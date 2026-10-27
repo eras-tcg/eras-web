@@ -25,6 +25,11 @@ export const routes: Routes = [
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),
       },
       {
+        path: 'booster-result',
+        title: 'Apertura · ERAS',
+        loadComponent: () => import('@features/editions/booster-result.page').then((m) => m.BoosterResultPage),
+      },
+      {
         path: 'login',
         title: 'Iniciar sesión · ERAS',
         loadComponent: () => import('@features/auth/login.page').then((m) => m.LoginPage),

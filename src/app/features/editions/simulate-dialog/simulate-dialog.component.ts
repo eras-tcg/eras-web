@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { legacyUrl } from '@core/navigation/legacy-url';
+import { Router } from '@angular/router';
 import { Edition, RARITIES } from '@data/editions/edition.model';
 import { canSimulateBox, pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { RarityBadgeComponent } from '@ui/domain/rarity-badge/rarity-badge.component';
@@ -20,6 +20,7 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 export class SimulateDialogComponent {
   protected readonly edition = inject<Edition>(DIALOG_DATA);
   protected readonly ref = inject(DialogRef);
+  private readonly router = inject(Router);
 
   protected readonly rarities = RARITIES;
   protected readonly packTypes = this.edition.packTypes ?? [];
@@ -42,9 +43,7 @@ export class SimulateDialogComponent {
   }
 
   private go(params: Record<string, string>): void {
-    const query = new URLSearchParams({ edition: this.edition.editionId, ...params });
     this.ref.close();
-    // The booster result page is not migrated yet: it lives in the legacy app
-    window.location.assign(legacyUrl(`/booster-result?${query.toString()}`));
+    void this.router.navigate(['/booster-result'], { queryParams: { edition: this.edition.editionId, ...params } });
   }
 }

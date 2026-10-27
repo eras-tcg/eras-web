@@ -10,6 +10,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 export interface ZoneDialogData {
   zone: ZoneName;
@@ -28,9 +29,9 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
-    <eras-modal [title]="title()" [subtitle]="cards().length + ' cartas'" (closed)="ref.close()">
+    <eras-modal [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
         <eras-empty-state title="Zona vacía" />
       } @else {

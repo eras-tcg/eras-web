@@ -6,6 +6,7 @@ import { TableComponent } from '@ui/data/table/table.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 interface DeckRow {
   cardId: string;
@@ -18,9 +19,9 @@ interface DeckRow {
 /** The deck you joined with: copies per card, restore removed copies, refresh card data after an admin edit. */
 @Component({
   selector: 'eras-decklist-dialog',
-  imports: [ModalComponent, TableComponent, BadgeComponent, ButtonComponent],
+  imports: [PluralPipe, ModalComponent, TableComponent, BadgeComponent, ButtonComponent],
   template: `
-    <eras-modal title="Tu mazo" [subtitle]="total() + ' cartas'" (closed)="ref.close()">
+    <eras-modal title="Tu mazo" [subtitle]="total() | plural: 'carta'" (closed)="ref.close()">
       <eras-table>
         <table>
           <thead><tr><th>Carta</th><th>Copias</th><th class="actions">Acciones</th></tr></thead>

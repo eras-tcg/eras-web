@@ -155,6 +155,12 @@ export const routes: Routes = [
       },
       // Old capitalized links shared from the Vue app
       { path: 'DeckBuilder', redirectTo: 'deck-builder' },
+      { path: 'Home', redirectTo: 'home' },
+      { path: 'Login', redirectTo: 'login' },
+      { path: 'Register', redirectTo: 'register' },
+      { path: 'Validate', redirectTo: 'validate' },
+      { path: 'Editions', redirectTo: 'editions' },
+      { path: 'Cards', redirectTo: 'cards' },
       {
         path: '**',
         title: 'No encontrada · ERAS',

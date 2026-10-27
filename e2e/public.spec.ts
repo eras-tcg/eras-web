@@ -72,9 +72,9 @@ test('rutas con sesión redirigen al login', async ({ page }) => {
 });
 
 test('el backend acepta escrituras desde este origen (CORS)', async ({ page, baseURL }) => {
-  // Known gap: the staging backend only allows https://staging.erastcg.com, so writes from next (and from
-  // ng serve, whose proxy keeps the browser's Origin) get 403. Remove this line once the origin is allowed.
-  test.fail(!baseURL?.includes('staging.erastcg.com'), 'CORS_ALLOWED_ORIGINS de staging no incluye este origen');
+  // Staging allows staging.erastcg.com and next.erastcg.com. ng serve's proxy keeps the browser's Origin
+  // (localhost), which staging rejects, so locally this is a known failure.
+  test.fail(!/(staging|next)\.erastcg\.com/.test(baseURL ?? ''), 'CORS de staging no admite localhost');
   await page.goto('/login');
   // Empty login: the backend must answer as an API (400/401), not reject the origin
   const result = await page.evaluate(async () => {

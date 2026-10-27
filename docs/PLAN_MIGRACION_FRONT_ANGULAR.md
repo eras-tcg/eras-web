@@ -254,10 +254,7 @@ reordenarse; el simulador va al final por ser lo más complejo y lo menos usado 
   mis mazos, lobby del simulador, permisos). Corre local (`ng serve`) o contra un despliegue
   (`E2E_BASE_URL=https://next.erastcg.com npm run e2e`, en verde). Checklist de paridad en `eras-web/docs/PARIDAD.md`.
   Redirecciones de los alias con mayúscula de Vue (`/Home`, `/Login`, `/Register`, `/Validate`, `/Editions`, `/Cards`).
-- **Bloqueante encontrado — CORS en next:** el backend de staging solo admite `https://staging.erastcg.com`, así que
-  todo POST/PUT/DELETE desde `next.erastcg.com` (login incluido) recibe `403 Invalid CORS request`. Requiere decisión:
-  agregar `https://next.erastcg.com` a `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging (recomendado)
-  o quitar `Origin` en el proxy de `nginx.next.conf`. El e2e "CORS" lo marca como fallo esperado.
+- **CORS de staging resuelto (2026-10-27):** `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging incluye `https://next.erastcg.com` (respaldo `.env.bak-<fecha>` en el VPS; redeploy con *Run workflow* en `develop`, la protección del entorno staging solo admite esa rama). Login y escrituras desde next ya no reciben 403; `ng serve` (origen localhost) sigue rechazado y el e2e "CORS" lo marca como fallo esperado solo en local.
 - **Pendiente para el corte (no hecho a propósito):** escrituras reales con permisos, partida real de 2 jugadores,
   corte de `eras-frontend-prod` a la imagen `eras-web` y archivar `Eras`; además endpoint "mi cuenta", SMTP,
   Storybook y e2e en CI.

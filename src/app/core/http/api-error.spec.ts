@@ -16,8 +16,11 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage(http(400, { error: 'Invalid verification token' }))).toBe('El enlace de verificación es inválido o ya se usó.');
   });
 
-  it('explains network failures', () => {
+  it('explains network, auth and server failures without technical text', () => {
     expect(apiErrorMessage(http(0, null))).toBe('No hay conexión con el servidor');
+    expect(apiErrorMessage(http(403, null))).toBe('No tienes permiso para hacer esto.');
+    expect(apiErrorMessage(http(401, ''))).toContain('Vuelve a iniciar sesión');
+    expect(apiErrorMessage(http(502, null), 'No se pudo guardar')).toBe('No se pudo guardar: error del servidor');
   });
 });
 

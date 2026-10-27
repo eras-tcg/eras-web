@@ -21,6 +21,11 @@ export class CardsStore {
   readonly cards = computed(() => mergeCards(this.images(), this.meta()));
   readonly options = computed(() => filterOptions(this.cards(), this.meta(), this.ref()));
 
+  /** After reference data changes elsewhere (admin), so filters and keyword texts update. */
+  setRef(ref: CardRefData): void {
+    this.ref.set(ref);
+  }
+
   async load(force = false): Promise<void> {
     if (this.loaded && !force) return;
     this.loading.set(true);

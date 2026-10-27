@@ -1,0 +1,93 @@
+<eras-page title="Datos de referencia" subtitle="Valores que usan los metadatos de las cartas" width="wide">
+  <button page-actions erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+
+  @if (fb.feedback(); as f) {
+    <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+  }
+
+  @if (loading() && !ref()) {
+    <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+  } @else if (ref(); as data) {
+    <eras-grid minColumn="20rem" [gap]="4">
+      @for (field of fields; track field.key) {
+        <eras-card>
+          <eras-stack [gap]="3">
+            <eras-section-header [title]="field.label + ' (' + (data[field.key]?.length ?? 0) + ')'" />
+            <span>{{ field.hint }}</span>
+            <form (submit)="$event.preventDefault(); add(field.key)">
+              <eras-stack direction="row" [gap]="2" align="end">
+                <eras-form-field label="Nuevo valor">
+                  <input [value]="drafts()[field.key] ?? ''" (input)="setDraft(field.key, $any($event.target).value)" />
+                </eras-form-field>
+                <button erasButton type="submit" [disabled]="busy() === field.key || !(drafts()[field.key] ?? '').trim()"><eras-icon name="plus" /> Agregar</button>
+              </eras-stack>
+            </form>
+            @if ((data[field.key]?.length ?? 0) > 8) {
+              <eras-form-field label="Buscar">
+                <input type="search" [value]="searches()[field.key] ?? ''" (input)="setSearch(field.key, $any($event.target).value)" />
+              </eras-form-field>
+            }
+            <eras-table>
+              <table>
+                <tbody>
+                  @for (v of values(field.key); track v) {
+                    <tr>
+                      <td>{{ v }}</td>
+                      @if (field.key === 'instances') {
+                        <td>
+                          <select [attr.aria-label]="'Tipo por defecto de ' + v" [disabled]="busy() === v" (change)="setKind(v, $any($event.target).value)">
+                            <option value="" [selected]="!kindOf(v)">Sin tipo por defecto</option>
+                            @for (k of data.kinds ?? []; track k) {
+                              <option [value]="k" [selected]="k === kindOf(v)">{{ k }}</option>
+                            }
+                          </select>
+                        </td>
+                      }
+                      <td class="actions">
+                        <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Eliminar ' + v" (click)="remove(field.key, v)"><eras-icon name="x" /></button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td class="muted">Sin valores</td></tr>
+                  }
+                </tbody>
+              </table>
+            </eras-table>
+          </eras-stack>
+        </eras-card>
+      }
+    </eras-grid>
+
+    <eras-section-header [title]="'Efectos keyword (' + keywords().length + ')'">
+      <button erasButton size="sm" type="button" (click)="editKeyword(null)"><eras-icon name="plus" /> Nuevo keyword</button>
+    </eras-section-header>
+    <eras-form-field label="Buscar keyword">
+      <input type="search" [value]="keywordSearch()" (input)="keywordSearch.set($any($event.target).value)" />
+    </eras-form-field>
+    <eras-table>
+      <table>
+        <thead>
+          <tr>
+            <th>Keyword</th>
+            <th>Efecto</th>
+            <th class="actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (k of keywords(); track k.keyword) {
+            <tr>
+              <td><strong>{{ k.keyword }}</strong></td>
+              <td class="muted">{{ k.summary || '—' }}</td>
+              <td class="actions">
+                <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Editar ' + k.keyword" (click)="editKeyword(k.keyword)"><eras-icon name="edit" /></button>
+                <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Eliminar ' + k.keyword" (click)="remove('keywordEffects', k.keyword)"><eras-icon name="x" /></button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td class="muted" colspan="3">Sin keywords</td></tr>
+          }
+        </tbody>
+      </table>
+    </eras-table>
+  }
+</eras-page>

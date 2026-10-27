@@ -47,6 +47,30 @@ export const routes: Routes = [
         loadComponent: () => import('@features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        path: 'public-decks',
+        title: 'Mazos públicos · ERAS',
+        loadComponent: () => import('@features/decks/public-decks.page').then((m) => m.PublicDecksPage),
+      },
+      {
+        path: 'my-decks',
+        title: 'Mis mazos · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/decks/my-decks.page').then((m) => m.MyDecksPage),
+      },
+      {
+        path: 'deck/:id',
+        title: 'Mazo · ERAS',
+        loadComponent: () => import('@features/decks/deck-view.page').then((m) => m.DeckViewPage),
+      },
+      {
+        path: 'deck-builder',
+        title: 'Constructor de mazos · ERAS',
+        canDeactivate: [(page: { confirmLeave?: () => Promise<boolean> }) => page.confirmLeave?.() ?? true],
+        loadComponent: () => import('@features/decks/deck-builder/deck-builder.page').then((m) => m.DeckBuilderPage),
+      },
+      // Old capitalized links shared from the Vue app
+      { path: 'DeckBuilder', redirectTo: 'deck-builder' },
+      {
         path: '**',
         title: 'No encontrada · ERAS',
         loadComponent: () => import('@features/not-found/not-found.page').then((m) => m.NotFoundPage),

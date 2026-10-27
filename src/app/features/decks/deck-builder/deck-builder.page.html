@@ -1,0 +1,197 @@
+<eras-workbench>
+  <!-- ── Left: selected card ─────────────────────────────────────────── -->
+  <div pane-start>
+    @if (selected(); as card) {
+      @if (detail(); as v) {
+        <eras-stack [gap]="4">
+          <eras-stack direction="row" [gap]="2" align="center" justify="center">
+            <button erasButton variant="secondary" size="sm" type="button" aria-label="Quitar una copia" [disabled]="draft.countOf(card.id) === 0" (click)="remove(card)">−</button>
+            <span>{{ draft.countOf(card.id) }} en el mazo</span>
+            <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+</button>
+          </eras-stack>
+          <eras-card-detail
+            stacked
+            [name]="v.name"
+            [edition]="v.edition"
+            [number]="v.number"
+            [color]="v.color"
+            [colorLabel]="v.colorLabel"
+            [imageUrl]="v.imageUrl"
+            [facts]="v.facts"
+            [textGroups]="v.groups"
+            [notice]="v.notice"
+          />
+        </eras-stack>
+      }
+    } @else {
+      <eras-empty-state title="Selecciona una carta" description="Haz clic en una carta para ver su detalle." />
+    }
+  </div>
+
+  <!-- ── Middle: the deck ────────────────────────────────────────────── -->
+  <eras-stack [gap]="4">
+    <eras-stack direction="row" [gap]="2" align="center" wrap>
+      <eras-form-field label="Nombre del mazo">
+        <input placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
+      </eras-form-field>
+      <button
+        erasChip
+        [selected]="draft.isPrivate()"
+        [attr.aria-label]="draft.isPrivate() ? 'Mazo privado (clic para hacerlo público)' : 'Mazo público (clic para hacerlo privado)'"
+        (click)="draft.togglePrivate()"
+      >
+        {{ draft.isPrivate() ? 'Privado' : 'Público' }}
+      </button>
+    </eras-stack>
+
+    <eras-stack direction="row" [gap]="2" align="center" wrap>
+      <strong>{{ draft.total() }} / {{ maxCards }} cartas</strong>
+      <button
+        erasButton
+        type="button"
+        [loading]="draft.saving()"
+        [disabled]="!canSave() || draft.saving() || !draft.dirty() || draft.total() === 0"
+        [attr.title]="canSave() ? null : 'Necesitas el permiso manage_decks para guardar'"
+        (click)="save()"
+      >
+        Guardar
+      </button>
+      <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
+      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
+      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
+      <eras-file-button accept=".txt,text/plain" (file)="importList($event)">Importar lista</eras-file-button>
+    </eras-stack>
+
+    @if (!canSave()) {
+      <eras-alert>Puedes armar, exportar e imprimir el mazo; para guardarlo necesitas iniciar sesión con permiso de mazos.</eras-alert>
+    }
+    @if (copyNotice()) {
+      <eras-alert>Este mazo es de otra persona: al guardar se crea una copia tuya.</eras-alert>
+    }
+    @if (loadError(); as message) {
+      <eras-alert tone="danger">{{ message }}</eras-alert>
+    }
+    @if (saveError(); as message) {
+      <eras-alert tone="danger">{{ message }}</eras-alert>
+    }
+    @if (savedNotice()) {
+      <eras-alert tone="success">Mazo guardado.</eras-alert>
+    }
+    @if (draft.missing() > 0) {
+      <eras-alert>{{ draft.missing() }} {{ draft.missing() === 1 ? 'carta guardada ya no existe' : 'cartas guardadas ya no existen' }} en el catálogo y se quitaron.</eras-alert>
+    }
+    @if (importWarnings().length) {
+      <eras-alert>
+        <eras-stack [gap]="1">
+          @for (w of importWarnings(); track $index) {
+            <span>{{ w }}</span>
+          }
+        </eras-stack>
+      </eras-alert>
+    }
+
+    <eras-dropzone [active]="dragOver()" (dragover)="dragOverDeck($event)" (dragleave)="dragOver.set(false)" (drop)="drop($event)">
+      @if (draft.total() === 0) {
+        <eras-empty-state title="El mazo está vacío" description="Arrastra cartas aquí o usa el botón + de la búsqueda." />
+      } @else {
+        @for (group of draft.groups(); track group.type) {
+          <eras-section-header [title]="(typeLabels[group.type] ?? group.type) + ' (' + group.count + ')'" />
+          <eras-grid minColumn="7.5rem" [gap]="3">
+            @for (entry of group.entries; track entry.card.id) {
+              <eras-stack [gap]="1" (contextmenu)="contextRemove($event, entry.card)">
+                <eras-card-thumb
+                  [name]="entry.card.name ?? ''"
+                  [imageUrl]="imageUrl(entry.card)"
+                  [count]="entry.count"
+                  showSingleCount
+                  [active]="selected()?.id === entry.card.id"
+                  (selected)="selected.set(entry.card)"
+                />
+                <eras-stack direction="row" [gap]="1" justify="center" align="center">
+                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" (click)="remove(entry.card)">−</button>
+                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Añadir una copia de ' + entry.card.name" [disabled]="!draft.canAdd(entry.card)" (click)="add(entry.card)">+</button>
+                  <button
+                    erasButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    [attr.aria-label]="draft.isCover(entry.card) ? 'Es la portada del mazo' : 'Usar como portada'"
+                    [attr.aria-pressed]="draft.isCover(entry.card)"
+                    [disabled]="draft.isCover(entry.card)"
+                    (click)="draft.setCover(entry.card)"
+                  >
+                    {{ draft.isCover(entry.card) ? '★' : '☆' }}
+                  </button>
+                </eras-stack>
+              </eras-stack>
+            }
+          </eras-grid>
+        }
+      }
+    </eras-dropzone>
+
+    @if (draft.total() > 0) {
+      <eras-section-header title="Métricas">
+        <button erasButton variant="ghost" size="sm" type="button" [attr.aria-expanded]="showMetrics()" (click)="showMetrics.set(!showMetrics())">
+          {{ showMetrics() ? 'Ocultar' : 'Mostrar' }}
+        </button>
+      </eras-section-header>
+      @if (showMetrics()) {
+        <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
+      }
+    }
+  </eras-stack>
+
+  <!-- ── Right: search ───────────────────────────────────────────────── -->
+  <div pane-end>
+    <eras-stack [gap]="3">
+      <eras-form-field label="Buscar cartas">
+        <input type="search" placeholder="Nombre o edición…" [value]="query()" (input)="query.set($any($event.target).value)" />
+      </eras-form-field>
+      <eras-stack direction="row" [gap]="1" wrap>
+        @for (t of cards.options().types; track t) {
+          <button erasChip [selected]="quickType() === t" (click)="toggleQuickType(t)">{{ typeLabels[t] ?? t }}</button>
+        }
+        <button erasChip [selected]="!view().collapse" (click)="view.set({ ...view(), collapse: !view().collapse })">Todas las impresiones</button>
+      </eras-stack>
+      <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
+        <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
+        <eras-stack direction="row" [gap]="1">
+          @if (filtersActive()) {
+            <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar</button>
+          }
+          <button erasButton variant="secondary" size="sm" type="button" (click)="openFilters()"><eras-icon name="filter" /> Filtros</button>
+        </eras-stack>
+      </eras-stack>
+
+      @if (cards.error(); as message) {
+        <eras-alert tone="danger">{{ message }}</eras-alert>
+      }
+      @if (cards.loading() && resultCount() === 0) {
+        <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
+      } @else {
+        <eras-grid minColumn="6.5rem" [gap]="2">
+          @for (card of visibleResults(); track card.id) {
+            <eras-stack [gap]="1" draggable="true" (dragstart)="dragStart($event, card)" (contextmenu)="contextAdd($event, card)">
+              <eras-card-thumb
+                [name]="card.name ?? ''"
+                [imageUrl]="imageUrl(card)"
+                [count]="draft.copiesOf(card)"
+                showSingleCount
+                [dimmed]="!draft.canAdd(card)"
+                [active]="selected()?.id === card.id"
+                (selected)="selected.set(card)"
+              />
+              <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Añadir ' + card.name" [disabled]="!draft.canAdd(card)" (click)="add(card)">
+                <eras-icon name="plus" />
+              </button>
+            </eras-stack>
+          }
+        </eras-grid>
+        @if (visibleResults().length < resultCount()) {
+          <div erasInView (inView)="showMore()"><eras-spinner /></div>
+        }
+      }
+    </eras-stack>
+  </div>
+</eras-workbench>

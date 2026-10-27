@@ -1,0 +1,42 @@
+<eras-page [title]="deck()?.deckName ?? 'Mazo'" [subtitle]="deck()?.username ? 'por ' + deck()?.username + ' · ' + total() + ' cartas' : null" width="wide">
+  <ng-container ngProjectAs="[page-actions]">
+    <button erasButton variant="ghost" type="button" (click)="back()"><eras-icon name="chevron-left" /> Volver</button>
+    @if (canEdit()) {
+      <a erasButton variant="secondary" routerLink="/deck-builder" [queryParams]="editQuery()"><eras-icon name="edit" /> Editar</a>
+    }
+    <button erasButton variant="secondary" type="button" [disabled]="total() === 0" (click)="openProxies()">Proxies</button>
+    @if (canCopy()) {
+      <a erasButton routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
+    }
+  </ng-container>
+
+  @if (error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+  @if (cards.error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+  @if (missing() > 0) {
+    <eras-alert>{{ missing() }} {{ missing() === 1 ? 'carta del mazo ya no existe' : 'cartas del mazo ya no existen' }} en el catálogo y no se muestran.</eras-alert>
+  }
+
+  @if (loading() || (cards.loading() && groups().length === 0)) {
+    <eras-empty-state title="Cargando mazo…"><eras-spinner /></eras-empty-state>
+  } @else if (!error() && groups().length === 0) {
+    <eras-empty-state title="Este mazo no tiene cartas" />
+  } @else {
+    @for (group of groups(); track group.type) {
+      <eras-section-header [title]="typeLabel(group.type) + ' (' + group.count + ')'" />
+      <eras-grid minColumn="9rem" [gap]="3">
+        @for (entry of group.entries; track entry.card.id) {
+          <eras-card-thumb
+            [name]="entry.card.name ?? ''"
+            [imageUrl]="imageUrl(entry.card)"
+            [count]="entry.count"
+            (selected)="openCard(entry.card.id)"
+          />
+        }
+      </eras-grid>
+    }
+  }
+</eras-page>

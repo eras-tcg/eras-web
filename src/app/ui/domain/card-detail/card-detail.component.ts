@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
 import { CardImageComponent } from '../card-image/card-image.component';
@@ -36,8 +36,11 @@ export interface CardTextGroup {
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.stacked]': 'stacked()' },
 })
 export class CardDetailComponent {
+  /** Image on top and info below, for narrow containers (side panels). */
+  readonly stacked = input(false, { transform: booleanAttribute });
   readonly name = input.required<string>();
   readonly edition = input.required<string>();
   readonly number = input<number | null>(null);

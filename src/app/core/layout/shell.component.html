@@ -42,6 +42,7 @@
         </button>
 
         @if (auth.user(); as user) {
+          <a class="user" routerLink="/my-decks" routerLinkActive="is-active" (click)="menuOpen.set(false)"><eras-icon name="cards" /> Mis mazos</a>
           <a class="user" routerLink="/profile" aria-label="Mi perfil" (click)="menuOpen.set(false)"><eras-icon name="user" /> {{ user.username }}</a>
           <button erasButton variant="secondary" size="sm" type="button" (click)="logout()">
             <eras-icon name="logout" /> Salir

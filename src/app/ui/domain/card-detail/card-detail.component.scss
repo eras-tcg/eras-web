@@ -136,6 +136,17 @@ dd {
   inset-block-start: 0;
 }
 
+:host(.stacked) .detail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+:host(.stacked) .image {
+  position: static;
+  grid-row: 1;
+  inline-size: min(100%, 16rem);
+  justify-self: center;
+}
+
 @media (max-width: 44rem) {
   .detail {
     grid-template-columns: minmax(0, 1fr);

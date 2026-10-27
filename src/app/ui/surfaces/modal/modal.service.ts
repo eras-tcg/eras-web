@@ -1,6 +1,8 @@
 import { Dialog, DialogConfig, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/overlay';
 import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 
 /** Opens dialogs with the app's backdrop and sensible defaults (focus trap, Esc to close). */
 @Injectable({ providedIn: 'root' })
@@ -17,5 +19,11 @@ export class ModalService {
       restoreFocus: true,
       ...config,
     });
+  }
+
+  /** Resolves `true` only when the user confirms. */
+  async confirm(data: ConfirmDialogData): Promise<boolean> {
+    const ref = this.open<boolean, ConfirmDialogData>(ConfirmDialogComponent, { data });
+    return (await firstValueFrom(ref.closed)) === true;
   }
 }

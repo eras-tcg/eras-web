@@ -1,0 +1,51 @@
+<eras-modal title="Imprimir proxies" [subtitle]="data.deckName" (closed)="ref.close()">
+  <eras-stack [gap]="4">
+    <p>
+      Cartas a 2.5 × 3.5 in: {{ data.cardIds.length }} {{ data.cardIds.length === 1 ? 'carta' : 'cartas' }},
+      {{ perPage() }} por hoja ({{ pages() }} {{ pages() === 1 ? 'hoja' : 'hojas' }}).
+    </p>
+
+    <eras-stack [gap]="2">
+      <span class="eras-form-field__text">Orientación</span>
+      <eras-stack direction="row" [gap]="1" wrap>
+        <button erasChip [selected]="orientation() === 'portrait'" (click)="orientation.set('portrait')">Vertical</button>
+        <button erasChip [selected]="orientation() === 'landscape'" (click)="orientation.set('landscape')">Horizontal</button>
+      </eras-stack>
+    </eras-stack>
+
+    <eras-stack [gap]="2">
+      <span class="eras-form-field__text">Tamaño de papel</span>
+      <eras-stack direction="row" [gap]="1" wrap>
+        @for (p of papers; track p.value) {
+          <button erasChip [selected]="paper() === p.value" (click)="paper.set(p.value)">{{ p.label }}</button>
+        }
+      </eras-stack>
+    </eras-stack>
+
+    <eras-form-field label="Margen (pulgadas)">
+      <input type="number" min="0.1" max="2" step="0.05" [value]="margin()" (input)="margin.set(number($event) || 0)" />
+    </eras-form-field>
+    @if (margin() < minMargin) {
+      <eras-alert tone="danger">El margen es menor que {{ minMargin }} in; es posible que la impresora recorte los bordes.</eras-alert>
+    }
+
+    <eras-form-field [label]="'Brillo (+' + brightness() + ')'">
+      <input type="range" min="0" max="100" step="5" [value]="brightness()" (input)="brightness.set(number($event))" />
+    </eras-form-field>
+    <eras-form-field [label]="'Contraste (+' + contrast() + ')'">
+      <input type="range" min="0" max="100" step="5" [value]="contrast()" (input)="contrast.set(number($event))" />
+    </eras-form-field>
+    <eras-alert>Brillo y contraste positivos mejoran la legibilidad, sobre todo en impresoras de baja calidad.</eras-alert>
+
+    @if (error(); as message) {
+      <eras-alert tone="danger">{{ message }}</eras-alert>
+    }
+  </eras-stack>
+
+  <ng-container modal-footer>
+    <button erasButton variant="secondary" type="button" (click)="ref.close()">Cerrar</button>
+    <button erasButton type="button" [loading]="generating()" [disabled]="generating() || data.cardIds.length === 0 || perPage() === 0" (click)="download()">
+      {{ generating() ? 'Generando PDF…' : 'Descargar PDF' }}
+    </button>
+  </ng-container>
+</eras-modal>

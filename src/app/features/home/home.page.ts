@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CanDirective } from '@core/auth/can.directive';
-import { legacyUrl } from '@core/navigation/legacy-url';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -63,7 +62,7 @@ export class HomePage {
   }
 
   protected openDeck(deck: Deck | null): void {
-    if (deck) window.location.assign(legacyUrl(`/deck/${encodeURIComponent(deck.id)}`));
+    if (deck) void this.router.navigate(['/deck', deck.id]);
   }
 
   protected startEdit(): void {

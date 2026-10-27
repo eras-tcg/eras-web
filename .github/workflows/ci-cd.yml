@@ -1,9 +1,11 @@
-# Build on GitHub, publish to GHCR, deploy to next.erastcg.com (eras-tcg/infra, self-hosted runner).
-# eras-web only targets the "next" environment until parity with the Vue app is reached
-# (see PLAN_MIGRACION_FRONT_ANGULAR.md, fase 7); it validates against the staging backend.
-#   PR to main      -> build + lint + test only
-#   push to main     -> build image + deploy to next
-#   Run workflow     -> redeploy an existing image (rollback)
+# Build on GitHub, publish to GHCR, deploy with eras-tcg/infra (self-hosted runner in the VPS).
+#   PR to main      -> lint + test + build only
+#   push to main     -> build next/staging/prod images + deploy to next.erastcg.com
+#   Run workflow     -> deploy an existing image to next, staging or production
+#
+# staging and production replace the Vue front (service "eras-frontend": same container names,
+# ports and vhosts as eras-tcg/erasFront), so the cutover and its rollback are both a Run workflow:
+# here with an eras-web tag, or in erasFront with a Vue tag (docs/HANDOFF.md).
 name: CI/CD
 
 on:
@@ -13,6 +15,11 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [next, staging, production]
+        required: true
       image_tag:
         description: Commit sha of an image already published (see a previous run)
         type: string
@@ -43,11 +50,12 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     needs: lint-test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [next, staging, prod]
     permissions:
       contents: read
       packages: write
-    outputs:
-      image: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-next
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -63,10 +71,11 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-next
+          build-args: ENVIRONMENT=${{ matrix.environment }}
+          tags: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-${{ matrix.environment }}
           labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.environment }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.environment }}
 
   deploy-next:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -78,7 +87,7 @@ jobs:
     with:
       service: eras-web
       environment: next
-      image: ${{ needs.build.outputs.image }}
+      image: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-next
       nginx_vhost: nginx/next.erastcg.com
 
   redeploy:
@@ -88,7 +97,7 @@ jobs:
       packages: read
     uses: eras-tcg/infra/.github/workflows/deploy.yml@main
     with:
-      service: eras-web
-      environment: next
-      image: ghcr.io/eras-tcg/eras-web:${{ inputs.image_tag }}-next
-      nginx_vhost: nginx/next.erastcg.com
+      service: ${{ inputs.environment == 'next' && 'eras-web' || 'eras-frontend' }}
+      environment: ${{ inputs.environment }}
+      image: ghcr.io/eras-tcg/eras-web:${{ inputs.image_tag }}-${{ inputs.environment == 'production' && 'prod' || inputs.environment }}
+      nginx_vhost: ${{ inputs.environment == 'production' && 'nginx/erastcg.com' || inputs.environment == 'staging' && 'nginx/staging.erastcg.com' || 'nginx/next.erastcg.com' }}

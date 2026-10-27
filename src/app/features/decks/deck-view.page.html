@@ -1,4 +1,4 @@
-<eras-page [title]="deck()?.deckName ?? 'Mazo'" [subtitle]="deck()?.username ? 'por ' + deck()?.username + ' · ' + total() + ' cartas' : null" width="wide">
+<eras-page [title]="deck()?.deckName ?? 'Mazo'" [subtitle]="deck()?.username ? 'por ' + deck()?.username + ' · ' + (total() | plural: 'carta') : null" width="wide">
   <ng-container ngProjectAs="[page-actions]">
     <button erasButton variant="ghost" type="button" (click)="back()"><eras-icon name="chevron-left" /> Volver</button>
     @if (canEdit()) {

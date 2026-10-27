@@ -3,11 +3,12 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Fecha de pausa:** 2026-10-27 · **Último PR:** #6 · **Despliegue:** https://next.erastcg.com (backend de staging)
+**Actualizado:** 2026-10-27 · **Último PR:** #8 · **Despliegues:** https://staging.erastcg.com (**Angular**),
+https://next.erastcg.com (Angular), https://erastcg.com (producción, **todavía Vue**)
 
 ## Estado en una línea
-Fases 0–6 terminadas y desplegadas en `next`; Fase 7 (corte) preparada (e2e + checklist); falta probar con cuentas
-reales (CORS de next ya resuelto). Producción sigue en Vue.
+Fases 0–6 terminadas; **staging ya sirve Angular** (corte de staging hecho, e2e 15/15 en staging); pruebas reales con
+la cuenta admin hechas; falta la partida real de 2 jugadores y el corte de producción.
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -17,24 +18,35 @@ reales (CORS de next ya resuelto). Producción sigue en Vue.
 | 3. Register, Validate, Profile | ✓ | `0db036e` |
 | 4. Mazos + BoosterResult | ✓ | `932880f`, `adc7171` |
 | 5. Administración + metadatos de cartas | ✓ | #1, #2 |
-| 6. Simulador (STOMP) | ✓ (sin partida real de 2 jugadores) | #3 |
-| 7. Corte | preparado: e2e (14 casos) + PARIDAD.md; **corte no hecho** | #4 |
+| 6. Simulador (STOMP) | ✓ (partida real de 2 jugadores pendiente) | #3 |
+| 7. Corte | e2e + PARIDAD.md (#4); imágenes staging/prod y entornos (#7); **staging cortado**; producción pendiente | #4, #7 |
 
-## Bloqueantes (requieren decisión o acceso del dueño)
-1. ~~CORS en `next`~~ — resuelto (2026-10-27): `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging incluye `https://next.erastcg.com` (respaldo `.env.bak-<fecha>` en el VPS; redeploy con *Run workflow* en `develop`, la protección del entorno staging solo admite esa rama). Login y escrituras desde next ya no reciben 403; `ng serve` (origen localhost) sigue rechazado y el e2e "CORS" lo marca como fallo esperado solo en local.
-2. **Pruebas con cuenta real** (staging, con permisos): login, guardar/borrar mazo, PDF de proxies, todas las
-   herramientas de admin, edición de Home/ediciones/metadatos. Hasta hoy solo se probaron con sesión y respuestas simuladas.
-3. **Partida real de 2 jugadores** en el simulador (dos navegadores/cuentas) en staging.
+## Corte: cómo está armado
+- Cada push a `main` publica `ghcr.io/eras-tcg/eras-web:<sha>-next|-staging|-prod` y despliega solo a `next`.
+- **Run workflow** (eras-web → CI/CD) con `environment` = `next` | `staging` | `production` e `image_tag` = sha.
+  Para staging/production despliega como servicio `eras-frontend` (mismos contenedores, puertos y vhosts que erasFront).
+  `production` exige la aprobación de CapitanPio en Actions (*Review deployments*).
+- **Rollback:** Run workflow en `eras-tcg/erasFront` (CI/CD) con la imagen Vue. Staging: rama `develop`, environment
+  `staging`, tag `0d010c9d8a4cbada9dd9875ad8ea501b7205eba2`. Producción: la imagen Vue que esté corriendo antes del corte
+  (anotarla al hacerlo).
+- **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Al cortar producción, desactivar ese
+  workflow (`gh workflow disable ci-cd.yml -R eras-tcg/erasFront`) y archivar el repo cuando ya no haga falta.
 
-## Siguiente trabajo, en orden
-1. ~~Resolver CORS~~ hecho; `E2E_BASE_URL=https://next.erastcg.com npm run e2e` en verde (14/14).
-2. Recorrer `PARIDAD.md` con una cuenta real: marcar cada fila "simulada" como probada o abrir arreglos.
-3. Partida real en el simulador; arreglar lo que aparezca.
-4. Corte (Fase 7): `eras-frontend-staging` y luego `eras-frontend-prod` pasan a la imagen `eras-web`
-   (`infra/deploy.sh` + `deploy.yml`); rollback = volver a la imagen Vue con *Run workflow*. Quitar el entorno `next`
-   y archivar el repo Vue (`Eras`). **No hacerlo sin confirmación del dueño.**
-5. Opcionales: e2e en CI (instalar navegador de Playwright en el runner `eras-vps`), Storybook, endpoint "mi cuenta"
-   en UsersService, SMTP (Brevo) y orden del registro.
+## Pruebas reales en staging (2026-10-27, cuenta admin, solo elementos de prueba creados y borrados)
+Mazo (crear, actualizar, PDF de proxies, borrar), roles (crear, editar permisos, borrar), notas de partidas (crear,
+editar, borrar), datos de referencia (crear, revisar uso, borrar) y lectura de usuarios, permisos, cambios pendientes,
+tierlist, metadatos y partidas: todo correcto. Detalle en `PARIDAD.md`. No se tocaron datos reales (cuentas, cambios de
+Drive, ediciones, tierlist, Home).
+
+## Pendiente
+1. **Partida real de 2 jugadores.** Hay dos cuentas de prueba en staging (`e2e_p1_71a21f`, `e2e_p2_71a21f`, rol USER)
+   con sus contraseñas en `e2e/.auth.local.json` (git-ignorado, solo en el equipo local). Están **sin verificar**: el
+   SMTP de staging falla (`Authentication failed`) y no hay forma de verificar desde la API sin el token del correo.
+   Verificarlas en el VPS (comando en la sección "Avisos operativos") y correr
+   `E2E_BASE_URL=https://staging.erastcg.com npx playwright test simulator-2p`.
+2. **Corte de producción:** Run workflow `production` con el último sha de `main` + aprobación; verificar con
+   `E2E_BASE_URL=https://erastcg.com npm run e2e`; desactivar el workflow de erasFront.
+3. Opcionales: e2e en CI, Storybook, endpoint "mi cuenta", SMTP (Brevo) y orden del registro, quitar `next`.
 
 ## Cómo trabajar en el repo
 ```bash
@@ -64,5 +76,9 @@ npx ng build --configuration staging
 - Usar siempre `env -u GH_TOKEN gh ...`: la variable `GH_TOKEN` del equipo es de otra cuenta y no debe usarse.
 - SSH al VPS: `C:\Windows\System32\OpenSSH\ssh.exe eras-vps` (usuario `claudio`, sudo sin contraseña) desde PowerShell.
 - DNS de `erastcg.com` en DonWeb (lo edita el dueño).
+- Verificar las cuentas de prueba de staging (en el VPS; marca `verified` sin pasar por el correo):
+  ```bash
+  uri=$(sudo grep -E '^SPRING_MONGODB_URI=' /etc/users-service-staging/.env | cut -d= -f2-); sudo docker run --rm -e U="$uri" mongo:7 sh -c 'mongosh "$U" --quiet --eval "printjson(db.getCollectionNames().map(c => [c, db.getCollection(c).updateMany({username: /^e2e_p[12]_71a21f$/}, {\$set: {verified: true}, \$unset: {verificationToken: 1}}).modifiedCount]))"'
+  ```
 - Los tests de UI con sesión usan una sesión falsa en `localStorage` (`auth_token`, `auth_user`) y respuestas
   simuladas (`e2e/fixtures.ts`); nunca crear cuentas ni escribir con credenciales reales sin permiso.

@@ -18,11 +18,12 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { feedbackState } from './admin-feedback';
+import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 /** User accounts (manage_users). Changing a user's role also needs manage_roles (to list roles). */
 @Component({
   selector: 'eras-users-page',
-  imports: [PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PluralPipe, PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   templateUrl: './users.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

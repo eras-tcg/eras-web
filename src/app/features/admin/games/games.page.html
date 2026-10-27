@@ -1,4 +1,4 @@
-<eras-page title="Registro de partidas" [subtitle]="games().length + ' partidas · ' + notes().length + ' notas'" width="wide">
+<eras-page title="Registro de partidas" [subtitle]="(games().length | plural: 'partida') + ' · ' + (notes().length | plural: 'nota')" width="wide">
   <ng-container ngProjectAs="[page-actions]">
     <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
     <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showStats()" (click)="showStats.set(!showStats())">

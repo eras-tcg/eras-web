@@ -22,6 +22,7 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { deckBuilderQuery } from './deck-links';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-dialog/proxy-print-dialog.component';
+import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 'Estructuras', utility: 'Utilidades', 'sin tipo': 'Sin tipo' };
 
@@ -30,6 +31,7 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
   selector: 'eras-deck-view-page',
   imports: [
     RouterLink,
+    PluralPipe,
     PageComponent,
     GridComponent,
     SectionHeaderComponent,

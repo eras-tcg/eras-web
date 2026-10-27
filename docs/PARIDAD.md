@@ -33,7 +33,7 @@ https://next.erastcg.com; **simulada** = probada con sesión y respuestas simula
 Además: `/card-meta` (nueva, metadatos sin imagen) y `/admin` (hub de herramientas).
 
 ## Antes del corte en producción
-1. Permitir escrituras desde `next` (ver pendiente de CORS) y repetir las escrituras "simuladas" con una cuenta real
+1. ~~Permitir escrituras desde `next`~~ (hecho) y repetir las escrituras "simuladas" con una cuenta real
    de staging con permisos: login, guardar/borrar mazo, PDF de proxies, admin (usuarios, roles, permisos, referencia,
    cambios, partidas, tierlist, Home, ediciones, metadatos).
 2. Partida real de 2 jugadores en el simulador (dos navegadores) en staging.
@@ -41,11 +41,7 @@ Además: `/card-meta` (nueva, metadatos sin imagen) y `/admin` (hub de herramien
 4. Corte: `eras-frontend-prod`/`-staging` pasan a la imagen `eras-web`; rollback = imagen Vue con *Run workflow*.
 
 ## Pendientes conocidos
-- **CORS en `next` (bloquea escrituras):** el backend de staging solo admite `https://staging.erastcg.com` en
-  `CORS_ALLOWED_ORIGINS`, así que todo POST/PUT/DELETE desde `next.erastcg.com` (y desde `ng serve`) recibe
-  `403 Invalid CORS request`, incluido el login. Arreglo: agregar `https://next.erastcg.com` (y
-  `http://localhost:4200`) a `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging, o quitar `Origin` en
-  el proxy de `nginx.next.conf`. El test e2e "CORS" lo marca como fallo esperado hasta que se arregle.
+- ~~CORS en `next`~~: resuelto (2026-10-27): `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging incluye `https://next.erastcg.com` (respaldo `.env.bak-<fecha>` en el VPS; redeploy con *Run workflow* en `develop`, la protección del entorno staging solo admite esa rama). Login y escrituras desde next ya no reciben 403; `ng serve` (origen localhost) sigue rechazado y el e2e "CORS" lo marca como fallo esperado solo en local.
 - Endpoint "mi cuenta" en UsersService (hoy usuario/correo propios exigen `manage_users`).
 - SMTP (Brevo) y orden del registro (se guarda el usuario antes de enviar el correo).
 - Storybook (pospuesto).

@@ -3,11 +3,11 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Fecha de pausa:** 2026-10-27 · **Último PR:** #4 · **Despliegue:** https://next.erastcg.com (backend de staging)
+**Fecha de pausa:** 2026-10-27 · **Último PR:** #6 · **Despliegue:** https://next.erastcg.com (backend de staging)
 
 ## Estado en una línea
-Fases 0–6 terminadas y desplegadas en `next`; Fase 7 (corte) preparada (e2e + checklist) pero **bloqueada** por CORS
-del backend de staging y por pruebas reales que requieren cuentas. Producción sigue en Vue.
+Fases 0–6 terminadas y desplegadas en `next`; Fase 7 (corte) preparada (e2e + checklist); falta probar con cuentas
+reales (CORS de next ya resuelto). Producción sigue en Vue.
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -21,20 +21,13 @@ del backend de staging y por pruebas reales que requieren cuentas. Producción s
 | 7. Corte | preparado: e2e (14 casos) + PARIDAD.md; **corte no hecho** | #4 |
 
 ## Bloqueantes (requieren decisión o acceso del dueño)
-1. **CORS en `next` — bloquea login y toda escritura.** El backend de staging solo admite
-   `https://staging.erastcg.com` en `CORS_ALLOWED_ORIGINS`; desde `next.erastcg.com` (y desde `ng serve`) todo
-   POST/PUT/DELETE recibe `403 Invalid CORS request`. Opciones:
-   - (recomendada) agregar `https://next.erastcg.com` y `http://localhost:4200` a `CORS_ALLOWED_ORIGINS` de
-     UsersService y DriveManager en staging y reiniciar esos contenedores;
-   - o quitar `Origin` en los `location /api/...` de `nginx.next.conf` (el clasificador de seguridad de Claude lo
-     bloqueó como "debilitar seguridad"; requiere aprobación explícita).
-   Al arreglarlo, quitar el `test.fail(...)` del caso "CORS" en `e2e/public.spec.ts`.
+1. ~~CORS en `next`~~ — resuelto (2026-10-27): `CORS_ALLOWED_ORIGINS` de UsersService y DriveManager en staging incluye `https://next.erastcg.com` (respaldo `.env.bak-<fecha>` en el VPS; redeploy con *Run workflow* en `develop`, la protección del entorno staging solo admite esa rama). Login y escrituras desde next ya no reciben 403; `ng serve` (origen localhost) sigue rechazado y el e2e "CORS" lo marca como fallo esperado solo en local.
 2. **Pruebas con cuenta real** (staging, con permisos): login, guardar/borrar mazo, PDF de proxies, todas las
    herramientas de admin, edición de Home/ediciones/metadatos. Hasta hoy solo se probaron con sesión y respuestas simuladas.
 3. **Partida real de 2 jugadores** en el simulador (dos navegadores/cuentas) en staging.
 
 ## Siguiente trabajo, en orden
-1. Resolver CORS (bloqueante 1) y correr `E2E_BASE_URL=https://next.erastcg.com npm run e2e` (el caso CORS debe pasar).
+1. ~~Resolver CORS~~ hecho; `E2E_BASE_URL=https://next.erastcg.com npm run e2e` en verde (14/14).
 2. Recorrer `PARIDAD.md` con una cuenta real: marcar cada fila "simulada" como probada o abrir arreglos.
 3. Partida real en el simulador; arreglar lo que aparezca.
 4. Corte (Fase 7): `eras-frontend-staging` y luego `eras-frontend-prod` pasan a la imagen `eras-web`

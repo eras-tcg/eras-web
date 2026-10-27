@@ -9,11 +9,11 @@ export const authGuard: CanMatchFn = () => {
   return auth.isAuthenticated() || inject(Router).createUrlTree(['/login']);
 };
 
-/** Route only for users with the given permission. */
-export function permissionGuard(permission: Permission): CanMatchFn {
+/** Route only for users with any of the given permissions. */
+export function permissionGuard(...permissions: Permission[]): CanMatchFn {
   return () => {
     const auth = inject(AuthService);
-    if (auth.can(permission)) return true;
+    if (permissions.some((p) => auth.can(p))) return true;
     return inject(Router).createUrlTree([auth.isAuthenticated() ? '/' : '/login']);
   };
 }

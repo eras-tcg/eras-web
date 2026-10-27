@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
+import { ADMIN_TOOLS } from '../navigation/admin-tools';
 import { legacyUrl } from '../navigation/legacy-url';
 import { MAIN_NAV, NavItem } from '../navigation/nav-items';
 import { ThemeService } from '../theme/theme.service';
@@ -21,6 +22,10 @@ export class ShellComponent {
 
   protected readonly nav = MAIN_NAV;
   protected readonly menuOpen = signal(false);
+  protected readonly hasAdminTools = computed(() => {
+    this.auth.user();
+    return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
+  });
 
   protected href(item: NavItem): string {
     return legacyUrl(item.legacyPath ?? '/');

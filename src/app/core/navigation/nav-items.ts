@@ -16,6 +16,7 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'Ediciones', route: '/editions' },
   { label: 'Constructor de mazos', route: '/deck-builder' },
   { label: 'Mazos', route: '/public-decks' },
-  { label: 'Tierlist', legacyPath: '/tierlist' },
+  { label: 'Tierlist', route: '/tierlist' },
+  { label: 'Cómo jugar', route: '/ruling' },
   { label: 'Simulador', legacyPath: '/simulator' },
 ];

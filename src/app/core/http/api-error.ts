@@ -13,7 +13,11 @@ export function apiErrorMessage(error: unknown, fallback = 'Ocurrió un error'):
       if (firstText) return translateServerMessage(firstText);
     }
     if (error.status === 0) return 'No hay conexión con el servidor';
-    return error.message || fallback;
+    if (error.status === 401) return 'Tu sesión expiró o no es válida. Vuelve a iniciar sesión.';
+    if (error.status === 403) return 'No tienes permiso para hacer esto.';
+    if (error.status === 404) return `${fallback} (no encontrado)`;
+    // Angular's own message ("Http failure response for …") is not meant for users
+    return error.status >= 500 ? `${fallback}: error del servidor` : fallback;
   }
   if (error instanceof Error && error.message) return error.message;
   return fallback;

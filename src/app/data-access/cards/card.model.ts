@@ -67,8 +67,30 @@ export interface CardRefData {
   instances?: string[];
   kinds?: string[];
   tags?: string[];
-  keywordEffects?: Record<string, { keyword?: string; displayText?: string | null } | undefined>;
+  /** Default effect kind for each instance (pre-fills the kind when an instance is chosen). */
+  instanceKinds?: Record<string, string | null | undefined>;
+  keywordEffects?: Record<string, KeywordEffectRef | undefined>;
 }
+
+/** A keyword in the reference data: its effect, and the text the backend derives from it. */
+export interface KeywordEffectRef {
+  keyword?: string;
+  effect?: CardEffect | null;
+  displayText?: string | null;
+  /** Legacy keywords stored before effects existed. */
+  description?: string | null;
+  parameter?: string | null;
+}
+
+/** List fields of the reference data editable as plain values. */
+export type RefListField = 'classes' | 'instances' | 'kinds' | 'tags';
+
+export const USAGE_LIMITS = ['once per turn', 'once per turn between copies', 'ultimate effect'] as const;
+export const USAGE_LIMIT_LABELS: Record<string, string> = {
+  'once per turn': 'Una vez por turno',
+  'once per turn between copies': 'Una vez por turno entre copias',
+  'ultimate effect': 'Efecto definitivo',
+};
 
 /** A card image joined with its metadata (null when it has none yet). */
 export interface CatalogCard extends DriveCard {

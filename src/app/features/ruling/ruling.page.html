@@ -1,0 +1,119 @@
+<eras-page title="Aprender a jugar" subtitle="Reglas básicas de ERAS" width="wide">
+  <eras-tabs label="Secciones del manual" [tabs]="sections" [selected]="section()" (selectedChange)="section.set($any($event))" />
+
+  @switch (section()) {
+    @case ('definitions') {
+      <eras-prose>
+        <h2>Definiciones</h2>
+        <p><strong>Mazo:</strong> un mazo tiene <strong>50 cartas</strong>. Todas deben pertenecer al mismo <strong>color o clase</strong> de la criatura con el keyword <strong>Iniciador</strong> (el blanco es genérico y sirve para todos los mazos). Cada carta puede incluirse hasta <strong>4 copias</strong>.</p>
+        <p><strong>Línea frontal:</strong> zona donde tus criaturas se enfrentan directamente con las del oponente. Desde aquí pueden declarar ataques, bloquear criaturas enemigas y usar efectos que las afecten. Al estar en primera línea, también quedan expuestas a los efectos de las criaturas rivales.</p>
+        <p><strong>Retaguardia:</strong> a diferencia de la línea frontal, las criaturas en la retaguardia están protegidas del oponente. Desde aquí no pueden declarar ataques, bloquear criaturas enemigas ni afectarlas con sus efectos. En esta zona también se juegan las estructuras y utilidades.</p>
+        <p><strong>Tributos:</strong> zona donde se colocan las cartas usadas como coste o enviadas por efectos del juego.</p>
+        <p><strong>Descarte:</strong> zona donde se colocan las utilidades usadas o las cartas enviadas por efectos del juego. Si una criatura es destruida por enfrentamiento o por un efecto rival, va a esta zona sin pasar por los tributos.</p>
+        <p><strong>Vidas:</strong> al comenzar la partida, cada jugador coloca 6 cartas del tope de su mazo boca abajo en la sección de vidas, formando una pila. Estas cartas representan tus vidas: si en algún momento te quedas sin vidas, pierdes la partida de inmediato.</p>
+        <p>La forma más común de perder vidas es a través de ataques. Cuando un jugador declara un ataque, el oponente revela una vida y sigue estos pasos:</p>
+        <ol>
+          <li>Si es una utilidad o estructura: puede jugarla de inmediato sin pagar su coste, o añadirla a su mano.</li>
+          <li>
+            Si es una criatura, compara su fuerza con la de la criatura atacante:
+            <ol>
+              <li>Si tiene más fuerza: puede añadirla a su mano o reforzar, colocándola boca arriba al fondo de sus vidas (solo puede reforzar si la criatura fue revelada por un ataque).</li>
+              <li>Si tiene menos fuerza: debe tributarla.</li>
+            </ol>
+          </li>
+        </ol>
+        <img src="/images/ruling/card-iniciales.png" width="922" height="588" alt="Ejemplo de cartas al comienzo de una partida" loading="lazy" />
+      </eras-prose>
+    }
+
+    @case ('cards') {
+      <eras-prose>
+        <h2>Tipos de carta</h2>
+        <p><strong>Criaturas:</strong> cartas que participan en combate y pueden usar <strong>invocaciones especiales</strong>.</p>
+        <h3>Invocaciones especiales</h3>
+        <ul>
+          <li><strong>Ritual:</strong> se paga el coste de invocación especial en gemas y se tributan uno o más aliados de <strong>nivel inferior</strong>, según lo requiera la carta.</li>
+          <li><strong>Evolución:</strong> se paga el coste en gemas y la criatura evoluciona colocándose sobre la criatura objetivo, <strong>heredando su efecto</strong> (la parte inferior de la carta).</li>
+          <li><strong>Ascenso:</strong> se paga el coste en gemas y se cumple el requerimiento de la carta tributando a la criatura que va a ascender.</li>
+          <li><strong>Materialización:</strong> se paga el coste en gemas y las criaturas usadas se colocan bajo la criatura materializada como <strong>materiales</strong>.</li>
+        </ul>
+        <h3>Reglas importantes</h3>
+        <ul>
+          <li>Al realizar una <strong>invocación especial</strong> o por efecto, <strong>antes</strong> de cualquier acción o habilidad, <strong>roba 1 carta</strong>.</li>
+          <li>Si una invocación requiere más de una criatura, la criatura <strong>invocadora</strong> siempre es la de <strong>mayor nivel</strong>.</li>
+          <li>Al evolucionar, la criatura mantiene todos sus <strong>estados y condiciones</strong>.</li>
+          <li>Si la criatura que evoluciona está en la retaguardia, <strong>puede</strong> subir a la <strong>línea frontal</strong>.</li>
+        </ul>
+        <p><strong>Utilidades:</strong> cartas que generan efectos inmediatos, respuestas o modifican el estado del juego. Si se voltea desde tus vidas, puede jugarse o llevarse a tu mano.</p>
+        <p><strong>Estructuras:</strong> cartas que permanecen en el campo generando efectos continuos. Solo puedes jugar 1 estructura por turno, pagando su coste en gemas. Si se voltea desde tus vidas, puede jugarse en tu campo.</p>
+      </eras-prose>
+    }
+
+    @case ('resources') {
+      <eras-grid minColumn="22rem" [gap]="5">
+        <eras-prose>
+          <h2>Sistema de gemas</h2>
+          <p>Tanto tú como tu rival usan <strong>gemas</strong> como recurso principal para jugar cartas y realizar acciones. Cada jugador tiene su propio <strong>contador de gemas</strong>, que determina cuántas gemas obtiene al inicio de su turno.</p>
+          <h3>¿Cómo se ganan?</h3>
+          <p>Al comenzar tu turno recibes tantas gemas como indique tu contador. El contador sube +1 cada turno, hasta un máximo de <strong>5</strong> (si está en 3, comienzas con 3 gemas; el siguiente turno sube a 4).</p>
+          <h3>¿Cómo se gastan?</h3>
+          <p>Puedes gastar gemas para jugar cartas, y no estás limitado a las tuyas: el límite real de gasto es <code>tus gemas + gemas del rival</code>. Con 3 y 3 puedes gastar hasta 6, en varias acciones (por ejemplo 1 + 2 + 3).</p>
+          <h3>¿Y si gastas más de lo que tienes?</h3>
+          <p>Quedas en negativo, y eso tiene consecuencias: <strong>no puedes declarar ataques</strong> y le entregas esas gemas extra a tu rival en su próximo turno.</p>
+          <h3>Ejemplo</h3>
+          <p>Tienes 3 gemas y tu rival 3. Gastas 5: quedas en -2 y esas 2 gemas pasan a tu rival, que en su turno recibe sus gemas normales más las 2 extra.</p>
+        </eras-prose>
+
+        <eras-card>
+          <eras-stack [gap]="4">
+            <strong>Simulador de recursos</strong>
+            <span>A partir de tu turno 3 (primer turno del rival).</span>
+            <eras-grid minColumn="8rem" [gap]="2">
+              <eras-card padding="sm"><eras-stack [gap]="1"><span>Tus gemas</span><strong>{{ gems().playerGems }}</strong><span>Contador {{ gems().playerCounter }}</span></eras-stack></eras-card>
+              <eras-card padding="sm"><eras-stack [gap]="1"><span>Gemas del rival</span><strong>{{ gems().rivalGems }}</strong><span>Contador {{ gems().rivalCounter }}</span></eras-stack></eras-card>
+            </eras-grid>
+            <eras-gem-track [slots]="track()" />
+            <eras-stack direction="row" [gap]="2" align="end" wrap>
+              <eras-form-field [label]="'Gemas a gastar (máx. ' + limit() + ')'">
+                <input type="number" min="0" [max]="limit()" [value]="amount()" (input)="amount.set($any($event.target).valueAsNumber || 0)" />
+              </eras-form-field>
+              <button erasButton type="button" [disabled]="amount() <= 0" (click)="doSpend()">Gastar gemas</button>
+            </eras-stack>
+            @if (spendError(); as message) {
+              <eras-alert tone="danger">{{ message }}</eras-alert>
+            }
+            <span>Gastado este turno: <strong>{{ gems().spent }}</strong> · te quedan <strong>{{ left() }}</strong></span>
+            @if (cannotAttack()) {
+              <eras-alert tone="danger">Gastaste más de lo que tienes: este turno no puedes atacar.</eras-alert>
+            }
+            @if (turnMessage(); as message) {
+              <eras-alert>{{ message }}</eras-alert>
+            }
+            <eras-stack direction="row" [gap]="2">
+              <button erasButton variant="secondary" type="button" (click)="doNextTurn()">Simular turno</button>
+              <button erasButton variant="ghost" type="button" (click)="reset()">Reiniciar</button>
+            </eras-stack>
+          </eras-stack>
+        </eras-card>
+      </eras-grid>
+    }
+
+    @case ('board') {
+      <eras-grid minColumn="22rem" [gap]="5">
+        <eras-playmat [zones]="zones" />
+        <eras-prose>
+          <h2>Zonas del tablero</h2>
+          <ol>
+            <li><strong>Vidas:</strong> cartas que representan la resistencia del jugador.</li>
+            <li><strong>Línea frontal:</strong> zona donde combaten las criaturas.</li>
+            <li><strong>Retaguardia:</strong> zona para criaturas invocadas o estructuras.</li>
+            <li><strong>Mazo:</strong> cartas disponibles para robar.</li>
+            <li><strong>Tributos:</strong> cartas enviadas como coste.</li>
+            <li><strong>Descarte:</strong> cartas usadas o destruidas.</li>
+            <li><strong>Gemas:</strong> donde va el contador de las gemas que ganaste en tu último turno o en el actual.</li>
+          </ol>
+        </eras-prose>
+      </eras-grid>
+    }
+  }
+</eras-page>

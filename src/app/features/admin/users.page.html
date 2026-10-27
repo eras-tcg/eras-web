@@ -1,0 +1,103 @@
+<eras-page title="Usuarios" [subtitle]="users().length + ' cuentas' + (unverified() ? ' · ' + unverified() + ' sin verificar' : '')">
+  <button page-actions erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+
+  @if (fb.feedback(); as f) {
+    <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+  }
+  @if (roles() === null && !loading() && users().length) {
+    <eras-alert>Sin el permiso manage_roles no se puede cambiar el rol de un usuario.</eras-alert>
+  }
+
+  @if (editing(); as user) {
+    <eras-card>
+      <eras-stack [gap]="4">
+        <strong>Editar {{ user.username }}</strong>
+        <eras-grid minColumn="14rem" [gap]="3">
+          <eras-form-field label="Usuario" required>
+            <input [value]="editUsername()" (input)="editUsername.set($any($event.target).value)" />
+          </eras-form-field>
+          <eras-form-field label="Correo" required>
+            <input type="email" [value]="editEmail()" (input)="editEmail.set($any($event.target).value)" />
+          </eras-form-field>
+          @if (roles(); as roleList) {
+            <eras-form-field label="Rol">
+              <select (change)="editRoleId.set($any($event.target).value)">
+                <option value="" [selected]="!editRoleId()">Sin cambios</option>
+                @for (r of roleList; track r.id) {
+                  <option [value]="r.id" [selected]="r.id === editRoleId()">{{ r.name }}</option>
+                }
+              </select>
+            </eras-form-field>
+          }
+        </eras-grid>
+        <eras-stack direction="row" [gap]="2">
+          <button erasButton type="button" [loading]="saving()" [disabled]="saving() || !editUsername().trim() || !editEmail().trim()" (click)="save()">Guardar</button>
+          <button erasButton variant="ghost" type="button" (click)="editing.set(null)">Cerrar</button>
+        </eras-stack>
+
+        <strong>Nueva contraseña</strong>
+        @if (passwordError(); as message) {
+          <eras-alert tone="danger">{{ message }}</eras-alert>
+        }
+        @if (passwordOk()) {
+          <eras-alert tone="success">Contraseña actualizada</eras-alert>
+        }
+        <eras-grid minColumn="14rem" [gap]="3">
+          <eras-form-field label="Contraseña">
+            <input type="password" autocomplete="new-password" [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" />
+          </eras-form-field>
+          <eras-form-field label="Repetir contraseña">
+            <input type="password" autocomplete="new-password" [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" />
+          </eras-form-field>
+        </eras-grid>
+        <div>
+          <button erasButton variant="secondary" type="button" [loading]="savingPassword()" [disabled]="savingPassword()" (click)="setPassword()">Cambiar contraseña</button>
+        </div>
+      </eras-stack>
+    </eras-card>
+  }
+
+  <eras-form-field label="Buscar">
+    <input type="search" placeholder="Usuario, correo o rol…" [value]="query()" (input)="query.set($any($event.target).value)" />
+  </eras-form-field>
+
+  @if (loading() && users().length === 0) {
+    <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+  } @else if (visible().length === 0) {
+    <eras-empty-state [title]="query() ? 'Ningún usuario coincide' : 'No hay usuarios'" />
+  } @else {
+    <eras-table>
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of visible(); track u.id) {
+            <tr>
+              <td><strong>{{ u.username }}</strong>@if (isSelf(u)) { <span class="muted"> (tú)</span> }</td>
+              <td class="muted">{{ u.email || '—' }}</td>
+              <td>{{ u.role || '—' }}</td>
+              <td>
+                @if (u.verified) {
+                  <eras-badge tone="success">Verificado</eras-badge>
+                } @else {
+                  <eras-badge tone="danger">Sin verificar</eras-badge>
+                }
+              </td>
+              <td class="actions">
+                <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Editar ' + u.username" (click)="edit(u)"><eras-icon name="edit" /></button>
+                <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Eliminar ' + u.username" [disabled]="busyId() === u.id || isSelf(u)" (click)="remove(u)"><eras-icon name="x" /></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </eras-table>
+  }
+</eras-page>

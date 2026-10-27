@@ -1,5 +1,7 @@
 # ErasWeb
 
+Front Angular de ERAS (reemplazo del front Vue). **Estado y cómo retomar:** [`docs/HANDOFF.md`](docs/HANDOFF.md) · plan: [`docs/PLAN_MIGRACION_FRONT_ANGULAR.md`](docs/PLAN_MIGRACION_FRONT_ANGULAR.md) · paridad: [`docs/PARIDAD.md`](docs/PARIDAD.md).
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.4.
 
 ## Development server

@@ -1,0 +1,179 @@
+// Board layout of one side: lives | field over hand | piles. The opponent side swaps field and hand.
+:host {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) 6.5rem;
+  grid-template-rows: minmax(14rem, 1fr) auto;
+  grid-template-areas:
+    'lives field piles'
+    'lives hand piles';
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+:host(.opponent) {
+  grid-template-rows: auto minmax(14rem, 1fr);
+  grid-template-areas:
+    'lives hand piles'
+    'lives field piles';
+}
+
+.lives {
+  grid-area: lives;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offline {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-regular);
+}
+
+.life-zone {
+  flex: 1;
+}
+
+.life-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-block-size: 100%;
+  padding-block-end: 2rem;
+}
+
+// Lives overlap like a physical pile
+.life-stack eras-game-card + eras-game-card {
+  margin-block-start: -3.7rem;
+}
+
+.field {
+  grid-area: field;
+  position: relative;
+  min-block-size: 14rem;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  overflow: hidden;
+}
+
+.field.drop-active {
+  border-color: var(--color-primary);
+  border-style: solid;
+}
+
+.divider {
+  position: absolute;
+  inset-inline: var(--space-3);
+  inset-block-start: 50%;
+  border-block-start: 1px dashed var(--color-border);
+}
+
+.line-label {
+  position: absolute;
+  inset-inline-start: var(--space-2);
+  color: var(--color-text-subtle);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.line-label.front {
+  inset-block-start: var(--space-1);
+}
+
+.line-label.back {
+  inset-block-end: var(--space-1);
+}
+
+.hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
+}
+
+.placed {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.placed.near {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.interact-hint {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--space-2);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+.hand {
+  grid-area: hand;
+  position: relative;
+  min-block-size: 6.5rem;
+}
+
+.hand-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.effect-prompt {
+  position: absolute;
+  inset-inline: 50% auto;
+  inset-block-start: -3rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.piles {
+  grid-area: piles;
+  display: grid;
+  grid-auto-rows: minmax(5.5rem, 1fr);
+  gap: var(--space-2);
+}
+
+@media (max-width: 48rem) {
+  :host,
+  :host(.opponent) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      'field field'
+      'hand hand'
+      'lives piles';
+  }
+
+  .piles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

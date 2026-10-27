@@ -1,0 +1,161 @@
+@let p = player();
+<!-- Lives and gem marker -->
+<div class="lives">
+  <span class="name">{{ p.username }}@if (!p.connected) { <span class="offline">(desconectado)</span> }</span>
+  <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent()" (valueChange)="game.setMarker($event)" />
+  <eras-game-zone
+    class="life-zone"
+    label="Vidas"
+    [count]="p.lifeStack.length"
+    [dropActive]="over() === 'lifeStack'"
+    [targeted]="isTargeted('lifeStack')"
+    [selectable]="targeting()"
+    [cdkContextMenuTriggerFor]="opponent() ? null : lifeMenu"
+    (dragover)="dragOver($event, 'lifeStack')"
+    (dragleave)="dragLeave()"
+    (drop)="drop($event, 'lifeStack', lifeHalf($event))"
+    (click)="pileClick('lifeStack')"
+  >
+    <div class="life-stack" [attr.draggable]="opponent() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
+      @for (life of p.lifeStack; track life.instanceId) {
+        <eras-game-card small [imageUrl]="life.imageUrl" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
+      }
+    </div>
+  </eras-game-zone>
+  <ng-template #lifeMenu>
+    <eras-menu>
+      <button erasMenuItem (triggered)="viewLives()">Ver vidas</button>
+      <button erasMenuItem (triggered)="game.lifeHeal()">Curar (tope del mazo a vidas)</button>
+      <button erasMenuItem (triggered)="game.lifeShuffle()">Barajar vidas</button>
+      <button erasMenuItem (triggered)="game.lifeAllDown()">Todas boca abajo</button>
+      <button erasMenuItem (triggered)="game.lifeAllUp()">Todas boca arriba</button>
+      <hr />
+      <button erasMenuItem class="danger" (triggered)="confirmThen('¿Reiniciar las vidas?', game.lifeRestart.bind(game))">Reiniciar vidas</button>
+    </eras-menu>
+  </ng-template>
+</div>
+
+<!-- Field: free positions in % -->
+<div
+  #field
+  class="field"
+  [class.drop-active]="over() === 'field' && !opponent()"
+  role="region"
+  [attr.aria-label]="opponent() ? 'Campo del rival' : 'Tu campo'"
+  (dragover)="dragOver($event, 'field')"
+  (dragleave)="dragLeave()"
+  (drop)="drop($event, 'field')"
+>
+  <span class="line-label front">{{ opponent() ? 'Retaguardia' : 'Línea frontal' }}</span>
+  <span class="divider" aria-hidden="true"></span>
+  <span class="line-label back">{{ opponent() ? 'Línea frontal' : 'Retaguardia' }}</span>
+  @if (p.field.length === 0) {
+    <span class="hint">{{ opponent() ? 'Campo del rival' : 'Arrastra cartas aquí' }}</span>
+  }
+  @for (s of p.field; track s.instanceId) {
+    <div class="placed" [style.left.%]="s.x ?? 50" [style.top.%]="fieldY(s.y, opponent())" [class.near]="nearby()?.instanceId === s.instanceId">
+      <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+    </div>
+  }
+  @if (nearby() && !opponent()) {
+    <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>
+  }
+</div>
+
+<!-- Hand -->
+<eras-game-zone
+  class="hand"
+  label="Mano"
+  [count]="p.hand.length"
+  [dropActive]="over() === 'hand' && !opponent()"
+  (dragover)="!opponent() && dragOver($event, 'hand')"
+  (dragleave)="dragLeave()"
+  (drop)="drop($event, 'hand')"
+>
+  <div class="hand-cards">
+    @for (s of p.hand; track s.instanceId) {
+      <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" small />
+    }
+  </div>
+  @if (effectSummon()) {
+    <div class="effect-prompt" role="alertdialog" aria-label="¿Invocación por efecto?">
+      <span>¿Invocación por efecto?</span>
+      <button erasButton size="sm" type="button" (click)="resolveEffectSummon(true)">Sí, robar</button>
+      <button erasButton variant="secondary" size="sm" type="button" (click)="resolveEffectSummon(false)">No</button>
+    </div>
+  }
+</eras-game-zone>
+
+<!-- Deck and piles -->
+<div class="piles">
+  <eras-game-zone
+    label="Mazo"
+    [count]="p.deck.length"
+    [dropActive]="over() === 'deck'"
+    [targeted]="isTargeted('deck')"
+    [selectable]="targeting()"
+    [cdkContextMenuTriggerFor]="opponent() ? null : deckMenu"
+    [attr.title]="opponent() ? null : 'Doble clic: robar · clic derecho: acciones'"
+    (dragover)="dragOver($event, 'deck')"
+    (dragleave)="dragLeave()"
+    (drop)="drop($event, 'deck')"
+    (click)="pileClick('deck')"
+    (dblclick)="deckDoubleClick()"
+  >
+    @if (p.deck.length) {
+      <eras-game-card small hidden />
+    }
+  </eras-game-zone>
+  <ng-template #deckMenu>
+    <eras-menu>
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="game.drawCard()">Robar</button>
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="peek('top')">Ver las {{ peekCount() }} de arriba</button>
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="peek('bottom')">Ver las {{ peekCount() }} de abajo</button>
+      <button erasMenuItem (triggered)="peekCount.set(peekCount() >= 10 ? 1 : peekCount() + 1)">Cantidad a ver: {{ peekCount() }} (cambiar)</button>
+      <hr />
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('lifeStack', true)">Tope a vidas</button>
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('tributeZone', false)">Tope a tributos</button>
+      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('discardPile', false)">Tope al descarte</button>
+      <hr />
+      <button erasMenuItem (triggered)="confirmThen('¿Barajar el mazo?', game.shuffleDeck.bind(game))">Barajar</button>
+      <button erasMenuItem (triggered)="confirmThen('¿Enviar el descarte al fondo del mazo (orden aleatorio)?', game.deckIncludeDiscard.bind(game))">Descarte al fondo</button>
+      <button erasMenuItem (triggered)="confirmThen('¿Enviar los tributos al fondo del mazo (orden aleatorio)?', game.deckIncludeTribute.bind(game))">Tributos al fondo</button>
+    </eras-menu>
+  </ng-template>
+
+  <eras-game-zone
+    label="Tributos"
+    [count]="p.tributeZone.length"
+    [dropActive]="over() === 'tributeZone'"
+    [targeted]="isTargeted('tributeZone')"
+    [selectable]="targeting()"
+    (dragover)="dragOver($event, 'tributeZone')"
+    (dragleave)="dragLeave()"
+    (drop)="drop($event, 'tributeZone')"
+    (click)="pileClick('tributeZone')"
+  >
+    @if (topTribute(); as t) {
+      <eras-game-card small [imageUrl]="t.imageUrl" [hidden]="t.faceDown" />
+    }
+  </eras-game-zone>
+
+  @if (!opponent()) {
+    <eras-game-zone label="Fondo del mazo" [dropActive]="over() === 'deckBottom'" (dragover)="dragOver($event, 'deckBottom')" (dragleave)="dragLeave()" (drop)="drop($event, 'deckBottom')" />
+  }
+
+  <eras-game-zone
+    label="Descarte"
+    [count]="p.discardPile.length"
+    [dropActive]="over() === 'discardPile'"
+    [targeted]="isTargeted('discardPile')"
+    [selectable]="targeting()"
+    (dragover)="dragOver($event, 'discardPile')"
+    (dragleave)="dragLeave()"
+    (drop)="drop($event, 'discardPile')"
+    (click)="pileClick('discardPile')"
+  >
+    @if (topDiscard(); as d) {
+      <eras-game-card small [imageUrl]="d.imageUrl" [hidden]="d.faceDown" />
+    }
+  </eras-game-zone>
+</div>

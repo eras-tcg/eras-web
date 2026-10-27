@@ -134,6 +134,25 @@ export const routes: Routes = [
         canMatch: [permissionGuard('manage_cards')],
         loadComponent: () => import('@features/admin/card-meta.page').then((m) => m.CardMetaPage),
       },
+      {
+        path: 'simulator',
+        title: 'Simulador · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/simulator/lobby.page').then((m) => m.LobbyPage),
+      },
+      {
+        path: 'simulator/:roomId',
+        title: 'Simulador · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/simulator/lobby.page').then((m) => m.LobbyPage),
+      },
+      {
+        path: 'simulator/:roomId/board',
+        title: 'Partida · ERAS',
+        canMatch: [authGuard],
+        canDeactivate: [(page: { confirmLeave?: () => Promise<boolean> }) => page.confirmLeave?.() ?? true],
+        loadComponent: () => import('@features/simulator/board/board.page').then((m) => m.BoardPage),
+      },
       // Old capitalized links shared from the Vue app
       { path: 'DeckBuilder', redirectTo: 'deck-builder' },
       {

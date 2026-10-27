@@ -1,0 +1,147 @@
+@let f = filters();
+@let o = options();
+<eras-stack [gap]="4">
+  <eras-form-field label="Ordenar por">
+    <eras-stack direction="row" [gap]="2" align="center">
+      <select (change)="setSort($event)">
+        @for (s of sortOptions; track s.value) {
+          <option [value]="s.value" [selected]="s.value === view().sort">{{ s.label }}</option>
+        }
+      </select>
+      <button
+        erasButton
+        variant="secondary"
+        size="sm"
+        type="button"
+        [attr.aria-label]="view().direction === 'asc' ? 'Orden ascendente' : 'Orden descendente'"
+        (click)="setView('direction', view().direction === 'asc' ? 'desc' : 'asc')"
+      >
+        <eras-icon [name]="view().direction === 'asc' ? 'sort-asc' : 'sort-desc'" />
+      </button>
+    </eras-stack>
+  </eras-form-field>
+
+  <eras-form-field label="Nombre" hint="Admite expresiones regulares">
+    <input type="search" placeholder="Buscar por nombre…" [value]="f.name" (input)="setText('name', $event)" />
+  </eras-form-field>
+
+  @if (o.types.length) {
+    <eras-form-field label="Tipo de carta">
+      <select (change)="setText('type', $event)">
+        <option value="">Todos</option>
+        @for (t of o.types; track t) {
+          <option [value]="t" [selected]="t === f.type">{{ typeLabels[t] ?? t }}</option>
+        }
+      </select>
+    </eras-form-field>
+  }
+
+  @if (o.colors.length) {
+    <eras-stack [gap]="2">
+      <span class="eras-form-field__text">Color</span>
+      <eras-stack direction="row" [gap]="1" wrap>
+        @for (c of o.colors; track c) {
+          <button erasChip [selected]="colorActive(c)" (click)="toggleColor(c)">
+            <eras-color-pip [color]="c" /> {{ colorLabels[c] ?? c }}
+          </button>
+        }
+      </eras-stack>
+      <eras-stack direction="row" [gap]="1" wrap>
+        <button erasChip [selected]="f.colorMode === 'any'" (click)="set('colorMode', 'any')">Cualquier color</button>
+        <button erasChip [selected]="f.colorMode === 'identity'" (click)="set('colorMode', 'identity')">Solo identidad</button>
+      </eras-stack>
+    </eras-stack>
+  }
+
+  @if (o.classes.length) {
+    <eras-multiselect label="Clases" [options]="o.classes" [value]="f.classes" (valueChange)="setList('classes', $event)" />
+  }
+
+  @if (o.maxCost > 0) {
+    <eras-range-slider label="Coste" [max]="o.maxCost" [value]="f.cost" (valueChange)="setRange('cost', $event)" />
+  }
+  @if (o.maxLevel > 0) {
+    <eras-range-slider label="Nivel" [max]="o.maxLevel" [value]="f.level" (valueChange)="setRange('level', $event)" />
+  }
+  @if (o.maxStrength > 0) {
+    <eras-range-slider label="Fuerza" [max]="o.maxStrength" [value]="f.strength" (valueChange)="setRange('strength', $event)" />
+  }
+
+  @if (o.specialSummons.length) {
+    <eras-form-field label="Invocación especial">
+      <select (change)="setText('specialSummon', $event)">
+        <option value="">Todas</option>
+        @for (s of o.specialSummons; track s) {
+          <option [value]="s" [selected]="s === f.specialSummon">{{ summonLabels[s] ?? s }}</option>
+        }
+      </select>
+    </eras-form-field>
+  }
+  @if (o.maxSpecialCost > 0) {
+    <eras-range-slider label="Coste especial" [max]="o.maxSpecialCost" [value]="f.specialCost" (valueChange)="setRange('specialCost', $event)" />
+  }
+
+  <eras-form-field label="Requerimiento">
+    <input type="search" placeholder="Buscar por requerimiento…" [value]="f.requirement" (input)="setText('requirement', $event)" />
+  </eras-form-field>
+
+  <eras-form-field label="Edición">
+    <select (change)="setText('edition', $event)">
+      <option value="">Todas</option>
+      @for (e of editions(); track e.editionId) {
+        <option [value]="e.editionId" [selected]="e.editionId === f.edition">{{ e.editionId }}{{ e.editionName ? ' — ' + e.editionName : '' }}</option>
+      }
+    </select>
+  </eras-form-field>
+
+  <eras-form-field label="Número de carta">
+    <input type="search" inputmode="numeric" placeholder="Buscar por número…" [value]="f.cardNumber" (input)="setText('cardNumber', $event)" />
+  </eras-form-field>
+
+  @if (!f.edition && o.subEditions.length > 1) {
+    <eras-stack [gap]="2">
+      <span class="eras-form-field__text">Sub-edición</span>
+      <eras-stack direction="row" [gap]="1" wrap>
+        <button erasChip [selected]="f.subEdition === null" (click)="set('subEdition', null)">Todas</button>
+        @for (s of o.subEditions; track s) {
+          <button erasChip [selected]="f.subEdition === s" (click)="setSub(s)">{{ subLabel(s) }}</button>
+        }
+      </eras-stack>
+    </eras-stack>
+  }
+
+  @if (o.rarities.length) {
+    <eras-stack [gap]="2">
+      <span class="eras-form-field__text">Rareza</span>
+      <eras-stack direction="row" [gap]="1" wrap>
+        @for (r of o.rarities; track r) {
+          <button erasChip [selected]="f.rarities.includes(r)" (click)="toggleRarity(r)">{{ r }}</button>
+        }
+      </eras-stack>
+    </eras-stack>
+  }
+
+  <label class="eras-form-field__text">
+    <input type="checkbox" [checked]="f.starterOnly" (change)="set('starterOnly', $any($event.target).checked)" />
+    Solo iniciadores
+  </label>
+
+  @if (o.keywords.length) {
+    <eras-multiselect label="Efectos keyword" [options]="o.keywords" [value]="f.keywords" (valueChange)="setList('keywords', $event)" />
+  }
+  @if (o.tags.length) {
+    <eras-multiselect label="Tags de efectos" [options]="o.tags" [value]="f.tags" (valueChange)="setList('tags', $event)" />
+  }
+
+  <eras-stack [gap]="2">
+    <span class="eras-form-field__text">Vista de cartas</span>
+    <eras-stack direction="row" [gap]="1" wrap>
+      <button erasChip [selected]="view().collapse" (click)="setView('collapse', true)">Colapsar repetidas</button>
+      <button erasChip [selected]="!view().collapse" (click)="setView('collapse', false)">Mostrar todas</button>
+    </eras-stack>
+  </eras-stack>
+
+  <eras-form-field [label]="'Tamaño de cartas (' + view().size + 'px)'">
+    <input type="range" min="100" max="500" step="10" [value]="view().size" (input)="setSize($event)" />
+  </eras-form-field>
+</eras-stack>

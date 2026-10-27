@@ -1,0 +1,78 @@
+<div class="detail">
+  <div class="info">
+    <h2 class="name">{{ name() }}</h2>
+
+    <div class="printing">
+      @if (printings() > 1) {
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          aria-label="Impresión anterior"
+          [disabled]="!hasPreviousPrinting()"
+          (click)="previousPrinting.emit()"
+        >
+          <eras-icon name="chevron-left" />
+        </button>
+      }
+      <span class="badge">{{ edition() }}</span>
+      @if (number() !== null) {
+        <span class="badge">#{{ number() }}</span>
+      }
+      @if (color()) {
+        <span class="badge"><eras-color-pip [color]="color()" /> {{ colorLabel() ?? color() }}</span>
+      }
+      @if (printings() > 1) {
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          aria-label="Impresión siguiente"
+          [disabled]="!hasNextPrinting()"
+          (click)="nextPrinting.emit()"
+        >
+          <eras-icon name="chevron-right" />
+        </button>
+      }
+    </div>
+
+    @if (notice()) {
+      <p class="notice">{{ notice() }}</p>
+    }
+
+    @if (facts().length) {
+      <dl class="facts">
+        @for (fact of facts(); track fact.label) {
+          <div class="fact" [class.wide]="fact.wide">
+            <dt>{{ fact.label }}</dt>
+            <dd>{{ fact.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
+    @for (group of textGroups(); track group.title) {
+      @if (group.lines.length) {
+        <section class="text-group">
+          <h3>{{ group.title }}</h3>
+          @for (line of group.lines; track $index) {
+            <p class="line">
+              @for (segment of line.segments; track $index) {
+                <span [class]="'seg-' + segment.kind">{{ segment.text }}</span>
+              }
+              @if (line.tags.length) {
+                <span class="tags">{{ line.tags.join(', ') }}</span>
+              }
+            </p>
+          }
+        </section>
+      }
+    }
+
+    <div class="actions"><ng-content select="[detail-actions]" /></div>
+  </div>
+
+  <eras-card-image class="image" [src]="imageUrl()" [alt]="name()" eager />
+</div>

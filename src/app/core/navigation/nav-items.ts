@@ -12,7 +12,7 @@ export interface NavItem {
 /** Main navigation. A page moves from `legacyPath` to `route` when it is migrated. */
 export const MAIN_NAV: NavItem[] = [
   { label: 'Inicio', route: '/home' },
-  { label: 'Cartas', legacyPath: '/cards' },
+  { label: 'Cartas', route: '/cards' },
   { label: 'Ediciones', route: '/editions' },
   { label: 'Constructor de mazos', legacyPath: '/DeckBuilder' },
   { label: 'Mazos', legacyPath: '/public-decks' },

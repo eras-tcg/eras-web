@@ -1,0 +1,50 @@
+<eras-page title="Cartas" width="wide">
+  <button page-actions erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
+    <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
+  </button>
+
+  @if (store.error(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
+
+  <eras-split aside="17rem" [asideHidden]="!showFilters()">
+    <div split-aside>
+      <eras-card-filters-panel
+        [filters]="filters()"
+        [options]="store.options()"
+        [editions]="editions.editions()"
+        [view]="view()"
+        (filtersChange)="filters.set($event)"
+        (viewChange)="view.set($event)"
+      />
+    </div>
+
+    <eras-stack [gap]="4">
+      @if (store.loading() && displayed().length === 0) {
+        <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
+      } @else if (!store.error()) {
+        <eras-stack direction="row" [gap]="3" align="center" wrap>
+          <span>{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
+          @if (filtersActive()) {
+            <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
+          }
+        </eras-stack>
+
+        @if (displayed().length === 0) {
+          <eras-empty-state [title]="filtersActive() ? 'Ninguna carta coincide con los filtros' : 'No hay cartas'" />
+        } @else {
+          <eras-grid [minColumn]="view().size + 'px'" [gap]="3">
+            @for (card of visible(); track card.id) {
+              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="card.meta ? null : 'Sin metadatos'" (selected)="open(card)" />
+            }
+          </eras-grid>
+          @if (visible().length < displayed().length) {
+            <div erasInView (inView)="showMore()">
+              <eras-empty-state title="Cargando más…"><eras-spinner /></eras-empty-state>
+            </div>
+          }
+        }
+      }
+    </eras-stack>
+  </eras-split>
+</eras-page>

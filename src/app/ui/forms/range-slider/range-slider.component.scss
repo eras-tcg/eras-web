@@ -1,0 +1,76 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.value {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
+}
+
+.track {
+  position: relative;
+  block-size: 1.25rem;
+}
+
+// Selected segment between the two thumbs
+.track::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: 4px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--color-border) var(--from),
+    var(--color-primary) var(--from),
+    var(--color-primary) var(--to),
+    var(--color-border) var(--to)
+  );
+}
+
+input {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  appearance: none;
+}
+
+input::-webkit-slider-thumb {
+  inline-size: 1rem;
+  block-size: 1rem;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  pointer-events: auto;
+  cursor: pointer;
+  appearance: none;
+}
+
+input::-moz-range-thumb {
+  inline-size: 1rem;
+  block-size: 1rem;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-focus);
+}

@@ -14,6 +14,11 @@ export const routes: Routes = [
         loadComponent: () => import('@features/home/home.page').then((m) => m.HomePage),
       },
       {
+        path: 'cards',
+        title: 'Cartas · ERAS',
+        loadComponent: () => import('@features/cards/cards.page').then((m) => m.CardsPage),
+      },
+      {
         path: 'editions',
         title: 'Ediciones · ERAS',
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),

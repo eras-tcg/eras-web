@@ -13,6 +13,11 @@ const ICONS = {
   menu: 'M4 6h16M4 12h16M4 18h16',
   external: 'M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6',
   cards: 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
+  'chevron-left': 'M15 18l-6-6 6-6',
+  'chevron-right': 'M9 18l6-6-6-6',
+  filter: 'M3 5h18l-7 8v6l-4 2v-8L3 5z',
+  'sort-asc': 'M4 6h7M4 12h5M4 18h3M17 20V4m0 0-3 3m3-3 3 3',
+  'sort-desc': 'M4 6h3M4 12h5M4 18h7M17 4v16m0 0-3-3m3 3 3-3',
 } as const;
 
 export type IconName = keyof typeof ICONS;

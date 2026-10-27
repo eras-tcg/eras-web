@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CanDirective } from '@core/auth/can.directive';
 import { legacyUrl } from '@core/navigation/legacy-url';
@@ -48,6 +49,7 @@ export class HomePage {
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly modal = inject(ModalService);
+  private readonly router = inject(Router);
 
   protected readonly news = NEWS;
   protected readonly saveError = signal<string | null>(null);
@@ -57,8 +59,7 @@ export class HomePage {
   }
 
   protected openCards(editionId: string): void {
-    // The cards page is not migrated yet
-    window.location.assign(legacyUrl(`/cards?edition=${encodeURIComponent(editionId)}`));
+    void this.router.navigate(['/cards'], { queryParams: { edition: editionId } });
   }
 
   protected openDeck(deck: Deck | null): void {

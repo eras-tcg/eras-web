@@ -1,0 +1,35 @@
+@let v = view();
+<button erasButton variant="secondary" type="button" class="nav prev" aria-label="Carta anterior" [disabled]="!hasPrevious()" (click)="move(-1)">
+  <eras-icon name="chevron-left" />
+</button>
+
+<div class="panel" role="document">
+  <button erasButton variant="ghost" size="sm" type="button" class="close" aria-label="Cerrar" (click)="ref.close()">
+    <eras-icon name="x" />
+  </button>
+
+  <eras-card-detail
+    [name]="v.name"
+    [edition]="v.edition"
+    [number]="v.number"
+    [color]="v.color"
+    [colorLabel]="v.colorLabel"
+    [imageUrl]="v.imageUrl"
+    [facts]="v.facts"
+    [textGroups]="v.groups"
+    [notice]="v.notice"
+    [printings]="variants().length"
+    [hasPreviousPrinting]="variantIndex() > 0"
+    [hasNextPrinting]="variantIndex() < variants().length - 1"
+    (previousPrinting)="switchPrinting(-1)"
+    (nextPrinting)="switchPrinting(1)"
+  >
+    <a detail-actions *erasCan="'manage_cards'" erasButton variant="secondary" size="sm" [href]="legacyCardsUrl">
+      <eras-icon name="external" /> Editar en la versión anterior
+    </a>
+  </eras-card-detail>
+</div>
+
+<button erasButton variant="secondary" type="button" class="nav next" aria-label="Carta siguiente" [disabled]="!hasNext()" (click)="move(1)">
+  <eras-icon name="chevron-right" />
+</button>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CanDirective } from '@core/auth/can.directive';
-import { legacyUrl } from '@core/navigation/legacy-url';
 import { Edition, EditionSaveRequest } from '@data/editions/edition.model';
 import { canSimulatePack } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -39,6 +39,7 @@ type FormState = { open: false } | { open: true; edition: Edition | null };
 export class EditionsPage {
   protected readonly store = inject(EditionsStore);
   private readonly modal = inject(ModalService);
+  private readonly router = inject(Router);
 
   protected readonly formState = signal<FormState>({ open: false });
   protected readonly saving = signal(false);
@@ -50,8 +51,7 @@ export class EditionsPage {
   }
 
   protected openCards(edition: Edition): void {
-    // The cards page is not migrated yet
-    window.location.assign(legacyUrl(`/cards?edition=${encodeURIComponent(edition.editionId)}`));
+    void this.router.navigate(['/cards'], { queryParams: { edition: edition.editionId } });
   }
 
   protected openSimulation(edition: Edition): void {

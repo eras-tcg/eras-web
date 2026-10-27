@@ -128,6 +128,12 @@ export const routes: Routes = [
         canMatch: [authGuard],
         loadComponent: () => import('@features/ruling/ruling.page').then((m) => m.RulingPage),
       },
+      {
+        path: 'card-meta',
+        title: 'Metadatos de cartas · ERAS',
+        canMatch: [permissionGuard('manage_cards')],
+        loadComponent: () => import('@features/admin/card-meta.page').then((m) => m.CardMetaPage),
+      },
       // Old capitalized links shared from the Vue app
       { path: 'DeckBuilder', redirectTo: 'deck-builder' },
       {

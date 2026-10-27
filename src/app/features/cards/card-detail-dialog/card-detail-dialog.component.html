@@ -24,9 +24,24 @@
     (previousPrinting)="switchPrinting(-1)"
     (nextPrinting)="switchPrinting(1)"
   >
-    <a detail-actions *erasCan="'manage_cards'" erasButton variant="secondary" size="sm" [href]="legacyCardsUrl">
-      <eras-icon name="external" /> Editar en la versión anterior
-    </a>
+    <ng-container ngProjectAs="[detail-actions]">
+      <ng-container *erasCan="'manage_cards'">
+        @if (actionError(); as message) {
+          <eras-alert tone="danger">{{ message }}</eras-alert>
+        }
+        <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="editMeta()">
+          <eras-icon name="edit" /> {{ card().meta ? 'Editar metadatos' : 'Crear metadatos' }}
+        </button>
+        <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="rename()">Renombrar</button>
+        @if (card().meta) {
+          <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="remove('meta')">Eliminar metadatos</button>
+        }
+        <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="remove('image')">Eliminar imagen</button>
+        @if (card().meta) {
+          <button erasButton variant="danger" size="sm" type="button" [disabled]="busy()" (click)="remove('both')">Eliminar todo</button>
+        }
+      </ng-container>
+    </ng-container>
   </eras-card-detail>
 </div>
 

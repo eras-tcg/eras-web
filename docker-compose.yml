@@ -1,0 +1,15 @@
+services:
+  frontend:
+    build:
+      context: .
+    image: eras-web:next
+    container_name: eras-web-next
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3002}:80"
+    restart: unless-stopped
+    networks:
+      - eras-network
+
+networks:
+  eras-network:
+    external: true

@@ -1,0 +1,27 @@
+<eras-page title="Iniciar sesión" width="narrow">
+  <eras-card padding="lg">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <eras-stack [gap]="4">
+        @if (error(); as message) {
+          <eras-alert tone="danger">{{ message }}</eras-alert>
+        }
+        <eras-form-field
+          label="Usuario"
+          required
+          [error]="form.controls.username.touched && form.controls.username.invalid ? 'Ingresa tu usuario' : null"
+        >
+          <input formControlName="username" autocomplete="username" />
+        </eras-form-field>
+        <eras-form-field
+          label="Contraseña"
+          required
+          [error]="form.controls.password.touched && form.controls.password.invalid ? 'Ingresa tu contraseña' : null"
+        >
+          <input type="password" formControlName="password" autocomplete="current-password" />
+        </eras-form-field>
+        <button erasButton type="submit" [loading]="loading()">Entrar</button>
+        <a [href]="registerUrl">¿No tienes cuenta? Regístrate</a>
+      </eras-stack>
+    </form>
+  </eras-card>
+</eras-page>

@@ -1,0 +1,33 @@
+:host {
+  display: block;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+:host(.padding-none) {
+  padding: 0;
+}
+:host(.padding-sm) {
+  padding: var(--space-3);
+}
+:host(.padding-md) {
+  padding: var(--space-5);
+}
+:host(.padding-lg) {
+  padding: var(--space-7);
+}
+
+:host(.is-interactive) {
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
+}
+
+:host(.is-interactive:hover) {
+  border-color: var(--color-text-muted);
+  transform: translateY(-1px);
+}

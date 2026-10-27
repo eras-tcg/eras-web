@@ -1,0 +1,34 @@
+<eras-modal
+  title="Simular apertura"
+  [subtitle]="edition.editionId + ' — ' + (edition.editionName ?? '')"
+  (closed)="ref.close()"
+>
+  @if (packTypes.length > 1) {
+    <eras-stack [gap]="2">
+      <span>Tipo de sobre</span>
+      <eras-stack direction="row" [gap]="2" wrap>
+        @for (pt of packTypes; track pt.name; let i = $index) {
+          <button erasChip [selected]="selectedIndex() === i" (click)="selectedIndex.set(i)">{{ pt.name }}</button>
+        }
+      </eras-stack>
+    </eras-stack>
+  }
+
+  @if (selected(); as pack) {
+    <eras-stack direction="row" [gap]="2" wrap>
+      @for (r of rarities; track r) {
+        @if (pack.cardsPerRarity[r] > 0) {
+          <eras-rarity-badge [rarity]="r" [count]="pack.cardsPerRarity[r]" />
+        }
+      }
+    </eras-stack>
+  }
+
+  <ng-container modal-footer>
+    <button erasButton variant="secondary" type="button" (click)="openPack()">Abrir sobre</button>
+    @if (hasBox) {
+      <button erasButton variant="secondary" type="button" (click)="openRandomPack()">Sobre al azar de una caja</button>
+      <button erasButton type="button" (click)="openBox()"><eras-icon name="box" /> Abrir caja ({{ totalPacks }})</button>
+    }
+  </ng-container>
+</eras-modal>

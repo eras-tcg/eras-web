@@ -1,0 +1,21 @@
+import { Permission } from '../auth/auth.model';
+
+export interface NavItem {
+  label: string;
+  /** Angular route (page already migrated) */
+  route?: string;
+  /** Path in the legacy Vue app (page not migrated yet) */
+  legacyPath?: string;
+  permission?: Permission;
+}
+
+/** Main navigation. A page moves from `legacyPath` to `route` when it is migrated. */
+export const MAIN_NAV: NavItem[] = [
+  { label: 'Inicio', legacyPath: '/home' },
+  { label: 'Cartas', legacyPath: '/cards' },
+  { label: 'Ediciones', route: '/editions' },
+  { label: 'Constructor de mazos', legacyPath: '/DeckBuilder' },
+  { label: 'Mazos', legacyPath: '/public-decks' },
+  { label: 'Tierlist', legacyPath: '/tierlist' },
+  { label: 'Simulador', legacyPath: '/simulator' },
+];

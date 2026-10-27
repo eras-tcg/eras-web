@@ -1,0 +1,25 @@
+// Semantic color tokens. Components use ONLY these names; themes give them values.
+:root {
+  --color-bg: var(--theme-bg);
+  --color-surface: var(--theme-surface);
+  --color-surface-muted: var(--theme-surface-muted);
+  --color-border: var(--theme-border);
+  --color-text: var(--theme-text);
+  --color-text-muted: var(--theme-text-muted);
+  --color-text-subtle: var(--theme-text-subtle);
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: var(--theme-primary-hover);
+  --color-on-primary: var(--theme-on-primary);
+  --color-link: var(--theme-link);
+  --color-focus: var(--theme-focus);
+  --color-danger: var(--theme-danger);
+  --color-success: var(--theme-success);
+  --color-overlay: var(--theme-overlay);
+
+  // Game palette (same in every theme)
+  --color-rarity-c: #9ca3af;
+  --color-rarity-uc: #34d399;
+  --color-rarity-r: #60a5fa;
+  --color-rarity-sr: #f59e0b;
+  --color-rarity-sec: #f472b6;
+}

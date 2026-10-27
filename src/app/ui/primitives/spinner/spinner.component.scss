@@ -1,0 +1,26 @@
+:host {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  animation: spin 0.7s linear infinite;
+}
+
+:host(.size-sm) {
+  inline-size: 0.9em;
+  block-size: 0.9em;
+}
+:host(.size-md) {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+:host(.size-lg) {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--_tone);
+  border-inline-start-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+:host(.tone-info) {
+  --_tone: var(--color-border);
+}
+:host(.tone-success) {
+  --_tone: var(--color-success);
+}
+:host(.tone-danger) {
+  --_tone: var(--color-danger);
+  color: var(--color-danger);
+}

@@ -1,0 +1,24 @@
+<eras-card padding="none" interactive>
+  <div class="tile">
+    <button type="button" class="open" [attr.aria-label]="'Ver cartas de ' + code()" (click)="selected.emit()">
+      <span class="media">
+        @if (imageUrl()) {
+          <img [src]="imageUrl()" [alt]="code()" loading="lazy" />
+        } @else {
+          <span class="placeholder">{{ code() }}</span>
+        }
+      </span>
+      <span class="info">
+        <span class="code">{{ code() }}</span>
+        <span class="name">{{ name() || '—' }}</span>
+        @if (cardCount()) {
+          <span class="count">{{ cardCount() }} cartas</span>
+        }
+        @if (description()) {
+          <span class="description">{{ description() }}</span>
+        }
+      </span>
+    </button>
+    <div class="actions"><ng-content select="[tile-actions]" /></div>
+  </div>
+</eras-card>

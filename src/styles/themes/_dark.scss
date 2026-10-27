@@ -1,0 +1,21 @@
+[data-theme='dark'] {
+  --theme-bg: #141414;
+  --theme-surface: #1e1e1e;
+  --theme-surface-muted: #262626;
+  --theme-border: #2e2e2e;
+  --theme-text: #eeeeee;
+  --theme-text-muted: #aaaaaa;
+  --theme-text-subtle: #666666;
+  --theme-primary: #eeeeee;
+  --theme-primary-hover: #cccccc;
+  --theme-on-primary: #111111;
+  --theme-link: #bbbbbb;
+  --theme-focus: #eeeeee;
+  --theme-danger: #e57373;
+  --theme-success: #66bb6a;
+  --theme-overlay: rgb(0 0 0 / 65%);
+  --theme-shadow-sm: 0 1px 4px rgb(0 0 0 / 40%);
+  --theme-shadow-md: 0 2px 20px rgb(0 0 0 / 50%);
+  --theme-shadow-lg: 0 12px 40px rgb(0 0 0 / 70%);
+  color-scheme: dark;
+}

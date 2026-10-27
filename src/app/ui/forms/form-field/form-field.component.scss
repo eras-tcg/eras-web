@@ -1,0 +1,61 @@
+.eras-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.eras-form-field__label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.eras-form-field__text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.eras-form-field input,
+.eras-form-field select,
+.eras-form-field textarea {
+  inline-size: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.eras-form-field input:focus,
+.eras-form-field select:focus,
+.eras-form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-focus);
+}
+
+.eras-form-field input:disabled {
+  opacity: 0.6;
+}
+
+.eras-form-field textarea {
+  resize: vertical;
+}
+
+.eras-form-field.has-error input,
+.eras-form-field.has-error select,
+.eras-form-field.has-error textarea {
+  border-color: var(--color-danger);
+}
+
+.eras-form-field__hint {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.eras-form-field__error {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}

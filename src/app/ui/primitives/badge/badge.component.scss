@@ -1,0 +1,24 @@
+:host {
+  --_color: var(--badge-color, var(--_tone));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--_color);
+  border-radius: var(--radius-pill);
+  color: var(--_color);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+:host(.tone-neutral) {
+  --_tone: var(--color-text-muted);
+}
+:host(.tone-success) {
+  --_tone: var(--color-success);
+}
+:host(.tone-danger) {
+  --_tone: var(--color-danger);
+}

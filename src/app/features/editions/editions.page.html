@@ -1,0 +1,49 @@
+<eras-page title="Ediciones" subtitle="Estructuras, expansiones y sus sobres">
+  <button page-actions *erasCan="'manage_editions'" erasButton type="button" (click)="openForm(null)">
+    <eras-icon name="plus" /> Nueva edición
+  </button>
+
+  @if (formState(); as state) {
+    @if (state.open) {
+      <eras-edition-form
+        [edition]="state.edition"
+        [saving]="saving()"
+        [serverError]="saveError()"
+        (submitted)="save($event)"
+        (cancelled)="closeForm()"
+      />
+    }
+  }
+
+  @if (store.error(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
+
+  @if (store.loading() && store.editions().length === 0) {
+    <eras-empty-state title="Cargando ediciones…"><eras-spinner /></eras-empty-state>
+  } @else if (!store.error() && store.editions().length === 0) {
+    <eras-empty-state title="Todavía no hay ediciones" />
+  } @else {
+    <eras-grid minColumn="18rem">
+      @for (edition of store.editions(); track edition.editionId) {
+        <eras-edition-tile
+          [code]="edition.editionId"
+          [name]="edition.editionName ?? null"
+          [cardCount]="edition.numberOfCards ?? null"
+          [description]="edition.editionDescription ?? null"
+          [imageUrl]="edition.editionImage ?? null"
+          (selected)="openCards(edition)"
+        >
+          @if (canSimulate(edition)) {
+            <button tile-actions erasButton variant="secondary" size="sm" type="button" (click)="openSimulation(edition)">
+              <eras-icon name="box" /> Simular apertura
+            </button>
+          }
+          <button tile-actions *erasCan="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
+            <eras-icon name="edit" /> Editar
+          </button>
+        </eras-edition-tile>
+      }
+    </eras-grid>
+  }
+</eras-page>

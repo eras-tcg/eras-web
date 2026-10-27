@@ -1,0 +1,21 @@
+@use 'sass:meta';
+
+// Global style entry. Order of cascade layers: later layers win.
+//   reset -> tokens -> theme -> base -> cdk -> components (component styles are encapsulated)
+@layer reset, tokens, theme, base, cdk;
+
+@layer reset {
+  @include meta.load-css('base/reset');
+}
+@layer tokens {
+  @include meta.load-css('tokens/index');
+}
+@layer theme {
+  @include meta.load-css('themes/index');
+}
+@layer base {
+  @include meta.load-css('base/document');
+}
+@layer cdk {
+  @include meta.load-css('@angular/cdk/overlay-prebuilt');
+}

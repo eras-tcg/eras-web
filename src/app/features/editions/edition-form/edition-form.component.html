@@ -1,0 +1,159 @@
+<eras-card>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <eras-stack [gap]="5">
+      <eras-section-header [title]="isEdit() ? 'Editar ' + edition()?.editionId : 'Nueva edición'" />
+
+      @if (validationError() || serverError(); as message) {
+        <eras-alert tone="danger">{{ message }}</eras-alert>
+      }
+
+      <eras-grid minColumn="14rem" [gap]="4">
+        <eras-form-field label="ID de la edición" hint="E1, E1.1, ST4…" required>
+          <input formControlName="editionId" />
+        </eras-form-field>
+        <eras-form-field label="Nombre (lore)">
+          <input formControlName="editionName" />
+        </eras-form-field>
+        <eras-form-field label="Número de cartas">
+          <input type="number" min="0" formControlName="numberOfCards" />
+        </eras-form-field>
+        <eras-form-field label="Fecha de lanzamiento" hint="aaaa-mm-dd-hh">
+          <input formControlName="releaseDate" />
+        </eras-form-field>
+        <eras-form-field
+          [label]="isEdit() ? 'Nueva imagen (ID de Drive)' : 'Imagen (ID de Drive)'"
+          [hint]="isEdit() ? 'Vacío mantiene la imagen actual' : null"
+        >
+          <input formControlName="editionImage" />
+        </eras-form-field>
+      </eras-grid>
+
+      <eras-form-field label="Descripción / lore">
+        <textarea rows="4" formControlName="editionDescription"></textarea>
+      </eras-form-field>
+
+      <!-- Pack types -->
+      <eras-section-header title="Tipos de sobre">
+        <button erasButton variant="ghost" size="sm" type="button" (click)="addPackType()">
+          <eras-icon name="plus" /> Agregar tipo
+        </button>
+      </eras-section-header>
+
+      @if (packTypes.length === 0) {
+        <eras-empty-state title="Sin tipos de sobre" description="Esta edición no tiene simulación configurada." />
+      }
+
+      <ng-container formArrayName="packTypes">
+        @for (pt of packTypes.controls; track pt; let i = $index) {
+          <eras-card padding="sm" [formGroupName]="i">
+            <eras-stack [gap]="3">
+              <eras-stack direction="row" [gap]="2" align="end">
+                <eras-form-field label="Nombre del sobre">
+                  <input formControlName="name" />
+                </eras-form-field>
+                <button erasButton variant="danger" size="sm" type="button" aria-label="Quitar tipo de sobre" (click)="packTypes.removeAt(i)">
+                  <eras-icon name="x" />
+                </button>
+              </eras-stack>
+              <eras-grid minColumn="5rem" [gap]="2" formGroupName="cardsPerRarity">
+                @for (r of rarities; track r) {
+                  <eras-form-field [label]="r">
+                    <input type="number" min="0" [formControlName]="r" />
+                  </eras-form-field>
+                }
+              </eras-grid>
+            </eras-stack>
+          </eras-card>
+        }
+      </ng-container>
+
+      <!-- Box configuration -->
+      <eras-section-header title="Configuración de caja" />
+      <ng-container formGroupName="boxConfig">
+        <eras-grid minColumn="14rem">
+          <eras-form-field label="Total de sobres por caja">
+            <input type="number" min="0" formControlName="totalPacks" />
+          </eras-form-field>
+        </eras-grid>
+
+        <eras-section-header title="Entradas de caja">
+          <button erasButton variant="ghost" size="sm" type="button" (click)="addEntry()">
+            <eras-icon name="plus" /> Agregar entrada
+          </button>
+        </eras-section-header>
+
+        @if (entries.length === 0) {
+          <eras-empty-state title="Sin entradas" description="La caja no tiene configuración." />
+        }
+
+        <ng-container formArrayName="entries">
+          @for (entry of entries.controls; track entry; let i = $index) {
+            <eras-card padding="sm" [formGroupName]="i">
+              <eras-stack [gap]="3">
+                <eras-stack direction="row" [gap]="2" align="end" wrap>
+                  <eras-form-field label="Tipo de sobre">
+                    <select formControlName="packTypeName">
+                      <option value="">— Tipo de sobre —</option>
+                      @for (name of packTypeNames(); track name) {
+                        <option [value]="name">{{ name }}</option>
+                      }
+                    </select>
+                  </eras-form-field>
+                  <eras-form-field label="Modo">
+                    <select formControlName="mode">
+                      @for (mode of modes; track mode) {
+                        <option [value]="mode">{{ mode }}</option>
+                      }
+                    </select>
+                  </eras-form-field>
+                  <button erasButton variant="danger" size="sm" type="button" aria-label="Quitar entrada" (click)="entries.removeAt(i)">
+                    <eras-icon name="x" />
+                  </button>
+                </eras-stack>
+
+                @switch (entryMode(entry)) {
+                  @case ('FIXED') {
+                    <eras-form-field label="Cantidad fija de sobres">
+                      <input type="number" min="0" formControlName="quantity" />
+                    </eras-form-field>
+                  }
+                  @case ('PROB') {
+                    <eras-stack [gap]="2" formArrayName="probOptions">
+                      @for (option of probOptions(entry).controls; track option; let oi = $index) {
+                        <eras-stack direction="row" [gap]="2" align="end" [formGroupName]="oi">
+                          <eras-form-field label="Cantidad">
+                            <input type="number" min="0" formControlName="quantity" />
+                          </eras-form-field>
+                          <eras-form-field label="Probabilidad">
+                            <input type="number" min="0" max="1" step="0.01" formControlName="prob" />
+                          </eras-form-field>
+                          <button erasButton variant="danger" size="sm" type="button" aria-label="Quitar opción" (click)="probOptions(entry).removeAt(oi)">
+                            <eras-icon name="x" />
+                          </button>
+                        </eras-stack>
+                      }
+                      <eras-stack direction="row" [gap]="3" align="center">
+                        <button erasButton variant="ghost" size="sm" type="button" (click)="addProbOption(entry)">
+                          <eras-icon name="plus" /> Opción
+                        </button>
+                        <eras-badge [tone]="probSumOk(entry) ? 'success' : 'danger'">Suma: {{ probSum(entry).toFixed(3) }}</eras-badge>
+                      </eras-stack>
+                    </eras-stack>
+                  }
+                  @case ('FLEX') {
+                    <eras-alert>Completa los sobres restantes hasta llegar al total de la caja.</eras-alert>
+                  }
+                }
+              </eras-stack>
+            </eras-card>
+          }
+        </ng-container>
+      </ng-container>
+
+      <eras-stack direction="row" [gap]="2" justify="end">
+        <button erasButton variant="ghost" type="button" (click)="cancelled.emit()">Cancelar</button>
+        <button erasButton type="submit" [loading]="saving()">Guardar edición</button>
+      </eras-stack>
+    </eras-stack>
+  </form>
+</eras-card>

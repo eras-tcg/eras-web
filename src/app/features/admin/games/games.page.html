@@ -1,0 +1,139 @@
+<eras-page title="Registro de partidas" [subtitle]="games().length + ' partidas · ' + notes().length + ' notas'" width="wide">
+  <ng-container ngProjectAs="[page-actions]">
+    <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+    <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showStats()" (click)="showStats.set(!showStats())">
+      {{ showStats() ? 'Ocultar estadísticas' : 'Estadísticas por mazo' }}
+    </button>
+  </ng-container>
+
+  @if (fb.feedback(); as f) {
+    <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+  }
+
+  @if (showStats()) {
+    <eras-card>
+      <eras-stack [gap]="3">
+        <eras-section-header title="Estadísticas por mazo">
+          <eras-sort-control
+            [options]="statsSortOptions"
+            [key]="statsSort()"
+            [direction]="statsDirection()"
+            (keyChange)="statsSort.set($any($event))"
+            (directionChange)="statsDirection.set($event)"
+          />
+        </eras-section-header>
+        <eras-grid minColumn="10rem" [gap]="2">
+          <eras-form-field label="Mazo"><input type="search" [value]="statsFilter().deckName" (input)="setFilter('deckName', $any($event.target).value)" /></eras-form-field>
+          <eras-form-field label="Jugador"><input type="search" [value]="statsFilter().player" (input)="setFilter('player', $any($event.target).value)" /></eras-form-field>
+          <eras-form-field label="Rival"><input type="search" [value]="statsFilter().opponent" (input)="setFilter('opponent', $any($event.target).value)" /></eras-form-field>
+          <eras-form-field label="Desde"><input type="date" [value]="statsFilter().from" (input)="setFilter('from', $any($event.target).value)" /></eras-form-field>
+          <eras-form-field label="Hasta"><input type="date" [value]="statsFilter().to" (input)="setFilter('to', $any($event.target).value)" /></eras-form-field>
+        </eras-grid>
+        <eras-table>
+          <table>
+            <thead>
+              <tr><th>Mazo</th><th>Jugadas</th><th>Ganadas</th><th>% victorias</th></tr>
+            </thead>
+            <tbody>
+              @for (row of stats(); track row.deck.id) {
+                <tr>
+                  <td>{{ row.deck.deckName }}</td>
+                  <td>{{ row.played }}</td>
+                  <td>{{ row.won }}</td>
+                  <td>{{ row.played ? (row.ratio | percent: '1.0-0') : '—' }}</td>
+                </tr>
+              } @empty {
+                <tr><td class="muted" colspan="4">Sin datos para esos filtros</td></tr>
+              }
+            </tbody>
+          </table>
+        </eras-table>
+      </eras-stack>
+    </eras-card>
+  }
+
+  <eras-grid minColumn="22rem" [gap]="4">
+    <eras-card>
+      <eras-stack [gap]="3">
+        <eras-section-header title="Registrar partida" />
+        <eras-game-form [value]="draft()" [decks]="decks()" (valueChange)="draft.set($event)" />
+        <div><button erasButton type="button" [loading]="savingGame()" [disabled]="savingGame()" (click)="registerGame()">Registrar partida</button></div>
+      </eras-stack>
+    </eras-card>
+    <eras-card>
+      <eras-stack [gap]="3">
+        <eras-section-header title="Agregar nota" />
+        <eras-form-field label="Nota" hint="Cambios de reglas, observaciones de la sesión…">
+          <textarea rows="4" [value]="noteText()" (input)="noteText.set($any($event.target).value)"></textarea>
+        </eras-form-field>
+        <div><button erasButton variant="secondary" type="button" [loading]="savingNote()" [disabled]="savingNote() || !noteText().trim()" (click)="addNote()">Guardar nota</button></div>
+      </eras-stack>
+    </eras-card>
+  </eras-grid>
+
+  <eras-section-header title="Historial" />
+  @if (loading() && items().length === 0) {
+    <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+  } @else if (items().length === 0) {
+    <eras-empty-state title="Todavía no hay partidas registradas" />
+  } @else {
+    <eras-stack [gap]="2">
+      @for (item of items(); track item.type + (item.type === 'game' ? item.game.id : item.note.id)) {
+        <eras-card padding="sm">
+          @if (item.type === 'game') {
+            @let g = item.game;
+            <eras-stack direction="row" [gap]="3" justify="space-between" align="start" wrap>
+              <eras-stack [gap]="1">
+                <span class="eras-form-field__text">{{ g.createdAt | date: 'short' }}@if (duration(g.duration); as d) { · {{ d }} }</span>
+                @for (side of sides; track side) {
+                  <eras-stack direction="row" [gap]="2" align="center" wrap>
+                    <strong>{{ player(g, side) }}</strong>
+                    <span>{{ deckName(g[side].deckId) }}</span>
+                    <span aria-label="Vidas">{{ lives(g[side].lives) }}</span>
+                    @if (g.winner === side) {
+                      <eras-badge tone="success">Ganó</eras-badge>
+                    }
+                    @if (g.firstPlayer === side) {
+                      <eras-badge>Empezó</eras-badge>
+                    }
+                  </eras-stack>
+                }
+                @if (g.comment) {
+                  <span>{{ g.comment }}</span>
+                }
+              </eras-stack>
+              <eras-stack direction="row" [gap]="1">
+                <button erasButton variant="ghost" size="sm" type="button" aria-label="Editar partida" (click)="editGame(g)"><eras-icon name="edit" /></button>
+                <button erasButton variant="ghost" size="sm" type="button" aria-label="Eliminar partida" [disabled]="busy() === g.id" (click)="remove('game', g.id)"><eras-icon name="x" /></button>
+              </eras-stack>
+            </eras-stack>
+          } @else {
+            @let n = item.note;
+            <eras-stack direction="row" [gap]="3" justify="space-between" align="start">
+              <eras-stack [gap]="1">
+                <span class="eras-form-field__text">Nota · {{ n.createdAt | date: 'short' }}</span>
+                @if (editingNote()?.id === n.id) {
+                  <eras-form-field label="Nota">
+                    <textarea rows="3" [value]="editNoteText()" (input)="editNoteText.set($any($event.target).value)"></textarea>
+                  </eras-form-field>
+                  <eras-stack direction="row" [gap]="2">
+                    <button erasButton size="sm" type="button" [disabled]="busy() === n.id || !editNoteText().trim()" (click)="saveNote()">Guardar</button>
+                    <button erasButton variant="ghost" size="sm" type="button" (click)="editingNote.set(null)">Cancelar</button>
+                  </eras-stack>
+                } @else {
+                  <span>{{ n.text }}</span>
+                }
+              </eras-stack>
+              @if (editingNote()?.id !== n.id) {
+                <eras-stack direction="row" [gap]="1">
+                  <button erasButton variant="ghost" size="sm" type="button" aria-label="Editar nota" (click)="startEditNote(n)"><eras-icon name="edit" /></button>
+                  <button erasButton variant="ghost" size="sm" type="button" aria-label="Eliminar nota" [disabled]="busy() === n.id" (click)="remove('note', n.id)"><eras-icon name="x" /></button>
+                </eras-stack>
+              }
+            </eras-stack>
+          }
+        </eras-card>
+      }
+    </eras-stack>
+  }
+</eras-page>

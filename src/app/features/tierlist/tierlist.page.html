@@ -1,0 +1,79 @@
+<eras-page title="Tierlist" subtitle="Mazos ordenados por desempeño" width="wide">
+  <ng-container ngProjectAs="[page-actions]">
+    @if (canEdit()) {
+      @if (editing()) {
+        <button erasButton variant="secondary" type="button" [disabled]="saving()" (click)="cancel()">Cancelar</button>
+        <button erasButton type="button" [loading]="saving()" [disabled]="saving()" (click)="save()">Guardar tierlist</button>
+      } @else {
+        <button erasButton variant="secondary" type="button" [disabled]="!list()" (click)="editing.set(true)"><eras-icon name="edit" /> Editar</button>
+      }
+    }
+  </ng-container>
+
+  @if (error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+  @if (savedNotice()) {
+    <eras-alert tone="success">Tierlist guardada.</eras-alert>
+  }
+
+  @if (loading() && !list()) {
+    <eras-empty-state title="Cargando tierlist…"><eras-spinner /></eras-empty-state>
+  } @else if (page(); as p) {
+    <eras-tabs label="Páginas de la tierlist" [tabs]="tabs()" [selected]="p.id" (selectedChange)="pageId.set($event)">
+      @if (editing()) {
+        <button erasButton variant="ghost" size="sm" type="button" (click)="addPage()"><eras-icon name="plus" /> Página</button>
+      }
+    </eras-tabs>
+
+    @if (editing()) {
+      <eras-card padding="sm">
+        <eras-stack direction="row" [gap]="3" align="end" wrap>
+          <eras-form-field label="Nombre de la página">
+            <input [value]="p.name" (input)="rename($any($event.target).value)" />
+          </eras-form-field>
+          <button erasButton variant="ghost" size="sm" type="button" [disabled]="tabs().length <= 1" (click)="deletePage()">Eliminar página</button>
+          <eras-multiselect label="Agregar mazos" placeholder="Elegir" [options]="addableNames()" [value]="toAdd()" (valueChange)="toAdd.set($event)" />
+          <button erasButton size="sm" type="button" [disabled]="toAdd().length === 0" (click)="addSelected()">Agregar al último tier</button>
+        </eras-stack>
+      </eras-card>
+    }
+
+    <eras-stack [gap]="2">
+      @for (tier of p.tiers; track tier.label) {
+        <eras-tier-row
+          [label]="tier.label"
+          [color]="tier.color"
+          [dropTarget]="dragOver() === tier.label"
+          (dragover)="editing() && dragOverTier($event, tier.label)"
+          (dragleave)="dragOver.set(null)"
+          (drop)="editing() && drop($event, tier.label)"
+        >
+          @for (id of tier.deckIds; track id) {
+            @let d = deck(id);
+            <eras-deck-chip
+              [name]="d?.deckName ?? 'Mazo eliminado'"
+              [imageUrl]="d?.deckImage ?? null"
+              [link]="['/deck', id]"
+              [attr.draggable]="editing() ? 'true' : null"
+              (dragstart)="dragStart($event, id)"
+            >
+              @if (editing()) {
+                <ng-container ngProjectAs="[chip-actions]">
+                  <select [attr.aria-label]="'Mover ' + (d?.deckName ?? 'mazo') + ' a'" (change)="move(id, $any($event.target).value)">
+                    @for (t of p.tiers; track t.label) {
+                      <option [value]="t.label" [selected]="t.label === tier.label">{{ t.label }}</option>
+                    }
+                  </select>
+                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Quitar ' + (d?.deckName ?? 'mazo')" (click)="move(id, null)"><eras-icon name="x" /></button>
+                </ng-container>
+              }
+            </eras-deck-chip>
+          } @empty {
+            <span>{{ editing() ? 'Arrastra mazos aquí' : '' }}</span>
+          }
+        </eras-tier-row>
+      }
+    </eras-stack>
+  }
+</eras-page>

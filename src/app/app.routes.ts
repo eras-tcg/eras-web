@@ -110,6 +110,24 @@ export const routes: Routes = [
         canMatch: [permissionGuard('manage_cards')],
         loadComponent: () => import('@features/admin/card-ref/card-ref.page').then((m) => m.CardRefPage),
       },
+      {
+        path: 'games-manager',
+        title: 'Registro de partidas · ERAS',
+        canMatch: [permissionGuard('manage_decks')],
+        loadComponent: () => import('@features/admin/games/games.page').then((m) => m.GamesPage),
+      },
+      {
+        path: 'tierlist',
+        title: 'Tierlist · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/tierlist/tierlist.page').then((m) => m.TierlistPage),
+      },
+      {
+        path: 'ruling',
+        title: 'Aprender a jugar · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/ruling/ruling.page').then((m) => m.RulingPage),
+      },
       // Old capitalized links shared from the Vue app
       { path: 'DeckBuilder', redirectTo: 'deck-builder' },
       {

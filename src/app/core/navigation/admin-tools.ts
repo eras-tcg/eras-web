@@ -17,5 +17,5 @@ export const ADMIN_TOOLS: AdminTool[] = [
   { label: 'Permisos', description: 'Catálogo de permisos', route: '/permissions', permissions: ['manage_permissions', 'read_permissions'] },
   { label: 'Datos de referencia', description: 'Clases, instancias, tags y efectos keyword', route: '/card-ref', permissions: ['manage_cards'] },
   { label: 'Gestionar cambios', description: 'Imágenes de cartas pendientes de aplicar', route: '/updates-manager', permissions: ['manage_cards'] },
-  { label: 'Registro de partidas', description: 'Partidas jugadas y notas', legacyPath: '/games-manager', permissions: ['manage_decks'] },
+  { label: 'Registro de partidas', description: 'Partidas jugadas y notas', route: '/games-manager', permissions: ['manage_decks'] },
 ];

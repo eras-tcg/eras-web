@@ -1,0 +1,64 @@
+<eras-page [title]="username() || 'Mi perfil'" subtitle="Tu cuenta">
+  <eras-grid minColumn="20rem" [gap]="5">
+    <eras-card padding="lg">
+      <eras-stack [gap]="4">
+        <eras-section-header title="Información de cuenta" />
+        @if (canEditAccount()) {
+          @if (accountLoading()) {
+            <eras-spinner />
+          } @else {
+            <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
+              <eras-stack [gap]="4">
+                @if (accountFeedback(); as f) {
+                  <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+                }
+                <eras-form-field
+                  label="Usuario"
+                  required
+                  [error]="accountForm.controls.username.touched && accountForm.controls.username.invalid ? 'Ingresa un nombre de usuario' : null"
+                >
+                  <input formControlName="username" autocomplete="username" />
+                </eras-form-field>
+                <eras-form-field
+                  label="Correo"
+                  required
+                  [error]="accountForm.controls.email.touched && accountForm.controls.email.invalid ? 'Ingresa un correo válido' : null"
+                >
+                  <input type="email" formControlName="email" autocomplete="email" />
+                </eras-form-field>
+                <button erasButton type="submit" [loading]="accountSaving()" [disabled]="accountSaving()">Guardar cuenta</button>
+              </eras-stack>
+            </form>
+          }
+        } @else {
+          <eras-form-field label="Usuario" hint="Por ahora el usuario y el correo solo los puede cambiar un administrador.">
+            <input [value]="username()" readonly />
+          </eras-form-field>
+        }
+      </eras-stack>
+    </eras-card>
+
+    <eras-card padding="lg">
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <eras-stack [gap]="4">
+          <eras-section-header title="Cambiar contraseña" />
+          @if (passwordFeedback(); as f) {
+            <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+          }
+          <!-- Hidden username helps password managers update the right entry -->
+          <input type="text" autocomplete="username" [value]="username()" hidden aria-hidden="true" />
+          <eras-form-field label="Contraseña actual" required [error]="passwordError('oldPassword')">
+            <input type="password" formControlName="oldPassword" autocomplete="current-password" />
+          </eras-form-field>
+          <eras-form-field label="Nueva contraseña" required [error]="passwordError('newPassword')">
+            <input type="password" formControlName="newPassword" autocomplete="new-password" (input)="newPasswordServerError.set(null)" />
+          </eras-form-field>
+          <eras-form-field label="Repetir nueva contraseña" required [error]="passwordError('confirm')">
+            <input type="password" formControlName="confirm" autocomplete="new-password" />
+          </eras-form-field>
+          <button erasButton type="submit" [loading]="passwordSaving()" [disabled]="passwordSaving()">Cambiar contraseña</button>
+        </eras-stack>
+      </form>
+    </eras-card>
+  </eras-grid>
+</eras-page>

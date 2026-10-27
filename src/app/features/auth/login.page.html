@@ -20,7 +20,7 @@
           <input type="password" formControlName="password" autocomplete="current-password" />
         </eras-form-field>
         <button erasButton type="submit" [loading]="loading()">Entrar</button>
-        <a [href]="registerUrl">¿No tienes cuenta? Regístrate</a>
+        <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
       </eras-stack>
     </form>
   </eras-card>

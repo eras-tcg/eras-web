@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfig } from '../http/api-config';
-import { AuthUser, LoginRequest, Permission } from './auth.model';
+import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission, RegisterRequest } from './auth.model';
 import { decodeJwtPayload } from './jwt';
 
 // Same keys as the Vue app, so a session can be shared when both run on the same domain
@@ -37,18 +37,60 @@ export class AuthService {
     );
     const token = response.token ?? response.accessToken ?? response.jwt;
     if (!token) throw new Error('El servidor no devolvió un token');
-
-    const payload = decodeJwtPayload(token);
-    const permissions = payload['permissions'];
-    this.setSession(token, {
-      id: String(payload['sub'] ?? ''),
-      username: request.username,
-      permissions: Array.isArray(permissions) ? permissions.map(String) : [],
-    });
+    this.applyToken(token, request.username);
   }
 
   logout(): void {
     this.setSession(null, null);
+  }
+
+  /** Creates an account. It stays disabled until the e-mailed link is opened, so this does not sign in. */
+  async register(request: RegisterRequest): Promise<void> {
+    await firstValueFrom(this.http.post(this.api.url('/api/auth/register'), request, { responseType: 'text' }));
+  }
+
+  /** Confirms an account with the token from the verification e-mail. */
+  async verify(token: string): Promise<void> {
+    await firstValueFrom(this.http.get(this.api.url('/api/auth/verify'), { params: { token }, responseType: 'text' }));
+  }
+
+  /** Changes the signed-in user's own password. */
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(this.api.url('/api/users/change-password'), { oldPassword, newPassword }, { responseType: 'text' }),
+    );
+  }
+
+  /**
+   * The signed-in user's record. UsersService only exposes users to manage_users,
+   * so for everyone else this returns null.
+   */
+  async loadOwnAccount(): Promise<AccountRecord | null> {
+    const user = this.userState();
+    if (!user || !this.can('manage_users')) return null;
+    const users = await firstValueFrom(this.http.get<AccountRecord[]>(this.api.url('/api/users')));
+    return users.find((u) => u.id === user.id) ?? null;
+  }
+
+  /** Renames the signed-in user / changes the e-mail (manage_users only). The server issues a new token. */
+  async updateOwnAccount(update: AccountUpdate): Promise<void> {
+    const user = this.userState();
+    if (!user) throw new Error('No hay una sesión iniciada');
+    const response = await firstValueFrom(
+      this.http.put<LoginResponse>(this.api.url(`/api/users/update/${encodeURIComponent(user.id)}`), update),
+    );
+    if (response.token) this.applyToken(response.token, update.username);
+    else this.setSession(this.tokenState(), { ...user, username: update.username });
+  }
+
+  private applyToken(token: string, username: string): void {
+    const payload = decodeJwtPayload(token);
+    const permissions = payload['permissions'];
+    this.setSession(token, {
+      id: String(payload['sub'] ?? ''),
+      username,
+      permissions: Array.isArray(permissions) ? permissions.map(String) : [],
+    });
   }
 
   private setSession(token: string | null, user: AuthUser | null): void {

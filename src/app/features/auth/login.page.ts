@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
-import { legacyUrl } from '@core/navigation/legacy-url';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -13,7 +12,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 
 @Component({
   selector: 'eras-login-page',
-  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageComponent, CardComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
   templateUrl: './login.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -23,7 +22,6 @@ export class LoginPage {
 
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly registerUrl = legacyUrl('/register');
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     username: ['', Validators.required],

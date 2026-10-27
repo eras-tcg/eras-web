@@ -9,6 +9,24 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+/** A user record as UsersService returns it (GET /api/users, manage_users only). */
+export interface AccountRecord {
+  id: string;
+  username: string;
+  email?: string | null;
+}
+
+export interface AccountUpdate {
+  username: string;
+  email: string;
+}
+
 /** Permission codes defined by UsersService (open-ended: new codes are plain strings). */
 export type Permission =
   | 'manage_editions'

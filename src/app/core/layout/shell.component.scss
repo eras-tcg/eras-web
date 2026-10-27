@@ -78,6 +78,11 @@
   gap: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.user:hover {
+  color: var(--color-text);
 }
 
 .main {

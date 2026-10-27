@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
 
 /** Each feature is lazy-loaded. Pages not migrated yet are linked to the legacy app from the navigation. */
@@ -27,6 +28,23 @@ export const routes: Routes = [
         path: 'login',
         title: 'Iniciar sesión · ERAS',
         loadComponent: () => import('@features/auth/login.page').then((m) => m.LoginPage),
+      },
+      {
+        path: 'register',
+        title: 'Crear cuenta · ERAS',
+        loadComponent: () => import('@features/auth/register.page').then((m) => m.RegisterPage),
+      },
+      {
+        // Same path as the Vue app: it is the link the verification e-mail points to
+        path: 'validate',
+        title: 'Validar cuenta · ERAS',
+        loadComponent: () => import('@features/auth/validate.page').then((m) => m.ValidatePage),
+      },
+      {
+        path: 'profile',
+        title: 'Mi perfil · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
         path: '**',

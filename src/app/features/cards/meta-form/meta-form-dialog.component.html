@@ -1,0 +1,133 @@
+@let v = f();
+<eras-modal [title]="data.metaId ? 'Editar metadatos' : 'Nuevos metadatos'" [subtitle]="v.cardName || null" (closed)="ref.close()">
+  <eras-split aside="12rem">
+    <div split-aside>
+      <eras-card-image [src]="data.imageUrl" [alt]="v.cardName" eager />
+    </div>
+
+    <eras-stack [gap]="4">
+      @for (e of errors(); track e) {
+        <eras-alert tone="danger">{{ e }}</eras-alert>
+      }
+
+      <eras-grid minColumn="10rem" [gap]="3">
+        <eras-form-field label="Nombre" required>
+          <input [value]="v.cardName" (input)="set('cardName', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Edición" required hint="E1 o E1.1">
+          <input [value]="v.edition" (input)="set('edition', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Número">
+          <input type="number" min="0" [value]="v.cardNumber ?? ''" (input)="setNumber('cardNumber', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Color de identidad">
+          <select (change)="set('colorIdentity', $any($event.target).value || null)">
+            <option value="" [selected]="!v.colorIdentity">—</option>
+            @for (c of colors; track c) {
+              <option [value]="c" [selected]="c === v.colorIdentity">{{ colorLabels[c] }}</option>
+            }
+          </select>
+        </eras-form-field>
+        <eras-form-field label="Tipo">
+          <select (change)="set('cardType', $any($event.target).value || null)">
+            @for (t of withCurrent(types, v.cardType); track t) {
+              <option [value]="t" [selected]="t === v.cardType">{{ typeLabels[t] ?? t }}</option>
+            }
+          </select>
+        </eras-form-field>
+        <eras-form-field label="Rareza">
+          <select (change)="set('rarity', $any($event.target).value || null)">
+            <option value="" [selected]="!v.rarity">—</option>
+            @for (r of withCurrent(rarities, v.rarity); track r) {
+              <option [value]="r" [selected]="r === v.rarity">{{ r }}</option>
+            }
+          </select>
+        </eras-form-field>
+        <eras-form-field label="Coste">
+          <input type="number" min="0" [value]="v.cost ?? ''" (input)="setNumber('cost', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Nivel">
+          <input type="number" min="0" [value]="v.level ?? ''" (input)="setNumber('level', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Fuerza">
+          <input type="number" min="0" [value]="v.strength ?? ''" (input)="setNumber('strength', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Regulación">
+          <input [value]="v.regulation" (input)="set('regulation', $any($event.target).value)" />
+        </eras-form-field>
+        <eras-form-field label="Invocación especial">
+          <select (change)="set('specialSummonKind', $any($event.target).value || null)">
+            <option value="" [selected]="!v.specialSummonKind">Ninguna</option>
+            @for (s of withCurrent(summons, v.specialSummonKind); track s) {
+              <option [value]="s" [selected]="s === v.specialSummonKind">{{ summonLabels[s] ?? s }}</option>
+            }
+          </select>
+        </eras-form-field>
+        <eras-form-field label="Coste especial">
+          <input type="number" min="0" [value]="v.specialCost ?? ''" (input)="setNumber('specialCost', $any($event.target).value)" />
+        </eras-form-field>
+      </eras-grid>
+
+      <eras-form-field label="Requerimiento">
+        <input [value]="v.requirement" (input)="set('requirement', $any($event.target).value)" />
+      </eras-form-field>
+
+      <eras-stack [gap]="2">
+        <span class="eras-form-field__text">Colores</span>
+        <eras-stack direction="row" [gap]="1" wrap>
+          @for (c of colors; track c) {
+            <button erasChip [selected]="v.colors.includes(c)" (click)="toggleColor(c)">{{ colorLabels[c] }}</button>
+          }
+          <button erasChip [selected]="v.starter" (click)="set('starter', !v.starter)">Iniciador</button>
+        </eras-stack>
+      </eras-stack>
+
+      <eras-multiselect label="Clases" placeholder="Ninguna" [options]="classes()" [value]="v.cardClasses" (valueChange)="set('cardClasses', $event)" />
+
+      @for (list of effectLists; track list.key) {
+        @let key = list.key;
+        <eras-section-header [title]="list.title">
+          <button erasButton variant="secondary" size="sm" type="button" (click)="editEffect(key, null)"><eras-icon name="plus" /> Agregar</button>
+        </eras-section-header>
+        @for (effect of v[key]; track $index; let i = $index) {
+          <eras-stack direction="row" [gap]="2" align="center" justify="space-between">
+            <span>{{ summary(effect) || 'efecto vacío' }}</span>
+            <eras-stack direction="row" [gap]="1">
+              <button erasButton variant="ghost" size="sm" type="button" aria-label="Editar efecto" (click)="editEffect(key, i)"><eras-icon name="edit" /></button>
+              <button erasButton variant="ghost" size="sm" type="button" aria-label="Quitar efecto" (click)="removeEffect(key, i)"><eras-icon name="x" /></button>
+            </eras-stack>
+          </eras-stack>
+        }
+      }
+
+      @for (list of keywordLists; track list.key) {
+        @let key = list.key;
+        <eras-section-header [title]="list.title">
+          <button erasButton variant="secondary" size="sm" type="button" [disabled]="keywords().length === 0" (click)="addKeyword(key)"><eras-icon name="plus" /> Agregar</button>
+        </eras-section-header>
+        @for (k of v[key]; track $index; let i = $index) {
+          <eras-stack direction="row" [gap]="2" align="end" wrap>
+            <eras-form-field label="Keyword">
+              <select (change)="setKeyword(key, i, { keyword: $any($event.target).value })">
+                @for (name of withCurrent(keywords(), k.keyword); track name) {
+                  <option [value]="name" [selected]="name === k.keyword">{{ name }}</option>
+                }
+              </select>
+            </eras-form-field>
+            @if (hasParameter(k.keyword)) {
+              <eras-form-field label="Valor">
+                <input size="4" [value]="k.number ?? ''" (input)="setKeyword(key, i, { number: $any($event.target).value || null })" />
+              </eras-form-field>
+            }
+            <button erasButton variant="ghost" size="sm" type="button" aria-label="Quitar keyword" (click)="removeKeyword(key, i)"><eras-icon name="x" /></button>
+          </eras-stack>
+        }
+      }
+    </eras-stack>
+  </eras-split>
+
+  <ng-container modal-footer>
+    <button erasButton variant="secondary" type="button" (click)="ref.close()">Cancelar</button>
+    <button erasButton type="button" [loading]="saving()" [disabled]="saving()" (click)="save()">Guardar metadatos</button>
+  </ng-container>
+</eras-modal>

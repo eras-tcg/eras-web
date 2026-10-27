@@ -19,6 +19,9 @@ export class CardsStore {
   readonly error = signal<string | null>(null);
 
   readonly cards = computed(() => mergeCards(this.images(), this.meta()));
+  /** Raw lists, for administration (metadata without image, same-name prefill). */
+  readonly metaList = this.meta.asReadonly();
+  readonly imageList = this.images.asReadonly();
   readonly options = computed(() => filterOptions(this.cards(), this.meta(), this.ref()));
 
   /** After reference data changes elsewhere (admin), so filters and keyword texts update. */

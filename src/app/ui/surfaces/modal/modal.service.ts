@@ -3,6 +3,7 @@ import { ComponentType } from '@angular/cdk/overlay';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
+import { PromptDialogComponent, PromptDialogData } from '../prompt-dialog/prompt-dialog.component';
 
 /** Opens dialogs with the app's backdrop and sensible defaults (focus trap, Esc to close). */
 @Injectable({ providedIn: 'root' })
@@ -19,6 +20,11 @@ export class ModalService {
       restoreFocus: true,
       ...config,
     });
+  }
+
+  /** Resolves the entered text, or undefined when cancelled. */
+  prompt(data: PromptDialogData): Promise<string | undefined> {
+    return firstValueFrom(this.open<string, PromptDialogData>(PromptDialogComponent, { data }).closed);
   }
 
   /** Resolves `true` only when the user confirms. */

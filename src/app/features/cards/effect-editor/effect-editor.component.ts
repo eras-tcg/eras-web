@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CardEffect, EffectBlock, USAGE_LIMITS, USAGE_LIMIT_LABELS } from '@data/cards/card.model';
 import { emptyBlock } from '@data/cards/effect-rules';
+import { keywordToken } from '@data/cards/meta-rules';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { MultiselectComponent } from '@ui/forms/multiselect/multiselect.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
@@ -65,6 +66,21 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
             <eras-form-field label="Resolución" hint="Keywords entre corchetes dobles: [[Celeridad]] o [[Provocar {nivel}:3]]">
               <textarea rows="2" [value]="block.resolution ?? ''" (input)="setBlock(i, 'resolution', $any($event.target).value)"></textarea>
             </eras-form-field>
+            @if (keywords().length) {
+              <eras-stack direction="row" [gap]="2" align="end" wrap>
+                <eras-form-field label="Insertar keyword">
+                  <select #kw>
+                    @for (k of keywords(); track k) {
+                      <option [value]="k">{{ k }}</option>
+                    }
+                  </select>
+                </eras-form-field>
+                <eras-form-field label="Valor" hint="Si el keyword tiene parámetro">
+                  <input #kwValue size="4" />
+                </eras-form-field>
+                <button erasButton variant="secondary" size="sm" type="button" (click)="insertKeyword(i, kw.value, kwValue.value); kwValue.value = ''">Insertar en resolución</button>
+              </eras-stack>
+            }
           </eras-stack>
         </eras-card>
       }
@@ -82,6 +98,8 @@ export class EffectEditorComponent {
   readonly tags = input<readonly string[]>([]);
   /** Default kind per instance, applied when the instance changes. */
   readonly instanceKinds = input<Record<string, string | null | undefined>>({});
+  /** Keywords that can be inserted as [[Keyword]] tokens. */
+  readonly keywords = input<readonly string[]>([]);
   readonly valueChange = output<CardEffect>();
 
   protected readonly usageLimits = USAGE_LIMITS;
@@ -108,6 +126,13 @@ export class EffectEditorComponent {
 
   protected setBlock(index: number, key: keyof EffectBlock, text: string): void {
     this.set('effectBlocks', this.blocks().map((b, i) => (i === index ? { ...b, [key]: text } : b)));
+  }
+
+  protected insertKeyword(index: number, keyword: string, value: string): void {
+    if (!keyword) return;
+    const current = this.blocks()[index]?.resolution ?? '';
+    const token = keywordToken(keyword, value.trim());
+    this.setBlock(index, 'resolution', current ? `${current} ${token}` : token);
   }
 
   protected addBlock(): void {

@@ -1,0 +1,76 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+.cover {
+  display: flex;
+  align-items: flex-end;
+  inline-size: 100%;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--color-surface-muted);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.cover:hover {
+  border-color: var(--color-text-muted);
+}
+
+.overlay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  inline-size: 100%;
+  padding: var(--space-5);
+  // Fixed dark scrim: the text sits on artwork, not on a themed surface.
+  background: linear-gradient(to top, rgb(0 0 0 / 90%), rgb(0 0 0 / 45%), transparent);
+}
+
+.eyebrow {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.name {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+}
+
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+}
+
+.actions {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+}
+
+.actions:empty {
+  display: none;
+}
+
+@media (max-width: 56rem) {
+  .cover {
+    aspect-ratio: 16 / 7;
+    max-block-size: 18rem;
+  }
+}

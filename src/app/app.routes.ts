@@ -7,7 +7,12 @@ export const routes: Routes = [
     path: '',
     component: ShellComponent,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'editions' },
+      { path: '', pathMatch: 'full', redirectTo: 'home' },
+      {
+        path: 'home',
+        title: 'ERAS',
+        loadComponent: () => import('@features/home/home.page').then((m) => m.HomePage),
+      },
       {
         path: 'editions',
         title: 'Ediciones · ERAS',

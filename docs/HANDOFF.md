@@ -3,12 +3,12 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Actualizado:** 2026-10-27 · **Último PR:** #10 · **Despliegues (todos Angular):** https://erastcg.com (producción),
+**Actualizado:** 2026-10-27 · **Último PR:** #14 · **Despliegues (todos Angular):** https://erastcg.com (producción),
 https://staging.erastcg.com, https://next.erastcg.com
 
 ## Estado en una línea
 **Migración completa: producción sirve Angular desde 2026-10-27** (`eras-web:ff32211…-prod`, e2e 14/14 en producción,
-15/15 en staging). Quedan solo tareas opcionales y desactivar el CI de erasFront (ver Pendiente).
+15/15 en staging). Rediseño y login obligatorio listos en staging y next; falta llevarlos a producción (ver Pendiente).
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -39,13 +39,28 @@ editar, borrar), datos de referencia (crear, revisar uso, borrar) y lectura de u
 tierlist, metadatos y partidas: todo correcto. Detalle en `PARIDAD.md`. No se tocaron datos reales (cuentas, cambios de
 Drive, ediciones, tierlist, Home).
 
+## Rediseño y login obligatorio (PRs #11–#14, 2026-10-27)
+- **Login obligatorio** en todo el sitio (guard en el shell; login/registro/validación públicos, vuelve a `?returnUrl=`).
+  El backend acompaña: DriveManager exige JWT en todas las consultas (DriveManager#10; solo `/api/drive/health`,
+  el webhook de Drive y `/ws` quedan abiertos). El deploy verifica DriveManager con `/api/drive/health`, que hace ping a
+  MongoDB (infra#5).
+- **Modo edición** global: interruptor en el navbar para quien tiene `manage_home`/`manage_editions`/`manage_cards`;
+  los controles de edición (Home, Ediciones, Tierlist, detalle de carta) solo se ven con el modo activo.
+- **Diseño:** navbar nuevo (isotipo, iconos, menú de cuenta, franja de modo edición), favicon con el isotipo, Home en una
+  pantalla, login/registro con portada, Admin agrupado, filtros de cartas en bloques (`eras-toggle-group`, sin
+  sub-edición), flechas grandes en el detalle de carta, edición de ediciones en modal, mazos y tierlist como portadas
+  tipo carta (`eras-deck-cover`) y filtros de mazos (nombre, autor, colores, edición, visibilidad).
+- **e2e:** las páginas con datos usan sesión real con la cuenta de prueba de staging (`e2e/.auth.local.json`); sin
+  cuenta (producción) solo corren los casos sin datos.
+
 ## Pendiente
-1. ~~Partida real de 2 jugadores~~ — hecha (2026-10-27): `E2E_BASE_URL=https://staging.erastcg.com npx playwright test
-   simulator-2p` en verde con las cuentas de prueba `e2e_p1_71a21f` / `e2e_p2_71a21f` (verificadas a mano en Mongo;
-   contraseñas en `e2e/.auth.local.json`, git-ignorado).
-2. ~~Corte de producción~~ — hecho (2026-10-27): run 40609236229, `eras-frontend-prod` pasó de
-   `eras-frontend:9e2abb4…-prod` (Vue) a `eras-web:ff32211…-prod`; `E2E_BASE_URL=https://erastcg.com npm run e2e` 14/14.
-   **Falta:** desactivar el workflow CI/CD de erasFront (ver "Ojo" arriba).
+1. **Desplegar a producción** (bloqueado para Claude por el clasificador; hacerlo en este orden):
+   1. Front: eras-web → Actions → CI/CD → Run workflow, `production`, image_tag
+      `5f45fc5b09e1440879fd96de6b59f67ca1a5cf80` → aprobar.
+   2. Backend: mergear DriveManager#11 (`develop → main`) → aprobar el deploy a producción.
+   3. Verificar: `E2E_BASE_URL=https://erastcg.com npm run e2e` y que `https://erastcg.com/api/drive/editions` dé 403
+      sin sesión.
+2. Desactivar el workflow CI/CD de erasFront (ver "Ojo" arriba).
 3. Opcionales: e2e en CI, Storybook, endpoint "mi cuenta", SMTP (Brevo) y orden del registro, quitar `next`.
 
 ## Cómo trabajar en el repo

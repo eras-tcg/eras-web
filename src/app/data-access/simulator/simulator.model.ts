@@ -26,6 +26,8 @@ export interface CardSlot {
   requirement?: string | null;
   /** Strength gained or lost until the end of the turn. */
   turnStrength?: number;
+  /** Strength gained or lost until the end of the opponent's next turn ("hasta el final del turno oponente"). */
+  laterStrength?: number;
   materials: CardSlot[];
   resources: CardSlot[];
 }
@@ -195,10 +197,20 @@ export interface EffectPrompt {
   summonerId?: string | null;
   /** What each card stands for in this choice (the effects it triggered), by instance id. */
   cardLabels?: Record<string, string> | null;
-  /** The effects offered in a chaining choice, with their whole text. */
-  effects?: { sourceId: string; sourceName: string; label: string; text: string }[] | null;
+  /** The effects offered in a chaining choice, with their whole text; each one is chosen by its effectId. */
+  effects?: OfferedEffect[] | null;
   /** The whole text of the effect resolving or paying its cost. */
   effectText?: string | null;
+}
+
+/** An effect offered to be chained (a card can trigger several at once: its own and the inherited ones). */
+export interface OfferedEffect {
+  /** What is answered to chain it (older servers only send the card's id). */
+  effectId?: string;
+  sourceId: string;
+  sourceName: string;
+  label: string;
+  text: string;
 }
 
 /** GET /api/simulator/rooms/{id} */

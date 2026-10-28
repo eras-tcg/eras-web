@@ -13,9 +13,21 @@
       }
     </eras-stack>
     @if (inProgress()) {
+      <!-- The phases of the turn are its controls: on your turn, the next phase you can go to is a button -->
       <ol class="phases" aria-label="Fases del turno">
         @for (p of phases; track p.id) {
-          <li [class.current]="currentPhase() === p.id" [class.mine]="game.isMyTurn()" [attr.aria-current]="currentPhase() === p.id ? 'step' : null">{{ p.label }}</li>
+          <li>
+            <button
+              type="button"
+              [class.current]="currentPhase() === p.id"
+              [class.mine]="game.isMyTurn()"
+              [class.next]="canGoTo(p.id)"
+              [disabled]="!canGoTo(p.id)"
+              [attr.aria-current]="currentPhase() === p.id ? 'step' : null"
+              [title]="phaseHint(p.id)"
+              (click)="goTo(p.id)"
+            >{{ p.label }}</button>
+          </li>
         }
       </ol>
     }
@@ -24,10 +36,6 @@
         @if (game.editorMode()) {
           <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
         }
-        @if (game.phase() === 'MAIN') {
-          <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.enterEndPhase()">Fase final</button>
-        }
-        <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.endTurn()">Terminar turno</button>
       }
       @if (game.pendingTargetSource()) {
         <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>
@@ -77,12 +85,14 @@
         <div class="chain-panel"><eras-chain-list /></div>
       }
       @if (engineNotice(); as notice) {
+        @if (!game.myPrompt()) {
         <eras-alert>
           <strong>{{ notice }}</strong>
           @if (opponentChoosing()) {
             — esperando la elección de {{ game.opponentState()?.username ?? 'tu rival' }}
           }
         </eras-alert>
+        }
       }
       @if (opponentLeft() && !dismissedLeft()) {
         <eras-alert tone="danger">

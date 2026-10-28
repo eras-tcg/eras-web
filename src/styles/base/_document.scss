@@ -55,6 +55,11 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
+// A chain is shown above the choices: they leave it room at the top
+body.eras-chain-open {
+  --sheet-max-block-size: 58vh;
+}
+
 /* Visually hidden, still read by screen readers */
 .sr-only {
   position: absolute;

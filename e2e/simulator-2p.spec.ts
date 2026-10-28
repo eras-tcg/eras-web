@@ -76,7 +76,7 @@ test('partida real de 2 jugadores', async ({ browser }) => {
   await expect(opponentHand.locator('eras-sim-card')).toHaveCount(before + 1);
 
   // Passing the turn flips it on both screens
-  await host.getByRole('button', { name: 'Terminar turno' }).click();
+  await host.getByRole('button', { name: 'Final' }).click();
   await expect(turnLabel(host)).toHaveText(/Turno del rival/);
   await expect(turnLabel(guest)).toHaveText(/Tu turno/);
 

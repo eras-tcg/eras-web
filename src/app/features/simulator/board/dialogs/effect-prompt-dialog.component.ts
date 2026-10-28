@@ -3,8 +3,7 @@ import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
-import { ChainListComponent } from '../chain-list.component';
-import { CardSlot, EffectPrompt } from '@data/simulator/simulator.model';
+import { CardSlot, EffectPrompt, OfferedEffect } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -17,32 +16,61 @@ export interface EffectPromptData {
 
 /**
  * A choice the rules engine is waiting for. It cannot be dismissed: the effect goes on only after the player
- * confirms a valid selection. Cards that do not meet the effect are shown locked. When the cards not chosen
- * go back to the deck (reorderRest), their order is set by dragging.
+ * confirms a valid selection. Only the cards that meet the effect are shown (a toggle shows the rest, locked).
+ * When the cards not chosen go back to the deck (reorderRest), their order is set by dragging. Chaining choices
+ * list each effect with its card: a card can trigger several at once (its own and the inherited ones). The chain
+ * itself is shown on the board, above this sheet.
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, ChainListComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag],
   template: `
     <eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
-      <eras-chain-list />
       @if (prompt.effects?.length) {
         <ul class="offered" aria-label="Efectos que se pueden encadenar">
           @for (e of prompt.effects; track $index) {
             <li>
-              <button type="button" class="offered-effect" [class.chosen]="chosen().has(e.sourceId)" [disabled]="sending()" (click)="toggle(e.sourceId)">
-                <strong>{{ e.sourceName }} · {{ e.label }}</strong>
-                <span>{{ e.text }}</span>
+              <button
+                type="button"
+                class="offered-effect"
+                [class.chosen]="chosen().has(effectKey(e))"
+                [disabled]="sending()"
+                [attr.aria-pressed]="chosen().has(effectKey(e))"
+                (click)="toggle(effectKey(e))"
+              >
+                <eras-game-card [imageUrl]="cardOf(e.sourceId)?.imageUrl ?? null" />
+                <span class="offered-body">
+                  <span class="offered-head">
+                    <strong>{{ e.sourceName }}</strong>
+                    <span class="badge">{{ e.label }}</span>
+                    @if (chosen().has(effectKey(e))) {
+                      <span class="link-tag"><eras-icon name="check" /> {{ chosenTag(effectKey(e)) }}</span>
+                    }
+                  </span>
+                  <span class="offered-text">{{ e.text }}</span>
+                  @if (cardOf(e.sourceId); as c) {
+                    @if (zoneOf(c); as zone) {
+                      <span class="zone">{{ zone }}</span>
+                    }
+                  }
+                </span>
               </button>
             </li>
           }
         </ul>
       } @else if (prompt.effectText && !inChain()) {
-        <!-- An effect already in the chain shows its text there -->
-        <blockquote class="effect-text"><strong>Efecto:</strong> {{ prompt.effectText }}</blockquote>
+        <!-- An effect already in the chain shows its text there, above this sheet -->
+        <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
       }
       @if (prompt.reorderRest) {
         <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
+      }
+      @if (!prompt.effects?.length) {
+      @if (hiddenCount() > 0) {
+        <label class="show-all">
+          <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
+          Mostrar también las que no cumplen ({{ hiddenCount() }})
+        </label>
       }
       <div
         class="cards"
@@ -53,7 +81,7 @@ export interface EffectPromptData {
         role="group"
         [attr.aria-label]="prompt.title"
       >
-        @for (c of order(); track c.instanceId) {
+        @for (c of shown(); track c.instanceId) {
           <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest || chosen().has(c.instanceId)">
             <button
               type="button"
@@ -85,8 +113,11 @@ export interface EffectPromptData {
               }
             </button>
           </div>
+        } @empty {
+          <p class="hint">No hay cartas que cumplan.</p>
         }
       </div>
+      }
       <ng-container sheet-footer>
         <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
           @if (prompt.kind === 'CONFIRM') {
@@ -148,22 +179,38 @@ export interface EffectPromptData {
     }
     .offered { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
     .offered-effect {
+      --game-card-width: 4.5rem;
       display: grid;
-      gap: var(--space-1);
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: var(--space-3);
       inline-size: 100%;
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--color-border);
+      padding: var(--space-2);
+      border: 2px solid var(--color-border);
       border-radius: var(--radius-md);
       background: var(--color-surface);
       color: inherit;
       font: inherit;
       text-align: start;
       cursor: pointer;
+      transition: border-color var(--duration-fast, 120ms) ease, background var(--duration-fast, 120ms) ease;
     }
-    .offered-effect:hover { border-color: var(--color-primary); }
-    .offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
-    .offered-effect span, .effect-text { font-size: var(--font-size-sm); }
-    .effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); }
+    .offered-effect:hover:not(:disabled) { border-color: var(--color-primary); }
+    .offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, transparent); }
+    .offered-effect:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .offered-body { display: grid; gap: var(--space-1); }
+    .offered-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+    .badge {
+      padding: 0 var(--space-2);
+      border-radius: var(--radius-pill, 999px);
+      background: var(--color-surface-muted);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+    }
+    .link-tag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-success); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+    .offered-text { font-size: var(--font-size-sm); line-height: 1.45; }
+    .effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
+    .show-all { display: inline-flex; align-items: center; gap: var(--space-2); justify-self: start; color: var(--color-text-muted); font-size: var(--font-size-sm); cursor: pointer; }
     .zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -174,6 +221,11 @@ export class EffectPromptDialogComponent {
 
   protected readonly valid = new Set(this.prompt.validIds);
   protected readonly order = signal<CardSlot[]>([...this.prompt.cards]);
+  /** Cards that do not meet the effect are hidden unless asked (all of them are needed to order the rest). */
+  protected readonly showAll = signal(false);
+  private readonly showsEverything = this.prompt.reorderRest || this.prompt.kind === 'CONFIRM';
+  protected readonly shown = computed(() => (this.showAll() || this.showsEverything ? this.order() : this.order().filter((c) => this.valid.has(c.instanceId))));
+  protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   protected readonly chosen = signal<Set<string>>(new Set());
   protected readonly sending = signal(false);
   protected readonly canConfirm = computed(() => {
@@ -204,7 +256,7 @@ export class EffectPromptDialogComponent {
       if (this.game.error()) this.sending.set(false);
     });
     // The board marks the cards chosen here (seen when the sheet is lowered)
-    effect(() => this.game.promptChosen.set(new Set(this.chosen())));
+    effect(() => this.game.promptChosen.set(new Set([...this.chosen()].map((id) => this.prompt.effects?.find((e) => this.effectKey(e) === id)?.sourceId ?? id))));
     inject(DestroyRef).onDestroy(() => this.game.promptChosen.set(new Set()));
   }
 
@@ -218,8 +270,17 @@ export class EffectPromptDialogComponent {
     return `Retaguardia · ${rows.back.findIndex((f) => f.instanceId === c.instanceId) + 1}`;
   }
 
+  /** What is answered to chain an offered effect. */
+  protected effectKey(e: OfferedEffect): string {
+    return e.effectId ?? e.sourceId;
+  }
+
+  protected cardOf(id: string): CardSlot | null {
+    return this.prompt.cards.find((c) => c.instanceId === id) ?? null;
+  }
+
   protected toggle(id: string): void {
-    if (!this.valid.has(id)) return;
+    if (!this.valid.has(id) && !this.prompt.effects?.some((e) => this.effectKey(e) === id)) return;
     const next = new Set(this.chosen());
     if (next.has(id)) next.delete(id);
     else if (next.size < this.prompt.max) next.add(id);
@@ -244,7 +305,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER' || this.prompt.purpose === 'OPTIONAL') {
       // The real link it will take: after the links already in the chain
       const base = this.game.state()?.chain?.length ?? 0;
-      const label = this.prompt.cardLabels?.[id];
+      const label = this.prompt.effects?.length ? null : this.prompt.cardLabels?.[id];
       return `Cadena ${base + [...this.chosen()].indexOf(id) + 1}${label ? ' · ' + label : ''}`;
     }
     return this.prompt.chosenLabel ?? 'Elegida';

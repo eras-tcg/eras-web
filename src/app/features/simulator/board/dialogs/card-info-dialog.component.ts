@@ -39,15 +39,10 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
           @if (!data.only) {
             <div class="info">
               <div class="art">
-                <eras-game-card [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
-                <!-- Its Recursos peek out from behind, each with what it gives the card -->
+                <eras-game-card class="main" [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
+                <!-- Its Recursos are placed under it, as on the table: their bottom part (the heritable text) shows -->
                 @for (r of resourceViews(); track r.id) {
-                  <div class="resource" [class.with-effect]="r.lines.length > 0">
-                    <strong>{{ r.name }}</strong>
-                    @for (line of r.lines; track $index) {
-                      <span>{{ line }}</span>
-                    }
-                  </div>
+                  <eras-game-card class="resource" [imageUrl]="r.imageUrl" [attr.aria-label]="'Recurso: ' + r.name" [title]="r.name" />
                 }
               </div>
               <div class="effects">
@@ -123,21 +118,14 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
   styles: `
     .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; }
     .art { --game-card-width: 14rem; display: grid; justify-items: center; }
-    .art eras-game-card { position: relative; z-index: 2; }
-    .resource {
-      position: relative;
+    .art eras-game-card { position: relative; }
+    .art .main { z-index: 2; }
+    // Each Recurso sits behind the card above it, showing only its last ~30% (card ratio 63:88)
+    .art .resource {
       z-index: 1;
-      display: grid;
-      gap: var(--space-1);
-      inline-size: calc(var(--game-card-width) - 1rem);
-      margin-block-start: -0.6rem;
-      padding: calc(0.6rem + var(--space-1)) var(--space-2) var(--space-2);
-      border: 1px solid var(--color-border);
-      border-radius: 0 0 var(--radius-md) var(--radius-md);
-      background: var(--color-surface-muted);
-      font-size: var(--font-size-xs);
+      margin-block-start: calc(var(--game-card-width) * -0.98);
+      filter: drop-shadow(0 2px 4px rgb(0 0 0 / 35%));
     }
-    .resource.with-effect { border-color: var(--color-primary); }
     .effects { display: grid; gap: var(--space-3); }
     .effects h3 { margin: 0; font-size: var(--font-size-lg); }
     .effects h4 { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -187,7 +175,7 @@ export class CardInfoDialogComponent {
   protected readonly resourceViews = computed(() =>
     (this.slot()?.resources ?? []).map((r) => {
       const m = this.meta(r.cardId);
-      return { id: r.instanceId, name: r.cardName ?? 'Recurso', lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
+      return { id: r.instanceId, name: r.cardName ?? 'Recurso', imageUrl: r.imageUrl, lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
     }),
   );
   /** The effects its Recursos give it, with their source. */

@@ -25,12 +25,15 @@
   min-block-size: 0;
 }
 
-// Alerts float at the top of the table instead of pushing it down
+// Alerts float at the top of the table instead of pushing it down. They stay above the choices' backdrop
+// (overlays are at 1000): the chain shown there is the reference for the effect a choice belongs to
 .toasts {
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline: 50% auto;
-  z-index: 15;
+  z-index: 1001;
+  max-block-size: calc(100dvh - var(--sheet-max-block-size, 75vh) - 8rem);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -96,16 +99,42 @@
   list-style: none;
 }
 
-.phases li {
+.phases button {
   padding: var(--space-1) var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-pill, 999px);
+  background: none;
   color: var(--color-text-muted);
+  font: inherit;
   font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
-.phases li.current {
+.phases button:disabled {
+  cursor: default;
+}
+
+// The phase you can go to next: a clear call to action
+.phases button.next {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.phases button.next:not(.current)::after {
+  content: ' ›';
+}
+
+.phases button.next:hover {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.phases button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.phases button.current {
   border-color: #ef4444;
   background: rgb(239 68 68 / 18%);
   color: var(--color-text);
@@ -113,7 +142,7 @@
   box-shadow: 0 0 12px 2px rgb(239 68 68 / 35%);
 }
 
-.phases li.current.mine {
+.phases button.current.mine {
   border-color: #3b82f6;
   background: rgb(59 130 246 / 18%);
   box-shadow: 0 0 12px 2px rgb(59 130 246 / 35%);

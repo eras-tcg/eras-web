@@ -1,7 +1,7 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
-import { displayStrength, isHidden } from '@data/simulator/game-rules';
+import { displayStrength, isHidden, strengthChange } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
@@ -27,7 +27,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       [hidden]="hidden()"
       [tapped]="slot().tapped"
       [strength]="strength()"
-      [modifier]="slot().strengthModifier || 0"
+      [modifier]="change()"
       [materialsCount]="zone() === 'field' ? slot().materials.length : 0"
       [resourcesCount]="zone() === 'field' ? slot().resources.length : 0"
       [targeted]="game.targetedId() === slot().instanceId"
@@ -81,7 +81,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
           }
         } @else {
           @for (a of actions(); track a) {
-            <button type="button" class="action" [class.attack]="a === 'attack'" [class.play]="a === 'summon' || a === 'ritual' || a === 'play'" [class.activate]="a === 'activate'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
+            <button type="button" class="action" [class.attack]="a === 'attack'" [class.play]="a === 'summon' || a === 'ritual' || a === 'play'" [class.activate]="a === 'activate'" [attr.aria-label]="a === 'ritual' ? specialLabel() : actionLabels[a]" (click)="run(a, $event)">
               <eras-icon [name]="actionIcons[a]" />
               <span>{{ a === 'ritual' ? specialLabel() : actionLabels[a] }}</span>
             </button>
@@ -261,6 +261,7 @@ export class SimCardComponent {
   private readonly effectsHelper = inject(BoardEffects);
   /** Your card has effect text (its own or inherited from its materials). */
   protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);
+  protected readonly change = computed(() => strengthChange(this.slot()));
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly selected = computed(() => this.game.selectedId() === this.slot().instanceId);
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */

@@ -67,6 +67,26 @@ export class BoardPage {
     { id: 'END_PHASE', label: 'Final' },
   ];
   protected readonly currentPhase = computed(() => (this.game.phase() === 'END' ? 'END_PHASE' : this.game.phase()));
+
+  /**
+   * On your turn, with nothing pending, the main phase goes on to the end phase. The end phase is closed: once its
+   * move up and its triggers are done the turn ends by itself (a stuck end phase can still be closed by hand).
+   */
+  protected canGoTo(phase: string): boolean {
+    if (!this.game.isMyTurn() || this.lookOnly() || this.game.state()?.prompt || this.game.state()?.chain?.length || this.game.state()?.combat) return false;
+    return phase === 'END_PHASE' && (this.currentPhase() === 'MAIN' || this.currentPhase() === 'END_PHASE');
+  }
+
+  protected phaseHint(phase: string): string {
+    if (!this.canGoTo(phase)) return '';
+    return this.currentPhase() === 'END_PHASE' ? 'Terminar el turno' : 'Pasar a la fase final: al terminarla, termina tu turno';
+  }
+
+  protected goTo(phase: string): void {
+    if (!this.canGoTo(phase)) return;
+    if (this.currentPhase() === 'END_PHASE') this.game.endTurn();
+    else this.game.enterEndPhase();
+  }
   /** A short pop-up when the turn or the phase changes. */
   protected readonly phasePopup = signal<{ who: string; phase: string; mine: boolean } | null>(null);
   private lastPhase: string | null = null;
@@ -105,7 +125,9 @@ export class BoardPage {
       this.document.body.classList.toggle('eras-acting-me', !!acting && acting === me);
       this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
     });
-    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival'));
+    // A chain is shown above the choices (they leave it room)
+    effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
+    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open'));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 

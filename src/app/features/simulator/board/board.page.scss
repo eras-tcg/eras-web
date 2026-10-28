@@ -102,12 +102,13 @@
   color: var(--color-text-muted);
 }
 
+// From the top down, under the turn bar, so they do not cover the hand
 .notices {
   position: fixed;
   inset-inline-end: var(--space-3);
-  inset-block-end: var(--space-3);
+  inset-block-start: calc(var(--app-header-height, 3rem) + 4rem);
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-end;
   gap: var(--space-2);
   max-inline-size: min(22rem, 90vw);
@@ -145,5 +146,59 @@
 
   .table {
     grid-template-rows: auto auto auto;
+  }
+}
+
+// Pop-up when the turn or the phase changes
+.phase-popup {
+  position: fixed;
+  inset-block-start: 40%;
+  inset-inline-start: 50%;
+  z-index: 30;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid #3b82f6;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  box-shadow: 0 0 32px 6px rgb(59 130 246 / 45%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: phase-popup 1.8s ease forwards;
+}
+
+.phase-popup.rival {
+  border-color: #ef4444;
+  box-shadow: 0 0 32px 6px rgb(239 68 68 / 45%);
+}
+
+.phase-popup .who {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.phase-popup strong {
+  font-size: var(--font-size-2xl, 1.75rem);
+}
+
+@keyframes phase-popup {
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+// Combat in progress: the table is framed in red
+.table.in-combat {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 2px rgb(239 68 68 / 70%), 0 0 30px 4px rgb(239 68 68 / 35%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase-popup {
+    animation: none;
   }
 }

@@ -36,7 +36,7 @@
   </header>
 
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
-  <div class="table">
+  <div class="table" [class.in-combat]="!!game.state()?.combat">
     @if (game.myState(); as me) {
       @if (game.opponentState(); as opp) {
         <eras-player-half [player]="opp" opponent />
@@ -85,6 +85,14 @@
       <eras-status-panels (leave)="exit()" />
     </div>
   </div>
+
+  <eras-card-flights />
+  @if (phasePopup(); as popup) {
+    <div class="phase-popup" [class.rival]="!popup.mine" role="status" aria-live="polite">
+      <span class="who">{{ popup.who }}</span>
+      <strong>{{ popup.phase }}</strong>
+    </div>
+  }
 
   <!-- Live notices: revealed cards and the latest actions -->
   <div class="notices" aria-live="polite">

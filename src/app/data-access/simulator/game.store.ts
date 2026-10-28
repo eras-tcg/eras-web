@@ -49,6 +49,9 @@ export class GameStore {
     if (s?.status !== 'IN_PROGRESS') return null;
     return s.prompt?.playerId ?? s.currentTurnUserId ?? null;
   });
+  /** Cards that just reached your hand: they blink for a few seconds so they can be spotted. */
+  readonly newInHand = signal<ReadonlySet<string>>(new Set());
+  private handIds: Set<string> | null = null;
   /** Cards chosen so far in the open choice: marked on the board so they can be told apart. */
   readonly promptChosen = signal<ReadonlySet<string>>(new Set());
   readonly log = signal<LogLine[]>([]);
@@ -131,6 +134,19 @@ export class GameStore {
     this.pendingTargetSource.set(null);
   }
 
+  /** Cards in your hand that were not there before (only while playing, not on joining or a new game). */
+  private markNewInHand(update: GameState, me: string | null): void {
+    const hand = (me && update.players?.[me]?.hand) || [];
+    const ids = new Set(hand.map((c) => c.instanceId));
+    const previous = this.handIds;
+    this.handIds = ids;
+    if (!previous || update.status !== 'IN_PROGRESS' || update.event === 'JOIN_ROOM' || update.event === 'RECONNECT') return;
+    const added = [...ids].filter((id) => !previous.has(id));
+    if (!added.length) return;
+    this.newInHand.update((s) => new Set([...s, ...added]));
+    this.later(4000, () => this.newInHand.update((s) => new Set([...s].filter((id) => !added.includes(id)))));
+  }
+
   private later(ms: number, fn: () => void): void {
     const t = setTimeout(() => {
       this.timers.delete(t);
@@ -149,6 +165,7 @@ export class GameStore {
     this.state.set(update);
     this.error.set(null);
     const me = this.me();
+    this.markNewInHand(update, me);
 
     if (update.event === 'JOIN_ROOM' && me) {
       const warnings = deckWarnings(update.players?.[me]?.originalDeck ?? []);

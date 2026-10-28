@@ -44,6 +44,9 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       [class.can-play]="canPlay()"
       [class.can-activate]="canActivate()"
       [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
+      [class.new-card]="zone() === 'hand' && game.newInHand().has(slot().instanceId)"
+      [class.combat-attacker]="combatRole() === 'attacker'"
+      [class.combat-defender]="combatRole() === 'blocker' || combatRole() === 'target'"
       cdkOverlayOrigin
       #origin="cdkOverlayOrigin"
       (click)="onClick($event)"
@@ -52,6 +55,13 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       (dragstart)="onDragStart($event)"
       (dragend)="drag.end()"
     />
+
+    @if (combatRole(); as role) {
+      <span class="combat-badge" [class.attacker]="role === 'attacker'">
+        <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
+        {{ role === 'attacker' ? 'Ataca' : role === 'blocker' ? 'Bloquea' : 'Atacada' }}
+      </span>
+    }
 
     <ng-template
       cdkConnectedOverlay
@@ -132,6 +142,37 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       justify-content: center;
       inline-size: calc(var(--game-card-width, 4.5rem) * 88 / 63);
     }
+    eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
+    @keyframes new-card {
+      from { box-shadow: 0 0 0 2px #e5e7eb, 0 0 6px 2px rgb(255 255 255 / 40%); }
+      to { box-shadow: 0 0 0 3px #fde68a, 0 0 18px 6px rgb(253 230 138 / 85%); }
+    }
+    eras-game-card.combat-attacker {
+      box-shadow: 0 0 0 3px #ef4444, 0 0 20px 6px rgb(239 68 68 / 70%);
+      animation: combat-pulse 0.8s ease-in-out infinite alternate;
+    }
+    eras-game-card.combat-defender { box-shadow: 0 0 0 3px #f59e0b, 0 0 18px 5px rgb(245 158 11 / 65%); }
+    @keyframes combat-pulse { to { box-shadow: 0 0 0 3px #ef4444, 0 0 8px 2px rgb(239 68 68 / 45%); } }
+    .combat-badge {
+      position: absolute;
+      inset-block-start: -0.7rem;
+      inset-inline-start: 50%;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      padding: 0 0.4rem;
+      border-radius: var(--radius-pill, 999px);
+      background: #f59e0b;
+      color: #1b1d24;
+      font-size: 0.65rem;
+      font-weight: var(--font-weight-bold);
+      white-space: nowrap;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .combat-badge.attacker { background: #ef4444; color: #fff; }
+    .combat-badge eras-icon { inline-size: 0.8rem; block-size: 0.8rem; }
     eras-game-card.prompt-chosen {
       outline: 3px solid #22c55e;
       outline-offset: 3px;
@@ -221,6 +262,16 @@ export class SimCardComponent {
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly selected = computed(() => this.game.selectedId() === this.slot().instanceId);
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
+  /** Its role in the combat in progress, if any. */
+  protected readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
+    const c = this.game.state()?.combat;
+    const id = this.slot().instanceId;
+    if (!c || this.zone() !== 'field') return null;
+    if (c.attackerId === id) return 'attacker';
+    if (c.blockerId === id) return 'blocker';
+    if (c.targetId === id) return 'target';
+    return null;
+  });
   /** A choice is lowered to look at the table: the card can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
   protected readonly actions = computed<LegalAction[]>(() =>

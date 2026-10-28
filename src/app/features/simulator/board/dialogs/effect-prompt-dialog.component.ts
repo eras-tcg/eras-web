@@ -51,7 +51,7 @@ export interface EffectPromptData {
               [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? '' : ', no cumple el efecto')"
               (click)="toggle(c.instanceId)"
             >
-              <eras-game-card [imageUrl]="c.imageUrl" />
+              <eras-game-card [imageUrl]="c.imageUrl" [class.new-card]="game.newInHand().has(c.instanceId)" />
               <span class="tag">
                 @if (chosen().has(c.instanceId)) {
                   <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
@@ -126,12 +126,17 @@ export interface EffectPromptData {
     }
     .pick.chosen .tag { color: var(--color-success); font-weight: var(--font-weight-bold); }
     .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
+    @keyframes new-card {
+      from { box-shadow: 0 0 0 2px #e5e7eb, 0 0 6px 2px rgb(255 255 255 / 40%); }
+      to { box-shadow: 0 0 0 3px #fde68a, 0 0 18px 6px rgb(253 230 138 / 85%); }
+    }
     .zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EffectPromptDialogComponent {
-  private readonly game = inject(GameStore);
+  protected readonly game = inject(GameStore);
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
   protected readonly valid = new Set(this.prompt.validIds);

@@ -21,13 +21,14 @@ import { PlayerHalfComponent } from './player-half.component';
 import { StatusPanelsComponent } from './status-panels.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { DOCUMENT } from '@angular/common';
+import { CardFlightsComponent } from './card-flights.component';
 
 const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [CardFlightsComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   providers: [BoardDrag, BoardDialogs, BoardEffects],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -56,7 +57,31 @@ export class BoardPage {
   protected readonly dismissedLeft = signal(false);
   private leaving = false;
 
+  /** A short pop-up when the turn or the phase changes. */
+  protected readonly phasePopup = signal<{ who: string; phase: string; mine: boolean } | null>(null);
+  private lastPhase: string | null = null;
+  private popupTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
+    effect(() => {
+      const s = this.game.state();
+      if (s?.status !== 'IN_PROGRESS' || !s.currentTurnUserId) {
+        this.lastPhase = null;
+        return;
+      }
+      const key = s.currentTurnUserId + '|' + s.currentPhase;
+      const first = this.lastPhase === null;
+      if (key === this.lastPhase) return;
+      this.lastPhase = key;
+      if (first) return;
+      const mine = s.currentTurnUserId === this.game.myState()?.userId;
+      const name = s.players?.[s.currentTurnUserId]?.username ?? 'Rival';
+      untracked(() => {
+        this.phasePopup.set({ who: mine ? 'Tu turno' : 'Turno de ' + name, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine });
+        if (this.popupTimer) clearTimeout(this.popupTimer);
+        this.popupTimer = setTimeout(() => this.phasePopup.set(null), 1800);
+      });
+    });
     // The page glows from the side of whoever has the priority
     effect(() => {
       const acting = this.game.actingId();

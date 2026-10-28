@@ -6,6 +6,7 @@
   <eras-game-zone
     class="life-zone"
     label="Vidas"
+    [attr.data-pile]="p.userId + ':lifeStack'"
     [count]="p.lifeStack.length"
     [dropActive]="over() === 'lifeStack'"
     [targeted]="isTargeted('lifeStack')"
@@ -68,6 +69,7 @@
 <eras-game-zone
   class="hand"
   label="Mano"
+  [attr.data-pile]="p.userId + ':hand'"
   [count]="p.hand.length"
   [dropActive]="over() === 'hand' && !opponent()"
   (dragover)="!opponent() && dragOver($event, 'hand')"
@@ -92,6 +94,7 @@
 <div class="piles">
   <eras-game-zone
     label="Mazo"
+    [attr.data-pile]="p.userId + ':deck'"
     [count]="p.deck.length"
     [dropActive]="over() === 'deck'"
     [targeted]="isTargeted('deck')"
@@ -126,6 +129,7 @@
 
   <eras-game-zone
     label="Tributos"
+    [attr.data-pile]="p.userId + ':tributeZone'"
     [count]="p.tributeZone.length"
     [dropActive]="over() === 'tributeZone'"
     [targeted]="isTargeted('tributeZone')"
@@ -146,6 +150,7 @@
 
   <eras-game-zone
     label="Descarte"
+    [attr.data-pile]="p.userId + ':discardPile'"
     [count]="p.discardPile.length"
     [dropActive]="over() === 'discardPile'"
     [targeted]="isTargeted('discardPile')"

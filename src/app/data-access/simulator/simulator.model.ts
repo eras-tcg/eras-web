@@ -90,6 +90,9 @@ export interface GameState {
   activatable?: Record<string, ActivatableEffect[]> | null;
   /** Players who already played a structure normally this turn (one per turn). */
   structurePlayed?: string[] | null;
+  /** Who won the game that just ended, and why. */
+  winnerId?: string | null;
+  endReason?: 'lives' | 'surrender' | null;
 }
 
 /** A slow effect (passive moment without a trigger) that can be activated from the board now. */

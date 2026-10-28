@@ -25,6 +25,11 @@
   min-block-size: 0;
 }
 
+// The rival's side is mirrored: their name and gems sit next to the center of the table, like yours
+:host(.opponent) .lives {
+  flex-direction: column-reverse;
+}
+
 .name {
   overflow: hidden;
   font-size: var(--font-size-sm);

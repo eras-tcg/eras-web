@@ -85,7 +85,14 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
       @case ('POST_GAME') {
         <eras-card>
           <eras-stack [gap]="3">
-            <strong>Partida terminada</strong>
+            @if (result(); as r) {
+              <div class="result" [class.won]="r.won">
+                <strong>{{ r.title }}</strong>
+                <span>{{ r.detail }}</span>
+              </div>
+            } @else {
+              <strong>Partida terminada</strong>
+            }
             @if (myChoice(); as c) {
               <span>Elegiste: {{ labels[c] }}. Esperando al rival…</span>
             } @else {
@@ -115,6 +122,10 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
     .pick { padding: 0; border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
     .pick:hover { border-color: var(--color-border); }
     .pick.chosen { border-color: var(--color-danger); opacity: 0.6; }
+    .result { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 2px solid var(--color-danger); border-radius: var(--radius-md); text-align: center; }
+    .result.won { border-color: var(--color-success); box-shadow: 0 0 24px 4px color-mix(in srgb, var(--color-success) 45%, transparent); }
+    .result strong { font-size: var(--font-size-2xl, 1.75rem); }
+    .result span { color: var(--color-text-muted); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -134,6 +145,19 @@ export class StatusPanelsComponent {
   protected readonly starterChosen = computed(() => (this.game.myState()?.field.length ?? 0) > 0);
   protected readonly topFive = computed(() => (this.game.myState()?.deck ?? []).slice(0, 5));
   protected readonly myChoice = computed(() => this.game.postGameChoices()[this.auth.user()?.id ?? ''] ?? null);
+  /** Who won and why. */
+  protected readonly result = computed(() => {
+    const s = this.game.state();
+    if (!s?.winnerId) return null;
+    const me = this.auth.user()?.id;
+    const won = s.winnerId === me;
+    const winner = s.players?.[s.winnerId]?.username ?? 'Tu rival';
+    const loser = Object.values(s.players ?? {}).find((p) => p.userId !== s.winnerId)?.username ?? 'Tu rival';
+    const detail = s.endReason === 'surrender'
+      ? (won ? `${loser} se rindió` : 'Te rendiste')
+      : (won ? `${loser} se quedó sin vidas` : 'Te quedaste sin vidas');
+    return { won, title: won ? '¡Ganaste!' : `Ganó ${winner}`, detail };
+  });
   protected readonly options = computed(() => {
     const state = this.game.state();
     const surrenderer = state?.event === 'SURRENDER' ? state.actorId : null;

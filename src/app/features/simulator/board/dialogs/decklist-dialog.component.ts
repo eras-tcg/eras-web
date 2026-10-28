@@ -39,7 +39,7 @@ interface DeckRow {
                   @if (row.missing.length) {
                     <button erasButton variant="secondary" size="sm" type="button" (click)="game.restoreCard(row.missing[0])">Restaurar 1</button>
                   }
-                  <button erasButton variant="ghost" size="sm" type="button" title="Vuelve a leer imagen y datos de la carta" (click)="game.refreshCardMetadata(row.cardId)">Actualizar datos</button>
+                  <button erasButton variant="ghost" size="sm" type="button" (click)="game.refreshCardMetadata(row.cardId)">Actualizar datos</button>
                 </td>
               </tr>
             }

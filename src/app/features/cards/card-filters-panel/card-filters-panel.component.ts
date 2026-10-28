@@ -41,6 +41,8 @@ export class CardFiltersPanelComponent {
   );
   /** All colors on = no color filter (same as the legacy page). */
   protected readonly activeColors = computed(() => (this.filters().colors.length ? this.filters().colors : this.options().colors));
+  /** Same rule as colors: no rarity filter = every rarity on. */
+  protected readonly activeRarities = computed(() => (this.filters().rarities.length ? this.filters().rarities : this.options().rarities));
   protected readonly rarityOptions = computed<ToggleOption[]>(() =>
     this.options().rarities.map((r) => ({ value: r, label: r, color: `var(--color-rarity-${r.toLowerCase()})` })),
   );
@@ -71,18 +73,11 @@ export class CardFiltersPanelComponent {
 
   /** Same behaviour as the legacy page: all colors on = no color filter. */
   protected toggleColor(color: string): void {
-    const all = this.options().colors;
-    const current = this.filters().colors;
-    let next: string[];
-    if (current.length === 0) next = [color];
-    else if (current.includes(color)) next = current.filter((c) => c !== color);
-    else next = [...current, color];
-    this.set('colors', next.length >= all.length ? [] : next);
+    this.set('colors', toggleInAll(this.filters().colors, color, this.options().colors));
   }
 
   protected toggleRarity(rarity: string): void {
-    const current = this.filters().rarities;
-    this.setList('rarities', current.includes(rarity) ? current.filter((r) => r !== rarity) : [...current, rarity]);
+    this.setList('rarities', toggleInAll(this.filters().rarities, rarity, this.options().rarities));
   }
 
   protected setView<K extends keyof CardView>(key: K, value: CardView[K]): void {
@@ -96,4 +91,16 @@ export class CardFiltersPanelComponent {
   protected setSize(event: Event): void {
     this.setView('size', (event.target as HTMLInputElement).valueAsNumber);
   }
+}
+
+/**
+ * Toggle where "nothing selected" means "everything on": the first click keeps only that value,
+ * the next ones add or remove values, and selecting all (or none) goes back to no filter.
+ */
+function toggleInAll(current: readonly string[], value: string, all: readonly string[]): string[] {
+  let next: string[];
+  if (current.length === 0) next = [value];
+  else if (current.includes(value)) next = current.filter((v) => v !== value);
+  else next = [...current, value];
+  return next.length >= all.length ? [] : next;
 }

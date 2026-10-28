@@ -56,7 +56,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
             <eras-stack direction="row" [gap]="3" wrap>
               @for (a of s[type]; track a.instanceId; let i = $index) {
                 <eras-stack [gap]="1" align="center">
-                  <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.title]="a.cardName" />
+                  <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
                   <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de ' + (a.cardName ?? 'anexo')">Mover…</button>
                   <ng-template #actions>
                     <eras-menu>

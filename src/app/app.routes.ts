@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
 
-/** Each feature is lazy-loaded. The whole site needs a session except login, register and validate. */
+/** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
   {
     path: '',
@@ -35,12 +35,6 @@ export const routes: Routes = [
         canMatch: [guestGuard],
         title: 'Iniciar sesión · ERAS',
         loadComponent: () => import('@features/auth/login.page').then((m) => m.LoginPage),
-      },
-      {
-        path: 'register',
-        canMatch: [guestGuard],
-        title: 'Crear cuenta · ERAS',
-        loadComponent: () => import('@features/auth/register.page').then((m) => m.RegisterPage),
       },
       {
         // Same path as the Vue app: it is the link the verification e-mail points to
@@ -160,7 +154,6 @@ export const routes: Routes = [
       { path: 'DeckBuilder', redirectTo: 'deck-builder' },
       { path: 'Home', redirectTo: 'home' },
       { path: 'Login', redirectTo: 'login' },
-      { path: 'Register', redirectTo: 'register' },
       { path: 'Validate', redirectTo: 'validate' },
       { path: 'Editions', redirectTo: 'editions' },
       { path: 'Cards', redirectTo: 'cards' },

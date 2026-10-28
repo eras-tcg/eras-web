@@ -51,7 +51,6 @@
         type="button"
         [loading]="draft.saving()"
         [disabled]="!canSave() || draft.saving() || !draft.dirty() || draft.total() === 0"
-        [attr.title]="canSave() ? null : 'Necesitas el permiso manage_decks para guardar'"
         (click)="save()"
       >
         Guardar

@@ -24,7 +24,7 @@ export interface BarItem {
             [class.active]="selected() === item.key"
             [class.dim]="selected() !== null && selected() !== item.key"
             [attr.aria-pressed]="selected() === item.key"
-            [attr.title]="item.label + ': ' + item.value"
+            [attr.aria-label]="item.label + ': ' + item.value"
             (click)="selectedChange.emit(selected() === item.key ? null : item.key)"
           >
             <span class="label">{{ item.label }}</span>

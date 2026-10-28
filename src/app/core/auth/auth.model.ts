@@ -9,12 +9,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-}
-
 /** A user record as UsersService returns it (GET /api/users, manage_users only). */
 export interface AccountRecord {
   id: string;

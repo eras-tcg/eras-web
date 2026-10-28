@@ -12,7 +12,7 @@ export interface Column {
     <p class="title">{{ title() }}</p>
     <div class="plot" role="img" [attr.aria-label]="summary()">
       @for (c of columns(); track c.label) {
-        <div class="col" [attr.title]="c.label + ': ' + c.value">
+        <div class="col" [attr.aria-label]="c.label + ': ' + c.value">
           <span class="count">{{ c.value || '' }}</span>
           <span class="track"><span class="fill" [style.height.%]="pct(c.value)"></span></span>
           <span class="axis">{{ c.label }}</span>

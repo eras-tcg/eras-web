@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 
 export interface ToggleOption {
   value: string;
-  /** Accessible name (and tooltip). */
+  /** Accessible name. */
   label: string;
   /** Text shown in the button; defaults to the label. Ignored for swatches. */
   text?: string;
@@ -30,13 +30,10 @@ export interface ToggleOption {
           [class.swatch]="o.swatch"
           [attr.aria-pressed]="selected().includes(o.value)"
           [attr.aria-label]="o.swatch ? o.label : null"
-          [attr.title]="o.label"
           [style.--segment-color]="o.color ?? null"
           (click)="toggled.emit(o.value)"
         >
-          @if (o.swatch) {
-            <span class="chip" aria-hidden="true"></span>
-          } @else {
+          @if (!o.swatch) {
             @if (o.color) {
               <span class="dot" aria-hidden="true"></span>
             }
@@ -61,23 +58,25 @@ export interface ToggleOption {
       display: flex;
       inline-size: 100%;
       padding: 3px;
+      gap: 3px;
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
       background: var(--color-surface-muted);
-      gap: 3px;
     }
     .segment {
+      --segment-color: var(--color-text);
+
       display: inline-flex;
       flex: 1;
       align-items: center;
       justify-content: center;
       gap: var(--space-1);
-      min-block-size: 2rem;
+      min-block-size: 2.1rem;
       padding: var(--space-1) var(--space-2);
-      border: 0;
+      border: 1px solid transparent;
       border-radius: calc(var(--radius-md) - 3px);
       background: transparent;
-      color: var(--color-text-muted);
+      color: var(--color-text-subtle);
       font: inherit;
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-medium);
@@ -85,45 +84,59 @@ export interface ToggleOption {
       cursor: pointer;
       transition:
         background-color var(--duration-fast) var(--easing-standard),
+        border-color var(--duration-fast) var(--easing-standard),
         color var(--duration-fast) var(--easing-standard),
         opacity var(--duration-fast) var(--easing-standard);
     }
     .segment:hover {
-      color: var(--color-text);
-    }
-    .segment.on {
-      background: var(--color-surface);
-      color: var(--color-text);
-      box-shadow: var(--shadow-sm);
+      color: var(--color-text-muted);
     }
     .segment:focus-visible {
       outline: 2px solid var(--color-focus);
       outline-offset: 1px;
     }
+    /* On: tinted with its color, outlined, full-strength text */
+    .segment.on {
+      border-color: color-mix(in srgb, var(--segment-color) 70%, transparent);
+      background: color-mix(in srgb, var(--segment-color) 18%, var(--color-surface));
+      color: var(--color-text);
+      font-weight: var(--font-weight-bold);
+      box-shadow: var(--shadow-sm);
+    }
     .dot {
-      inline-size: 0.55rem;
-      block-size: 0.55rem;
+      inline-size: 0.6rem;
+      block-size: 0.6rem;
       border-radius: 50%;
       background: var(--segment-color);
+      opacity: 0.35;
     }
-    /* Swatches: the color fills the button; "off" ones fade out */
-    .segment.swatch {
-      padding: 3px;
-    }
-    .chip {
-      inline-size: 100%;
-      block-size: 1.5rem;
-      border: 1px solid rgb(0 0 0 / 25%);
-      border-radius: calc(var(--radius-md) - 5px);
-      background: var(--segment-color);
-      opacity: 0.25;
-      transition: opacity var(--duration-fast) var(--easing-standard);
-    }
-    .segment.swatch:hover .chip {
-      opacity: 0.55;
-    }
-    .segment.swatch.on .chip {
+    .segment.on .dot {
       opacity: 1;
+    }
+    /* Swatches: the whole button takes the color when on; off ones are faint and crossed out */
+    .segment.swatch {
+      position: relative;
+      background: color-mix(in srgb, var(--segment-color) 14%, transparent);
+    }
+    .segment.swatch::after {
+      position: absolute;
+      inset: 50% 18%;
+      block-size: 2px;
+      border-radius: 2px;
+      background: var(--color-text-subtle);
+      transform: rotate(-20deg);
+      content: '';
+    }
+    .segment.swatch:hover {
+      background: color-mix(in srgb, var(--segment-color) 35%, transparent);
+    }
+    .segment.swatch.on {
+      border-color: color-mix(in srgb, var(--segment-color) 60%, #000);
+      background: var(--segment-color);
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), var(--shadow-sm);
+    }
+    .segment.swatch.on::after {
+      display: none;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

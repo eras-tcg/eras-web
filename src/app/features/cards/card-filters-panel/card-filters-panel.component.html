@@ -94,7 +94,7 @@
   </eras-form-field>
 
   @if (o.rarities.length) {
-    <eras-toggle-group label="Rareza" [options]="rarityOptions()" [selected]="f.rarities" (toggled)="toggleRarity($event)" />
+    <eras-toggle-group label="Rareza" [options]="rarityOptions()" [selected]="activeRarities()" (toggled)="toggleRarity($event)" />
   }
 
   <label class="eras-form-field__text">

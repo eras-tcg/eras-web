@@ -1,4 +1,16 @@
 {
-  "/api": { "target": "https://staging.erastcg.com", "secure": true, "changeOrigin": true },
-  "/ws": { "target": "https://staging.erastcg.com", "secure": true, "changeOrigin": true, "ws": true }
+  "/api": {
+    "target": "https://staging.erastcg.com",
+    "secure": true,
+    "changeOrigin": true,
+    "headers": {
+      "origin": "https://staging.erastcg.com"
+    }
+  },
+  "/ws": {
+    "target": "https://staging.erastcg.com",
+    "secure": true,
+    "changeOrigin": true,
+    "ws": true
+  }
 }

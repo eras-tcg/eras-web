@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -7,7 +8,7 @@ import { DecksStore } from '@data/decks/decks.store';
 import { DEFAULT_TIERS, addDecks, moveDeck, normalizeTierList } from '@data/games/games-rules';
 import { GamesApi } from '@data/games/games.api';
 import { TierList, TierPage } from '@data/games/games.model';
-import { DeckChipComponent } from '@ui/domain/deck-chip/deck-chip.component';
+import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { TierRowComponent } from '@ui/domain/tier-row/tier-row.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -33,7 +34,7 @@ const DRAG_TYPE = 'application/x-eras-deck';
     CardComponent,
     TabsComponent,
     TierRowComponent,
-    DeckChipComponent,
+    DeckCoverComponent,
     FormFieldComponent,
     MultiselectComponent,
     AlertComponent,
@@ -50,6 +51,7 @@ export class TierlistPage {
   private readonly decksStore = inject(DecksStore);
   private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
+  private readonly router = inject(Router);
 
   protected readonly canEdit = computed(() => this.editMode.allows('manage_decks'));
   protected readonly list = signal<TierList | null>(null);
@@ -81,6 +83,10 @@ export class TierlistPage {
     effect(() => {
       if (!this.canEdit() && untracked(() => this.editing())) this.cancel();
     });
+  }
+
+  protected openDeck(id: string): void {
+    void this.router.navigate(['/deck', id]);
   }
 
   protected deck(id: string): Deck | null {

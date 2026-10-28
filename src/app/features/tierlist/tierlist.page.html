@@ -51,24 +51,28 @@
         >
           @for (id of tier.deckIds; track id) {
             @let d = deck(id);
-            <eras-deck-chip
-              [name]="d?.deckName ?? 'Mazo eliminado'"
-              [imageUrl]="d?.deckImage ?? null"
-              [link]="['/deck', id]"
-              [attr.draggable]="editing() ? 'true' : null"
-              (dragstart)="dragStart($event, id)"
-            >
+            <eras-stack [gap]="1" [attr.draggable]="editing() ? 'true' : null" (dragstart)="dragStart($event, id)">
+              <eras-deck-cover
+                size="sm"
+                [name]="d?.deckName ?? 'Mazo eliminado'"
+                [author]="d?.username ?? null"
+                [imageUrl]="d?.deckImage ?? null"
+                (selected)="openDeck(id)"
+              >
+                @if (editing()) {
+                  <button cover-actions erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Quitar ' + (d?.deckName ?? 'mazo')" (click)="move(id, null)">
+                    <eras-icon name="x" />
+                  </button>
+                }
+              </eras-deck-cover>
               @if (editing()) {
-                <ng-container ngProjectAs="[chip-actions]">
-                  <select [attr.aria-label]="'Mover ' + (d?.deckName ?? 'mazo') + ' a'" (change)="move(id, $any($event.target).value)">
-                    @for (t of p.tiers; track t.label) {
-                      <option [value]="t.label" [selected]="t.label === tier.label">{{ t.label }}</option>
-                    }
-                  </select>
-                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Quitar ' + (d?.deckName ?? 'mazo')" (click)="move(id, null)"><eras-icon name="x" /></button>
-                </ng-container>
+                <select [attr.aria-label]="'Mover ' + (d?.deckName ?? 'mazo') + ' a'" (change)="move(id, $any($event.target).value)">
+                  @for (t of p.tiers; track t.label) {
+                    <option [value]="t.label" [selected]="t.label === tier.label">Nivel {{ t.label }}</option>
+                  }
+                </select>
               }
-            </eras-deck-chip>
+            </eras-stack>
           } @empty {
             <span>{{ editing() ? 'Arrastra mazos aquí' : '' }}</span>
           }

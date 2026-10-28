@@ -11,7 +11,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
     :host {
       display: grid;
       grid-template-columns: 4.5rem minmax(0, 1fr);
-      min-block-size: 7rem;
+      min-block-size: 11.5rem;
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
       overflow: hidden;
@@ -28,8 +28,9 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       color: #1b1d24;
       font-family: var(--font-family-display);
       font-size: var(--font-size-2xl);
+      text-align: center;
     }
-    .items { display: flex; flex-wrap: wrap; align-content: flex-start; gap: var(--space-2); padding: var(--space-2); }
+    .items { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.drop-target]': 'dropTarget()' },

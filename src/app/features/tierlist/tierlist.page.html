@@ -1,4 +1,4 @@
-<eras-page title="Tierlist" subtitle="Mazos ordenados por desempeño" width="wide">
+<eras-page title="Tierlist" subtitle="Mazos ordenados por desempeño" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
     @if (canEdit()) {
       @if (editing()) {
@@ -39,8 +39,8 @@
       </eras-card>
     }
 
-    <eras-stack [gap]="2">
-      @for (tier of p.tiers; track tier.label) {
+    <eras-tier-board>
+      @for (tier of p.tiers; track tier.label; let t = $index) {
         <eras-tier-row
           [label]="tier.label"
           [color]="tier.color"
@@ -51,33 +51,33 @@
         >
           @for (id of tier.deckIds; track id) {
             @let d = deck(id);
-            <eras-stack [gap]="1" [attr.draggable]="editing() ? 'true' : null" (dragstart)="dragStart($event, id)">
-              <eras-deck-cover
-                size="sm"
-                [name]="d?.deckName ?? 'Mazo eliminado'"
-                [author]="d?.username ?? null"
-                [imageUrl]="d?.deckImage ?? null"
-                (selected)="openDeck(id)"
-              >
-                @if (editing()) {
-                  <button cover-actions erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Quitar ' + (d?.deckName ?? 'mazo')" (click)="move(id, null)">
+            <eras-deck-cover
+              size="row"
+              [name]="d?.deckName ?? 'Mazo eliminado'"
+              [imageUrl]="d?.deckImage ?? null"
+              [attr.draggable]="editing() ? 'true' : null"
+              (dragstart)="dragStart($event, id)"
+              (selected)="openDeck(id)"
+            >
+              @if (editing()) {
+                <ng-container ngProjectAs="[cover-actions]">
+                  <button erasButton variant="secondary" size="sm" type="button" [disabled]="t === 0" [attr.aria-label]="'Subir ' + (d?.deckName ?? 'mazo') + ' de nivel'" (click)="move(id, p.tiers[t - 1].label)">
+                    <eras-icon name="chevron-up" />
+                  </button>
+                  <button erasButton variant="secondary" size="sm" type="button" [disabled]="t === p.tiers.length - 1" [attr.aria-label]="'Bajar ' + (d?.deckName ?? 'mazo') + ' de nivel'" (click)="move(id, p.tiers[t + 1].label)">
+                    <eras-icon name="chevron-down" />
+                  </button>
+                  <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Quitar ' + (d?.deckName ?? 'mazo')" (click)="move(id, null)">
                     <eras-icon name="x" />
                   </button>
-                }
-              </eras-deck-cover>
-              @if (editing()) {
-                <select [attr.aria-label]="'Mover ' + (d?.deckName ?? 'mazo') + ' a'" (change)="move(id, $any($event.target).value)">
-                  @for (t of p.tiers; track t.label) {
-                    <option [value]="t.label" [selected]="t.label === tier.label">Nivel {{ t.label }}</option>
-                  }
-                </select>
+                </ng-container>
               }
-            </eras-stack>
+            </eras-deck-cover>
           } @empty {
             <span>{{ editing() ? 'Arrastra mazos aquí' : '' }}</span>
           }
         </eras-tier-row>
       }
-    </eras-stack>
+    </eras-tier-board>
   }
 </eras-page>

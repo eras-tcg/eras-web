@@ -77,7 +77,9 @@ test('sin sesión: todo el sitio redirige al login y vuelve a la página pedida'
   }
   await page.goto('/cards');
   await expect(page).toHaveURL(/\/login\?returnUrl=%2Fcards$/);
-  await expect(page.getByRole('link', { name: 'Regístrate' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Regístrate' })).toHaveCount(0);
+  await page.goto('/register');
+  await expect(page).toHaveURL(/\/login/);
 });
 
 test('sin sesión: el backend acepta escrituras desde este origen (CORS)', async ({ page, baseURL }) => {

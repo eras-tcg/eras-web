@@ -9,6 +9,7 @@ import { DEFAULT_TIERS, addDecks, moveDeck, normalizeTierList } from '@data/game
 import { GamesApi } from '@data/games/games.api';
 import { TierList, TierPage } from '@data/games/games.model';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
+import { TierBoardComponent } from '@ui/domain/tier-row/tier-board.component';
 import { TierRowComponent } from '@ui/domain/tier-row/tier-row.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -34,6 +35,7 @@ const DRAG_TYPE = 'application/x-eras-deck';
     CardComponent,
     TabsComponent,
     TierRowComponent,
+    TierBoardComponent,
     DeckCoverComponent,
     FormFieldComponent,
     MultiselectComponent,

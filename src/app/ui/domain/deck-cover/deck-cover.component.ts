@@ -56,6 +56,33 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       inset-inline: var(--space-2);
       inset-block-end: var(--space-2);
     }
+    /* Row: as tall as its container (a tier row), width from the card ratio */
+    :host(.size-row) {
+      block-size: 100%;
+      flex: none;
+    }
+    :host(.size-row) .cover {
+      inline-size: auto;
+      block-size: 100%;
+    }
+    :host(.size-row) .name {
+      font-size: var(--font-size-xs);
+    }
+    :host(.size-row) .author {
+      display: none;
+    }
+    :host(.size-row) .info {
+      inset-inline: var(--space-2);
+      inset-block-end: var(--space-2);
+    }
+    :host(.size-row) .actions {
+      inset-block-start: 2px;
+      inset-inline-end: 2px;
+      flex-direction: column;
+      gap: 2px;
+      transform: scale(0.8);
+      transform-origin: top right;
+    }
     :host(.fit) {
       container-type: size;
       display: grid;
@@ -196,7 +223,7 @@ import { IconComponent } from '../../primitives/icon/icon.component';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.fit]': 'fit()', '[class.size-sm]': "size() === 'sm'" },
+  host: { '[class.fit]': 'fit()', '[class.size-sm]': "size() === 'sm'", '[class.size-row]': "size() === 'row'" },
 })
 export class DeckCoverComponent {
   readonly name = input<string | null>(null);
@@ -206,7 +233,7 @@ export class DeckCoverComponent {
   readonly rank = input(null, { transform: (v: unknown) => (v == null ? null : numberAttribute(v)) });
   readonly isPrivate = input(false, { transform: booleanAttribute });
   readonly fit = input(false, { transform: booleanAttribute });
-  /** auto: fills its grid cell; sm: fixed 7.5rem wide. */
-  readonly size = input<'auto' | 'sm'>('auto');
+  /** auto: fills its grid cell; sm: fixed 7.5rem wide; row: as tall as its container. */
+  readonly size = input<'auto' | 'sm' | 'row'>('auto');
   readonly selected = output<void>();
 }

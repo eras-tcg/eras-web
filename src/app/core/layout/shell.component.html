@@ -7,7 +7,7 @@
         <ul class="links">
           @for (item of nav; track item.route) {
             <li>
-              <a [routerLink]="item.route" routerLinkActive="is-active" ariaCurrentWhenActive="page" [attr.title]="item.label">
+              <a [routerLink]="item.route" routerLinkActive="is-active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label">
                 <eras-icon [name]="item.icon" />
                 <span>{{ item.label }}</span>
               </a>
@@ -24,7 +24,6 @@
             role="switch"
             [class.on]="editMode.active()"
             [attr.aria-checked]="editMode.active()"
-            [attr.title]="editMode.active() ? 'Salir del modo edición' : 'Mostrar los controles de edición'"
             (click)="editMode.toggle()"
           >
             <eras-icon name="edit" />

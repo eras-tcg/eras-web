@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 
 /**
  * Standard page frame: title, optional subtitle and actions, then the content.
@@ -20,10 +20,12 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   `,
   styleUrl: './page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class]': '"width-" + width()' },
+  host: { '[class]': '"width-" + width()', '[class.fill]': 'fill()' },
 })
 export class PageComponent {
   readonly title = input.required<string>();
   readonly subtitle = input<string | null>(null);
   readonly width = input<'narrow' | 'default' | 'wide'>('default');
+  /** Exactly one screen high (below the header); the content fills the rest instead of scrolling the page. */
+  readonly fill = input(false, { transform: booleanAttribute });
 }

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfig } from '../http/api-config';
-import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission, RegisterRequest } from './auth.model';
+import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission } from './auth.model';
 import { decodeJwtPayload } from './jwt';
 
 // Same keys as the Vue app, so a session can be shared when both run on the same domain
@@ -42,11 +42,6 @@ export class AuthService {
 
   logout(): void {
     this.setSession(null, null);
-  }
-
-  /** Creates an account. It stays disabled until the e-mailed link is opened, so this does not sign in. */
-  async register(request: RegisterRequest): Promise<void> {
-    await firstValueFrom(this.http.post(this.api.url('/api/auth/register'), request, { responseType: 'text' }));
   }
 
   /** Confirms an account with the token from the verification e-mail. */

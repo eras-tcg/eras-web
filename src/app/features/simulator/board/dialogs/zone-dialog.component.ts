@@ -56,7 +56,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
         <ol class="cards" [attr.aria-label]="title()">
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li [class.selected]="selected().has(c.instanceId)">
-              <eras-game-card small [imageUrl]="c.imageUrl" [hidden]="c.faceDown && !peeked().has(c.instanceId)" [attr.title]="c.cardName" />
+              <eras-game-card small [imageUrl]="c.imageUrl" [hidden]="c.faceDown && !peeked().has(c.instanceId)" [attr.aria-label]="c.cardName" />
               @if (!data.opponent) {
                 <label class="pick">
                   <input type="checkbox" [checked]="selected().has(c.instanceId)" (change)="toggle(c.instanceId)" />

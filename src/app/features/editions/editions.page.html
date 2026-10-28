@@ -12,7 +12,7 @@
   } @else if (!store.error() && store.editions().length === 0) {
     <eras-empty-state title="Todavía no hay ediciones" />
   } @else {
-    <eras-grid minColumn="18rem">
+    <eras-grid minColumn="26rem">
       @for (edition of store.editions(); track edition.editionId) {
         <eras-edition-tile
           [code]="edition.editionId"

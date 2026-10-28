@@ -30,7 +30,6 @@ import { BoardDialogs } from './board-dialogs';
       [selectable]="game.pendingTargetSource() !== null"
       [small]="small()"
       [attr.draggable]="opponent() ? null : 'true'"
-      [attr.title]="hidden() ? null : slot().cardName"
       tabindex="0"
       role="button"
       [attr.aria-label]="label()"

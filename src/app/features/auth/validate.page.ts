@@ -26,7 +26,7 @@ type Status = { state: 'loading' } | { state: 'success' } | { state: 'error'; me
           }
           @case ('error') {
             <eras-empty-state title="No se pudo verificar" [description]="errorMessage()">
-              <a erasButton variant="secondary" routerLink="/register">Volver al registro</a>
+              <a erasButton variant="secondary" routerLink="/login">Ir a iniciar sesión</a>
             </eras-empty-state>
           }
         }

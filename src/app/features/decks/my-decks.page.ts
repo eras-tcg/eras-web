@@ -90,7 +90,7 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
               >
                 <ng-container ngProjectAs="[cover-actions]">
                   <ng-container *erasCan="'manage_decks'">
-                    <a erasButton variant="secondary" size="sm" routerLink="/deck-builder" [queryParams]="editQuery(deck)" [attr.aria-label]="'Editar ' + deck.deckName" title="Editar">
+                    <a erasButton variant="secondary" size="sm" routerLink="/deck-builder" [queryParams]="editQuery(deck)" [attr.aria-label]="'Editar ' + deck.deckName">
                       <eras-icon name="edit" />
                     </a>
                     <button
@@ -99,7 +99,6 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
                       size="sm"
                       type="button"
                       [attr.aria-label]="'Borrar ' + deck.deckName"
-                      title="Borrar"
                       [disabled]="deleting() === deck.id"
                       (click)="remove(deck)"
                     >

@@ -4,7 +4,7 @@ import { Permission } from './auth.model';
 import { AuthService } from './auth.service';
 
 /** Pages reachable without a session; everything else needs one. */
-export const PUBLIC_PATHS = ['login', 'register', 'validate'];
+export const PUBLIC_PATHS = ['login', 'validate'];
 
 /** Route only for signed-in users; others go to /login and come back after signing in. */
 export const authGuard: CanMatchFn = (_route, segments) => {

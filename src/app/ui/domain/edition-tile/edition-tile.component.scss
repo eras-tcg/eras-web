@@ -2,16 +2,23 @@
   display: block;
 }
 
+eras-card {
+  block-size: 100%;
+}
+
+/* Horizontal tile: card-shaped art on the left, text (and actions) on the right */
 .tile {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
   block-size: 100%;
 }
 
 .open {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   padding: 0;
   border: 0;
   background: none;
@@ -20,12 +27,18 @@
   cursor: pointer;
 }
 
+.open:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
 .media {
   display: grid;
   place-items: center;
-  aspect-ratio: 16 / 9;
-  background: var(--color-surface-muted);
+  align-self: start;
+  aspect-ratio: 63 / 88;
   overflow: hidden;
+  background: var(--color-surface-muted);
 }
 
 .media img {
@@ -37,14 +50,18 @@
 .placeholder {
   color: var(--color-text-subtle);
   font-family: var(--font-family-display);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
 }
 
 .info {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-4) var(--space-4) var(--space-2);
+  padding: var(--space-4);
+}
+
+.tile:has(.actions:not(:empty)) .info {
+  padding-block-end: 3.75rem;
 }
 
 .code {
@@ -58,6 +75,9 @@
 .name {
   font-family: var(--font-family-display);
   font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .count {
@@ -67,20 +87,35 @@
 
 .description {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
   overflow: hidden;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
+/* Sits over the button's text column, at the bottom */
 .actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
+  grid-column: 2;
+  grid-row: 2;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4) var(--space-4);
+  padding: 0 var(--space-4) var(--space-4);
 }
 
 .actions:empty {
   display: none;
+}
+
+@media (max-width: 30rem) {
+  .tile {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+  }
+
+  .name {
+    font-size: var(--font-size-md);
+  }
 }

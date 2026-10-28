@@ -95,7 +95,6 @@
     [targeted]="isTargeted('deck')"
     [selectable]="targeting()"
     [cdkContextMenuTriggerFor]="opponent() ? null : deckMenu"
-    [attr.title]="opponent() ? null : 'Doble clic: robar · clic derecho: acciones'"
     (dragover)="dragOver($event, 'deck')"
     (dragleave)="dragLeave()"
     (drop)="drop($event, 'deck')"

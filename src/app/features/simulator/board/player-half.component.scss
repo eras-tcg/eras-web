@@ -1,7 +1,7 @@
 // Board layout of one side: lives | field over hand | piles. The opponent side swaps field and hand.
 :host {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) 8.5rem;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 11.5rem;
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     'lives field piles'

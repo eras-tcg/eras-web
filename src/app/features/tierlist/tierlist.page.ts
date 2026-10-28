@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
@@ -48,10 +48,10 @@ const DRAG_TYPE = 'application/x-eras-deck';
 export class TierlistPage {
   private readonly api = inject(GamesApi);
   private readonly decksStore = inject(DecksStore);
-  private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
 
-  protected readonly canEdit = computed(() => this.auth.user() !== null && this.auth.can('manage_decks'));
+  protected readonly canEdit = computed(() => this.editMode.allows('manage_decks'));
   protected readonly list = signal<TierList | null>(null);
   private saved: TierList | null = null;
   protected readonly pageId = signal('');
@@ -75,6 +75,12 @@ export class TierlistPage {
 
   constructor() {
     void this.load();
+    const unregister = this.editMode.registerDirty(() => this.editing());
+    inject(DestroyRef).onDestroy(unregister);
+    // Turning edit mode off (already confirmed by the navbar) drops the draft
+    effect(() => {
+      if (!this.canEdit() && untracked(() => this.editing())) this.cancel();
+    });
   }
 
   protected deck(id: string): Deck | null {

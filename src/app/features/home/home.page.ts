@@ -1,20 +1,19 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CanDirective } from '@core/auth/can.directive';
+import { EditDirective } from '@core/auth/edit.directive';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { HomeStore } from '@data/home/home.store';
-import { DeckTileComponent } from '@ui/domain/deck-tile/deck-tile.component';
+import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { FeaturedEditionComponent } from '@ui/domain/featured-edition/featured-edition.component';
 import { NewsCardComponent } from '@ui/domain/news-card/news-card.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
-import { PageComponent } from '@ui/layout/page/page.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
-import { SplitComponent } from '@ui/layout/split/split.component';
+import { HomeLayoutComponent } from '@ui/layout/home-layout/home-layout.component';
+import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
@@ -22,17 +21,15 @@ import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dia
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { NEWS } from './news';
 
-/** Landing page: featured edition, featured decks and news. With manage_home the content can be edited. */
+/** Landing page in one screen: featured edition, featured decks and news. Editable in edit mode (manage_home). */
 @Component({
   selector: 'eras-home-page',
   imports: [
-    CanDirective,
-    PageComponent,
-    SplitComponent,
-    GridComponent,
-    SectionHeaderComponent,
+    EditDirective,
+    HomeLayoutComponent,
+    StackComponent,
+    DeckCoverComponent,
     FeaturedEditionComponent,
-    DeckTileComponent,
     NewsCardComponent,
     AlertComponent,
     EmptyStateComponent,
@@ -55,6 +52,13 @@ export class HomePage {
 
   constructor() {
     void this.home.load();
+    const editMode = inject(EditModeService);
+    const unregister = editMode.registerDirty(() => this.home.editing());
+    inject(DestroyRef).onDestroy(unregister);
+    // Turning edit mode off (already confirmed by the navbar) drops the draft
+    effect(() => {
+      if (!editMode.active() && untracked(() => this.home.editing())) this.home.cancelEdit();
+    });
   }
 
   protected openCards(editionId: string): void {

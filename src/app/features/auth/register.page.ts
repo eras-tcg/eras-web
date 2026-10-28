@@ -5,17 +5,16 @@ import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { PageComponent } from '@ui/layout/page/page.component';
+import { AuthLayoutComponent } from '@ui/layout/auth-layout/auth-layout.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
 import { matching } from './matching.validator';
 
 type Field = 'username' | 'email' | 'password';
 
 @Component({
   selector: 'eras-register-page',
-  imports: [ReactiveFormsModule, RouterLink, PageComponent, CardComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
   templateUrl: './register.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

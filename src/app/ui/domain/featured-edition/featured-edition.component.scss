@@ -74,3 +74,13 @@
     max-block-size: 18rem;
   }
 }
+
+// fill: take the parent's height instead of the 5:7 ratio (e.g. a full-height column)
+:host(.fill) {
+  block-size: 100%;
+}
+
+:host(.fill) .cover {
+  block-size: 100%;
+  aspect-ratio: auto;
+}

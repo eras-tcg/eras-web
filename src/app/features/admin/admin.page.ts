@@ -1,38 +1,36 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
-import { ADMIN_TOOLS, AdminTool } from '@core/navigation/admin-tools';
-import { legacyUrl } from '@core/navigation/legacy-url';
+import { ADMIN_GROUPS, ADMIN_TOOLS } from '@core/navigation/admin-tools';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
+import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
+import { LinkTileComponent } from '@ui/surfaces/link-tile/link-tile.component';
 
-/** Entry point to the administration tools the user is allowed to use. */
+/** Entry point to the administration tools the user is allowed to use, grouped by area. */
 @Component({
   selector: 'eras-admin-page',
-  imports: [RouterLink, PageComponent, GridComponent, CardComponent, StackComponent, EmptyStateComponent, IconComponent],
+  imports: [PageComponent, GridComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, LinkTileComponent],
   template: `
-    <eras-page title="Administración">
-      @if (tools().length === 0) {
+    <eras-page title="Administración" subtitle="Herramientas para gestionar cuentas, cartas y partidas">
+      @if (groups().length === 0) {
         <eras-empty-state title="No tienes herramientas de administración" />
       } @else {
-        <eras-grid minColumn="16rem">
-          @for (tool of tools(); track tool.label) {
-            <eras-card interactive>
-              <eras-stack [gap]="1">
-                @if (tool.route) {
-                  <a [routerLink]="tool.route"><strong>{{ tool.label }}</strong></a>
-                } @else {
-                  <a [href]="href(tool)"><strong>{{ tool.label }}</strong> <eras-icon name="external" /></a>
-                }
-                <span>{{ tool.description }}</span>
+        <eras-stack [gap]="6">
+          @for (group of groups(); track group.name) {
+            <section>
+              <eras-stack [gap]="3">
+                <eras-section-header [title]="group.name" />
+                <eras-grid minColumn="18rem" [gap]="3">
+                  @for (tool of group.tools; track tool.route) {
+                    <eras-link-tile [link]="tool.route" [icon]="tool.icon" [heading]="tool.label" [description]="tool.description" />
+                  }
+                </eras-grid>
               </eras-stack>
-            </eras-card>
+            </section>
           }
-        </eras-grid>
+        </eras-stack>
       }
     </eras-page>
   `,
@@ -40,11 +38,10 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 })
 export class AdminPage {
   private readonly auth = inject(AuthService);
-  protected readonly tools = computed(() => {
+
+  protected readonly groups = computed(() => {
     this.auth.user();
-    return ADMIN_TOOLS.filter((t) => t.permissions.some((p) => this.auth.can(p)));
+    const allowed = ADMIN_TOOLS.filter((t) => t.permissions.some((p) => this.auth.can(p)));
+    return ADMIN_GROUPS.map((name) => ({ name, tools: allowed.filter((t) => t.group === name) })).filter((g) => g.tools.length);
   });
-  protected href(tool: AdminTool): string {
-    return legacyUrl(tool.legacyPath ?? '/');
-  }
 }

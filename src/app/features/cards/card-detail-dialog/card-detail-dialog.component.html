@@ -25,7 +25,7 @@
     (nextPrinting)="switchPrinting(1)"
   >
     <ng-container ngProjectAs="[detail-actions]">
-      <ng-container *erasCan="'manage_cards'">
+      <ng-container *erasEdit="'manage_cards'">
         @if (actionError(); as message) {
           <eras-alert tone="danger">{{ message }}</eras-alert>
         }

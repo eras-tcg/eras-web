@@ -8,102 +8,302 @@
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-header);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
   border-block-end: var(--border-width) solid var(--color-border);
 }
 
 .bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  max-inline-size: var(--layout-max-width);
+  gap: var(--space-4);
+  max-inline-size: 90rem;
+  min-block-size: 3.5rem;
   margin-inline: auto;
-  padding: var(--space-3) var(--layout-gutter);
+  padding: var(--space-2) var(--layout-gutter);
+}
+
+.compact .bar {
+  min-block-size: 3rem;
+  padding-block: var(--space-1);
 }
 
 .brand {
-  margin-inline-end: auto;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text);
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl);
+  letter-spacing: 0.06em;
   text-decoration: none;
 }
 
-.nav {
-  display: none;
-  flex-basis: 100%;
-  flex-direction: column;
-  gap: var(--space-3);
+.logo {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
 }
 
-.nav.is-open {
-  display: flex;
+/* Main navigation */
+.nav {
+  display: none;
 }
 
 .links {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .links a {
-  display: block;
-  padding: var(--space-2) var(--space-2);
-  border-radius: var(--radius-sm);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard);
 }
 
-.links a:hover,
-.links a.is-active {
+.links a:hover {
   color: var(--color-text);
   background: var(--color-surface-muted);
 }
 
-.tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.user {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-}
-
-.user:hover {
+.links a.is-active {
   color: var(--color-text);
 }
 
-.main {
-  flex: 1;
+.links eras-icon {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+  opacity: 0.85;
 }
 
+/* Right side */
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.edit-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard);
+}
+
+.edit-switch:hover {
+  color: var(--color-text);
+}
+
+.edit-switch eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.track {
+  position: relative;
+  inline-size: 2rem;
+  block-size: 1.15rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+  transition: background-color var(--duration-base) var(--easing-standard);
+}
+
+.knob {
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-start: 0.15rem;
+  inline-size: 0.85rem;
+  block-size: 0.85rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-base) var(--easing-standard);
+}
+
+.edit-switch.on {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+}
+
+.edit-switch.on .track {
+  background: var(--color-warning);
+}
+
+.edit-switch.on .knob {
+  transform: translateX(0.85rem);
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.account:hover,
+.account[aria-expanded='true'] {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+}
+
+.account eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 1.85rem;
+  block-size: 1.85rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.edit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--layout-gutter);
+  background: var(--color-warning);
+  color: #1a1a1a;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.edit-banner eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+}
+
+// Column flex: full-screen pages (home, simulator board) can take exactly the space left below the header
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Small screens: links in a drop-down panel */
+@media (max-width: 63.99rem) {
+  .bar {
+    flex-wrap: wrap;
+  }
+
+  .nav.is-open {
+    display: block;
+    order: 3;
+    flex-basis: 100%;
+    padding-block: var(--space-2);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .nav.is-open .links {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .nav.is-open .links a.is-active {
+    background: var(--color-surface-muted);
+  }
+
+  .account-name,
+  .edit-label,
+  .account eras-icon {
+    display: none;
+  }
+
+  .bar {
+    gap: var(--space-2);
+  }
+
+  .edit-switch {
+    padding-inline-start: var(--space-2);
+  }
+}
+
+/* Phones: logo only, so the tools fit on the same row */
+@media (max-width: 29.99rem) {
+  .brand-text {
+    display: none;
+  }
+}
+
+/* Wide screens: inline links, the active one underlined */
 @media (min-width: 64rem) {
   .menu-toggle {
     display: none;
   }
 
-  .nav,
-  .nav.is-open {
-    display: flex;
-    flex-basis: auto;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-5);
+  .nav {
+    display: block;
+    min-inline-size: 0;
   }
 
   .links {
-    flex-direction: row;
+    gap: var(--space-1);
+  }
+
+  .links a.is-active::after {
+    position: absolute;
+    inset-inline: var(--space-3);
+    inset-block-end: calc(-1 * var(--space-2) - 1px);
+    block-size: 2px;
+    border-radius: 2px;
+    background: var(--color-text);
+    content: '';
+  }
+}
+
+/* Mid-size screens: icons only until the labels fit */
+@media (min-width: 64rem) and (max-width: 81.99rem) {
+  .links a span,
+  .edit-label {
+    display: none;
+  }
+
+  .links a {
+    padding-inline: var(--space-2);
+  }
+
+  .links a.is-active::after {
+    inset-inline: var(--space-2);
   }
 }

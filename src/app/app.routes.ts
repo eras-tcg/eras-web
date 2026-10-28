@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
-import { authGuard, permissionGuard } from '@core/auth/auth.guards';
+import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
 
-/** Each feature is lazy-loaded. Pages not migrated yet are linked to the legacy app from the navigation. */
+/** Each feature is lazy-loaded. The whole site needs a session except login, register and validate. */
 export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
+    canActivateChild: [loginRequiredGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       {
@@ -31,11 +32,13 @@ export const routes: Routes = [
       },
       {
         path: 'login',
+        canMatch: [guestGuard],
         title: 'Iniciar sesión · ERAS',
         loadComponent: () => import('@features/auth/login.page').then((m) => m.LoginPage),
       },
       {
         path: 'register',
+        canMatch: [guestGuard],
         title: 'Crear cuenta · ERAS',
         loadComponent: () => import('@features/auth/register.page').then((m) => m.RegisterPage),
       },

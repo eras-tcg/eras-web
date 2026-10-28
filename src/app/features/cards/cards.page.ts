@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName } from '@data/cards/card-rules';
@@ -50,7 +50,7 @@ export class CardsPage {
 
   protected readonly store = inject(CardsStore);
   protected readonly editions = inject(EditionsStore);
-  private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
 
@@ -61,7 +61,7 @@ export class CardsPage {
   protected readonly showFilters = signal(this.wide);
   protected readonly renderCount = signal(PAGE_SIZE);
 
-  private readonly canManage = computed(() => this.auth.user() !== null && this.auth.can('manage_cards'));
+  private readonly canManage = computed(() => this.editMode.allows('manage_cards'));
 
   /** Filtered and sorted, before collapsing repeated names (the count shows collapsed). */
   private readonly filtered = computed(() =>

@@ -98,7 +98,11 @@ export class BoardPage {
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */
   protected readonly engineNotice = computed(() => {
     const effect = this.game.resolving();
-    if (effect) return `${effect.sourceName} · ${effect.label}`;
+    if (effect) {
+      // The whole chain, last link first (it resolves first)
+      const chain = this.game.state()?.chain ?? [];
+      return [...chain].reverse().map((e) => `Cadena ${e.link}: ${e.sourceName} · ${e.label}`).join('  ←  ');
+    }
     const prompt = this.game.state()?.prompt;
     if (prompt) return prompt.title;
     const combat = this.game.state()?.combat;

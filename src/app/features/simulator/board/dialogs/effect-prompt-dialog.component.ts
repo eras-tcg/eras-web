@@ -51,7 +51,7 @@ export interface EffectPromptData {
               <eras-game-card [imageUrl]="c.imageUrl" />
               <span class="tag">
                 @if (chosen().has(c.instanceId)) {
-                  <eras-icon name="check" /> {{ prompt.chosenLabel ?? 'Elegida' }}
+                  <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
                 } @else if (prompt.kind === 'CONFIRM') {
                   {{ c.cardName }}
                 } @else if (!valid.has(c.instanceId)) {
@@ -171,6 +171,12 @@ export class EffectPromptDialogComponent {
     const list = [...this.order()];
     moveItemInArray(list, event.previousIndex, event.currentIndex);
     this.order.set(list);
+  }
+
+  /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
+  protected chosenTag(id: string): string {
+    if (this.prompt.purpose === 'ORDER') return `Cadena +${[...this.chosen()].indexOf(id) + 1}`;
+    return this.prompt.chosenLabel ?? 'Elegida';
   }
 
   /** CONFIRM prompts: choosing the card means yes. */

@@ -16,8 +16,10 @@ export interface RulesView {
   opponentMarker: number;
   /** I still have the "ventaja del iniciador": an Iniciador costs me 1 less, once (rule 6.2.1.4). */
   starterAdvantage: boolean;
-  /** My field, for the Requerimiento of a Ritual. */
+  /** My field, for the Requerimiento of a special summon. */
   field: CardSlot[];
+  /** My Tributos (materials of a Materialización). */
+  tributes: CardSlot[];
   /** Slow effects I can activate now (the server lists them). */
   activatable: ActivatableEffect[];
   /** I already played a structure normally this turn (only one per turn). */
@@ -37,6 +39,7 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     opponentMarker: opponent ? (state?.players[opponent]?.resourceCount ?? 0) : 0,
     starterAdvantage: !!me && state?.starterAdvantageUserId === me,
     field: (me && state?.players[me]?.field) || [],
+    tributes: (me && state?.players[me]?.tributeZone) || [],
     activatable: (me && state?.activatable?.[me]) || [],
     structurePlayed: !!me && !!state?.structurePlayed?.includes(me),
   };
@@ -127,6 +130,41 @@ export function canRitual(view: RulesView, slot: CardSlot): boolean {
   return req.sum ? sumsExactly(materials, req.level) : materials.some((c) => c.level === req.level);
 }
 
+/** The name of a special summon kind, for the board. */
+export function specialKindLabel(kind: string | null | undefined): string {
+  switch (kind?.toLowerCase()) {
+    case 'evolution':
+      return 'Evolución';
+    case 'promotion':
+      return 'Ascenso';
+    case 'materialization':
+      return 'Materialización';
+    default:
+      return 'Ritual';
+  }
+}
+
+/** Evolución, Ascenso or Materialización can be done now (mirrors the server; Ritual has canRitual). */
+export function canOtherSpecial(view: RulesView, slot: CardSlot): boolean {
+  const kind = slot.specialSummonKind?.toLowerCase() ?? '';
+  if (!['evolution', 'promotion', 'materialization'].includes(kind) || slot.specialCost == null) return false;
+  const text = slot.requirement?.toLowerCase() ?? '';
+  const level = /ni[ev]*l\s*(\d+)/.exec(text);
+  if (!level || !canPay(view, slot.specialCost)) return false;
+  const summonerLevel = Number(level[1]);
+  if (kind === 'promotion') {
+    const sum = /suman\s*(\d+)/.exec(text);
+    const allies = view.field.filter((c) => c.cardType === 'creature').reduce((t, c) => t + (c.level ?? 0), 0);
+    if (sum && allies < Number(sum[1])) return false;
+  }
+  const summoners = view.field.filter((c) => c.cardType === 'creature' && c.level === summonerLevel && sharesTypeOrColor(c, slot));
+  if (kind !== 'materialization') return summoners.length > 0;
+  const material = /material\s*ni[ev]*l\s*(\d+)/.exec(text);
+  const materialLevel = material ? Number(material[1]) : summonerLevel;
+  const pool = [...view.tributes, ...view.field].filter((c) => c.cardType === 'creature' && c.level === materialLevel && sharesTypeOrColor(c, slot));
+  return summoners.some((s) => pool.some((m) => m !== s));
+}
+
 /** Legal actions of one of your cards; the server checks them again. */
 export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): LegalAction[] {
   if (!view.inProgress || view.phase !== 'MAIN' || view.closed) return [];
@@ -139,7 +177,7 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
     if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot)) actions.unshift('attack');
   } else if (zone === 'hand') {
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
-    if (slot.cardType === 'creature' && canRitual(view, slot)) actions.push('ritual');
+    if (slot.cardType === 'creature' && (canRitual(view, slot) || canOtherSpecial(view, slot))) actions.push('ritual');
     const structureLeft = slot.cardType !== 'structure' || !view.structurePlayed;
     if ((slot.cardType === 'utility' || slot.cardType === 'structure') && structureLeft && canPay(view, playCost(view, slot))) actions.push('play');
   }

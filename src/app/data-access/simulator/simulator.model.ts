@@ -154,6 +154,7 @@ export type PromptPurpose =
   | 'PROVOKE'
   | 'ADVANCE'
   | 'RITUAL'
+  | 'SPECIAL'
   | 'SPECIAL_FRONT'
   | 'REINFORCE'
   | 'LIFE_PLAY'

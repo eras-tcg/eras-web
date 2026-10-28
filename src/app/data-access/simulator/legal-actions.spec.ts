@@ -31,6 +31,7 @@ const open: RulesView = {
   opponentMarker: 1,
   starterAdvantage: false,
   field: [],
+  tributes: [],
   activatable: [],
   structurePlayed: false,
 };

@@ -6,7 +6,7 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
-import { LegalAction, legalActions } from '@data/simulator/legal-actions';
+import { LegalAction, legalActions, specialKindLabel } from '@data/simulator/legal-actions';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
@@ -83,7 +83,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
           @for (a of actions(); track a) {
             <button type="button" class="action" [class.attack]="a === 'attack'" [class.play]="a === 'summon' || a === 'ritual' || a === 'play'" [class.activate]="a === 'activate'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
               <eras-icon [name]="actionIcons[a]" />
-              <span>{{ actionLabels[a] }}</span>
+              <span>{{ a === 'ritual' ? specialLabel() : actionLabels[a] }}</span>
             </button>
           }
         }
@@ -243,6 +243,8 @@ export class SimCardComponent {
   protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'plus', ritual: 'layers', play: 'play', activate: 'sparkles' };
   /** Slow effects of this card that can be activated now. */
   protected readonly myEffects = computed(() => this.game.rules().activatable.filter((e) => e.instanceId === this.slot().instanceId));
+  /** The card's special summon: Ritual, Evolución, Ascenso or Materialización. */
+  protected readonly specialLabel = computed(() => specialKindLabel(this.slot().specialSummonKind));
   /** Can be played, summoned or summoned by Ritual now: blue glow. */
   protected readonly canPlay = computed(() => this.actions().some((a) => a === 'summon' || a === 'ritual' || a === 'play'));
   /** Has an effect to activate now: gold glow. */

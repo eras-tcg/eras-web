@@ -37,7 +37,8 @@ export interface EffectPromptData {
             </li>
           }
         </ul>
-      } @else if (prompt.effectText) {
+      } @else if (prompt.effectText && !inChain()) {
+        <!-- An effect already in the chain shows its text there -->
         <blockquote class="effect-text"><strong>Efecto:</strong> {{ prompt.effectText }}</blockquote>
       }
       @if (prompt.reorderRest) {
@@ -234,6 +235,9 @@ export class EffectPromptDialogComponent {
     moveItemInArray(list, event.previousIndex, event.currentIndex);
     this.order.set(list);
   }
+
+  /** The effect of this choice is in the chain (its text is shown in the chain panel). */
+  protected readonly inChain = computed(() => !!this.prompt.effectId && !!this.game.state()?.chain?.some((e) => e.id === this.prompt.effectId));
 
   /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
   protected chosenTag(id: string): string {

@@ -95,6 +95,8 @@ export interface GameState {
   starterAdvantageUserId?: string | null;
   /** Slow effects each player can activate now, by player id. */
   activatable?: Record<string, ActivatableEffect[]> | null;
+  /** Cards each player can special summon now (from the hand, or the Tributos when the card allows it), by player id. */
+  specialSummonable?: Record<string, string[]> | null;
   /** Players who already played a structure normally this turn (one per turn). */
   structurePlayed?: string[] | null;
   /** Who won the game that just ended, and why. */

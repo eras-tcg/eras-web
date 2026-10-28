@@ -134,6 +134,8 @@
     [dropActive]="over() === 'tributeZone'"
     [targeted]="isTargeted('tributeZone')"
     [selectable]="targeting()"
+    [class.can-play]="tributeActions().play"
+    [class.can-activate]="tributeActions().activate"
     (dragover)="dragOver($event, 'tributeZone')"
     (dragleave)="dragLeave()"
     (drop)="drop($event, 'tributeZone')"

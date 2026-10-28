@@ -3,6 +3,8 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZONE_LABELS, ZoneName } from '@data/simulator/simulator.model';
+import { legalActions, specialKindLabel } from '@data/simulator/legal-actions';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -58,7 +60,20 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
         <ol class="cards" [attr.aria-label]="title()">
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li [class.selected]="selected().has(c.instanceId)">
-              <eras-game-card small [imageUrl]="c.imageUrl" [hidden]="c.faceDown && !peeked().has(c.instanceId)" [attr.aria-label]="c.cardName" />
+              <eras-game-card
+                small
+                [imageUrl]="c.imageUrl"
+                [hidden]="c.faceDown && !peeked().has(c.instanceId)"
+                [attr.aria-label]="c.cardName"
+                [class.can-play]="actionsOf(c).includes('ritual')"
+                [class.can-activate]="actionsOf(c).includes('activate')"
+              />
+              @if (actionsOf(c).includes('ritual')) {
+                <button erasButton size="sm" type="button" (click)="special(c)">{{ kindLabel(c) }}</button>
+              }
+              @for (e of effectsOf(c); track e.scriptId) {
+                <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">{{ e.label }}</button>
+              }
               @if (!data.opponent && !data.readonly) {
                 <label class="pick">
                   <input type="checkbox" [checked]="selected().has(c.instanceId)" (change)="toggle(c.instanceId)" />
@@ -99,6 +114,8 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); }
     li.selected { background: var(--color-surface-muted); outline: 2px solid var(--color-primary); }
+    eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
+    eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
     .pick { display: inline-flex; }
     .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
   `,
@@ -117,6 +134,32 @@ export class ZoneDialogComponent {
   protected readonly destinations = computed(() => DESTINATIONS.filter((d) => d.zone !== this.data.zone));
   protected readonly canReorder = computed(() => !this.data.opponent && (this.data.zone === 'discardPile' || this.data.zone === 'tributeZone'));
   private readonly targetPlayer = computed(() => (this.data.opponent ? (this.game.opponentState()?.userId ?? null) : null));
+
+  private readonly lookOnly = inject(SheetState).lowered;
+
+  /** What the rules let me do with one of my cards here now. */
+  protected actionsOf(c: CardSlot) {
+    return this.data.opponent || this.lookOnly() ? [] : legalActions(this.game.rules(), c, this.data.zone);
+  }
+
+  protected effectsOf(c: CardSlot) {
+    return this.actionsOf(c).includes('activate') ? this.game.rules().activatable.filter((e) => e.instanceId === c.instanceId) : [];
+  }
+
+  protected kindLabel(c: CardSlot): string {
+    return specialKindLabel(c.specialSummonKind);
+  }
+
+  /** The server asks for the summoner and the materials. */
+  protected special(c: CardSlot): void {
+    this.ref.close();
+    this.game.ritualSummon(c.instanceId);
+  }
+
+  protected activate(c: CardSlot, scriptId: string): void {
+    this.ref.close();
+    this.game.activateEffect(c.instanceId, scriptId);
+  }
 
   protected toggle(id: string): void {
     this.selected.update((s) => {

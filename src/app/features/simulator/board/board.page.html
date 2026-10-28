@@ -111,6 +111,8 @@
   </div>
 
   <eras-card-flights />
+  <!-- The card a choice is about stays bright above the choice's backdrop -->
+  <eras-prompt-spotlight />
   <eras-damage-reveal />
   @if (phasePopup(); as popup) {
     <div class="phase-popup" [class.rival]="!popup.mine" role="status" aria-live="polite">

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, GameEvent, GameState } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
@@ -27,7 +27,8 @@ interface Clash {
   mine: boolean;
 }
 
-type Shown = Hit | Clash;
+/** Each one gets its own id: it is drawn anew, so its animation starts over even right after another one. */
+type Shown = (Hit | Clash) & { id: number };
 
 const SHOW_MS = 2600;
 
@@ -39,7 +40,7 @@ const SHOW_MS = 2600;
   selector: 'eras-damage-reveal',
   imports: [GameCardComponent, IconComponent],
   template: `
-    @if (current(); as s) {
+    @for (s of shown(); track s.id) {
       <button type="button" class="reveal" [class.mine]="s.mine" aria-live="assertive" aria-label="Saltar la animación" (click)="skip()">
         @if (s.kind === 'damage') {
           <div class="side">
@@ -135,6 +136,11 @@ export class DamageRevealComponent {
   private readonly game = inject(GameStore);
   private readonly animations = inject(BoardAnimations);
   protected readonly current = signal<Shown | null>(null);
+  protected readonly shown = computed(() => {
+    const current = this.current();
+    return current ? [current] : [];
+  });
+  private ids = 0;
   private readonly queue: Shown[] = [];
   private lastSeq: number | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -166,7 +172,7 @@ export class DamageRevealComponent {
     const events = timeline.filter((e) => (e.type === 'LIFE_DAMAGE' || e.type === 'CLASH') && e.seq > (this.lastSeq ?? 0));
     this.lastSeq = Math.max(this.lastSeq, maxSeq);
     if (!events.length || !state) return;
-    for (const e of events) this.queue.push(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e));
+    for (const e of events) this.queue.push({ ...(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e)), id: ++this.ids });
     // The choices wait until all of them have been shown
     this.release ??= this.animations.begin();
     if (!this.current()) this.next();

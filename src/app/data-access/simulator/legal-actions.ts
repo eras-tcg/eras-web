@@ -22,6 +22,8 @@ export interface RulesView {
   tributes: CardSlot[];
   /** Slow effects I can activate now (the server lists them). */
   activatable: ActivatableEffect[];
+  /** Cards I can special summon now, as the server says; null when it does not say (older server: checked here). */
+  specialSummonable: string[] | null;
   /** I already played a structure normally this turn (only one per turn). */
   structurePlayed: boolean;
 }
@@ -41,6 +43,7 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     field: (me && state?.players[me]?.field) || [],
     tributes: (me && state?.players[me]?.tributeZone) || [],
     activatable: (me && state?.activatable?.[me]) || [],
+    specialSummonable: state?.specialSummonable ? ((me && state.specialSummonable[me]) || []) : null,
     structurePlayed: !!me && !!state?.structurePlayed?.includes(me),
   };
 }
@@ -187,11 +190,20 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
     if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot)) actions.unshift('attack');
   } else if (zone === 'hand') {
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
-    if (slot.cardType === 'creature' && (canRitual(view, slot) || canOtherSpecial(view, slot))) actions.push('ritual');
+    if (slot.cardType === 'creature' && canSpecial(view, slot)) actions.push('ritual');
     const structureLeft = slot.cardType !== 'structure' || !view.structurePlayed;
     if ((slot.cardType === 'utility' || slot.cardType === 'structure') && structureLeft && canPay(view, playCost(view, slot))) actions.push('play');
+  } else if (zone === 'tributeZone') {
+    // "como si estuviera en tu mano para invocaciones especiales" (Falanx): only the server knows
+    if (view.specialSummonable?.includes(slot.instanceId)) actions.push('ritual');
   }
   return actions;
+}
+
+/** Its special summon can be done now: the server's list, or the checks here when it sends none. */
+function canSpecial(view: RulesView, slot: CardSlot): boolean {
+  if (view.specialSummonable) return view.specialSummonable.includes(slot.instanceId);
+  return canRitual(view, slot) || canOtherSpecial(view, slot);
 }
 
 /** The field in two rows, each ordered left to right. */

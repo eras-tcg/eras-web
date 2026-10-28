@@ -24,13 +24,14 @@ import { DOCUMENT } from '@angular/common';
 import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
+import { PromptSpotlightComponent } from './prompt-spotlight.component';
 
 const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [CardFlightsComponent, DamageRevealComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',

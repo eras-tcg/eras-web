@@ -1,7 +1,7 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
 import { zoneTargetId } from '@data/simulator/game-rules';
-import { fieldRows } from '@data/simulator/legal-actions';
+import { fieldRows, legalActions } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
@@ -50,6 +50,11 @@ export class PlayerHalfComponent {
 
   protected readonly targeting = computed(() => this.game.pendingTargetSource() !== null);
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
+  /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
+  protected readonly tributeActions = computed(() => {
+    const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c, 'tributeZone'));
+    return { play: actions.includes('ritual'), activate: actions.includes('activate') };
+  });
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
   protected readonly rows = computed(() => fieldRows(this.player().field));
   /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */

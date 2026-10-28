@@ -197,3 +197,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+// The Tributos pile glows like a card when one of its cards can do something now (blue: summon, gold: effect)
+eras-game-zone.can-play {
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%);
+}
+
+eras-game-zone.can-activate {
+  box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%);
+}

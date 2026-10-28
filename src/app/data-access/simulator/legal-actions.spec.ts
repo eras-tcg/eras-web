@@ -33,6 +33,7 @@ const open: RulesView = {
   field: [],
   tributes: [],
   activatable: [],
+  specialSummonable: null,
   structurePlayed: false,
 };
 
@@ -109,6 +110,17 @@ describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
     const view = { ...open, myTurn: false, activatable: [{ instanceId: 'a', scriptId: 's', label: 'Turno Aliado', text: 't' }] };
     expect(legalActions(view, slot('a', { tapped: true }), 'field')).toEqual(['activate']);
     expect(legalActions({ ...view, closed: true }, slot('a'), 'field')).toEqual([]);
+  });
+});
+
+describe('special summons listed by the server', () => {
+  it('follows the server list, from the hand and from the Tributos', () => {
+    const falanx = slot('falanx', { cardType: 'creature', specialSummonKind: 'materialization', specialCost: 1, requirement: 'aliados que sumen 6' });
+    const view = { ...open, specialSummonable: ['falanx'] };
+    expect(legalActions(view, falanx, 'tributeZone')).toEqual(['ritual']);
+    expect(legalActions(view, falanx, 'hand')).toContain('ritual');
+    expect(legalActions({ ...open, specialSummonable: [] }, falanx, 'hand')).not.toContain('ritual');
+    expect(legalActions(open, falanx, 'tributeZone')).toEqual([]);
   });
 });
 

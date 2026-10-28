@@ -3,7 +3,7 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Actualizado:** 2026-10-27 · **Último PR:** #15 · **Despliegues (todos Angular):** https://erastcg.com (producción),
+**Actualizado:** 2026-10-27 · **Último PR:** #19 · **Despliegues (todos Angular):** https://erastcg.com (producción),
 https://staging.erastcg.com, https://next.erastcg.com
 
 ## Estado en una línea
@@ -51,6 +51,14 @@ Drive, ediciones, tierlist, Home).
   tipo carta (`eras-deck-cover`) y filtros de mazos (nombre, autor, colores, edición, visibilidad).
 - **e2e:** las páginas con datos usan sesión real con la cuenta de prueba de staging (`e2e/.auth.local.json`); sin
   cuenta (producción) solo corren los casos sin datos.
+
+## Ajustes de diseño y simulador (PRs #16–#18, en producción desde 2026-10-28, `eras-web:2b03b87…-prod`)
+- Home en grilla de cartas (destacada = alto de dos filas de mazos), ediciones horizontales, tierlist sin scroll
+  (`eras-page fill` + `eras-tier-board`), filtros de color/rareza con "nada marcado = todo", sin tooltips.
+- **Registro eliminado** del front (cuentas privadas). `POST /api/auth/register` de UsersService sigue abierto: cerrarlo
+  cuando exista "crear usuario" en el panel de Usuarios.
+- Simulador: elegir mazo crea/une la sala y entra; tablero del alto de la pantalla sin scroll (≥ 48rem); "Aleatorio" para
+  quién empieza. El vhost de next ahora pasa el WebSocket (`location /ws`).
 
 ## Pendiente
 1. ~~Desplegar el rediseño a producción~~ — hecho (2026-10-27): front run 40616811405 (`eras-web:5f45fc5…-prod`), backend

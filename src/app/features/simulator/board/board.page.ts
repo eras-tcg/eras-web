@@ -22,14 +22,16 @@ import { StatusPanelsComponent } from './status-panels.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { DOCUMENT } from '@angular/common';
 import { CardFlightsComponent } from './card-flights.component';
+import { BoardAnimations } from './board-animations';
+import { DamageRevealComponent } from './damage-reveal.component';
 
 const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [CardFlightsComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
-  providers: [BoardDrag, BoardDialogs, BoardEffects],
+  imports: [CardFlightsComponent, DamageRevealComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +43,7 @@ export class BoardPage {
   readonly roomId = input.required<string>();
 
   protected readonly game = inject(GameStore);
+  private readonly animations = inject(BoardAnimations);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */
   protected readonly lookOnly = inject(SheetState).lowered;
   private readonly document = inject(DOCUMENT);
@@ -120,14 +123,20 @@ export class BoardPage {
     let open: { id: string; close: () => void } | null = null;
     effect(() => {
       const prompt = this.game.myPrompt();
+      // The choice waits until the animations on the table are over (a card flying, direct damage)
+      const idle = this.animations.idle();
       untracked(() => {
         if (open && open.id !== prompt?.id) {
           open.close();
           open = null;
         }
-        if (prompt && !open) {
-          const ref = this.dialogs.effectPrompt({ prompt });
-          open = { id: prompt.id, close: () => ref.close() };
+        if (prompt && !open && idle) {
+          // A short wait lets the animations of this very update start first
+          setTimeout(() => {
+            if (open || !this.animations.idle() || this.game.myPrompt()?.id !== prompt.id) return;
+            const ref = this.dialogs.effectPrompt({ prompt });
+            open = { id: prompt.id, close: () => ref.close() };
+          }, 80);
         }
       });
     });

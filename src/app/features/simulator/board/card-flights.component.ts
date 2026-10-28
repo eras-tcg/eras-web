@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, GameState, ZoneName } from '@data/simulator/simulator.model';
+import { BoardAnimations } from './board-animations';
 
 /** Where a field card was drawn last time, to fly it from there when it leaves the field. */
 interface Seen {
@@ -28,6 +29,7 @@ const DURATION = 650;
 export class CardFlightsComponent {
   private readonly game = inject(GameStore);
   private readonly document = inject(DOCUMENT);
+  private readonly animations = inject(BoardAnimations);
   private seen = new Map<string, Seen>();
 
   constructor() {
@@ -130,6 +132,7 @@ export class CardFlightsComponent {
     const start = `translate(0px, 0px) rotate(${from.tapped ? 90 : 0}deg) rotateY(0deg) scale(1)`;
     const end = `translate(${dx}px, ${dy}px) rotate(0deg) rotateY(${faceDown ? 180 : 0}deg) scale(${scale})`;
     const reduced = this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.animations.hold(reduced ? 1 : DURATION);
     const animation = inner.animate([{ transform: start }, { transform: end }], {
       duration: reduced ? 1 : DURATION,
       easing: 'cubic-bezier(0.4, 0, 0.2, 1)',

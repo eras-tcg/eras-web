@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
-import { Edition, EditionSaveRequest } from '@data/editions/edition.model';
+import { Edition } from '@data/editions/edition.model';
 import { canSimulatePack } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { EditionTileComponent } from '@ui/domain/edition-tile/edition-tile.component';
@@ -13,10 +13,8 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { EditionFormComponent } from './edition-form/edition-form.component';
+import { EditionFormDialogComponent } from './edition-form/edition-form-dialog.component';
 import { SimulateDialogComponent } from './simulate-dialog/simulate-dialog.component';
-
-type FormState = { open: false } | { open: true; edition: Edition | null };
 
 /** Editions list: browse, simulate openings and (with manage_editions) create or edit. */
 @Component({
@@ -26,7 +24,6 @@ type FormState = { open: false } | { open: true; edition: Edition | null };
     PageComponent,
     GridComponent,
     EditionTileComponent,
-    EditionFormComponent,
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
@@ -41,9 +38,6 @@ export class EditionsPage {
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
 
-  protected readonly formState = signal<FormState>({ open: false });
-  protected readonly saving = signal(false);
-  protected readonly saveError = signal<string | null>(null);
   protected readonly canSimulate = canSimulatePack;
 
   constructor() {
@@ -58,25 +52,8 @@ export class EditionsPage {
     this.modal.open(SimulateDialogComponent, { data: edition });
   }
 
+  /** Create (null) or edit an edition in a dialog; the store refreshes the list on save. */
   protected openForm(edition: Edition | null): void {
-    this.saveError.set(null);
-    this.formState.set({ open: true, edition });
-  }
-
-  protected closeForm(): void {
-    this.formState.set({ open: false });
-  }
-
-  protected async save(request: EditionSaveRequest): Promise<void> {
-    this.saving.set(true);
-    this.saveError.set(null);
-    try {
-      await this.store.save(request);
-      this.closeForm();
-    } catch (e) {
-      this.saveError.set(e instanceof Error ? e.message : 'No se pudo guardar la edición');
-    } finally {
-      this.saving.set(false);
-    }
+    this.modal.open(EditionFormDialogComponent, { data: edition });
   }
 }

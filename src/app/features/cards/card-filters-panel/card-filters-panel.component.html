@@ -38,18 +38,13 @@
 
   @if (o.colors.length) {
     <eras-stack [gap]="2">
-      <span class="eras-form-field__text">Color</span>
-      <eras-stack direction="row" [gap]="1" wrap>
-        @for (c of o.colors; track c) {
-          <button erasChip [selected]="colorActive(c)" (click)="toggleColor(c)">
-            <eras-color-pip [color]="c" /> {{ colorLabels[c] ?? c }}
-          </button>
-        }
-      </eras-stack>
-      <eras-stack direction="row" [gap]="1" wrap>
-        <button erasChip [selected]="f.colorMode === 'any'" (click)="set('colorMode', 'any')">Cualquier color</button>
-        <button erasChip [selected]="f.colorMode === 'identity'" (click)="set('colorMode', 'identity')">Solo identidad</button>
-      </eras-stack>
+      <eras-toggle-group label="Color" [options]="colorOptions()" [selected]="activeColors()" (toggled)="toggleColor($event)" />
+      <eras-toggle-group
+        label="Coincidir por"
+        [options]="colorModeOptions"
+        [selected]="[f.colorMode]"
+        (toggled)="set('colorMode', $any($event))"
+      />
     </eras-stack>
   }
 
@@ -98,27 +93,8 @@
     <input type="search" inputmode="numeric" placeholder="Buscar por número…" [value]="f.cardNumber" (input)="setText('cardNumber', $event)" />
   </eras-form-field>
 
-  @if (!f.edition && o.subEditions.length > 1) {
-    <eras-stack [gap]="2">
-      <span class="eras-form-field__text">Sub-edición</span>
-      <eras-stack direction="row" [gap]="1" wrap>
-        <button erasChip [selected]="f.subEdition === null" (click)="set('subEdition', null)">Todas</button>
-        @for (s of o.subEditions; track s) {
-          <button erasChip [selected]="f.subEdition === s" (click)="setSub(s)">{{ subLabel(s) }}</button>
-        }
-      </eras-stack>
-    </eras-stack>
-  }
-
   @if (o.rarities.length) {
-    <eras-stack [gap]="2">
-      <span class="eras-form-field__text">Rareza</span>
-      <eras-stack direction="row" [gap]="1" wrap>
-        @for (r of o.rarities; track r) {
-          <button erasChip [selected]="f.rarities.includes(r)" (click)="toggleRarity(r)">{{ r }}</button>
-        }
-      </eras-stack>
-    </eras-stack>
+    <eras-toggle-group label="Rareza" [options]="rarityOptions()" [selected]="f.rarities" (toggled)="toggleRarity($event)" />
   }
 
   <label class="eras-form-field__text">
@@ -133,13 +109,12 @@
     <eras-multiselect label="Tags de efectos" [options]="o.tags" [value]="f.tags" (valueChange)="setList('tags', $event)" />
   }
 
-  <eras-stack [gap]="2">
-    <span class="eras-form-field__text">Vista de cartas</span>
-    <eras-stack direction="row" [gap]="1" wrap>
-      <button erasChip [selected]="view().collapse" (click)="setView('collapse', true)">Colapsar repetidas</button>
-      <button erasChip [selected]="!view().collapse" (click)="setView('collapse', false)">Mostrar todas</button>
-    </eras-stack>
-  </eras-stack>
+  <eras-toggle-group
+    label="Vista de cartas"
+    [options]="viewOptions"
+    [selected]="[view().collapse ? 'collapse' : 'all']"
+    (toggled)="setView('collapse', $event === 'collapse')"
+  />
 
   <eras-form-field [label]="'Tamaño de cartas (' + view().size + 'px)'">
     <input type="range" min="100" max="500" step="10" [value]="view().size" (input)="setSize($event)" />

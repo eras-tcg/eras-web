@@ -1,13 +1,23 @@
 :host {
+  --modal-width: 32rem;
+
   display: flex;
   flex-direction: column;
-  inline-size: min(32rem, calc(100vw - 2 * var(--layout-gutter)));
+  inline-size: min(var(--modal-width), calc(100vw - 2 * var(--layout-gutter)));
   max-block-size: calc(100vh - 2 * var(--space-6));
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   color: var(--color-text);
+}
+
+:host(.size-lg) {
+  --modal-width: 48rem;
+}
+
+:host(.size-xl) {
+  --modal-width: 64rem;
 }
 
 .header {

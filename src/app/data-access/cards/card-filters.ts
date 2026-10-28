@@ -26,8 +26,6 @@ export interface CardFilters {
   /** Edition id, "E1" or "E1.1"; empty = all. */
   edition: string;
   cardNumber: string;
-  /** Only used when no edition is selected. `null` = all, '' = main set only. */
-  subEdition: string | null;
   rarities: string[];
   starterOnly: boolean;
   keywords: string[];
@@ -50,7 +48,6 @@ export const EMPTY_FILTERS: CardFilters = {
   requirement: '',
   edition: '',
   cardNumber: '',
-  subEdition: null,
   rarities: [],
   starterOnly: false,
   keywords: [],
@@ -62,7 +59,6 @@ const isRangeSet = (r: NumberRange) => r.min !== null || r.max !== null;
 export function hasActiveFilters(f: CardFilters): boolean {
   return (
     !!(f.name || f.type || f.specialSummon || f.requirement || f.edition || f.cardNumber || f.starterOnly) ||
-    f.subEdition !== null ||
     [f.colors, f.classes, f.rarities, f.keywords, f.tags].some((list) => list.length > 0) ||
     [f.cost, f.level, f.strength, f.specialCost].some(isRangeSet)
   );
@@ -89,8 +85,7 @@ function matchesEdition(card: CatalogCard, f: CardFilters): boolean {
     const [base, sub] = f.edition.split('.');
     return card.edition === base && (card.sub_edition ?? '') === (sub ?? '');
   }
-  if (f.subEdition === null) return true;
-  return (card.sub_edition ?? '') === f.subEdition;
+  return true;
 }
 
 function matchesColor(card: CatalogCard, f: CardFilters): boolean {

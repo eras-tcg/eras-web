@@ -6,7 +6,7 @@ import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface CreatureInteractionData {
   /** Card dropped onto the creature. */
@@ -21,9 +21,9 @@ const SUMMON_KINDS = ['materialization', 'evolution', 'ritual', 'promotion'];
 /** Dropping a card onto a creature: special summon (if the card has one), attach as material or as resource. */
 @Component({
   selector: 'eras-creature-interaction-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, ButtonComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent],
   template: `
-    <eras-modal title="Interacción de criaturas" (closed)="ref.close()">
+    <eras-sheet title="Interacción de criaturas" (closed)="ref.close()">
       <eras-stack direction="row" [gap]="4" justify="center" align="center">
         <eras-stack [gap]="1" align="center"><eras-game-card [imageUrl]="data.summoned.imageUrl" /><span>Entrante</span></eras-stack>
         <span aria-hidden="true">→</span>
@@ -47,10 +47,10 @@ const SUMMON_KINDS = ['materialization', 'evolution', 'ritual', 'promotion'];
           <button erasButton variant="secondary" type="button" (click)="resource()">Agregar como recurso</button>
         </eras-stack>
       }
-      <ng-container modal-footer>
+      <ng-container sheet-footer>
         <button erasButton variant="ghost" type="button" (click)="ref.close()">Cancelar</button>
       </ng-container>
-    </eras-modal>
+    </eras-sheet>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

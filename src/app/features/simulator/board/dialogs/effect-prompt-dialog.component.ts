@@ -8,7 +8,7 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface EffectPromptData {
   prompt: EffectPrompt;
@@ -21,9 +21,9 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, ChainListComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, ChainListComponent],
   template: `
-    <eras-modal size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+    <eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
       <eras-chain-list />
       @if (prompt.reorderRest) {
         <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
@@ -66,7 +66,7 @@ export interface EffectPromptData {
           </div>
         }
       </div>
-      <ng-container modal-footer>
+      <ng-container sheet-footer>
         <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
           @if (prompt.kind === 'CONFIRM') {
             <button erasButton variant="secondary" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
@@ -77,7 +77,7 @@ export interface EffectPromptData {
           }
         </eras-stack>
       </ng-container>
-    </eras-modal>
+    </eras-sheet>
   `,
   styles: `
     .hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }

@@ -31,13 +31,13 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
   selector: 'eras-card-info-dialog',
   imports: [ModalComponent, CardDetailComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
-    <eras-modal [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
+    <eras-modal size="xl" [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
       @if (slot(); as s) {
         <eras-stack [gap]="4">
           @if (!data.only) {
             @if (view(); as v) {
+              <!-- Two columns: characteristics and image, so the card fits without scrolling -->
               <eras-card-detail
-                stacked
                 [name]="v.name"
                 [edition]="v.edition"
                 [number]="v.number"

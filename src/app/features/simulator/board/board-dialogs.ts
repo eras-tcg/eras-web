@@ -21,7 +21,7 @@ export class BoardDialogs {
 
   cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
     const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent };
-    this.modal.open(CardInfoDialogComponent, { data, width: 'min(40rem, 96vw)' });
+    this.modal.open(CardInfoDialogComponent, { data, width: 'min(64rem, 96vw)' });
   }
 
   detach(slot: CardSlot, only: AttachmentType, opponent: boolean): void {
@@ -36,18 +36,18 @@ export class BoardDialogs {
 
   creatureInteraction(summoned: CardSlot, summoner: CardSlot, fromZone: ZoneName): void {
     const data: CreatureInteractionData = { summoned, summoner, fromZone };
-    this.modal.open(CreatureInteractionDialogComponent, { data });
+    this.modal.sheet(CreatureInteractionDialogComponent, { data });
   }
 
   /** Target of an attack: an exhausted enemy creature id, null for the rival, undefined when cancelled. */
   attackTarget(data: AttackTargetData): Promise<string | null | undefined> {
-    const ref = this.modal.open<string | null, AttackTargetData>(AttackTargetDialogComponent, { data });
+    const ref = this.modal.sheet<string | null, AttackTargetData>(AttackTargetDialogComponent, { data });
     return firstValueFrom(ref.closed);
   }
 
   /** Rules-engine choice; it cannot be dismissed (the board closes it when the engine moves on). */
   effectPrompt(data: EffectPromptData) {
-    return this.modal.open(EffectPromptDialogComponent, { data, disableClose: true, injector: this.injector });
+    return this.modal.sheet(EffectPromptDialogComponent, { data, disableClose: true, injector: this.injector });
   }
 
   /** Assisted effects of one of your cards. */
@@ -58,7 +58,7 @@ export class BoardDialogs {
 
   deckPeek(position: 'top' | 'bottom', n: number): void {
     const data: DeckPeekData = { position, n };
-    this.modal.open(DeckPeekDialogComponent, { data, width: 'min(56rem, 96vw)' });
+    this.modal.sheet(DeckPeekDialogComponent, { data });
   }
 
   decklist(): void {

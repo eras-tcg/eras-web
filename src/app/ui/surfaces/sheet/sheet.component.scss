@@ -1,0 +1,113 @@
+:host {
+  --sheet-width: 48rem;
+
+  display: flex;
+  flex-direction: column;
+  inline-size: min(var(--sheet-width), 100vw);
+  max-block-size: 75vh;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-block-end: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+  animation: sheet-up var(--duration-normal, 200ms) var(--easing-standard, ease-out);
+  transition: transform var(--duration-normal, 200ms) var(--easing-standard, ease-out);
+}
+
+:host(.size-md) {
+  --sheet-width: 32rem;
+}
+
+:host(.size-xl) {
+  --sheet-width: 64rem;
+}
+
+// Lowered: only the header stays in view
+:host(.collapsed) {
+  transform: translateY(calc(100% - 3.5rem));
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-2);
+}
+
+.toggle {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  border-color: var(--color-primary);
+}
+
+.toggle eras-icon {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+}
+
+.heading {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  line-height: 2rem;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5);
+  overflow-y: auto;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5) var(--space-4);
+}
+
+.footer:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    animation: none;
+    transition: none;
+  }
+}

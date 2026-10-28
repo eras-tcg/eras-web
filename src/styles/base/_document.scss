@@ -33,6 +33,16 @@ a {
   background: var(--color-overlay);
 }
 
+// Sheets (choices from the bottom): a lighter backdrop, clear while the sheet is lowered; it still blocks the page
+.cdk-overlay-backdrop.eras-sheet-backdrop {
+  background: color-mix(in srgb, var(--color-overlay) 60%, transparent);
+  transition: background var(--duration-normal, 200ms) ease;
+}
+
+.cdk-overlay-backdrop.eras-sheet-backdrop.collapsed {
+  background: transparent;
+}
+
 /* Visually hidden, still read by screen readers */
 .sr-only {
   position: absolute;

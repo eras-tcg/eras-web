@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CardSlot } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface AttackTargetData {
   attacker: CardSlot;
@@ -15,9 +15,9 @@ export interface AttackTargetData {
 /** The rival, or one of their exhausted creatures. Closes with the creature id, null for the rival, undefined if cancelled. */
 @Component({
   selector: 'eras-attack-target-dialog',
-  imports: [ModalComponent, GameCardComponent, IconComponent],
+  imports: [SheetComponent, GameCardComponent, IconComponent],
   template: `
-    <eras-modal size="lg" [title]="'Atacar con ' + (data.attacker.cardName ?? 'tu criatura')" subtitle="Se agota al declarar el ataque. Elige el objetivo." (closed)="ref.close()">
+    <eras-sheet size="lg" [title]="'Atacar con ' + (data.attacker.cardName ?? 'tu criatura')" subtitle="Se agota al declarar el ataque. Elige el objetivo." (closed)="ref.close()">
       <div class="targets" role="group" aria-label="Objetivos del ataque">
         <button type="button" class="target rival" (click)="ref.close(null)">
           <eras-icon name="user" />
@@ -31,7 +31,7 @@ export interface AttackTargetData {
           </button>
         }
       </div>
-    </eras-modal>
+    </eras-sheet>
   `,
   styles: `
     .targets { display: flex; flex-wrap: wrap; gap: var(--space-3); }

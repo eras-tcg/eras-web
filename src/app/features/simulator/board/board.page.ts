@@ -20,7 +20,7 @@ import { BoardDrag } from './board-drag';
 import { PlayerHalfComponent } from './player-half.component';
 import { StatusPanelsComponent } from './status-panels.component';
 
-const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final' };
+const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({

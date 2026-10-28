@@ -1,59 +1,66 @@
-<eras-page title="Simulador" subtitle="Juega una partida con otra persona en tiempo real">
-  @if (error(); as message) {
-    <eras-alert tone="danger">{{ message }}</eras-alert>
+<eras-page
+  title="Simulador"
+  [subtitle]="roomId() ? 'Te invitaron a una sala: elige tu mazo para entrar' : 'Elige un mazo: se crea la sala y entras para compartir el enlace'"
+  width="wide"
+>
+  @if (alreadyIn()) {
+    <button page-actions erasButton type="button" [loading]="busy() === 'reconnect'" [disabled]="!!busy()" (click)="reconnect()">
+      Volver a la partida
+    </button>
   }
 
-  @if (roomId(); as room) {
-    <eras-card>
-      <eras-stack [gap]="3">
-        <eras-section-header [title]="'Sala ' + room" />
-        @if (checking()) {
-          <eras-spinner />
-        } @else if (statusLabel()) {
-          <span>Estado: <strong>{{ statusLabel() }}</strong></span>
-        }
-        <span>Comparte este enlace con tu rival:</span>
-        <eras-stack direction="row" [gap]="2" align="center" wrap>
-          <code>{{ link() }}</code>
-          <button erasButton variant="secondary" size="sm" type="button" (click)="copy()">{{ copied() ? 'Copiado' : 'Copiar enlace' }}</button>
-        </eras-stack>
-        @if (alreadyIn()) {
-          <eras-alert>Ya estás en esta sala: tu mazo y el estado de la partida se conservan.</eras-alert>
-          <div><button erasButton type="button" [loading]="busy()" [disabled]="busy()" (click)="enter(false)">Volver a la partida</button></div>
-          <span>o entra con otro mazo (solo si la partida aún no empezó):</span>
-        }
-        <div>
-          <button erasButton [variant]="alreadyIn() ? 'secondary' : 'primary'" type="button" [loading]="busy()" [disabled]="busy() || !selected()" (click)="enter(true)">
-            {{ alreadyIn() ? 'Entrar con el mazo elegido' : 'Entrar a la partida' }}
-          </button>
-        </div>
-      </eras-stack>
-    </eras-card>
-  } @else {
-    <eras-card>
-      <eras-stack [gap]="3">
-        <span>Crea una sala, comparte el enlace con tu rival y entren los dos con su mazo.</span>
-        <div><button erasButton type="button" [loading]="busy()" [disabled]="busy()" (click)="create()">Crear sala</button></div>
-      </eras-stack>
-    </eras-card>
-  }
+  <eras-stack [gap]="4">
+    @if (error(); as message) {
+      <eras-alert tone="danger">{{ message }}</eras-alert>
+    }
+    @if (roomId() && statusLabel()) {
+      <eras-alert>Sala {{ roomId() }} · {{ statusLabel() }}{{ alreadyIn() ? ' · ya estás en esta sala: puedes volver con tu mazo o entrar con otro si la partida no empezó' : '' }}</eras-alert>
+    }
 
-  <eras-section-header [title]="'Elige tu mazo' + (selected() ? '' : ' (ninguno elegido)')" />
-  @if (allDecks().length === 0) {
-    <eras-empty-state title="No hay mazos disponibles"><eras-spinner /></eras-empty-state>
-  } @else {
-    <eras-grid minColumn="11rem" [gap]="3">
-      @for (deck of allDecks(); track deck.id) {
-        <eras-deck-card
-          [name]="deck.deckName + (selected() === deck.id ? ' ✓' : '')"
-          [author]="deck.username ?? null"
-          [imageUrl]="deck.deckImage ?? null"
-          [cardCount]="deck.cards.length"
-          [isPrivate]="!!deck.privateDeck"
-          [attr.aria-current]="selected() === deck.id ? 'true' : null"
-          (selected)="selected.set(deck.id)"
-        />
+    <eras-form-field label="Buscar mazo">
+      <input type="search" placeholder="Nombre del mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
+    </eras-form-field>
+
+    @if (allDecks().length === 0) {
+      <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
+    } @else {
+      @if (mine().length) {
+        <eras-section-header title="Tus mazos" />
+        <eras-grid minColumn="9.5rem" [gap]="3">
+          @for (deck of mine(); track deck.id) {
+            <eras-deck-cover
+              [name]="deck.deckName"
+              [imageUrl]="deck.deckImage ?? null"
+              [cardCount]="deck.cards.length"
+              [isPrivate]="!!deck.privateDeck"
+              [style.opacity]="busy() && busy() !== deck.id ? 0.4 : null"
+              (selected)="enterWith(deck.id)"
+            />
+          }
+        </eras-grid>
       }
-    </eras-grid>
+      @if (others().length) {
+        <eras-section-header title="Mazos públicos" />
+        <eras-grid minColumn="9.5rem" [gap]="3">
+          @for (deck of others(); track deck.id) {
+            <eras-deck-cover
+              [name]="deck.deckName"
+              [author]="deck.username ?? null"
+              [imageUrl]="deck.deckImage ?? null"
+              [cardCount]="deck.cards.length"
+              [style.opacity]="busy() && busy() !== deck.id ? 0.4 : null"
+              (selected)="enterWith(deck.id)"
+            />
+          }
+        </eras-grid>
+      }
+      @if (!mine().length && !others().length) {
+        <eras-empty-state title="Ningún mazo coincide con la búsqueda" />
+      }
+    }
+  </eras-stack>
+
+  @if (busy() && busy() !== 'reconnect') {
+    <div class="sr-only" role="status">{{ roomId() ? 'Entrando a la sala…' : 'Creando la sala…' }}</div>
   }
 </eras-page>

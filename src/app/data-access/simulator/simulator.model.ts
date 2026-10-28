@@ -14,6 +14,11 @@ export interface CardSlot {
   specialSummonKind: string | null;
   starter: boolean;
   strengthModifier: number;
+  /** Printed properties read by the rules engine (may be missing on old rooms). */
+  cost?: number | null;
+  level?: number | null;
+  colors?: string[];
+  classes?: string[];
   materials: CardSlot[];
   resources: CardSlot[];
 }
@@ -64,6 +69,58 @@ export interface GameState {
   revealedCardImageUrl?: string | null;
   revealedCardName?: string | null;
   eventLog?: GameLogEntry[];
+  /** Latest rules events (structured timeline, rules 11.6–11.7). */
+  timeline?: GameEvent[] | null;
+  /** Effects in the chain; the last one resolves first. */
+  chain?: PendingEffect[] | null;
+  /** Choice the rules engine is waiting for (only prompt.playerId may answer). */
+  prompt?: EffectPrompt | null;
+}
+
+/** One rules event of the timeline (the text log is generated from these). */
+export interface GameEvent {
+  seq: number;
+  ts: number;
+  type: string;
+  playerId: string | null;
+  cardInstanceId: string | null;
+  cardName: string | null;
+  fromZone: string | null;
+  toZone: string | null;
+  /** Effect instance it belongs to, and the resolution where it happened. */
+  effectId: string | null;
+  resolutionId: string | null;
+  data: Record<string, unknown> | null;
+}
+
+export interface PendingEffect {
+  id: string;
+  scriptId: string;
+  controllerId: string;
+  sourceInstanceId: string;
+  sourceName: string;
+  label: string;
+  text: string;
+}
+
+export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK_FROM_HAND';
+
+/** A choice the engine waits for; it cannot be dismissed. */
+export interface EffectPrompt {
+  id: string;
+  kind: EffectPromptKind;
+  playerId: string;
+  effectId: string;
+  sourceName: string;
+  title: string;
+  instruction: string;
+  cards: CardSlot[];
+  /** Cards that may be chosen; the rest are locked. */
+  validIds: string[];
+  min: number;
+  max: number;
+  /** The cards not chosen can be reordered (they go to the deck bottom in that order). */
+  reorderRest: boolean;
 }
 
 /** GET /api/simulator/rooms/{id} */

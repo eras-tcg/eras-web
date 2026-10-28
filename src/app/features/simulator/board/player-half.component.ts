@@ -106,6 +106,11 @@ export class PlayerHalfComponent {
         this.dialogs.creatureInteraction(dragged, nearby, card.fromZone);
         return;
       }
+      // A creature from the hand without an effect: normal summon by the rules (the server pays and triggers)
+      if (this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && dragged?.cardType === 'creature') {
+        this.game.normalSummon(card.instanceId, pos.x, pos.y);
+        return;
+      }
       const summon = this.game.status() === 'IN_PROGRESS' && card.fromZone !== 'field' && dragged?.cardType === 'creature';
       this.game.moveCard(card.instanceId, card.fromZone, 'field', pos);
       if (summon) this.effectSummon.set({ instanceId: card.instanceId, fromZone: card.fromZone });

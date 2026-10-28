@@ -55,6 +55,16 @@ export class GameStore {
   readonly status = computed(() => this.state()?.status ?? null);
   readonly phase = computed(() => this.state()?.currentPhase ?? 'MAIN');
   readonly isMyTurn = computed(() => !!this.me() && this.state()?.currentTurnUserId === this.me());
+  /** Effect choice waiting for this player (blocking modal). */
+  readonly myPrompt = computed(() => {
+    const prompt = this.state()?.prompt;
+    return prompt && prompt.playerId === this.me() ? prompt : null;
+  });
+  /** Effect being resolved, when the rules engine is busy (shown to both players). */
+  readonly resolving = computed(() => {
+    const chain = this.state()?.chain;
+    return chain?.length ? chain[chain.length - 1] : null;
+  });
   readonly isHost = computed(() => !!this.me() && this.state()?.hostId === this.me());
   /** The player listed first sees the shared bar unmirrored. */
   readonly isFirstPlayer = computed(() => {
@@ -119,7 +129,8 @@ export class GameStore {
   private onMessage(body: string): void {
     const update = JSON.parse(body) as GameState;
     if (update.error) {
-      this.error.set(update.error);
+      // Errors reach the whole room: show only the ones caused by this player
+      if (!update.actorId || update.actorId === this.me()) this.error.set(update.error);
       return;
     }
     this.state.set(update);
@@ -170,6 +181,16 @@ export class GameStore {
   }
 
   // ── Actions (same names and payloads as the legacy store) ──────────────
+
+  /** Normal summon (rules engine): a creature from the hand to the board; the server pays its cost and fires its triggers. */
+  normalSummon(instanceId: string, x: number, y: number): void {
+    this.send('NORMAL_SUMMON', { instanceId, x, y });
+  }
+
+  /** Answers the effect choice the engine waits for. `order`: the cards not chosen, in deck-bottom order. */
+  resolvePrompt(promptId: string, chosen: string[], order: string[] = []): void {
+    this.send('RESOLVE_PROMPT', { promptId, chosen, order });
+  }
 
   joinRoom(deckId: string | null): void {
     this.send('JOIN_ROOM', { deckId, username: this.auth.user()?.username ?? '' });

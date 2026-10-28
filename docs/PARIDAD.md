@@ -28,7 +28,7 @@ elementos de prueba creados y borrados; **simulada** = probada con sesión y res
 | `/tierlist` | `/tierlist` | **real** | simulada (no se tocó la tierlist real) | real (lectura) |
 | `/games-manager` | `/games-manager` | **real** (25 partidas) | notas: crear, editar y borrar **real**; partidas: simulada | real |
 | `/simulator`, `/simulator/:roomId` | iguales | simulada | crear sala: simulada | e2e (simulado) |
-| `/simulator/:roomId/board` | igual | estado simulado | partida real: `e2e/simulator-2p.spec.ts` listo, falta verificar las 2 cuentas de prueba | manual (estado simulado) |
+| `/simulator/:roomId/board` | igual | estado simulado | partida real de 2 jugadores: **real** (sala, iniciadora, mulligan, turnos, robar, rendición; 2/2 corridas) | e2e (`simulator-2p`), real |
 | `/:pathMatch(.*)*` | `**` (NotFound) | ✓ | — | e2e, next |
 
 Además: `/card-meta` (nueva, metadatos sin imagen) y `/admin` (hub de herramientas).

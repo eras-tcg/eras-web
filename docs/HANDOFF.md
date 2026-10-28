@@ -3,12 +3,12 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Actualizado:** 2026-10-27 · **Último PR:** #14 · **Despliegues (todos Angular):** https://erastcg.com (producción),
+**Actualizado:** 2026-10-27 · **Último PR:** #15 · **Despliegues (todos Angular):** https://erastcg.com (producción),
 https://staging.erastcg.com, https://next.erastcg.com
 
 ## Estado en una línea
 **Migración completa: producción sirve Angular desde 2026-10-27** (`eras-web:ff32211…-prod`, e2e 14/14 en producción,
-15/15 en staging). Rediseño y login obligatorio listos en staging y next; falta llevarlos a producción (ver Pendiente).
+15/15 en staging). Rediseño y login obligatorio en producción desde 2026-10-27 (front `5f45fc5…-prod`, DriveManager `fcc84d2`).
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -29,9 +29,8 @@ https://staging.erastcg.com, https://next.erastcg.com
 - **Rollback:** Run workflow en `eras-tcg/erasFront` (CI/CD) con la imagen Vue. Staging: rama `develop`, environment
   `staging`, tag `0d010c9d8a4cbada9dd9875ad8ea501b7205eba2`. Producción: rama `main`, environment `production`, tag
   `9e2abb449f50892b9f496e1b2be11f1387e599db` (imagen Vue que corría antes del corte).
-- **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Ese workflow **sigue activo** (el
-  clasificador de Claude bloqueó desactivarlo): desactivarlo a mano (erasFront → Actions → CI/CD → ⋯ → *Disable workflow*)
-  y archivar el repo cuando ya no haga falta.
+- **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Ese workflow está **desactivado**
+  desde 2026-10-27.
 
 ## Pruebas reales en staging (2026-10-27, cuenta admin, solo elementos de prueba creados y borrados)
 Mazo (crear, actualizar, PDF de proxies, borrar), roles (crear, editar permisos, borrar), notas de partidas (crear,
@@ -54,13 +53,13 @@ Drive, ediciones, tierlist, Home).
   cuenta (producción) solo corren los casos sin datos.
 
 ## Pendiente
-1. **Desplegar a producción** (bloqueado para Claude por el clasificador; hacerlo en este orden):
-   1. Front: eras-web → Actions → CI/CD → Run workflow, `production`, image_tag
-      `5f45fc5b09e1440879fd96de6b59f67ca1a5cf80` → aprobar.
-   2. Backend: mergear DriveManager#11 (`develop → main`) → aprobar el deploy a producción.
-   3. Verificar: `E2E_BASE_URL=https://erastcg.com npm run e2e` y que `https://erastcg.com/api/drive/editions` dé 403
-      sin sesión.
-2. Desactivar el workflow CI/CD de erasFront (ver "Ojo" arriba).
+1. ~~Desplegar el rediseño a producción~~ — hecho (2026-10-27): front run 40616811405 (`eras-web:5f45fc5…-prod`), backend
+   DriveManager#11 run 40616913632 (`drive-manager:fcc84d2…`). Verificado: `/api/drive/health` 200, consultas sin sesión
+   403, login 400 (validación), e2e en producción 9 pasan y 6 se saltan (necesitan cuenta de prueba, no hay en producción).
+   Rollback del backend: Run workflow en DriveManager (`main`, `production`, tag `c00911f2de1ea27f04bfb78ecc973cd076f3f9f4`);
+   del front: Run workflow en eras-web (`production`, tag `ff3221169b4e86e0b5abb288962c97a531900b6e`).
+2. ~~Desactivar el CI/CD de erasFront~~ — hecho (2026-10-27, `disabled_manually`). Para un rollback a Vue hay que
+   reactivarlo primero (erasFront → Actions → CI/CD → *Enable workflow*). Archivar el repo cuando ya no haga falta.
 3. Opcionales: e2e en CI, Storybook, endpoint "mi cuenta", SMTP (Brevo) y orden del registro, quitar `next`.
 
 ## Cómo trabajar en el repo

@@ -43,6 +43,8 @@ export class GameStore {
   readonly pendingTargetSource = signal<string | null>(null);
   /** Card clicked on the board: it shows its legal actions. */
   readonly selectedId = signal<string | null>(null);
+  /** Cards chosen so far in the open choice: marked on the board so they can be told apart. */
+  readonly promptChosen = signal<ReadonlySet<string>>(new Set());
   readonly log = signal<LogLine[]>([]);
   readonly recentLog = signal<LogLine[]>([]);
 

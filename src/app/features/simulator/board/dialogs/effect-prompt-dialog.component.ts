@@ -1,7 +1,8 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
+import { fieldRows } from '@data/simulator/legal-actions';
 import { ChainListComponent } from '../chain-list.component';
 import { CardSlot, EffectPrompt } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
@@ -64,6 +65,9 @@ export interface EffectPromptData {
                   {{ c.cardName }}
                 }
               </span>
+              @if (zoneOf(c); as zone) {
+                <span class="zone">{{ zone }}</span>
+              }
             </button>
           </div>
         }
@@ -121,6 +125,7 @@ export interface EffectPromptData {
     }
     .pick.chosen .tag { color: var(--color-success); font-weight: var(--font-weight-bold); }
     .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -156,6 +161,19 @@ export class EffectPromptDialogComponent {
     effect(() => {
       if (this.game.error()) this.sending.set(false);
     });
+    // The board marks the cards chosen here (seen when the sheet is lowered)
+    effect(() => this.game.promptChosen.set(new Set(this.chosen())));
+    inject(DestroyRef).onDestroy(() => this.game.promptChosen.set(new Set()));
+  }
+
+  /** Where a card of the field is, with its place in that line from the left: tells copies apart. */
+  protected zoneOf(c: CardSlot): string | null {
+    const field = Object.values(this.game.state()?.players ?? {}).find((p) => p.field.some((f) => f.instanceId === c.instanceId))?.field;
+    if (!field) return null;
+    const rows = fieldRows(field);
+    const front = rows.front.findIndex((f) => f.instanceId === c.instanceId);
+    if (front >= 0) return `Línea frontal · ${front + 1}`;
+    return `Retaguardia · ${rows.back.findIndex((f) => f.instanceId === c.instanceId) + 1}`;
   }
 
   protected toggle(id: string): void {

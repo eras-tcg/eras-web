@@ -88,6 +88,8 @@ export interface GameState {
   starterAdvantageUserId?: string | null;
   /** Slow effects each player can activate now, by player id. */
   activatable?: Record<string, ActivatableEffect[]> | null;
+  /** Players who already played a structure normally this turn (one per turn). */
+  structurePlayed?: string[] | null;
 }
 
 /** A slow effect (passive moment without a trigger) that can be activated from the board now. */

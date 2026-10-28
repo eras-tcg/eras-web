@@ -32,6 +32,7 @@ const open: RulesView = {
   starterAdvantage: false,
   field: [],
   activatable: [],
+  structurePlayed: false,
 };
 
 describe('legalActions', () => {
@@ -56,6 +57,9 @@ describe('legalActions', () => {
     expect(legalActions(open, slot('h', { cost: 4 }), 'hand')).toEqual([]);
     expect(legalActions(open, slot('h', { cost: null }), 'hand')).toEqual([]);
     expect(legalActions(open, slot('u', { cardType: 'utility', cost: 1 }), 'hand')).toEqual(['play']);
+    // One structure per turn
+    expect(legalActions(open, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual(['play']);
+    expect(legalActions({ ...open, structurePlayed: true }, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual([]);
   });
 
   it('Caza Nocturna costs 1 less below 0 gems', () => {
@@ -89,6 +93,8 @@ describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
     expect(legalActions({ ...open, field: [two] }, zha, 'hand')).toEqual(['ritual']);
     const mawser = slot('m', { specialSummonKind: 'ritual', specialCost: 3, requirement: 'criaturas que en nivel sumen 6.', colors: ['P'] });
     expect(canRitual({ ...open, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(true);
+    // Exactly 6: 4 + 3 is too much
+    expect(canRitual({ ...open, field: [slot('3', { level: 3, colors: ['P'] }), slot('4', { level: 4, colors: ['P'] })] }, mawser)).toBe(false);
     expect(canRitual({ ...open, gems: -1, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(false);
   });
 

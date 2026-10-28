@@ -20,6 +20,8 @@ export interface RulesView {
   field: CardSlot[];
   /** Slow effects I can activate now (the server lists them). */
   activatable: ActivatableEffect[];
+  /** I already played a structure normally this turn (only one per turn). */
+  structurePlayed: boolean;
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
@@ -36,6 +38,7 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     starterAdvantage: !!me && state?.starterAdvantageUserId === me,
     field: (me && state?.players[me]?.field) || [],
     activatable: (me && state?.activatable?.[me]) || [],
+    structurePlayed: !!me && !!state?.structurePlayed?.includes(me),
   };
 }
 
@@ -102,13 +105,26 @@ export function ritualMaterials(view: RulesView, slot: CardSlot): CardSlot[] {
   return view.field.filter((c) => c.cardType === 'creature' && c.level != null && sharesTypeOrColor(c, slot));
 }
 
+/** Some of the creatures' levels add up exactly to `target` ("criaturas que en nivel sumen N"). */
+export function sumsExactly(cards: readonly CardSlot[], target: number): boolean {
+  if (target < 0) return false;
+  const reachable = new Array<boolean>(target + 1).fill(false);
+  reachable[0] = true;
+  for (const c of cards) {
+    const level = c.level ?? 0;
+    if (level <= 0) continue;
+    for (let t = target; t >= level; t--) if (reachable[t - level]) reachable[t] = true;
+  }
+  return reachable[target];
+}
+
 /** The creature can be summoned by Ritual now: special cost payable and the Requerimiento met (mirrors the server). */
 export function canRitual(view: RulesView, slot: CardSlot): boolean {
   const req = requirement(slot);
   if (slot.specialSummonKind?.toLowerCase() !== 'ritual' || !req || slot.specialCost == null) return false;
   if (!canPay(view, summonCost(view, slot, slot.specialCost))) return false;
   const materials = ritualMaterials(view, slot);
-  return req.sum ? materials.reduce((t, c) => t + (c.level ?? 0), 0) >= req.level : materials.some((c) => c.level === req.level);
+  return req.sum ? sumsExactly(materials, req.level) : materials.some((c) => c.level === req.level);
 }
 
 /** Legal actions of one of your cards; the server checks them again. */
@@ -124,7 +140,8 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
   } else if (zone === 'hand') {
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
     if (slot.cardType === 'creature' && canRitual(view, slot)) actions.push('ritual');
-    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && canPay(view, playCost(view, slot))) actions.push('play');
+    const structureLeft = slot.cardType !== 'structure' || !view.structurePlayed;
+    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && structureLeft && canPay(view, playCost(view, slot))) actions.push('play');
   }
   return actions;
 }

@@ -41,6 +41,7 @@ import { BoardEffects } from './board-effects';
       [class.selected]="selected()"
       [class.can-play]="canPlay()"
       [class.can-activate]="canActivate()"
+      [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
       cdkOverlayOrigin
       #origin="cdkOverlayOrigin"
       (click)="onClick($event)"
@@ -129,6 +130,13 @@ import { BoardEffects } from './board-effects';
       justify-content: center;
       inline-size: calc(var(--game-card-width, 4.5rem) * 88 / 63);
     }
+    eras-game-card.prompt-chosen {
+      outline: 3px solid #22c55e;
+      outline-offset: 3px;
+      box-shadow: 0 0 18px 6px rgb(34 197 94 / 75%);
+      animation: chosen-pulse 0.9s ease-in-out infinite alternate;
+    }
+    @keyframes chosen-pulse { to { box-shadow: 0 0 6px 2px rgb(34 197 94 / 45%); } }
     eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
     eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
     eras-game-card.can-play.can-activate {

@@ -59,6 +59,14 @@
       @if (game.pendingTargetSource()) {
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
+      @if (game.resolving(); as effect) {
+        <eras-alert>
+          <strong>Resolviendo: {{ effect.sourceName }} · {{ effect.label }}</strong>
+          @if (opponentChoosing()) {
+            — esperando la elección de {{ game.opponentState()?.username ?? 'tu rival' }}
+          }
+        </eras-alert>
+      }
       @if (opponentLeft() && !dismissedLeft()) {
         <eras-alert tone="danger">
           <eras-stack direction="row" [gap]="2" align="center" wrap>

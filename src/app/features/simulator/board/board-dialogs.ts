@@ -5,6 +5,7 @@ import { AttachmentType, CardInfoData, CardInfoDialogComponent } from './dialogs
 import { CreatureInteractionData, CreatureInteractionDialogComponent } from './dialogs/creature-interaction-dialog.component';
 import { DeckPeekData, DeckPeekDialogComponent } from './dialogs/deck-peek-dialog.component';
 import { DecklistDialogComponent } from './dialogs/decklist-dialog.component';
+import { EffectPromptData, EffectPromptDialogComponent } from './dialogs/effect-prompt-dialog.component';
 import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
 import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.component';
@@ -34,6 +35,11 @@ export class BoardDialogs {
   creatureInteraction(summoned: CardSlot, summoner: CardSlot, fromZone: ZoneName): void {
     const data: CreatureInteractionData = { summoned, summoner, fromZone };
     this.modal.open(CreatureInteractionDialogComponent, { data });
+  }
+
+  /** Rules-engine choice; it cannot be dismissed (the board closes it when the engine moves on). */
+  effectPrompt(data: EffectPromptData) {
+    return this.modal.open(EffectPromptDialogComponent, { data, disableClose: true, injector: this.injector });
   }
 
   /** Assisted effects of one of your cards. */

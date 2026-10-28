@@ -1,5 +1,5 @@
 import { CdkMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { CardsStore } from '@data/cards/cards.store';
 import { sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
@@ -75,7 +75,30 @@ export class BoardPage {
     effect(() => {
       if (!this.opponentLeft()) this.dismissedLeft.set(false);
     });
+
+    // Rules-engine choices: one blocking dialog per prompt; it closes when the engine moves on
+    let open: { id: string; close: () => void } | null = null;
+    effect(() => {
+      const prompt = this.game.myPrompt();
+      untracked(() => {
+        if (open && open.id !== prompt?.id) {
+          open.close();
+          open = null;
+        }
+        if (prompt && !open) {
+          const ref = this.dialogs.effectPrompt({ prompt });
+          open = { id: prompt.id, close: () => ref.close() };
+        }
+      });
+    });
+    inject(DestroyRef).onDestroy(() => open?.close());
   }
+
+  /** Waiting on the opponent's choice for an effect. */
+  protected readonly opponentChoosing = computed(() => {
+    const prompt = this.game.state()?.prompt;
+    return !!prompt && !this.game.myPrompt();
+  });
 
   protected selectShared(index: number): void {
     this.game.setCounter(sharedValueForIndex(index, this.game.isFirstPlayer()));

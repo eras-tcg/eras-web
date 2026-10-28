@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
 
@@ -22,9 +22,11 @@ import { IconComponent } from '../../primitives/icon/icon.component';
           <p class="subtitle">{{ subtitle() }}</p>
         }
       </div>
-      <button erasButton variant="ghost" size="sm" type="button" aria-label="Cerrar" (click)="closed.emit()">
-        <eras-icon name="x" />
-      </button>
+      @if (closable()) {
+        <button erasButton variant="ghost" size="sm" type="button" aria-label="Cerrar" (click)="closed.emit()">
+          <eras-icon name="x" />
+        </button>
+      }
     </header>
     <div class="body"><ng-content /></div>
     <footer class="footer"><ng-content select="[modal-footer]" /></footer>
@@ -38,5 +40,7 @@ export class ModalComponent {
   readonly subtitle = input<string | null>(null);
   /** Width: md (forms, confirmations), lg and xl (big forms, tables). */
   readonly size = input<'md' | 'lg' | 'xl'>('md');
+  /** False for choices that must be answered (open the dialog with disableClose too). */
+  readonly closable = input(true, { transform: booleanAttribute });
   readonly closed = output<void>();
 }

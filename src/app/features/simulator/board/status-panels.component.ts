@@ -30,6 +30,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
                 @for (p of players(); track p.userId) {
                   <button erasButton type="button" (click)="game.startGame(p.userId)">Empieza {{ p.username }}</button>
                 }
+                <button erasButton variant="secondary" type="button" (click)="game.startGame('random')">Aleatorio</button>
               </eras-stack>
             } @else if (players().length === 2) {
               <span>Esperando que el anfitrión inicie la partida.</span>

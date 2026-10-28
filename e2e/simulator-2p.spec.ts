@@ -33,10 +33,9 @@ async function player(browser: Browser, account: Account): Promise<Page> {
   return page;
 }
 
-/** Picks a starter deck (they all have an "Iniciador" creature) and enters the room. */
+/** Picks a starter deck (they all have an "Iniciador" creature): that creates/joins the room and opens the board. */
 async function enterWithDeck(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Ver ST2', exact: true }).click();
-  await page.getByRole('button', { name: /Entrar (a la partida|con el mazo elegido)/ }).click();
   await expect(page).toHaveURL(/\/board$/);
 }
 
@@ -48,10 +47,8 @@ test('partida real de 2 jugadores', async ({ browser }) => {
 
   // Host creates the room and enters; the guest opens the shared link
   await host.goto('/simulator');
-  await host.getByRole('button', { name: 'Crear sala' }).click();
-  await expect(host).toHaveURL(/\/simulator\/[^/]+$/);
-  const roomUrl = new URL(host.url()).pathname;
   await enterWithDeck(host);
+  const roomUrl = new URL(host.url()).pathname.replace(/\/board$/, '');
   await expect(host.getByText('Esperando al rival')).toBeVisible();
 
   await guest.goto(roomUrl);

@@ -35,38 +35,45 @@
     </eras-stack>
   </header>
 
-  @if (game.error(); as message) {
-    <eras-alert tone="danger">{{ message }}</eras-alert>
-  }
-  @if (game.deckWarning(); as warning) {
-    <eras-alert>{{ warning }}</eras-alert>
-  }
-  @if (game.pendingTargetSource()) {
-    <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
-  }
-  @if (opponentLeft() && !dismissedLeft()) {
-    <eras-alert tone="danger">
-      <eras-stack direction="row" [gap]="2" align="center" wrap>
-        <span>El rival se desconectó.</span>
-        <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
-        <button erasButton variant="danger" size="sm" type="button" (click)="closeRoom()">Cerrar la sala</button>
-      </eras-stack>
-    </eras-alert>
-  }
-
-  <eras-status-panels (leave)="exit()" />
-
-  @if (game.myState(); as me) {
-    @if (game.opponentState(); as opp) {
-      <eras-player-half [player]="opp" opponent />
+  <!-- The table takes the rest of the screen; alerts and status panels float over it -->
+  <div class="table">
+    @if (game.myState(); as me) {
+      @if (game.opponentState(); as opp) {
+        <eras-player-half [player]="opp" opponent />
+      } @else {
+        <div class="empty-side">El rival todavía no entra a la sala.</div>
+      }
+      <eras-shared-bar [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
+      <eras-player-half [player]="me" />
     } @else {
-      <div class="empty-side">El rival todavía no entra a la sala.</div>
+      <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
     }
-    <eras-shared-bar [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
-    <eras-player-half [player]="me" />
-  } @else {
-    <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
-  }
+
+    <div class="toasts">
+      @if (game.error(); as message) {
+        <eras-alert tone="danger">{{ message }}</eras-alert>
+      }
+      @if (game.deckWarning(); as warning) {
+        <eras-alert>{{ warning }}</eras-alert>
+      }
+      @if (game.pendingTargetSource()) {
+        <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
+      }
+      @if (opponentLeft() && !dismissedLeft()) {
+        <eras-alert tone="danger">
+          <eras-stack direction="row" [gap]="2" align="center" wrap>
+            <span>El rival se desconectó.</span>
+            <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
+            <button erasButton variant="danger" size="sm" type="button" (click)="closeRoom()">Cerrar la sala</button>
+          </eras-stack>
+        </eras-alert>
+      }
+    </div>
+
+    <div class="status-layer">
+      <eras-status-panels (leave)="exit()" />
+    </div>
+  </div>
 
   <!-- Live notices: revealed cards and the latest actions -->
   <div class="notices" aria-live="polite">

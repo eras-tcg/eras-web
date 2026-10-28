@@ -37,14 +37,14 @@ test('mis mazos lista los mazos propios', async ({ page }) => {
   await expect(page.getByText(E2E_DECK.deckName)).toBeVisible();
 });
 
-test('simulador: el lobby crea una sala y ofrece el mazo propio', async ({ page }) => {
+test('simulador: elegir un mazo crea la sala', async ({ page }) => {
   await signIn(page);
   await mockSignedInApi(page);
+  const created = page.waitForRequest((r) => r.url().endsWith('/api/simulator/rooms') && r.method() === 'POST');
   await page.goto('/simulator');
-  await page.getByRole('button', { name: 'Crear sala' }).click();
-  await expect(page).toHaveURL(/\/simulator\/e2e-room$/);
-  await expect(page.getByText('Sala e2e-room')).toBeVisible();
-  await expect(page.getByText(E2E_DECK.deckName)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tus mazos' })).toBeVisible();
+  await page.getByRole('button', { name: `Ver ${E2E_DECK.deckName}` }).click();
+  await created;
 });
 
 test('sin permisos, las herramientas de administración redirigen', async ({ page }) => {

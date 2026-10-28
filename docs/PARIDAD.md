@@ -33,7 +33,7 @@ elementos de prueba creados y borrados; **simulada** = probada con sesión y res
 
 Además: `/card-meta` (nueva, metadatos sin imagen) y `/admin` (hub de herramientas).
 
-## Antes del corte en producción
+## Antes del corte en producción (hecho el 2026-10-27)
 1. ~~Permitir escrituras desde `next`~~ (hecho) y repetir las escrituras "simuladas" con una cuenta real
    de staging con permisos: login, guardar/borrar mazo, PDF de proxies, admin (usuarios, roles, permisos, referencia,
    cambios, partidas, tierlist, Home, ediciones, metadatos).

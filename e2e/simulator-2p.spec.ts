@@ -12,9 +12,14 @@ interface Account {
   password: string;
 }
 const authFile = join(__dirname, '.auth.local.json');
-const accounts: Account[] = existsSync(authFile) ? JSON.parse(readFileSync(authFile, 'utf8')).accounts : [];
+const auth: { baseURL?: string; accounts?: Account[] } = existsSync(authFile) ? JSON.parse(readFileSync(authFile, 'utf8')) : {};
+const accounts = auth.accounts ?? [];
 
-test.skip(accounts.length < 2 || !process.env['E2E_BASE_URL'], 'Requiere e2e/.auth.local.json y E2E_BASE_URL');
+// The test accounts only exist on the site they were created on (staging)
+test.skip(
+  accounts.length < 2 || !process.env['E2E_BASE_URL'] || process.env['E2E_BASE_URL'] !== auth.baseURL,
+  'Requiere e2e/.auth.local.json con cuentas del mismo sitio que E2E_BASE_URL',
+);
 test.setTimeout(150_000);
 
 async function player(browser: Browser, account: Account): Promise<Page> {

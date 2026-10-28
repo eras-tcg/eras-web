@@ -3,12 +3,12 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Actualizado:** 2026-10-27 · **Último PR:** #9 · **Despliegues:** https://staging.erastcg.com (**Angular**),
-https://next.erastcg.com (Angular), https://erastcg.com (producción, **todavía Vue**)
+**Actualizado:** 2026-10-27 · **Último PR:** #10 · **Despliegues (todos Angular):** https://erastcg.com (producción),
+https://staging.erastcg.com, https://next.erastcg.com
 
 ## Estado en una línea
-Fases 0–6 terminadas; **staging ya sirve Angular** (corte de staging hecho, e2e 15/15 en staging); pruebas reales con
-la cuenta admin y partida real de 2 jugadores hechas; falta el corte de producción.
+**Migración completa: producción sirve Angular desde 2026-10-27** (`eras-web:ff32211…-prod`, e2e 14/14 en producción,
+15/15 en staging). Quedan solo tareas opcionales y desactivar el CI de erasFront (ver Pendiente).
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -18,8 +18,8 @@ la cuenta admin y partida real de 2 jugadores hechas; falta el corte de producci
 | 3. Register, Validate, Profile | ✓ | `0db036e` |
 | 4. Mazos + BoosterResult | ✓ | `932880f`, `adc7171` |
 | 5. Administración + metadatos de cartas | ✓ | #1, #2 |
-| 6. Simulador (STOMP) | ✓ (partida real de 2 jugadores pendiente) | #3 |
-| 7. Corte | e2e + PARIDAD.md (#4); imágenes staging/prod y entornos (#7); **staging cortado**; producción pendiente | #4, #7 |
+| 6. Simulador (STOMP) | ✓ (partida real de 2 jugadores en staging) | #3, #9 |
+| 7. Corte | ✓ staging y **producción** en Angular (2026-10-27) | #4, #7, #8, #10 |
 
 ## Corte: cómo está armado
 - Cada push a `main` publica `ghcr.io/eras-tcg/eras-web:<sha>-next|-staging|-prod` y despliega solo a `next`.
@@ -29,8 +29,9 @@ la cuenta admin y partida real de 2 jugadores hechas; falta el corte de producci
 - **Rollback:** Run workflow en `eras-tcg/erasFront` (CI/CD) con la imagen Vue. Staging: rama `develop`, environment
   `staging`, tag `0d010c9d8a4cbada9dd9875ad8ea501b7205eba2`. Producción: rama `main`, environment `production`, tag
   `9e2abb449f50892b9f496e1b2be11f1387e599db` (imagen Vue que corría antes del corte).
-- **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Al cortar producción, desactivar ese
-  workflow (`gh workflow disable ci-cd.yml -R eras-tcg/erasFront`) y archivar el repo cuando ya no haga falta.
+- **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Ese workflow **sigue activo** (el
+  clasificador de Claude bloqueó desactivarlo): desactivarlo a mano (erasFront → Actions → CI/CD → ⋯ → *Disable workflow*)
+  y archivar el repo cuando ya no haga falta.
 
 ## Pruebas reales en staging (2026-10-27, cuenta admin, solo elementos de prueba creados y borrados)
 Mazo (crear, actualizar, PDF de proxies, borrar), roles (crear, editar permisos, borrar), notas de partidas (crear,
@@ -42,8 +43,9 @@ Drive, ediciones, tierlist, Home).
 1. ~~Partida real de 2 jugadores~~ — hecha (2026-10-27): `E2E_BASE_URL=https://staging.erastcg.com npx playwright test
    simulator-2p` en verde con las cuentas de prueba `e2e_p1_71a21f` / `e2e_p2_71a21f` (verificadas a mano en Mongo;
    contraseñas en `e2e/.auth.local.json`, git-ignorado).
-2. **Corte de producción:** Run workflow `production` con el último sha de `main` + aprobación; verificar con
-   `E2E_BASE_URL=https://erastcg.com npm run e2e`; desactivar el workflow de erasFront.
+2. ~~Corte de producción~~ — hecho (2026-10-27): run 40609236229, `eras-frontend-prod` pasó de
+   `eras-frontend:9e2abb4…-prod` (Vue) a `eras-web:ff32211…-prod`; `E2E_BASE_URL=https://erastcg.com npm run e2e` 14/14.
+   **Falta:** desactivar el workflow CI/CD de erasFront (ver "Ojo" arriba).
 3. Opcionales: e2e en CI, Storybook, endpoint "mi cuenta", SMTP (Brevo) y orden del registro, quitar `next`.
 
 ## Cómo trabajar en el repo

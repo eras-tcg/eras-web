@@ -118,6 +118,8 @@ export interface Combat {
   targetId: string | null;
   blockerId: string | null;
   step: 'ATTACK' | 'BLOCK' | 'CLASH' | 'DAMAGE' | 'END';
+  /** Entering the step, carrying it out or leaving it (each opens a window for triggers). */
+  phase: 'ENTER' | 'ACT' | 'EXIT';
   byEffect: boolean;
 }
 
@@ -130,8 +132,8 @@ export interface EffectPrompt {
   kind: EffectPromptKind;
   playerId: string;
   effectId: string | null;
-  /** Combat choices that are not part of an effect: BLOCK or PROVOKE. */
-  purpose?: 'BLOCK' | 'PROVOKE' | null;
+  /** Choices that are not part of an effect: BLOCK, PROVOKE (Provocar) or ADVANCE (move up to the Línea frontal). */
+  purpose?: 'BLOCK' | 'PROVOKE' | 'ADVANCE' | null;
   sourceName: string;
   title: string;
   instruction: string;

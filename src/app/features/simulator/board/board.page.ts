@@ -29,7 +29,8 @@ const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fas
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:keydown.escape)': 'game.pendingTargetSource.set(null)' },
+  // A click elsewhere or Esc hides the selected card's actions (cards stop their own clicks)
+  host: { '(document:keydown.escape)': 'game.pendingTargetSource.set(null); game.selectedId.set(null)', '(click)': 'game.selectedId.set(null)' },
 })
 export class BoardPage {
   /** Route param `:roomId`. */
@@ -104,7 +105,8 @@ export class BoardPage {
     if (!combat) return null;
     const all = Object.values(this.game.state()?.players ?? {}).flatMap((p) => p.field);
     const name = (id: string | null) => all.find((c) => c.instanceId === id)?.cardName ?? 'una criatura';
-    return `Combate: ${name(combat.attackerId)} ataca a ${combat.targetId ? name(combat.targetId) : 'su rival'}`;
+    const steps = { ATTACK: 'ataque', BLOCK: 'bloqueo', CLASH: 'enfrentamiento', DAMAGE: 'daño directo', END: 'final' } as const;
+    return `Combate (${steps[combat.step]}): ${name(combat.attackerId)} ataca a ${combat.targetId ? name(combat.targetId) : 'su rival'}`;
   });
 
   /** Waiting on the opponent's choice for an effect. */

@@ -2,7 +2,7 @@ import { Injectable, Injector, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardPickerData, CardPickerDialogComponent } from './dialogs/card-picker-dialog.component';
+import { AttackTargetData, AttackTargetDialogComponent } from './dialogs/attack-target-dialog.component';
 import { AttachmentType, CardInfoData, CardInfoDialogComponent } from './dialogs/card-info-dialog.component';
 import { CreatureInteractionData, CreatureInteractionDialogComponent } from './dialogs/creature-interaction-dialog.component';
 import { DeckPeekData, DeckPeekDialogComponent } from './dialogs/deck-peek-dialog.component';
@@ -39,19 +39,10 @@ export class BoardDialogs {
     this.modal.open(CreatureInteractionDialogComponent, { data });
   }
 
-  /** Attack an exhausted enemy creature with `attacker`. */
-  async attackCreature(attacker: CardSlot, targets: readonly CardSlot[], attack: (targetId: string) => void): Promise<void> {
-    const data: CardPickerData = {
-      title: `Atacar con ${attacker.cardName ?? 'tu criatura'}`,
-      subtitle: 'Elige la criatura agotada a la que atacas.',
-      cards: targets,
-      max: 1,
-      exact: true,
-      confirmLabel: 'Atacar',
-    };
-    const ref = this.modal.open<string[], CardPickerData>(CardPickerDialogComponent, { data });
-    const ids = await firstValueFrom(ref.closed);
-    if (ids?.length) attack(ids[0]);
+  /** Target of an attack: an exhausted enemy creature id, null for the rival, undefined when cancelled. */
+  attackTarget(data: AttackTargetData): Promise<string | null | undefined> {
+    const ref = this.modal.open<string | null, AttackTargetData>(AttackTargetDialogComponent, { data });
+    return firstValueFrom(ref.closed);
   }
 
   /** Rules-engine choice; it cannot be dismissed (the board closes it when the engine moves on). */

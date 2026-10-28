@@ -140,6 +140,7 @@ export class EffectPromptDialogComponent {
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'BLOCK') return 'No bloquear';
     if (this.prompt.purpose === 'PROVOKE') return 'No provocar';
+    if (this.prompt.purpose === 'ADVANCE') return 'No subir ninguna';
     return this.prompt.chosenLabel === 'Atacar' ? 'Atacar al rival' : 'Continuar sin elegir';
   });
 

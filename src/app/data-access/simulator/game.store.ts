@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
+import { rulesView } from './legal-actions';
 import { CardSlot, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
 
 export interface RevealedCard {
@@ -40,6 +41,8 @@ export class GameStore {
   readonly targetingSourceId = signal<string | null>(null);
   /** Card chosen with "Hacer objetivo", waiting for its target to be clicked. */
   readonly pendingTargetSource = signal<string | null>(null);
+  /** Card clicked on the board: it shows its legal actions. */
+  readonly selectedId = signal<string | null>(null);
   readonly log = signal<LogLine[]>([]);
   readonly recentLog = signal<LogLine[]>([]);
 
@@ -65,6 +68,8 @@ export class GameStore {
     const chain = this.state()?.chain;
     return chain?.length ? chain[chain.length - 1] : null;
   });
+  /** What the rules check for me now (turn, phase, closed state, gems). */
+  readonly rules = computed(() => rulesView(this.state(), this.me()));
   readonly isHost = computed(() => !!this.me() && this.state()?.hostId === this.me());
   /** The player listed first sees the shared bar unmirrored. */
   readonly isFirstPlayer = computed(() => {

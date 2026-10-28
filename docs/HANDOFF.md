@@ -65,12 +65,18 @@ Drive, ediciones, tierlist, Home).
   EFFECT/BATTLE/RITUAL/MANUAL), ventanas de disparo tras cada resolución (11.6.0.4), disparos opcionales con Sí/No,
   límites por turno (también "entre copias"), combate de 5 pasos (bloqueo, Provocar, Imbloqueable, Letalidad, daño
   directo, derrota sin vidas), Ritual por efecto, timeline con `effectId`/`resolutionId`.
+- Combate: atacar es acción legal (criatura activa en línea frontal, 0+ gemas); agotar y declarar son una acción y
+  disparan "Al Atacar". Cada paso (bloqueo, enfrentamiento, daño, final) registra `COMBAT_STEP` al entrar y salir, con
+  ventana de disparos; si el atacante sale del campo no hay final de combate. Subir a línea frontal: pregunta al inicio
+  de turno y en fase final (todas a la vez). El Iniciador va a la mano tras el mulligan (regla 3.6).
+- Tablero: el campo son dos filas (línea frontal / retaguardia, cartas lado a lado). Clic en una carta = sus acciones
+  legales (`legal-actions.ts`: Atacar, Invocar, Jugar, Ver); clic derecho = acciones manuales.
 - Efectos: ST3 completo en `CardEffects` (por nombre; los textos no se interpretan) + palabra clave Celeridad.
 - Pruebas: 40 tests de motor (`EffectEngineTest`, `DestructionTest`, `CombatTest`, `St3IntegrationTest` con los
   metadatos reales de ST3 en `src/test/resources/simulator`). Solo probado en local; falta e2e de 2 jugadores en staging.
 - Sin implementar: Furia (solo se registra), Reforzar y jugar gratis una utilidad revelada como vida (va a la mano),
   responder a una cadena (prioridad), elegir el orden dentro de un grupo de disparos, validar coste/Requerimiento de la
-  invocación especial manual del tablero, Iniciador a la mano al empezar (regla 3.6).
+  invocación especial manual del tablero, ventaja del iniciador (−1 al coste del segundo jugador).
 
 ## Pendiente
 1. ~~Desplegar el rediseño a producción~~ — hecho (2026-10-27): front run 40616811405 (`eras-web:5f45fc5…-prod`), backend

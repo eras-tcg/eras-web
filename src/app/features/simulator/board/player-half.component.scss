@@ -69,6 +69,21 @@
   overflow: hidden;
 }
 
+// The side of whoever has the priority glows: blue for you, red for your opponent
+:host(.acting) .field {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6, 0 0 22px 2px rgb(59 130 246 / 45%);
+}
+
+:host(.acting.opponent) .field {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444, 0 0 22px 2px rgb(239 68 68 / 45%);
+}
+
+.field {
+  transition: box-shadow var(--duration-normal, 200ms) ease, border-color var(--duration-normal, 200ms) ease;
+}
+
 .field.drop-active {
   border-color: var(--color-primary);
   border-style: solid;

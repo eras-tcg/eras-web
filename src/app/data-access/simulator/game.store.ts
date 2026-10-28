@@ -43,6 +43,12 @@ export class GameStore {
   readonly pendingTargetSource = signal<string | null>(null);
   /** Card clicked on the board: it shows its legal actions. */
   readonly selectedId = signal<string | null>(null);
+  /** Who acts now: whoever must answer the pending choice, else the player whose turn it is. */
+  readonly actingId = computed(() => {
+    const s = this.state();
+    if (s?.status !== 'IN_PROGRESS') return null;
+    return s.prompt?.playerId ?? s.currentTurnUserId ?? null;
+  });
   /** Cards chosen so far in the open choice: marked on the board so they can be told apart. */
   readonly promptChosen = signal<ReadonlySet<string>>(new Set());
   readonly log = signal<LogLine[]>([]);

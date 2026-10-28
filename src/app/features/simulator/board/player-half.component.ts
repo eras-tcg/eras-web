@@ -26,11 +26,13 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.opponent]': 'opponent()' },
+  host: { '[class.opponent]': 'opponent()', '[class.acting]': 'acting()' },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
+  /** This player has the priority now (acts or must answer): their side of the table glows. */
+  protected readonly acting = computed(() => this.game.actingId() === this.player().userId);
 
   protected readonly game = inject(GameStore);
   protected readonly drag = inject(BoardDrag);

@@ -155,6 +155,7 @@ export type PromptPurpose =
   | 'REINFORCE'
   | 'LIFE_PLAY'
   | 'ORDER'
+  | 'OPTIONAL'
   | 'PRIORITY';
 
 /** A choice the engine waits for; it cannot be dismissed. */
@@ -166,7 +167,8 @@ export interface EffectPrompt {
   /**
    * Choices made by the rules, not by an effect: BLOCK, PROVOKE (Provocar), ADVANCE (move up to the Línea frontal),
    * RITUAL (creatures for a Ritual from the hand), SPECIAL_FRONT (move up after a special summon), REINFORCE
-   * (Reforzar), LIFE_PLAY (play a lost life), ORDER (simultaneous triggers) or PRIORITY (respond to the chain).
+   * (Reforzar), LIFE_PLAY (play a lost life), ORDER (order of simultaneous mandatory triggers), OPTIONAL (chain one
+   * of your optional triggers, then the next) or PRIORITY (respond to the chain).
    */
   purpose?: PromptPurpose | null;
   sourceName: string;

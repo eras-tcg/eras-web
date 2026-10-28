@@ -146,7 +146,8 @@ export class EffectPromptDialogComponent {
   protected readonly confirmLabel = computed(() => {
     if (this.chosen().size > 0 && this.prompt.purpose === 'RITUAL') return 'Invocar';
     if (this.chosen().size > 0 && this.prompt.purpose === 'PRIORITY') return 'Activar';
-    if (this.prompt.purpose === 'ORDER') return this.chosen().size > 0 ? 'Encadenar' : 'No activar ninguno';
+    if (this.prompt.purpose === 'ORDER') return 'Encadenar';
+    if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
@@ -196,7 +197,7 @@ export class EffectPromptDialogComponent {
 
   /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
   protected chosenTag(id: string): string {
-    if (this.prompt.purpose === 'ORDER') {
+    if (this.prompt.purpose === 'ORDER' || this.prompt.purpose === 'OPTIONAL') {
       // The real link it will take: after the links already in the chain
       const base = this.game.state()?.chain?.length ?? 0;
       const label = this.prompt.cardLabels?.[id];

@@ -1,22 +1,24 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { PageComponent } from '@ui/layout/page/page.component';
+import { AuthLayoutComponent } from '@ui/layout/auth-layout/auth-layout.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
 
 @Component({
   selector: 'eras-login-page',
-  imports: [ReactiveFormsModule, RouterLink, PageComponent, CardComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
   templateUrl: './login.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPage {
+  /** Page that sent the user here (?returnUrl=), opened again after signing in. */
+  readonly returnUrl = input<string>();
+
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -37,11 +39,16 @@ export class LoginPage {
     this.error.set(null);
     try {
       await this.auth.login(this.form.getRawValue());
-      await this.router.navigateByUrl('/');
+      await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo iniciar sesión'));
     } finally {
       this.loading.set(false);
     }
   }
+}
+
+/** Only same-site paths: never follow an absolute or protocol-relative URL from the query string. */
+function safeReturnUrl(url: string | undefined): string {
+  return url && url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/login') ? url : '/home';
 }

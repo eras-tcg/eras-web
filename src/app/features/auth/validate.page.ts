@@ -3,20 +3,18 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { PageComponent } from '@ui/layout/page/page.component';
+import { AuthLayoutComponent } from '@ui/layout/auth-layout/auth-layout.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
 
 type Status = { state: 'loading' } | { state: 'success' } | { state: 'error'; message: string };
 
 /** Target of the link in the verification e-mail: /validate?token=… */
 @Component({
   selector: 'eras-validate-page',
-  imports: [RouterLink, PageComponent, CardComponent, EmptyStateComponent, SpinnerComponent, ButtonComponent],
+  imports: [RouterLink, AuthLayoutComponent, EmptyStateComponent, SpinnerComponent, ButtonComponent],
   template: `
-    <eras-page title="Validar cuenta" width="narrow">
-      <eras-card padding="lg">
+    <eras-auth-layout heading="Validar cuenta">
         @switch (status().state) {
           @case ('loading') {
             <eras-empty-state title="Verificando tu cuenta…"><eras-spinner /></eras-empty-state>
@@ -32,8 +30,7 @@ type Status = { state: 'loading' } | { state: 'success' } | { state: 'error'; me
             </eras-empty-state>
           }
         }
-      </eras-card>
-    </eras-page>
+    </eras-auth-layout>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

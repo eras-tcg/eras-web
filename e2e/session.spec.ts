@@ -11,11 +11,12 @@ test('login guarda la sesión y salir la borra', async ({ page }) => {
   await page.getByRole('button', { name: 'Entrar' }).click();
 
   await expect(page).not.toHaveURL(/\/login/);
-  await expect(page.getByRole('link', { name: 'Mis mazos' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Menú de la cuenta' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('auth_token'))).toBeTruthy();
 
-  await page.getByRole('button', { name: 'Salir' }).click();
-  await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await page.getByRole('button', { name: 'Menú de la cuenta' }).click();
+  await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click();
+  await expect(page).toHaveURL(/\/login/);
   expect(await page.evaluate(() => localStorage.getItem('auth_token'))).toBeNull();
 });
 

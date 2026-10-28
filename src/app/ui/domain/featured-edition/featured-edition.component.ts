@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 
 /** Large cover of an edition with its name over the artwork. Actions go into [featured-actions]. */
 @Component({
@@ -23,6 +23,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   `,
   styleUrl: './featured-edition.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.fill]': 'fill()' },
 })
 export class FeaturedEditionComponent {
   readonly code = input.required<string>();
@@ -30,6 +31,9 @@ export class FeaturedEditionComponent {
   readonly description = input<string | null>(null);
   readonly imageUrl = input<string | null>(null);
   readonly eyebrow = input('Última edición');
+
+  /** Fill the parent height instead of keeping the 5:7 ratio. */
+  readonly fill = input(false, { transform: booleanAttribute });
 
   readonly selected = output<void>();
 }

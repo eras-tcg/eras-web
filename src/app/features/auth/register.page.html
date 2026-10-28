@@ -1,5 +1,4 @@
-<eras-page title="Crear cuenta" width="narrow">
-  <eras-card padding="lg">
+<eras-auth-layout heading="Crear cuenta" subtitle="Te enviaremos un correo para validarla.">
     @if (done()) {
       <eras-stack [gap]="4">
         <eras-alert tone="success">
@@ -26,9 +25,8 @@
             <input type="password" formControlName="confirm" autocomplete="new-password" />
           </eras-form-field>
           <button erasButton type="submit" [loading]="loading()" [disabled]="loading()">Crear cuenta</button>
-          <a routerLink="/login">¿Ya tienes cuenta? Inicia sesión</a>
         </eras-stack>
       </form>
     }
-  </eras-card>
-</eras-page>
+  <span auth-footer>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></span>
+</eras-auth-layout>

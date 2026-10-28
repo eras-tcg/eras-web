@@ -1,5 +1,5 @@
 <eras-page title="Ediciones" subtitle="Estructuras, expansiones y sus sobres">
-  <button page-actions *erasCan="'manage_editions'" erasButton type="button" (click)="openForm(null)">
+  <button page-actions *erasEdit="'manage_editions'" erasButton type="button" (click)="openForm(null)">
     <eras-icon name="plus" /> Nueva edición
   </button>
 
@@ -39,7 +39,7 @@
               <eras-icon name="box" /> Simular apertura
             </button>
           }
-          <button tile-actions *erasCan="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
+          <button tile-actions *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
             <eras-icon name="edit" /> Editar
           </button>
         </eras-edition-tile>

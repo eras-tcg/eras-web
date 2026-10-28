@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { signIn } from './fixtures';
 
-// Public pages, read from the real backend.
+// Site pages with a (mocked) session; data read from the real backend.
+test.beforeEach(async ({ page }, testInfo) => {
+  if (!testInfo.title.startsWith('sin sesión')) await signIn(page);
+});
 
 test('home carga con la navegación principal', async ({ page }) => {
   await page.goto('/');
@@ -64,11 +68,14 @@ test('constructor de mazos: agregar copias y avisar al salir', async ({ page }) 
   await expect(page).toHaveURL(/\/deck-builder/);
 });
 
-test('rutas con sesión redirigen al login', async ({ page }) => {
-  for (const path of ['/my-decks', '/simulator', '/admin', '/profile']) {
+test('sin sesión: todo el sitio redirige al login y vuelve a la página pedida', async ({ page }) => {
+  for (const path of ['/home', '/cards', '/editions', '/public-decks', '/my-decks', '/simulator', '/admin', '/profile']) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login/);
   }
+  await page.goto('/cards');
+  await expect(page).toHaveURL(/\/login\?returnUrl=%2Fcards$/);
+  await expect(page.getByRole('link', { name: 'Regístrate' })).toBeVisible();
 });
 
 test('el backend acepta escrituras desde este origen (CORS)', async ({ page, baseURL }) => {

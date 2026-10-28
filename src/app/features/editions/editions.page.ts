@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { CanDirective } from '@core/auth/can.directive';
+import { EditDirective } from '@core/auth/edit.directive';
 import { Edition, EditionSaveRequest } from '@data/editions/edition.model';
 import { canSimulatePack } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -22,7 +22,7 @@ type FormState = { open: false } | { open: true; edition: Edition | null };
 @Component({
   selector: 'eras-editions-page',
   imports: [
-    CanDirective,
+    EditDirective,
     PageComponent,
     GridComponent,
     EditionTileComponent,

@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CanDirective } from '@core/auth/can.directive';
+import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { CatalogCard } from '@data/cards/card.model';
 import { nameVariants } from '@data/cards/card-rules';
@@ -27,7 +27,7 @@ export interface CardDetailDialogData {
 /** One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. */
 @Component({
   selector: 'eras-card-detail-dialog',
-  imports: [CardDetailComponent, AlertComponent, ButtonComponent, IconComponent, CanDirective],
+  imports: [CardDetailComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective],
   templateUrl: './card-detail-dialog.component.html',
   styleUrl: './card-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

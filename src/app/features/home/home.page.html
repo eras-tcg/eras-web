@@ -1,74 +1,68 @@
-<eras-page title="ERAS" subtitle="Juego de cartas coleccionables" width="wide">
-  <ng-container ngProjectAs="[page-actions]">
+<eras-home-layout mainTitle="Mazos destacados" sideTitle="Noticias">
+  <eras-stack home-toolbar direction="row" [gap]="2" align="center" justify="end" wrap>
     @if (home.editing()) {
-      <button erasButton variant="secondary" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
-      <button erasButton type="button" [loading]="home.saving()" (click)="save()">Guardar cambios</button>
+      <span class="sr-only" role="status">Editando la portada</span>
+      <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
+      <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
     } @else {
-      <button *erasCan="'manage_home'" erasButton variant="secondary" type="button" (click)="startEdit()">
+      <button *erasEdit="'manage_home'" erasButton variant="secondary" size="sm" type="button" (click)="startEdit()">
         <eras-icon name="edit" /> Editar portada
       </button>
     }
-  </ng-container>
+  </eras-stack>
 
   @if (home.error(); as error) {
-    <eras-alert tone="danger">{{ error }}</eras-alert>
+    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
   }
   @if (saveError(); as error) {
-    <eras-alert tone="danger">{{ error }}</eras-alert>
+    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
   }
 
-  @if (home.loading()) {
-    <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
-  } @else {
-    <eras-split aside="18rem">
-      <div split-aside>
-        @if (home.content().edition; as edition) {
-          <eras-featured-edition
-            [code]="edition.editionId"
-            [name]="edition.editionName ?? null"
-            [description]="edition.editionDescription ?? null"
-            [imageUrl]="edition.editionImage ?? null"
-            (selected)="openCards(edition.editionId)"
-          >
-            @if (home.editing()) {
-              <button featured-actions erasButton size="sm" type="button" (click)="pickEdition()">
-                <eras-icon name="edit" /> Cambiar
-              </button>
-            }
-          </eras-featured-edition>
-        } @else if (home.editing()) {
-          <button erasButton variant="secondary" type="button" (click)="pickEdition()">
-            <eras-icon name="plus" /> Elegir edición destacada
+  <div home-feature>
+    @if (home.loading()) {
+      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+    } @else if (home.content().edition; as edition) {
+      <eras-featured-edition
+        fill
+        [code]="edition.editionId"
+        [name]="edition.editionName ?? null"
+        [description]="edition.editionDescription ?? null"
+        [imageUrl]="edition.editionImage ?? null"
+        (selected)="openCards(edition.editionId)"
+      >
+        @if (home.editing()) {
+          <button featured-actions erasButton size="sm" type="button" (click)="pickEdition()">
+            <eras-icon name="edit" /> Cambiar
           </button>
         }
-      </div>
+      </eras-featured-edition>
+    } @else if (home.editing()) {
+      <button erasButton variant="secondary" type="button" (click)="pickEdition()">
+        <eras-icon name="plus" /> Elegir edición destacada
+      </button>
+    }
+  </div>
 
-      <eras-grid minColumn="17rem" [gap]="3">
-        @for (deck of home.content().decks; track $index; let i = $index) {
-          @if (deck || home.editing()) {
-            <eras-deck-tile
-              [rank]="i + 1"
-              [name]="deck?.deckName ?? null"
-              [author]="deck?.username ?? null"
-              [imageUrl]="deck?.deckImage ?? null"
-              (selected)="openDeck(deck)"
-            >
-              @if (home.editing()) {
-                <button tile-actions erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
-                  <eras-icon name="edit" />
-                </button>
-              }
-            </eras-deck-tile>
-          }
-        }
-      </eras-grid>
-    </eras-split>
+  @for (deck of home.loading() ? [] : home.content().decks; track $index; let i = $index) {
+    <eras-deck-cover
+      [style.visibility]="deck || home.editing() ? null : 'hidden'"
+      home-main
+      fit
+      [rank]="i + 1"
+      [name]="deck?.deckName ?? null"
+      [author]="deck?.username ?? null"
+      [imageUrl]="deck?.deckImage ?? null"
+      (selected)="openDeck(deck)"
+    >
+      @if (home.editing()) {
+        <button cover-actions erasButton size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
+          <eras-icon name="edit" />
+        </button>
+      }
+    </eras-deck-cover>
   }
 
-  <eras-section-header title="Noticias recientes" />
-  <eras-grid minColumn="16rem">
-    @for (item of news; track item.title) {
-      <eras-news-card [date]="item.date" [dateLabel]="item.dateLabel" [title]="item.title" [excerpt]="item.excerpt" />
-    }
-  </eras-grid>
-</eras-page>
+  @for (item of news; track item.title) {
+    <eras-news-card home-side [date]="item.date" [dateLabel]="item.dateLabel" [title]="item.title" [excerpt]="item.excerpt" />
+  }
+</eras-home-layout>

@@ -1,22 +1,21 @@
+import type { IconName } from '@ui/primitives/icon/icon.component';
 import { Permission } from '../auth/auth.model';
 
 export interface NavItem {
   label: string;
-  /** Angular route (page already migrated) */
-  route?: string;
-  /** Path in the legacy Vue app (page not migrated yet) */
-  legacyPath?: string;
+  route: string;
+  icon: IconName;
   permission?: Permission;
 }
 
-/** Main navigation. A page moves from `legacyPath` to `route` when it is migrated. */
+/** Main navigation (navbar). */
 export const MAIN_NAV: NavItem[] = [
-  { label: 'Inicio', route: '/home' },
-  { label: 'Cartas', route: '/cards' },
-  { label: 'Ediciones', route: '/editions' },
-  { label: 'Constructor de mazos', route: '/deck-builder' },
-  { label: 'Mazos', route: '/public-decks' },
-  { label: 'Tierlist', route: '/tierlist' },
-  { label: 'Cómo jugar', route: '/ruling' },
-  { label: 'Simulador', route: '/simulator' },
+  { label: 'Inicio', route: '/home', icon: 'home' },
+  { label: 'Cartas', route: '/cards', icon: 'cards' },
+  { label: 'Ediciones', route: '/editions', icon: 'layers' },
+  { label: 'Constructor', route: '/deck-builder', icon: 'square-plus' },
+  { label: 'Mazos', route: '/public-decks', icon: 'stack' },
+  { label: 'Tierlist', route: '/tierlist', icon: 'trophy' },
+  { label: 'Cómo jugar', route: '/ruling', icon: 'book' },
+  { label: 'Simulador', route: '/simulator', icon: 'gamepad' },
 ];

@@ -1,35 +1,38 @@
-<header class="header">
+<header class="header" [class.compact]="compact()">
   <div class="bar">
-    <a class="brand" routerLink="/">ERAS</a>
+    <a class="brand" routerLink="/home" aria-label="ERAS, inicio"><img class="logo" src="favicon.svg" alt="" /><span class="brand-text">ERAS</span></a>
 
-    <button
-      erasButton
-      variant="ghost"
-      size="sm"
-      type="button"
-      class="menu-toggle"
-      [attr.aria-expanded]="menuOpen()"
-      aria-controls="main-nav"
-      aria-label="Menú"
-      (click)="menuOpen.set(!menuOpen())"
-    >
-      <eras-icon name="menu" />
-    </button>
-
-    <nav id="main-nav" class="nav" [class.is-open]="menuOpen()" aria-label="Principal">
-      <ul class="links">
-        @for (item of nav; track item.label) {
-          <li>
-            @if (item.route) {
-              <a [routerLink]="item.route" routerLinkActive="is-active" (click)="menuOpen.set(false)">{{ item.label }}</a>
-            } @else {
-              <a [href]="href(item)">{{ item.label }}</a>
-            }
-          </li>
-        }
-      </ul>
+    @if (auth.user(); as user) {
+      <nav id="main-nav" class="nav" [class.is-open]="menuOpen()" aria-label="Principal">
+        <ul class="links">
+          @for (item of nav; track item.route) {
+            <li>
+              <a [routerLink]="item.route" routerLinkActive="is-active" ariaCurrentWhenActive="page" [attr.title]="item.label">
+                <eras-icon [name]="item.icon" />
+                <span>{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
 
       <div class="tools">
+        @if (editMode.available()) {
+          <button
+            type="button"
+            class="edit-switch"
+            role="switch"
+            [class.on]="editMode.active()"
+            [attr.aria-checked]="editMode.active()"
+            [attr.title]="editMode.active() ? 'Salir del modo edición' : 'Mostrar los controles de edición'"
+            (click)="editMode.toggle()"
+          >
+            <eras-icon name="edit" />
+            <span class="edit-label">Modo edición</span>
+            <span class="track" aria-hidden="true"><span class="knob"></span></span>
+          </button>
+        }
+
         <button
           erasButton
           variant="ghost"
@@ -41,21 +44,59 @@
           <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
         </button>
 
-        @if (auth.user(); as user) {
-          <a class="user" routerLink="/my-decks" routerLinkActive="is-active" (click)="menuOpen.set(false)"><eras-icon name="cards" /> Mis mazos</a>
-          @if (hasAdminTools()) {
-            <a class="user" routerLink="/admin" routerLinkActive="is-active" (click)="menuOpen.set(false)">Administración</a>
-          }
-          <a class="user" routerLink="/profile" aria-label="Mi perfil" (click)="menuOpen.set(false)"><eras-icon name="user" /> {{ user.username }}</a>
-          <button erasButton variant="secondary" size="sm" type="button" (click)="logout()">
-            <eras-icon name="logout" /> Salir
-          </button>
-        } @else {
-          <a erasButton variant="primary" size="sm" routerLink="/login" (click)="menuOpen.set(false)">Iniciar sesión</a>
-        }
+        <button type="button" class="account" [cdkMenuTriggerFor]="accountMenu" aria-label="Menú de la cuenta">
+          <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+          <span class="account-name">{{ user.username }}</span>
+          <eras-icon name="chevron-down" />
+        </button>
+        <ng-template #accountMenu>
+          <eras-menu>
+            <span class="eras-menu-label">Sesión iniciada como <strong>{{ user.username }}</strong></span>
+            <button erasMenuItem (triggered)="go('/my-decks')"><eras-icon name="stack" /> Mis mazos</button>
+            <button erasMenuItem (triggered)="go('/profile')"><eras-icon name="user" /> Mi perfil</button>
+            @if (hasAdminTools()) {
+              <button erasMenuItem (triggered)="go('/admin')"><eras-icon name="shield" /> Administración</button>
+            }
+            <hr />
+            <button erasMenuItem (triggered)="logout()"><eras-icon name="logout" /> Cerrar sesión</button>
+          </eras-menu>
+        </ng-template>
+
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="menu-toggle"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="main-nav"
+          aria-label="Menú"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <eras-icon [name]="menuOpen() ? 'x' : 'menu'" />
+        </button>
       </div>
-    </nav>
+    } @else {
+      <div class="tools">
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema oscuro'"
+          (click)="theme.toggle()"
+        >
+          <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+        </button>
+      </div>
+    }
   </div>
+
+  @if (editMode.active()) {
+    <div class="edit-banner" role="status">
+      <eras-icon name="edit" /> Modo edición activo: los controles para editar el contenido están visibles.
+    </div>
+  }
 </header>
 
 <main class="main">

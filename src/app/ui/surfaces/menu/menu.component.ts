@@ -22,6 +22,9 @@ import { ChangeDetectionStrategy, Component, Directive, ViewEncapsulation } from
       box-shadow: var(--shadow-lg);
     }
     .eras-menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
       padding: var(--space-2) var(--space-3);
       border: 0;
       border-radius: var(--radius-sm);
@@ -34,6 +37,7 @@ import { ChangeDetectionStrategy, Component, Directive, ViewEncapsulation } from
     .eras-menu-item:hover, .eras-menu-item:focus-visible { background: var(--color-surface-muted); outline: none; }
     .eras-menu-item.danger { color: var(--color-danger); }
     .eras-menu-item:disabled { opacity: 0.45; cursor: default; }
+    .eras-menu-label { padding: var(--space-2) var(--space-3) var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-xs); }
     .eras-menu hr { margin: var(--space-1) 0; border: 0; border-block-start: var(--border-width) solid var(--color-border); }
   `,
   // Not encapsulated: styles the projected items. Selectors are namespaced.

@@ -58,6 +58,8 @@ export interface EffectPromptData {
                   {{ c.cardName }}
                 } @else if (!valid.has(c.instanceId)) {
                   No cumple
+                } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
+                  {{ effectLabel }}
                 } @else {
                   {{ c.cardName }}
                 }
@@ -113,11 +115,9 @@ export interface EffectPromptData {
       display: inline-flex;
       align-items: center;
       gap: var(--space-1);
-      max-inline-size: 7rem;
-      overflow: hidden;
+      max-inline-size: 8rem;
       font-size: var(--font-size-xs);
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      text-align: center;
     }
     .pick.chosen .tag { color: var(--color-success); font-weight: var(--font-weight-bold); }
     .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
@@ -141,6 +141,7 @@ export class EffectPromptDialogComponent {
   protected readonly confirmLabel = computed(() => {
     if (this.chosen().size > 0 && this.prompt.purpose === 'RITUAL') return 'Invocar';
     if (this.chosen().size > 0 && this.prompt.purpose === 'PRIORITY') return 'Activar';
+    if (this.prompt.purpose === 'ORDER') return this.chosen().size > 0 ? 'Encadenar' : 'No activar ninguno';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
@@ -177,7 +178,12 @@ export class EffectPromptDialogComponent {
 
   /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
   protected chosenTag(id: string): string {
-    if (this.prompt.purpose === 'ORDER') return `Cadena +${[...this.chosen()].indexOf(id) + 1}`;
+    if (this.prompt.purpose === 'ORDER') {
+      // The real link it will take: after the links already in the chain
+      const base = this.game.state()?.chain?.length ?? 0;
+      const label = this.prompt.cardLabels?.[id];
+      return `Cadena ${base + [...this.chosen()].indexOf(id) + 1}${label ? ' · ' + label : ''}`;
+    }
     return this.prompt.chosenLabel ?? 'Elegida';
   }
 

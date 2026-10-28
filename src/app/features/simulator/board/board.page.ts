@@ -99,8 +99,8 @@ export class BoardPage {
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */
   protected readonly engineNotice = computed(() => {
     const effect = this.game.resolving();
-    // The chain itself is listed by <eras-chain-list>
-    if (effect) return `Cadena ${effect.link}: ${effect.sourceName} · ${effect.label}`;
+    // The chain itself is listed by <eras-chain-list>; while it is being built nothing resolves yet
+    if (effect?.resolutionId) return `Resolviendo Cadena ${effect.link}: ${effect.sourceName} · ${effect.label}`;
     const prompt = this.game.state()?.prompt;
     if (prompt) return prompt.title;
     const combat = this.game.state()?.combat;

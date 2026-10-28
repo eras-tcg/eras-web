@@ -64,7 +64,7 @@
       }
       @if (engineNotice(); as notice) {
         <eras-alert>
-          <strong>Resolviendo: {{ notice }}</strong>
+          <strong>{{ notice }}</strong>
           @if (opponentChoosing()) {
             — esperando la elección de {{ game.opponentState()?.username ?? 'tu rival' }}
           }

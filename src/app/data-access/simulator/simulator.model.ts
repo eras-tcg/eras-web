@@ -183,6 +183,8 @@ export interface EffectPrompt {
   subjectId?: string | null;
   /** Ritual from the hand: the summoner it was dropped onto. */
   summonerId?: string | null;
+  /** What each card stands for in this choice (the effects it triggered), by instance id. */
+  cardLabels?: Record<string, string> | null;
 }
 
 /** GET /api/simulator/rooms/{id} */

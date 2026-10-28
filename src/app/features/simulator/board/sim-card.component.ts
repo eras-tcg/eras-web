@@ -1,4 +1,5 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
+import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
 import { displayStrength, isHidden } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
@@ -18,7 +19,7 @@ import { BoardEffects } from './board-effects';
  */
 @Component({
   selector: 'eras-sim-card',
-  imports: [GameCardComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconComponent],
+  imports: [GameCardComponent, CdkContextMenuTrigger, CdkConnectedOverlay, CdkOverlayOrigin, MenuComponent, MenuItemDirective, IconComponent],
   template: `
     <eras-game-card
       [imageUrl]="slot().imageUrl"
@@ -38,6 +39,10 @@ import { BoardEffects } from './board-effects';
       [attr.aria-label]="label()"
       [cdkContextMenuTriggerFor]="menu"
       [class.selected]="selected()"
+      [class.can-play]="canPlay()"
+      [class.can-activate]="canActivate()"
+      cdkOverlayOrigin
+      #origin="cdkOverlayOrigin"
       (click)="onClick($event)"
       (dblclick)="onDoubleClick()"
       (keydown.enter)="onClick($event)"
@@ -45,7 +50,14 @@ import { BoardEffects } from './board-effects';
       (dragend)="drag.end()"
     />
 
-    @if (selected()) {
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="origin"
+      [cdkConnectedOverlayOpen]="selected()"
+      [cdkConnectedOverlayPositions]="toolbarPositions"
+      [cdkConnectedOverlayPush]="true"
+      cdkConnectedOverlayPanelClass="eras-card-actions-panel"
+    >
       <div class="actions" role="toolbar" [attr.aria-label]="'Acciones de ' + (slot().cardName ?? 'la carta')">
         @if (effectsOpen()) {
           @for (e of myEffects(); track e.scriptId) {
@@ -56,7 +68,7 @@ import { BoardEffects } from './board-effects';
           }
         } @else {
           @for (a of actions(); track a) {
-            <button type="button" class="action" [class.attack]="a === 'attack'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
+            <button type="button" class="action" [class.attack]="a === 'attack'" [class.play]="a === 'summon' || a === 'ritual' || a === 'play'" [class.activate]="a === 'activate'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
               <eras-icon [name]="actionIcons[a]" />
               <span>{{ actionLabels[a] }}</span>
             </button>
@@ -69,7 +81,7 @@ import { BoardEffects } from './board-effects';
           </button>
         }
       </div>
-    }
+    </ng-template>
 
     <ng-template #menu>
       <eras-menu>
@@ -111,32 +123,46 @@ import { BoardEffects } from './board-effects';
   styles: `
     :host { position: relative; display: inline-block; }
     eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
-    .actions {
-      position: absolute;
-      inset-inline: 0;
-      inset-block-end: var(--space-1);
-      z-index: 2;
-      display: flex;
-      flex-wrap: wrap;
+    :host(.tapped-field) {
+      /* An exhausted card is turned sideways: it takes the card's height in width, so it does not overlap its neighbors */
+      display: inline-flex;
       justify-content: center;
+      inline-size: calc(var(--game-card-width, 4.5rem) * 88 / 63);
+    }
+    eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
+    eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
+    eras-game-card.can-play.can-activate {
+      box-shadow: 0 0 0 2px #f5b301, 0 0 0 4px #3b82f6, 0 0 16px 4px rgb(245 179 1 / 60%);
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
       gap: var(--space-1);
-      padding: 0 var(--space-1);
+      padding: var(--space-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      box-shadow: var(--shadow-lg, var(--shadow-md));
     }
     .action {
       display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
-      padding: 0.2rem 0.45rem;
+      gap: var(--space-2);
+      padding: 0.4rem 0.75rem;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-full, 999px);
       background: var(--color-surface);
       box-shadow: var(--shadow-md);
       color: var(--color-text);
-      font-size: 0.7rem;
+      font-size: var(--font-size-sm);
       font-weight: var(--font-weight-bold);
+      white-space: nowrap;
       cursor: pointer;
     }
-    .action eras-icon { inline-size: 0.9rem; block-size: 0.9rem; }
+    .action eras-icon { inline-size: 1.1rem; block-size: 1.1rem; }
+    .action.play { border-color: #3b82f6; }
+    .action.effect, .action.activate { border-color: #f5b301; }
     .action:hover { border-color: var(--color-primary); }
     .action.attack { border-color: var(--color-danger); color: var(--color-danger); }
     .action.effect { border-color: var(--color-primary); }
@@ -144,6 +170,7 @@ import { BoardEffects } from './board-effects';
     eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.tapped-field]': "slot().tapped && zone() === 'field'" },
 })
 export class SimCardComponent {
   readonly slot = input.required<CardSlot>();
@@ -165,6 +192,15 @@ export class SimCardComponent {
   protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'plus', ritual: 'layers', play: 'play', activate: 'sparkles' };
   /** Slow effects of this card that can be activated now. */
   protected readonly myEffects = computed(() => this.game.rules().activatable.filter((e) => e.instanceId === this.slot().instanceId));
+  /** Can be played, summoned or summoned by Ritual now: blue glow. */
+  protected readonly canPlay = computed(() => this.actions().some((a) => a === 'summon' || a === 'ritual' || a === 'play'));
+  /** Has an effect to activate now: gold glow. */
+  protected readonly canActivate = computed(() => this.actions().includes('activate'));
+  /** The toolbar opens above the card, or below when there is no room. */
+  protected readonly toolbarPositions: ConnectedPosition[] = [
+    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
+    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 8 },
+  ];
   /** The card has several effects to activate: the toolbar lists them. */
   protected readonly effectsOpen = signal(false);
 

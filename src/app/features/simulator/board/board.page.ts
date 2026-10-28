@@ -14,6 +14,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
+import { BoardEffects } from './board-effects';
 import { BoardDrag } from './board-drag';
 import { PlayerHalfComponent } from './player-half.component';
 import { StatusPanelsComponent } from './status-panels.component';
@@ -24,7 +25,7 @@ const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fas
 @Component({
   selector: 'eras-board-page',
   imports: [PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
-  providers: [BoardDrag, BoardDialogs],
+  providers: [BoardDrag, BoardDialogs, BoardEffects],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

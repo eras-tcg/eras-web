@@ -1,10 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { AttachmentType, CardInfoData, CardInfoDialogComponent } from './dialogs/card-info-dialog.component';
 import { CreatureInteractionData, CreatureInteractionDialogComponent } from './dialogs/creature-interaction-dialog.component';
 import { DeckPeekData, DeckPeekDialogComponent } from './dialogs/deck-peek-dialog.component';
 import { DecklistDialogComponent } from './dialogs/decklist-dialog.component';
+import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
 import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.component';
 
@@ -12,6 +13,8 @@ import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.compo
 @Injectable()
 export class BoardDialogs {
   private readonly modal = inject(ModalService);
+  /** The board's injector: dialogs that use board services (BoardEffects) are created under it. */
+  private readonly injector = inject(Injector);
 
   cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
     const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent };
@@ -31,6 +34,12 @@ export class BoardDialogs {
   creatureInteraction(summoned: CardSlot, summoner: CardSlot, fromZone: ZoneName): void {
     const data: CreatureInteractionData = { summoned, summoner, fromZone };
     this.modal.open(CreatureInteractionDialogComponent, { data });
+  }
+
+  /** Assisted effects of one of your cards. */
+  effects(slot: CardSlot, zone: ZoneName): void {
+    const data: EffectsDialogData = { instanceId: slot.instanceId, zone };
+    this.modal.open(EffectsDialogComponent, { data, injector: this.injector });
   }
 
   deckPeek(position: 'top' | 'bottom', n: number): void {

@@ -4,10 +4,12 @@ import { displayStrength, isHidden } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
 import { BoardDialogs } from './board-dialogs';
+import { BoardEffects } from './board-effects';
 
 /**
  * A card on the board with its interactions: click taps (field) or picks the target, double click
@@ -15,7 +17,7 @@ import { BoardDialogs } from './board-dialogs';
  */
 @Component({
   selector: 'eras-sim-card',
-  imports: [GameCardComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [GameCardComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconComponent],
   template: `
     <eras-game-card
       [imageUrl]="slot().imageUrl"
@@ -45,6 +47,9 @@ import { BoardDialogs } from './board-dialogs';
       <eras-menu>
         @if (!hidden() || !opponent()) {
           <button erasMenuItem (triggered)="dialogs.cardInfo(slot(), zone(), opponent())">Ver</button>
+        }
+        @if (!opponent() && hasEffects()) {
+          <button erasMenuItem (triggered)="dialogs.effects(slot(), zone())"><eras-icon name="sparkles" /> Efectos…</button>
         }
         @if (zone() === 'field') {
           <button erasMenuItem (triggered)="game.tapCard(slot().instanceId, zone(), targetPlayer())">{{ slot().tapped ? 'Enderezar' : 'Agotar' }}</button>
@@ -90,6 +95,9 @@ export class SimCardComponent implements OnDestroy {
   private tapTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly hidden = computed(() => isHidden(this.slot(), this.zone(), this.opponent()));
+  private readonly effectsHelper = inject(BoardEffects);
+  /** Your card has effect text (its own or inherited from its materials). */
+  protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly label = computed(() => {

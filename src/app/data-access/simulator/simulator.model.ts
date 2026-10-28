@@ -82,6 +82,20 @@ export interface GameState {
   prompt?: EffectPrompt | null;
   /** Combat in progress (the engine runs it step by step). */
   combat?: Combat | null;
+  /** Who took the first turn. */
+  firstPlayerId?: string | null;
+  /** The second player while the "ventaja del iniciador" is unused (−1 to an Iniciador's cost, once). */
+  starterAdvantageUserId?: string | null;
+  /** Slow effects each player can activate now, by player id. */
+  activatable?: Record<string, ActivatableEffect[]> | null;
+}
+
+/** A slow effect (passive moment without a trigger) that can be activated from the board now. */
+export interface ActivatableEffect {
+  instanceId: string;
+  scriptId: string;
+  label: string;
+  text: string;
 }
 
 /** One rules event of the timeline (the text log is generated from these). */
@@ -126,14 +140,29 @@ export interface Combat {
 /** TAKE_REVEALED_REST_BOTTOM: pick for the hand and order the rest. PICK: choose cards. CONFIRM: yes (choose the card) or no. */
 export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK' | 'CONFIRM';
 
+export type PromptPurpose =
+  | 'BLOCK'
+  | 'PROVOKE'
+  | 'ADVANCE'
+  | 'RITUAL'
+  | 'SPECIAL_FRONT'
+  | 'REINFORCE'
+  | 'LIFE_PLAY'
+  | 'ORDER'
+  | 'PRIORITY';
+
 /** A choice the engine waits for; it cannot be dismissed. */
 export interface EffectPrompt {
   id: string;
   kind: EffectPromptKind;
   playerId: string;
   effectId: string | null;
-  /** Choices that are not part of an effect: BLOCK, PROVOKE (Provocar) or ADVANCE (move up to the Línea frontal). */
-  purpose?: 'BLOCK' | 'PROVOKE' | 'ADVANCE' | null;
+  /**
+   * Choices made by the rules, not by an effect: BLOCK, PROVOKE (Provocar), ADVANCE (move up to the Línea frontal),
+   * RITUAL (creatures for a Ritual from the hand), SPECIAL_FRONT (move up after a special summon), REINFORCE
+   * (Reforzar), LIFE_PLAY (play a lost life), ORDER (simultaneous triggers) or PRIORITY (respond to the chain).
+   */
+  purpose?: PromptPurpose | null;
   sourceName: string;
   title: string;
   instruction: string;
@@ -146,6 +175,10 @@ export interface EffectPrompt {
   max: number;
   /** The cards not chosen can be reordered (they go to the deck bottom in that order). */
   reorderRest: boolean;
+  /** The card the choice is about (the creature summoned by Ritual, the life card…). */
+  subjectId?: string | null;
+  /** Ritual from the hand: the summoner it was dropped onto. */
+  summonerId?: string | null;
 }
 
 /** GET /api/simulator/rooms/{id} */

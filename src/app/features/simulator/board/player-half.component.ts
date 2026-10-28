@@ -106,6 +106,12 @@ export class PlayerHalfComponent {
     if (to === 'field' && pos) {
       const me = this.game.myState();
       const dragged = me?.[card.fromZone].find((c) => c.instanceId === card.instanceId);
+      // A Ritual creature from the hand dropped onto one of your creatures: Ritual by the rules, that one is the summoner
+      const ritual = dragged?.cardType === 'creature' && dragged.specialSummonKind?.toLowerCase() === 'ritual';
+      if (nearby && dragged && ritual && card.fromZone === 'hand' && nearby.cardType === 'creature' && this.game.status() === 'IN_PROGRESS') {
+        this.game.ritualSummon(dragged.instanceId, nearby.instanceId);
+        return;
+      }
       if (nearby && dragged) {
         this.dialogs.creatureInteraction(dragged, nearby, card.fromZone);
         return;

@@ -57,7 +57,6 @@ export interface FilterOptions {
   rarities: string[];
   types: string[];
   specialSummons: string[];
-  subEditions: string[];
   classes: string[];
   keywords: string[];
   tags: string[];
@@ -71,13 +70,11 @@ export interface FilterOptions {
 export function filterOptions(cards: readonly CatalogCard[], meta: readonly CardMeta[], ref: CardRefData | null): FilterOptions {
   const colors = new Set(cards.map((c) => c.color_identity));
   const rarities = new Set(meta.map((m) => m.rarity));
-  const subs = new Set(cards.map((c) => c.sub_edition ?? ''));
   return {
     colors: CARD_COLORS.filter((c) => colors.has(c)),
     rarities: CARD_RARITIES.filter((r) => rarities.has(r)),
     types: sortedUnique(meta.map((m) => m.cardType)),
     specialSummons: sortedUnique(meta.map((m) => m.specialSummonKind)),
-    subEditions: [...subs].sort((a, b) => (a === '' ? -1 : b === '' ? 1 : parseInt(a, 10) - parseInt(b, 10))),
     classes: [...(ref?.classes ?? [])].sort(),
     keywords: Object.keys(ref?.keywordEffects ?? {}).sort(),
     tags: [...(ref?.tags ?? [])].sort(),

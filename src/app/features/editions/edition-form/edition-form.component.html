@@ -1,7 +1,5 @@
-<eras-card>
-  <form [formGroup]="form" (ngSubmit)="submit()">
+<form [formGroup]="form" (ngSubmit)="submit()">
     <eras-stack [gap]="5">
-      <eras-section-header [title]="isEdit() ? 'Editar ' + edition()?.editionId : 'Nueva edición'" />
 
       @if (validationError() || serverError(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
@@ -156,4 +154,3 @@
       </eras-stack>
     </eras-stack>
   </form>
-</eras-card>

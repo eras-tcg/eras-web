@@ -3,18 +3,6 @@
     <eras-icon name="plus" /> Nueva edición
   </button>
 
-  @if (formState(); as state) {
-    @if (state.open) {
-      <eras-edition-form
-        [edition]="state.edition"
-        [saving]="saving()"
-        [serverError]="saveError()"
-        (submitted)="save($event)"
-        (cancelled)="closeForm()"
-      />
-    }
-  }
-
   @if (store.error(); as error) {
     <eras-alert tone="danger">{{ error }}</eras-alert>
   }

@@ -17,6 +17,32 @@
   box-shadow: var(--shadow-lg);
 }
 
+// Big round arrows to move through the grid
+.nav {
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+}
+
+.nav eras-icon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+}
+
+@media (min-width: 64rem) {
+  .nav {
+    inline-size: 4.25rem;
+    block-size: 4.25rem;
+  }
+
+  .nav eras-icon {
+    inline-size: 2.1rem;
+    block-size: 2.1rem;
+  }
+}
+
 .close {
   position: absolute;
   inset-block-start: var(--space-2);
@@ -32,5 +58,12 @@
     grid-column: 1 / -1;
     grid-row: 1;
     padding: var(--space-4);
+  }
+
+  .nav {
+    justify-self: center;
+    inline-size: 100%;
+    block-size: 3rem;
+    border-radius: var(--radius-md);
   }
 }

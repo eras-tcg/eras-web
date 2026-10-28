@@ -86,7 +86,6 @@ describe('filterCards', () => {
 
   it('reports active filters', () => {
     expect(hasActiveFilters(EMPTY_FILTERS)).toBe(false);
-    expect(hasActiveFilters({ ...EMPTY_FILTERS, subEdition: '' })).toBe(true);
     expect(hasActiveFilters({ ...EMPTY_FILTERS, cost: { min: null, max: 3 } })).toBe(true);
   });
 });

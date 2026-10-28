@@ -94,6 +94,14 @@ export class BoardPage {
     inject(DestroyRef).onDestroy(() => open?.close());
   }
 
+  /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */
+  protected readonly engineNotice = computed(() => {
+    const effect = this.game.resolving();
+    if (effect) return `${effect.sourceName} · ${effect.label}`;
+    const prompt = this.game.state()?.prompt;
+    return prompt ? prompt.title : null;
+  });
+
   /** Waiting on the opponent's choice for an effect. */
   protected readonly opponentChoosing = computed(() => {
     const prompt = this.game.state()?.prompt;

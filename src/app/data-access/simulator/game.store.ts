@@ -187,6 +187,16 @@ export class GameStore {
     this.send('NORMAL_SUMMON', { instanceId, x, y });
   }
 
+  /** Destroys a card on the field: to its owner's Descarte; its "En Destrucción" effects trigger. */
+  destroyCard(instanceId: string, targetPlayerId: string | null = null): void {
+    this.send('DESTROY_CARD', { instanceId, targetPlayerId });
+  }
+
+  /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */
+  sacrificeCard(instanceId: string): void {
+    this.send('SACRIFICE_CARD', { instanceId });
+  }
+
   /** Answers the effect choice the engine waits for. `order`: the cards not chosen, in deck-bottom order. */
   resolvePrompt(promptId: string, chosen: string[], order: string[] = []): void {
     this.send('RESOLVE_PROMPT', { promptId, chosen, order });

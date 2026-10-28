@@ -19,6 +19,8 @@ export interface CardSlot {
   level?: number | null;
   colors?: string[];
   classes?: string[];
+  /** Abilities gained until the end of the turn ("Furia 1"). */
+  turnKeywords?: string[];
   materials: CardSlot[];
   resources: CardSlot[];
 }
@@ -103,7 +105,8 @@ export interface PendingEffect {
   text: string;
 }
 
-export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK_FROM_HAND';
+/** TAKE_REVEALED_REST_BOTTOM: pick for the hand and order the rest. PICK: choose cards. CONFIRM: yes (choose the card) or no. */
+export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK' | 'CONFIRM';
 
 /** A choice the engine waits for; it cannot be dismissed. */
 export interface EffectPrompt {
@@ -114,6 +117,8 @@ export interface EffectPrompt {
   sourceName: string;
   title: string;
   instruction: string;
+  /** What happens to a chosen card ("A tu mano", "Tributar", "Destruir"). */
+  chosenLabel: string | null;
   cards: CardSlot[];
   /** Cards that may be chosen; the rest are locked. */
   validIds: string[];

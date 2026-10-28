@@ -3,12 +3,12 @@
 Documento para retomar el trabajo. Plan completo: [`PLAN_MIGRACION_FRONT_ANGULAR.md`](PLAN_MIGRACION_FRONT_ANGULAR.md)
 (sección 9 = estado detallado por fase). Paridad por ruta: [`PARIDAD.md`](PARIDAD.md).
 
-**Actualizado:** 2026-10-27 · **Último PR:** #8 · **Despliegues:** https://staging.erastcg.com (**Angular**),
+**Actualizado:** 2026-10-27 · **Último PR:** #9 · **Despliegues:** https://staging.erastcg.com (**Angular**),
 https://next.erastcg.com (Angular), https://erastcg.com (producción, **todavía Vue**)
 
 ## Estado en una línea
 Fases 0–6 terminadas; **staging ya sirve Angular** (corte de staging hecho, e2e 15/15 en staging); pruebas reales con
-la cuenta admin hechas; falta la partida real de 2 jugadores y el corte de producción.
+la cuenta admin y partida real de 2 jugadores hechas; falta el corte de producción.
 
 | Fase | Estado | PR |
 |---|---|---|
@@ -27,8 +27,8 @@ la cuenta admin hechas; falta la partida real de 2 jugadores y el corte de produ
   Para staging/production despliega como servicio `eras-frontend` (mismos contenedores, puertos y vhosts que erasFront).
   `production` exige la aprobación de CapitanPio en Actions (*Review deployments*).
 - **Rollback:** Run workflow en `eras-tcg/erasFront` (CI/CD) con la imagen Vue. Staging: rama `develop`, environment
-  `staging`, tag `0d010c9d8a4cbada9dd9875ad8ea501b7205eba2`. Producción: la imagen Vue que esté corriendo antes del corte
-  (anotarla al hacerlo).
+  `staging`, tag `0d010c9d8a4cbada9dd9875ad8ea501b7205eba2`. Producción: rama `main`, environment `production`, tag
+  `9e2abb449f50892b9f496e1b2be11f1387e599db` (imagen Vue que corría antes del corte).
 - **Ojo:** un push a `develop`/`main` de erasFront vuelve a desplegar Vue encima. Al cortar producción, desactivar ese
   workflow (`gh workflow disable ci-cd.yml -R eras-tcg/erasFront`) y archivar el repo cuando ya no haga falta.
 
@@ -39,11 +39,9 @@ tierlist, metadatos y partidas: todo correcto. Detalle en `PARIDAD.md`. No se to
 Drive, ediciones, tierlist, Home).
 
 ## Pendiente
-1. **Partida real de 2 jugadores.** Hay dos cuentas de prueba en staging (`e2e_p1_71a21f`, `e2e_p2_71a21f`, rol USER)
-   con sus contraseñas en `e2e/.auth.local.json` (git-ignorado, solo en el equipo local). Están **sin verificar**: el
-   SMTP de staging falla (`Authentication failed`) y no hay forma de verificar desde la API sin el token del correo.
-   Verificarlas en el VPS (comando en la sección "Avisos operativos") y correr
-   `E2E_BASE_URL=https://staging.erastcg.com npx playwright test simulator-2p`.
+1. ~~Partida real de 2 jugadores~~ — hecha (2026-10-27): `E2E_BASE_URL=https://staging.erastcg.com npx playwright test
+   simulator-2p` en verde con las cuentas de prueba `e2e_p1_71a21f` / `e2e_p2_71a21f` (verificadas a mano en Mongo;
+   contraseñas en `e2e/.auth.local.json`, git-ignorado).
 2. **Corte de producción:** Run workflow `production` con el último sha de `main` + aprobación; verificar con
    `E2E_BASE_URL=https://erastcg.com npm run e2e`; desactivar el workflow de erasFront.
 3. Opcionales: e2e en CI, Storybook, endpoint "mi cuenta", SMTP (Brevo) y orden del registro, quitar `next`.

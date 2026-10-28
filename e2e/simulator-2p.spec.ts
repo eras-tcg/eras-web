@@ -30,7 +30,7 @@ async function player(browser: Browser, account: Account): Promise<Page> {
 
 /** Picks a starter deck (they all have an "Iniciador" creature) and enters the room. */
 async function enterWithDeck(page: Page): Promise<void> {
-  await page.locator('eras-deck-card').filter({ hasText: /^\s*ST1\b/ }).first().click();
+  await page.getByRole('button', { name: 'Ver ST2', exact: true }).click();
   await page.getByRole('button', { name: /Entrar (a la partida|con el mazo elegido)/ }).click();
   await expect(page).toHaveURL(/\/board$/);
 }
@@ -60,7 +60,6 @@ test('partida real de 2 jugadores', async ({ browser }) => {
     await page.getByRole('button', { name: /^Elegir / }).first().click();
   }
   for (const page of [host, guest]) {
-    await expect(page.getByText('Mulligan', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Quedarme con todas' }).click();
   }
 

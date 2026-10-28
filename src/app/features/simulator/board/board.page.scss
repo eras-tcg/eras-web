@@ -237,3 +237,12 @@
     animation: none;
   }
 }
+
+.editor-badge {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius-pill, 999px);
+  color: var(--color-warning, #f59e0b);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}

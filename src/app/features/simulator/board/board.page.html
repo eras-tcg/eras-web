@@ -2,6 +2,9 @@
   <header class="topbar">
     <eras-stack direction="row" [gap]="3" align="center" wrap>
       <strong>{{ statusLabel() }}</strong>
+      @if (game.editorMode()) {
+        <span class="editor-badge">Modo editor</span>
+      }
       @if (inProgress()) {
         <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }}</span>
       }
@@ -18,7 +21,9 @@
     }
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       @if (inProgress() && game.isMyTurn()) {
-        <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
+        @if (game.editorMode()) {
+          <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
+        }
         @if (game.phase() === 'MAIN') {
           <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.enterEndPhase()">Fase final</button>
         }
@@ -30,6 +35,8 @@
       <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="options">Opciones</button>
       <ng-template #options>
         <eras-menu>
+          <button erasMenuItem (triggered)="game.setEditorMode(!game.editorMode())">{{ game.editorMode() ? 'Salir del modo editor' : 'Modo editor (acciones manuales)' }}</button>
+          <hr />
           <button erasMenuItem (triggered)="dialogs.decklist()">Ver mi mazo</button>
           <button erasMenuItem (triggered)="dialogs.log()">Historial</button>
           @if (inProgress()) {

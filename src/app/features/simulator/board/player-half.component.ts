@@ -99,6 +99,9 @@ export class PlayerHalfComponent {
     const card = this.drag.read(event);
     if (!card) return;
 
+    // Outside editor mode only the rules' drops: a card of the hand onto the field (or onto a creature for its special summon)
+    if (!this.game.editorMode() && (this.opponent() || card.fromZone !== 'hand' || to !== 'field')) return;
+
     if (this.opponent()) {
       // Dropping on the rival's side points your card at their creature or zone
       const target = to === 'field' ? nearby?.instanceId : to === 'deckBottom' ? null : this.zoneId(to);
@@ -116,7 +119,7 @@ export class PlayerHalfComponent {
         this.game.ritualSummon(dragged.instanceId, nearby.instanceId);
         return;
       }
-      if (nearby && dragged) {
+      if (nearby && dragged && this.game.editorMode()) {
         this.dialogs.creatureInteraction(dragged, nearby, card.fromZone);
         return;
       }
@@ -130,6 +133,7 @@ export class PlayerHalfComponent {
         this.game.playCard(card.instanceId, pos.x, pos.y);
         return;
       }
+      if (!this.game.editorMode()) return;
       const summon = this.game.status() === 'IN_PROGRESS' && card.fromZone !== 'field' && dragged?.cardType === 'creature';
       // Manual move: into the line it was dropped on (only creatures go to the Línea frontal)
       const front = pos.y < 50 && dragged?.cardType === 'creature';
@@ -156,7 +160,7 @@ export class PlayerHalfComponent {
   /** Drags a life card out: the top or bottom one, depending on where the stack is grabbed. */
   protected lifeDragStart(event: DragEvent): void {
     const lives = this.player().lifeStack;
-    if (this.opponent() || !lives.length) {
+    if (this.opponent() || !lives.length || !this.game.editorMode()) {
       event.preventDefault();
       return;
     }
@@ -182,7 +186,7 @@ export class PlayerHalfComponent {
   }
 
   protected deckDoubleClick(): void {
-    if (this.lookOnly()) return;
+    if (this.lookOnly() || !this.game.editorMode()) return;
     if (!this.opponent() && this.player().deck.length) this.game.drawCard();
   }
 

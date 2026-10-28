@@ -15,7 +15,7 @@ import { GameStore } from '@data/simulator/game.store';
           @for (l of links(); track l.id) {
             <li [class.resolving]="l.resolving" [class.mine]="l.mine">
               <span class="link">{{ l.link }}</span>
-              <span class="name">{{ l.sourceName }} · {{ l.label }}</span>
+              <span class="name">{{ l.sourceName }} · {{ l.label }}<small class="text">{{ l.text }}</small></span>
               <span class="state">{{ l.resolving ? 'resolviendo' : l.mine ? 'tuyo' : 'del rival' }}</span>
             </li>
           }
@@ -51,6 +51,8 @@ import { GameStore } from '@data/simulator/game.store';
     }
     li.resolving .link { background: var(--color-primary); color: var(--color-on-primary, #fff); }
     .state { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+    .name { display: grid; }
+    .text { color: var(--color-text-muted); font-size: var(--font-size-xs); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

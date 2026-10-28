@@ -195,6 +195,10 @@ export interface EffectPrompt {
   summonerId?: string | null;
   /** What each card stands for in this choice (the effects it triggered), by instance id. */
   cardLabels?: Record<string, string> | null;
+  /** The effects offered in a chaining choice, with their whole text. */
+  effects?: { sourceId: string; sourceName: string; label: string; text: string }[] | null;
+  /** The whole text of the effect resolving or paying its cost. */
+  effectText?: string | null;
 }
 
 /** GET /api/simulator/rooms/{id} */

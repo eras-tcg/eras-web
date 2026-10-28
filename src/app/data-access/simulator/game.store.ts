@@ -25,6 +25,16 @@ function wsUrl(): string {
  * Every broadcast carries the full state; this store keeps it plus the transient effects
  * (revealed cards, targeting glow, recent log lines). Same protocol as the legacy app.
  */
+const EDITOR_MODE_KEY = 'eras-sim-editor-mode';
+
+function readEditorMode(): boolean {
+  try {
+    return localStorage.getItem(EDITOR_MODE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
@@ -49,6 +59,21 @@ export class GameStore {
     if (s?.status !== 'IN_PROGRESS') return null;
     return s.prompt?.playerId ?? s.currentTurnUserId ?? null;
   });
+  /**
+   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
+   * attachments, strength…). Off by default; remembered on this device.
+   */
+  readonly editorMode = signal<boolean>(readEditorMode());
+
+  setEditorMode(on: boolean): void {
+    this.editorMode.set(on);
+    try {
+      localStorage.setItem(EDITOR_MODE_KEY, on ? '1' : '0');
+    } catch {
+      // Storage unavailable: it lasts for this page only
+    }
+  }
+
   /** Cards that just reached your hand: they blink for a few seconds so they can be spotted. */
   readonly newInHand = signal<ReadonlySet<string>>(new Set());
   private handIds: Set<string> | null = null;

@@ -34,12 +34,12 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       [source]="game.targetingSourceId() === slot().instanceId || game.pendingTargetSource() === slot().instanceId"
       [selectable]="game.pendingTargetSource() !== null"
       [small]="small()"
-      [attr.draggable]="opponent() || lookOnly() ? null : 'true'"
+      [attr.draggable]="canDrag() ? 'true' : null"
       tabindex="0"
       role="button"
       [attr.aria-label]="label()"
       [cdkContextMenuTriggerFor]="menu"
-      [cdkContextMenuDisabled]="lookOnly()"
+      [cdkContextMenuDisabled]="lookOnly() || !game.editorMode()"
       [class.selected]="selected()"
       [class.can-play]="canPlay()"
       [class.can-activate]="canActivate()"
@@ -264,6 +264,8 @@ export class SimCardComponent {
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly selected = computed(() => this.game.selectedId() === this.slot().instanceId);
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
+  /** Cards of the hand can be dropped to play them by the rules; anything else is moved only in editor mode. */
+  protected readonly canDrag = computed(() => !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode()));
   /** Its role in the combat in progress, if any. */
   protected readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
     const c = this.game.state()?.combat;
@@ -351,7 +353,7 @@ export class SimCardComponent {
   }
 
   protected onDragStart(event: DragEvent): void {
-    if (this.opponent() || this.lookOnly()) {
+    if (!this.canDrag()) {
       event.preventDefault();
       return;
     }

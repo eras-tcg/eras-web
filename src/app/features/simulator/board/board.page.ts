@@ -184,7 +184,8 @@ export class BoardPage {
   });
 
   protected selectShared(index: number): void {
-    if (this.lookOnly()) return;
+    // Moving the gems by hand is an editor action
+    if (this.lookOnly() || !this.game.editorMode()) return;
     this.game.setCounter(sharedValueForIndex(index, this.game.isFirstPlayer()));
   }
 

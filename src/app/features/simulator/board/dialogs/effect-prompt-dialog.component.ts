@@ -26,6 +26,20 @@ export interface EffectPromptData {
   template: `
     <eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
       <eras-chain-list />
+      @if (prompt.effects?.length) {
+        <ul class="offered" aria-label="Efectos que se pueden encadenar">
+          @for (e of prompt.effects; track $index) {
+            <li>
+              <button type="button" class="offered-effect" [class.chosen]="chosen().has(e.sourceId)" [disabled]="sending()" (click)="toggle(e.sourceId)">
+                <strong>{{ e.sourceName }} · {{ e.label }}</strong>
+                <span>{{ e.text }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (prompt.effectText) {
+        <blockquote class="effect-text"><strong>Efecto:</strong> {{ prompt.effectText }}</blockquote>
+      }
       @if (prompt.reorderRest) {
         <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
       }
@@ -131,6 +145,24 @@ export interface EffectPromptData {
       from { box-shadow: 0 0 0 2px #e5e7eb, 0 0 6px 2px rgb(255 255 255 / 40%); }
       to { box-shadow: 0 0 0 3px #fde68a, 0 0 18px 6px rgb(253 230 138 / 85%); }
     }
+    .offered { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+    .offered-effect {
+      display: grid;
+      gap: var(--space-1);
+      inline-size: 100%;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: inherit;
+      font: inherit;
+      text-align: start;
+      cursor: pointer;
+    }
+    .offered-effect:hover { border-color: var(--color-primary); }
+    .offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
+    .offered-effect span, .effect-text { font-size: var(--font-size-sm); }
+    .effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); }
     .zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

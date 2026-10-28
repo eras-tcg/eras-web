@@ -4,7 +4,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
-import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
@@ -12,7 +11,8 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
-import { cardDetailView } from '../../../cards/card-detail-view';
+import { renderEffect, renderKeywordEffect } from '@data/cards/card-rules';
+import { CardEffect, KeywordEffect } from '@data/cards/card.model';
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -31,27 +31,54 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [ModalComponent, CardDetailComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
     <eras-modal size="xl" [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
       @if (slot(); as s) {
         <eras-stack [gap]="4">
           @if (!data.only) {
-            @if (view(); as v) {
-              <!-- Two columns: characteristics and image, so the card fits without scrolling -->
-              <eras-card-detail
-                [name]="v.name"
-                [edition]="v.edition"
-                [number]="v.number"
-                [color]="v.color"
-                [colorLabel]="v.colorLabel"
-                [imageUrl]="s.imageUrl ?? v.imageUrl"
-                [facts]="v.facts"
-                [textGroups]="v.groups"
-              />
-            } @else {
-              <eras-game-card [imageUrl]="s.imageUrl" />
-            }
+            <div class="info">
+              <div class="art">
+                <eras-game-card [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
+                <!-- Its Recursos peek out from behind, each with what it gives the card -->
+                @for (r of resourceViews(); track r.id) {
+                  <div class="resource" [class.with-effect]="r.lines.length > 0">
+                    <strong>{{ r.name }}</strong>
+                    @for (line of r.lines; track $index) {
+                      <span>{{ line }}</span>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="effects">
+                @if (own().length) {
+                  <section>
+                    <h4>Efectos</h4>
+                    @for (line of own(); track $index) {
+                      <p>{{ line }}</p>
+                    }
+                  </section>
+                } @else {
+                  <p class="muted">Sin efectos.</p>
+                }
+                @if (inherited().length) {
+                  <section>
+                    <h4>Efectos de sus recursos</h4>
+                    @for (e of inherited(); track $index) {
+                      <p><span class="source">{{ e.source }}:</span> {{ e.line }}</p>
+                    }
+                  </section>
+                }
+                @if (heritable().length) {
+                  <section class="disabled" aria-label="Efectos heredables: solo se aplican cuando esta carta es Recurso de otra">
+                    <h4>Heredables <small>(los da como Recurso; no se aplican a esta carta)</small></h4>
+                    @for (line of heritable(); track $index) {
+                      <p>{{ line }}</p>
+                    }
+                  </section>
+                }
+              </div>
+            </div>
           }
           @for (type of groups(); track type) {
             <eras-section-header [title]="labels[type] + ' (' + s[type].length + ')'" />
@@ -93,6 +120,34 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
       }
     </eras-modal>
   `,
+  styles: `
+    .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+    .art { --game-card-width: 14rem; display: grid; justify-items: center; }
+    .art eras-game-card { position: relative; z-index: 2; }
+    .resource {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: var(--space-1);
+      inline-size: calc(var(--game-card-width) - 1rem);
+      margin-block-start: -0.6rem;
+      padding: calc(0.6rem + var(--space-1)) var(--space-2) var(--space-2);
+      border: 1px solid var(--color-border);
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      background: var(--color-surface-muted);
+      font-size: var(--font-size-xs);
+    }
+    .resource.with-effect { border-color: var(--color-primary); }
+    .effects { display: grid; gap: var(--space-3); }
+    .effects h3 { margin: 0; font-size: var(--font-size-lg); }
+    .effects h4 { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .effects p { margin: 0 0 var(--space-2); }
+    .effects .source { font-weight: var(--font-weight-bold); }
+    .disabled { opacity: 0.5; }
+    .disabled small { text-transform: none; letter-spacing: 0; }
+    .muted { color: var(--color-text-muted); }
+    @media (max-width: 44rem) { .info { grid-template-columns: 1fr; } }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CardInfoDialogComponent {
@@ -107,14 +162,41 @@ export class CardInfoDialogComponent {
     const player = this.data.opponent ? this.game.opponentState() : this.game.myState();
     return player?.[this.data.zone].find((c) => c.instanceId === this.data.instanceId) ?? null;
   });
-  protected readonly view = computed(() => {
-    const s = this.slot();
-    const card = s && this.cards.cards().find((c) => c.id === s.cardId);
-    return card ? cardDetailView(card, this.cards.ref()) : null;
+  /** Metadata of a card of the game, by its file id. */
+  private meta(cardId: string | null | undefined) {
+    return this.cards.cards().find((c) => c.id === cardId)?.meta ?? null;
+  }
+
+  private lines(effects: CardEffect[] | null | undefined, keywords: KeywordEffect[] | null | undefined): string[] {
+    const ref = this.cards.ref();
+    const text = (l: { segments: { text: string }[] }) => l.segments.map((x) => x.text).join('').trim();
+    return [...(effects ?? []).map((e) => text(renderEffect(e, ref))), ...(keywords ?? []).map((k) => text(renderKeywordEffect(k, ref)))].filter(Boolean);
+  }
+
+  /** The card's own effects and keywords. */
+  protected readonly own = computed(() => {
+    const m = this.meta(this.slot()?.cardId);
+    return this.lines(m?.effects, m?.keywordEffects);
   });
+  /** What it would give as a Recurso of another card (not applied to itself). */
+  protected readonly heritable = computed(() => {
+    const m = this.meta(this.slot()?.cardId);
+    return this.lines(m?.inheritEffects, m?.inheritKeywordEffects);
+  });
+  /** Its Recursos, with what each one gives it. */
+  protected readonly resourceViews = computed(() =>
+    (this.slot()?.resources ?? []).map((r) => {
+      const m = this.meta(r.cardId);
+      return { id: r.instanceId, name: r.cardName ?? 'Recurso', lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
+    }),
+  );
+  /** The effects its Recursos give it, with their source. */
+  protected readonly inherited = computed(() => this.resourceViews().flatMap((r) => r.lines.map((line) => ({ source: r.name, line }))));
+
   protected readonly groups = computed<AttachmentType[]>(() => {
     const s = this.slot();
-    if (!s || this.data.zone !== 'field') return [];
+    // Moving attachments by hand is only for "Separar materiales/recursos" (editor mode)
+    if (!s || this.data.zone !== 'field' || !this.data.only) return [];
     if (this.data.only) return [this.data.only];
     return (['materials', 'resources'] as const).filter((t) => s[t].length > 0);
   });

@@ -2,7 +2,7 @@
 <!-- Lives and gem marker -->
 <div class="lives">
   <span class="name">{{ p.username }}@if (!p.connected) { <span class="offline">(desconectado)</span> }</span>
-  <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent()" (valueChange)="game.setMarker($event)" />
+  <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
   <eras-game-zone
     class="life-zone"
     label="Vidas"
@@ -11,13 +11,13 @@
     [dropActive]="over() === 'lifeStack'"
     [targeted]="isTargeted('lifeStack')"
     [selectable]="targeting()"
-    [cdkContextMenuTriggerFor]="opponent() ? null : lifeMenu"
+    [cdkContextMenuTriggerFor]="opponent() || !game.editorMode() ? null : lifeMenu"
     (dragover)="dragOver($event, 'lifeStack')"
     (dragleave)="dragLeave()"
     (drop)="drop($event, 'lifeStack', lifeHalf($event))"
     (click)="pileClick('lifeStack')"
   >
-    <div class="life-stack" [attr.draggable]="opponent() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
+    <div class="life-stack" [attr.draggable]="opponent() || !game.editorMode() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
       @for (life of p.lifeStack; track life.instanceId) {
         <eras-game-card small [imageUrl]="life.imageUrl" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
       }

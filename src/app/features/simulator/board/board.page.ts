@@ -25,7 +25,7 @@ import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
 
-const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
+const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
@@ -60,10 +60,19 @@ export class BoardPage {
   protected readonly dismissedLeft = signal(false);
   private leaving = false;
 
+  /** The phases of the turn in the bar. */
+  protected readonly phases = [
+    { id: 'START', label: 'Inicio' },
+    { id: 'MAIN', label: 'Principal' },
+    { id: 'END_PHASE', label: 'Final' },
+  ];
+  protected readonly currentPhase = computed(() => (this.game.phase() === 'END' ? 'END_PHASE' : this.game.phase()));
   /** A short pop-up when the turn or the phase changes. */
   protected readonly phasePopup = signal<{ who: string; phase: string; mine: boolean } | null>(null);
   private lastPhase: string | null = null;
+  private lastTurn: string | null = null;
   private popupTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly popups: { who: string; phase: string; mine: boolean }[] = [];
 
   constructor() {
     effect(() => {
@@ -75,14 +84,18 @@ export class BoardPage {
       const key = s.currentTurnUserId + '|' + s.currentPhase;
       const first = this.lastPhase === null;
       if (key === this.lastPhase) return;
+      const newTurn = this.lastTurn !== null && this.lastTurn !== s.currentTurnUserId;
       this.lastPhase = key;
+      this.lastTurn = s.currentTurnUserId;
       if (first) return;
       const mine = s.currentTurnUserId === this.game.myState()?.userId;
       const name = s.players?.[s.currentTurnUserId]?.username ?? 'Rival';
+      const who = mine ? 'Tu turno' : 'Turno de ' + name;
       untracked(() => {
-        this.phasePopup.set({ who: mine ? 'Tu turno' : 'Turno de ' + name, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine });
-        if (this.popupTimer) clearTimeout(this.popupTimer);
-        this.popupTimer = setTimeout(() => this.phasePopup.set(null), 1800);
+        // A new turn always shows its start, even when it went straight on to the main phase
+        if (newTurn && s.currentPhase !== 'START') this.popups.push({ who, phase: PHASE_LABELS['START'], mine });
+        this.popups.push({ who, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine });
+        if (!this.popupTimer) this.nextPopup();
       });
     });
     // The page glows from the side of whoever has the priority
@@ -141,6 +154,12 @@ export class BoardPage {
       });
     });
     inject(DestroyRef).onDestroy(() => open?.close());
+  }
+
+  private nextPopup(): void {
+    const popup = this.popups.shift() ?? null;
+    this.phasePopup.set(popup);
+    this.popupTimer = popup ? setTimeout(() => this.nextPopup(), 1300) : null;
   }
 
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */

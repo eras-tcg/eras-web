@@ -8,7 +8,17 @@ export class BoardAnimations {
 
   /** Marks an animation of `ms` milliseconds as playing. */
   hold(ms: number): void {
+    setTimeout(this.begin(), ms);
+  }
+
+  /** Marks an animation as playing until the returned function is called (once). */
+  begin(): () => void {
     this.running.update((n) => n + 1);
-    setTimeout(() => this.running.update((n) => Math.max(0, n - 1)), ms);
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      this.running.update((n) => Math.max(0, n - 1));
+    };
   }
 }

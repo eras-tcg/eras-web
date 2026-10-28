@@ -3,16 +3,23 @@
     <eras-stack direction="row" [gap]="3" align="center" wrap>
       <strong>{{ statusLabel() }}</strong>
       @if (inProgress()) {
-        <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }} · {{ phaseLabel() }}</span>
+        <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }}</span>
       }
       @if (!game.connected()) {
         <span class="warn">Sin conexión, reintentando…</span>
       }
     </eras-stack>
+    @if (inProgress()) {
+      <ol class="phases" aria-label="Fases del turno">
+        @for (p of phases; track p.id) {
+          <li [class.current]="currentPhase() === p.id" [class.mine]="game.isMyTurn()" [attr.aria-current]="currentPhase() === p.id ? 'step' : null">{{ p.label }}</li>
+        }
+      </ol>
+    }
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       @if (inProgress() && game.isMyTurn()) {
         <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
-        @if (game.phase() !== 'END') {
+        @if (game.phase() === 'MAIN') {
           <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.enterEndPhase()">Fase final</button>
         }
         <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.endTurn()">Terminar turno</button>

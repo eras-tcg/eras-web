@@ -2,7 +2,7 @@ import { CardSlot, PlayerState, PostGameChoice, ZoneName } from './simulator.mod
 
 /** Strength shown on a creature (base + modifier); null for cards without strength. */
 export function displayStrength(slot: CardSlot): number | null {
-  return slot.strength == null ? null : slot.strength + (slot.strengthModifier || 0);
+  return slot.strength == null ? null : slot.strength + (slot.strengthModifier || 0) + (slot.turnStrength || 0);
 }
 
 /** Opponent hands are always hidden; other cards when face down. */

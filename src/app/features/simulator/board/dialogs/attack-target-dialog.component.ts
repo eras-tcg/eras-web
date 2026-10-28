@@ -8,7 +8,7 @@ import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 export interface AttackTargetData {
   attacker: CardSlot;
   opponentName: string;
-  /** Exhausted enemy creatures that can be attacked. */
+  /** Enemy creatures that can be attacked: exhausted ones, or active ones it can face (Enfrentar). */
   creatures: readonly CardSlot[];
 }
 

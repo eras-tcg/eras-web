@@ -89,6 +89,16 @@ export function attackGemsOk(view: RulesView, slot: CardSlot): boolean {
   return f != null && (f < 0 || view.gems >= -f);
 }
 
+/** Enfrentar: the attacker can attack this active enemy (Enfrentar N: level N or less). */
+export function challenges(attacker: CardSlot, target: CardSlot): boolean {
+  for (const k of [...(attacker.keywords ?? []), ...(attacker.turnKeywords ?? [])]) {
+    if (!k.toLowerCase().startsWith('enfrentar')) continue;
+    const n = /(\d+)/.exec(k);
+    if (!n || (target.level ?? 99) <= Number(n[1])) return true;
+  }
+  return false;
+}
+
 /** Requerimiento of a Ritual: one creature of level N, or several whose levels add up to N. */
 export function requirement(slot: CardSlot): { sum: boolean; level: number } | null {
   const text = slot.requirement?.toLowerCase() ?? '';

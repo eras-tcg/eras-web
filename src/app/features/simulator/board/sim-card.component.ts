@@ -6,7 +6,7 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
-import { LegalAction, legalActions, specialKindLabel } from '@data/simulator/legal-actions';
+import { LegalAction, challenges, legalActions, specialKindLabel } from '@data/simulator/legal-actions';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
@@ -315,7 +315,8 @@ export class SimCardComponent {
     switch (action) {
       case 'attack': {
         const opponent = this.game.opponentState();
-        const creatures = (opponent?.field ?? []).filter((c) => c.cardType === 'creature' && c.tapped);
+        // Exhausted enemies, or active ones it can face (Enfrentar)
+        const creatures = (opponent?.field ?? []).filter((c) => c.cardType === 'creature' && (c.tapped || challenges(s, c)));
         const target = await this.dialogs.attackTarget({ attacker: s, opponentName: opponent?.username ?? 'Rival', creatures });
         if (target !== undefined) this.game.attack(s.instanceId, target);
         return;

@@ -24,6 +24,8 @@ export interface CardSlot {
   turnKeywords?: string[];
   specialCost?: number | null;
   requirement?: string | null;
+  /** Strength gained or lost until the end of the turn. */
+  turnStrength?: number;
   materials: CardSlot[];
   resources: CardSlot[];
 }

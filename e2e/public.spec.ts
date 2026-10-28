@@ -72,9 +72,9 @@ test('rutas con sesión redirigen al login', async ({ page }) => {
 });
 
 test('el backend acepta escrituras desde este origen (CORS)', async ({ page, baseURL }) => {
-  // Staging allows staging.erastcg.com and next.erastcg.com. ng serve's proxy keeps the browser's Origin
-  // (localhost), which staging rejects, so locally this is a known failure.
-  test.fail(!/(staging|next)\.erastcg\.com/.test(baseURL ?? ''), 'CORS de staging no admite localhost');
+  // The backends allow their own sites (erastcg.com, staging, next) but not localhost: ng serve's proxy keeps the
+  // browser's Origin, so locally this is a known failure.
+  test.fail(/localhost|127\.0\.0\.1/.test(baseURL ?? ''), 'El CORS del backend no admite localhost');
   await page.goto('/login');
   // Empty login: the backend must answer as an API (400/401), not reject the origin
   const result = await page.evaluate(async () => {

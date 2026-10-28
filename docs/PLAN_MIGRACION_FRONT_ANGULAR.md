@@ -259,6 +259,9 @@ reordenarse; el simulador va al final por ser lo más complejo y lo menos usado 
   `eras-frontend`); e2e en verde. Pruebas reales con la cuenta admin (mazos, PDF, roles, notas, datos de referencia y
   lectura del resto) correctas. Producción sigue en Vue; pendiente la partida real de 2 jugadores (cuentas de prueba sin
   verificar por el SMTP) y el corte de producción. Ver `docs/HANDOFF.md`.
+- **Corte de producción (2026-10-27, PR #10):** erastcg.com sirve Angular (`eras-web:ff32211…-prod`), e2e 14/14 en
+  producción; partida real de 2 jugadores verificada en staging. Rollback: Run workflow en erasFront (`main`,
+  `production`, tag `9e2abb449f50892b9f496e1b2be11f1387e599db`). Falta desactivar el CI de erasFront. **Migración completa.**
 - **Pendiente para el corte (no hecho a propósito):** escrituras reales con permisos, partida real de 2 jugadores,
   corte de `eras-frontend-prod` a la imagen `eras-web` y archivar `Eras`; además endpoint "mi cuenta", SMTP,
   Storybook y e2e en CI.

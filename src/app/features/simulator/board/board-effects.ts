@@ -112,13 +112,8 @@ export class BoardEffects {
         const enemies = frontLine(opp?.field ?? []);
         const targets = action.all ? enemies.map((c) => c.instanceId) : await this.pick({ title: `Reducir ${action.amount} la fuerza`, cards: enemies, max: 1, exact: true });
         if (!targets) return false;
-        for (const id of targets) {
-          this.game.modifyStrength(id, -action.amount, oppId);
-          // Strength reduced to 0: destroyed by effect, to the Descarte (rule 12.0.0.1)
-          const slot = enemies.find((c) => c.instanceId === id);
-          const strength = slot ? displayStrength(slot) : null;
-          if (strength != null && strength - action.amount <= 0) this.game.moveCard(id, 'field', 'discardPile', { targetPlayerId: oppId });
-        }
+        // Strength reduced to 0: the server destroys it (rule 12.0.0.2)
+        for (const id of targets) this.game.modifyStrength(id, -action.amount, oppId);
         return true;
       }
       case 'gainStrength':
@@ -133,7 +128,7 @@ export class BoardEffects {
           ...this.filtered(action.filter, true),
         });
         if (!ids) return false;
-        for (const id of ids) this.game.moveCard(id, 'field', 'discardPile', { targetPlayerId: oppId });
+        for (const id of ids) this.game.destroyCard(id, oppId);
         return true;
       }
       case 'untapSelf': {
@@ -182,8 +177,7 @@ export class BoardEffects {
       case 'sacrifice': {
         const ids = await this.pick({ title: 'Sacrificar aliado', cards: me.field, max: 1, exact: true });
         if (!ids) return false;
-        // Sacrificed = destroyed, but it goes to Tributos (rule 4.0.4.2)
-        for (const id of ids) this.game.moveCard(id, 'field', 'tributeZone');
+        for (const id of ids) this.game.sacrificeCard(id);
         return true;
       }
       case 'destroyLife': {

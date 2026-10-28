@@ -19,6 +19,11 @@ export interface CardSlot {
   level?: number | null;
   colors?: string[];
   classes?: string[];
+  /** Printed keyword abilities ("Provocar", "Letalidad 1") and those gained until the end of the turn. */
+  keywords?: string[];
+  turnKeywords?: string[];
+  specialCost?: number | null;
+  requirement?: string | null;
   materials: CardSlot[];
   resources: CardSlot[];
 }
@@ -75,6 +80,8 @@ export interface GameState {
   chain?: PendingEffect[] | null;
   /** Choice the rules engine is waiting for (only prompt.playerId may answer). */
   prompt?: EffectPrompt | null;
+  /** Combat in progress (the engine runs it step by step). */
+  combat?: Combat | null;
 }
 
 /** One rules event of the timeline (the text log is generated from these). */
@@ -103,17 +110,35 @@ export interface PendingEffect {
   text: string;
 }
 
-export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK_FROM_HAND';
+export interface Combat {
+  attackerId: string;
+  attackerOwnerId: string;
+  defenderId: string;
+  /** Exhausted enemy creature attacked; null = the opponent. */
+  targetId: string | null;
+  blockerId: string | null;
+  step: 'ATTACK' | 'BLOCK' | 'CLASH' | 'DAMAGE' | 'END';
+  /** Entering the step, carrying it out or leaving it (each opens a window for triggers). */
+  phase: 'ENTER' | 'ACT' | 'EXIT';
+  byEffect: boolean;
+}
+
+/** TAKE_REVEALED_REST_BOTTOM: pick for the hand and order the rest. PICK: choose cards. CONFIRM: yes (choose the card) or no. */
+export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK' | 'CONFIRM';
 
 /** A choice the engine waits for; it cannot be dismissed. */
 export interface EffectPrompt {
   id: string;
   kind: EffectPromptKind;
   playerId: string;
-  effectId: string;
+  effectId: string | null;
+  /** Choices that are not part of an effect: BLOCK, PROVOKE (Provocar) or ADVANCE (move up to the Línea frontal). */
+  purpose?: 'BLOCK' | 'PROVOKE' | 'ADVANCE' | null;
   sourceName: string;
   title: string;
   instruction: string;
+  /** What happens to a chosen card ("A tu mano", "Tributar", "Destruir"). */
+  chosenLabel: string | null;
   cards: CardSlot[];
   /** Cards that may be chosen; the rest are locked. */
   validIds: string[];

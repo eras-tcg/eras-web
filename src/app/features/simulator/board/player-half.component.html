@@ -35,7 +35,7 @@
   </ng-template>
 </div>
 
-<!-- Field: free positions in % -->
+<!-- Field: the Línea frontal (nearer the rival) and the Retaguardia, cards side by side -->
 <div
   #field
   class="field"
@@ -46,16 +46,18 @@
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'field')"
 >
-  <span class="line-label front">{{ opponent() ? 'Retaguardia' : 'Línea frontal' }}</span>
-  <span class="divider" aria-hidden="true"></span>
-  <span class="line-label back">{{ opponent() ? 'Línea frontal' : 'Retaguardia' }}</span>
+  @for (line of lines; track line) {
+    <div class="line" [class.front]="line === 'front'" role="group" [attr.aria-label]="line === 'front' ? 'Línea frontal' : 'Retaguardia'">
+      <span class="line-label">{{ line === 'front' ? 'Línea frontal' : 'Retaguardia' }}</span>
+      @for (s of rows()[line]; track s.instanceId) {
+        <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
+          <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+        </div>
+      }
+    </div>
+  }
   @if (p.field.length === 0) {
     <span class="hint">{{ opponent() ? 'Campo del rival' : 'Arrastra cartas aquí' }}</span>
-  }
-  @for (s of p.field; track s.instanceId) {
-    <div class="placed" [style.left.%]="s.x ?? 50" [style.top.%]="fieldY(s.y, opponent())" [class.near]="nearby()?.instanceId === s.instanceId">
-      <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
-    </div>
   }
   @if (nearby() && !opponent()) {
     <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>

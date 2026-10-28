@@ -40,9 +40,10 @@ export interface EffectPromptData {
             <button
               type="button"
               class="pick"
+              [class.static]="prompt.kind === 'CONFIRM'"
               [class.chosen]="chosen().has(c.instanceId)"
               [class.locked]="!valid.has(c.instanceId)"
-              [disabled]="!valid.has(c.instanceId) || sending()"
+              [disabled]="!valid.has(c.instanceId) || sending() || prompt.kind === 'CONFIRM'"
               [attr.aria-pressed]="chosen().has(c.instanceId)"
               [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? '' : ', no cumple el efecto')"
               (click)="toggle(c.instanceId)"
@@ -50,7 +51,9 @@ export interface EffectPromptData {
               <eras-game-card [imageUrl]="c.imageUrl" />
               <span class="tag">
                 @if (chosen().has(c.instanceId)) {
-                  <eras-icon name="check" /> {{ prompt.kind === 'PICK_FROM_HAND' ? 'Elegida' : 'A tu mano' }}
+                  <eras-icon name="check" /> {{ prompt.chosenLabel ?? 'Elegida' }}
+                } @else if (prompt.kind === 'CONFIRM') {
+                  {{ c.cardName }}
                 } @else if (!valid.has(c.instanceId)) {
                   No cumple
                 } @else {
@@ -63,8 +66,13 @@ export interface EffectPromptData {
       </div>
       <ng-container modal-footer>
         <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
-          <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
-          <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">Confirmar</button>
+          @if (prompt.kind === 'CONFIRM') {
+            <button erasButton variant="secondary" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
+            <button erasButton type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
+          } @else {
+            <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
+            <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
+          }
         </eras-stack>
       </ng-container>
     </eras-modal>
@@ -97,6 +105,7 @@ export interface EffectPromptData {
     .pick:hover:not(:disabled) { background: var(--color-surface-muted); }
     .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
     .pick.locked { opacity: 0.4; cursor: not-allowed; }
+    .pick.static, .pick.static:disabled { opacity: 1; cursor: default; }
     .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .tag {
       display: inline-flex;
@@ -126,6 +135,15 @@ export class EffectPromptDialogComponent {
     return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
   });
 
+  /** Optional choices can be confirmed with nothing chosen ("No bloquear"). */
+  protected readonly confirmLabel = computed(() => {
+    if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
+    if (this.prompt.purpose === 'BLOCK') return 'No bloquear';
+    if (this.prompt.purpose === 'PROVOKE') return 'No provocar';
+    if (this.prompt.purpose === 'ADVANCE') return 'No subir ninguna';
+    return this.prompt.chosenLabel === 'Atacar' ? 'Atacar al rival' : 'Continuar sin elegir';
+  });
+
   constructor() {
     // The server rejected the answer: let the player fix it and confirm again
     effect(() => {
@@ -149,6 +167,12 @@ export class EffectPromptDialogComponent {
     const list = [...this.order()];
     moveItemInArray(list, event.previousIndex, event.currentIndex);
     this.order.set(list);
+  }
+
+  /** CONFIRM prompts: choosing the card means yes. */
+  protected answer(yes: boolean): void {
+    this.sending.set(true);
+    this.game.resolvePrompt(this.prompt.id, yes ? this.prompt.validIds.slice(0, 1) : []);
   }
 
   /** The board closes this dialog when the engine moves on to the next step. */

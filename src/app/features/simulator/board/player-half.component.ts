@@ -1,6 +1,7 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
-import { creatureNear, fieldY, zoneTargetId } from '@data/simulator/game-rules';
+import { zoneTargetId } from '@data/simulator/game-rules';
+import { fieldRows } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
@@ -47,7 +48,11 @@ export class PlayerHalfComponent {
   protected readonly targeting = computed(() => this.game.pendingTargetSource() !== null);
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
-  protected readonly fieldY = fieldY;
+  protected readonly rows = computed(() => fieldRows(this.player().field));
+  /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */
+  protected get lines(): readonly ('front' | 'back')[] {
+    return this.opponent() ? ['back', 'front'] : ['front', 'back'];
+  }
 
   private last(list: CardSlot[]): CardSlot | null {
     return list.length ? list[list.length - 1] : null;
@@ -68,12 +73,11 @@ export class PlayerHalfComponent {
     event.preventDefault();
     this.over.set(zone);
     if (zone === 'field') {
-      const el = this.fieldEl()?.nativeElement;
+      // The creature under the pointer, to interact with it (summon on top, attach)
       const dragging = this.drag.dragging();
-      if (el && dragging) {
-        const { x, y } = this.drag.position(event, el, this.opponent());
-        this.nearby.set(creatureNear(this.player().field, x, y, this.opponent() ? null : dragging.instanceId));
-      }
+      const id = (event.target as HTMLElement | null)?.closest('[data-instance-id]')?.getAttribute('data-instance-id');
+      const under = this.player().field.find((s) => s.instanceId === id && s.cardType === 'creature') ?? null;
+      this.nearby.set(under && (this.opponent() || under.instanceId !== dragging?.instanceId) ? under : null);
     }
   }
 
@@ -111,8 +115,15 @@ export class PlayerHalfComponent {
         this.game.normalSummon(card.instanceId, pos.x, pos.y);
         return;
       }
+      // Utilities and structures from the hand are played: the server pays them and fires "En Juego"
+      if (this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && (dragged?.cardType === 'utility' || dragged?.cardType === 'structure')) {
+        this.game.playCard(card.instanceId, pos.x, pos.y);
+        return;
+      }
       const summon = this.game.status() === 'IN_PROGRESS' && card.fromZone !== 'field' && dragged?.cardType === 'creature';
-      this.game.moveCard(card.instanceId, card.fromZone, 'field', pos);
+      // Manual move: into the line it was dropped on (only creatures go to the Línea frontal)
+      const front = pos.y < 50 && dragged?.cardType === 'creature';
+      this.game.moveCard(card.instanceId, card.fromZone, 'field', { x: pos.x, y: front ? 25 : 75 });
       if (summon) this.effectSummon.set({ instanceId: card.instanceId, fromZone: card.fromZone });
       return;
     }

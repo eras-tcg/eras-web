@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
+import { rulesView } from './legal-actions';
 import { CardSlot, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
 
 export interface RevealedCard {
@@ -40,6 +41,8 @@ export class GameStore {
   readonly targetingSourceId = signal<string | null>(null);
   /** Card chosen with "Hacer objetivo", waiting for its target to be clicked. */
   readonly pendingTargetSource = signal<string | null>(null);
+  /** Card clicked on the board: it shows its legal actions. */
+  readonly selectedId = signal<string | null>(null);
   readonly log = signal<LogLine[]>([]);
   readonly recentLog = signal<LogLine[]>([]);
 
@@ -65,6 +68,8 @@ export class GameStore {
     const chain = this.state()?.chain;
     return chain?.length ? chain[chain.length - 1] : null;
   });
+  /** What the rules check for me now (turn, phase, closed state, gems). */
+  readonly rules = computed(() => rulesView(this.state(), this.me()));
   readonly isHost = computed(() => !!this.me() && this.state()?.hostId === this.me());
   /** The player listed first sees the shared bar unmirrored. */
   readonly isFirstPlayer = computed(() => {
@@ -185,6 +190,26 @@ export class GameStore {
   /** Normal summon (rules engine): a creature from the hand to the board; the server pays its cost and fires its triggers. */
   normalSummon(instanceId: string, x: number, y: number): void {
     this.send('NORMAL_SUMMON', { instanceId, x, y });
+  }
+
+  /** Destroys a card on the field: to its owner's Descarte; its "En Destrucción" effects trigger. */
+  destroyCard(instanceId: string, targetPlayerId: string | null = null): void {
+    this.send('DESTROY_CARD', { instanceId, targetPlayerId });
+  }
+
+  /** Declares an attack with one of your creatures; `targetInstanceId` null attacks the opponent. */
+  attack(instanceId: string, targetInstanceId: string | null = null): void {
+    this.send('ATTACK', { instanceId, targetInstanceId });
+  }
+
+  /** Plays a utility or structure from the hand: the server pays it and fires its "En Juego" effects. */
+  playCard(instanceId: string, x: number, y: number): void {
+    this.send('PLAY_CARD', { instanceId, x, y });
+  }
+
+  /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */
+  sacrificeCard(instanceId: string): void {
+    this.send('SACRIFICE_CARD', { instanceId });
   }
 
   /** Answers the effect choice the engine waits for. `order`: the cards not chosen, in deck-bottom order. */

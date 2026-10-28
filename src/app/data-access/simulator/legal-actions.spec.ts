@@ -66,6 +66,9 @@ describe('legalActions', () => {
     // Below the opponent's Marcador nothing can be paid, except a cost of 0
     expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 1)).toBe(false);
     expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 0)).toBe(true);
+    // On the opponent's turn their Marcador does not limit it, only the end of the Contador
+    expect(canPay({ ...open, myTurn: false, gems: -5, opponentMarker: 2 }, 5)).toBe(true);
+    expect(canPay({ ...open, myTurn: false, gems: -5, opponentMarker: 2 }, 6)).toBe(false);
   });
 });
 

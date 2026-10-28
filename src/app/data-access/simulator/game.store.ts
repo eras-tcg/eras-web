@@ -192,6 +192,16 @@ export class GameStore {
     this.send('DESTROY_CARD', { instanceId, targetPlayerId });
   }
 
+  /** Declares an attack with one of your creatures; `targetInstanceId` null attacks the opponent. */
+  attack(instanceId: string, targetInstanceId: string | null = null): void {
+    this.send('ATTACK', { instanceId, targetInstanceId });
+  }
+
+  /** Plays a utility or structure from the hand: the server pays it and fires its "En Juego" effects. */
+  playCard(instanceId: string, x: number, y: number): void {
+    this.send('PLAY_CARD', { instanceId, x, y });
+  }
+
   /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */
   sacrificeCard(instanceId: string): void {
     this.send('SACRIFICE_CARD', { instanceId });

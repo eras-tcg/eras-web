@@ -19,8 +19,11 @@ export interface CardSlot {
   level?: number | null;
   colors?: string[];
   classes?: string[];
-  /** Abilities gained until the end of the turn ("Furia 1"). */
+  /** Printed keyword abilities ("Provocar", "Letalidad 1") and those gained until the end of the turn. */
+  keywords?: string[];
   turnKeywords?: string[];
+  specialCost?: number | null;
+  requirement?: string | null;
   materials: CardSlot[];
   resources: CardSlot[];
 }
@@ -77,6 +80,8 @@ export interface GameState {
   chain?: PendingEffect[] | null;
   /** Choice the rules engine is waiting for (only prompt.playerId may answer). */
   prompt?: EffectPrompt | null;
+  /** Combat in progress (the engine runs it step by step). */
+  combat?: Combat | null;
 }
 
 /** One rules event of the timeline (the text log is generated from these). */
@@ -105,6 +110,17 @@ export interface PendingEffect {
   text: string;
 }
 
+export interface Combat {
+  attackerId: string;
+  attackerOwnerId: string;
+  defenderId: string;
+  /** Exhausted enemy creature attacked; null = the opponent. */
+  targetId: string | null;
+  blockerId: string | null;
+  step: 'ATTACK' | 'BLOCK' | 'CLASH' | 'DAMAGE' | 'END';
+  byEffect: boolean;
+}
+
 /** TAKE_REVEALED_REST_BOTTOM: pick for the hand and order the rest. PICK: choose cards. CONFIRM: yes (choose the card) or no. */
 export type EffectPromptKind = 'TAKE_REVEALED_REST_BOTTOM' | 'PICK' | 'CONFIRM';
 
@@ -113,7 +129,9 @@ export interface EffectPrompt {
   id: string;
   kind: EffectPromptKind;
   playerId: string;
-  effectId: string;
+  effectId: string | null;
+  /** Combat choices that are not part of an effect: BLOCK or PROVOKE. */
+  purpose?: 'BLOCK' | 'PROVOKE' | null;
   sourceName: string;
   title: string;
   instruction: string;

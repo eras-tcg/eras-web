@@ -71,7 +71,7 @@ export interface EffectPromptData {
             <button erasButton type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
           } @else {
             <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
-            <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">Confirmar</button>
+            <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
           }
         </eras-stack>
       </ng-container>
@@ -133,6 +133,14 @@ export class EffectPromptDialogComponent {
   protected readonly canConfirm = computed(() => {
     const n = this.chosen().size;
     return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
+  });
+
+  /** Optional choices can be confirmed with nothing chosen ("No bloquear"). */
+  protected readonly confirmLabel = computed(() => {
+    if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
+    if (this.prompt.purpose === 'BLOCK') return 'No bloquear';
+    if (this.prompt.purpose === 'PROVOKE') return 'No provocar';
+    return this.prompt.chosenLabel === 'Atacar' ? 'Atacar al rival' : 'Continuar sin elegir';
   });
 
   constructor() {

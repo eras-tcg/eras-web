@@ -60,6 +60,12 @@ import { BoardEffects } from './board-effects';
               <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, -slot().strengthModifier, targetPlayer())">Restaurar fuerza</button>
             }
           }
+          @if (canAttack()) {
+            <button erasMenuItem (triggered)="game.attack(slot().instanceId)">Atacar al rival</button>
+            @if (attackTargets().length) {
+              <button erasMenuItem (triggered)="dialogs.attackCreature(slot(), attackTargets(), attackWith)">Atacar a una criatura…</button>
+            }
+          }
           <button erasMenuItem (triggered)="game.pendingTargetSource.set(slot().instanceId)">Hacer objetivo</button>
           <button erasMenuItem class="danger" (triggered)="game.destroyCard(slot().instanceId, targetPlayer())">Destruir</button>
           @if (!opponent()) {
@@ -103,6 +109,24 @@ export class SimCardComponent implements OnDestroy {
   /** Your card has effect text (its own or inherited from its materials). */
   protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
+  /** Your active creature in the Línea frontal, during your main phase with nothing pending (rule 10.1.1.1). */
+  protected readonly canAttack = computed(() => {
+    const s = this.slot();
+    return (
+      !this.opponent() &&
+      this.zone() === 'field' &&
+      s.cardType === 'creature' &&
+      !s.tapped &&
+      (s.y ?? 100) < 50 &&
+      this.game.isMyTurn() &&
+      this.game.phase() !== 'END' &&
+      !this.game.state()?.combat &&
+      !this.game.resolving()
+    );
+  });
+  /** Exhausted enemy creatures that can be attacked. */
+  protected readonly attackTargets = computed(() => (this.game.opponentState()?.field ?? []).filter((c) => c.cardType === 'creature' && c.tapped));
+  protected readonly attackWith = (targetId: string): void => this.game.attack(this.slot().instanceId, targetId);
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly label = computed(() => {
     const s = this.slot();

@@ -111,6 +111,11 @@ export class PlayerHalfComponent {
         this.game.normalSummon(card.instanceId, pos.x, pos.y);
         return;
       }
+      // Utilities and structures from the hand are played: the server pays them and fires "En Juego"
+      if (this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && (dragged?.cardType === 'utility' || dragged?.cardType === 'structure')) {
+        this.game.playCard(card.instanceId, pos.x, pos.y);
+        return;
+      }
       const summon = this.game.status() === 'IN_PROGRESS' && card.fromZone !== 'field' && dragged?.cardType === 'creature';
       this.game.moveCard(card.instanceId, card.fromZone, 'field', pos);
       if (summon) this.effectSummon.set({ instanceId: card.instanceId, fromZone: card.fromZone });

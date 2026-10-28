@@ -99,7 +99,12 @@ export class BoardPage {
     const effect = this.game.resolving();
     if (effect) return `${effect.sourceName} · ${effect.label}`;
     const prompt = this.game.state()?.prompt;
-    return prompt ? prompt.title : null;
+    if (prompt) return prompt.title;
+    const combat = this.game.state()?.combat;
+    if (!combat) return null;
+    const all = Object.values(this.game.state()?.players ?? {}).flatMap((p) => p.field);
+    const name = (id: string | null) => all.find((c) => c.instanceId === id)?.cardName ?? 'una criatura';
+    return `Combate: ${name(combat.attackerId)} ataca a ${combat.targetId ? name(combat.targetId) : 'su rival'}`;
   });
 
   /** Waiting on the opponent's choice for an effect. */

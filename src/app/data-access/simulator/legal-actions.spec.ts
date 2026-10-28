@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RulesView, canPay, fieldRows, legalActions, playCost, rulesView } from './legal-actions';
+import { RulesView, attackGemsOk, canPay, canRitual, fieldRows, legalActions, playCost, rulesView } from './legal-actions';
 import { CardSlot, GameState } from './simulator.model';
 
 const slot = (id: string, over: Partial<CardSlot> = {}): CardSlot => ({
@@ -22,7 +22,17 @@ const slot = (id: string, over: Partial<CardSlot> = {}): CardSlot => ({
   ...over,
 });
 
-const open: RulesView = { inProgress: true, myTurn: true, phase: 'MAIN', closed: false, gems: 2, opponentMarker: 1 };
+const open: RulesView = {
+  inProgress: true,
+  myTurn: true,
+  phase: 'MAIN',
+  closed: false,
+  gems: 2,
+  opponentMarker: 1,
+  starterAdvantage: false,
+  field: [],
+  activatable: [],
+};
 
 describe('legalActions', () => {
   it('attacks with an active creature of the Línea frontal and 0 or more gems', () => {
@@ -53,6 +63,39 @@ describe('legalActions', () => {
     expect(playCost({ ...open, gems: -1 }, caza)).toBe(0);
     expect(playCost(open, caza)).toBe(1);
     expect(canPay({ ...open, gems: -1 }, 0)).toBe(true);
+  });
+});
+
+describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
+  it('Furia N lets a creature attack while the opponent has N or fewer gems', () => {
+    const a = slot('a', { turnKeywords: ['Furia 1'] });
+    expect(attackGemsOk({ ...open, gems: -1 }, a)).toBe(true);
+    expect(attackGemsOk({ ...open, gems: -2 }, a)).toBe(false);
+    expect(attackGemsOk({ ...open, gems: -9 }, slot('b', { keywords: ['Furia'] }))).toBe(true);
+    expect(legalActions({ ...open, gems: -1 }, a, 'field')).toEqual(['attack']);
+  });
+
+  it('offers Ritual when the special cost can be paid and the Requerimiento is met', () => {
+    const zha = slot('z', { specialSummonKind: 'ritual', specialCost: 2, requirement: 'criatura nivel 2.', colors: ['P'], cost: 9 });
+    const two = slot('two', { level: 2, colors: ['P'] });
+    expect(canRitual({ ...open, field: [] }, zha)).toBe(false);
+    expect(canRitual({ ...open, field: [slot('red', { level: 2, colors: ['R'] })] }, zha)).toBe(false);
+    expect(legalActions({ ...open, field: [two] }, zha, 'hand')).toEqual(['ritual']);
+    const mawser = slot('m', { specialSummonKind: 'ritual', specialCost: 3, requirement: 'criaturas que en nivel sumen 6.', colors: ['P'] });
+    expect(canRitual({ ...open, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(true);
+    expect(canRitual({ ...open, gems: -1, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(false);
+  });
+
+  it('an Iniciador costs the second player 1 less while the advantage is unused', () => {
+    const ini = slot('i', { starter: true, cost: 4 });
+    expect(legalActions(open, ini, 'hand')).toEqual([]);
+    expect(legalActions({ ...open, starterAdvantage: true }, ini, 'hand')).toEqual(['summon']);
+  });
+
+  it('slow effects listed by the server, also outside your turn', () => {
+    const view = { ...open, myTurn: false, activatable: [{ instanceId: 'a', scriptId: 's', label: 'Turno Aliado', text: 't' }] };
+    expect(legalActions(view, slot('a', { tapped: true }), 'field')).toEqual(['activate']);
+    expect(legalActions({ ...view, closed: true }, slot('a'), 'field')).toEqual([]);
   });
 });
 

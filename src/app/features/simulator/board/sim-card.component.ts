@@ -1,5 +1,5 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
 import { displayStrength, isHidden } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
@@ -47,11 +47,20 @@ import { BoardEffects } from './board-effects';
 
     @if (selected()) {
       <div class="actions" role="toolbar" [attr.aria-label]="'Acciones de ' + (slot().cardName ?? 'la carta')">
-        @for (a of actions(); track a) {
-          <button type="button" class="action" [class.attack]="a === 'attack'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
-            <eras-icon [name]="actionIcons[a]" />
-            <span>{{ actionLabels[a] }}</span>
-          </button>
+        @if (effectsOpen()) {
+          @for (e of myEffects(); track e.scriptId) {
+            <button type="button" class="action effect" [attr.title]="e.text" [attr.aria-label]="'Activar ' + e.label + ': ' + e.text" (click)="activate(e.scriptId, $event)">
+              <eras-icon name="sparkles" />
+              <span>{{ e.label }}</span>
+            </button>
+          }
+        } @else {
+          @for (a of actions(); track a) {
+            <button type="button" class="action" [class.attack]="a === 'attack'" [attr.aria-label]="actionLabels[a]" (click)="run(a, $event)">
+              <eras-icon [name]="actionIcons[a]" />
+              <span>{{ actionLabels[a] }}</span>
+            </button>
+          }
         }
         @if (!hidden() || !opponent()) {
           <button type="button" class="action" aria-label="Ver" (click)="$event.stopPropagation(); game.selectedId.set(null); dialogs.cardInfo(slot(), zone(), opponent())">
@@ -130,6 +139,7 @@ import { BoardEffects } from './board-effects';
     .action eras-icon { inline-size: 0.9rem; block-size: 0.9rem; }
     .action:hover { border-color: var(--color-primary); }
     .action.attack { border-color: var(--color-danger); color: var(--color-danger); }
+    .action.effect { border-color: var(--color-primary); }
     .action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
     eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   `,
@@ -145,8 +155,18 @@ export class SimCardComponent {
   protected readonly drag = inject(BoardDrag);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly modal = inject(ModalService);
-  protected readonly actionLabels: Record<LegalAction, string> = { attack: 'Atacar', summon: 'Invocar', play: 'Jugar' };
-  protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'plus', play: 'play' };
+  protected readonly actionLabels: Record<LegalAction, string> = {
+    attack: 'Atacar',
+    summon: 'Invocar',
+    ritual: 'Ritual',
+    play: 'Jugar',
+    activate: 'Activar efecto',
+  };
+  protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'plus', ritual: 'layers', play: 'play', activate: 'sparkles' };
+  /** Slow effects of this card that can be activated now. */
+  protected readonly myEffects = computed(() => this.game.rules().activatable.filter((e) => e.instanceId === this.slot().instanceId));
+  /** The card has several effects to activate: the toolbar lists them. */
+  protected readonly effectsOpen = signal(false);
 
   protected readonly hidden = computed(() => isHidden(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
@@ -162,6 +182,12 @@ export class SimCardComponent {
     const name = this.hidden() ? 'Carta boca abajo' : s.cardName || 'Carta';
     return `${name}${s.tapped ? ', agotada' : ''}${this.opponent() ? ', del rival' : ''}`;
   });
+
+  constructor() {
+    effect(() => {
+      if (!this.selected()) this.effectsOpen.set(false);
+    });
+  }
 
   protected onClick(event?: Event): void {
     event?.stopPropagation();
@@ -197,7 +223,27 @@ export class SimCardComponent {
       case 'play':
         this.game.playCard(s.instanceId, 50, 75);
         return;
+      case 'ritual':
+        // The server asks for the creatures that meet the Requerimiento
+        this.game.ritualSummon(s.instanceId);
+        return;
+      case 'activate': {
+        const effects = this.myEffects();
+        if (effects.length === 1) {
+          this.game.activateEffect(s.instanceId, effects[0].scriptId);
+        } else {
+          this.game.selectedId.set(s.instanceId);
+          this.effectsOpen.set(true);
+        }
+        return;
+      }
     }
+  }
+
+  protected activate(scriptId: string, event: Event): void {
+    event.stopPropagation();
+    this.game.selectedId.set(null);
+    this.game.activateEffect(this.slot().instanceId, scriptId);
   }
 
   protected onDragStart(event: DragEvent): void {

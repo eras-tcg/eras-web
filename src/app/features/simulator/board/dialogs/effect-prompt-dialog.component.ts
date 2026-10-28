@@ -137,7 +137,11 @@ export class EffectPromptDialogComponent {
 
   /** Optional choices can be confirmed with nothing chosen ("No bloquear"). */
   protected readonly confirmLabel = computed(() => {
+    if (this.chosen().size > 0 && this.prompt.purpose === 'RITUAL') return 'Invocar';
+    if (this.chosen().size > 0 && this.prompt.purpose === 'PRIORITY') return 'Activar';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
+    if (this.prompt.purpose === 'RITUAL') return 'No invocar';
+    if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
     if (this.prompt.purpose === 'BLOCK') return 'No bloquear';
     if (this.prompt.purpose === 'PROVOKE') return 'No provocar';
     if (this.prompt.purpose === 'ADVANCE') return 'No subir ninguna';

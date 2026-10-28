@@ -207,6 +207,19 @@ export class GameStore {
     this.send('PLAY_CARD', { instanceId, x, y });
   }
 
+  /**
+   * Ritual summon from the hand: the server checks the special cost and the Requerimiento. `summonerId` is the
+   * creature it was dropped onto; whatever is missing is asked with a prompt.
+   */
+  ritualSummon(instanceId: string, summonerId: string | null = null): void {
+    this.send('RITUAL_SUMMON', { instanceId, summonerId });
+  }
+
+  /** Activates a slow effect (listed in `state.activatable`). */
+  activateEffect(instanceId: string, scriptId: string | null = null): void {
+    this.send('ACTIVATE_EFFECT', { instanceId, scriptId });
+  }
+
   /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */
   sacrificeCard(instanceId: string): void {
     this.send('SACRIFICE_CARD', { instanceId });

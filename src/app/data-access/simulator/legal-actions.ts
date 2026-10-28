@@ -1,7 +1,7 @@
-import { CardSlot, GameState, ZoneName } from './simulator.model';
+import { ActivatableEffect, CardSlot, GameState, ZoneName } from './simulator.model';
 
 /** What a card can do now by the rules (clicking it offers these; the right-click menu keeps the manual actions). */
-export type LegalAction = 'attack' | 'summon' | 'play';
+export type LegalAction = 'attack' | 'summon' | 'ritual' | 'play' | 'activate';
 
 /** Everything the rules check, read from the room for one player. */
 export interface RulesView {
@@ -14,6 +14,12 @@ export interface RulesView {
   gems: number;
   /** The opponent's Marcador: how far below 0 I may pay (rule 5.0.0.1). */
   opponentMarker: number;
+  /** I still have the "ventaja del iniciador": an Iniciador costs me 1 less, once (rule 6.2.1.4). */
+  starterAdvantage: boolean;
+  /** My field, for the Requerimiento of a Ritual. */
+  field: CardSlot[];
+  /** Slow effects I can activate now (the server lists them). */
+  activatable: ActivatableEffect[];
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
@@ -27,6 +33,9 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     closed: !!state?.prompt || !!state?.chain?.length || !!state?.combat,
     gems: (state?.sharedCounter ?? 0) * (first ? -1 : 1),
     opponentMarker: opponent ? (state?.players[opponent]?.resourceCount ?? 0) : 0,
+    starterAdvantage: !!me && state?.starterAdvantageUserId === me,
+    field: (me && state?.players[me]?.field) || [],
+    activatable: (me && state?.activatable?.[me]) || [],
   };
 }
 
@@ -47,15 +56,71 @@ export function playCost(view: RulesView, slot: CardSlot): number {
   return Math.max(0, cost);
 }
 
+/** A summon cost after the "ventaja del iniciador". */
+export function summonCost(view: RulesView, slot: CardSlot, cost: number): number {
+  return slot.starter && view.starterAdvantage && cost > 0 ? cost - 1 : cost;
+}
+
+/** Furia N → N; Furia without a number → -1 (no limit); null without Furia. */
+export function furia(slot: CardSlot): number | null {
+  let best: number | null = null;
+  for (const k of [...(slot.keywords ?? []), ...(slot.turnKeywords ?? [])]) {
+    if (!k.toLowerCase().startsWith('furia')) continue;
+    const n = /(\d+)/.exec(k);
+    if (!n) return -1;
+    best = Math.max(best ?? 0, Number(n[1]));
+  }
+  return best;
+}
+
+/** Rule 10.1.1.1: 0 or more gems; Furia N while the opponent has N or fewer; Furia alone, always. */
+export function attackGemsOk(view: RulesView, slot: CardSlot): boolean {
+  if (view.gems >= 0) return true;
+  const f = furia(slot);
+  return f != null && (f < 0 || view.gems >= -f);
+}
+
+/** Requerimiento of a Ritual: one creature of level N, or several whose levels add up to N. */
+export function requirement(slot: CardSlot): { sum: boolean; level: number } | null {
+  const text = slot.requirement?.toLowerCase() ?? '';
+  const m = /nivel\s*(\d+)|sumen\s*(\d+)/.exec(text);
+  return m ? { sum: text.includes('sum'), level: Number(m[1] ?? m[2]) } : null;
+}
+
+/** Rule 9.2.0.10: a creature used for a Ritual shares a type or a color with the summoned one. */
+export function sharesTypeOrColor(used: CardSlot, summoned: CardSlot): boolean {
+  const colors = summoned.colors ?? [];
+  const classes = (summoned.classes ?? []).map((c) => c.toLowerCase());
+  return (used.colors ?? []).some((c) => colors.includes(c)) || (used.classes ?? []).some((c) => classes.includes(c.toLowerCase()));
+}
+
+/** Creatures of my field that can be used for the Ritual of `slot`. */
+export function ritualMaterials(view: RulesView, slot: CardSlot): CardSlot[] {
+  return view.field.filter((c) => c.cardType === 'creature' && c.level != null && sharesTypeOrColor(c, slot));
+}
+
+/** The creature can be summoned by Ritual now: special cost payable and the Requerimiento met (mirrors the server). */
+export function canRitual(view: RulesView, slot: CardSlot): boolean {
+  const req = requirement(slot);
+  if (slot.specialSummonKind?.toLowerCase() !== 'ritual' || !req || slot.specialCost == null) return false;
+  if (!canPay(view, summonCost(view, slot, slot.specialCost))) return false;
+  const materials = ritualMaterials(view, slot);
+  return req.sum ? materials.reduce((t, c) => t + (c.level ?? 0), 0) >= req.level : materials.some((c) => c.level === req.level);
+}
+
 /** Legal actions of one of your cards; the server checks them again. */
 export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): LegalAction[] {
-  if (!view.inProgress || !view.myTurn || view.phase !== 'MAIN' || view.closed) return [];
+  if (!view.inProgress || view.phase !== 'MAIN' || view.closed) return [];
   const actions: LegalAction[] = [];
+  // Slow effects: the server says which ones can be activated now
+  if (view.activatable.some((e) => e.instanceId === slot.instanceId)) actions.push('activate');
+  if (!view.myTurn) return actions;
   if (zone === 'field') {
-    // Rule 10.1.1.1: an active creature of the Línea frontal, with 0 or more gems
-    if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && view.gems >= 0) actions.push('attack');
+    // Rule 10.1.1.1: an active creature of the Línea frontal, with 0 or more gems (or what its Furia allows)
+    if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot)) actions.unshift('attack');
   } else if (zone === 'hand') {
-    if (slot.cardType === 'creature' && slot.cost != null && canPay(view, slot.cost)) actions.push('summon');
+    if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
+    if (slot.cardType === 'creature' && canRitual(view, slot)) actions.push('ritual');
     if ((slot.cardType === 'utility' || slot.cardType === 'structure') && canPay(view, playCost(view, slot))) actions.push('play');
   }
   return actions;

@@ -2,6 +2,7 @@ import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk
 import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
+import { ChainListComponent } from '../chain-list.component';
 import { CardSlot, EffectPrompt } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -20,9 +21,10 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag],
+  imports: [ModalComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, ChainListComponent],
   template: `
     <eras-modal size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+      <eras-chain-list />
       @if (prompt.reorderRest) {
         <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
       }

@@ -124,6 +124,8 @@ export interface PendingEffect {
   text: string;
   /** Its chain link: 1 for the first one activated (it resolves last). */
   link: number;
+  /** Set while it resolves. */
+  resolutionId?: string | null;
 }
 
 export interface Combat {

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { CardsStore } from '@data/cards/cards.store';
 import { sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
+import { ChainListComponent } from './chain-list.component';
 import { STATUS_LABELS } from '@data/simulator/simulator.model';
 import { SharedBarComponent } from '@ui/domain/game-counters/shared-bar.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -24,7 +25,7 @@ const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fas
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   providers: [BoardDrag, BoardDialogs, BoardEffects],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -98,11 +99,8 @@ export class BoardPage {
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */
   protected readonly engineNotice = computed(() => {
     const effect = this.game.resolving();
-    if (effect) {
-      // The whole chain, last link first (it resolves first)
-      const chain = this.game.state()?.chain ?? [];
-      return [...chain].reverse().map((e) => `Cadena ${e.link}: ${e.sourceName} · ${e.label}`).join('  ←  ');
-    }
+    // The chain itself is listed by <eras-chain-list>
+    if (effect) return `Cadena ${effect.link}: ${effect.sourceName} · ${effect.label}`;
     const prompt = this.game.state()?.prompt;
     if (prompt) return prompt.title;
     const combat = this.game.state()?.combat;

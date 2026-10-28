@@ -59,6 +59,9 @@
       @if (game.pendingTargetSource()) {
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
+      @if (game.state()?.chain?.length) {
+        <div class="chain-panel"><eras-chain-list /></div>
+      }
       @if (engineNotice(); as notice) {
         <eras-alert>
           <strong>Resolviendo: {{ notice }}</strong>

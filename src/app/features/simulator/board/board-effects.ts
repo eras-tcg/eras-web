@@ -4,7 +4,7 @@ import { CardMeta } from '@data/cards/card.model';
 import { CardsStore } from '@data/cards/cards.store';
 import { CardFilter, EffectAction, EffectText, cardEffectTexts, filterLabel, matchesFilter } from '@data/simulator/effect-actions';
 import { GameStore } from '@data/simulator/game.store';
-import { displayStrength } from '@data/simulator/game-rules';
+import { displayStrength, sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardPickerData, CardPickerDialogComponent } from './dialogs/card-picker-dialog.component';
@@ -109,10 +109,16 @@ export class BoardEffects {
         return true;
       }
       case 'reduceStrength': {
-        const enemies = opp?.field ?? [];
+        const enemies = frontLine(opp?.field ?? []);
         const targets = action.all ? enemies.map((c) => c.instanceId) : await this.pick({ title: `Reducir ${action.amount} la fuerza`, cards: enemies, max: 1, exact: true });
         if (!targets) return false;
-        for (const id of targets) this.game.modifyStrength(id, -action.amount, oppId);
+        for (const id of targets) {
+          this.game.modifyStrength(id, -action.amount, oppId);
+          // Strength reduced to 0: destroyed by effect, to the Descarte (rule 12.0.0.1)
+          const slot = enemies.find((c) => c.instanceId === id);
+          const strength = slot ? displayStrength(slot) : null;
+          if (strength != null && strength - action.amount <= 0) this.game.moveCard(id, 'field', 'discardPile', { targetPlayerId: oppId });
+        }
         return true;
       }
       case 'gainStrength':
@@ -121,7 +127,7 @@ export class BoardEffects {
       case 'destroy': {
         const ids = await this.pick({
           title: 'Destruir enemigo',
-          cards: opp?.field ?? [],
+          cards: frontLine(opp?.field ?? []),
           max: action.count,
           exact: !action.upTo,
           ...this.filtered(action.filter, true),
@@ -141,9 +147,14 @@ export class BoardEffects {
         for (const id of ids) this.game.tapCard(id, 'field');
         return true;
       }
-      case 'gainGem':
-        this.game.setMarker(Math.min(5, (me.resourceCount ?? 0) + action.count));
+      case 'gainGem': {
+        // Gems are the shared Contador (10…0…10), not the 0–5 Marcador (rules 4.0.9 and 5): moves it towards you
+        const first = this.game.isFirstPlayer();
+        const index = sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, first);
+        const next = Math.max(0, Math.min(20, index - action.count));
+        this.game.setCounter(sharedValueForIndex(next, first));
         return true;
+      }
       case 'deckTopToLife': {
         const top = me.deck[0];
         if (top) this.game.moveCard(top.instanceId, 'deck', 'lifeStack', { toPosition: 'top', faceDown: !action.faceUp });
@@ -153,8 +164,11 @@ export class BoardEffects {
         const pool = action.from === 'hand' ? me.hand : me.tributeZone;
         const ids = await this.pick({ title: `Invocar de ${action.from === 'hand' ? 'la mano' : 'tributos'}`, cards: pool, max: action.count, ...this.filtered(action.filter) });
         if (!ids) return false;
-        // Front line, spread so they do not overlap
-        ids.forEach((id, i) => this.game.moveCard(id, action.from, 'field', { x: 35 + i * 15, y: 30 }));
+        // Summoned by effect: into the Retaguardia (rule 4.0.6.1), with the regulatory draw (rule 9.1.0.4)
+        ids.forEach((id, i) => {
+          this.game.moveCard(id, action.from, 'field', { x: 35 + i * 15, y: 75 });
+          if (me.deck.length > i) this.game.drawCard();
+        });
         return true;
       }
       case 'materialsToTributes': {
@@ -168,7 +182,8 @@ export class BoardEffects {
       case 'sacrifice': {
         const ids = await this.pick({ title: 'Sacrificar aliado', cards: me.field, max: 1, exact: true });
         if (!ids) return false;
-        for (const id of ids) this.game.moveCard(id, 'field', 'discardPile');
+        // Sacrificed = destroyed, but it goes to Tributos (rule 4.0.4.2)
+        for (const id of ids) this.game.moveCard(id, 'field', 'tributeZone');
         return true;
       }
       case 'destroyLife': {
@@ -225,4 +240,12 @@ export class BoardEffects {
       },
     };
   }
+}
+
+/**
+ * Enemies an effect can choose: the Retaguardia cannot be targeted by the opponent's effects (rule 4.0.6.3).
+ * Field y is stored from the owner's view, where the front line is the upper half.
+ */
+function frontLine(slots: readonly CardSlot[]): CardSlot[] {
+  return slots.filter((c) => (c.y ?? 0) < 50);
 }

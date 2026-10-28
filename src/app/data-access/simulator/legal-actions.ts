@@ -44,9 +44,9 @@ export function inFrontLine(slot: CardSlot): boolean {
   return slot.y != null && slot.y < 50;
 }
 
-/** Rule 5.0.0.1: paying may not leave the opponent with more gems than their Marcador shows. */
+/** Rule 5.0.0.1: paying may not leave the opponent with more gems than their Marcador shows. Paying 0 always works. */
 export function canPay(view: RulesView, cost: number): boolean {
-  return view.gems - cost >= -view.opponentMarker;
+  return cost <= 0 || view.gems - cost >= -view.opponentMarker;
 }
 
 /** Cost to play a utility or structure, after the reductions printed on it (mirrors the server). */

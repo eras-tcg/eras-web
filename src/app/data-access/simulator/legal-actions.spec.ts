@@ -63,6 +63,9 @@ describe('legalActions', () => {
     expect(playCost({ ...open, gems: -1 }, caza)).toBe(0);
     expect(playCost(open, caza)).toBe(1);
     expect(canPay({ ...open, gems: -1 }, 0)).toBe(true);
+    // Below the opponent's Marcador nothing can be paid, except a cost of 0
+    expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 1)).toBe(false);
+    expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 0)).toBe(true);
   });
 });
 

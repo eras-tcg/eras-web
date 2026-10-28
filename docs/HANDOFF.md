@@ -60,7 +60,7 @@ Drive, ediciones, tierlist, Home).
 - Simulador: elegir mazo crea/une la sala y entra; tablero del alto de la pantalla sin scroll (≥ 48rem); "Aleatorio" para
   quién empieza. El vhost de next ahora pasa el WebSocket (`location /ws`).
 
-## Motor de reglas del simulador (DriveManager `simulator/engine`, rama `feat/engine-destroy-st3`, sin desplegar)
+## Motor de reglas del simulador (DriveManager `simulator/engine`, en staging desde 2026-10-28: DriveManager#13, eras-web#24, front `eras-web:7e52048…-staging`)
 - Partes: invocación normal, jugar utilidades/estructuras, destruir/sacrificar (etiquetas DESTROY/SACRIFICE con causa
   EFFECT/BATTLE/RITUAL/MANUAL), ventanas de disparo tras cada resolución (11.6.0.4), disparos opcionales con Sí/No,
   límites por turno (también "entre copias"), combate de 5 pasos (bloqueo, Provocar, Imbloqueable, Letalidad, daño
@@ -72,8 +72,9 @@ Drive, ediciones, tierlist, Home).
 - Tablero: el campo son dos filas (línea frontal / retaguardia, cartas lado a lado). Clic en una carta = sus acciones
   legales (`legal-actions.ts`: Atacar, Invocar, Jugar, Ver); clic derecho = acciones manuales.
 - Efectos: ST3 completo en `CardEffects` (por nombre; los textos no se interpretan) + palabra clave Celeridad.
-- Pruebas: 40 tests de motor (`EffectEngineTest`, `DestructionTest`, `CombatTest`, `St3IntegrationTest` con los
-  metadatos reales de ST3 en `src/test/resources/simulator`). Solo probado en local; falta e2e de 2 jugadores en staging.
+- Pruebas: 46 tests de motor (`EffectEngineTest`, `DestructionTest`, `CombatTest`, `St3IntegrationTest` con los
+  metadatos reales de ST3 en `src/test/resources/simulator`). En staging, partida de 2 jugadores: invocar
+  con la barra, subir al inicio del turno, atacar al rival y daño directo a una vida (bloqueo y enfrentamiento solo en tests).
 - Sin implementar: Furia (solo se registra), Reforzar y jugar gratis una utilidad revelada como vida (va a la mano),
   responder a una cadena (prioridad), elegir el orden dentro de un grupo de disparos, validar coste/Requerimiento de la
   invocación especial manual del tablero, ventaja del iniciador (−1 al coste del segundo jugador).

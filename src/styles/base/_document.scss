@@ -41,6 +41,18 @@ a {
 
 .cdk-overlay-backdrop.eras-sheet-backdrop.collapsed {
   background: transparent;
+  pointer-events: none;
+}
+
+// Who has the priority in the simulator: the page glows from that player's side (blue: you, below; red: rival, above)
+body.eras-acting-me {
+  background-image: linear-gradient(to top, rgb(59 130 246 / 45%), rgb(59 130 246 / 12%) 45%, transparent 75%);
+  background-attachment: fixed;
+}
+
+body.eras-acting-rival {
+  background-image: linear-gradient(to bottom, rgb(239 68 68 / 45%), rgb(239 68 68 / 12%) 45%, transparent 75%);
+  background-attachment: fixed;
 }
 
 /* Visually hidden, still read by screen readers */

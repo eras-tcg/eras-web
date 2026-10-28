@@ -69,21 +69,6 @@
   overflow: hidden;
 }
 
-// The side of whoever has the priority glows behind it, like a playable card: blue for you, red for your opponent
-:host {
-  border-radius: var(--radius-lg);
-  transition: box-shadow var(--duration-normal, 200ms) ease, background var(--duration-normal, 200ms) ease;
-}
-
-:host(.acting) {
-  background: radial-gradient(ellipse at center, rgb(59 130 246 / 16%), rgb(59 130 246 / 4%) 70%);
-  box-shadow: 0 0 0 2px rgb(59 130 246 / 70%), 0 0 28px 6px rgb(59 130 246 / 45%);
-}
-
-:host(.acting.opponent) {
-  background: radial-gradient(ellipse at center, rgb(239 68 68 / 16%), rgb(239 68 68 / 4%) 70%);
-  box-shadow: 0 0 0 2px rgb(239 68 68 / 70%), 0 0 28px 6px rgb(239 68 68 / 45%);
-}
 
 .field.drop-active {
   border-color: var(--color-primary);

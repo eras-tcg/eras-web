@@ -59,7 +59,7 @@ export interface DeckPeekData {
     </eras-sheet>
   `,
   styles: `
-    .cards { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+    .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
     .pos { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
   `,

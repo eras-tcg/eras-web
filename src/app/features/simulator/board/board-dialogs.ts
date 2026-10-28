@@ -11,16 +11,18 @@ import { EffectPromptData, EffectPromptDialogComponent } from './dialogs/effect-
 import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
 import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.component';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
 /** Opens the board's dialogs (one instance per board page). */
 @Injectable()
 export class BoardDialogs {
   private readonly modal = inject(ModalService);
+  private readonly sheet = inject(SheetState);
   /** The board's injector: dialogs that use board services (BoardEffects) are created under it. */
   private readonly injector = inject(Injector);
 
   cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
-    const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent };
+    const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent, readonly: this.sheet.lowered() };
     this.modal.open(CardInfoDialogComponent, { data, width: 'min(64rem, 96vw)' });
   }
 
@@ -30,7 +32,7 @@ export class BoardDialogs {
   }
 
   zone(zone: ZoneName, opponent: boolean): void {
-    const data: ZoneDialogData = { zone, opponent };
+    const data: ZoneDialogData = { zone, opponent, readonly: this.sheet.lowered() };
     this.modal.open(ZoneDialogComponent, { data, width: 'min(48rem, 96vw)' });
   }
 

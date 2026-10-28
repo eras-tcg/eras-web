@@ -1,11 +1,12 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, input, output, signal, DestroyRef } from '@angular/core';
 import { ButtonComponent } from '../../primitives/button/button.component';
+import { SheetState } from './sheet-state';
 import { IconComponent } from '../../primitives/icon/icon.component';
 
 /**
  * A choice that rises from the bottom of the screen (open it with ModalService.sheet). The arrow lowers it to
- * look at what is behind; while lowered nothing can be done, neither in the sheet nor behind it.
+ * look at what is behind: the page can then be browsed (SheetState.lowered) but its actions are blocked.
  *
  * <eras-sheet title="Elige el objetivo" (closed)="ref.close()">
  *   ...body...
@@ -59,9 +60,19 @@ export class SheetComponent {
   protected readonly collapsed = signal(false);
 
   private readonly ref = inject(DialogRef, { optional: true });
+  private readonly state = inject(SheetState);
 
   constructor() {
-    // Lowered, the backdrop turns clear: the board can be seen but not used
-    effect(() => this.ref?.overlayRef.backdropElement?.classList.toggle('collapsed', this.collapsed()));
+    // Lowered, the backdrop lets the page through: it can be looked at, and the page blocks its own actions
+    effect(() => {
+      const backdrop = this.ref?.overlayRef.backdropElement;
+      backdrop?.classList.toggle('collapsed', this.collapsed());
+      if (backdrop) backdrop.style.pointerEvents = this.collapsed() ? 'none' : '';
+      // The lowered sheet only takes clicks on its header (the arrow): the rest of the page can be used to look
+      const pane = this.ref?.overlayRef.overlayElement;
+      if (pane) pane.style.pointerEvents = this.collapsed() ? 'none' : '';
+      this.state.lowered.set(this.collapsed());
+    });
+    inject(DestroyRef).onDestroy(() => this.state.lowered.set(false));
   }
 }

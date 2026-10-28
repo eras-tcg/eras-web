@@ -34,7 +34,7 @@ export interface AttackTargetData {
     </eras-sheet>
   `,
   styles: `
-    .targets { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+    .targets { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
     .target {
       --game-card-width: 6.5rem;
       display: flex;

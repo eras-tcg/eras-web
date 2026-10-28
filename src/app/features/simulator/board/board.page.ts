@@ -19,6 +19,8 @@ import { BoardEffects } from './board-effects';
 import { BoardDrag } from './board-drag';
 import { PlayerHalfComponent } from './player-half.component';
 import { StatusPanelsComponent } from './status-panels.component';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { DOCUMENT } from '@angular/common';
 
 const PHASE_LABELS: Record<string, string> = { MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
@@ -38,6 +40,9 @@ export class BoardPage {
   readonly roomId = input.required<string>();
 
   protected readonly game = inject(GameStore);
+  /** A choice is lowered to look at the table: nothing can be done meanwhile. */
+  protected readonly lookOnly = inject(SheetState).lowered;
+  private readonly document = inject(DOCUMENT);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly cards = inject(CardsStore);
   private readonly modal = inject(ModalService);
@@ -52,6 +57,14 @@ export class BoardPage {
   private leaving = false;
 
   constructor() {
+    // The page glows from the side of whoever has the priority
+    effect(() => {
+      const acting = this.game.actingId();
+      const me = this.game.myState()?.userId;
+      this.document.body.classList.toggle('eras-acting-me', !!acting && acting === me);
+      this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
+    });
+    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival'));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 
@@ -118,6 +131,7 @@ export class BoardPage {
   });
 
   protected selectShared(index: number): void {
+    if (this.lookOnly()) return;
     this.game.setCounter(sharedValueForIndex(index, this.game.isFirstPlayer()));
   }
 

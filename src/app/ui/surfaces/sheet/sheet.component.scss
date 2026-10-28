@@ -23,9 +23,14 @@
   --sheet-width: 64rem;
 }
 
-// Lowered: only the header stays in view
+// Lowered: only the header stays in view, and only it takes clicks
 :host(.collapsed) {
   transform: translateY(calc(100% - 3.5rem));
+  pointer-events: none;
+}
+
+:host(.collapsed) .header {
+  pointer-events: auto;
 }
 
 @keyframes sheet-up {

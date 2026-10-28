@@ -90,6 +90,7 @@ export interface EffectPromptData {
     .cards {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: var(--space-3);
       min-block-size: 12rem;
     }

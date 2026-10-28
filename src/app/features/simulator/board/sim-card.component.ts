@@ -12,6 +12,7 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
 import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
@@ -33,11 +34,12 @@ import { BoardEffects } from './board-effects';
       [source]="game.targetingSourceId() === slot().instanceId || game.pendingTargetSource() === slot().instanceId"
       [selectable]="game.pendingTargetSource() !== null"
       [small]="small()"
-      [attr.draggable]="opponent() ? null : 'true'"
+      [attr.draggable]="opponent() || lookOnly() ? null : 'true'"
       tabindex="0"
       role="button"
       [attr.aria-label]="label()"
       [cdkContextMenuTriggerFor]="menu"
+      [cdkContextMenuDisabled]="lookOnly()"
       [class.selected]="selected()"
       [class.can-play]="canPlay()"
       [class.can-activate]="canActivate()"
@@ -219,7 +221,11 @@ export class SimCardComponent {
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly selected = computed(() => this.game.selectedId() === this.slot().instanceId);
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
-  protected readonly actions = computed<LegalAction[]>(() => (this.opponent() ? [] : legalActions(this.game.rules(), this.slot(), this.zone())));
+  /** A choice is lowered to look at the table: the card can be looked at, nothing else. */
+  protected readonly lookOnly = inject(SheetState).lowered;
+  protected readonly actions = computed<LegalAction[]>(() =>
+    this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot(), this.zone()),
+  );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly label = computed(() => {
     const s = this.slot();
@@ -291,7 +297,7 @@ export class SimCardComponent {
   }
 
   protected onDragStart(event: DragEvent): void {
-    if (this.opponent()) {
+    if (this.opponent() || this.lookOnly()) {
       event.preventDefault();
       return;
     }

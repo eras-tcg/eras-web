@@ -13,6 +13,7 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
 import { BoardDrag } from './board-drag';
 import { SimCardComponent } from './sim-card.component';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
 type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
 
@@ -26,13 +27,13 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.opponent]': 'opponent()', '[class.acting]': 'acting()' },
+  host: { '[class.opponent]': 'opponent()' },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
-  /** This player has the priority now (acts or must answer): their side of the table glows. */
-  protected readonly acting = computed(() => this.game.actingId() === this.player().userId);
+  /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
+  private readonly lookOnly = inject(SheetState).lowered;
 
   protected readonly game = inject(GameStore);
   protected readonly drag = inject(BoardDrag);
@@ -89,7 +90,7 @@ export class PlayerHalfComponent {
   }
 
   protected async drop(event: DragEvent, to: ZoneName | 'deckBottom', half?: 'top' | 'bottom'): Promise<void> {
-    if (!this.drag.accepts(event)) return;
+    if (!this.drag.accepts(event) || this.lookOnly()) return;
     event.preventDefault();
     const el = this.fieldEl()?.nativeElement;
     const pos = to === 'field' && el ? this.drag.position(event, el, this.opponent()) : null;
@@ -180,6 +181,7 @@ export class PlayerHalfComponent {
   }
 
   protected deckDoubleClick(): void {
+    if (this.lookOnly()) return;
     if (!this.opponent() && this.player().deck.length) this.game.drawCard();
   }
 

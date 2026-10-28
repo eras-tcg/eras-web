@@ -65,8 +65,9 @@ export interface CardPickerData {
   `,
   styles: `
     .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: var(--space-3);
     }
     .pick {

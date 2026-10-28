@@ -15,6 +15,8 @@ import { PluralPipe } from '@ui/utilities/plural.pipe';
 export interface ZoneDialogData {
   zone: ZoneName;
   opponent: boolean;
+  /** Only to look at the cards (a choice is lowered): no actions. */
+  readonly?: boolean;
 }
 
 const DESTINATIONS: { zone: ZoneName; label: string }[] = [
@@ -35,7 +37,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
       @if (cards().length === 0) {
         <eras-empty-state title="Zona vacía" />
       } @else {
-        @if (!data.opponent) {
+        @if (!data.opponent && !data.readonly) {
           <eras-stack direction="row" [gap]="2" wrap align="center">
             <button erasButton variant="ghost" size="sm" type="button" (click)="selectAll()">{{ selected().size === cards().length ? 'Quitar selección' : 'Seleccionar todo' }}</button>
             @if (selected().size) {
@@ -57,13 +59,15 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li [class.selected]="selected().has(c.instanceId)">
               <eras-game-card small [imageUrl]="c.imageUrl" [hidden]="c.faceDown && !peeked().has(c.instanceId)" [attr.aria-label]="c.cardName" />
-              @if (!data.opponent) {
+              @if (!data.opponent && !data.readonly) {
                 <label class="pick">
                   <input type="checkbox" [checked]="selected().has(c.instanceId)" (change)="toggle(c.instanceId)" />
                   <span class="visually-hidden">Seleccionar</span>
                 </label>
               }
-              <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de la carta ' + (i + 1)">⋯</button>
+              @if (!data.readonly) {
+                <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de la carta ' + (i + 1)">⋯</button>
+              }
               <ng-template #actions>
                 <eras-menu>
                   @if (!data.opponent) {
@@ -92,7 +96,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     </eras-modal>
   `,
   styles: `
-    .cards { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+    .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); }
     li.selected { background: var(--color-surface-muted); outline: 2px solid var(--color-primary); }
     .pick { display: inline-flex; }

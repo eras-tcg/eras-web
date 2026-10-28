@@ -11,11 +11,11 @@
     </eras-stack>
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       @if (inProgress() && game.isMyTurn()) {
-        <button erasButton size="sm" type="button" (click)="game.drawCard()">Robar</button>
+        <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
         @if (game.phase() !== 'END') {
-          <button erasButton variant="secondary" size="sm" type="button" (click)="game.enterEndPhase()">Fase final</button>
+          <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.enterEndPhase()">Fase final</button>
         }
-        <button erasButton variant="secondary" size="sm" type="button" (click)="game.endTurn()">Terminar turno</button>
+        <button erasButton variant="secondary" size="sm" type="button" [disabled]="lookOnly()" (click)="game.endTurn()">Terminar turno</button>
       }
       @if (game.pendingTargetSource()) {
         <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>

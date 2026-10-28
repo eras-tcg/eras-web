@@ -73,7 +73,7 @@ export function summonCost(view: RulesView, slot: CardSlot, cost: number): numbe
 /** Furia N → N; Furia without a number → -1 (no limit); null without Furia. */
 export function furia(slot: CardSlot): number | null {
   let best: number | null = null;
-  for (const k of [...(slot.keywords ?? []), ...(slot.turnKeywords ?? [])]) {
+  for (const k of [...(slot.keywords ?? []), ...(slot.turnKeywords ?? []), ...(slot.continuousKeywords ?? [])]) {
     if (!k.toLowerCase().startsWith('furia')) continue;
     const n = /(\d+)/.exec(k);
     if (!n) return -1;
@@ -91,7 +91,7 @@ export function attackGemsOk(view: RulesView, slot: CardSlot): boolean {
 
 /** Enfrentar: the attacker can attack this active enemy (Enfrentar N: level N or less). */
 export function challenges(attacker: CardSlot, target: CardSlot): boolean {
-  for (const k of [...(attacker.keywords ?? []), ...(attacker.turnKeywords ?? [])]) {
+  for (const k of [...(attacker.keywords ?? []), ...(attacker.turnKeywords ?? []), ...(attacker.continuousKeywords ?? [])]) {
     if (!k.toLowerCase().startsWith('enfrentar')) continue;
     const n = /(\d+)/.exec(k);
     if (!n || (target.level ?? 99) <= Number(n[1])) return true;

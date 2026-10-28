@@ -22,6 +22,9 @@ export interface CardSlot {
   /** Printed keyword abilities ("Provocar", "Letalidad 1") and those gained until the end of the turn. */
   keywords?: string[];
   turnKeywords?: string[];
+  /** Abilities and strength its continuous effects give it now (they stop when their condition does). */
+  continuousKeywords?: string[];
+  continuousStrength?: number;
   specialCost?: number | null;
   requirement?: string | null;
   /** Strength gained or lost until the end of the turn. */

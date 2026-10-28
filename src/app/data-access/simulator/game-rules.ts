@@ -7,7 +7,7 @@ export function displayStrength(slot: CardSlot): number | null {
 
 /** What its strength gained or lost: by hand, until the end of this turn and until the end of the next one. */
 export function strengthChange(slot: CardSlot): number {
-  return (slot.strengthModifier || 0) + (slot.turnStrength || 0) + (slot.laterStrength || 0);
+  return (slot.strengthModifier || 0) + (slot.turnStrength || 0) + (slot.laterStrength || 0) + (slot.continuousStrength || 0);
 }
 
 /** Opponent hands are always hidden; other cards when face down. */

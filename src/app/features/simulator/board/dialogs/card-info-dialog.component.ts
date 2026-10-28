@@ -40,9 +40,15 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
             <div class="info">
               <div class="art">
                 <eras-game-card class="main" [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
-                <!-- Its Recursos are placed under it, as on the table: their bottom part (the heritable text) shows -->
+                <!-- Its Recursos under it, as on the table: only their name and the effect they pass on (just the name if none) -->
                 @for (r of resourceViews(); track r.id) {
-                  <eras-game-card class="resource" [imageUrl]="r.imageUrl" [attr.aria-label]="'Recurso: ' + r.name" [title]="r.name" />
+                  <div class="resource" [class.name-only]="r.lines.length === 0" role="img" [attr.aria-label]="'Recurso: ' + r.name">
+                    @if (r.imageUrl) {
+                      <img [src]="r.imageUrl" alt="" />
+                    } @else {
+                      <span>{{ r.name }}</span>
+                    }
+                  </div>
                 }
               </div>
               <div class="effects">
@@ -61,14 +67,6 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
                     <h4>Efectos de sus recursos</h4>
                     @for (e of inherited(); track $index) {
                       <p><span class="source">{{ e.source }}:</span> {{ e.line }}</p>
-                    }
-                  </section>
-                }
-                @if (heritable().length) {
-                  <section class="disabled" aria-label="Efectos heredables: solo se aplican cuando esta carta es Recurso de otra">
-                    <h4>Heredables <small>(los da como Recurso; no se aplican a esta carta)</small></h4>
-                    @for (line of heritable(); track $index) {
-                      <p>{{ line }}</p>
                     }
                   </section>
                 }
@@ -120,19 +118,25 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
     .art { --game-card-width: 14rem; display: grid; justify-items: center; }
     .art eras-game-card { position: relative; }
     .art .main { z-index: 2; }
-    // Each Recurso sits behind the card above it, showing only its last ~30% (card ratio 63:88)
-    .art .resource {
-      z-index: 1;
-      margin-block-start: calc(var(--game-card-width) * -0.98);
-      filter: drop-shadow(0 2px 4px rgb(0 0 0 / 35%));
+    // A Recurso shows the strip of its card from its name bar down (its heritable effect): 80%–100% of the card
+    // height (ratio 63:88); without a heritable effect only the name bar (80%–87.5%)
+    .resource {
+      --card-height: calc(var(--game-card-width) * 88 / 63);
+      inline-size: var(--game-card-width);
+      block-size: calc(var(--card-height) * 0.2);
+      overflow: hidden;
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      background: var(--color-surface-muted);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 35%);
     }
+    .resource.name-only { block-size: calc(var(--card-height) * 0.075); border-radius: 0; }
+    .resource img { display: block; inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
+    .resource span { display: block; padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
     .effects { display: grid; gap: var(--space-3); }
     .effects h3 { margin: 0; font-size: var(--font-size-lg); }
     .effects h4 { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
     .effects p { margin: 0 0 var(--space-2); }
     .effects .source { font-weight: var(--font-weight-bold); }
-    .disabled { opacity: 0.5; }
-    .disabled small { text-transform: none; letter-spacing: 0; }
     .muted { color: var(--color-text-muted); }
     @media (max-width: 44rem) { .info { grid-template-columns: 1fr; } }
   `,
@@ -165,11 +169,6 @@ export class CardInfoDialogComponent {
   protected readonly own = computed(() => {
     const m = this.meta(this.slot()?.cardId);
     return this.lines(m?.effects, m?.keywordEffects);
-  });
-  /** What it would give as a Recurso of another card (not applied to itself). */
-  protected readonly heritable = computed(() => {
-    const m = this.meta(this.slot()?.cardId);
-    return this.lines(m?.inheritEffects, m?.inheritKeywordEffects);
   });
   /** Its Recursos, with what each one gives it. */
   protected readonly resourceViews = computed(() =>

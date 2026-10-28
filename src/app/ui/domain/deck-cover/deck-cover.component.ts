@@ -21,15 +21,17 @@ import { IconComponent } from '../../primitives/icon/icon.component';
         @if (rank()) {
           <span class="rank">#{{ rank() }}</span>
         }
-        <span class="badges">
-          @if (isPrivate()) {
-            <span class="badge">Privado</span>
-          }
-          @if (cardCount() !== null) {
-            <span class="badge">{{ cardCount() }} cartas</span>
-          }
-        </span>
         <span class="info">
+          @if (isPrivate() || cardCount() !== null) {
+            <span class="badges">
+              @if (isPrivate()) {
+                <span class="badge">Privado</span>
+              }
+              @if (cardCount() !== null) {
+                <span class="badge">{{ cardCount() }} cartas</span>
+              }
+            </span>
+          }
           <span class="name">{{ name() || 'Vacío' }}</span>
           @if (author()) {
             <span class="author">{{ author() }}</span>
@@ -42,6 +44,17 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   styles: `
     :host {
       display: block;
+    }
+    /* Small fixed size, for rows of decks (tier list) */
+    :host(.size-sm) {
+      inline-size: 7.5rem;
+    }
+    :host(.size-sm) .name {
+      font-size: var(--font-size-xs);
+    }
+    :host(.size-sm) .info {
+      inset-inline: var(--space-2);
+      inset-block-end: var(--space-2);
     }
     :host(.fit) {
       container-type: size;
@@ -130,10 +143,8 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       color: var(--color-text-muted);
     }
     .badges {
-      position: absolute;
-      inset-inline: var(--space-3);
-      inset-block-end: calc(var(--space-3) + 3.2em);
       display: flex;
+      margin-block-end: var(--space-1);
       flex-wrap: wrap;
       gap: var(--space-1);
     }
@@ -185,7 +196,7 @@ import { IconComponent } from '../../primitives/icon/icon.component';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.fit]': 'fit()' },
+  host: { '[class.fit]': 'fit()', '[class.size-sm]': "size() === 'sm'" },
 })
 export class DeckCoverComponent {
   readonly name = input<string | null>(null);
@@ -195,5 +206,7 @@ export class DeckCoverComponent {
   readonly rank = input(null, { transform: (v: unknown) => (v == null ? null : numberAttribute(v)) });
   readonly isPrivate = input(false, { transform: booleanAttribute });
   readonly fit = input(false, { transform: booleanAttribute });
+  /** auto: fills its grid cell; sm: fixed 7.5rem wide. */
+  readonly size = input<'auto' | 'sm'>('auto');
   readonly selected = output<void>();
 }

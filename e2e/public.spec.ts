@@ -44,7 +44,7 @@ test('ediciones lista y abre sobres simulados', async ({ page }) => {
 
 test('mazos públicos y vista de un mazo', async ({ page }) => {
   await page.goto('/public-decks');
-  const decks = page.locator('eras-deck-card');
+  const decks = page.locator('eras-deck-cover');
   await expect(decks.first()).toBeVisible();
   await decks.first().click();
   await expect(page).toHaveURL(/\/deck\/[^/]+$/);

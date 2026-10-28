@@ -1,6 +1,17 @@
 server {
     server_name next.erastcg.com;
 
+    # Simulator WebSocket: the upgrade headers must reach the container (which proxies /ws to DriveManager)
+    location /ws {
+        proxy_pass         http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_read_timeout 3600s;
+    }
+
     location / {
         proxy_pass         http://localhost:3002;
         proxy_redirect     default;

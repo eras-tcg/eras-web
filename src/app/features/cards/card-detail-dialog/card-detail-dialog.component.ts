@@ -49,6 +49,8 @@ export class CardDetailDialogComponent {
   protected readonly card = computed(() => this.printing() ?? this.gridCard());
   protected readonly hasPrevious = computed(() => this.index() > 0);
   protected readonly hasNext = computed(() => this.index() < this.data.cards.length - 1);
+  /** Only a list of cards has arrows (one card alone, as from the simulator, has none). */
+  protected readonly navigable = this.data.cards.length > 1;
 
   protected readonly variants = computed(() => nameVariants(this.gridCard(), this.store.cards(), this.editions.releaseDates()));
   protected readonly variantIndex = computed(() => this.variants().findIndex((c) => c.id === this.card().id));

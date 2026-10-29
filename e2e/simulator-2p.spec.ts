@@ -39,7 +39,7 @@ async function enterWithDeck(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/board$/);
 }
 
-const turnLabel = (page: Page) => page.locator('.topbar').getByText(/Tu turno|Turno del rival/);
+const turnLabel = (page: Page) => page.locator('.strip').getByText(/Tu turno|Turno del rival/);
 
 test('partida real de 2 jugadores', async ({ browser }) => {
   const host = await player(browser, accounts[0]);
@@ -76,7 +76,7 @@ test('partida real de 2 jugadores', async ({ browser }) => {
   await expect(opponentHand.locator('eras-sim-card')).toHaveCount(before + 1);
 
   // Passing the turn flips it on both screens
-  await host.getByRole('button', { name: 'Terminar turno' }).click();
+  await host.getByRole('button', { name: 'Final' }).click();
   await expect(turnLabel(host)).toHaveText(/Turno del rival/);
   await expect(turnLabel(guest)).toHaveText(/Tu turno/);
 

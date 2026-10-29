@@ -4,15 +4,26 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
-import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
-import { cardDetailView } from '../../../cards/card-detail-view';
+import { renderEffect, renderKeywordEffect, usageLimitLabel } from '@data/cards/card-rules';
+import { CardEffect, KeywordEffect } from '@data/cards/card.model';
+import { displayStrength } from '@data/simulator/game-rules';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardDetailDialogComponent, CardDetailDialogData } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
+
+/** An effect for display: its moment ("Al Atacar") and tags ("una vez por turno") apart from its text. */
+interface EffectLine {
+  moment: string | null;
+  tags: string[];
+  text: string;
+}
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -22,6 +33,8 @@ export interface CardInfoData {
   opponent: boolean;
   /** Only show this attachment group (from "Separar materiales/recursos"). */
   only?: AttachmentType;
+  /** Only to look at it (a choice is lowered): no actions. */
+  readonly?: boolean;
 }
 
 const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales', resources: 'Recursos' };
@@ -29,66 +42,9 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [ModalComponent, CardDetailComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
-  template: `
-    <eras-modal [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
-      @if (slot(); as s) {
-        <eras-stack [gap]="4">
-          @if (!data.only) {
-            @if (view(); as v) {
-              <eras-card-detail
-                stacked
-                [name]="v.name"
-                [edition]="v.edition"
-                [number]="v.number"
-                [color]="v.color"
-                [colorLabel]="v.colorLabel"
-                [imageUrl]="s.imageUrl ?? v.imageUrl"
-                [facts]="v.facts"
-                [textGroups]="v.groups"
-              />
-            } @else {
-              <eras-game-card [imageUrl]="s.imageUrl" />
-            }
-          }
-          @for (type of groups(); track type) {
-            <eras-section-header [title]="labels[type] + ' (' + s[type].length + ')'" />
-            <eras-stack direction="row" [gap]="3" wrap>
-              @for (a of s[type]; track a.instanceId; let i = $index) {
-                <eras-stack [gap]="1" align="center">
-                  <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
-                  <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de ' + (a.cardName ?? 'anexo')">Mover…</button>
-                  <ng-template #actions>
-                    <eras-menu>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'hand')">A la mano</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'discardPile')">Al descarte</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'tributeZone')">A tributos</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'deck', 'bottom')">Al fondo del mazo</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'lifeStack', 'top', true)">A las vidas (boca abajo)</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'field')">Al campo</button>
-                      <hr />
-                      <button erasMenuItem (triggered)="game.swapWithMain(a.instanceId, type, s.instanceId, targetPlayer())">Intercambiar con la principal</button>
-                      <button erasMenuItem (triggered)="game.reclassifyAttachment(a.instanceId, type, s.instanceId, targetPlayer())">
-                        Pasar a {{ type === 'materials' ? 'recursos' : 'materiales' }}
-                      </button>
-                      @if (i > 0) {
-                        <button erasMenuItem (triggered)="reorder(s, type, i, -1)">Subir</button>
-                      }
-                      @if (i < s[type].length - 1) {
-                        <button erasMenuItem (triggered)="reorder(s, type, i, 1)">Bajar</button>
-                      }
-                    </eras-menu>
-                  </ng-template>
-                </eras-stack>
-              }
-            </eras-stack>
-          }
-        </eras-stack>
-      } @else {
-        <eras-empty-state title="La carta ya no está en esa zona" />
-      }
-    </eras-modal>
-  `,
+  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent],
+  templateUrl: './card-info-dialog.component.html',
+  styleUrl: './card-info-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CardInfoDialogComponent {
@@ -96,6 +52,7 @@ export class CardInfoDialogComponent {
   protected readonly ref = inject(DialogRef);
   protected readonly game = inject(GameStore);
   private readonly cards = inject(CardsStore);
+  private readonly modal = inject(ModalService);
   protected readonly labels = ATTACH_LABELS;
 
   /** Live slot: the dialog follows the card through every broadcast. */
@@ -103,14 +60,85 @@ export class CardInfoDialogComponent {
     const player = this.data.opponent ? this.game.opponentState() : this.game.myState();
     return player?.[this.data.zone].find((c) => c.instanceId === this.data.instanceId) ?? null;
   });
-  protected readonly view = computed(() => {
-    const s = this.slot();
-    const card = s && this.cards.cards().find((c) => c.id === s.cardId);
-    return card ? cardDetailView(card, this.cards.ref()) : null;
+  /** Metadata of a card of the game, by its file id. */
+  private meta(cardId: string | null | undefined) {
+    return this.cards.cards().find((c) => c.id === cardId)?.meta ?? null;
+  }
+
+  /** The effects and keyword abilities as lines: the moment and the usage limit come from the card's data. */
+  private lines(effects: CardEffect[] | null | undefined, keywords: KeywordEffect[] | null | undefined): EffectLine[] {
+    const ref = this.cards.ref();
+    const text = (l: { segments: { text: string }[] }) => l.segments.map((x) => x.text).join('').trim();
+    return [
+      ...(effects ?? []).map((e) => ({
+        moment: e.instance ?? null,
+        tags: [usageLimitLabel(e.ussageLimit)].filter((t): t is string => !!t),
+        text: text(renderEffect(e, ref, false)),
+      })),
+      ...(keywords ?? []).map((k) => ({ moment: null, tags: [], text: text(renderKeywordEffect(k, ref)) })),
+    ].filter((l) => l.text);
+  }
+
+  /** The card's own effects and keywords. */
+  protected readonly own = computed(() => {
+    const m = this.meta(this.slot()?.cardId);
+    return this.lines(m?.effects, m?.keywordEffects);
   });
+  /** Its Recursos, with what each one gives it. */
+  protected readonly resourceViews = computed(() =>
+    (this.slot()?.resources ?? []).map((r) => {
+      const m = this.meta(r.cardId);
+      return { id: r.instanceId, slot: r, name: r.cardName ?? 'Recurso', imageUrl: r.imageUrl, lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
+    }),
+  );
+  /**
+   * What it has now beyond what is printed: its current strength, what effects gave or took for a while (with
+   * their source), its continuous effects that hold and any manual adjustment. Null when there is nothing.
+   */
+  protected readonly modifiers = computed(() => {
+    const s = this.slot();
+    if (!s || s.faceDown || this.data.zone !== 'field') return null;
+    const now = displayStrength(s);
+    const strength = s.strength != null && now !== s.strength ? { base: s.strength, now } : null;
+    const floating = s.floating ?? [];
+    const gained = [...(s.continuousStrength ? [`fuerza ${s.continuousStrength > 0 ? '+' : ''}${s.continuousStrength}`] : []), ...(s.continuousKeywords ?? [])];
+    const continuous = gained.length ? `Gana ${gained.join(', ')}` : null;
+    const manual = s.strengthModifier || 0;
+    return strength || floating.length || continuous || manual ? { strength, floating, continuous, manual } : null;
+  });
+
+  /** The effects its Recursos give it, with their source. */
+  protected readonly inherited = computed(() => this.resourceViews().flatMap((r) => r.lines.map((line) => ({ source: r.name, line }))));
+  protected readonly ownLines = this.own;
+  protected readonly inheritedLines = computed(() => this.inherited().map((e) => ({ source: e.source, line: e.line })));
+
+  /** Its printed numbers at a glance; the strength as it is now (marked when it changed). */
+  protected readonly facts = computed(() => {
+    const s = this.slot();
+    if (!s || (s.faceDown && !this.game.seeAll())) return [];
+    const facts: { label: string; value: string; changed?: boolean }[] = [];
+    if (s.level != null) facts.push({ label: 'Nivel', value: String(s.level) });
+    if (s.cost != null) facts.push({ label: 'Coste', value: String(s.cost) });
+    if (s.strength != null) {
+      const now = this.data.zone === 'field' ? displayStrength(s) : s.strength;
+      facts.push({ label: 'Fuerza', value: String(now), changed: now !== s.strength });
+    }
+    if (s.classes?.length) facts.push({ label: 'Clase', value: s.classes.join(' · ') });
+    return facts;
+  });
+
+  /** The card in detail, as in the cards catalog. */
+  protected openDetail(card: CardSlot): void {
+    const catalog = this.cards.cards().find((c) => c.id === card.cardId);
+    if (!catalog) return;
+    const data: CardDetailDialogData = { cards: [catalog], index: 0 };
+    this.modal.open(CardDetailDialogComponent, { data });
+  }
+
   protected readonly groups = computed<AttachmentType[]>(() => {
     const s = this.slot();
-    if (!s || this.data.zone !== 'field') return [];
+    // Moving attachments by hand is only for "Separar materiales/recursos" (editor mode)
+    if (!s || this.data.zone !== 'field' || !this.data.only) return [];
     if (this.data.only) return [this.data.only];
     return (['materials', 'resources'] as const).filter((t) => s[t].length > 0);
   });

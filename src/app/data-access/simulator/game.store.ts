@@ -1,9 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
 import { rulesView } from './legal-actions';
-import { CardSlot, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
+import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
 
 export interface RevealedCard {
   id: number;
@@ -36,6 +37,11 @@ export class GameStore {
   readonly state = signal<GameState | null>(null);
   readonly error = signal<string | null>(null);
   readonly deckWarning = signal<string | null>(null);
+  /**
+   * Why I am no longer in the room (taken out by its owner, or it closed). The board leaves on it and the lobby
+   * shows it; it outlives disconnect() for that.
+   */
+  readonly removed = signal<string | null>(null);
   readonly revealed = signal<RevealedCard[]>([]);
   readonly targetedId = signal<string | null>(null);
   readonly targetingSourceId = signal<string | null>(null);
@@ -43,10 +49,58 @@ export class GameStore {
   readonly pendingTargetSource = signal<string | null>(null);
   /** Card clicked on the board: it shows its legal actions. */
   readonly selectedId = signal<string | null>(null);
+  /** Who acts now: whoever must answer the pending choice, else the player whose turn it is. */
+  readonly actingId = computed(() => {
+    const s = this.state();
+    if (s?.status !== 'IN_PROGRESS') return null;
+    return s.prompt?.playerId ?? s.currentTurnUserId ?? null;
+  });
+  /**
+   * A test room (from the site's edit mode): its owner plays both sides alone, with the manual actions, test
+   * cards and every hidden card shown.
+   */
+  readonly editorRoom = computed(() => !!this.state()?.editor);
+  private readonly siteEditMode = inject(EditModeService);
+  /**
+   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
+   * attachments, strength…). On in a test room and while the site's edit mode (the navigation bar's switch) is on.
+   */
+  readonly editorMode = computed(() => this.editorRoom() || this.siteEditMode.active());
+  /** Test room: the side being played (my own by default). */
+  readonly seat = signal<string | null>(null);
+  /** Test room: the side played follows whoever must act (a choice, else the turn). */
+  readonly followActive = signal(true);
+  /**
+   * Editor mode: hidden cards (hands, lives, deck) are shown. On by default in a test room, off against a player
+   * until turned on.
+   */
+  private readonly revealChoice = signal<boolean | null>(null);
+  readonly revealHidden = computed(() => this.revealChoice() ?? this.editorRoom());
+  readonly seeAll = computed(() => this.editorMode() && this.revealHidden());
+
+  toggleRevealHidden(): void {
+    this.revealChoice.set(!this.revealHidden());
+  }
+  /** For one action: the side it is done as (a test room's other side, from its zones' dialogs). */
+  private actAsOnce: string | null = null;
+
+  /** Cards that just reached your hand: they blink for a few seconds so they can be spotted. */
+  readonly newInHand = signal<ReadonlySet<string>>(new Set());
+  private handIds: Set<string> | null = null;
+  /** Cards chosen so far in the open choice: marked on the board so they can be told apart. */
+  readonly promptChosen = signal<ReadonlySet<string>>(new Set());
   readonly log = signal<LogLine[]>([]);
   readonly recentLog = signal<LogLine[]>([]);
 
-  private readonly me = computed(() => this.auth.user()?.id ?? null);
+  private readonly userId = computed(() => this.auth.user()?.id ?? null);
+  /** The side I play: myself, or in a test room the side chosen. */
+  private readonly me = computed(() => (this.editorRoom() && this.seat()) || this.userId());
+  /** Test room: both sides (mine first). */
+  readonly sides = computed(() => {
+    const players = Object.values(this.state()?.players ?? {});
+    const own = this.userId();
+    return [...players.filter((p) => p.userId === own), ...players.filter((p) => p.userId !== own)];
+  });
   readonly myState = computed<PlayerState | null>(() => {
     const id = this.me();
     return (id && this.state()?.players?.[id]) || null;
@@ -70,7 +124,7 @@ export class GameStore {
   });
   /** What the rules check for me now (turn, phase, closed state, gems). */
   readonly rules = computed(() => rulesView(this.state(), this.me()));
-  readonly isHost = computed(() => !!this.me() && this.state()?.hostId === this.me());
+  readonly isHost = computed(() => !!this.userId() && this.state()?.hostId === this.userId());
   /** The player listed first sees the shared bar unmirrored. */
   readonly isFirstPlayer = computed(() => {
     const ids = Object.keys(this.state()?.players ?? {});
@@ -83,6 +137,7 @@ export class GameStore {
     if (this.client?.active && this.roomId() === roomId && this.connected()) return Promise.resolve();
     this.disconnect();
     this.roomId.set(roomId);
+    this.removed.set(null);
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('timeout')), timeoutMs);
       this.client = new Client({
@@ -113,6 +168,7 @@ export class GameStore {
     this.timers.clear();
     this.roomId.set(null);
     this.state.set(null);
+    this.seat.set(null);
     this.connected.set(false);
     this.error.set(null);
     this.deckWarning.set(null);
@@ -121,6 +177,19 @@ export class GameStore {
     this.recentLog.set([]);
     this.targetedId.set(null);
     this.pendingTargetSource.set(null);
+  }
+
+  /** Cards in your hand that were not there before (only while playing, not on joining or a new game). */
+  private markNewInHand(update: GameState, me: string | null): void {
+    const hand = (me && update.players?.[me]?.hand) || [];
+    const ids = new Set(hand.map((c) => c.instanceId));
+    const previous = this.handIds;
+    this.handIds = ids;
+    if (!previous || update.status !== 'IN_PROGRESS' || update.event === 'JOIN_ROOM' || update.event === 'RECONNECT') return;
+    const added = [...ids].filter((id) => !previous.has(id));
+    if (!added.length) return;
+    this.newInHand.update((s) => new Set([...s, ...added]));
+    this.later(4000, () => this.newInHand.update((s) => new Set([...s].filter((id) => !added.includes(id)))));
   }
 
   private later(ms: number, fn: () => void): void {
@@ -133,17 +202,33 @@ export class GameStore {
 
   private onMessage(body: string): void {
     const update = JSON.parse(body) as GameState;
+    const me = this.userId();
     if (update.error) {
+      // The room is gone (closed while I was away)
+      if (update.error === 'La sala ya no existe' && (!update.actorId || update.actorId === me)) {
+        this.removed.set('La sala se cerró');
+        return;
+      }
       // Errors reach the whole room: show only the ones caused by this player
-      if (!update.actorId || update.actorId === this.me()) this.error.set(update.error);
+      if (!update.actorId || update.actorId === me) this.error.set(update.error);
       return;
     }
+    // Taken out of the room: stop showing it
+    const wasIn = !!me && !!this.state()?.players?.[me];
+    if (me && wasIn && !update.players?.[me]) {
+      this.removed.set(update.event === 'PLAYER_KICKED' && update.subjectUserId === me ? 'El dueño de la sala te sacó de la sala' : 'Ya no estás en la sala');
+      return;
+    }
+    const previous = this.state();
     this.state.set(update);
     this.error.set(null);
-    const me = this.me();
+    if (update.editor) this.followSides(update, previous);
+    this.markNewInHand(update, this.me());
 
-    if (update.event === 'JOIN_ROOM' && me) {
-      const warnings = deckWarnings(update.players?.[me]?.originalDeck ?? []);
+    // Warn about the deck I just picked (in the pre-room I join without one)
+    const side = this.me();
+    if (update.event === 'SET_DECK' && side && update.actorId === side) {
+      const warnings = deckWarnings(update.players?.[side]?.originalDeck ?? []);
       if (warnings.length) {
         this.deckWarning.set(warnings.join(' · '));
         this.later(10_000, () => this.deckWarning.set(null));
@@ -170,7 +255,7 @@ export class GameStore {
     }
 
     if (update.event === 'TARGET_CARD' && update.targetedInstanceId) {
-      this.targetedId.set(targetForViewer(update.targetedInstanceId, update.actorId === me));
+      this.targetedId.set(targetForViewer(update.targetedInstanceId, update.actorId === this.me()));
       this.targetingSourceId.set(update.targetingSourceInstanceId ?? null);
       this.later(3000, () => {
         this.targetedId.set(null);
@@ -179,10 +264,49 @@ export class GameStore {
     }
   }
 
+  /**
+   * Test room: the side played follows whoever must act now — the player a choice waits for; in the mulligan,
+   * the side that has not confirmed yet; else the one whose turn it is when the turn (or the game's phase)
+   * changes or a choice ends.
+   */
+  private followSides(update: GameState, previous: GameState | null): void {
+    if (!this.followActive()) return;
+    const ids = Object.keys(update.players ?? {});
+    const confirmed = update.mulliganReady ?? [];
+    const next =
+      update.prompt?.playerId ??
+      (update.status === 'MULLIGAN' ? ids.find((id) => !confirmed.includes(id)) : null) ??
+      (update.currentTurnUserId !== previous?.currentTurnUserId || update.status !== previous?.status || previous?.prompt ? update.currentTurnUserId : null);
+    if (next && update.players?.[next]) this.seat.set(next);
+  }
+
+  /** Test room: plays the given side from now on. */
+  playSide(userId: string): void {
+    this.seat.set(userId);
+  }
+
+  /** Test room: runs actions as the given side (its zones seen from the other side). */
+  actingAs(userId: string | null, actions: () => void): void {
+    this.actAsOnce = userId;
+    try {
+      actions();
+    } finally {
+      this.actAsOnce = null;
+    }
+  }
+
+  /** The side an action is done as. */
+  private actor(): string | null {
+    return this.actAsOnce ?? this.me();
+  }
+
   private send(type: string, payload: Record<string, unknown> = {}): void {
     const room = this.roomId();
     if (!this.client?.connected || !room) return;
-    this.client.publish({ destination: `/app/room/${room}/action`, body: JSON.stringify({ type, payload }) });
+    // Test room: the owner plays the other side too
+    const actor = this.actor();
+    const body = this.editorRoom() && actor && actor !== this.userId() ? { ...payload, actAs: actor } : payload;
+    this.client.publish({ destination: `/app/room/${room}/action`, body: JSON.stringify({ type, payload: body }) });
   }
 
   // ── Actions (same names and payloads as the legacy store) ──────────────
@@ -227,7 +351,11 @@ export class GameStore {
 
   /** Answers the effect choice the engine waits for. `order`: the cards not chosen, in deck-bottom order. */
   resolvePrompt(promptId: string, chosen: string[], order: string[] = []): void {
-    this.send('RESOLVE_PROMPT', { promptId, chosen, order });
+    // Test room: answered as the side it is for
+    const prompt = this.state()?.prompt;
+    this.actingAs(this.editorRoom() && prompt?.id === promptId ? prompt.playerId : this.actAsOnce, () =>
+      this.send('RESOLVE_PROMPT', { promptId, chosen, order }),
+    );
   }
 
   joinRoom(deckId: string | null): void {
@@ -239,9 +367,6 @@ export class GameStore {
   shuffleDeck(): void {
     this.send('SHUFFLE_DECK');
   }
-  passTurn(): void {
-    this.send('PASS_TURN');
-  }
   enterEndPhase(): void {
     this.send('ENTER_END_PHASE');
   }
@@ -250,6 +375,20 @@ export class GameStore {
   }
   startGame(firstPlayerId: string): void {
     this.send('START_GAME', { firstPlayerId });
+  }
+  /** Pre-room: the deck to play with (its first Iniciador is the starter until another is chosen). */
+  setDeck(deckId: string): void {
+    this.send('SET_DECK', { deckId });
+  }
+  setStarter(cardId: string): void {
+    this.send('SET_STARTER', { cardId });
+  }
+  /** Pre-room (host): who takes the first turn, a player id or "random". */
+  setFirstPlayer(choice: string): void {
+    this.send('SET_FIRST_PLAYER', { choice });
+  }
+  setReady(ready: boolean): void {
+    this.send('SET_READY', { ready });
   }
   selectStarter(instanceId: string): void {
     this.send('SELECT_STARTER', { instanceId });
@@ -271,6 +410,14 @@ export class GameStore {
   }
   closeRoom(): void {
     this.send('CLOSE_ROOM');
+  }
+  /** Leaves the room for good (the seat is freed; an owner passes the room on, an empty room closes). */
+  leaveRoom(): void {
+    this.send('LEAVE_ROOM');
+  }
+  /** The owner takes a player out of the room (in a game, only a disconnected one). */
+  kickPlayer(userId: string): void {
+    this.send('KICK_PLAYER', { userId });
   }
   resolveEffectSummon(instanceId: string, fromZone: ZoneName, draw: boolean): void {
     this.send('EFFECT_SUMMON_RESOLVE', { instanceId, fromZone, draw });
@@ -298,7 +445,7 @@ export class GameStore {
     // Own cards move immediately; the broadcast confirms it a moment later
     const me = this.me();
     const state = this.state();
-    if (!targetPlayerId && me && state?.players?.[me]) {
+    if (!targetPlayerId && me && this.actor() === me && state?.players?.[me]) {
       const moved = applyLocalMove(state.players[me], instanceId, fromZone, toZone, x, y);
       if (moved !== state.players[me]) this.state.set({ ...state, players: { ...state.players, [me]: moved } });
     }
@@ -381,6 +528,10 @@ export class GameStore {
   }
   reorderAttachment(parentId: string, attachmentType: 'materials' | 'resources', instanceIds: string[], targetPlayerId: string | null = null): void {
     this.send('REORDER_ATTACHMENT', { parentId, attachmentType, instanceIds, targetPlayerId });
+  }
+  /** Test room: a made-up card (or a copy of a real one) placed in a zone of the side being played. */
+  createDummy(card: DummyCard): void {
+    this.send('CREATE_DUMMY', { ...card });
   }
   revealToHand(instanceId: string): void {
     this.send('REVEAL_TO_HAND', { instanceId });

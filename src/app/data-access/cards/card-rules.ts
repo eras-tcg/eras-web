@@ -131,9 +131,21 @@ function tokenize(text: string, out: EffectSegment[], found: { keyword: string; 
   if (last < text.length) out.push({ kind: 'text', text: text.slice(last) });
 }
 
-export function renderEffect(effect: CardEffect, ref: CardRefData | null): EffectLine {
+/** The usage limit as words ("una vez por turno"), for a label; null without one. */
+export function usageLimitLabel(limit: string | null | undefined): string | null {
+  const text = USAGE_LIMIT_TEXT[limit ?? ''];
+  return text ? text.replace(/[[\],]/g, '').replace(/\s+/g, ' ').trim() : null;
+}
+
+/**
+ * An effect's text. With {@code withHeading} false it leaves out its moment and usage limit ("<Al Atacar> [una vez
+ * por turno]"), for a view that shows them apart.
+ */
+export function renderEffect(effect: CardEffect, ref: CardRefData | null, withHeading = true): EffectLine {
   const segments: EffectSegment[] = [];
-  const prefix = [effect.instance ? `<${effect.instance}>` : '', USAGE_LIMIT_TEXT[effect.ussageLimit ?? ''] ?? ''].filter(Boolean).join(' ');
+  const prefix = withHeading
+    ? [effect.instance ? `<${effect.instance}>` : '', USAGE_LIMIT_TEXT[effect.ussageLimit ?? ''] ?? ''].filter(Boolean).join(' ')
+    : '';
   if (prefix) segments.push({ kind: 'text', text: prefix + ' ' });
 
   for (const block of effect.effectBlocks ?? []) {

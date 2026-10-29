@@ -1,0 +1,86 @@
+/* Yes / no (Reforzar, playing a life, activating an effect): big enough to hit at once */
+:host button.big-choice {
+  min-inline-size: 8rem;
+  min-block-size: 3rem;
+  font-size: var(--font-size-lg, 1.125rem);
+}
+.hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  min-block-size: 12rem;
+}
+.slot { display: flex; }
+.slot.cdk-drag-preview { box-shadow: var(--shadow-lg); }
+.slot.cdk-drag-placeholder { opacity: 0.3; }
+.cdk-drop-list-dragging .slot:not(.cdk-drag-placeholder) { transition: transform var(--duration-base) var(--easing-standard); }
+.pick {
+  --game-card-width: 7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.pick:hover:not(:disabled) { background: var(--color-surface-muted); }
+.pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
+.pick.locked { opacity: 0.4; cursor: not-allowed; }
+.pick.static, .pick.static:disabled { opacity: 1; cursor: default; }
+.pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-inline-size: 8rem;
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+.pick.chosen .tag { color: var(--color-success); font-weight: var(--font-weight-bold); }
+.count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
+@keyframes new-card {
+  from { box-shadow: 0 0 0 2px var(--color-card-w), 0 0 6px 2px color-mix(in srgb, var(--color-card-w) 40%, transparent); }
+  to { box-shadow: 0 0 0 3px var(--color-sim-glow), 0 0 18px 6px color-mix(in srgb, var(--color-sim-glow) 85%, transparent); }
+}
+.offered { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.offered-effect {
+  --game-card-width: 4.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--duration-fast, 120ms) ease, background var(--duration-fast, 120ms) ease;
+}
+.offered-effect:hover:not(:disabled) { border-color: var(--color-primary); }
+.offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, transparent); }
+.offered-effect:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.offered-body { display: grid; gap: var(--space-1); }
+.offered-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.badge {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+.link-tag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-success); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+.offered-text { font-size: var(--font-size-sm); line-height: 1.45; }
+.effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
+.show-all { display: inline-flex; align-items: center; gap: var(--space-2); justify-self: start; color: var(--color-text-muted); font-size: var(--font-size-sm); cursor: pointer; }
+.zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }

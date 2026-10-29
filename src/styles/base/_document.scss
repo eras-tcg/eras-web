@@ -24,6 +24,38 @@ a {
   color: var(--color-link);
 }
 
+// Scrollbars: thin and rounded, in the page's colors (WebKit / Chromium; Firefox gets the thin standard one)
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted) 45%, transparent) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 75%, transparent);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-primary);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-text-muted) 45%, transparent) transparent;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -31,6 +63,38 @@ a {
 
 .cdk-overlay-backdrop.eras-backdrop {
   background: var(--color-overlay);
+}
+
+// Sheets (choices from the bottom): a lighter backdrop, clear while the sheet is lowered; it still blocks the page
+.cdk-overlay-backdrop.eras-sheet-backdrop {
+  background: color-mix(in srgb, var(--color-overlay) 60%, transparent);
+  transition: background var(--duration-normal, 200ms) ease;
+}
+
+.cdk-overlay-backdrop.eras-sheet-backdrop.collapsed {
+  background: transparent;
+  pointer-events: none;
+}
+
+// Who has the priority in the simulator: the page glows from that player's side (blue: you, below; red: rival, above)
+body.eras-acting-me {
+  background-image: linear-gradient(to top, rgb(59 130 246 / 45%), rgb(59 130 246 / 12%) 45%, transparent 75%);
+  background-attachment: fixed;
+}
+
+body.eras-acting-rival {
+  background-image: linear-gradient(to bottom, rgb(239 68 68 / 45%), rgb(239 68 68 / 12%) 45%, transparent 75%);
+  background-attachment: fixed;
+}
+
+// The simulator can hide the site's navigation bar to give the table the whole height
+body.eras-hide-header eras-shell header.header {
+  display: none;
+}
+
+// A chain is shown above the choices: they leave it room at the top
+body.eras-chain-open {
+  --sheet-max-block-size: 58vh;
 }
 
 /* Visually hidden, still read by screen readers */

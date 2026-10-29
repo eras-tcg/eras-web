@@ -6,6 +6,9 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
   template: `
     @if (!hidden() && imageUrl()) {
       <img [src]="imageUrl()" alt="" draggable="false" />
+    } @else if (!hidden() && name()) {
+      <!-- A card without art (a test card): its name -->
+      <span class="face">{{ name() }}</span>
     } @else {
       <span class="back" aria-hidden="true"></span>
     }
@@ -37,23 +40,40 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
     :host(.targeted) { box-shadow: 0 0 0 3px var(--color-danger), 0 0 14px var(--color-danger); }
     :host(.source) { box-shadow: 0 0 0 3px var(--color-primary); }
     :host(.selectable) { cursor: crosshair; }
-    img, .back { display: block; inline-size: 100%; block-size: 100%; border-radius: inherit; object-fit: cover; }
+    img, .back, .face { display: block; inline-size: 100%; block-size: 100%; border-radius: inherit; object-fit: cover; }
+    .face {
+      display: grid;
+      place-items: center;
+      padding: 0.25rem;
+      overflow: hidden;
+      border: 1px dashed var(--color-border);
+      background: var(--color-surface-muted);
+      color: var(--color-text);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
     .back {
       border: 1px solid rgb(255 255 255 / 25%);
       // Fixed card-back art colors: the same in both themes, like a physical card
-      background: repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px);
+      background: var(--color-card-back);
     }
     .strength {
       position: absolute;
       inset-block-start: -0.4rem;
       inset-inline-end: -0.4rem;
-      padding: 0 0.35rem;
+      // As big as the card allows: readable at a glance on the field
+      min-inline-size: 1.6em;
+      padding: 0.05em 0.4em;
+      border: 2px solid rgb(27 29 36 / 70%);
       border-radius: var(--radius-pill);
       background: #f59e0b;
       color: #1b1d24;
-      font-size: var(--font-size-xs);
+      font-size: clamp(0.8rem, calc(var(--game-card-width, 4.5rem) * 0.17), 1.35rem);
       font-weight: var(--font-weight-bold);
-      line-height: 1.4;
+      line-height: 1.3;
+      text-align: center;
     }
     .strength.up { background: #22c55e; }
     .strength.down { background: #ef4444; color: #fff; }
@@ -83,6 +103,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
 })
 export class GameCardComponent {
   readonly imageUrl = input<string | null>(null);
+  /** Shown instead of the art when there is none (a test card). */
+  readonly name = input<string | null>(null);
   readonly hidden = input(false, { transform: booleanAttribute });
   readonly tapped = input(false, { transform: booleanAttribute });
   readonly strength = input<number | null>(null);

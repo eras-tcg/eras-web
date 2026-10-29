@@ -31,7 +31,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       font-size: var(--font-size-2xl);
       text-align: center;
     }
-    .items { display: flex; align-items: stretch; gap: var(--space-2); min-block-size: 0; padding: var(--space-2); overflow-x: auto; scrollbar-width: thin; }
+    .items { display: flex; align-items: stretch; gap: var(--space-2); min-block-size: 0; padding: var(--space-2); overflow-x: auto; }
     .label { font-size: clamp(var(--font-size-lg), 4vh, var(--font-size-2xl)); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

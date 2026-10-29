@@ -192,7 +192,7 @@ export class BoardEffects {
   }
 
   private async pick(data: CardPickerData): Promise<string[] | undefined> {
-    const ref = this.modal.open<string[], CardPickerData>(CardPickerDialogComponent, { data });
+    const ref = this.modal.sheet<string[], CardPickerData>(CardPickerDialogComponent, { data });
     const ids = await firstValueFrom(ref.closed);
     return ids && ids.length ? ids : undefined;
   }

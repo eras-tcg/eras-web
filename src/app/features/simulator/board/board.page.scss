@@ -2,17 +2,94 @@
 :host {
   display: block;
   block-size: calc(100dvh - var(--app-header-height, 3rem));
-  padding: var(--space-2) var(--space-3);
-  overflow: hidden;
+  // No padding at the top and bottom: the hands go past the edges of the table (only their upper half shows)
+  padding: 0 var(--space-3);
+  // clip, not hidden: the hands go past the edges and focusing one of their cards must not scroll the table
+  overflow: clip;
+  position: relative;
+  --sidebar-closed: 2.75rem;
+  --sidebar-open: 17.5rem;
+  // The table's side columns (lives / piles): the halves and the middle strip share them, so the gem bar is as
+  // wide as the field
+  --side: 15rem;
+}
+
+// In a game: room on the right for the collapsed options sidebar (expanded, it lies over the table)
+:host(.in-game) {
+  padding-inline-end: calc(var(--sidebar-closed) + var(--space-2));
+}
+
+// Full screen: the extra room goes to the field cards
+:host(.fullscreen) {
+  --field-card-max: 13rem;
+}
+
+.sidebar-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  padding: 0;
+  border: none;
+  background: var(--color-overlay);
+  cursor: default;
+}
+
+.sidebar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  inline-size: var(--sidebar-closed);
+  padding: var(--space-2) var(--space-1);
+  border-inline-start: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  transition: inline-size var(--duration-fast, 120ms) var(--easing-standard, ease);
+}
+
+.sidebar.open {
+  inline-size: var(--sidebar-open);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.sidebar .group-label {
+  padding: var(--space-1) 0.45rem 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sidebar:not(.open) .group-label {
+  display: none;
+}
+
+.sidebar hr {
+  inline-size: 100%;
+  margin: var(--space-1) 0;
+  border: none;
+  border-block-start: var(--border-width) solid var(--color-border);
 }
 
 .board {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  // No gap: the overlays after the table are empty boxes, and the hand's peek must reach the very bottom
+  gap: 0;
   block-size: 100%;
   max-inline-size: 110rem;
   margin-inline: auto;
+}
+
+// Before a game the pre-room scrolls the whole width (its own content is centered): its scrollbar on the screen's edge
+:host(:not(.in-game)) .board {
+  max-inline-size: none;
 }
 
 // Opponent half / shared bar / own half; both halves share the height left
@@ -25,17 +102,29 @@
   min-block-size: 0;
 }
 
-// Alerts float at the top of the table instead of pushing it down
+// Alerts float at the top of the table instead of pushing it down. They stay above the choices' backdrop
+// (overlays are at 1000): the chain shown there is the reference for the effect a choice belongs to
 .toasts {
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline: 50% auto;
-  z-index: 15;
+  z-index: 1001;
+  max-block-size: calc(100% - 2 * var(--space-2));
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   inline-size: min(36rem, 90%);
   transform: translateX(-50%);
+}
+
+.chain-panel {
+  transition: opacity var(--duration-fast, 120ms) ease;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
 }
 
 .toasts:empty {
@@ -64,16 +153,103 @@
   overflow: auto;
 }
 
-.topbar {
-  display: flex;
-  flex-wrap: wrap;
+// Status and phases | gem bar | controls: the strip across the middle of the table (at the top before a game)
+.strip {
+  display: grid;
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) 0;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.strip:not(.with-gems) {
+  grid-template-columns: 1fr auto;
+  margin-block: var(--space-2);
+}
+
+.strip > :first-child {
+  padding-inline-start: var(--space-3);
+}
+
+.strip > :last-child {
+  justify-self: end;
+  padding-inline-end: var(--space-2);
+}
+
+.strip .gems {
+  min-inline-size: 0;
+}
+
+@media (max-width: 70rem) {
+  .strip {
+    grid-template-columns: 1fr auto;
+  }
+
+  .strip .gems {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+// The three phases of the turn, centered; the current one is marked
+.phases {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phases button {
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill, 999px);
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.phases button:disabled {
+  cursor: default;
+}
+
+// The phase you can go to next: a clear call to action
+.phases button.next {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.phases button.next:not(.current)::after {
+  content: ' ›';
+}
+
+.phases button.next:hover {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.phases button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.phases button.current {
+  border-color: var(--color-sim-rival);
+  background: color-mix(in srgb, var(--color-sim-rival) 18%, transparent);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-sim-rival) 35%, transparent);
+}
+
+.phases button.current.mine {
+  border-color: var(--color-sim-ally);
+  background: color-mix(in srgb, var(--color-sim-ally) 18%, transparent);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-sim-ally) 35%, transparent);
 }
 
 .my-turn {
@@ -94,13 +270,15 @@
   color: var(--color-text-muted);
 }
 
+// From the top down, under the turn bar, so they do not cover the hand
+// Top left, over the rival's lives
 .notices {
   position: fixed;
-  inset-inline-end: var(--space-3);
-  inset-block-end: var(--space-3);
+  inset-inline-start: var(--space-3);
+  inset-block-start: calc(var(--app-header-height, 3rem) + var(--space-3));
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: column-reverse;
+  align-items: flex-start;
   gap: var(--space-2);
   max-inline-size: min(22rem, 90vw);
   pointer-events: none;
@@ -138,4 +316,123 @@
   .table {
     grid-template-rows: auto auto auto;
   }
+}
+
+// Pop-up when the turn or the phase changes
+.phase-popup {
+  position: fixed;
+  inset-block-start: 40%;
+  inset-inline-start: 50%;
+  z-index: 30;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid var(--color-sim-ally);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  box-shadow: 0 0 32px 6px color-mix(in srgb, var(--color-sim-ally) 45%, transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: phase-popup 1.3s ease forwards;
+}
+
+.phase-popup.rival {
+  border-color: var(--color-sim-rival);
+  box-shadow: 0 0 32px 6px color-mix(in srgb, var(--color-sim-rival) 45%, transparent);
+}
+
+.phase-popup .who {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.phase-popup strong {
+  font-size: var(--font-size-2xl, 1.75rem);
+}
+
+@keyframes phase-popup {
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+// Combat in progress: the table is framed in red
+.table.in-combat {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-sim-rival) 70%, transparent), 0 0 30px 4px color-mix(in srgb, var(--color-sim-rival) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase-popup {
+    animation: none;
+  }
+}
+
+// Test room: which side is being played
+.sides {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  button {
+    padding: var(--space-1) var(--space-2);
+    border: 0;
+    background: none;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  button + button { border-inline-start: 1px solid var(--color-border); }
+  button.on { background: var(--color-primary); color: var(--color-on-primary, #fff); font-weight: var(--font-weight-bold); }
+  button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+}
+
+// Held to look at the table through it
+.chain-panel.see-through {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+// Above the choices (the overlay layer), at the bottom left of the table
+.see-through-btn {
+  position: fixed;
+  inset-block-end: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.see-through-btn.on {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 22%, var(--color-surface));
+}
+
+.see-through-btn eras-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+// A sheet open at the bottom: the alerts and the chain keep above it
+:host-context(body.eras-sheet-open) .toasts {
+  max-block-size: calc(100dvh - var(--app-header-height, 3rem) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
 }

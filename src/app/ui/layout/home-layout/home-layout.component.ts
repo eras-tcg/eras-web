@@ -138,7 +138,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         block-size: calc(2 * var(--h) + var(--g));
         padding-inline-end: var(--space-1);
         overflow-y: auto;
-        scrollbar-width: thin;
       }
     }
   `,

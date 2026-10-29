@@ -16,10 +16,16 @@ export interface RulesView {
   opponentMarker: number;
   /** I still have the "ventaja del iniciador": an Iniciador costs me 1 less, once (rule 6.2.1.4). */
   starterAdvantage: boolean;
-  /** My field, for the Requerimiento of a Ritual. */
+  /** My field, for the Requerimiento of a special summon. */
   field: CardSlot[];
+  /** My Tributos (materials of a Materialización). */
+  tributes: CardSlot[];
   /** Slow effects I can activate now (the server lists them). */
   activatable: ActivatableEffect[];
+  /** Cards I can special summon now, as the server says; null when it does not say (older server: checked here). */
+  specialSummonable: string[] | null;
+  /** I already played a structure normally this turn (only one per turn). */
+  structurePlayed: boolean;
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
@@ -35,7 +41,10 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     opponentMarker: opponent ? (state?.players[opponent]?.resourceCount ?? 0) : 0,
     starterAdvantage: !!me && state?.starterAdvantageUserId === me,
     field: (me && state?.players[me]?.field) || [],
+    tributes: (me && state?.players[me]?.tributeZone) || [],
     activatable: (me && state?.activatable?.[me]) || [],
+    specialSummonable: state?.specialSummonable ? ((me && state.specialSummonable[me]) || []) : null,
+    structurePlayed: !!me && !!state?.structurePlayed?.includes(me),
   };
 }
 
@@ -44,9 +53,12 @@ export function inFrontLine(slot: CardSlot): boolean {
   return slot.y != null && slot.y < 50;
 }
 
-/** Rule 5.0.0.1: paying may not leave the opponent with more gems than their Marcador shows. */
+/**
+ * Rule 5.0.0.1: on your turn, paying may not leave the opponent with more gems than their Marcador shows; on
+ * theirs only the end of the Contador limits it. Paying 0 always works.
+ */
 export function canPay(view: RulesView, cost: number): boolean {
-  return view.gems - cost >= -view.opponentMarker;
+  return cost <= 0 || view.gems - cost >= (view.myTurn ? -view.opponentMarker : -10);
 }
 
 /** Cost to play a utility or structure, after the reductions printed on it (mirrors the server). */
@@ -64,7 +76,7 @@ export function summonCost(view: RulesView, slot: CardSlot, cost: number): numbe
 /** Furia N → N; Furia without a number → -1 (no limit); null without Furia. */
 export function furia(slot: CardSlot): number | null {
   let best: number | null = null;
-  for (const k of [...(slot.keywords ?? []), ...(slot.turnKeywords ?? [])]) {
+  for (const k of [...(slot.keywords ?? []), ...(slot.turnKeywords ?? []), ...(slot.continuousKeywords ?? [])]) {
     if (!k.toLowerCase().startsWith('furia')) continue;
     const n = /(\d+)/.exec(k);
     if (!n) return -1;
@@ -78,6 +90,16 @@ export function attackGemsOk(view: RulesView, slot: CardSlot): boolean {
   if (view.gems >= 0) return true;
   const f = furia(slot);
   return f != null && (f < 0 || view.gems >= -f);
+}
+
+/** Enfrentar: the attacker can attack this active enemy (Enfrentar N: level N or less). */
+export function challenges(attacker: CardSlot, target: CardSlot): boolean {
+  for (const k of [...(attacker.keywords ?? []), ...(attacker.turnKeywords ?? []), ...(attacker.continuousKeywords ?? [])]) {
+    if (!k.toLowerCase().startsWith('enfrentar')) continue;
+    const n = /(\d+)/.exec(k);
+    if (!n || (target.level ?? 99) <= Number(n[1])) return true;
+  }
+  return false;
 }
 
 /** Requerimiento of a Ritual: one creature of level N, or several whose levels add up to N. */
@@ -99,13 +121,61 @@ export function ritualMaterials(view: RulesView, slot: CardSlot): CardSlot[] {
   return view.field.filter((c) => c.cardType === 'creature' && c.level != null && sharesTypeOrColor(c, slot));
 }
 
+/** Some of the creatures' levels add up exactly to `target` ("criaturas que en nivel sumen N"). */
+export function sumsExactly(cards: readonly CardSlot[], target: number): boolean {
+  if (target < 0) return false;
+  const reachable = new Array<boolean>(target + 1).fill(false);
+  reachable[0] = true;
+  for (const c of cards) {
+    const level = c.level ?? 0;
+    if (level <= 0) continue;
+    for (let t = target; t >= level; t--) if (reachable[t - level]) reachable[t] = true;
+  }
+  return reachable[target];
+}
+
 /** The creature can be summoned by Ritual now: special cost payable and the Requerimiento met (mirrors the server). */
 export function canRitual(view: RulesView, slot: CardSlot): boolean {
   const req = requirement(slot);
   if (slot.specialSummonKind?.toLowerCase() !== 'ritual' || !req || slot.specialCost == null) return false;
   if (!canPay(view, summonCost(view, slot, slot.specialCost))) return false;
   const materials = ritualMaterials(view, slot);
-  return req.sum ? materials.reduce((t, c) => t + (c.level ?? 0), 0) >= req.level : materials.some((c) => c.level === req.level);
+  return req.sum ? sumsExactly(materials, req.level) : materials.some((c) => c.level === req.level);
+}
+
+/** The name of a special summon kind, for the board. */
+export function specialKindLabel(kind: string | null | undefined): string {
+  switch (kind?.toLowerCase()) {
+    case 'evolution':
+      return 'Evolución';
+    case 'promotion':
+      return 'Ascenso';
+    case 'materialization':
+      return 'Materialización';
+    default:
+      return 'Ritual';
+  }
+}
+
+/** Evolución, Ascenso or Materialización can be done now (mirrors the server; Ritual has canRitual). */
+export function canOtherSpecial(view: RulesView, slot: CardSlot): boolean {
+  const kind = slot.specialSummonKind?.toLowerCase() ?? '';
+  if (!['evolution', 'promotion', 'materialization'].includes(kind) || slot.specialCost == null) return false;
+  const text = slot.requirement?.toLowerCase() ?? '';
+  const level = /ni[ev]*l\s*(\d+)/.exec(text);
+  if (!level || !canPay(view, slot.specialCost)) return false;
+  const summonerLevel = Number(level[1]);
+  if (kind === 'promotion') {
+    const sum = /suman\s*(\d+)/.exec(text);
+    const allies = view.field.filter((c) => c.cardType === 'creature').reduce((t, c) => t + (c.level ?? 0), 0);
+    if (sum && allies < Number(sum[1])) return false;
+  }
+  const summoners = view.field.filter((c) => c.cardType === 'creature' && c.level === summonerLevel && sharesTypeOrColor(c, slot));
+  if (kind !== 'materialization') return summoners.length > 0;
+  const material = /material\s*ni[ev]*l\s*(\d+)/.exec(text);
+  const materialLevel = material ? Number(material[1]) : summonerLevel;
+  const pool = [...view.tributes, ...view.field].filter((c) => c.cardType === 'creature' && c.level === materialLevel && sharesTypeOrColor(c, slot));
+  return summoners.some((s) => pool.some((m) => m !== s));
 }
 
 /** Legal actions of one of your cards; the server checks them again. */
@@ -120,10 +190,20 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
     if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot)) actions.unshift('attack');
   } else if (zone === 'hand') {
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
-    if (slot.cardType === 'creature' && canRitual(view, slot)) actions.push('ritual');
-    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && canPay(view, playCost(view, slot))) actions.push('play');
+    if (slot.cardType === 'creature' && canSpecial(view, slot)) actions.push('ritual');
+    const structureLeft = slot.cardType !== 'structure' || !view.structurePlayed;
+    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && structureLeft && canPay(view, playCost(view, slot))) actions.push('play');
+  } else if (zone === 'tributeZone') {
+    // "como si estuviera en tu mano para invocaciones especiales" (Falanx): only the server knows
+    if (view.specialSummonable?.includes(slot.instanceId)) actions.push('ritual');
   }
   return actions;
+}
+
+/** Its special summon can be done now: the server's list, or the checks here when it sends none. */
+function canSpecial(view: RulesView, slot: CardSlot): boolean {
+  if (view.specialSummonable) return view.specialSummonable.includes(slot.instanceId);
+  return canRitual(view, slot) || canOtherSpecial(view, slot);
 }
 
 /** The field in two rows, each ordered left to right. */

@@ -9,35 +9,12 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 
-/** Phase-gated panels over the board: waiting room, starter choice, mulligan and post game. */
+/** Phase-gated panels over the board: starter choice (older rooms), mulligan and post game. The pre-room has its own view. */
 @Component({
   selector: 'eras-status-panels',
   imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent],
   template: `
     @switch (game.status()) {
-      @case ('WAITING') {
-        <eras-card>
-          <eras-stack [gap]="3">
-            <strong>Esperando al rival</strong>
-            <span>Comparte el enlace de la sala:</span>
-            <eras-stack direction="row" [gap]="2" align="center" wrap>
-              <code>{{ link() }}</code>
-              <button erasButton variant="secondary" size="sm" type="button" (click)="copy()">{{ copied() ? 'Copiado' : 'Copiar enlace' }}</button>
-            </eras-stack>
-            @if (game.isHost() && players().length === 2) {
-              <span>¿Quién empieza?</span>
-              <eras-stack direction="row" [gap]="2" wrap>
-                @for (p of players(); track p.userId) {
-                  <button erasButton type="button" (click)="game.startGame(p.userId)">Empieza {{ p.username }}</button>
-                }
-                <button erasButton variant="secondary" type="button" (click)="game.startGame('random')">Aleatorio</button>
-              </eras-stack>
-            } @else if (players().length === 2) {
-              <span>Esperando que el anfitrión inicie la partida.</span>
-            }
-          </eras-stack>
-        </eras-card>
-      }
       @case ('SELECTING_STARTER') {
         <eras-card>
           <eras-stack [gap]="3">
@@ -85,7 +62,14 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
       @case ('POST_GAME') {
         <eras-card>
           <eras-stack [gap]="3">
-            <strong>Partida terminada</strong>
+            @if (result(); as r) {
+              <div class="result" [class.won]="r.won">
+                <strong>{{ r.title }}</strong>
+                <span>{{ r.detail }}</span>
+              </div>
+            } @else {
+              <strong>Partida terminada</strong>
+            }
             @if (myChoice(); as c) {
               <span>Elegiste: {{ labels[c] }}. Esperando al rival…</span>
             } @else {
@@ -115,6 +99,10 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
     .pick { padding: 0; border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
     .pick:hover { border-color: var(--color-border); }
     .pick.chosen { border-color: var(--color-danger); opacity: 0.6; }
+    .result { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 2px solid var(--color-danger); border-radius: var(--radius-md); text-align: center; }
+    .result.won { border-color: var(--color-success); box-shadow: 0 0 24px 4px color-mix(in srgb, var(--color-success) 45%, transparent); }
+    .result strong { font-size: var(--font-size-2xl, 1.75rem); }
+    .result span { color: var(--color-text-muted); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -134,6 +122,21 @@ export class StatusPanelsComponent {
   protected readonly starterChosen = computed(() => (this.game.myState()?.field.length ?? 0) > 0);
   protected readonly topFive = computed(() => (this.game.myState()?.deck ?? []).slice(0, 5));
   protected readonly myChoice = computed(() => this.game.postGameChoices()[this.auth.user()?.id ?? ''] ?? null);
+  /** Who won and why. */
+  protected readonly result = computed(() => {
+    const s = this.game.state();
+    if (!s?.winnerId) return null;
+    const me = this.auth.user()?.id;
+    const won = s.winnerId === me;
+    const winner = s.players?.[s.winnerId]?.username ?? 'Tu rival';
+    const loser = Object.values(s.players ?? {}).find((p) => p.userId !== s.winnerId)?.username ?? 'Tu rival';
+    const detail = s.endReason === 'surrender'
+      ? (won ? `${loser} se rindió` : 'Te rendiste')
+      : s.endReason === 'deck'
+        ? (won ? `${loser} no pudo robar al inicio de su turno` : 'No pudiste robar al inicio de tu turno')
+        : (won ? `${loser} se quedó sin vidas` : 'Te quedaste sin vidas');
+    return { won, title: won ? '¡Ganaste!' : `Ganó ${winner}`, detail };
+  });
   protected readonly options = computed(() => {
     const state = this.game.state();
     const surrenderer = state?.event === 'SURRENDER' ? state.actorId : null;
@@ -147,8 +150,10 @@ export class StatusPanelsComponent {
     // A new game (rematch) goes through the same phases again
     effect(() => {
       this.game.status();
+      // A test room switches sides: the mulligan panel is that side's
+      const side = this.game.myState()?.userId;
       untracked(() => {
-        this.mulliganSent.set(false);
+        this.mulliganSent.set(!!side && (this.game.state()?.mulliganReady ?? []).includes(side));
         this.toBottom.set(new Set());
       });
     });
@@ -175,7 +180,8 @@ export class StatusPanelsComponent {
   }
 
   protected choose(choice: PostGameChoice): void {
-    this.game.postGameChoice(choice);
+    // Leaving frees the seat (the board sends it on its way out)
     if (choice === 'exit') this.leave.emit();
+    else this.game.postGameChoice(choice);
   }
 }

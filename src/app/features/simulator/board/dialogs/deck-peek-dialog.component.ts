@@ -8,7 +8,7 @@ import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.compon
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface DeckPeekData {
   position: 'top' | 'bottom';
@@ -21,9 +21,9 @@ export interface DeckPeekData {
  */
 @Component({
   selector: 'eras-deck-peek-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
-    <eras-modal [title]="(data.position === 'top' ? 'Tope' : 'Fondo') + ' del mazo'" [subtitle]="cards().length + ' cartas, en orden'" (closed)="ref.close()">
+    <eras-sheet [title]="(data.position === 'top' ? 'Tope' : 'Fondo') + ' del mazo'" [subtitle]="cards().length + ' cartas, en orden'" (closed)="ref.close()">
       @if (cards().length === 0) {
         <eras-empty-state title="No quedan cartas por ordenar" />
       } @else {
@@ -51,15 +51,15 @@ export interface DeckPeekData {
           }
         </ol>
       }
-      <ng-container modal-footer>
+      <ng-container sheet-footer>
         <button erasButton variant="secondary" type="button" [disabled]="!cards().length" (click)="putBack('top', false)">Devolver al tope</button>
         <button erasButton variant="secondary" type="button" [disabled]="!cards().length" (click)="putBack('bottom', false)">Al fondo</button>
         <button erasButton type="button" (click)="cards().length ? putBack('top', true) : ref.close()">{{ cards().length ? 'Barajar en el mazo' : 'Cerrar' }}</button>
       </ng-container>
-    </eras-modal>
+    </eras-sheet>
   `,
   styles: `
-    .cards { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+    .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
     .pos { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
   `,

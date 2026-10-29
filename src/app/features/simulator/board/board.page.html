@@ -1,50 +1,123 @@
 <div class="board">
-  <header class="topbar">
-    <eras-stack direction="row" [gap]="3" align="center" wrap>
-      <strong>{{ statusLabel() }}</strong>
-      @if (inProgress()) {
-        <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }} · {{ phaseLabel() }}</span>
-      }
-      @if (!game.connected()) {
-        <span class="warn">Sin conexión, reintentando…</span>
-      }
-    </eras-stack>
-    <eras-stack direction="row" [gap]="2" align="center" wrap>
-      @if (inProgress() && game.isMyTurn()) {
-        <button erasButton size="sm" type="button" (click)="game.drawCard()">Robar</button>
-        @if (game.phase() !== 'END') {
-          <button erasButton variant="secondary" size="sm" type="button" (click)="game.enterEndPhase()">Fase final</button>
+  <!-- Game status | gem bar | phases: the strip across the middle of the table (at the top before a game) -->
+  <ng-template #strip let-gems="gems">
+    <div class="strip" [class.with-gems]="gems">
+      <eras-stack direction="row" [gap]="3" align="center" wrap>
+        @if (inProgress()) {
+          <span class="turn" [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
         }
-        <button erasButton variant="secondary" size="sm" type="button" (click)="game.endTurn()">Terminar turno</button>
+        @if (!game.connected()) {
+          <span class="warn">Sin conexión, reintentando…</span>
+        }
+      </eras-stack>
+      @if (gems) {
+        <eras-shared-bar class="gems" [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
       }
-      @if (game.pendingTargetSource()) {
-        <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>
-      }
-      <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="options">Opciones</button>
-      <ng-template #options>
-        <eras-menu>
-          <button erasMenuItem (triggered)="dialogs.decklist()">Ver mi mazo</button>
-          <button erasMenuItem (triggered)="dialogs.log()">Historial</button>
-          @if (inProgress()) {
-            <button erasMenuItem class="danger" (triggered)="surrender()">Rendirse</button>
+      @if (inProgress()) {
+        <!-- The phases of the turn are its controls: on your turn, the next phase you can go to is a button -->
+        <ol class="phases" aria-label="Fases del turno">
+          @for (p of phases; track p.id) {
+            <li>
+              <button
+                type="button"
+                [class.current]="currentPhase() === p.id"
+                [class.mine]="game.isMyTurn()"
+                [class.next]="canGoTo(p.id)"
+                [disabled]="!canGoTo(p.id)"
+                [attr.aria-current]="currentPhase() === p.id ? 'step' : null"
+                [title]="phaseHint(p.id)"
+                (click)="goTo(p.id)"
+              >{{ p.label }}</button>
+            </li>
           }
-          <hr />
-          <button erasMenuItem (triggered)="exit()">Salir</button>
-        </eras-menu>
-      </ng-template>
-    </eras-stack>
-  </header>
+        </ol>
+      } @else {
+        <span></span>
+      }
+    </div>
+  </ng-template>
 
+  <!-- Options: a sidebar on the right, only icons when collapsed (their name on hover) -->
+  @if (inGame()) {
+  @if (sidebarExpanded() && !sidebarDynamic()) {
+    <!-- Expanded by hand it lies over the table, like a modal: a click outside collapses it -->
+    <button type="button" class="sidebar-backdrop" aria-label="Contraer el menú" (click)="toggleSidebar(); $event.stopPropagation()"></button>
+  }
+  <aside
+    class="sidebar"
+    [class.open]="sidebarOpen()"
+    aria-label="Opciones de la partida"
+    (mouseenter)="sidebarHover.set(true)"
+    (mouseleave)="sidebarHover.set(false)"
+  >
+    <!-- Preferences: how the table looks and behaves -->
+    <span class="group-label">Preferencias</span>
+    <button type="button" erasSidebarItem [icon]="headerHidden() ? 'chevron-down' : 'chevron-up'" (click)="headerHidden.set(!headerHidden())">
+      {{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}
+    </button>
+    @if (!sidebarDynamic()) {
+      <button type="button" erasSidebarItem [icon]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" (click)="toggleSidebar()">
+        {{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}
+      </button>
+    }
+    @if (sidebarExpanded() || sidebarDynamic()) {
+      <button type="button" erasSidebarItem icon="refresh" [on]="sidebarDynamic()" (click)="sidebarDynamic.set(!sidebarDynamic())">
+        Menú dinámico (se expande al pasar el mouse)
+      </button>
+    }
+    @if (game.editorRoom()) {
+      <button type="button" erasSidebarItem icon="swap" [on]="game.followActive()" (click)="game.followActive.set(!game.followActive())">
+        Cambiar de lado según quién actúa
+      </button>
+    }
+    @if (game.editorMode()) {
+      <button type="button" erasSidebarItem icon="eye" [on]="game.revealHidden()" (click)="game.toggleRevealHidden()">
+        Mostrar cartas ocultas (manos, vidas, mazo)
+      </button>
+    }
+    <button type="button" erasSidebarItem icon="list" [on]="!noticesOff()" (click)="noticesOff.set(!noticesOff())">Avisos de las últimas acciones</button>
+    <button type="button" erasSidebarItem icon="cards" [on]="straightHand()" (click)="straightHand.set(!straightHand())">Mano recta (sin curva)</button>
+    <button type="button" erasSidebarItem icon="layers" [on]="mirrored()" (click)="mirrored.set(!mirrored())">Zonas espejadas</button>
+    <button type="button" erasSidebarItem icon="maximize" [on]="fullscreen()" (click)="toggleFullscreen()">
+      Pantalla completa (cartas del campo más grandes)
+    </button>
+    <hr />
+    <button type="button" erasSidebarItem icon="cards" (click)="dialogs.decklist()">Ver mi mazo</button>
+    <button type="button" erasSidebarItem icon="list" (click)="dialogs.log()">Historial</button>
+    @if (game.editorRoom()) {
+      @if (otherSide(); as other) {
+        <button type="button" erasSidebarItem icon="user" (click)="game.followActive.set(false); game.playSide(other.userId)">
+          Cambiar perspectiva (ver desde {{ other.username }})
+        </button>
+      }
+      <button type="button" erasSidebarItem icon="square-plus" (click)="dialogs.dummyCard()">Crear carta</button>
+    }
+    <hr />
+    @if (inProgress()) {
+      <button type="button" erasSidebarItem icon="flag" danger (click)="surrender()">Rendirse</button>
+    }
+    <button type="button" erasSidebarItem icon="logout" (click)="exit()">Salir</button>
+    @if (game.editorRoom()) {
+      <!-- At the foot: a test room -->
+      <div erasSidebarItem icon="edit" notice>Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba</div>
+    }
+  </aside>
+  }
+
+  @if (game.status() === 'WAITING') {
+    <!-- Before a game: decks, starters, who goes first and both confirm -->
+    <eras-pre-room />
+  } @else {
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
-  <div class="table">
+  <div class="table" [class.in-combat]="!!game.state()?.combat">
     @if (game.myState(); as me) {
       @if (game.opponentState(); as opp) {
-        <eras-player-half [player]="opp" opponent />
+        <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" [straightHand]="straightHand()" />
       } @else {
         <div class="empty-side">El rival todavía no entra a la sala.</div>
       }
-      <eras-shared-bar [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
-      <eras-player-half [player]="me" />
+      <ng-container *ngTemplateOutlet="strip; context: { gems: true }" />
+      <eras-player-half [player]="me" [straightHand]="straightHand()" />
     } @else {
       <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
     }
@@ -59,20 +132,30 @@
       @if (game.pendingTargetSource()) {
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
+      @if (game.state()?.chain?.length) {
+        <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+      }
       @if (engineNotice(); as notice) {
+        @if (!game.myPrompt()) {
         <eras-alert>
-          <strong>Resolviendo: {{ notice }}</strong>
+          <strong>{{ notice }}</strong>
           @if (opponentChoosing()) {
             — esperando la elección de {{ game.opponentState()?.username ?? 'tu rival' }}
           }
         </eras-alert>
+        }
       }
       @if (opponentLeft() && !dismissedLeft()) {
         <eras-alert tone="danger">
           <eras-stack direction="row" [gap]="2" align="center" wrap>
-            <span>El rival se desconectó.</span>
-            <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
-            <button erasButton variant="danger" size="sm" type="button" (click)="closeRoom()">Cerrar la sala</button>
+            @if (game.isHost()) {
+              <span>{{ game.opponentState()?.username ?? 'Tu rival' }} se desconectó. ¿Lo esperas o lo sacas de la sala?</span>
+              <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
+              <button erasButton variant="danger" size="sm" type="button" (click)="kickRival()">Sacar de la sala</button>
+            } @else {
+              <span>{{ game.opponentState()?.username ?? 'Tu rival' }} se desconectó.{{ rivalOwns() ? ' Si no vuelve pronto, pasas a ser el dueño de la sala.' : '' }}</span>
+              <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
+            }
           </eras-stack>
         </eras-alert>
       }
@@ -82,6 +165,39 @@
       <eras-status-panels (leave)="exit()" />
     </div>
   </div>
+  }
+
+  @if (canSeeThrough()) {
+    <!-- Held (or a long press anywhere): the choice and the chain turn transparent to look at the table -->
+    <button
+      type="button"
+      class="see-through-btn"
+      [class.on]="seeThrough()"
+      [attr.aria-pressed]="seeThrough()"
+      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic en cualquier parte)"
+      (pointerdown)="holdSeeThrough($event)"
+      (keydown.space)="seeThrough.set(true); $event.preventDefault()"
+      (keyup.space)="seeThrough.set(false)"
+      (keydown.enter)="seeThrough.set(true)"
+      (keyup.enter)="seeThrough.set(false)"
+      (blur)="seeThrough.set(false)"
+      (click)="$event.stopPropagation()"
+    >
+      <eras-icon name="eye" />
+      <span>Ver la mesa</span>
+    </button>
+  }
+
+  <eras-card-flights />
+  <!-- The card a choice is about stays bright above the choice's backdrop -->
+  <eras-prompt-spotlight />
+  <eras-damage-reveal />
+  @if (phasePopup(); as popup) {
+    <div class="phase-popup" [class.rival]="!popup.mine" role="status" aria-live="polite">
+      <span class="who">{{ popup.who }}</span>
+      <strong>{{ popup.phase }}</strong>
+    </div>
+  }
 
   <!-- Live notices: revealed cards and the latest actions -->
   <div class="notices" aria-live="polite">
@@ -91,8 +207,10 @@
         <img [src]="card.imageUrl" alt="" />
       </div>
     }
-    @for (line of game.recentLog(); track line.id) {
-      <div class="log-line">{{ line.text }}</div>
+    @if (!noticesOff()) {
+      @for (line of game.recentLog(); track line.id) {
+        <div class="log-line">{{ line.text }}</div>
+      }
     }
   </div>
 </div>

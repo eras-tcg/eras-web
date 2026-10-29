@@ -5,7 +5,7 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface CardPickerData {
   title: string;
@@ -24,9 +24,9 @@ export interface CardPickerData {
 /** Choose cards for an effect. Closes with the chosen instance ids (undefined when cancelled). */
 @Component({
   selector: 'eras-card-picker-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
   template: `
-    <eras-modal size="lg" [title]="data.title" [subtitle]="subtitle()" (closed)="ref.close()">
+    <eras-sheet size="lg" [title]="data.title" [subtitle]="subtitle()" (closed)="ref.close()">
       @if (data.matches && hiddenCount() > 0) {
         <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
           <span>{{ showAll() ? 'Mostrando todas las cartas' : hiddenCount() + ' no cumplen el filtro' + (data.filterLabel ? ' (' + data.filterLabel + ')' : '') }}</span>
@@ -55,18 +55,19 @@ export interface CardPickerData {
           }
         </div>
       }
-      <ng-container modal-footer>
+      <ng-container sheet-footer>
         <button erasButton variant="secondary" type="button" (click)="ref.close()">Cancelar</button>
         <button erasButton type="button" [disabled]="!canConfirm()" (click)="ref.close([...chosen()])">
           {{ data.confirmLabel ?? 'Confirmar' }} ({{ chosen().size }}/{{ data.max }})
         </button>
       </ng-container>
-    </eras-modal>
+    </eras-sheet>
   `,
   styles: `
     .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: var(--space-3);
     }
     .pick {

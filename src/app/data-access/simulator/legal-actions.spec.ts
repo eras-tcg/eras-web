@@ -31,7 +31,10 @@ const open: RulesView = {
   opponentMarker: 1,
   starterAdvantage: false,
   field: [],
+  tributes: [],
   activatable: [],
+  specialSummonable: null,
+  structurePlayed: false,
 };
 
 describe('legalActions', () => {
@@ -56,6 +59,9 @@ describe('legalActions', () => {
     expect(legalActions(open, slot('h', { cost: 4 }), 'hand')).toEqual([]);
     expect(legalActions(open, slot('h', { cost: null }), 'hand')).toEqual([]);
     expect(legalActions(open, slot('u', { cardType: 'utility', cost: 1 }), 'hand')).toEqual(['play']);
+    // One structure per turn
+    expect(legalActions(open, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual(['play']);
+    expect(legalActions({ ...open, structurePlayed: true }, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual([]);
   });
 
   it('Caza Nocturna costs 1 less below 0 gems', () => {
@@ -63,6 +69,12 @@ describe('legalActions', () => {
     expect(playCost({ ...open, gems: -1 }, caza)).toBe(0);
     expect(playCost(open, caza)).toBe(1);
     expect(canPay({ ...open, gems: -1 }, 0)).toBe(true);
+    // Below the opponent's Marcador nothing can be paid, except a cost of 0
+    expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 1)).toBe(false);
+    expect(canPay({ ...open, gems: -5, opponentMarker: 2 }, 0)).toBe(true);
+    // On the opponent's turn their Marcador does not limit it, only the end of the Contador
+    expect(canPay({ ...open, myTurn: false, gems: -5, opponentMarker: 2 }, 5)).toBe(true);
+    expect(canPay({ ...open, myTurn: false, gems: -5, opponentMarker: 2 }, 6)).toBe(false);
   });
 });
 
@@ -83,6 +95,8 @@ describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
     expect(legalActions({ ...open, field: [two] }, zha, 'hand')).toEqual(['ritual']);
     const mawser = slot('m', { specialSummonKind: 'ritual', specialCost: 3, requirement: 'criaturas que en nivel sumen 6.', colors: ['P'] });
     expect(canRitual({ ...open, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(true);
+    // Exactly 6: 4 + 3 is too much
+    expect(canRitual({ ...open, field: [slot('3', { level: 3, colors: ['P'] }), slot('4', { level: 4, colors: ['P'] })] }, mawser)).toBe(false);
     expect(canRitual({ ...open, gems: -1, field: [two, slot('four', { level: 4, colors: ['P'] })] }, mawser)).toBe(false);
   });
 
@@ -96,6 +110,17 @@ describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
     const view = { ...open, myTurn: false, activatable: [{ instanceId: 'a', scriptId: 's', label: 'Turno Aliado', text: 't' }] };
     expect(legalActions(view, slot('a', { tapped: true }), 'field')).toEqual(['activate']);
     expect(legalActions({ ...view, closed: true }, slot('a'), 'field')).toEqual([]);
+  });
+});
+
+describe('special summons listed by the server', () => {
+  it('follows the server list, from the hand and from the Tributos', () => {
+    const falanx = slot('falanx', { cardType: 'creature', specialSummonKind: 'materialization', specialCost: 1, requirement: 'aliados que sumen 6' });
+    const view = { ...open, specialSummonable: ['falanx'] };
+    expect(legalActions(view, falanx, 'tributeZone')).toEqual(['ritual']);
+    expect(legalActions(view, falanx, 'hand')).toContain('ritual');
+    expect(legalActions({ ...open, specialSummonable: [] }, falanx, 'hand')).not.toContain('ritual');
+    expect(legalActions(open, falanx, 'tributeZone')).toEqual([]);
   });
 });
 

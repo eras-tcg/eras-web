@@ -44,7 +44,7 @@
     }
   }
   @if (!prompt.effects?.length) {
-  @if (prompt.maxLevelSum != null) {
+  @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
   @if (hiddenCount() > 0) {
@@ -81,7 +81,7 @@
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
             } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
               No cumple
-            } @else if (prompt.maxLevelSum != null && !selectable(c)) {
+            } @else if (levelSum !== null && !selectable(c)) {
               Supera {{ prompt.maxLevelSum }} niveles
             } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
               {{ effectLabel }}

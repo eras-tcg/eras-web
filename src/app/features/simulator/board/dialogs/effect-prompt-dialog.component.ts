@@ -38,6 +38,8 @@ export class EffectPromptDialogComponent {
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
   protected readonly valid = new Set(this.prompt.validIds);
+  /** The most the chosen cards' levels may add up to, or null without that limit. */
+  protected readonly levelSum = this.prompt.maxLevelSum ?? null;
   protected readonly order = signal<CardSlot[]>([...this.prompt.cards]);
   /** Cards that do not meet the effect are hidden unless asked (all of them are needed to order the rest). */
   protected readonly showAll = signal(false);
@@ -94,8 +96,8 @@ export class EffectPromptDialogComponent {
   /** It meets the effect and, with a level-sum limit, still fits with those already chosen. */
   protected selectable(c: CardSlot): boolean {
     if (!this.valid.has(c.instanceId)) return false;
-    const max = this.prompt.maxLevelSum;
-    return max == null || this.chosen().has(c.instanceId) || this.chosenLevels() + (c.level ?? 0) <= max;
+    const max = this.levelSum;
+    return max === null || this.chosen().has(c.instanceId) || this.chosenLevels() + (c.level ?? 0) <= max;
   }
 
   private selectableId(id: string): boolean {

@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
 import { StagedChange, StagedChangesApi } from '@data/cards/staged.api';
+import { StagedApplyStore } from '@data/cards/staged-apply.store';
 import { TableComponent } from '@ui/data/table/table.component';
 import { ColorPipComponent } from '@ui/domain/color-pip/color-pip.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -22,10 +23,30 @@ import { feedbackState } from './admin-feedback';
     <eras-page title="Gestionar cambios" subtitle="Imágenes de cartas detectadas en Drive pendientes de aplicar">
       <ng-container ngProjectAs="[page-actions]">
         <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
-        <button erasButton type="button" [loading]="applyingAll()" [disabled]="applyingAll() || changes().length === 0" (click)="applyAll()">
+        <button erasButton type="button" [loading]="applying.running()" [disabled]="applying.running() || changes().length === 0" (click)="applyAll()">
           Aplicar todos ({{ changes().length }})
         </button>
       </ng-container>
+
+      @if (applying.progress(); as p) {
+        @if (p.running || p.finishedAt) {
+          <section class="progress" aria-live="polite">
+            <div class="progress-head">
+              <strong>{{ p.running ? 'Aplicando cambios…' : 'Cambios aplicados' }}</strong>
+              <span class="muted">{{ p.done + p.failed }} de {{ p.total }}{{ p.failed ? ' · ' + p.failed + ' con error' : '' }}</span>
+            </div>
+            <div class="bar" role="progressbar" [attr.aria-valuenow]="applying.percent()" aria-valuemin="0" aria-valuemax="100">
+              <span [style.inline-size.%]="applying.percent()"></span>
+            </div>
+            @if (p.running) {
+              <span class="muted">{{ p.current ? p.current + ' · ' : '' }}Sigue en el servidor aunque salgas de esta página.</span>
+            }
+            @for (e of p.errors; track $index) {
+              <span class="error">{{ e }}</span>
+            }
+          </section>
+        }
+      }
 
       @if (fb.feedback(); as f) {
         <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
@@ -81,6 +102,14 @@ import { feedbackState } from './admin-feedback';
       }
     </eras-page>
   `,
+  styles: `
+    .progress { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    .progress-head { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; justify-content: space-between; }
+    .bar { block-size: 0.5rem; overflow: hidden; border-radius: 999px; background: var(--color-surface-muted); }
+    .bar span { display: block; block-size: 100%; background: var(--color-primary); transition: inline-size var(--duration-base) ease; }
+    .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .error { color: var(--color-danger); font-size: var(--font-size-sm); }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpdatesPage {
@@ -91,11 +120,15 @@ export class UpdatesPage {
   protected readonly fb = feedbackState();
   protected readonly changes = signal<StagedChange[]>([]);
   protected readonly loading = signal(false);
-  protected readonly applyingAll = signal(false);
+  protected readonly applying = inject(StagedApplyStore);
   protected readonly busy = signal<string | null>(null);
 
   constructor() {
     void this.load();
+    // A run started earlier (here or before leaving the page) is shown again; its end reloads the list
+    void this.applying.refresh();
+    const stop = this.applying.onFinished(() => void this.load());
+    inject(DestroyRef).onDestroy(stop);
   }
 
   protected async load(): Promise<void> {
@@ -125,17 +158,11 @@ export class UpdatesPage {
       confirmLabel: 'Aplicar todos',
     });
     if (!ok) return;
-    this.applyingAll.set(true);
     this.fb.clear();
     try {
-      const { applied } = await firstValueFrom(this.api.applyAll());
-      this.fb.ok(`Se aplicaron ${applied} cambios`);
-      void this.cards.load(true);
-      await this.load();
+      await this.applying.start();
     } catch (e) {
       this.fb.fail(e, 'No se pudieron aplicar los cambios');
-    } finally {
-      this.applyingAll.set(false);
     }
   }
 

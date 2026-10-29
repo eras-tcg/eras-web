@@ -38,6 +38,14 @@
   min-block-size: 0;
 }
 
+.lives eras-resource-pips {
+  align-self: center;
+}
+
+.lives .name {
+  text-align: center;
+}
+
 // The rival's side is mirrored: their name and gems sit next to the center of the table, like yours
 :host(.opponent) .lives {
   flex-direction: column-reverse;
@@ -60,10 +68,18 @@
   flex: 1;
   min-block-size: 0;
   overflow: hidden;
+  container-type: size;
 }
 
 // The lives lie sideways (a box as wide as the card is tall). Yours go down from the gem marker; the rival's go up
+// As big as the zone allows: the whole pile (the card and a strip of each other life) fits under its label
 .life-stack {
+  --life-card: min(
+    7rem,
+    calc((100cqw - 0.5rem) * 63 / 88),
+    calc((100cqh - 1.75rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
+  );
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -235,7 +251,8 @@
 
 // Your card rises to be seen whole while the pointer is on it (just the hidden half)
 :host(:not(.opponent)) .in-hand:hover,
-:host(:not(.opponent)) .in-hand:focus-within {
+:host(:not(.opponent)) .in-hand.raised,
+:host(:not(.opponent)) .in-hand:has(:focus-visible) {
   z-index: 2;
   transform: translateY(calc(var(--hand-peek) * -1)) rotate(0deg);
 }

@@ -8,6 +8,7 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
@@ -33,7 +34,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent],
   template: `
     <eras-modal size="xl" [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -45,8 +46,6 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
             @if (selected().size) {
               <span class="count">{{ selected().size }} {{ selected().size === 1 ? 'seleccionada' : 'seleccionadas' }}</span>
               <button erasButton size="sm" type="button" (click)="sendSelected()">Enviar selección a…</button>
-            } @else {
-              <span class="count">Toca las cartas para seleccionarlas.</span>
             }
           </eras-stack>
         }
@@ -69,6 +68,18 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                   [class.can-play]="actionsOf(c).includes('ritual')"
                   [class.can-activate]="actionsOf(c).includes('activate')"
                 />
+                @if (!data.readonly) {
+                  <!-- "Enviar a…": on the card's lower right corner -->
+                  <span
+                    class="send"
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="'Enviar ' + (c.cardName ?? 'la carta') + ' a…'"
+                    title="Enviar a…"
+                    (click)="$event.stopPropagation(); sendOne(c, i)"
+                    (keydown.enter)="$event.stopPropagation(); sendOne(c, i)"
+                  ><eras-icon name="external" /></span>
+                }
                 <span class="position">{{ positionLabel(i) }}</span>
               </button>
               @if (actionsOf(c).includes('ritual')) {
@@ -77,9 +88,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
               @for (e of effectsOf(c); track e.scriptId) {
                 <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">{{ e.label }}</button>
               }
-              @if (!data.readonly) {
-                <button erasButton variant="secondary" size="sm" type="button" (click)="sendOne(c, i)">Enviar a…</button>
-              }
+
             </li>
           }
         </ol>
@@ -99,6 +108,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
     .pick {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -117,6 +127,23 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     .pick.chosen eras-game-card { box-shadow: 0 0 0 2px var(--color-success), 0 0 14px 3px color-mix(in srgb, var(--color-success) 60%, transparent); }
     .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .position { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+    .send {
+      position: absolute;
+      inset-block-end: 1.6rem;
+      inset-inline-end: 0.15rem;
+      display: inline-grid;
+      place-items: center;
+      inline-size: 1.9rem;
+      block-size: 1.9rem;
+      border: 1px solid var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+    }
+    .send:hover, .send:focus-visible { border-color: var(--color-primary); color: var(--color-primary); outline: none; }
+    .send eras-icon { inline-size: 1rem; block-size: 1rem; }
     eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
     eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
   `,

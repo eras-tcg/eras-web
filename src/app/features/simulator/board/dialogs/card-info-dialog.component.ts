@@ -8,7 +8,7 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { renderEffect, renderKeywordEffect } from '@data/cards/card-rules';
@@ -32,7 +32,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
     <eras-modal size="xl" [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
       @if (slot(); as s) {
@@ -95,10 +95,13 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
             <eras-section-header [title]="labels[type] + ' (' + s[type].length + ')'" />
             <eras-stack direction="row" [gap]="3" wrap>
               @for (a of s[type]; track a.instanceId; let i = $index) {
-                <eras-stack [gap]="1" align="center">
+                <div class="attached">
                   <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
                   @if (!data.readonly) {
-                    <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de ' + (a.cardName ?? 'anexo')">Mover…</button>
+                    <!-- "Enviar a…": on the card's lower right corner -->
+                    <button type="button" class="send" title="Enviar a…" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
+                      <eras-icon name="external" />
+                    </button>
                   }
                   <ng-template #actions>
                     <eras-menu>
@@ -121,7 +124,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
                       }
                     </eras-menu>
                   </ng-template>
-                </eras-stack>
+                </div>
               }
             </eras-stack>
           }
@@ -132,6 +135,25 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
     </eras-modal>
   `,
   styles: `
+    .attached { position: relative; display: flex; flex-direction: column; align-items: center; }
+    .send {
+      position: absolute;
+      inset-block-end: -0.4rem;
+      inset-inline-end: -0.4rem;
+      display: inline-grid;
+      place-items: center;
+      inline-size: 1.8rem;
+      block-size: 1.8rem;
+      padding: 0;
+      border: 1px solid var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+    }
+    .send:hover, .send:focus-visible { border-color: var(--color-primary); color: var(--color-primary); }
+    .send eras-icon { inline-size: 1rem; block-size: 1rem; }
     .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; }
     .art { --game-card-width: 14rem; display: grid; justify-items: center; }
     .art eras-game-card { position: relative; }

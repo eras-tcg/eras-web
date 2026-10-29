@@ -5,7 +5,6 @@ import { CardsStore } from '@data/cards/cards.store';
 import { sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ChainListComponent } from './chain-list.component';
-import { STATUS_LABELS } from '@data/simulator/simulator.model';
 import { SharedBarComponent } from '@ui/domain/game-counters/shared-bar.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -64,7 +63,7 @@ const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: '
     '(click)': 'game.selectedId.set(null)',
     '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
     '[class.fullscreen]': 'fullscreen()',
-    '[class.sidebar-pinned]': 'sidebarExpanded() && !sidebarDynamic()',
+    '[class.in-game]': 'inGame()',
   },
 })
 export class BoardPage {
@@ -83,14 +82,11 @@ export class BoardPage {
   /** The site's edit mode banner already says it: no badge of its own then. */
   protected readonly editMode = inject(EditModeService);
 
-  protected readonly statusLabel = computed(() => (this.game.status() ? STATUS_LABELS[this.game.status()!] : 'Conectando…'));
   protected readonly phaseLabel = computed(() => PHASE_LABELS[this.game.phase()] ?? this.game.phase());
   protected readonly inProgress = computed(() => this.game.status() === 'IN_PROGRESS');
   /** Test room: whose turn it is, by name (both sides are mine). */
-  protected readonly turnName = computed(() => {
-    const id = this.game.state()?.currentTurnUserId;
-    return (id && this.game.state()?.players?.[id]?.username) || '—';
-  });
+  /** Inside a game (after the pre-room): the options sidebar and the hidden navigation bar apply. */
+  protected readonly inGame = computed(() => !!this.game.status() && this.game.status() !== 'WAITING');
   protected readonly sharedIndex = computed(() => sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()));
   protected readonly opponentLeft = computed(() => this.game.opponentState()?.connected === false);
   /** The owner of the room is the rival (if they stay away, the room passes to me). */
@@ -177,7 +173,7 @@ export class BoardPage {
       this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
     });
     // The site's navigation bar, hidden while on the table if asked
-    effect(() => this.document.body.classList.toggle('eras-hide-header', this.headerHidden()));
+    effect(() => this.document.body.classList.toggle('eras-hide-header', this.headerHidden() && this.inGame()));
     inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-hide-header'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));

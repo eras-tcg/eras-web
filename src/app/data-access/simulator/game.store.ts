@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
 import { rulesView } from './legal-actions';
 import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
@@ -70,11 +71,13 @@ export class GameStore {
    */
   readonly editorRoom = computed(() => !!this.state()?.editor);
   private readonly manualActions = signal<boolean>(readEditorMode());
+  private readonly siteEditMode = inject(EditModeService);
   /**
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). Off by default (always on in a test room); remembered on this device.
+   * attachments, strength…). Off by default; always on in a test room and while the site's edit mode is on;
+   * remembered on this device.
    */
-  readonly editorMode = computed(() => this.manualActions() || this.editorRoom());
+  readonly editorMode = computed(() => this.manualActions() || this.editorRoom() || this.siteEditMode.active());
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */

@@ -1,77 +1,52 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, ZONES } from '@data/simulator/simulator.model';
-import { TableComponent } from '@ui/data/table/table.component';
-import { BadgeComponent } from '@ui/primitives/badge/badge.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { CardSlot } from '@data/simulator/simulator.model';
+import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
 
-interface DeckRow {
-  cardId: string;
-  name: string;
-  copies: CardSlot[];
-  /** Copies no longer in any zone (removed from the game). */
-  missing: CardSlot[];
-}
+const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure: 2 };
 
-/** The deck you joined with: copies per card, restore removed copies, refresh card data after an admin edit. */
+/** The deck you joined with: every card, as cards, in order (creatures by level, then utilities and structures), only to look at. */
 @Component({
   selector: 'eras-decklist-dialog',
-  imports: [PluralPipe, ModalComponent, TableComponent, BadgeComponent, ButtonComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent],
   template: `
-    <eras-modal title="Tu mazo" [subtitle]="total() | plural: 'carta'" (closed)="ref.close()">
-      <eras-table>
-        <table>
-          <thead><tr><th>Carta</th><th>Copias</th><th class="actions">Acciones</th></tr></thead>
-          <tbody>
-            @for (row of rows(); track row.cardId) {
-              <tr>
-                <td>{{ row.name }}</td>
-                <td>
-                  {{ row.copies.length }}
-                  @if (row.missing.length) {
-                    <eras-badge tone="danger">{{ row.missing.length }} eliminada{{ row.missing.length > 1 ? 's' : '' }}</eras-badge>
-                  }
-                </td>
-                <td class="actions">
-                  @if (row.missing.length) {
-                    <button erasButton variant="secondary" size="sm" type="button" (click)="game.restoreCard(row.missing[0])">Restaurar 1</button>
-                  }
-                  <button erasButton variant="ghost" size="sm" type="button" (click)="game.refreshCardMetadata(row.cardId)">Actualizar datos</button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </eras-table>
+    <eras-modal size="xl" title="Tu mazo" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
+      <ol class="cards" aria-label="Cartas de tu mazo">
+        @for (c of cards(); track c.instanceId) {
+          <li>
+            <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [attr.aria-label]="c.cardName" />
+          </li>
+        }
+      </ol>
     </eras-modal>
+  `,
+  styles: `
+    .cards {
+      --game-card-width: 7.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    li { display: flex; justify-content: center; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DecklistDialogComponent {
   protected readonly ref = inject(DialogRef);
-  protected readonly game = inject(GameStore);
+  private readonly game = inject(GameStore);
 
-  protected readonly total = computed(() => this.game.myState()?.originalDeck.length ?? 0);
-  protected readonly rows = computed<DeckRow[]>(() => {
-    const me = this.game.myState();
-    if (!me) return [];
-    const present = new Set<string>();
-    for (const zone of ZONES) {
-      for (const c of me[zone]) {
-        present.add(c.instanceId);
-        for (const a of [...c.materials, ...c.resources]) present.add(a.instanceId);
-      }
-    }
-    const rows = new Map<string, DeckRow>();
-    for (const slot of me.originalDeck) {
-      const row = rows.get(slot.cardId) ?? { cardId: slot.cardId, name: slot.cardName ?? '—', copies: [], missing: [] };
-      row.copies.push(slot);
-      if (!present.has(slot.instanceId)) row.missing.push(slot);
-      rows.set(slot.cardId, row);
-    }
-    return [...rows.values()].sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  });
+  protected readonly cards = computed<CardSlot[]>(() =>
+    [...(this.game.myState()?.originalDeck ?? [])].sort(
+      (a, b) =>
+        (TYPE_ORDER[a.cardType ?? ''] ?? 3) - (TYPE_ORDER[b.cardType ?? ''] ?? 3) ||
+        (a.level ?? 0) - (b.level ?? 0) ||
+        (a.cardName ?? '').localeCompare(b.cardName ?? '', 'es'),
+    ),
+  );
 }

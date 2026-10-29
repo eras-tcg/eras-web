@@ -3,18 +3,11 @@
   <ng-template #strip let-gems="gems">
     <div class="strip" [class.with-gems]="gems">
       <eras-stack direction="row" [gap]="3" align="center" wrap>
-        <strong>{{ statusLabel() }}</strong>
-        @if (game.editorRoom()) {
-          <span class="editor-badge">Partida de prueba</span>
-        } @else if (game.editorMode() && !editMode.active()) {
+        @if (!game.editorRoom() && game.editorMode() && !editMode.active()) {
           <span class="editor-badge">Modo editor</span>
         }
         @if (inProgress()) {
-          @if (game.editorRoom()) {
-            <span class="my-turn">Turno de {{ turnName() }}</span>
-          } @else {
-            <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }}</span>
-          }
+          <span class="turn" [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
         }
         @if (!game.connected()) {
           <span class="warn">Sin conexión, reintentando…</span>
@@ -51,6 +44,11 @@
   </ng-template>
 
   <!-- Options: a sidebar on the right, only icons when collapsed (their name on hover) -->
+  @if (inGame()) {
+  @if (sidebarExpanded() && !sidebarDynamic()) {
+    <!-- Expanded by hand it lies over the table, like a modal: a click outside collapses it -->
+    <button type="button" class="sidebar-backdrop" aria-label="Contraer el menú" (click)="toggleSidebar(); $event.stopPropagation()"></button>
+  }
   <aside
     class="sidebar"
     [class.open]="sidebarOpen()"
@@ -58,6 +56,10 @@
     (mouseenter)="sidebarHover.set(true)"
     (mouseleave)="sidebarHover.set(false)"
   >
+    <button type="button" class="item" [title]="headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación'" (click)="toggleHeader()">
+      <eras-icon [name]="headerHidden() ? 'chevron-down' : 'chevron-up'" />
+      <span>{{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}</span>
+    </button>
     <button type="button" class="item" [title]="sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú'" (click)="toggleSidebar()">
       <eras-icon [name]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" />
       <span>{{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}</span>
@@ -70,6 +72,10 @@
     }
     <hr />
     @if (game.editorRoom()) {
+      <div class="notice" title="Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba">
+        <eras-icon name="edit" />
+        <span>Partida de prueba</span>
+      </div>
       @if (otherSide(); as other) {
         <button type="button" class="item" [title]="'Ver desde ' + other.username" (click)="game.followActive.set(false); game.playSide(other.userId)">
           <eras-icon name="user" />
@@ -88,7 +94,8 @@
         <eras-icon name="square-plus" />
         <span>Crear carta de prueba</span>
       </button>
-    } @else {
+    } @else if (!editMode.active()) {
+      <!-- With the site's edit mode on, the editor mode is on -->
       <button type="button" class="item" [class.on]="game.editorMode()" title="Modo editor (acciones manuales)" (click)="game.setEditorMode(!game.editorMode())">
         <eras-icon name="edit" />
         <span>Modo editor{{ game.editorMode() ? ' ✓' : '' }}</span>
@@ -101,10 +108,6 @@
     <button type="button" class="item" [class.on]="fullscreen()" title="Pantalla completa (cartas del campo más grandes)" (click)="toggleFullscreen()">
       <eras-icon name="maximize" />
       <span>Pantalla completa{{ fullscreen() ? ' ✓' : '' }}</span>
-    </button>
-    <button type="button" class="item" [class.on]="!headerHidden()" [title]="headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación'" (click)="toggleHeader()">
-      <eras-icon name="menu" />
-      <span>Barra de navegación{{ headerHidden() ? '' : ' ✓' }}</span>
     </button>
     <hr />
     <button type="button" class="item" title="Ver mi mazo" (click)="dialogs.decklist()">
@@ -126,10 +129,10 @@
       <span>Salir</span>
     </button>
   </aside>
+  }
 
   @if (game.status() === 'WAITING') {
     <!-- Before a game: decks, starters, who goes first and both confirm -->
-    <ng-container *ngTemplateOutlet="strip; context: { gems: false }" />
     <eras-pre-room />
   } @else {
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->

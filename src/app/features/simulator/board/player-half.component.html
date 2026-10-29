@@ -19,7 +19,7 @@
   >
     <!-- Sideways, like a physical pile: the first life (nearest the gem marker) lies on top of the next one; the
          edge of each covered card shows its right side, where its strength is printed -->
-    <div class="life-stack" [attr.draggable]="opponent() || !game.editorMode() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
+    <div class="life-stack" [style.--lives]="p.lifeStack.length" [attr.draggable]="opponent() || !game.editorMode() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
       @for (life of p.lifeStack; track life.instanceId; let i = $index) {
         <div class="life" [style.z-index]="p.lifeStack.length - i">
           <eras-game-card [imageUrl]="life.imageUrl" [name]="life.cardName" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
@@ -83,7 +83,7 @@
   <!-- A fan: only the upper half of each card shows (the rest is off the table); they overlap just a little -->
   <div class="hand-cards">
     @for (s of p.hand; track s.instanceId; let i = $index) {
-      <div class="in-hand" [style.--fan]="i - (p.hand.length - 1) / 2">
+      <div class="in-hand" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2">
         <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
       </div>
     }

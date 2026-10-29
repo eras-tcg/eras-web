@@ -35,6 +35,8 @@ export interface CardSlot {
   floating?: FloatingEffect[];
   materials: CardSlot[];
   resources: CardSlot[];
+  /** What of its effects the rules engine does not run yet (played by hand); null when all of it runs. */
+  unprogrammed?: string | null;
 }
 
 /** "Pierde 3 de fuerza hasta el final del turno", from Arc xioma. */

@@ -41,6 +41,9 @@
                 }
               </div>
             }
+            @if (s.unprogrammed) {
+              <p class="unprogrammed" role="note"><eras-icon name="alert" /> Sin programar en el simulador: {{ s.unprogrammed }}. Se juega a mano.</p>
+            }
             @if (modifiers(); as m) {
               <section class="panel modifiers" aria-label="Modificadores">
                 <h4><eras-icon name="sparkles" /> Ahora</h4>

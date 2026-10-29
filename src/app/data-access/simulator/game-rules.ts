@@ -27,6 +27,12 @@ export function deckWarnings(originalDeck: readonly CardSlot[]): string[] {
     for (const s of noMeta) counts.set(s.cardName || '?', (counts.get(s.cardName || '?') ?? 0) + 1);
     warnings.push(`Sin metadatos: ${[...counts].map(([name, n]) => (n > 1 ? `×${n} ${name}` : name)).join(', ')}`);
   }
+  // Effects the rules engine does not run: they are played by hand (editor mode)
+  const unprogrammed = new Map<string, number>();
+  for (const s of originalDeck) if (s.unprogrammed) unprogrammed.set(s.cardName || '?', (unprogrammed.get(s.cardName || '?') ?? 0) + 1);
+  if (unprogrammed.size) {
+    warnings.push(`Efectos sin programar (se juegan a mano): ${[...unprogrammed].map(([name, n]) => (n > 1 ? `×${n} ${name}` : name)).join(', ')}`);
+  }
   return warnings;
 }
 

@@ -21,19 +21,38 @@ import { BoardDrag } from './board-drag';
 import { PlayerHalfComponent } from './player-half.component';
 import { StatusPanelsComponent } from './status-panels.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
 
+const MIRRORED_KEY = 'eras-sim-mirrored';
+const HEADER_KEY = 'eras-sim-header-hidden';
+
+function readFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string, on: boolean): void {
+  try {
+    localStorage.setItem(key, on ? '1' : '0');
+  } catch {
+    // Not remembered (private window, blocked storage)
+  }
+}
+
 const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -70,6 +89,10 @@ export class BoardPage {
   /** The owner of the room is the rival (if they stay away, the room passes to me). */
   protected readonly rivalOwns = computed(() => !!this.game.state()?.hostId && this.game.state()?.hostId === this.game.opponentState()?.userId);
   protected readonly dismissedLeft = signal(false);
+  /** "Zonas espejadas": the rival's lives and gems swap with their piles. Remembered on the device. */
+  protected readonly mirrored = signal(readFlag(MIRRORED_KEY));
+  /** The site's navigation bar is hidden to give the table more height. Remembered on the device. */
+  protected readonly headerHidden = signal(readFlag(HEADER_KEY));
   private leaving = false;
 
   /** The phases of the turn in the bar. */
@@ -137,6 +160,9 @@ export class BoardPage {
       this.document.body.classList.toggle('eras-acting-me', !!acting && acting === me);
       this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
     });
+    // The site's navigation bar, hidden while on the table if asked
+    effect(() => this.document.body.classList.toggle('eras-hide-header', this.headerHidden()));
+    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-hide-header'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
     inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open'));
@@ -186,6 +212,16 @@ export class BoardPage {
       });
     });
     inject(DestroyRef).onDestroy(() => open?.close());
+  }
+
+  protected toggleMirrored(): void {
+    this.mirrored.update((on) => !on);
+    writeFlag(MIRRORED_KEY, this.mirrored());
+  }
+
+  protected toggleHeader(): void {
+    this.headerHidden.update((on) => !on);
+    writeFlag(HEADER_KEY, this.headerHidden());
   }
 
   private nextPopup(): void {

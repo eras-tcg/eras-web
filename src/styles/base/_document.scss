@@ -55,6 +55,11 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
+// The simulator can hide the site's navigation bar to give the table the whole height
+body.eras-hide-header eras-shell header.header {
+  display: none;
+}
+
 // A chain is shown above the choices: they leave it room at the top
 body.eras-chain-open {
   --sheet-max-block-size: 58vh;

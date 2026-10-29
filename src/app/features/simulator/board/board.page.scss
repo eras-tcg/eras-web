@@ -2,8 +2,10 @@
 :host {
   display: block;
   block-size: calc(100dvh - var(--app-header-height, 3rem));
-  padding: var(--space-2) var(--space-3);
-  overflow: hidden;
+  // No padding at the top and bottom: the hands go past the edges of the table (only their upper half shows)
+  padding: 0 var(--space-3);
+  // clip, not hidden: the hands go past the edges and focusing one of their cards must not scroll the table
+  overflow: clip;
 }
 
 .board {
@@ -75,19 +77,40 @@
   overflow: auto;
 }
 
-.topbar {
+// Status and phases | gem bar | controls: the strip across the middle of the table (at the top before a game)
+.strip {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
-.topbar > :last-child {
+.strip:not(.with-gems) {
+  grid-template-columns: 1fr auto;
+  margin-block-start: var(--space-2);
+}
+
+.strip > :last-child {
   justify-self: end;
+}
+
+.strip .gems {
+  min-inline-size: 12rem;
+}
+
+@media (max-width: 70rem) {
+  .strip {
+    grid-template-columns: 1fr auto;
+  }
+
+  .strip .gems {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 // The three phases of the turn, centered; the current one is marked

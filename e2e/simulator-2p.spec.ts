@@ -39,7 +39,7 @@ async function enterWithDeck(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/board$/);
 }
 
-const turnLabel = (page: Page) => page.locator('.topbar').getByText(/Tu turno|Turno del rival/);
+const turnLabel = (page: Page) => page.locator('.strip').getByText(/Tu turno|Turno del rival/);
 
 test('partida real de 2 jugadores', async ({ browser }) => {
   const host = await player(browser, accounts[0]);

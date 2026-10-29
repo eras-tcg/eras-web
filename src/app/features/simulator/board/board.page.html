@@ -1,107 +1,118 @@
 <div class="board">
-  <header class="topbar">
-    <eras-stack direction="row" [gap]="3" align="center" wrap>
-      <strong>{{ statusLabel() }}</strong>
-      @if (game.editorRoom()) {
-        <span class="editor-badge">Partida de prueba</span>
-      } @else if (game.editorMode() && !editMode.active()) {
-        <span class="editor-badge">Modo editor</span>
-      }
-      @if (inProgress()) {
+  <!-- Game status, phases and options: in the middle of the table, around the gem bar (at the top before a game) -->
+  <ng-template #strip let-gems="gems">
+    <div class="strip" [class.with-gems]="gems">
+      <eras-stack direction="row" [gap]="3" align="center" wrap>
+        <strong>{{ statusLabel() }}</strong>
         @if (game.editorRoom()) {
-          <span class="my-turn">Turno de {{ turnName() }}</span>
-        } @else {
-          <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }}</span>
+          <span class="editor-badge">Partida de prueba</span>
+        } @else if (game.editorMode() && !editMode.active()) {
+          <span class="editor-badge">Modo editor</span>
         }
-      }
-      @if (!game.connected()) {
-        <span class="warn">Sin conexión, reintentando…</span>
-      }
-    </eras-stack>
-    @if (inProgress()) {
-      <!-- The phases of the turn are its controls: on your turn, the next phase you can go to is a button -->
-      <ol class="phases" aria-label="Fases del turno">
-        @for (p of phases; track p.id) {
-          <li>
-            <button
-              type="button"
-              [class.current]="currentPhase() === p.id"
-              [class.mine]="game.isMyTurn()"
-              [class.next]="canGoTo(p.id)"
-              [disabled]="!canGoTo(p.id)"
-              [attr.aria-current]="currentPhase() === p.id ? 'step' : null"
-              [title]="phaseHint(p.id)"
-              (click)="goTo(p.id)"
-            >{{ p.label }}</button>
-          </li>
-        }
-      </ol>
-    }
-    <eras-stack direction="row" [gap]="2" align="center" wrap>
-      @if (inProgress() && game.isMyTurn()) {
-        @if (game.editorMode()) {
-          <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
-        }
-      }
-      @if (game.editorRoom()) {
-        <!-- Test room: the side played (the board is seen from it) -->
-        <div class="sides" role="group" aria-label="Lado que controlas">
-          @for (p of game.sides(); track p.userId) {
-            <button
-              type="button"
-              [class.on]="game.myState()?.userId === p.userId"
-              [attr.aria-pressed]="game.myState()?.userId === p.userId"
-              (click)="game.followActive.set(false); game.playSide(p.userId)"
-            >{{ p.username }}</button>
-          }
-        </div>
-        @if (game.status() !== 'WAITING') {
-          <button erasButton variant="secondary" size="sm" type="button" (click)="dialogs.dummyCard()">Crear carta</button>
-        }
-      }
-      @if (game.pendingTargetSource()) {
-        <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>
-      }
-      <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="options">Opciones</button>
-      <ng-template #options>
-        <eras-menu>
+        @if (inProgress()) {
           @if (game.editorRoom()) {
-            <button erasMenuItem (triggered)="game.followActive.set(!game.followActive())">
-              {{ game.followActive() ? '✓ ' : '' }}Cambiar de lado según quién actúa
-            </button>
-            <button erasMenuItem (triggered)="game.revealHidden.set(!game.revealHidden())">
-              {{ game.revealHidden() ? '✓ ' : '' }}Mostrar cartas ocultas (manos, vidas, mazo)
-            </button>
-            <button erasMenuItem (triggered)="dialogs.dummyCard()">Crear carta de prueba</button>
+            <span class="my-turn">Turno de {{ turnName() }}</span>
           } @else {
-            <button erasMenuItem (triggered)="game.setEditorMode(!game.editorMode())">{{ game.editorMode() ? 'Salir del modo editor' : 'Modo editor (acciones manuales)' }}</button>
+            <span [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Tu turno' : 'Turno del rival' }}</span>
           }
-          <hr />
-          <button erasMenuItem (triggered)="dialogs.decklist()">Ver mi mazo</button>
-          <button erasMenuItem (triggered)="dialogs.log()">Historial</button>
-          @if (inProgress()) {
-            <button erasMenuItem class="danger" (triggered)="surrender()">Rendirse</button>
+        }
+        @if (!game.connected()) {
+          <span class="warn">Sin conexión, reintentando…</span>
+        }
+        @if (inProgress()) {
+          <!-- The phases of the turn are its controls: on your turn, the next phase you can go to is a button -->
+          <ol class="phases" aria-label="Fases del turno">
+            @for (p of phases; track p.id) {
+              <li>
+                <button
+                  type="button"
+                  [class.current]="currentPhase() === p.id"
+                  [class.mine]="game.isMyTurn()"
+                  [class.next]="canGoTo(p.id)"
+                  [disabled]="!canGoTo(p.id)"
+                  [attr.aria-current]="currentPhase() === p.id ? 'step' : null"
+                  [title]="phaseHint(p.id)"
+                  (click)="goTo(p.id)"
+                >{{ p.label }}</button>
+              </li>
+            }
+          </ol>
+        }
+      </eras-stack>
+      @if (gems) {
+        <eras-shared-bar class="gems" [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
+      }
+      <eras-stack direction="row" [gap]="2" align="center" wrap>
+        @if (inProgress() && game.isMyTurn()) {
+          @if (game.editorMode()) {
+            <button erasButton size="sm" type="button" [disabled]="lookOnly()" (click)="game.drawCard()">Robar</button>
           }
-          <hr />
-          <button erasMenuItem (triggered)="exit()">Salir</button>
-        </eras-menu>
-      </ng-template>
-    </eras-stack>
-  </header>
+        }
+        @if (game.editorRoom()) {
+          <!-- Test room: the side played (the board is seen from it) -->
+          <div class="sides" role="group" aria-label="Lado que controlas">
+            @for (p of game.sides(); track p.userId) {
+              <button
+                type="button"
+                [class.on]="game.myState()?.userId === p.userId"
+                [attr.aria-pressed]="game.myState()?.userId === p.userId"
+                (click)="game.followActive.set(false); game.playSide(p.userId)"
+              >{{ p.username }}</button>
+            }
+          </div>
+          @if (game.status() !== 'WAITING') {
+            <button erasButton variant="secondary" size="sm" type="button" (click)="dialogs.dummyCard()">Crear carta</button>
+          }
+        }
+        @if (game.pendingTargetSource()) {
+          <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>
+        }
+        <button erasButton variant="ghost" size="sm" type="button" [attr.aria-pressed]="headerHidden()" [title]="headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación'" (click)="toggleHeader()">{{ headerHidden() ? '▾ Menú' : '▴ Menú' }}</button>
+        <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="options">Opciones</button>
+        <ng-template #options>
+          <eras-menu>
+            @if (game.editorRoom()) {
+              <button erasMenuItem (triggered)="game.followActive.set(!game.followActive())">
+                {{ game.followActive() ? '✓ ' : '' }}Cambiar de lado según quién actúa
+              </button>
+              <button erasMenuItem (triggered)="game.revealHidden.set(!game.revealHidden())">
+                {{ game.revealHidden() ? '✓ ' : '' }}Mostrar cartas ocultas (manos, vidas, mazo)
+              </button>
+              @if (game.status() === 'WAITING') {
+                <button erasMenuItem (triggered)="dialogs.dummyCard()">Crear carta de prueba</button>
+              }
+            } @else {
+              <button erasMenuItem (triggered)="game.setEditorMode(!game.editorMode())">{{ game.editorMode() ? 'Salir del modo editor' : 'Modo editor (acciones manuales)' }}</button>
+            }
+            <button erasMenuItem (triggered)="toggleMirrored()">{{ mirrored() ? '✓ ' : '' }}Zonas espejadas</button>
+            <hr />
+            <button erasMenuItem (triggered)="dialogs.decklist()">Ver mi mazo</button>
+            <button erasMenuItem (triggered)="dialogs.log()">Historial</button>
+            @if (inProgress()) {
+              <button erasMenuItem class="danger" (triggered)="surrender()">Rendirse</button>
+            }
+            <hr />
+            <button erasMenuItem (triggered)="exit()">Salir</button>
+          </eras-menu>
+        </ng-template>
+      </eras-stack>
+    </div>
+  </ng-template>
 
   @if (game.status() === 'WAITING') {
     <!-- Before a game: decks, starters, who goes first and both confirm -->
+    <ng-container *ngTemplateOutlet="strip; context: { gems: false }" />
     <eras-pre-room />
   } @else {
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
   <div class="table" [class.in-combat]="!!game.state()?.combat">
     @if (game.myState(); as me) {
       @if (game.opponentState(); as opp) {
-        <eras-player-half [player]="opp" opponent />
+        <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" />
       } @else {
         <div class="empty-side">El rival todavía no entra a la sala.</div>
       }
-      <eras-shared-bar [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
+      <ng-container *ngTemplateOutlet="strip; context: { gems: true }" />
       <eras-player-half [player]="me" />
     } @else {
       <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>

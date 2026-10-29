@@ -27,11 +27,13 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.opponent]': 'opponent()' },
+  host: { '[class.opponent]': 'opponent()', '[class.mirrored]': 'mirrored()' },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
+  /** "Zonas espejadas": the rival's lives and gem marker swap places with their piles. */
+  readonly mirrored = input(false, { transform: booleanAttribute });
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
   private readonly lookOnly = inject(SheetState).lowered;
 
@@ -128,13 +130,15 @@ export class PlayerHalfComponent {
         this.dialogs.creatureInteraction(dragged, nearby, card.fromZone);
         return;
       }
-      // A creature from the hand without an effect: normal summon by the rules (the server pays and triggers)
-      if (this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && dragged?.cardType === 'creature') {
+      // A creature from the hand without an effect: normal summon by the rules (the server pays and triggers).
+      // In editor mode dragging is a manual move (hand, Retaguardia and Línea frontal freely); the rules' summon is in the card's actions
+      const rules = !this.game.editorMode();
+      if (rules && this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && dragged?.cardType === 'creature') {
         this.game.normalSummon(card.instanceId, pos.x, pos.y);
         return;
       }
       // Utilities and structures from the hand are played: the server pays them and fires "En Juego"
-      if (this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && (dragged?.cardType === 'utility' || dragged?.cardType === 'structure')) {
+      if (rules && this.game.status() === 'IN_PROGRESS' && card.fromZone === 'hand' && (dragged?.cardType === 'utility' || dragged?.cardType === 'structure')) {
         this.game.playCard(card.instanceId, pos.x, pos.y);
         return;
       }

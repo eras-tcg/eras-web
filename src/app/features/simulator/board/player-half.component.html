@@ -17,9 +17,13 @@
     (drop)="drop($event, 'lifeStack', lifeHalf($event))"
     (click)="pileClick('lifeStack')"
   >
+    <!-- Sideways, like a physical pile: the first life (nearest the gem marker) lies on top of the next one; the
+         edge of each covered card shows its right side, where its strength is printed -->
     <div class="life-stack" [attr.draggable]="opponent() || !game.editorMode() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
-      @for (life of p.lifeStack; track life.instanceId) {
-        <eras-game-card small [imageUrl]="life.imageUrl" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
+      @for (life of p.lifeStack; track life.instanceId; let i = $index) {
+        <div class="life" [style.z-index]="p.lifeStack.length - i">
+          <eras-game-card [imageUrl]="life.imageUrl" [name]="life.cardName" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
+        </div>
       }
     </div>
   </eras-game-zone>
@@ -76,9 +80,12 @@
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
 >
+  <!-- A fan: only the upper half of each card shows (the rest is off the table); they overlap just a little -->
   <div class="hand-cards">
-    @for (s of p.hand; track s.instanceId) {
-      <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" small />
+    @for (s of p.hand; track s.instanceId; let i = $index) {
+      <div class="in-hand" [style.--fan]="i - (p.hand.length - 1) / 2">
+        <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
+      </div>
     }
   </div>
   @if (effectSummon()) {
@@ -93,6 +100,7 @@
 <!-- Deck and piles -->
 <div class="piles">
   <eras-game-zone
+    class="pile deck"
     label="Mazo"
     [attr.data-pile]="p.userId + ':deck'"
     [count]="p.deck.length"
@@ -107,7 +115,7 @@
     (dblclick)="deckDoubleClick()"
   >
     @if (p.deck.length) {
-      <eras-game-card small hidden />
+      <eras-game-card hidden />
     }
   </eras-game-zone>
   <ng-template #deckMenu>
@@ -128,6 +136,7 @@
   </ng-template>
 
   <eras-game-zone
+    class="pile tributes"
     label="Tributos"
     [attr.data-pile]="p.userId + ':tributeZone'"
     [count]="p.tributeZone.length"
@@ -142,15 +151,12 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card small [imageUrl]="t.imageUrl" [hidden]="t.faceDown" />
+      <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown" />
     }
   </eras-game-zone>
 
-  @if (!opponent()) {
-    <eras-game-zone label="Fondo del mazo" [dropActive]="over() === 'deckBottom'" (dragover)="dragOver($event, 'deckBottom')" (dragleave)="dragLeave()" (drop)="drop($event, 'deckBottom')" />
-  }
-
   <eras-game-zone
+    class="pile discard"
     label="Descarte"
     [attr.data-pile]="p.userId + ':discardPile'"
     [count]="p.discardPile.length"
@@ -163,7 +169,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card small [imageUrl]="d.imageUrl" [hidden]="d.faceDown" />
+      <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown" />
     }
   </eras-game-zone>
 </div>

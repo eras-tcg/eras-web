@@ -1,8 +1,15 @@
-// Board layout of one side: lives | field over hand | piles. The opponent side swaps field and hand.
+// Board layout of one side: lives | field over hand | piles. The opponent side swaps field and hand; with the
+// mirrored zones its lives and piles swap too, so both side columns are as wide.
 :host {
+  // Card sizes: the hand shows only the upper half of its cards; the lives lie sideways
+  --hand-card: 7.5rem;
+  --hand-peek: calc(var(--hand-card) * 88 / 63 * 0.5);
+  --life-card: 7rem;
+  --side: 15rem;
+
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) 11.5rem;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
+  grid-template-rows: minmax(0, 1fr) var(--hand-peek);
   grid-template-areas:
     'lives field piles'
     'lives hand piles';
@@ -11,10 +18,16 @@
 }
 
 :host(.opponent) {
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: var(--hand-peek) minmax(0, 1fr);
   grid-template-areas:
     'lives hand piles'
     'lives field piles';
+}
+
+:host(.opponent.mirrored) {
+  grid-template-areas:
+    'piles hand lives'
+    'piles field lives';
 }
 
 .lives {
@@ -49,17 +62,47 @@
   overflow: hidden;
 }
 
+// The lives lie sideways (a box as wide as the card is tall). Yours go down from the gem marker; the rival's go up
 .life-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   max-block-size: 100%;
-  padding-block-end: 2rem;
 }
 
-// Lives overlap like a physical pile
-.life-stack eras-game-card + eras-game-card {
-  margin-block-start: -3.7rem;
+:host(.opponent) .life-stack {
+  flex-direction: column-reverse;
+}
+
+.life {
+  position: relative;
+  flex: none;
+  inline-size: calc(var(--life-card) * 88 / 63);
+  block-size: var(--life-card);
+}
+
+// Each card covers all but a strip of the next one: the strip is the card's right edge, with its strength
+.life + .life {
+  margin-block-start: calc(var(--life-card) * -0.74);
+}
+
+:host(.opponent) .life + .life {
+  margin-block-start: 0;
+  margin-block-end: calc(var(--life-card) * -0.74);
+}
+
+.life eras-game-card {
+  --game-card-width: var(--life-card);
+
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  // Clockwise: the right edge faces down, towards the covered part; the rival's, counter-clockwise (up)
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+:host(.opponent) .life eras-game-card {
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .field {
@@ -83,12 +126,13 @@
 // One line of the field: cards side by side, centered
 .line {
   position: relative;
+  container-type: size;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   min-block-size: 0;
-  padding: var(--space-4) var(--space-3) var(--space-1);
+  padding: 1.1rem var(--space-3) 0.2rem;
 }
 
 .line + .line {
@@ -120,7 +164,10 @@
   pointer-events: none;
 }
 
+// Field cards as big as their line allows (an exhausted one turns: it needs its height as width too)
 .placed {
+  --game-card-width: min(7.5rem, calc((100cqh - 1.4rem) * 63 / 88));
+
   flex: none;
 }
 
@@ -140,20 +187,57 @@
   text-align: center;
 }
 
+// The hand lies at the edge of the table: its cards go past it (the board clips them), so only their upper half
+// (the art) shows. The rival's hangs from the top edge.
 .hand {
   grid-area: hand;
   position: relative;
-  min-block-size: 6.5rem;
+  border: none;
+  background: none;
+  padding: 0;
+  overflow: visible;
 }
 
 .hand-cards {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
   display: flex;
-  justify-content: safe center;
-  gap: var(--space-2);
-  // Room for the glow of playable cards (the horizontal scroll would clip it)
-  padding: 0.6rem 0.6rem;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  justify-content: center;
+}
+
+:host(.opponent) .hand-cards {
+  inset-block: auto 0;
+  align-items: flex-end;
+}
+
+// A slight fan: the cards turn and drop towards the ends, overlapping only a little
+.in-hand {
+  --game-card-width: var(--hand-card);
+
+  flex: none;
+  margin-inline: calc(var(--hand-card) * -0.08);
+  transform-origin: 50% 100%;
+  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * 0.18rem)) rotate(calc(var(--fan) * 3deg));
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+:host(.opponent) .in-hand {
+  transform-origin: 50% 0;
+  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * -0.18rem)) rotate(calc(var(--fan) * -3deg));
+}
+
+// Your card rises to be seen whole while the pointer is on it
+:host(:not(.opponent)) .in-hand:hover,
+:host(:not(.opponent)) .in-hand:focus-within {
+  z-index: 2;
+  transform: translateY(calc(var(--hand-peek) * -1)) rotate(0deg);
+}
+
+.hand-cards:empty::after {
+  content: 'Mano vacía';
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
 }
 
 .effect-prompt {
@@ -177,9 +261,31 @@
   grid-area: piles;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'deck tributes'
+    'discard .';
   gap: var(--space-2);
   min-block-size: 0;
+}
+
+:host(.opponent) .piles {
+  grid-template-areas:
+    'discard .'
+    'deck tributes';
+}
+
+.pile.deck { grid-area: deck; }
+.pile.tributes { grid-area: tributes; }
+.pile.discard { grid-area: discard; }
+
+// Each pile's card takes the whole zone it has (its label aside)
+.pile {
+  container-type: size;
+}
+
+.pile eras-game-card {
+  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem) * 63 / 88));
 }
 
 @media (max-width: 48rem) {

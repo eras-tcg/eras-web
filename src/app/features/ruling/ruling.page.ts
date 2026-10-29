@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { CardsStore } from '@data/cards/cards.store';
 import { GemState, INITIAL_GEMS, excess, gemTrack, nextTurn, remaining, spend, spendLimit } from '@data/rules/gems';
 import { GemTrackComponent } from '@ui/domain/gem-track/gem-track.component';
 import { PlaymatComponent, PlaymatZone } from '@ui/domain/playmat/playmat.component';
@@ -12,7 +13,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { TabsComponent } from '@ui/surfaces/tabs/tabs.component';
 
-type Section = 'definitions' | 'cards' | 'resources' | 'board';
+type Section = 'definitions' | 'setup' | 'cards' | 'resources' | 'board' | 'turn' | 'combat' | 'effects' | 'keywords';
 
 const ZONES: PlaymatZone[] = [
   { number: 1, name: 'Vidas', area: 'lives' },
@@ -29,17 +30,43 @@ const ZONES: PlaymatZone[] = [
   selector: 'eras-ruling-page',
   imports: [PageComponent, TabsComponent, ProseComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent, GemTrackComponent, PlaymatComponent],
   templateUrl: './ruling.page.html',
+  styles: `
+    .keywords { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); }
+    .keywords dt { font-weight: var(--font-weight-bold); }
+    .keywords dd { margin: 0; }
+    @media (max-width: 40rem) { .keywords { grid-template-columns: 1fr; } .keywords dd { margin-block-end: var(--space-2); } }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RulingPage {
   protected readonly sections = [
     { key: 'definitions', label: 'Definiciones' },
+    { key: 'setup', label: 'Preparación' },
     { key: 'cards', label: 'Tipos de carta' },
     { key: 'resources', label: 'Recursos' },
     { key: 'board', label: 'Zonas de juego' },
+    { key: 'turn', label: 'El turno' },
+    { key: 'combat', label: 'Combate' },
+    { key: 'effects', label: 'Efectos y cadenas' },
+    { key: 'keywords', label: 'Habilidades' },
   ];
   protected readonly section = signal<Section>('definitions');
   protected readonly zones = ZONES;
+  private readonly cards = inject(CardsStore);
+  protected readonly cardsLoading = this.cards.loading;
+
+  /** Keyword abilities from the reference data (one per name: "Provocar" and "Provocar {nivel}" both listed). */
+  protected readonly keywords = computed(() =>
+    Object.entries(this.cards.ref()?.keywordEffects ?? {})
+      .map(([name, k]) => ({ name, text: (k?.displayText ?? k?.description ?? '').replace(/^<[^>]*>\s*/, '') }))
+      .filter((k) => k.text)
+      .map((k) => ({ ...k, text: k.text.charAt(0).toUpperCase() + k.text.slice(1) }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+  );
+
+  constructor() {
+    void this.cards.load();
+  }
 
   // ── Gem simulator ─────────────────────────────────────────────────────
   protected readonly gems = signal<GemState>(INITIAL_GEMS);

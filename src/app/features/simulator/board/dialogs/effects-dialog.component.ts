@@ -28,7 +28,7 @@ export interface EffectsDialogData {
     <eras-modal size="lg" [title]="'Efectos de ' + (card()?.slot?.cardName ?? 'la carta')" subtitle="Usa cada acción cuando corresponda; tú decides las condiciones y los objetivos." (closed)="ref.close()">
       @if (card(); as c) {
         <div class="layout">
-          <eras-game-card class="art" [imageUrl]="c.slot.imageUrl" />
+          <eras-game-card class="art" [imageUrl]="c.slot.imageUrl" [name]="c.slot.cardName ?? null" />
           <eras-stack [gap]="3">
             @for (e of effects(); track $index; let i = $index) {
               <eras-card padding="sm">

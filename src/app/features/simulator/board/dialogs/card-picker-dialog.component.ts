@@ -49,7 +49,7 @@ export interface CardPickerData {
               [attr.aria-label]="c.cardName ?? 'Carta'"
               (click)="toggle(c.instanceId)"
             >
-              <eras-game-card [imageUrl]="c.imageUrl" />
+              <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
               <span class="name">{{ c.cardName }}</span>
             </button>
           }

@@ -270,6 +270,8 @@ export interface EffectPrompt {
   effects?: OfferedEffect[] | null;
   /** The whole text of the effect resolving or paying its cost. */
   effectText?: string | null;
+  /** The levels of the cards chosen may add up to this at most. */
+  maxLevelSum?: number | null;
 }
 
 /** An effect offered to be chained (a card can trigger several at once: its own and the inherited ones). */

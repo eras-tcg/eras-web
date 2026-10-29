@@ -44,6 +44,9 @@
     }
   }
   @if (!prompt.effects?.length) {
+  @if (prompt.maxLevelSum != null) {
+    <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
+  }
   @if (hiddenCount() > 0) {
     <label class="show-all">
       <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
@@ -66,30 +69,31 @@
           class="pick"
           [class.static]="prompt.kind === 'CONFIRM'"
           [class.chosen]="chosen().has(c.instanceId)"
-          [class.locked]="!valid.has(c.instanceId)"
-          [disabled]="!valid.has(c.instanceId) || sending() || prompt.kind === 'CONFIRM'"
+          [class.locked]="!selectable(c)"
+          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM'"
           [attr.aria-pressed]="chosen().has(c.instanceId)"
-          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? '' : ', no cumple el efecto')"
+          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : ', supera la suma de niveles') : ', no cumple el efecto')"
           (click)="toggle(c.instanceId)"
         >
           <eras-game-card [imageUrl]="c.imageUrl" [class.new-card]="game.newInHand().has(c.instanceId)" />
           <span class="tag">
             @if (chosen().has(c.instanceId)) {
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
-            } @else if (prompt.kind === 'CONFIRM') {
-              {{ c.cardName }}
-            } @else if (!valid.has(c.instanceId)) {
+            } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
               No cumple
+            } @else if (prompt.maxLevelSum != null && !selectable(c)) {
+              Supera {{ prompt.maxLevelSum }} niveles
             } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
               {{ effectLabel }}
-            } @else {
-              {{ c.cardName }}
             }
           </span>
           @if (zoneOf(c); as zone) {
             <span class="zone">{{ zone }}</span>
           }
         </button>
+        @if (!c.faceDown || game.seeAll()) {
+          <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>
+        }
       </div>
     } @empty {
       <p class="hint">No hay cartas que cumplan.</p>

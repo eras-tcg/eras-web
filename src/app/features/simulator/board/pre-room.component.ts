@@ -101,7 +101,7 @@ export class PreRoomComponent {
 
   protected readonly firstChoice = computed(() => this.game.state()?.firstChoice ?? 'random');
   protected readonly firstOptions = computed(() => [
-    ...this.seats().filter((p): p is PlayerState => !!p).map((p) => ({ id: p.userId, label: p.userId === this.me() ? 'Yo' : p.username })),
+    ...this.seats().filter((p): p is PlayerState => !!p).map((p) => ({ id: p.userId, label: !this.game.editorRoom() && p.userId === this.me() ? 'Yo' : p.username })),
     { id: 'random', label: 'Aleatorio' },
   ]);
   protected readonly firstLabel = computed(() => {

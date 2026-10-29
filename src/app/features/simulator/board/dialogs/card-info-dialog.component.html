@@ -45,7 +45,7 @@
               <section class="panel modifiers" aria-label="Modificadores">
                 <h4><eras-icon name="sparkles" /> Ahora</h4>
                 @if (m.strength) {
-                  <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">(impresa {{ m.strength.base }})</span></p>
+                  <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">&nbsp;(original {{ m.strength.base }})</span></p>
                 }
                 @for (f of m.floating; track $index) {
                   <p><span [class.gain]="f.strength > 0 || (f.keyword && f.strength >= 0)" [class.loss]="f.strength < 0">{{ f.text }}</span>@if (f.source) {<span class="muted"> · {{ f.source }}</span>}</p>

@@ -7,6 +7,7 @@ import { AttachmentType, CardInfoData, CardInfoDialogComponent } from './dialogs
 import { CreatureInteractionData, CreatureInteractionDialogComponent } from './dialogs/creature-interaction-dialog.component';
 import { DeckPeekData, DeckPeekDialogComponent } from './dialogs/deck-peek-dialog.component';
 import { DecklistDialogComponent } from './dialogs/decklist-dialog.component';
+import { DummyCardDialogComponent } from './dialogs/dummy-card-dialog.component';
 import { EffectPromptData, EffectPromptDialogComponent } from './dialogs/effect-prompt-dialog.component';
 import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
@@ -25,7 +26,7 @@ export class BoardDialogs {
 
   cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
     const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent, readonly: this.sheet.lowered() || !this.game.editorMode() };
-    this.modal.open(CardInfoDialogComponent, { data, width: 'min(64rem, 96vw)' });
+    this.modal.open(CardInfoDialogComponent, { data });
   }
 
   detach(slot: CardSlot, only: AttachmentType, opponent: boolean): void {
@@ -35,7 +36,7 @@ export class BoardDialogs {
 
   zone(zone: ZoneName, opponent: boolean): void {
     const data: ZoneDialogData = { zone, opponent, readonly: this.sheet.lowered() || !this.game.editorMode() };
-    this.modal.open(ZoneDialogComponent, { data, width: 'min(48rem, 96vw)' });
+    this.modal.open(ZoneDialogComponent, { data });
   }
 
   creatureInteraction(summoned: CardSlot, summoner: CardSlot, fromZone: ZoneName): void {
@@ -66,10 +67,15 @@ export class BoardDialogs {
   }
 
   decklist(): void {
-    this.modal.open(DecklistDialogComponent, { width: 'min(40rem, 96vw)' });
+    this.modal.open(DecklistDialogComponent, {});
+  }
+
+  /** Test room: makes a card up and places it. */
+  dummyCard(): void {
+    this.modal.open(DummyCardDialogComponent, {});
   }
 
   log(): void {
-    this.modal.open(LogDialogComponent, { width: 'min(40rem, 96vw)' });
+    this.modal.open(LogDialogComponent, {});
   }
 }

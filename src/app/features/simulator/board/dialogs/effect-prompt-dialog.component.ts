@@ -63,7 +63,11 @@ export interface EffectPromptData {
         <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
       }
       @if (prompt.reorderRest) {
-        <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
+        @if (prompt.restToTop) {
+          <p class="hint">Haz clic en las cartas que descartas. Arrastra las demás para ordenarlas: vuelven al tope de tu mazo en ese orden (la de la izquierda queda arriba).</p>
+        } @else {
+          <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
+        }
       }
       @if (!prompt.effects?.length) {
       @if (hiddenCount() > 0) {
@@ -240,6 +244,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'SPECIAL') return 'No invocar';
     if (this.chosen().size > 0 && this.prompt.purpose === 'PRIORITY') return 'Activar';
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
+    if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';

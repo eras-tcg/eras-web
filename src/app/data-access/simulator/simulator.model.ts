@@ -31,8 +31,44 @@ export interface CardSlot {
   turnStrength?: number;
   /** Strength gained or lost until the end of the opponent's next turn ("hasta el final del turno oponente"). */
   laterStrength?: number;
+  /** What effects gave or took from it for a while, with the card they came from. */
+  floating?: FloatingEffect[];
   materials: CardSlot[];
   resources: CardSlot[];
+}
+
+/** "Pierde 3 de fuerza hasta el final del turno", from Arc xioma. */
+export interface FloatingEffect {
+  text: string;
+  source: string | null;
+  until: 'turn' | 'nextTurn' | 'attack';
+  strength: number;
+  keyword: string | null;
+}
+
+/** Test room: a made-up card (or a copy of a real one: its name gives it that card's effects) and where it goes. */
+export interface DummyCard {
+  zone: ZoneName;
+  /** Deck or lives: on top (else at the bottom / the end). */
+  position?: 'top' | 'bottom';
+  faceDown?: boolean;
+  /** Field: where (y < 50 is the Línea frontal). */
+  x?: number;
+  y?: number;
+  cardId?: string | null;
+  imageUrl?: string | null;
+  cardName: string;
+  cardType: 'creature' | 'utility' | 'structure';
+  cost?: number | null;
+  level?: number | null;
+  strength?: number | null;
+  specialCost?: number | null;
+  specialSummonKind?: string | null;
+  requirement?: string | null;
+  starter?: boolean;
+  colors?: string[];
+  classes?: string[];
+  keywords?: string[];
 }
 
 export const ZONES = ['hand', 'deck', 'lifeStack', 'tributeZone', 'discardPile', 'field'] as const;
@@ -42,6 +78,10 @@ export interface PlayerState {
   userId: string;
   username: string;
   connected: boolean;
+  /** Pre-room: the deck's name, the starter chosen (a card id of the deck) and whether they confirmed. */
+  deckName?: string | null;
+  starterCardId?: string | null;
+  ready?: boolean;
   deckId: string | null;
   /** Gem marker (0..5). */
   resourceCount: number;
@@ -68,10 +108,16 @@ export interface GameState {
   status: RoomStatus;
   players: Record<string, PlayerState>;
   hostId: string | null;
+  /** A test room: its owner plays both sides alone (the other side is not a real player). */
+  editor?: boolean;
+  /** Mulligan: who already confirmed their hand. */
+  mulliganReady?: string[] | null;
   currentTurnUserId: string | null;
   currentPhase: string | null;
   event: string | null;
   actorId: string | null;
+  /** The player an event is about (the one taken out of the room by PLAYER_KICKED). */
+  subjectUserId?: string | null;
   error?: string | null;
   /** Shared gem bar, -10..10 from the first player's point of view. */
   sharedCounter: number;
@@ -93,6 +139,8 @@ export interface GameState {
   firstPlayerId?: string | null;
   /** The second player while the "ventaja del iniciador" is unused (−1 to an Iniciador's cost, once). */
   starterAdvantageUserId?: string | null;
+  /** Pre-room: who takes the first turn, chosen by the room's owner (hostId) ("random" or a player id). */
+  firstChoice?: string | null;
   /** Slow effects each player can activate now, by player id. */
   activatable?: Record<string, ActivatableEffect[]> | null;
   /** Cards each player can special summon now (from the hand, or the Tributos when the card allows it), by player id. */
@@ -169,7 +217,10 @@ export type PromptPurpose =
   | 'LIFE_PLAY'
   | 'ORDER'
   | 'OPTIONAL'
-  | 'PRIORITY';
+  | 'PRIORITY'
+  /** A card about to leave the field: replace it ("en su lugar", Protección), and the hand card that pays it. */
+  | 'REPLACE'
+  | 'REPLACE_HAND';
 
 /** A choice the engine waits for; it cannot be dismissed. */
 export interface EffectPrompt {
@@ -196,6 +247,8 @@ export interface EffectPrompt {
   max: number;
   /** The cards not chosen can be reordered (they go to the deck bottom in that order). */
   reorderRest: boolean;
+  /** The rest goes back to the deck top instead of its bottom. */
+  restToTop?: boolean;
   /** The card the choice is about (the creature summoned by Ritual, the life card…). */
   subjectId?: string | null;
   /** Ritual from the hand: the summoner it was dropped onto. */
@@ -223,10 +276,14 @@ export interface RoomInfo {
   roomId?: string;
   status: RoomStatus;
   playerIds?: string[];
+  /** Usernames of the players in it. */
+  players?: string[];
+  playerCount?: number;
+  createdAt?: string;
 }
 
 export const STATUS_LABELS: Record<RoomStatus, string> = {
-  WAITING: 'Esperando oponente',
+  WAITING: 'Preparando la partida',
   SELECTING_STARTER: 'Seleccionando iniciador',
   MULLIGAN: 'Mulligan',
   IN_PROGRESS: 'En curso',

@@ -186,7 +186,8 @@ export class PlayerHalfComponent {
       this.game.target(this.zoneId(zone));
       return;
     }
-    if (zone === 'deck') return;
+    // The whole deck is only looked at (and ordered) in a test room
+    if (zone === 'deck' && !this.game.editorRoom()) return;
     if (this.player()[zone].length) this.dialogs.zone(zone, this.opponent());
   }
 

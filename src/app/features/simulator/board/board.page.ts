@@ -1,6 +1,7 @@
 import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { CardsStore } from '@data/cards/cards.store';
 import { sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
@@ -25,13 +26,14 @@ import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
+import { PreRoomComponent } from './pre-room.component';
 
 const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -52,12 +54,21 @@ export class BoardPage {
   private readonly cards = inject(CardsStore);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
+  /** The site's edit mode banner already says it: no badge of its own then. */
+  protected readonly editMode = inject(EditModeService);
 
   protected readonly statusLabel = computed(() => (this.game.status() ? STATUS_LABELS[this.game.status()!] : 'Conectando…'));
   protected readonly phaseLabel = computed(() => PHASE_LABELS[this.game.phase()] ?? this.game.phase());
   protected readonly inProgress = computed(() => this.game.status() === 'IN_PROGRESS');
+  /** Test room: whose turn it is, by name (both sides are mine). */
+  protected readonly turnName = computed(() => {
+    const id = this.game.state()?.currentTurnUserId;
+    return (id && this.game.state()?.players?.[id]?.username) || '—';
+  });
   protected readonly sharedIndex = computed(() => sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()));
   protected readonly opponentLeft = computed(() => this.game.opponentState()?.connected === false);
+  /** The owner of the room is the rival (if they stay away, the room passes to me). */
+  protected readonly rivalOwns = computed(() => !!this.game.state()?.hostId && this.game.state()?.hostId === this.game.opponentState()?.userId);
   protected readonly dismissedLeft = signal(false);
   private leaving = false;
 
@@ -140,15 +151,13 @@ export class BoardPage {
       });
     });
 
-    // "Cambiar mazo" after a game sends the room back to WAITING: pick a deck again in the lobby
-    let previous: string | null = null;
+    // Taken out of the room (or it closed): back to the lobby, which says why
     effect(() => {
-      const status = this.game.status();
-      if (previous === 'POST_GAME' && status === 'WAITING') {
+      if (!this.game.removed()) return;
+      untracked(() => {
         this.leaving = true;
-        void this.router.navigate(['/simulator', this.roomId()], { replaceUrl: true });
-      }
-      previous = status;
+        void this.router.navigateByUrl('/simulator', { replaceUrl: true });
+      });
     });
 
     effect(() => {
@@ -220,18 +229,30 @@ export class BoardPage {
     await this.router.navigateByUrl('/simulator');
   }
 
-  protected async closeRoom(): Promise<void> {
-    this.game.closeRoom();
-    this.leaving = true;
-    await this.router.navigateByUrl('/home');
+  /** The owner takes the disconnected rival out of the room (the game ends; the pre-room waits for another). */
+  protected kickRival(): void {
+    const rival = this.game.opponentState();
+    if (rival) this.game.kickPlayer(rival.userId);
   }
 
-  /** Route guard: leaving a game in progress asks first; leaving always disconnects. */
+  /**
+   * Route guard. Leaving a game in course asks first and keeps the seat (the owner may wait for you or take you
+   * out); leaving the pre-room or a finished game frees the seat. Leaving always disconnects.
+   */
   async confirmLeave(): Promise<boolean> {
-    if (!this.leaving && this.game.status() === 'IN_PROGRESS') {
-      const ok = await this.modal.confirm({ title: 'Salir de la partida', message: 'La partida sigue sin ti; puedes volver desde el enlace de la sala.', confirmLabel: 'Salir' });
+    const status = this.game.status();
+    const playing = status === 'IN_PROGRESS' || status === 'MULLIGAN' || status === 'SELECTING_STARTER';
+    if (!this.leaving && playing) {
+      const ok = await this.modal.confirm({
+        title: 'Salir de la partida',
+        message: this.game.isHost()
+          ? 'La partida sigue sin ti y puedes volver desde el enlace de la sala. Si no vuelves pronto, tu rival pasa a ser el dueño de la sala.'
+          : 'La partida sigue sin ti y puedes volver desde el enlace de la sala, pero el dueño de la sala puede sacarte mientras no estés.',
+        confirmLabel: 'Salir',
+      });
       if (!ok) return false;
     }
+    if (!playing && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
     // Going back to the lobby of the same room keeps the connection (it reconnects there)
     this.game.disconnect();
     return true;

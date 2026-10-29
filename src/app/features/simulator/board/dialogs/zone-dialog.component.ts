@@ -1,4 +1,3 @@
-import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
@@ -9,10 +8,11 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
+import { firstValueFrom } from 'rxjs';
+import { SendToData, SendToDialogComponent, SendToOption } from './send-to-dialog.component';
 
 export interface ZoneDialogData {
   zone: ZoneName;
@@ -33,77 +33,53 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
   template: `
-    <eras-modal [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
+    <eras-modal size="xl" [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
         <eras-empty-state title="Zona vacía" />
       } @else {
-        @if (!data.opponent && !data.readonly) {
+        @if (canAct()) {
           <eras-stack direction="row" [gap]="2" wrap align="center">
             <button erasButton variant="ghost" size="sm" type="button" (click)="selectAll()">{{ selected().size === cards().length ? 'Quitar selección' : 'Seleccionar todo' }}</button>
             @if (selected().size) {
-              <span>{{ selected().size }} seleccionadas</span>
-              <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="bulk">Mover selección…</button>
-              <ng-template #bulk>
-                <eras-menu>
-                  @for (d of destinations(); track d.zone) {
-                    <button erasMenuItem (triggered)="bulkMove(d.zone)">{{ d.label }}</button>
-                  }
-                  <button erasMenuItem (triggered)="bulkBottom(false)">Al fondo del mazo (en orden)</button>
-                  <button erasMenuItem (triggered)="bulkBottom(true)">Al fondo del mazo (aleatorio)</button>
-                </eras-menu>
-              </ng-template>
+              <span class="count">{{ selected().size }} {{ selected().size === 1 ? 'seleccionada' : 'seleccionadas' }}</span>
+              <button erasButton size="sm" type="button" (click)="sendSelected()">Enviar selección a…</button>
+            } @else {
+              <span class="count">Toca las cartas para seleccionarlas.</span>
             }
           </eras-stack>
         }
         <ol class="cards" [attr.aria-label]="title()">
           @for (c of cards(); track c.instanceId; let i = $index) {
-            <li [class.selected]="selected().has(c.instanceId)">
-              <eras-game-card
-                small
-                [imageUrl]="c.imageUrl"
-                [hidden]="c.faceDown && !peeked().has(c.instanceId)"
-                [attr.aria-label]="c.cardName"
-                [class.can-play]="actionsOf(c).includes('ritual')"
-                [class.can-activate]="actionsOf(c).includes('activate')"
-              />
+            <li>
+              <button
+                type="button"
+                class="pick"
+                [class.chosen]="selected().has(c.instanceId)"
+                [class.static]="!canAct()"
+                [attr.aria-pressed]="canAct() ? selected().has(c.instanceId) : null"
+                [attr.aria-label]="label(c, i)"
+                (click)="canAct() && toggle(c.instanceId)"
+              >
+                <eras-game-card
+                  [imageUrl]="c.imageUrl"
+                  [name]="c.cardName"
+                  [hidden]="isHidden(c)"
+                  [class.can-play]="actionsOf(c).includes('ritual')"
+                  [class.can-activate]="actionsOf(c).includes('activate')"
+                />
+                <span class="position">{{ positionLabel(i) }}</span>
+              </button>
               @if (actionsOf(c).includes('ritual')) {
                 <button erasButton size="sm" type="button" (click)="special(c)">{{ kindLabel(c) }}</button>
               }
               @for (e of effectsOf(c); track e.scriptId) {
                 <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">{{ e.label }}</button>
               }
-              @if (!data.opponent && !data.readonly) {
-                <label class="pick">
-                  <input type="checkbox" [checked]="selected().has(c.instanceId)" (change)="toggle(c.instanceId)" />
-                  <span class="visually-hidden">Seleccionar</span>
-                </label>
-              }
               @if (!data.readonly) {
-                <button erasButton variant="ghost" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Acciones de la carta ' + (i + 1)">⋯</button>
+                <button erasButton variant="secondary" size="sm" type="button" (click)="sendOne(c, i)">Enviar a…</button>
               }
-              <ng-template #actions>
-                <eras-menu>
-                  @if (!data.opponent) {
-                    @for (d of destinations(); track d.zone) {
-                      <button erasMenuItem (triggered)="move(c, d.zone)">{{ d.label }}</button>
-                    }
-                    <button erasMenuItem (triggered)="game.flipCard(c.instanceId, data.zone)">{{ c.faceDown ? 'Poner boca arriba' : 'Poner boca abajo' }}</button>
-                    @if (data.zone === 'lifeStack' && c.faceDown) {
-                      <button erasMenuItem (triggered)="peek(c)">Mirar</button>
-                    }
-                    @if (canReorder() && i > 0) {
-                      <button erasMenuItem (triggered)="reorder(i, -1)">Subir</button>
-                    }
-                    @if (canReorder() && i < cards().length - 1) {
-                      <button erasMenuItem (triggered)="reorder(i, 1)">Bajar</button>
-                    }
-                    <hr />
-                  }
-                  <button erasMenuItem class="danger" (triggered)="remove(c)">Eliminar del juego</button>
-                </eras-menu>
-              </ng-template>
             </li>
           }
         </ol>
@@ -111,13 +87,38 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     </eras-modal>
   `,
   styles: `
-    .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
-    li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); }
-    li.selected { background: var(--color-surface-muted); outline: 2px solid var(--color-primary); }
+    .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .cards {
+      --game-card-width: 7.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+      gap: var(--space-3);
+      margin: var(--space-3) 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+    .pick {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      background: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    .pick:hover:not(.static) { background: var(--color-surface-muted); }
+    .pick.static { cursor: default; }
+    // Selected: the same glow as the choices of an effect
+    .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
+    .pick.chosen eras-game-card { box-shadow: 0 0 0 2px var(--color-success), 0 0 14px 3px color-mix(in srgb, var(--color-success) 60%, transparent); }
+    .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .position { color: var(--color-text-muted); font-size: var(--font-size-xs); }
     eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
     eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
-    .pick { display: inline-flex; }
-    .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -132,8 +133,119 @@ export class ZoneDialogComponent {
   protected readonly cards = computed<CardSlot[]>(() => (this.data.opponent ? this.game.opponentState() : this.game.myState())?.[this.data.zone] ?? []);
   protected readonly title = computed(() => `${ZONE_LABELS[this.data.zone]}${this.data.opponent ? ' del rival' : ''}`);
   protected readonly destinations = computed(() => DESTINATIONS.filter((d) => d.zone !== this.data.zone));
-  protected readonly canReorder = computed(() => !this.data.opponent && (this.data.zone === 'discardPile' || this.data.zone === 'tributeZone'));
-  private readonly targetPlayer = computed(() => (this.data.opponent ? (this.game.opponentState()?.userId ?? null) : null));
+  /** My zone, or in a test room either side's (the other side's actions are done as that side). */
+  protected readonly editable = computed(() => !this.data.opponent || this.game.editorRoom());
+  /** The order of the deck, lives and hand is changed only in a test room. */
+  protected readonly canReorder = computed(
+    () => this.editable() && (this.data.zone === 'discardPile' || this.data.zone === 'tributeZone' || (this.game.editorRoom() && this.data.zone !== 'field')),
+  );
+  private readonly owner = computed(() => (this.data.opponent ? (this.game.opponentState()?.userId ?? null) : null));
+  /** In a test room the other side's zone is changed as that side; otherwise its cards are moved as targets. */
+  private readonly targetPlayer = computed(() => (this.game.editorRoom() ? null : this.owner()));
+
+  /** Cards can be selected and sent (my zone, or either side's in a test room). */
+  protected readonly canAct = computed(() => this.editable() && !this.data.readonly);
+
+  protected isHidden(c: CardSlot): boolean {
+    return c.faceDown && !this.peeked().has(c.instanceId) && !this.game.seeAll();
+  }
+
+  protected label(c: CardSlot, i: number): string {
+    return `${this.isHidden(c) ? 'Carta oculta' : (c.cardName ?? 'Carta')}, ${this.positionLabel(i)}`;
+  }
+
+  /** Where it is in the pile: the deck's and lives' order matters. */
+  protected positionLabel(i: number): string {
+    const n = this.cards().length;
+    if (this.data.zone === 'deck') return i === 0 ? 'Tope' : i === n - 1 ? 'Fondo' : `${i + 1}ª desde el tope`;
+    if (this.data.zone === 'lifeStack') return i === 0 ? 'Vida del tope' : `Vida ${i + 1}`;
+    return `${i + 1}`;
+  }
+
+  private async choose(data: SendToData): Promise<string | undefined> {
+    return firstValueFrom(this.modal.open<string, SendToData>(SendToDialogComponent, { data }).closed);
+  }
+
+  private zones(): SendToOption[] {
+    return [
+      ...this.destinations().map((d) => ({ id: `to:${d.zone}`, label: d.label })),
+      ...(this.data.zone === 'deck' ? [] : [{ id: 'to:deck-bottom', label: 'Al fondo del mazo' }]),
+    ];
+  }
+
+  /** "Enviar a…" for one card: its destinations, then what else can be done with it here. */
+  protected async sendOne(c: CardSlot, i: number): Promise<void> {
+    const last = this.cards().length - 1;
+    const other: SendToOption[] = [];
+    if (this.editable()) {
+      other.push({ id: 'flip', label: c.faceDown ? 'Poner boca arriba' : 'Poner boca abajo' });
+      if (this.data.zone === 'lifeStack' && c.faceDown && !this.game.seeAll()) other.push({ id: 'peek', label: 'Mirar' });
+    }
+    const order: SendToOption[] = [];
+    if (this.canReorder()) {
+      if (i > 0) order.push({ id: 'first', label: this.data.zone === 'deck' ? 'Al tope' : 'Al principio' }, { id: 'up', label: 'Subir una' });
+      if (i < last) order.push({ id: 'down', label: 'Bajar una' }, { id: 'last', label: this.data.zone === 'deck' ? 'Al fondo' : 'Al final' });
+    }
+    const id = await this.choose({
+      title: 'Enviar a…',
+      subtitle: this.isHidden(c) ? 'Carta oculta' : (c.cardName ?? undefined),
+      groups: [
+        { label: 'Zona', options: this.editable() ? this.zones() : [] },
+        { label: 'Orden en ' + ZONE_LABELS[this.data.zone].toLowerCase(), options: order },
+        { label: 'Carta', options: [...other, { id: 'remove', label: 'Eliminar del juego', danger: true }] },
+      ],
+    });
+    if (!id) return;
+    if (id === 'remove') return this.remove(c);
+    if (id === 'peek') return this.peek(c);
+    this.asOwner(() => {
+      if (id.startsWith('to:')) {
+        const to = id.slice(3);
+        if (to === 'deck-bottom') this.game.bulkToDeckBottom(this.data.zone, [c.instanceId], false);
+        else this.move(c, to as ZoneName);
+      } else if (id === 'flip') this.game.flipCard(c.instanceId, this.data.zone);
+      else if (id === 'up') this.reorder(i, -1);
+      else if (id === 'down') this.reorder(i, 1);
+      else if (id === 'first') this.reorderTo(i, 0);
+      else if (id === 'last') this.reorderTo(i, last);
+    });
+    this.selected.update((s) => {
+      const next = new Set(s);
+      next.delete(c.instanceId);
+      return next;
+    });
+  }
+
+  /** "Enviar selección a…": the same zones, or the deck's bottom in order or shuffled. */
+  protected async sendSelected(): Promise<void> {
+    const n = this.selected().size;
+    const id = await this.choose({
+      title: 'Enviar selección a…',
+      subtitle: `${n} ${n === 1 ? 'carta' : 'cartas'}`,
+      groups: [
+        { label: 'Zona', options: this.destinations().map((d) => ({ id: `to:${d.zone}`, label: d.label })) },
+        {
+          label: 'Fondo del mazo',
+          options: [
+            { id: 'bottom', label: 'En el orden de aquí' },
+            { id: 'bottom-random', label: 'En orden aleatorio' },
+          ],
+        },
+      ],
+    });
+    if (!id) return;
+    this.asOwner(() => {
+      if (id === 'bottom') this.bulkBottom(false);
+      else if (id === 'bottom-random') this.bulkBottom(true);
+      else this.bulkMove(id.slice(3) as ZoneName);
+    });
+  }
+
+  /** Runs the actions as the owner of the zone (the other side of a test room). */
+  protected asOwner(actions: () => void): void {
+    if (this.game.editorRoom() && this.owner()) this.game.actingAs(this.owner(), actions);
+    else actions();
+  }
 
   private readonly lookOnly = inject(SheetState).lowered;
 
@@ -199,6 +311,14 @@ export class ZoneDialogComponent {
   protected reorder(index: number, step: -1 | 1): void {
     const ids = this.cards().map((c) => c.instanceId);
     [ids[index], ids[index + step]] = [ids[index + step], ids[index]];
+    this.game.zoneReorder(this.data.zone, ids);
+  }
+
+  /** Puts a card first or last (the deck's top or bottom). */
+  protected reorderTo(index: number, to: number): void {
+    const ids = this.cards().map((c) => c.instanceId);
+    const [id] = ids.splice(index, 1);
+    ids.splice(to, 0, id);
     this.game.zoneReorder(this.data.zone, ids);
   }
 

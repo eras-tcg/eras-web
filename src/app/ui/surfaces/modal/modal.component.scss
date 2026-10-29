@@ -4,6 +4,8 @@
   display: flex;
   flex-direction: column;
   inline-size: min(var(--modal-width), calc(100vw - 2 * var(--layout-gutter)));
+  // Centered in its overlay pane even when the pane was given another width
+  margin-inline: auto;
   max-block-size: calc(100vh - 2 * var(--space-6));
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);

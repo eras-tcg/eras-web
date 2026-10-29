@@ -9,35 +9,12 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 
-/** Phase-gated panels over the board: waiting room, starter choice, mulligan and post game. */
+/** Phase-gated panels over the board: starter choice (older rooms), mulligan and post game. The pre-room has its own view. */
 @Component({
   selector: 'eras-status-panels',
   imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent],
   template: `
     @switch (game.status()) {
-      @case ('WAITING') {
-        <eras-card>
-          <eras-stack [gap]="3">
-            <strong>Esperando al rival</strong>
-            <span>Comparte el enlace de la sala:</span>
-            <eras-stack direction="row" [gap]="2" align="center" wrap>
-              <code>{{ link() }}</code>
-              <button erasButton variant="secondary" size="sm" type="button" (click)="copy()">{{ copied() ? 'Copiado' : 'Copiar enlace' }}</button>
-            </eras-stack>
-            @if (game.isHost() && players().length === 2) {
-              <span>¿Quién empieza?</span>
-              <eras-stack direction="row" [gap]="2" wrap>
-                @for (p of players(); track p.userId) {
-                  <button erasButton type="button" (click)="game.startGame(p.userId)">Empieza {{ p.username }}</button>
-                }
-                <button erasButton variant="secondary" type="button" (click)="game.startGame('random')">Aleatorio</button>
-              </eras-stack>
-            } @else if (players().length === 2) {
-              <span>Esperando que el anfitrión inicie la partida.</span>
-            }
-          </eras-stack>
-        </eras-card>
-      }
       @case ('SELECTING_STARTER') {
         <eras-card>
           <eras-stack [gap]="3">
@@ -171,8 +148,10 @@ export class StatusPanelsComponent {
     // A new game (rematch) goes through the same phases again
     effect(() => {
       this.game.status();
+      // A test room switches sides: the mulligan panel is that side's
+      const side = this.game.myState()?.userId;
       untracked(() => {
-        this.mulliganSent.set(false);
+        this.mulliganSent.set(!!side && (this.game.state()?.mulliganReady ?? []).includes(side));
         this.toBottom.set(new Set());
       });
     });
@@ -199,7 +178,8 @@ export class StatusPanelsComponent {
   }
 
   protected choose(choice: PostGameChoice): void {
-    this.game.postGameChoice(choice);
+    // Leaving frees the seat (the board sends it on its way out)
     if (choice === 'exit') this.leave.emit();
+    else this.game.postGameChoice(choice);
   }
 }

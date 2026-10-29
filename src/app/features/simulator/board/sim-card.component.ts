@@ -24,6 +24,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
   template: `
     <eras-game-card
       [imageUrl]="slot().imageUrl"
+      [name]="slot().cardName"
       [hidden]="hidden()"
       [tapped]="slot().tapped"
       [strength]="strength()"
@@ -105,6 +106,10 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
           <button erasMenuItem (triggered)="dialogs.effects(slot(), zone())"><eras-icon name="sparkles" /> Efectos…</button>
         }
         @if (zone() === 'field') {
+          @if (game.editorMode() && slot().cardType === 'creature') {
+            <!-- Manual: between the two lines of the field -->
+            <button erasMenuItem (triggered)="toLine()">{{ isFront() ? 'Mover a la retaguardia' : 'Mover a la línea frontal' }}</button>
+          }
           <button erasMenuItem (triggered)="game.tapCard(slot().instanceId, zone(), targetPlayer())">{{ slot().tapped ? 'Enderezar' : 'Agotar' }}</button>
           @if (slot().strength !== null) {
             <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, -1, targetPlayer())">Reducir fuerza</button>
@@ -257,7 +262,8 @@ export class SimCardComponent {
   /** The card has several effects to activate: the toolbar lists them. */
   protected readonly effectsOpen = signal(false);
 
-  protected readonly hidden = computed(() => isHidden(this.slot(), this.zone(), this.opponent()));
+  /** Hidden from me (in a test room everything can be shown). */
+  protected readonly hidden = computed(() => !this.game.seeAll() && isHidden(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
   /** Your card has effect text (its own or inherited from its materials). */
   protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);
@@ -283,6 +289,13 @@ export class SimCardComponent {
     this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot(), this.zone()),
   );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
+  protected readonly isFront = computed(() => inFrontLine(this.slot()));
+
+  /** Editor mode: the creature goes to the other line of the field (same place across it). */
+  protected toLine(): void {
+    const s = this.slot();
+    this.game.moveCard(s.instanceId, 'field', 'field', { x: s.x ?? 50, y: this.isFront() ? 75 : 25, targetPlayerId: this.targetPlayer() });
+  }
   protected readonly label = computed(() => {
     const s = this.slot();
     const name = this.hidden() ? 'Carta boca abajo' : s.cardName || 'Carta';

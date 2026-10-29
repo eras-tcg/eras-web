@@ -13,6 +13,7 @@ import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.compone
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { renderEffect, renderKeywordEffect } from '@data/cards/card-rules';
 import { CardEffect, KeywordEffect } from '@data/cards/card.model';
+import { displayStrength } from '@data/simulator/game-rules';
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -52,6 +53,23 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
                 }
               </div>
               <div class="effects">
+                @if (modifiers(); as m) {
+                  <section class="modifiers" aria-label="Modificadores">
+                    <h4>Ahora</h4>
+                    @if (m.strength) {
+                      <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">(impresa {{ m.strength.base }})</span></p>
+                    }
+                    @for (f of m.floating; track $index) {
+                      <p><span [class.gain]="f.strength > 0 || (f.keyword && f.strength >= 0)" [class.loss]="f.strength < 0">{{ f.text }}</span>@if (f.source) {<span class="muted"> · {{ f.source }}</span>}</p>
+                    }
+                    @if (m.continuous) {
+                      <p><span class="gain">{{ m.continuous }}</span><span class="muted"> · efecto continuo</span></p>
+                    }
+                    @if (m.manual) {
+                      <p><span [class.gain]="m.manual > 0" [class.loss]="m.manual < 0">{{ m.manual > 0 ? '+' : '' }}{{ m.manual }} de fuerza</span><span class="muted"> · ajuste manual</span></p>
+                    }
+                  </section>
+                }
                 @if (own().length) {
                   <section>
                     <h4>Efectos</h4>
@@ -138,6 +156,11 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
     .effects p { margin: 0 0 var(--space-2); }
     .effects .source { font-weight: var(--font-weight-bold); }
     .muted { color: var(--color-text-muted); }
+    .modifiers { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    .modifiers p:last-child { margin-block-end: 0; }
+    .modifiers .strength strong { font-size: var(--font-size-lg); }
+    .gain { color: var(--color-success); }
+    .loss { color: var(--color-danger); }
     @media (max-width: 44rem) { .info { grid-template-columns: 1fr; } }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -177,6 +200,22 @@ export class CardInfoDialogComponent {
       return { id: r.instanceId, name: r.cardName ?? 'Recurso', imageUrl: r.imageUrl, lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
     }),
   );
+  /**
+   * What it has now beyond what is printed: its current strength, what effects gave or took for a while (with
+   * their source), its continuous effects that hold and any manual adjustment. Null when there is nothing.
+   */
+  protected readonly modifiers = computed(() => {
+    const s = this.slot();
+    if (!s || s.faceDown || this.data.zone !== 'field') return null;
+    const now = displayStrength(s);
+    const strength = s.strength != null && now !== s.strength ? { base: s.strength, now } : null;
+    const floating = s.floating ?? [];
+    const gained = [...(s.continuousStrength ? [`fuerza ${s.continuousStrength > 0 ? '+' : ''}${s.continuousStrength}`] : []), ...(s.continuousKeywords ?? [])];
+    const continuous = gained.length ? `Gana ${gained.join(', ')}` : null;
+    const manual = s.strengthModifier || 0;
+    return strength || floating.length || continuous || manual ? { strength, floating, continuous, manual } : null;
+  });
+
   /** The effects its Recursos give it, with their source. */
   protected readonly inherited = computed(() => this.resourceViews().flatMap((r) => r.lines.map((line) => ({ source: r.name, line }))));
 

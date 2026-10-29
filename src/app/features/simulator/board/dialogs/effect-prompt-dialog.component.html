@@ -12,7 +12,7 @@
             (click)="toggle(effectKey(e))"
           >
             <!-- Inherited: the Recurso that gives it, small at the corner -->
-            <eras-card-with-source [imageUrl]="cardOf(e.sourceId)?.imageUrl ?? null" [sourceName]="e.inheritedFromName" [sourceImage]="e.inheritedFromImage" />
+            <eras-card-with-source [imageUrl]="cardOf(e.sourceId)?.imageUrl ?? null" [name]="e.sourceName" [sourceName]="e.inheritedFromName" [sourceImage]="e.inheritedFromImage" />
             <span class="offered-body">
               <span class="offered-head">
                 <strong>{{ e.sourceName }}</strong>
@@ -75,7 +75,12 @@
           [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : ', supera la suma de niveles') : ', no cumple el efecto')"
           (click)="toggle(c.instanceId)"
         >
-          <eras-game-card [imageUrl]="c.imageUrl" [class.new-card]="game.newInHand().has(c.instanceId)" />
+          @if (hostOf(c); as host) {
+            <!-- A Material or Recurso: the card it belongs to, with it small at the corner -->
+            <eras-card-with-source [imageUrl]="host.imageUrl" [name]="host.cardName" [sourceName]="c.cardName ?? '?'" [sourceImage]="c.imageUrl" [sourceLabel]="(c.cardName ?? '?') + ' · ' + zoneOf(c)" />
+          } @else {
+            <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
+          }
           <span class="tag">
             @if (chosen().has(c.instanceId)) {
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}

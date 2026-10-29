@@ -3,7 +3,7 @@ import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
-import { CardSlot, EffectPrompt, OfferedEffect, ZONES } from '@data/simulator/simulator.model';
+import { CardSlot, EffectPrompt, OfferedEffect, ZONE_LABELS, ZONES } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-source.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -81,11 +81,30 @@ export class EffectPromptDialogComponent {
     inject(DestroyRef).onDestroy(() => this.game.promptChosen.set(new Set()));
   }
 
-  /** Which line of the field a card is in. */
+  /**
+   * Where a card is now: the line of the field, or its zone (Mano, Tributos…), or the card it is attached to. A special
+   * summon can take cards from several zones, so each one says where it comes from.
+   */
   protected zoneOf(c: CardSlot): string | null {
-    const field = Object.values(this.game.state()?.players ?? {}).find((p) => p.field.some((f) => f.instanceId === c.instanceId))?.field;
-    if (!field) return null;
-    return fieldRows(field).front.some((f) => f.instanceId === c.instanceId) ? 'Línea frontal' : 'Retaguardia';
+    const players = Object.values(this.game.state()?.players ?? {});
+    const field = players.find((p) => p.field.some((f) => f.instanceId === c.instanceId))?.field;
+    if (field) return fieldRows(field).front.some((f) => f.instanceId === c.instanceId) ? 'Línea frontal' : 'Retaguardia';
+    const host = this.hostOf(c);
+    if (host) return `${host.materials.some((m) => m.instanceId === c.instanceId) ? 'Material' : 'Recurso'} de ${host.cardName ?? 'una carta'}`;
+    for (const p of players) {
+      const zone = ZONES.find((z) => z !== 'field' && p[z].some((x) => x.instanceId === c.instanceId));
+      if (zone) return ZONE_LABELS[zone];
+    }
+    return null;
+  }
+
+  /** The card of the field a Material or Recurso belongs to (shown big, with it small at its corner), or null. */
+  protected hostOf(c: CardSlot): CardSlot | null {
+    for (const p of Object.values(this.game.state()?.players ?? {})) {
+      const host = p.field.find((f) => f.materials.some((m) => m.instanceId === c.instanceId) || f.resources.some((r) => r.instanceId === c.instanceId));
+      if (host) return host;
+    }
+    return null;
   }
 
   /** The levels of the cards chosen so far. */

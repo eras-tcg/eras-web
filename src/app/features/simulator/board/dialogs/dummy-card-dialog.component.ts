@@ -49,6 +49,9 @@ const num = (text: string) => (text.trim() === '' || Number.isNaN(Number(text)) 
  * Test room: makes a card up (or copies a real one, which then has its effects: the engine finds them by name)
  * and places it in a zone of either side.
  */
+/** The highest "Dummy N" created from this board, by room. */
+const lastDummy = new Map<string, number>();
+
 @Component({
   selector: 'eras-dummy-card-dialog',
   imports: [ModalComponent, FormFieldComponent, ButtonComponent, GameCardComponent],
@@ -238,9 +241,12 @@ export class DummyCardDialogComponent {
     this.copied.set(null);
   }
 
-  /** "Dummy N": the next number after the test cards already in the game. */
+  /**
+   * "Dummy N": the next number after the test cards already in the game and those created from this board (a card hidden from
+   * this side, as the rival's hand or a deck, does not show its name, and the broadcast of the last one may not have arrived).
+   */
   private nextDummyName(): string {
-    let max = 0;
+    let max = lastDummy.get(this.game.state()?.roomId ?? '') ?? 0;
     for (const p of Object.values(this.game.state()?.players ?? {})) {
       for (const zone of [p.hand, p.deck, p.lifeStack, p.tributeZone, p.discardPile, p.field]) {
         for (const c of [...zone, ...zone.flatMap((x) => [...x.materials, ...x.resources])]) {
@@ -292,6 +298,9 @@ export class DummyCardDialogComponent {
       keywords: list(fill(this.keywords(), () => pick(keywords))),
     };
     this.game.actingAs(this.side() || null, () => this.game.createDummy(card));
+    const created = /^Dummy (\d+)$/.exec(card.cardName)?.[1];
+    const room = this.game.state()?.roomId ?? '';
+    if (created) lastDummy.set(room, Math.max(lastDummy.get(room) ?? 0, Number(created)));
     if (close) {
       this.ref.close();
       return;

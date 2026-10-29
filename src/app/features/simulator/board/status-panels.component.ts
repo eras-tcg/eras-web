@@ -25,7 +25,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
               <eras-stack direction="row" [gap]="2" wrap>
                 @for (c of starters(); track c.instanceId) {
                   <button type="button" class="pick" [attr.aria-label]="'Elegir ' + c.cardName" (click)="game.selectStarter(c.instanceId)">
-                    <eras-game-card [imageUrl]="c.imageUrl" />
+                    <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
                   </button>
                 } @empty {
                   <eras-alert tone="danger">Tu mazo no tiene criaturas con el keyword Iniciador.</eras-alert>
@@ -46,7 +46,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
               <eras-stack direction="row" [gap]="2" wrap>
                 @for (c of topFive(); track c.instanceId) {
                   <button type="button" class="pick" [class.chosen]="toBottom().has(c.instanceId)" [attr.aria-pressed]="toBottom().has(c.instanceId)" [attr.aria-label]="c.cardName" (click)="toggle(c.instanceId)">
-                    <eras-game-card [imageUrl]="c.imageUrl" />
+                    <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
                   </button>
                 }
               </eras-stack>

@@ -8,14 +8,14 @@
             <div class="art" [style.--materials]="s.materials.length">
               @for (m of s.materials; track m.instanceId; let i = $index) {
                 <div class="material" [style.--i]="i">
-                  <eras-game-card [imageUrl]="m.imageUrl" [hidden]="m.faceDown && !game.seeAll()" />
+                  <eras-game-card [imageUrl]="m.imageUrl" [name]="m.cardName ?? null" [hidden]="m.faceDown && !game.seeAll()" />
                   @if (!m.faceDown || game.seeAll()) {
                     <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (m.cardName ?? 'el material')" (click)="openDetail(m)"></button>
                   }
                 </div>
               }
               <div class="main-card">
-                <eras-game-card class="main" [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
+                <eras-game-card class="main" [imageUrl]="s.imageUrl" [name]="s.cardName ?? null" [materialsCount]="s.materials.length" />
                 <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (s.cardName ?? 'la carta')" (click)="openDetail(s)"></button>
               </div>
             </div>
@@ -124,7 +124,7 @@
         <eras-stack direction="row" [gap]="3" wrap>
           @for (a of s[type]; track a.instanceId; let i = $index) {
             <div class="attached">
-              <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
+              <eras-game-card small [imageUrl]="a.imageUrl" [name]="a.cardName ?? null" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
               @if (!data.readonly) {
                 <!-- "Enviar a…": on the card's lower right corner -->
                 <button type="button" class="send" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">

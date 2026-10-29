@@ -79,6 +79,11 @@ describe('legalActions', () => {
 });
 
 describe('Furia, Ritual, the ventaja del iniciador and slow effects', () => {
+  it('does not offer the attack when an effect says it cannot declare one', () => {
+    expect(legalActions(open, slot('a', { turnKeywords: ['No puede atacar'] }), 'field')).toEqual([]);
+    expect(legalActions(open, slot('a', { continuousKeywords: ['No puede atacar'] }), 'field')).toEqual([]);
+  });
+
   it('Furia N lets a creature attack while the opponent has N or fewer gems', () => {
     const a = slot('a', { turnKeywords: ['Furia 1'] });
     expect(attackGemsOk({ ...open, gems: -1 }, a)).toBe(true);

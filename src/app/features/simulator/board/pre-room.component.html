@@ -26,7 +26,7 @@
               <!-- The starter is the seat's face: large, beside who plays it -->
               <div class="starter-slot">
                 @if (starterOf(p); as s) {
-                  <eras-game-card [imageUrl]="s.imageUrl" />
+                  <eras-game-card [imageUrl]="s.imageUrl" [name]="s.cardName ?? null" />
                 } @else {
                   <div class="starter-empty">{{ p.deckId ? 'Sin Iniciador' : 'Sin mazo' }}</div>
                 }
@@ -113,7 +113,7 @@
         <div class="starters" role="group" aria-label="Iniciador">
           @for (s of myStarters(); track s.cardId) {
             <button type="button" class="pick" [class.chosen]="mine()?.starterCardId === s.cardId" [attr.aria-pressed]="mine()?.starterCardId === s.cardId" [attr.aria-label]="s.cardName" (click)="game.setStarter(s.cardId)">
-              <eras-game-card [imageUrl]="s.imageUrl" />
+              <eras-game-card [imageUrl]="s.imageUrl" [name]="s.cardName ?? null" />
             </button>
           }
         </div>

@@ -3,7 +3,7 @@ import { GameCardComponent } from '../game-card/game-card.component';
 
 /**
  * A card with, small at its lower right corner, the card an effect of it comes from (the Recurso of an inherited
- * effect). Its size follows `--game-card-width`.
+ * effect) or one attached to it (the Material being chosen). Its size follows `--game-card-width`.
  *
  * <eras-card-with-source [imageUrl]="card.imageUrl" sourceName="Duregón" [sourceImage]="url" />
  */
@@ -11,10 +11,10 @@ import { GameCardComponent } from '../game-card/game-card.component';
   selector: 'eras-card-with-source',
   imports: [GameCardComponent],
   template: `
-    <eras-game-card [imageUrl]="imageUrl()" />
+    <eras-game-card [imageUrl]="imageUrl()" [name]="name()" />
     @if (sourceName()) {
-      <span class="source" [title]="'Heredado de ' + sourceName()">
-        <eras-game-card [imageUrl]="sourceImage() ?? null" />
+      <span class="source" [title]="sourceLabel() ?? 'Heredado de ' + sourceName()">
+        <eras-game-card [imageUrl]="sourceImage() ?? null" [name]="sourceName() ?? null" />
       </span>
     }
   `,
@@ -38,7 +38,11 @@ import { GameCardComponent } from '../game-card/game-card.component';
 })
 export class CardWithSourceComponent {
   readonly imageUrl = input<string | null>(null);
+  /** Its name, shown when it has no art (a test card). */
+  readonly name = input<string | null>(null);
   /** The card it comes from (none: just the card). */
   readonly sourceName = input<string | null | undefined>(null);
   readonly sourceImage = input<string | null | undefined>(null);
+  /** What the small card is, as its tooltip ("Heredado de X" by default; "Material: X"). */
+  readonly sourceLabel = input<string | null>(null);
 }

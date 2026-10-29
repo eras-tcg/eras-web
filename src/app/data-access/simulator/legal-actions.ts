@@ -178,6 +178,11 @@ export function canOtherSpecial(view: RulesView, slot: CardSlot): boolean {
   return summoners.some((s) => pool.some((m) => m !== s));
 }
 
+/** "no puede declarar ataque": an effect forbids it (Sacerdotisa Del Portal Del Eclipse's summon, Grod), as the server's "No puede atacar". */
+export function cannotAttack(slot: CardSlot): boolean {
+  return [...(slot.keywords ?? []), ...(slot.turnKeywords ?? []), ...(slot.continuousKeywords ?? [])].includes('No puede atacar');
+}
+
 /** Legal actions of one of your cards; the server checks them again. */
 export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): LegalAction[] {
   if (!view.inProgress || view.phase !== 'MAIN' || view.closed) return [];
@@ -187,7 +192,7 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
   if (!view.myTurn) return actions;
   if (zone === 'field') {
     // Rule 10.1.1.1: an active creature of the Línea frontal, with 0 or more gems (or what its Furia allows)
-    if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot)) actions.unshift('attack');
+    if (slot.cardType === 'creature' && !slot.tapped && inFrontLine(slot) && attackGemsOk(view, slot) && !cannotAttack(slot)) actions.unshift('attack');
   } else if (zone === 'hand') {
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
     if (slot.cardType === 'creature' && canSpecial(view, slot)) actions.push('ritual');

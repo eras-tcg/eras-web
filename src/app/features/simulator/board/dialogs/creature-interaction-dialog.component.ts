@@ -25,9 +25,9 @@ const SUMMON_KINDS = ['materialization', 'evolution', 'ritual', 'promotion'];
   template: `
     <eras-sheet title="Interacción de criaturas" (closed)="ref.close()">
       <eras-stack direction="row" [gap]="4" justify="center" align="center">
-        <eras-stack [gap]="1" align="center"><eras-game-card [imageUrl]="data.summoned.imageUrl" /><span>Entrante</span></eras-stack>
+        <eras-stack [gap]="1" align="center"><eras-game-card [imageUrl]="data.summoned.imageUrl" [name]="data.summoned.cardName ?? null" /><span>Entrante</span></eras-stack>
         <span aria-hidden="true">→</span>
-        <eras-stack [gap]="1" align="center"><eras-game-card [imageUrl]="data.summoner.imageUrl" /><span>En campo</span></eras-stack>
+        <eras-stack [gap]="1" align="center"><eras-game-card [imageUrl]="data.summoner.imageUrl" [name]="data.summoner.cardName ?? null" /><span>En campo</span></eras-stack>
       </eras-stack>
 
       @if (askAttachments()) {

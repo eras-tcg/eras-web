@@ -31,7 +31,7 @@ export interface AttackTargetData {
           <!-- As it is on the board: exhausted, or active (Enfrentar) -->
           <div class="slot">
             <button type="button" class="target" [attr.aria-label]="'Atacar a ' + (c.cardName ?? 'la criatura')" (click)="ref.close(c.instanceId)">
-              <eras-game-card [imageUrl]="c.imageUrl" [tapped]="!!c.tapped" />
+              <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" [tapped]="!!c.tapped" />
               <small>{{ c.tapped ? 'Agotada' : 'Activa' }}</small>
             </button>
             <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>

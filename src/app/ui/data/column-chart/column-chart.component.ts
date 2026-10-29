@@ -8,6 +8,8 @@ export interface Column {
 /** Small single-series column chart: one bar per bucket, count above, bucket label below. */
 @Component({
   selector: 'eras-column-chart',
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null' },
   template: `
     <p class="title">{{ title() }}</p>
     <div class="plot" role="img" [attr.aria-label]="summary()">

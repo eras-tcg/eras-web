@@ -1,4 +1,4 @@
-<eras-page title="Ediciones" subtitle="Estructuras, expansiones y sus sobres">
+<eras-page title="Ediciones" subtitle="Estructuras, expansiones y sus sobres" width="wide">
   <button page-actions *erasEdit="'manage_editions'" erasButton type="button" (click)="openForm(null)">
     <eras-icon name="plus" /> Nueva edición
   </button>
@@ -12,26 +12,59 @@
   } @else if (!store.error() && store.editions().length === 0) {
     <eras-empty-state title="Todavía no hay ediciones" />
   } @else {
-    <eras-grid minColumn="26rem">
+    <!-- One row per edition: what it is, and its cards in a strip -->
+    <div class="rows">
       @for (edition of store.editions(); track edition.editionId) {
-        <eras-edition-tile
-          [code]="edition.editionId"
-          [name]="edition.editionName ?? null"
-          [cardCount]="edition.numberOfCards ?? null"
-          [description]="edition.editionDescription ?? null"
-          [imageUrl]="edition.editionImage ?? null"
-          (selected)="openCards(edition)"
-        >
-          @if (canSimulate(edition)) {
-            <button tile-actions erasButton variant="secondary" size="sm" type="button" (click)="openSimulation(edition)">
-              <eras-icon name="box" /> Simular apertura
-            </button>
+        @let cards = cardsOf(edition.editionId);
+        <section class="edition" [attr.aria-labelledby]="'ed-' + edition.editionId">
+          <header class="head">
+            @if (edition.editionImage) {
+              <img class="cover" [src]="edition.editionImage" alt="" loading="lazy" />
+            }
+            <div class="info">
+              <h2 [id]="'ed-' + edition.editionId">
+                <span class="code">{{ edition.editionId }}</span>
+                @if (edition.editionName) {
+                  {{ edition.editionName }}
+                }
+              </h2>
+              @if (edition.editionDescription) {
+                <p class="description">{{ edition.editionDescription }}</p>
+              }
+              <span class="muted">{{ cards.length || edition.numberOfCards || 0 }} cartas</span>
+            </div>
+            <div class="actions">
+              <button erasButton variant="secondary" size="sm" type="button" (click)="openCards(edition)">Ver todas</button>
+              @if (canSimulate(edition)) {
+                <button erasButton variant="secondary" size="sm" type="button" (click)="openSimulation(edition)">
+                  <eras-icon name="box" /> Simular apertura
+                </button>
+              }
+              <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
+                <eras-icon name="edit" /> Editar
+              </button>
+            </div>
+          </header>
+
+          @if (cards.length) {
+            <ul class="strip" [attr.aria-label]="'Cartas de ' + edition.editionId">
+              @for (card of cards.slice(0, rowSize); track card.id; let i = $index) {
+                <li><eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" (selected)="openCard(cards, i)" /></li>
+              }
+              @if (cards.length > rowSize) {
+                <li>
+                  <button type="button" class="more" (click)="openCards(edition)">
+                    <strong>+{{ cards.length - rowSize }}</strong>
+                    <span>Ver todas</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else if (cardsStore.loading()) {
+            <div class="strip-empty"><eras-spinner /></div>
           }
-          <button tile-actions *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
-            <eras-icon name="edit" /> Editar
-          </button>
-        </eras-edition-tile>
+        </section>
       }
-    </eras-grid>
+    </div>
   }
 </eras-page>

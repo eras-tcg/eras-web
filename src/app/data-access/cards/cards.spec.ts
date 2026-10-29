@@ -38,6 +38,9 @@ describe('cardImageUrl', () => {
     expect(cardImageUrl({ image_url: 'u', time_stamp: null })).toBe('u');
     expect(cardImageUrl({ image_url: null, time_stamp: null })).toBeNull();
   });
+  it('keeps the version the backend already put in the URL', () => {
+    expect(cardImageUrl({ image_url: 'u?v=1767225600', time_stamp: '2026-01-01T00:00:00Z' })).toBe('u?v=1767225600');
+  });
 });
 
 describe('filterCards', () => {

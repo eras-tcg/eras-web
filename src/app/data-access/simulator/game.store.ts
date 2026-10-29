@@ -140,6 +140,7 @@ export class GameStore {
     this.removed.set(null);
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+      let reconnecting = false;
       this.client = new Client({
         brokerURL: wsUrl(),
         connectHeaders: { Authorization: `Bearer ${this.auth.token() ?? ''}` },
@@ -148,6 +149,9 @@ export class GameStore {
           clearTimeout(timeout);
           this.connected.set(true);
           this.client?.subscribe(`/topic/room/${roomId}`, (msg) => this.onMessage(msg.body));
+          // The socket dropped and came back by itself: be in the room again and get its current state
+          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
+          reconnecting = true;
           resolve();
         },
         onStompError: (frame) => {
@@ -433,6 +437,23 @@ export class GameStore {
   }
   bulkToDeckBottom(zone: ZoneName, instanceIds: string[], random: boolean): void {
     this.send('BULK_TO_DECK_BOTTOM', { zone, instanceIds, random });
+  }
+  /** Several cards from one zone to another in one action (one update, one line of history). */
+  bulkMove(
+    instanceIds: string[],
+    fromZone: ZoneName,
+    toZone: ZoneName,
+    opts: { toPosition?: 'top' | 'bottom'; targetPlayerId?: string | null; faceDown?: boolean } = {},
+  ): void {
+    if (!instanceIds.length) return;
+    const { toPosition, targetPlayerId = null, faceDown } = opts;
+    const me = this.me();
+    const state = this.state();
+    if (!targetPlayerId && me && this.actor() === me && state?.players?.[me]) {
+      const moved = instanceIds.reduce((p, id) => applyLocalMove(p, id, fromZone, toZone), state.players[me]);
+      if (moved !== state.players[me]) this.state.set({ ...state, players: { ...state.players, [me]: moved } });
+    }
+    this.send('BULK_MOVE', { instanceIds, fromZone, toZone, toPosition, targetPlayerId, ...(faceDown != null ? { faceDown } : {}) });
   }
 
   moveCard(

@@ -91,6 +91,12 @@
     }
   </div>
 
+  @if (version.updateAvailable()) {
+    <div class="update-banner" role="status">
+      <eras-icon name="refresh" /> Hay una versión nueva de ERAS.
+      <button type="button" class="update-reload" (click)="version.reload()">Recargar</button>
+    </div>
+  }
   @if (editMode.active()) {
     <div class="edit-banner" role="status">
       <eras-icon name="edit" /> Modo edición activo: los controles para editar el contenido están visibles.

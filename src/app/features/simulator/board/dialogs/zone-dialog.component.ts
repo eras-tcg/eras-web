@@ -75,7 +75,6 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="'Enviar ' + (c.cardName ?? 'la carta') + ' a…'"
-                    title="Enviar a…"
                     (click)="$event.stopPropagation(); sendOne(c, i)"
                     (keydown.enter)="$event.stopPropagation(); sendOne(c, i)"
                   ><eras-icon name="external" /></span>
@@ -321,7 +320,8 @@ export class ZoneDialogComponent {
   }
 
   protected bulkMove(to: ZoneName): void {
-    for (const c of this.cards().filter((x) => this.selected().has(x.instanceId))) this.move(c, to);
+    const ids = this.cards().filter((c) => this.selected().has(c.instanceId)).map((c) => c.instanceId);
+    this.game.bulkMove(ids, this.data.zone, to, { targetPlayerId: this.targetPlayer(), toPosition: to === 'deck' ? 'top' : undefined, faceDown: to === 'lifeStack' ? true : undefined });
     this.selected.set(new Set());
   }
 

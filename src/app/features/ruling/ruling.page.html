@@ -98,6 +98,126 @@
       </eras-grid>
     }
 
+    @case ('setup') {
+      <eras-prose>
+        <h2>Cómo se gana</h2>
+        <p>Pierdes la partida si te quedas <strong>sin vidas</strong> o si al inicio de tu turno <strong>no puedes robar</strong> porque tu mazo está vacío.</p>
+        <h2>Preparar la partida</h2>
+        <ol>
+          <li>Se decide al azar quién comienza.</li>
+          <li>Cada jugador separa su <strong>Iniciador</strong> y lo muestra.</li>
+          <li>Baraja el resto del mazo y roba <strong>5 cartas</strong>.</li>
+          <li>Puede hacer <strong>mulligan</strong>: devuelve al fondo del mazo las cartas que no quiera y roba esa misma cantidad, quedando otra vez con 5. Luego baraja su mazo.</li>
+          <li>Añade el Iniciador a su mano: comienza con <strong>6 cartas</strong>.</li>
+          <li>Coloca las <strong>6 cartas</strong> del tope de su mazo bocabajo como sus vidas.</li>
+          <li>Su marcador de gemas empieza en <strong>0</strong>.</li>
+        </ol>
+      </eras-prose>
+    }
+
+    @case ('turn') {
+      <eras-prose>
+        <h2>El turno</h2>
+        <p>Cada turno tiene tres fases y siempre se recorren en orden, aunque no hagas nada en alguna.</p>
+        <h3>1. Inicio del turno</h3>
+        <ol>
+          <li>Si tu marcador de gemas es menor que 5, sube en 1.</li>
+          <li>Ganas tantas gemas como indique el marcador y <strong>robas 1 carta</strong>.</li>
+          <li>Tus cartas agotadas se <strong>reactivan</strong>.</li>
+          <li>Puedes subir a la línea frontal las criaturas de tu retaguardia que quieras, todas a la vez.</li>
+          <li>Se disparan los efectos «al inicio del turno» (los tuyos tienen prioridad).</li>
+        </ol>
+        <h3>2. Fase principal</h3>
+        <p>En el orden y la cantidad que quieras, mientras pagues sus costes:</p>
+        <ul>
+          <li>Jugar cartas de tu mano.</li>
+          <li>Invocar criaturas, de forma normal o especial.</li>
+          <li>Declarar ataques con criaturas de tu línea frontal (uno a la vez).</li>
+          <li>Activar los efectos que se usan en tu turno.</li>
+        </ul>
+        <h3>3. Final del turno</h3>
+        <ol>
+          <li>Declaras el final de tu turno.</li>
+          <li>Las gemas que no gastaste se pierden.</li>
+          <li>Puedes volver a subir criaturas de tu retaguardia a la línea frontal, todas a la vez.</li>
+          <li>Se disparan los efectos «al final del turno».</li>
+        </ol>
+        <p>Los efectos que duran «por el turno» terminan al cambiar de turno, y en ese momento se reinician los límites de «una vez por turno».</p>
+      </eras-prose>
+    }
+
+    @case ('combat') {
+      <eras-prose>
+        <h2>Combate</h2>
+        <p>Una criatura de tu <strong>línea frontal</strong> puede atacar al oponente o a una criatura enemiga <strong>agotada</strong> (con Enfrentar, también a una activa). Para atacar se <strong>agota</strong>, y solo puede haber un combate a la vez.</p>
+        <h3>1. Ataque</h3>
+        <p>Se disparan los efectos «Al Atacar» y los que reaccionan a la declaración del ataque. Se resuelven todos antes de seguir.</p>
+        <h3>2. Bloqueo</h3>
+        <ul>
+          <li>Primero se resuelven los efectos del comienzo del bloqueo (por ejemplo, Provocar).</li>
+          <li>El defensor puede bloquear con <strong>una</strong> criatura activa de su línea frontal; bloquear la agota. Una vez declarado, el bloqueador no cambia.</li>
+          <li>Si atacaste a una criatura y nadie bloquea, esa criatura pasa a ser el bloqueador. Si la atacaste con Enfrentar estando activa, ella misma no puede declararse bloqueadora: solo puede bloquear otra.</li>
+        </ul>
+        <h3>3. Enfrentamiento</h3>
+        <p>Si hay bloqueador, la criatura con <strong>menos fuerza</strong> es destruida (con igual fuerza, ambas). La destruida va al Descarte.</p>
+        <h3>4. Daño directo</h3>
+        <p>Si no hubo enfrentamiento, el atacante daña la vida superior del defensor, que se revela:</p>
+        <ul>
+          <li><strong>Utilidad o estructura:</strong> el defensor puede jugarla sin pagar su coste o llevarla a su mano.</li>
+          <li><strong>Criatura con fuerza menor o igual al daño:</strong> se tributa.</li>
+          <li><strong>Criatura con más fuerza:</strong> va a la mano o, si se reveló en ese momento, puede <strong>Reforzar</strong>: vuelve bocarriba al fondo de las vidas.</li>
+        </ul>
+        <h3>5. Final del combate</h3>
+        <p>Se disparan los efectos «Al Final Del Ataque». Si el atacante sale del campo antes, el combate termina de inmediato y estos efectos no se disparan.</p>
+      </eras-prose>
+    }
+
+    @case ('effects') {
+      <eras-prose>
+        <h2>Efectos y cadenas</h2>
+        <p>El texto de un efecto se lee así: <strong>momento</strong> (cuándo se usa), <strong>condición</strong> («si…», «cuando…»), <strong>coste</strong> (lo que va antes del «;», incluidos los objetivos que eliges) y <strong>resolución</strong> (lo que pasa después).</p>
+        <ul>
+          <li>Sin «puedes», el efecto es <strong>obligatorio</strong>.</li>
+          <li>Si varios efectos se disparan a la vez, forman una <strong>cadena</strong> y se resuelven del último al primero. El orden es: obligatorios del jugador activo, obligatorios del oponente, opcionales del jugador activo y opcionales del oponente.</li>
+          <li>La prioridad alterna: el jugador activo agrega efectos hasta pasar, luego el oponente. La cadena se resuelve cuando ambos pasan seguidos.</li>
+          <li>Lo que ocurre mientras una cadena se arma o se resuelve (por ejemplo, un material tributado como coste) <strong>no</strong> entra en esa cadena: sus efectos esperan y forman una cadena nueva.</li>
+          <li>Las <strong>reacciones</strong> («cuando esta carta fuera a…») se aplican antes del evento: un modificador lo cambia (como Asalto) y un reemplazo lo sustituye. No forman cadena.</li>
+        </ul>
+        <h3>Conectores</h3>
+        <ul>
+          <li><strong>«A y B»:</strong> se hace cada parte que sea posible.</li>
+          <li><strong>«A. Luego, B»:</strong> en orden, pero B no depende de A.</li>
+          <li><strong>«A. Si lo haces, B»:</strong> B solo ocurre si A ocurrió.</li>
+        </ul>
+        <h3>Límites</h3>
+        <ul>
+          <li><strong>Una vez por turno:</strong> cada copia, para su controlador.</li>
+          <li><strong>Una vez por turno entre copias:</strong> compartido entre todas las cartas con el mismo nombre.</li>
+          <li>Desde la <strong>retaguardia</strong> una criatura no puede afectar a cartas enemigas con sus efectos.</li>
+          <li>Una invocación por efecto entra en la retaguardia salvo que la carta diga otra cosa.</li>
+        </ul>
+      </eras-prose>
+    }
+
+    @case ('keywords') {
+      <eras-prose>
+        <h2>Habilidades</h2>
+        <p>Palabras clave que resumen un efecto. El número entre llaves cambia según la carta (por ejemplo, Letalidad 2).</p>
+        @if (keywords().length) {
+          <dl class="keywords">
+            @for (k of keywords(); track k.name) {
+              <dt>{{ k.name }}</dt>
+              <dd>{{ k.text }}</dd>
+            }
+          </dl>
+        } @else if (cardsLoading()) {
+          <p>Cargando habilidades…</p>
+        } @else {
+          <p>No se pudo cargar la lista de habilidades.</p>
+        }
+      </eras-prose>
+    }
+
     @case ('board') {
       <eras-grid minColumn="22rem" [gap]="5">
         <eras-playmat [zones]="zones" />

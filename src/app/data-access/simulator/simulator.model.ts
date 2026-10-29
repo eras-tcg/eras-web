@@ -35,6 +35,8 @@ export interface CardSlot {
   floating?: FloatingEffect[];
   materials: CardSlot[];
   resources: CardSlot[];
+  /** What of its effects the rules engine does not run yet (played by hand); null when all of it runs. */
+  unprogrammed?: string | null;
 }
 
 /** "Pierde 3 de fuerza hasta el final del turno", from Arc xioma. */
@@ -270,6 +272,8 @@ export interface EffectPrompt {
   effects?: OfferedEffect[] | null;
   /** The whole text of the effect resolving or paying its cost. */
   effectText?: string | null;
+  /** The levels of the cards chosen may add up to this at most. */
+  maxLevelSum?: number | null;
 }
 
 /** An effect offered to be chained (a card can trigger several at once: its own and the inherited ones). */

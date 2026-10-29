@@ -47,7 +47,8 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   `,
   styleUrl: './sheet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()', '[class.see-through]': 'state.seeThrough()' },
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null', '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()', '[class.see-through]': 'state.seeThrough()' },
 })
 export class SheetComponent {
   readonly title = input.required<string>();

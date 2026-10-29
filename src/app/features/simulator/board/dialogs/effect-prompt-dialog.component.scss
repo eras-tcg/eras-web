@@ -32,6 +32,10 @@
 .pick:hover:not(:disabled) { background: var(--color-surface-muted); }
 .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
 .pick.locked { opacity: 0.4; cursor: not-allowed; }
+.slot { position: relative; }
+/* The eye floats at the card's upper right corner: the card in detail, with its Materiales and Recursos */
+.peek-btn { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; z-index: 2; opacity: 0.85; }
+.peek-btn:hover, .peek-btn:focus-visible { opacity: 1; }
 .pick.static, .pick.static:disabled { opacity: 1; cursor: default; }
 .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .tag {

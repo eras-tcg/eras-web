@@ -16,6 +16,18 @@ export interface StagedChange {
   stagedAt?: string | null;
 }
 
+/** How applying all the changes goes (it runs on the server: POST /api/drive/staged/apply). */
+export interface ApplyProgress {
+  running: boolean;
+  total: number;
+  done: number;
+  failed: number;
+  current: string | null;
+  errors: string[];
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class StagedChangesApi {
   private readonly http = inject(HttpClient);
@@ -25,8 +37,13 @@ export class StagedChangesApi {
     return this.http.get<StagedChange[]>(this.api.url('/api/drive/staged'));
   }
 
-  applyAll(): Observable<{ applied: number }> {
-    return this.http.post<{ applied: number }>(this.api.url('/api/drive/staged/apply'), null);
+  /** Starts applying all of them in the background. */
+  applyAll(): Observable<ApplyProgress> {
+    return this.http.post<ApplyProgress>(this.api.url('/api/drive/staged/apply'), null);
+  }
+
+  applyStatus(): Observable<ApplyProgress> {
+    return this.http.get<ApplyProgress>(this.api.url('/api/drive/staged/apply/status'));
   }
 
   apply(id: string): Observable<unknown> {

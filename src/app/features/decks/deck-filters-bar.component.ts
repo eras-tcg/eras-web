@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { COLOR_LABELS, CARD_COLORS } from '@data/cards/card.model';
 import { DeckFilters, EMPTY_DECK_FILTERS, hasDeckFilters } from '@data/decks/deck-filters';
@@ -9,15 +10,31 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 
-/** Filters for deck lists: name, author, colors, edition and (own decks) visibility. Stateless. */
+/**
+ * Filters for deck lists: name, author, colors, edition and (own decks) visibility. Stateless. As a `panel`, one
+ * column for a side panel (like the cards page), without the result line.
+ */
 @Component({
   selector: 'eras-deck-filters-bar',
-  imports: [CardComponent, GridComponent, StackComponent, FormFieldComponent, ToggleGroupComponent, ButtonComponent, IconComponent],
+  imports: [NgTemplateOutlet, CardComponent, GridComponent, StackComponent, FormFieldComponent, ToggleGroupComponent, ButtonComponent, IconComponent],
   template: `
     @let f = filters();
+    @if (panel()) {
+      <eras-stack [gap]="4"><ng-container [ngTemplateOutlet]="fields" /></eras-stack>
+    } @else {
     <eras-card padding="sm">
       <eras-stack [gap]="3">
-        <eras-grid minColumn="12rem" [gap]="3">
+        <eras-grid minColumn="12rem" [gap]="3"><ng-container [ngTemplateOutlet]="fields" /></eras-grid>
+        <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
+          <span>{{ resultLabel() }}</span>
+          @if (active()) {
+            <button erasButton variant="ghost" size="sm" type="button" (click)="filtersChange.emit(empty)"><eras-icon name="x" /> Limpiar filtros</button>
+          }
+        </eras-stack>
+      </eras-stack>
+    </eras-card>
+    }
+    <ng-template #fields>
           <eras-form-field label="Nombre">
             <input type="search" placeholder="Buscar mazo…" [value]="f.name" (input)="set('name', $any($event.target).value)" />
           </eras-form-field>
@@ -43,15 +60,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
           @if (showVisibility()) {
             <eras-toggle-group label="Visibilidad" [options]="visibilityOptions" [selected]="[f.visibility]" (toggled)="set('visibility', $any($event))" />
           }
-        </eras-grid>
-        <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
-          <span>{{ resultLabel() }}</span>
-          @if (active()) {
-            <button erasButton variant="ghost" size="sm" type="button" (click)="filtersChange.emit(empty)"><eras-icon name="x" /> Limpiar filtros</button>
-          }
-        </eras-stack>
-      </eras-stack>
-    </eras-card>
+    </ng-template>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,6 +69,7 @@ export class DeckFiltersBarComponent {
   readonly authors = input<readonly string[]>([]);
   readonly editions = input.required<readonly string[]>();
   readonly showVisibility = input(false, { transform: booleanAttribute });
+  readonly panel = input(false, { transform: booleanAttribute });
   readonly shown = input.required<number>();
   readonly total = input.required<number>();
   readonly filtersChange = output<DeckFilters>();

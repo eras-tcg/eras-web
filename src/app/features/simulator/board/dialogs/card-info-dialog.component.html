@@ -7,7 +7,7 @@
             <!-- The card with its Materiales peeking out behind it, and its Recursos under it, as on the table -->
             <div class="art" [style.--materials]="s.materials.length">
               @for (m of s.materials; track m.instanceId; let i = $index) {
-                <div class="material" [style.--i]="i" [title]="m.faceDown && !game.seeAll() ? 'Material bocabajo' : (m.cardName ?? '')">
+                <div class="material" [style.--i]="i">
                   <eras-game-card [imageUrl]="m.imageUrl" [hidden]="m.faceDown && !game.seeAll()" />
                   @if (!m.faceDown || game.seeAll()) {
                     <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (m.cardName ?? 'el material')" (click)="openDetail(m)"></button>
@@ -41,11 +41,14 @@
                 }
               </div>
             }
+            @if (s.unprogrammed) {
+              <p class="unprogrammed" role="note"><eras-icon name="alert" /> Sin programar en el simulador: {{ s.unprogrammed }}. Se juega a mano.</p>
+            }
             @if (modifiers(); as m) {
               <section class="panel modifiers" aria-label="Modificadores">
                 <h4><eras-icon name="sparkles" /> Ahora</h4>
                 @if (m.strength) {
-                  <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">(impresa {{ m.strength.base }})</span></p>
+                  <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">&nbsp;(original {{ m.strength.base }})</span></p>
                 }
                 @for (f of m.floating; track $index) {
                   <p><span [class.gain]="f.strength > 0 || (f.keyword && f.strength >= 0)" [class.loss]="f.strength < 0">{{ f.text }}</span>@if (f.source) {<span class="muted"> · {{ f.source }}</span>}</p>
@@ -124,7 +127,7 @@
               <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
               @if (!data.readonly) {
                 <!-- "Enviar a…": on the card's lower right corner -->
-                <button type="button" class="send" title="Enviar a…" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
+                <button type="button" class="send" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
                   <eras-icon name="external" />
                 </button>
               }

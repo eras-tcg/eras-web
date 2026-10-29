@@ -3,12 +3,15 @@ import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
-import { CardSlot, EffectPrompt, OfferedEffect } from '@data/simulator/simulator.model';
+import { CardSlot, EffectPrompt, OfferedEffect, ZONES } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-source.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardInfoData, CardInfoDialogComponent } from './card-info-dialog.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 
 export interface EffectPromptData {
@@ -24,16 +27,19 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EffectPromptDialogComponent {
   protected readonly game = inject(GameStore);
+  private readonly modal = inject(ModalService);
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
   protected readonly valid = new Set(this.prompt.validIds);
+  /** The most the chosen cards' levels may add up to, or null without that limit. */
+  protected readonly levelSum = this.prompt.maxLevelSum ?? null;
   protected readonly order = signal<CardSlot[]>([...this.prompt.cards]);
   /** Cards that do not meet the effect are hidden unless asked (all of them are needed to order the rest). */
   protected readonly showAll = signal(false);
@@ -75,14 +81,41 @@ export class EffectPromptDialogComponent {
     inject(DestroyRef).onDestroy(() => this.game.promptChosen.set(new Set()));
   }
 
-  /** Where a card of the field is, with its place in that line from the left: tells copies apart. */
+  /** Which line of the field a card is in. */
   protected zoneOf(c: CardSlot): string | null {
     const field = Object.values(this.game.state()?.players ?? {}).find((p) => p.field.some((f) => f.instanceId === c.instanceId))?.field;
     if (!field) return null;
-    const rows = fieldRows(field);
-    const front = rows.front.findIndex((f) => f.instanceId === c.instanceId);
-    if (front >= 0) return `Línea frontal · ${front + 1}`;
-    return `Retaguardia · ${rows.back.findIndex((f) => f.instanceId === c.instanceId) + 1}`;
+    return fieldRows(field).front.some((f) => f.instanceId === c.instanceId) ? 'Línea frontal' : 'Retaguardia';
+  }
+
+  /** The levels of the cards chosen so far. */
+  protected readonly chosenLevels = computed(() =>
+    this.prompt.cards.filter((c) => this.chosen().has(c.instanceId)).reduce((sum, c) => sum + (c.level ?? 0), 0),
+  );
+
+  /** It meets the effect and, with a level-sum limit, still fits with those already chosen. */
+  protected selectable(c: CardSlot): boolean {
+    if (!this.valid.has(c.instanceId)) return false;
+    const max = this.levelSum;
+    return max === null || this.chosen().has(c.instanceId) || this.chosenLevels() + (c.level ?? 0) <= max;
+  }
+
+  private selectableId(id: string): boolean {
+    const card = this.cardOf(id);
+    return !!card && this.selectable(card);
+  }
+
+  /** The card in detail as on the board (with its Materiales and Recursos), wherever it is now. */
+  protected detail(c: CardSlot): void {
+    for (const opponent of [false, true]) {
+      const player = opponent ? this.game.opponentState() : this.game.myState();
+      const zone = ZONES.find((z) => player?.[z].some((x) => x.instanceId === c.instanceId));
+      if (zone) {
+        const data: CardInfoData = { instanceId: c.instanceId, zone, opponent, readonly: true };
+        this.modal.open(CardInfoDialogComponent, { data });
+        return;
+      }
+    }
   }
 
   /** What is answered to chain an offered effect. */
@@ -95,7 +128,7 @@ export class EffectPromptDialogComponent {
   }
 
   protected toggle(id: string): void {
-    if (!this.valid.has(id) && !this.prompt.effects?.some((e) => this.effectKey(e) === id)) return;
+    if (this.prompt.effects?.length ? !this.prompt.effects.some((e) => this.effectKey(e) === id) : !this.selectableId(id)) return;
     const next = new Set(this.chosen());
     if (next.has(id)) next.delete(id);
     else if (next.size < this.prompt.max) next.add(id);

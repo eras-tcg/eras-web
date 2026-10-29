@@ -6,6 +6,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  */
 @Component({
   selector: 'eras-auth-layout',
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null' },
   template: `
     <div class="frame">
       <img class="logo" src="favicon.svg" alt="" />

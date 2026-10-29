@@ -15,6 +15,8 @@ export function mergeCards(drive: readonly DriveCard[], meta: readonly CardMeta[
 /** Image URL with a cache-buster, so a replaced image is not served from cache. */
 export function cardImageUrl(card: Pick<DriveCard, 'image_url' | 'time_stamp'>): string | null {
   if (!card.image_url) return null;
+  // The backend sends it versioned already (?v=upload time)
+  if (card.image_url.includes('?')) return card.image_url;
   const version = card.time_stamp ? new Date(card.time_stamp).getTime() : 0;
   return version ? `${card.image_url}?v=${version}` : card.image_url;
 }

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfig } from '../http/api-config';
 import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission } from './auth.model';
@@ -19,6 +20,8 @@ interface LoginResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
+  private readonly injector = inject(Injector);
+  private expiryTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly tokenState = signal<string | null>(readStorage(TOKEN_KEY));
   private readonly userState = signal<AuthUser | null>(parseUser(readStorage(USER_KEY)));
@@ -26,6 +29,34 @@ export class AuthService {
   readonly token = this.tokenState.asReadonly();
   readonly user = this.userState.asReadonly();
   readonly isAuthenticated = computed(() => this.tokenState() !== null);
+  /** The last session ended because it expired (shown on the login page). */
+  readonly expired = signal(false);
+
+  constructor() {
+    // A session stored from an earlier visit may have expired meanwhile
+    if (tokenExpired(this.tokenState())) {
+      this.setSession(null, null);
+      this.expired.set(true);
+    }
+    this.scheduleExpiry();
+    // Timers stop while the computer sleeps: check again when the tab is shown
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && tokenExpired(this.tokenState())) this.expire();
+    });
+  }
+
+  /**
+   * The session is no longer valid (its token expired, or the server answered 401): sign out and go to the
+   * login page, which then brings the user back to where they were.
+   */
+  expire(): void {
+    if (!this.tokenState()) return;
+    this.setSession(null, null);
+    this.expired.set(true);
+    const router = this.injector.get(Router);
+    const returnUrl = router.url && router.url !== '/' && !router.url.startsWith('/login') ? router.url : undefined;
+    void router.navigate(['/login'], { queryParams: returnUrl ? { returnUrl } : {} });
+  }
 
   can(permission: Permission): boolean {
     return this.userState()?.permissions.includes(permission) ?? false;
@@ -38,6 +69,7 @@ export class AuthService {
     const token = response.token ?? response.accessToken ?? response.jwt;
     if (!token) throw new Error('El servidor no devolvió un token');
     this.applyToken(token, request.username);
+    this.expired.set(false);
   }
 
   logout(): void {
@@ -93,7 +125,31 @@ export class AuthService {
     this.userState.set(user);
     writeStorage(TOKEN_KEY, token);
     writeStorage(USER_KEY, user ? JSON.stringify(user) : null);
+    this.scheduleExpiry();
   }
+
+  /** Signs out by itself when the token's expiry ("exp") is reached. */
+  private scheduleExpiry(): void {
+    if (this.expiryTimer) clearTimeout(this.expiryTimer);
+    this.expiryTimer = null;
+    const exp = tokenExpiry(this.tokenState());
+    if (exp === null) return;
+    // setTimeout holds at most ~24.8 days; a longer session is checked again then
+    const wait = Math.min(Math.max(0, exp - Date.now()), 2_147_000_000);
+    this.expiryTimer = setTimeout(() => (tokenExpired(this.tokenState()) ? this.expire() : this.scheduleExpiry()), wait);
+  }
+}
+
+/** When the token expires (ms), or null if it says nothing. */
+function tokenExpiry(token: string | null): number | null {
+  if (!token) return null;
+  const exp = decodeJwtPayload(token)['exp'];
+  return typeof exp === 'number' ? exp * 1000 : null;
+}
+
+function tokenExpired(token: string | null): boolean {
+  const exp = tokenExpiry(token);
+  return exp !== null && exp <= Date.now();
 }
 
 function readStorage(key: string): string | null {

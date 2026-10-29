@@ -29,12 +29,12 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       justify-content: space-between;
       gap: var(--space-1);
       color: var(--color-text-muted);
-      font-size: 0.65rem;
+      font-size: 0.8rem;
       font-weight: var(--font-weight-bold);
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    .count { color: var(--color-text); }
+    .count { color: var(--color-text); font-size: 1rem; }
     .content { display: flex; flex: 1; align-items: center; justify-content: center; min-block-size: 0; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

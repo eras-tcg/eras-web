@@ -45,7 +45,7 @@
 
 .name {
   overflow: hidden;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md, 1rem);
   font-weight: var(--font-weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -148,7 +148,7 @@
   inset-block-start: var(--space-1);
   inset-inline-start: var(--space-2);
   color: var(--color-text-subtle);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -166,7 +166,7 @@
 
 // Field cards as big as their line allows (an exhausted one turns: it needs its height as width too)
 .placed {
-  --game-card-width: min(7.5rem, calc((100cqh - 1.4rem) * 63 / 88));
+  --game-card-width: min(var(--field-card-max, 9rem), calc((100cqh - 1.4rem) * 63 / 88));
 
   flex: none;
 }
@@ -227,7 +227,13 @@
   transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * -0.18rem)) rotate(calc(var(--fan) * -3deg));
 }
 
-// Your card rises to be seen whole while the pointer is on it
+// The rival's cards face you upside down: the edge that shows is their top (the art), as across a real table
+:host(.opponent) .in-hand eras-sim-card {
+  display: block;
+  transform: rotate(180deg);
+}
+
+// Your card rises to be seen whole while the pointer is on it (just the hidden half)
 :host(:not(.opponent)) .in-hand:hover,
 :host(:not(.opponent)) .in-hand:focus-within {
   z-index: 2;

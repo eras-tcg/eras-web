@@ -1,4 +1,3 @@
-import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
@@ -13,7 +12,7 @@ import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.compon
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
@@ -29,6 +28,8 @@ import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
 
 const MIRRORED_KEY = 'eras-sim-mirrored';
+const SIDEBAR_KEY = 'eras-sim-sidebar-expanded';
+const DYNAMIC_KEY = 'eras-sim-sidebar-dynamic';
 const HEADER_KEY = 'eras-sim-header-hidden';
 
 function readFlag(key: string): boolean {
@@ -52,13 +53,19 @@ const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: '
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // A click elsewhere or Esc hides the selected card's actions (cards stop their own clicks)
-  host: { '(document:keydown.escape)': 'game.pendingTargetSource.set(null); game.selectedId.set(null)', '(click)': 'game.selectedId.set(null)' },
+  host: {
+    '(document:keydown.escape)': 'game.pendingTargetSource.set(null); game.selectedId.set(null)',
+    '(click)': 'game.selectedId.set(null)',
+    '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
+    '[class.fullscreen]': 'fullscreen()',
+    '[class.sidebar-pinned]': 'sidebarExpanded() && !sidebarDynamic()',
+  },
 })
 export class BoardPage {
   /** Route param `:roomId`. */
@@ -93,6 +100,15 @@ export class BoardPage {
   protected readonly mirrored = signal(readFlag(MIRRORED_KEY));
   /** The site's navigation bar is hidden to give the table more height. Remembered on the device. */
   protected readonly headerHidden = signal(readFlag(HEADER_KEY));
+  /** The options sidebar: expanded (names beside the icons), or dynamic (it expands while the pointer is on it). */
+  protected readonly sidebarExpanded = signal(readFlag(SIDEBAR_KEY));
+  protected readonly sidebarDynamic = signal(readFlag(DYNAMIC_KEY));
+  protected readonly sidebarHover = signal(false);
+  protected readonly sidebarOpen = computed(() => (this.sidebarDynamic() ? this.sidebarHover() : this.sidebarExpanded()));
+  /** Browser full screen: the field cards get the extra room. */
+  protected readonly fullscreen = signal(false);
+  /** Test room: the other side, to look at the table from it. */
+  protected readonly otherSide = computed(() => this.game.sides().find((p) => p.userId !== this.game.myState()?.userId) ?? null);
   private leaving = false;
 
   /** The phases of the turn in the bar. */
@@ -217,6 +233,27 @@ export class BoardPage {
   protected toggleMirrored(): void {
     this.mirrored.update((on) => !on);
     writeFlag(MIRRORED_KEY, this.mirrored());
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarExpanded.update((on) => !on);
+    writeFlag(SIDEBAR_KEY, this.sidebarExpanded());
+    // Collapsing it by hand leaves it collapsed until hovered again
+    if (!this.sidebarExpanded()) this.sidebarHover.set(false);
+  }
+
+  protected toggleDynamic(): void {
+    this.sidebarDynamic.update((on) => !on);
+    writeFlag(DYNAMIC_KEY, this.sidebarDynamic());
+  }
+
+  protected async toggleFullscreen(): Promise<void> {
+    try {
+      if (this.document.fullscreenElement) await this.document.exitFullscreen();
+      else await this.document.documentElement.requestFullscreen();
+    } catch {
+      // The browser refused it (no user gesture, not allowed): nothing changes
+    }
   }
 
   protected toggleHeader(): void {

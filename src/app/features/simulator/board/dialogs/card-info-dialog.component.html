@@ -7,7 +7,7 @@
             <!-- The card with its Materiales peeking out behind it, and its Recursos under it, as on the table -->
             <div class="art" [style.--materials]="s.materials.length">
               @for (m of s.materials; track m.instanceId; let i = $index) {
-                <div class="material" [style.--i]="i" [title]="m.faceDown && !game.seeAll() ? 'Material bocabajo' : (m.cardName ?? '')">
+                <div class="material" [style.--i]="i">
                   <eras-game-card [imageUrl]="m.imageUrl" [hidden]="m.faceDown && !game.seeAll()" />
                   @if (!m.faceDown || game.seeAll()) {
                     <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (m.cardName ?? 'el material')" (click)="openDetail(m)"></button>
@@ -127,7 +127,7 @@
               <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
               @if (!data.readonly) {
                 <!-- "Enviar a…": on the card's lower right corner -->
-                <button type="button" class="send" title="Enviar a…" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
+                <button type="button" class="send" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
                   <eras-icon name="external" />
                 </button>
               }

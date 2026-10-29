@@ -20,7 +20,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
   `,
   styleUrl: './page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class]': '"width-" + width()', '[class.fill]': 'fill()' },
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null', '[class]': '"width-" + width()', '[class.fill]': 'fill()' },
 })
 export class PageComponent {
   readonly title = input.required<string>();

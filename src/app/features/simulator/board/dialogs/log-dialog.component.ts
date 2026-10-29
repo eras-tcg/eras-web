@@ -74,7 +74,7 @@ interface Group {
           @for (g of groups(); track g.id) {
             <li class="group" [class.no-card]="!g.imageUrl">
               @if (g.imageUrl) {
-                <div class="card" [title]="g.sourceName ?? ''">
+                <div class="card">
                   <eras-card-with-source [imageUrl]="g.imageUrl" [sourceName]="g.inheritedName" [sourceImage]="g.inheritedImage" />
                 </div>
               }

@@ -3,6 +3,8 @@ import { CardComponent } from '../../surfaces/card/card.component';
 
 @Component({
   selector: 'eras-news-card',
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null' },
   imports: [CardComponent],
   template: `
     <eras-card>

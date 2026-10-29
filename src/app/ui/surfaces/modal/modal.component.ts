@@ -33,7 +33,8 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   `,
   styleUrl: './modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class]': '"size-" + size()' },
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null', '[class]': '"size-" + size()' },
 })
 export class ModalComponent {
   readonly title = input.required<string>();

@@ -75,7 +75,6 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="'Enviar ' + (c.cardName ?? 'la carta') + ' a…'"
-                    title="Enviar a…"
                     (click)="$event.stopPropagation(); sendOne(c, i)"
                     (keydown.enter)="$event.stopPropagation(); sendOne(c, i)"
                   ><eras-icon name="external" /></span>

@@ -14,6 +14,8 @@ export interface BarItem {
  */
 @Component({
   selector: 'eras-bar-list',
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null' },
   template: `
     <p class="title">{{ title() }}</p>
     <ul>

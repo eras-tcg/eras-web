@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CanDirective } from '@core/auth/can.directive';
 import { AuthService } from '@core/auth/auth.service';
 import { CardsStore } from '@data/cards/cards.store';
-import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, summarizeDecks } from '@data/decks/deck-filters';
+import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, hasDeckFilters, summarizeDecks } from '@data/decks/deck-filters';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
@@ -17,6 +17,7 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { SplitComponent } from '@ui/layout/split/split.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { DeckFiltersBarComponent } from './deck-filters-bar.component';
 import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
@@ -38,6 +39,7 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
     ButtonComponent,
     IconComponent,
     SpinnerComponent,
+    SplitComponent,
   ],
   template: `
     <eras-page title="Mis mazos" subtitle="Tus mazos, públicos y privados" width="wide">
@@ -49,12 +51,23 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
           (keyChange)="sortKey.set($any($event))"
           (directionChange)="direction.set($event)"
         />
+        <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
+          <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
+        </button>
         <a *erasCan="'manage_decks'" erasButton routerLink="/deck-builder"><eras-icon name="plus" /> Nuevo mazo</a>
       </ng-container>
 
-      <eras-stack [gap]="4">
-        @if (store.myDecks().length) {
+      @if (store.error(); as error) {
+        <eras-alert tone="danger">{{ error }}</eras-alert>
+      }
+      @if (actionError(); as error) {
+        <eras-alert tone="danger">{{ error }}</eras-alert>
+      }
+
+      <eras-split aside="17rem" [asideHidden]="!showFilters() || store.myDecks().length === 0">
+        <div split-aside>
           <eras-deck-filters-bar
+            panel
             showVisibility
             [filters]="filters()"
             [editions]="editions()"
@@ -62,13 +75,16 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
             [total]="store.myDecks().length"
             (filtersChange)="filters.set($event)"
           />
-        }
+        </div>
 
-        @if (store.error(); as error) {
-          <eras-alert tone="danger">{{ error }}</eras-alert>
-        }
-        @if (actionError(); as error) {
-          <eras-alert tone="danger">{{ error }}</eras-alert>
+      <eras-stack [gap]="4">
+        @if (store.myDecks().length) {
+          <eras-stack direction="row" [gap]="3" align="center" wrap>
+              <span>{{ countLabel() }}</span>
+              @if (filtersActive()) {
+                <button erasButton variant="ghost" size="sm" type="button" (click)="filters.set(emptyFilters)"><eras-icon name="x" /> Limpiar filtros</button>
+              }
+            </eras-stack>
         }
         @if (store.loading() && store.myDecks().length === 0) {
           <eras-empty-state title="Cargando tus mazos…"><eras-spinner /></eras-empty-state>
@@ -111,6 +127,7 @@ import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
           </eras-grid>
         }
       </eras-stack>
+      </eras-split>
     </eras-page>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -126,6 +143,14 @@ export class MyDecksPage {
   protected readonly sortKey = signal<DeckSortKey>('name');
   protected readonly direction = signal<'asc' | 'desc'>('asc');
   protected readonly filters = signal<DeckFilters>(EMPTY_DECK_FILTERS);
+  protected readonly emptyFilters = EMPTY_DECK_FILTERS;
+  // Open beside the list on wide screens, folded on phones (as on the cards page)
+  protected readonly showFilters = signal(typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches);
+  protected readonly filtersActive = computed(() => hasDeckFilters(this.filters()));
+  protected readonly countLabel = computed(() => {
+    const n = this.decks().length;
+    return `${n} ${n === 1 ? 'mazo' : 'mazos'}${this.filtersActive() ? ' (filtrados)' : ''}`;
+  });
   protected readonly deleting = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
 

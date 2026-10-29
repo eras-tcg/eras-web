@@ -1,0 +1,50 @@
+.rows { display: grid; gap: var(--space-6); }
+.edition { display: grid; gap: var(--space-3); min-inline-size: 0; }
+.head { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.cover { inline-size: 4.5rem; block-size: 4.5rem; flex: none; border-radius: var(--radius-md); object-fit: cover; }
+.info { display: grid; flex: 1 1 16rem; gap: var(--space-1); min-inline-size: 0; }
+h2 { margin: 0; font-size: var(--font-size-lg); }
+.code { margin-inline-end: var(--space-2); color: var(--color-primary); }
+.description {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+// The cards in one row, scrolled sideways
+.strip {
+  display: grid;
+  grid-auto-columns: 9rem;
+  grid-auto-flow: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+.strip li { scroll-snap-align: start; }
+.more {
+  display: grid;
+  place-content: center;
+  gap: var(--space-1);
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 8rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.more:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.strip-empty { display: grid; place-items: center; min-block-size: 6rem; }
+@media (max-width: 40rem) {
+  .strip { grid-auto-columns: 7rem; }
+}

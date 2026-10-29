@@ -100,6 +100,17 @@ export type PostGameChoice = 'new_game' | 'change_deck' | 'exit';
 export interface GameLogEntry {
   ts: number;
   text: string;
+  /** Timeline event's type (ACTIVATE…, DRAW, DESTROY…), MANUAL for an action by hand, or none (a note). */
+  kind?: string | null;
+  /** The card behind it: the effect's card for an effect's steps, else the card the action is about. */
+  sourceId?: string | null;
+  sourceName?: string | null;
+  imageUrl?: string | null;
+  /** One of an effect's steps (not its activation or resolution). */
+  detail?: boolean;
+  /** An inherited effect: the Recurso that gives it. */
+  inheritedFromName?: string | null;
+  inheritedFromImage?: string | null;
 }
 
 /** Every broadcast on /topic/room/{id} carries the whole room state. */
@@ -149,7 +160,7 @@ export interface GameState {
   structurePlayed?: string[] | null;
   /** Who won the game that just ended, and why. */
   winnerId?: string | null;
-  endReason?: 'lives' | 'surrender' | null;
+  endReason?: 'lives' | 'surrender' | 'deck' | null;
 }
 
 /** A slow effect (passive moment without a trigger) that can be activated from the board now. */
@@ -269,6 +280,9 @@ export interface OfferedEffect {
   sourceName: string;
   label: string;
   text: string;
+  /** An inherited effect: the Recurso that gives it. */
+  inheritedFromName?: string | null;
+  inheritedFromImage?: string | null;
 }
 
 /** GET /api/simulator/rooms/{id} */

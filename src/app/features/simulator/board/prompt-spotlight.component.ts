@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { ChangeDetectionStrategy, Component, DestroyRef, afterRenderEffect, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterRenderEffect, computed, effect, inject } from '@angular/core';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 
@@ -23,6 +24,7 @@ export class PromptSpotlightComponent {
   private readonly document = inject(DOCUMENT);
   private readonly overlays = inject(OverlayContainer);
   private readonly layer = this.createLayer();
+  private readonly seeThrough = inject(SheetState).seeThrough;
 
   /** The cards the open choice is about: the effect's card, else the cards whose effects are offered. */
   private readonly ids = computed<string[]>(() => {
@@ -41,6 +43,11 @@ export class PromptSpotlightComponent {
       this.draw(this.ids());
     };
     afterRenderEffect({ write: draw });
+    // "Ver la mesa": the chain's copy turns transparent with the chain itself
+    effect(() => {
+      const through = this.seeThrough();
+      this.layer.querySelectorAll<HTMLElement>('[data-chain-copy]').forEach((c) => (c.style.opacity = through ? '0.12' : ''));
+    });
     const view = this.document.defaultView;
     view?.addEventListener('resize', draw);
     // The choice opens a moment after the update: draw again when an overlay opens or closes
@@ -85,7 +92,12 @@ export class PromptSpotlightComponent {
       copy.removeAttribute('id');
       copy.style.position = 'fixed';
       copy.style.margin = '0';
-      if (card) copy.style.filter = 'drop-shadow(0 0 6px rgb(253 230 138 / 95%)) drop-shadow(0 0 14px rgb(253 230 138 / 70%))';
+      if (!card) {
+        copy.dataset['chainCopy'] = '';
+        copy.style.transition = 'opacity 120ms ease';
+        if (this.seeThrough()) copy.style.opacity = '0.12';
+      }
+      if (card) copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
       // The size the card takes from where it is
       copy.style.setProperty('--game-card-width', getComputedStyle(element).getPropertyValue('--game-card-width'));
       copy.style.width = `${width}px`;

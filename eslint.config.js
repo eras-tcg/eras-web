@@ -36,7 +36,12 @@ module.exports = defineConfig([
   },
   // Components that style native elements (`button[erasButton]`) use attribute selectors.
   {
-    files: ['src/app/ui/primitives/button/*.ts', 'src/app/ui/primitives/chip/*.ts'],
+    files: [
+      'src/app/ui/primitives/button/*.ts',
+      'src/app/ui/primitives/chip/*.ts',
+      'src/app/ui/primitives/icon-button/*.ts',
+      'src/app/features/simulator/board/sidebar-item.component.ts',
+    ],
     rules: {
       '@angular-eslint/component-selector': ['error', { type: 'attribute', prefix: 'eras', style: 'camelCase' }],
     },

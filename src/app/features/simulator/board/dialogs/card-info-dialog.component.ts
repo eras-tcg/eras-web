@@ -9,11 +9,21 @@ import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.compon
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
-import { renderEffect, renderKeywordEffect } from '@data/cards/card-rules';
+import { renderEffect, renderKeywordEffect, usageLimitLabel } from '@data/cards/card-rules';
 import { CardEffect, KeywordEffect } from '@data/cards/card.model';
 import { displayStrength } from '@data/simulator/game-rules';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardDetailDialogComponent, CardDetailDialogData } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
+
+/** An effect for display: its moment ("Al Atacar") and tags ("una vez por turno") apart from its text. */
+interface EffectLine {
+  moment: string | null;
+  tags: string[];
+  text: string;
+}
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -32,159 +42,9 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
-  template: `
-    <eras-modal size="xl" [title]="data.only ? 'Separar ' + labels[data.only].toLowerCase() : (slot()?.cardName ?? 'Carta')" (closed)="ref.close()">
-      @if (slot(); as s) {
-        <eras-stack [gap]="4">
-          @if (!data.only) {
-            <div class="info">
-              <div class="art">
-                <eras-game-card class="main" [imageUrl]="s.imageUrl" [materialsCount]="s.materials.length" />
-                <!-- Its Recursos under it, as on the table: only their name and the effect they pass on (just the name if none) -->
-                @for (r of resourceViews(); track r.id) {
-                  <div class="resource" [class.name-only]="r.lines.length === 0" role="img" [attr.aria-label]="'Recurso: ' + r.name">
-                    @if (r.imageUrl) {
-                      <img [src]="r.imageUrl" alt="" />
-                    } @else {
-                      <span>{{ r.name }}</span>
-                    }
-                  </div>
-                }
-              </div>
-              <div class="effects">
-                @if (modifiers(); as m) {
-                  <section class="modifiers" aria-label="Modificadores">
-                    <h4>Ahora</h4>
-                    @if (m.strength) {
-                      <p class="strength">Fuerza <strong>{{ m.strength.now }}</strong> <span class="muted">(impresa {{ m.strength.base }})</span></p>
-                    }
-                    @for (f of m.floating; track $index) {
-                      <p><span [class.gain]="f.strength > 0 || (f.keyword && f.strength >= 0)" [class.loss]="f.strength < 0">{{ f.text }}</span>@if (f.source) {<span class="muted"> · {{ f.source }}</span>}</p>
-                    }
-                    @if (m.continuous) {
-                      <p><span class="gain">{{ m.continuous }}</span><span class="muted"> · efecto continuo</span></p>
-                    }
-                    @if (m.manual) {
-                      <p><span [class.gain]="m.manual > 0" [class.loss]="m.manual < 0">{{ m.manual > 0 ? '+' : '' }}{{ m.manual }} de fuerza</span><span class="muted"> · ajuste manual</span></p>
-                    }
-                  </section>
-                }
-                @if (own().length) {
-                  <section>
-                    <h4>Efectos</h4>
-                    @for (line of own(); track $index) {
-                      <p>{{ line }}</p>
-                    }
-                  </section>
-                } @else {
-                  <p class="muted">Sin efectos.</p>
-                }
-                @if (inherited().length) {
-                  <section>
-                    <h4>Efectos de sus recursos</h4>
-                    @for (e of inherited(); track $index) {
-                      <p><span class="source">{{ e.source }}:</span> {{ e.line }}</p>
-                    }
-                  </section>
-                }
-              </div>
-            </div>
-          }
-          @for (type of groups(); track type) {
-            <eras-section-header [title]="labels[type] + ' (' + s[type].length + ')'" />
-            <eras-stack direction="row" [gap]="3" wrap>
-              @for (a of s[type]; track a.instanceId; let i = $index) {
-                <div class="attached">
-                  <eras-game-card small [imageUrl]="a.imageUrl" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
-                  @if (!data.readonly) {
-                    <!-- "Enviar a…": on the card's lower right corner -->
-                    <button type="button" class="send" title="Enviar a…" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
-                      <eras-icon name="external" />
-                    </button>
-                  }
-                  <ng-template #actions>
-                    <eras-menu>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'hand')">A la mano</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'discardPile')">Al descarte</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'tributeZone')">A tributos</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'deck', 'bottom')">Al fondo del mazo</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'lifeStack', 'top', true)">A las vidas (boca abajo)</button>
-                      <button erasMenuItem (triggered)="moveOut(a, type, 'field')">Al campo</button>
-                      <hr />
-                      <button erasMenuItem (triggered)="game.swapWithMain(a.instanceId, type, s.instanceId, targetPlayer())">Intercambiar con la principal</button>
-                      <button erasMenuItem (triggered)="game.reclassifyAttachment(a.instanceId, type, s.instanceId, targetPlayer())">
-                        Pasar a {{ type === 'materials' ? 'recursos' : 'materiales' }}
-                      </button>
-                      @if (i > 0) {
-                        <button erasMenuItem (triggered)="reorder(s, type, i, -1)">Subir</button>
-                      }
-                      @if (i < s[type].length - 1) {
-                        <button erasMenuItem (triggered)="reorder(s, type, i, 1)">Bajar</button>
-                      }
-                    </eras-menu>
-                  </ng-template>
-                </div>
-              }
-            </eras-stack>
-          }
-        </eras-stack>
-      } @else {
-        <eras-empty-state title="La carta ya no está en esa zona" />
-      }
-    </eras-modal>
-  `,
-  styles: `
-    .attached { position: relative; display: flex; flex-direction: column; align-items: center; }
-    .send {
-      position: absolute;
-      inset-block-end: -0.4rem;
-      inset-inline-end: -0.4rem;
-      display: inline-grid;
-      place-items: center;
-      inline-size: 1.8rem;
-      block-size: 1.8rem;
-      padding: 0;
-      border: 1px solid var(--color-border);
-      border-radius: 50%;
-      background: var(--color-surface);
-      color: var(--color-text);
-      box-shadow: var(--shadow-md);
-      cursor: pointer;
-    }
-    .send:hover, .send:focus-visible { border-color: var(--color-primary); color: var(--color-primary); }
-    .send eras-icon { inline-size: 1rem; block-size: 1rem; }
-    .info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; }
-    .art { --game-card-width: 14rem; display: grid; justify-items: center; }
-    .art eras-game-card { position: relative; }
-    .art .main { z-index: 2; }
-    // A Recurso shows the strip of its card from its name bar down (its heritable effect): 80%–100% of the card
-    // height (ratio 63:88); without a heritable effect only the name bar (80%–87.5%)
-    .resource {
-      --card-height: calc(var(--game-card-width) * 88 / 63);
-      inline-size: var(--game-card-width);
-      block-size: calc(var(--card-height) * 0.2);
-      overflow: hidden;
-      border-radius: 0 0 var(--radius-md) var(--radius-md);
-      background: var(--color-surface-muted);
-      box-shadow: 0 2px 4px rgb(0 0 0 / 35%);
-    }
-    .resource.name-only { block-size: calc(var(--card-height) * 0.075); border-radius: 0; }
-    .resource img { display: block; inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
-    .resource span { display: block; padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
-    .effects { display: grid; gap: var(--space-3); }
-    .effects h3 { margin: 0; font-size: var(--font-size-lg); }
-    .effects h4 { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .effects p { margin: 0 0 var(--space-2); }
-    .effects .source { font-weight: var(--font-weight-bold); }
-    .muted { color: var(--color-text-muted); }
-    .modifiers { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-    .modifiers p:last-child { margin-block-end: 0; }
-    .modifiers .strength strong { font-size: var(--font-size-lg); }
-    .gain { color: var(--color-success); }
-    .loss { color: var(--color-danger); }
-    @media (max-width: 44rem) { .info { grid-template-columns: 1fr; } }
-  `,
+  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent],
+  templateUrl: './card-info-dialog.component.html',
+  styleUrl: './card-info-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CardInfoDialogComponent {
@@ -192,6 +52,7 @@ export class CardInfoDialogComponent {
   protected readonly ref = inject(DialogRef);
   protected readonly game = inject(GameStore);
   private readonly cards = inject(CardsStore);
+  private readonly modal = inject(ModalService);
   protected readonly labels = ATTACH_LABELS;
 
   /** Live slot: the dialog follows the card through every broadcast. */
@@ -204,10 +65,18 @@ export class CardInfoDialogComponent {
     return this.cards.cards().find((c) => c.id === cardId)?.meta ?? null;
   }
 
-  private lines(effects: CardEffect[] | null | undefined, keywords: KeywordEffect[] | null | undefined): string[] {
+  /** The effects and keyword abilities as lines: the moment and the usage limit come from the card's data. */
+  private lines(effects: CardEffect[] | null | undefined, keywords: KeywordEffect[] | null | undefined): EffectLine[] {
     const ref = this.cards.ref();
     const text = (l: { segments: { text: string }[] }) => l.segments.map((x) => x.text).join('').trim();
-    return [...(effects ?? []).map((e) => text(renderEffect(e, ref))), ...(keywords ?? []).map((k) => text(renderKeywordEffect(k, ref)))].filter(Boolean);
+    return [
+      ...(effects ?? []).map((e) => ({
+        moment: e.instance ?? null,
+        tags: [usageLimitLabel(e.ussageLimit)].filter((t): t is string => !!t),
+        text: text(renderEffect(e, ref, false)),
+      })),
+      ...(keywords ?? []).map((k) => ({ moment: null, tags: [], text: text(renderKeywordEffect(k, ref)) })),
+    ].filter((l) => l.text);
   }
 
   /** The card's own effects and keywords. */
@@ -219,7 +88,7 @@ export class CardInfoDialogComponent {
   protected readonly resourceViews = computed(() =>
     (this.slot()?.resources ?? []).map((r) => {
       const m = this.meta(r.cardId);
-      return { id: r.instanceId, name: r.cardName ?? 'Recurso', imageUrl: r.imageUrl, lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
+      return { id: r.instanceId, slot: r, name: r.cardName ?? 'Recurso', imageUrl: r.imageUrl, lines: this.lines(m?.inheritEffects, m?.inheritKeywordEffects) };
     }),
   );
   /**
@@ -240,6 +109,31 @@ export class CardInfoDialogComponent {
 
   /** The effects its Recursos give it, with their source. */
   protected readonly inherited = computed(() => this.resourceViews().flatMap((r) => r.lines.map((line) => ({ source: r.name, line }))));
+  protected readonly ownLines = this.own;
+  protected readonly inheritedLines = computed(() => this.inherited().map((e) => ({ source: e.source, line: e.line })));
+
+  /** Its printed numbers at a glance; the strength as it is now (marked when it changed). */
+  protected readonly facts = computed(() => {
+    const s = this.slot();
+    if (!s || (s.faceDown && !this.game.seeAll())) return [];
+    const facts: { label: string; value: string; changed?: boolean }[] = [];
+    if (s.level != null) facts.push({ label: 'Nivel', value: String(s.level) });
+    if (s.cost != null) facts.push({ label: 'Coste', value: String(s.cost) });
+    if (s.strength != null) {
+      const now = this.data.zone === 'field' ? displayStrength(s) : s.strength;
+      facts.push({ label: 'Fuerza', value: String(now), changed: now !== s.strength });
+    }
+    if (s.classes?.length) facts.push({ label: 'Clase', value: s.classes.join(' · ') });
+    return facts;
+  });
+
+  /** The card in detail, as in the cards catalog. */
+  protected openDetail(card: CardSlot): void {
+    const catalog = this.cards.cards().find((c) => c.id === card.cardId);
+    if (!catalog) return;
+    const data: CardDetailDialogData = { cards: [catalog], index: 0 };
+    this.modal.open(CardDetailDialogComponent, { data });
+  }
 
   protected readonly groups = computed<AttachmentType[]>(() => {
     const s = this.slot();

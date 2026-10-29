@@ -3,9 +3,6 @@
   <ng-template #strip let-gems="gems">
     <div class="strip" [class.with-gems]="gems">
       <eras-stack direction="row" [gap]="3" align="center" wrap>
-        @if (!game.editorRoom() && game.editorMode() && !editMode.active()) {
-          <span class="editor-badge">Modo editor</span>
-        }
         @if (inProgress()) {
           <span class="turn" [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
         }
@@ -53,82 +50,56 @@
     (mouseenter)="sidebarHover.set(true)"
     (mouseleave)="sidebarHover.set(false)"
   >
-    <button type="button" class="item" (click)="toggleHeader()">
-      <eras-icon [name]="headerHidden() ? 'chevron-down' : 'chevron-up'" />
-      <span>{{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}</span>
+    <!-- Preferences: how the table looks and behaves -->
+    <span class="group-label">Preferencias</span>
+    <button type="button" erasSidebarItem [icon]="headerHidden() ? 'chevron-down' : 'chevron-up'" (click)="headerHidden.set(!headerHidden())">
+      {{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}
     </button>
     @if (!sidebarDynamic()) {
-      <button type="button" class="item" (click)="toggleSidebar()">
-        <eras-icon [name]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" />
-        <span>{{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}</span>
+      <button type="button" erasSidebarItem [icon]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" (click)="toggleSidebar()">
+        {{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}
       </button>
     }
     @if (sidebarExpanded() || sidebarDynamic()) {
-      <button type="button" class="item" [class.on]="sidebarDynamic()" [attr.aria-pressed]="sidebarDynamic()" (click)="toggleDynamic()">
-        <eras-icon name="refresh" />
-        <span>Menú dinámico (se expande al pasar el mouse)</span>
+      <button type="button" erasSidebarItem icon="refresh" [on]="sidebarDynamic()" (click)="sidebarDynamic.set(!sidebarDynamic())">
+        Menú dinámico (se expande al pasar el mouse)
       </button>
     }
+    @if (game.editorRoom()) {
+      <button type="button" erasSidebarItem icon="swap" [on]="game.followActive()" (click)="game.followActive.set(!game.followActive())">
+        Cambiar de lado según quién actúa
+      </button>
+    }
+    @if (game.editorMode()) {
+      <button type="button" erasSidebarItem icon="eye" [on]="game.revealHidden()" (click)="game.toggleRevealHidden()">
+        Mostrar cartas ocultas (manos, vidas, mazo)
+      </button>
+    }
+    <button type="button" erasSidebarItem icon="list" [on]="!noticesOff()" (click)="noticesOff.set(!noticesOff())">Avisos de las últimas acciones</button>
+    <button type="button" erasSidebarItem icon="cards" [on]="straightHand()" (click)="straightHand.set(!straightHand())">Mano recta (sin curva)</button>
+    <button type="button" erasSidebarItem icon="layers" [on]="mirrored()" (click)="mirrored.set(!mirrored())">Zonas espejadas</button>
+    <button type="button" erasSidebarItem icon="maximize" [on]="fullscreen()" (click)="toggleFullscreen()">
+      Pantalla completa (cartas del campo más grandes)
+    </button>
     <hr />
+    <button type="button" erasSidebarItem icon="cards" (click)="dialogs.decklist()">Ver mi mazo</button>
+    <button type="button" erasSidebarItem icon="list" (click)="dialogs.log()">Historial</button>
     @if (game.editorRoom()) {
       @if (otherSide(); as other) {
-        <button type="button" class="item" (click)="game.followActive.set(false); game.playSide(other.userId)">
-          <eras-icon name="user" />
-          <span>Ver desde {{ other.username }}</span>
+        <button type="button" erasSidebarItem icon="user" (click)="game.followActive.set(false); game.playSide(other.userId)">
+          Cambiar perspectiva (ver desde {{ other.username }})
         </button>
       }
-      <button type="button" class="item" [class.on]="game.followActive()" [attr.aria-pressed]="game.followActive()" (click)="game.followActive.set(!game.followActive())">
-        <eras-icon name="swap" />
-        <span>Cambiar de lado según quién actúa</span>
-      </button>
-      <button type="button" class="item" [class.on]="game.revealHidden()" [attr.aria-pressed]="game.revealHidden()" (click)="game.revealHidden.set(!game.revealHidden())">
-        <eras-icon name="eye" />
-        <span>Mostrar cartas ocultas (manos, vidas, mazo)</span>
-      </button>
-      <button type="button" class="item" (click)="dialogs.dummyCard()">
-        <eras-icon name="square-plus" />
-        <span>Crear carta de prueba</span>
-      </button>
-    } @else if (!editMode.active()) {
-      <!-- With the site's edit mode on, the editor mode is on -->
-      <button type="button" class="item" [class.on]="game.editorMode()" [attr.aria-pressed]="game.editorMode()" (click)="game.setEditorMode(!game.editorMode())">
-        <eras-icon name="edit" />
-        <span>Modo editor (acciones manuales)</span>
-      </button>
+      <button type="button" erasSidebarItem icon="square-plus" (click)="dialogs.dummyCard()">Crear carta</button>
     }
-    <button type="button" class="item" [class.on]="mirrored()" [attr.aria-pressed]="mirrored()" (click)="toggleMirrored()">
-      <eras-icon name="layers" />
-      <span>Zonas espejadas</span>
-    </button>
-    <button type="button" class="item" [class.on]="fullscreen()" [attr.aria-pressed]="fullscreen()" (click)="toggleFullscreen()">
-      <eras-icon name="maximize" />
-      <span>Pantalla completa (cartas del campo más grandes)</span>
-    </button>
     <hr />
-    <button type="button" class="item" (click)="dialogs.decklist()">
-      <eras-icon name="cards" />
-      <span>Ver mi mazo</span>
-    </button>
-    <button type="button" class="item" (click)="dialogs.log()">
-      <eras-icon name="list" />
-      <span>Historial</span>
-    </button>
     @if (inProgress()) {
-      <button type="button" class="item danger" (click)="surrender()">
-        <eras-icon name="flag" />
-        <span>Rendirse</span>
-      </button>
+      <button type="button" erasSidebarItem icon="flag" danger (click)="surrender()">Rendirse</button>
     }
-    <button type="button" class="item" (click)="exit()">
-      <eras-icon name="logout" />
-      <span>Salir</span>
-    </button>
+    <button type="button" erasSidebarItem icon="logout" (click)="exit()">Salir</button>
     @if (game.editorRoom()) {
       <!-- At the foot: a test room -->
-      <div class="notice">
-        <eras-icon name="edit" />
-        <span>Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba</span>
-      </div>
+      <div erasSidebarItem icon="edit" notice>Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba</div>
     }
   </aside>
   }
@@ -141,12 +112,12 @@
   <div class="table" [class.in-combat]="!!game.state()?.combat">
     @if (game.myState(); as me) {
       @if (game.opponentState(); as opp) {
-        <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" />
+        <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" [straightHand]="straightHand()" />
       } @else {
         <div class="empty-side">El rival todavía no entra a la sala.</div>
       }
       <ng-container *ngTemplateOutlet="strip; context: { gems: true }" />
-      <eras-player-half [player]="me" />
+      <eras-player-half [player]="me" [straightHand]="straightHand()" />
     } @else {
       <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
     }
@@ -162,7 +133,7 @@
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
       @if (game.state()?.chain?.length) {
-        <div class="chain-panel"><eras-chain-list /></div>
+        <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
       }
       @if (engineNotice(); as notice) {
         @if (!game.myPrompt()) {
@@ -196,6 +167,27 @@
   </div>
   }
 
+  @if (canSeeThrough()) {
+    <!-- Held (or a long press anywhere): the choice and the chain turn transparent to look at the table -->
+    <button
+      type="button"
+      class="see-through-btn"
+      [class.on]="seeThrough()"
+      [attr.aria-pressed]="seeThrough()"
+      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic en cualquier parte)"
+      (pointerdown)="holdSeeThrough($event)"
+      (keydown.space)="seeThrough.set(true); $event.preventDefault()"
+      (keyup.space)="seeThrough.set(false)"
+      (keydown.enter)="seeThrough.set(true)"
+      (keyup.enter)="seeThrough.set(false)"
+      (blur)="seeThrough.set(false)"
+      (click)="$event.stopPropagation()"
+    >
+      <eras-icon name="eye" />
+      <span>Ver la mesa</span>
+    </button>
+  }
+
   <eras-card-flights />
   <!-- The card a choice is about stays bright above the choice's backdrop -->
   <eras-prompt-spotlight />
@@ -215,8 +207,10 @@
         <img [src]="card.imageUrl" alt="" />
       </div>
     }
-    @for (line of game.recentLog(); track line.id) {
-      <div class="log-line">{{ line.text }}</div>
+    @if (!noticesOff()) {
+      @for (line of game.recentLog(); track line.id) {
+        <div class="log-line">{{ line.text }}</div>
+      }
     }
   </div>
 </div>

@@ -216,13 +216,18 @@
 .hand-cards {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: 0;
+  // A little up (over the edge of the Retaguardia): more of each card shows. The window reaches --hand-reach above
+  // and below the hand, so it is measured from there
+  inset-block-start: calc(var(--hand-reach) - 1.5rem);
   display: flex;
   justify-content: center;
+  // Turned like a wheel: the cards slide along with the fan, so the one that stands up comes to the middle
+  transform: translateX(calc(var(--hand-turn, 0) * var(--hand-card) * -0.84));
+  transition: transform var(--duration-fast) var(--easing-standard);
 }
 
 :host(.opponent) .hand-cards {
-  inset-block: auto 0;
+  inset-block: auto calc(var(--hand-reach) - 1.5rem);
   align-items: flex-end;
 }
 
@@ -248,12 +253,61 @@
   transform: rotate(180deg);
 }
 
+// "Mano recta": the row stays within its place; the cards past its ends fade out (the arrows bring them in)
+// The cards' window: as wide as the hand, and much taller, so a card raised over the Retaguardia stays inside it
+// (a mask only paints what is inside its box). It lets the pointer through to what is under it but its cards.
+.hand-window {
+  --hand-reach: 20rem;
+
+  position: absolute;
+  inset-inline: 0;
+  inset-block: calc(var(--hand-reach) * -1);
+  pointer-events: none;
+}
+
+.hand-window .in-hand {
+  pointer-events: auto;
+}
+
+// Its fade makes the window a layer of its own: lift the hand above the Retaguardia, as the fan is
+.hand.straight {
+  z-index: 3;
+}
+
+.hand.straight .hand-window {
+  mask-image: linear-gradient(to right, transparent 0, #000 2.5rem, #000 calc(100% - 2.5rem), transparent 100%);
+}
+
+// "Mano recta": a row, no lean and no drop
+.hand-cards.straight .in-hand {
+  transform: none;
+}
+
 // Your card rises to be seen whole while the pointer is on it (just the hidden half)
 :host(:not(.opponent)) .in-hand:hover,
 :host(:not(.opponent)) .in-hand.raised,
 :host(:not(.opponent)) .in-hand:has(:focus-visible) {
   z-index: 2;
   transform: translateY(calc(var(--hand-peek) * -1)) rotate(0deg);
+}
+
+// Turning a big hand: round buttons at its ends, over the cards
+.hand-turn {
+  position: absolute;
+  inset-block-start: calc(var(--hand-peek) / 2 - 2.75rem);
+  z-index: 3;
+}
+
+.hand-turn.start {
+  inset-inline-start: var(--space-1);
+}
+
+.hand-turn.end {
+  inset-inline-end: var(--space-1);
+}
+
+:host(.opponent) .hand-turn {
+  inset-block: auto calc(var(--hand-peek) / 2 - 2.75rem);
 }
 
 .hand-cards:empty::after {
@@ -328,9 +382,9 @@
 
 // The Tributos pile glows like a card when one of its cards can do something now (blue: summon, gold: effect)
 eras-game-zone.can-play {
-  box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%);
+  box-shadow: 0 0 0 2px var(--color-sim-ally), 0 0 14px 3px color-mix(in srgb, var(--color-sim-ally) 70%, transparent);
 }
 
 eras-game-zone.can-activate {
-  box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%);
+  box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 14px 3px color-mix(in srgb, var(--color-sim-gold) 70%, transparent);
 }

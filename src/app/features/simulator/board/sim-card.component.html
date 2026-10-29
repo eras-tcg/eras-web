@@ -1,0 +1,120 @@
+<eras-game-card
+  [imageUrl]="slot().imageUrl"
+  [name]="slot().cardName"
+  [hidden]="hidden()"
+  [tapped]="slot().tapped"
+  [strength]="strength()"
+  [modifier]="change()"
+  [materialsCount]="zone() === 'field' ? slot().materials.length : 0"
+  [resourcesCount]="zone() === 'field' ? slot().resources.length : 0"
+  [targeted]="game.targetedId() === slot().instanceId"
+  [source]="game.targetingSourceId() === slot().instanceId || game.pendingTargetSource() === slot().instanceId"
+  [selectable]="game.pendingTargetSource() !== null"
+  [small]="small()"
+  [attr.draggable]="canDrag() ? 'true' : null"
+  tabindex="0"
+  role="button"
+  [attr.aria-label]="label()"
+  [cdkContextMenuTriggerFor]="menu"
+  [cdkContextMenuDisabled]="lookOnly() || !game.editorMode()"
+  [class.selected]="selected()"
+  [class.can-play]="canPlay()"
+  [class.can-activate]="canActivate()"
+  [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
+  [class.new-card]="zone() === 'hand' && game.newInHand().has(slot().instanceId)"
+  [class.combat-attacker]="combatRole() === 'attacker'"
+  [class.combat-defender]="combatRole() === 'blocker' || combatRole() === 'target'"
+  cdkOverlayOrigin
+  #origin="cdkOverlayOrigin"
+  (click)="onClick($event)"
+  (dblclick)="onDoubleClick()"
+  (keydown.enter)="onClick($event)"
+  (dragstart)="onDragStart($event)"
+  (dragend)="drag.end()"
+/>
+
+@if (game.pendingTargetSource() === slot().instanceId) {
+  <!-- Choosing its target: cancel it from the card itself -->
+  <button type="button" class="cancel-target" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
+}
+
+@if (combatRole(); as role) {
+  <span class="combat-badge" [class.attacker]="role === 'attacker'">
+    <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
+    {{ role === 'attacker' ? 'Ataca' : role === 'blocker' ? 'Bloquea' : 'Atacada' }}
+  </span>
+}
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="selected()"
+  [cdkConnectedOverlayPositions]="toolbarPositions"
+  [cdkConnectedOverlayPush]="true"
+  cdkConnectedOverlayPanelClass="eras-card-actions-panel"
+>
+  <div class="actions" role="toolbar" [attr.aria-label]="'Acciones de ' + (slot().cardName ?? 'la carta')">
+    @if (effectsOpen()) {
+      @for (e of myEffects(); track e.scriptId) {
+        <button type="button" class="action effect" [attr.title]="e.text" [attr.aria-label]="'Activar ' + e.label + ': ' + e.text" (click)="activate(e.scriptId, $event)">
+          <eras-icon name="sparkles" />
+          <span>{{ e.label }}</span>
+        </button>
+      }
+    } @else {
+      @for (a of actions(); track a) {
+        <button type="button" class="action" [class.attack]="a === 'attack'" [class.play]="a === 'summon' || a === 'ritual' || a === 'play'" [class.activate]="a === 'activate'" [attr.aria-label]="a === 'ritual' ? specialLabel() : actionLabels[a]" (click)="run(a, $event)">
+          <eras-icon [name]="actionIcons[a]" />
+          <span>{{ a === 'ritual' ? specialLabel() : actionLabels[a] }}</span>
+        </button>
+      }
+    }
+    @if (!hidden() || !opponent()) {
+      <button type="button" class="action" aria-label="Ver" (click)="$event.stopPropagation(); game.selectedId.set(null); dialogs.cardInfo(slot(), zone(), opponent())">
+        <eras-icon name="eye" />
+        <span>Ver</span>
+      </button>
+    }
+  </div>
+</ng-template>
+
+<ng-template #menu>
+  <eras-menu>
+    @if (!hidden() || !opponent()) {
+      <button erasMenuItem (triggered)="dialogs.cardInfo(slot(), zone(), opponent())">Ver</button>
+    }
+    @if (!opponent() && hasEffects()) {
+      <button erasMenuItem (triggered)="dialogs.effects(slot(), zone())"><eras-icon name="sparkles" /> Efectos…</button>
+    }
+    @if (zone() === 'field') {
+      @if (game.editorMode() && slot().cardType === 'creature') {
+        <!-- Manual: between the two lines of the field -->
+        <button erasMenuItem (triggered)="toLine()">{{ isFront() ? 'Mover a la retaguardia' : 'Mover a la línea frontal' }}</button>
+      }
+      <button erasMenuItem (triggered)="game.tapCard(slot().instanceId, zone(), targetPlayer())">{{ slot().tapped ? 'Enderezar' : 'Agotar' }}</button>
+      @if (slot().strength !== null) {
+        <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, -1, targetPlayer())">Reducir fuerza</button>
+        <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, 1, targetPlayer())">Incrementar fuerza</button>
+        @if (slot().strengthModifier) {
+          <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, -slot().strengthModifier, targetPlayer())">Restaurar fuerza</button>
+        }
+      }
+      <button erasMenuItem (triggered)="game.pendingTargetSource.set(slot().instanceId)">Hacer objetivo</button>
+      <button erasMenuItem class="danger" (triggered)="game.destroyCard(slot().instanceId, targetPlayer())">Destruir</button>
+      @if (!opponent()) {
+        <button erasMenuItem class="danger" (triggered)="game.sacrificeCard(slot().instanceId)">Sacrificar</button>
+      }
+      @if (slot().materials.length) {
+        <button erasMenuItem (triggered)="dialogs.detach(slot(), 'materials', opponent())">Separar materiales</button>
+      }
+      @if (slot().resources.length) {
+        <button erasMenuItem (triggered)="dialogs.detach(slot(), 'resources', opponent())">Separar recursos</button>
+      }
+    }
+    @if (!opponent() && zone() !== 'field') {
+      <button erasMenuItem (triggered)="game.flipCard(slot().instanceId, zone())">{{ slot().faceDown ? 'Poner boca arriba' : 'Poner boca abajo' }}</button>
+    }
+    <hr />
+    <button erasMenuItem class="danger" (triggered)="remove()">Eliminar del juego</button>
+  </eras-menu>
+</ng-template>

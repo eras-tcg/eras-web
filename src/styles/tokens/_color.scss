@@ -30,4 +30,17 @@
   --color-card-r: #ef4444;
   --color-card-w: #f5f5f5;
   --color-keyword: #7c8ce8;
+
+  // Simulator: whose it is and what stands out on the table (same in every theme)
+  --color-sim-ally: var(--color-card-b);
+  --color-sim-rival: var(--color-card-r);
+  --color-sim-effect: var(--color-card-p);
+  --color-sim-gold: #f5b301;
+  --color-sim-glow: #fde68a;
+  --color-sim-moment: #f59e0b;
+  /** Text on those colors */
+  --color-sim-on-moment: #1b1d24;
+  --color-sim-on-rival: #fff;
+  /** The back of a card */
+  --color-card-back: repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px);
 }

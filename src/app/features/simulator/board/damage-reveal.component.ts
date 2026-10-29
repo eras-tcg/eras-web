@@ -15,6 +15,8 @@ interface Hit {
   /** Where the life went: "tributeZone" or "hand". */
   to: string | null;
   mine: boolean;
+  /** Dealt by an effect (Flarix…), not by an attacking creature. */
+  byEffect: boolean;
 }
 
 /** Two creatures clashing. */
@@ -45,12 +47,15 @@ const SHOW_MS = 2600;
         @if (s.kind === 'damage') {
           <div class="side">
             <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" />
-            <span>{{ s.attacker?.cardName ?? 'Atacante' }}</span>
+            <span>{{ s.attacker?.cardName ?? (s.byEffect ? 'Efecto' : 'Atacante') }}</span>
+            @if (s.byEffect) {
+              <small>Por efecto</small>
+            }
           </div>
-          <div class="middle">
-            <eras-icon name="sword" />
+          <div class="middle" [class.effect]="s.byEffect">
+            <eras-icon [name]="s.byEffect ? 'zap' : 'sword'" />
             <strong>{{ s.damage }}</strong>
-            <span>de daño directo</span>
+            <span>{{ s.byEffect ? 'de daño directo por efecto' : 'de daño directo' }}</span>
           </div>
           <div class="side big flip">
             <eras-game-card [imageUrl]="s.life?.imageUrl ?? null" />
@@ -94,17 +99,17 @@ const SHOW_MS = 2600;
       align-items: center;
       gap: var(--space-6);
       padding: var(--space-5) var(--space-6) var(--space-6);
-      border: 2px solid #ef4444;
+      border: 2px solid var(--color-sim-rival);
       border-radius: var(--radius-lg);
       background: var(--color-surface);
-      box-shadow: 0 0 40px 8px rgb(239 68 68 / 45%);
+      box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-rival) 45%, transparent);
       color: inherit;
       font: inherit;
       transform: translate(-50%, -50%);
       cursor: pointer;
       animation: reveal 2.6s ease forwards;
     }
-    .reveal.mine { border-color: #3b82f6; box-shadow: 0 0 40px 8px rgb(59 130 246 / 45%); }
+    .reveal.mine { border-color: var(--color-sim-ally); box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-ally) 45%, transparent); }
     .reveal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
     .side { --game-card-width: 9rem; display: grid; justify-items: center; gap: var(--space-2); max-inline-size: 12rem; text-align: center; }
     .side.big { --game-card-width: 12rem; }
@@ -112,9 +117,10 @@ const SHOW_MS = 2600;
     .side small { color: var(--color-text-muted); }
     .side.loses eras-game-card { filter: grayscale(0.8) brightness(0.6); transition: filter 0.4s ease 0.9s; }
     .strength { font-size: 2rem; line-height: 1; }
-    .destroyed { color: #ef4444 !important; font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: 0.06em; }
-    .middle { display: grid; justify-items: center; gap: var(--space-1); color: #ef4444; }
+    .destroyed { color: var(--color-sim-rival) !important; font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: 0.06em; }
+    .middle { display: grid; justify-items: center; gap: var(--space-1); color: var(--color-sim-rival); }
     .middle eras-icon { inline-size: 2.5rem; block-size: 2.5rem; }
+    .middle.effect { color: var(--color-sim-effect); }
     .middle strong { font-size: 3.5rem; line-height: 1; }
     .middle span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
     .flip eras-game-card { animation: flip-in 0.6s ease 0.3s backwards; }
@@ -179,7 +185,8 @@ export class DamageRevealComponent {
   }
 
   private finder(state: GameState): (id: unknown) => CardSlot | null {
-    const all = Object.values(state.players ?? {}).flatMap((p) => [...p.field, ...p.hand, ...p.tributeZone, ...p.discardPile, ...p.lifeStack]);
+    // The deck too: an effect's card may pay with itself (Flarix goes to the bottom of the deck)
+    const all = Object.values(state.players ?? {}).flatMap((p) => [...p.field, ...p.hand, ...p.tributeZone, ...p.discardPile, ...p.lifeStack, ...p.deck]);
     return (id) => all.find((c) => c.instanceId === id) ?? null;
   }
 
@@ -194,6 +201,7 @@ export class DamageRevealComponent {
       defender: (defenderId && state.players?.[defenderId]?.username) || 'El rival',
       to: e.toZone,
       mine: defenderId !== this.game.myState()?.userId,
+      byEffect: !!e.effectId,
     };
   }
 

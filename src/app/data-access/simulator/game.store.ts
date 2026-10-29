@@ -26,16 +26,6 @@ function wsUrl(): string {
  * Every broadcast carries the full state; this store keeps it plus the transient effects
  * (revealed cards, targeting glow, recent log lines). Same protocol as the legacy app.
  */
-const EDITOR_MODE_KEY = 'eras-sim-editor-mode';
-
-function readEditorMode(): boolean {
-  try {
-    return localStorage.getItem(EDITOR_MODE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
@@ -70,32 +60,29 @@ export class GameStore {
    * cards and every hidden card shown.
    */
   readonly editorRoom = computed(() => !!this.state()?.editor);
-  private readonly manualActions = signal<boolean>(readEditorMode());
   private readonly siteEditMode = inject(EditModeService);
   /**
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). Off by default; always on in a test room and while the site's edit mode is on;
-   * remembered on this device.
+   * attachments, strength…). On in a test room and while the site's edit mode (the navigation bar's switch) is on.
    */
-  readonly editorMode = computed(() => this.manualActions() || this.editorRoom() || this.siteEditMode.active());
+  readonly editorMode = computed(() => this.editorRoom() || this.siteEditMode.active());
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */
   readonly followActive = signal(true);
-  /** Test room: hidden cards (hands, lives, deck) are shown. */
-  readonly revealHidden = signal(true);
-  readonly seeAll = computed(() => this.editorRoom() && this.revealHidden());
+  /**
+   * Editor mode: hidden cards (hands, lives, deck) are shown. On by default in a test room, off against a player
+   * until turned on.
+   */
+  private readonly revealChoice = signal<boolean | null>(null);
+  readonly revealHidden = computed(() => this.revealChoice() ?? this.editorRoom());
+  readonly seeAll = computed(() => this.editorMode() && this.revealHidden());
+
+  toggleRevealHidden(): void {
+    this.revealChoice.set(!this.revealHidden());
+  }
   /** For one action: the side it is done as (a test room's other side, from its zones' dialogs). */
   private actAsOnce: string | null = null;
-
-  setEditorMode(on: boolean): void {
-    this.manualActions.set(on);
-    try {
-      localStorage.setItem(EDITOR_MODE_KEY, on ? '1' : '0');
-    } catch {
-      // Storage unavailable: it lasts for this page only
-    }
-  }
 
   /** Cards that just reached your hand: they blink for a few seconds so they can be spotted. */
   readonly newInHand = signal<ReadonlySet<string>>(new Set());
@@ -379,9 +366,6 @@ export class GameStore {
   }
   shuffleDeck(): void {
     this.send('SHUFFLE_DECK');
-  }
-  passTurn(): void {
-    this.send('PASS_TURN');
   }
   enterEndPhase(): void {
     this.send('ENTER_END_PHASE');

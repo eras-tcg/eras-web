@@ -12,7 +12,9 @@
   box-shadow: var(--shadow-lg);
   color: var(--color-text);
   animation: sheet-up var(--duration-normal, 200ms) var(--easing-standard, ease-out);
-  transition: transform var(--duration-normal, 200ms) var(--easing-standard, ease-out);
+  transition:
+    transform var(--duration-normal, 200ms) var(--easing-standard, ease-out),
+    opacity var(--duration-fast, 120ms) ease;
 }
 
 :host(.size-md) {
@@ -115,4 +117,15 @@
     animation: none;
     transition: none;
   }
+}
+
+
+// Held to look at the page through it (after .collapsed: its header stops taking clicks too)
+:host(.see-through) {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+:host(.see-through) .header {
+  pointer-events: none;
 }

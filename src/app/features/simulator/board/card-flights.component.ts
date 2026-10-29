@@ -118,7 +118,7 @@ export class CardFlightsComponent {
         boxShadow: '0 8px 24px rgb(0 0 0 / 45%)',
       });
       if (back || !from.imageUrl) {
-        el.style.background = 'repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px)';
+        el.style.background = 'var(--color-card-back)';
         if (back) el.style.transform = 'rotateY(180deg)';
       } else {
         (el as HTMLImageElement).src = from.imageUrl;

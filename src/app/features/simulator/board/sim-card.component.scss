@@ -1,0 +1,102 @@
+.cancel-target {
+  position: absolute;
+  inset-block-end: 0.3rem;
+  inset-inline: 50% auto;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 0.15rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: var(--color-sim-on-rival);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+:host { position: relative; display: inline-block; }
+eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
+:host(.tapped-field) {
+  /* An exhausted card is turned sideways: it takes the card's height in width, so it does not overlap its neighbors */
+  display: inline-flex;
+  justify-content: center;
+  inline-size: calc(var(--game-card-width, 4.5rem) * 88 / 63);
+}
+eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
+@keyframes new-card {
+  from { box-shadow: 0 0 0 2px var(--color-card-w), 0 0 6px 2px color-mix(in srgb, var(--color-card-w) 40%, transparent); }
+  to { box-shadow: 0 0 0 3px var(--color-sim-glow), 0 0 18px 6px color-mix(in srgb, var(--color-sim-glow) 85%, transparent); }
+}
+eras-game-card.combat-attacker {
+  box-shadow: 0 0 0 3px var(--color-sim-rival), 0 0 20px 6px color-mix(in srgb, var(--color-sim-rival) 70%, transparent);
+  animation: combat-pulse 0.8s ease-in-out infinite alternate;
+}
+eras-game-card.combat-defender { box-shadow: 0 0 0 3px var(--color-sim-moment), 0 0 18px 5px color-mix(in srgb, var(--color-sim-moment) 65%, transparent); }
+@keyframes combat-pulse { to { box-shadow: 0 0 0 3px var(--color-sim-rival), 0 0 8px 2px color-mix(in srgb, var(--color-sim-rival) 45%, transparent); } }
+.combat-badge {
+  position: absolute;
+  inset-block-start: -0.7rem;
+  inset-inline-start: 50%;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-sim-moment);
+  color: var(--color-sim-on-moment);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.combat-badge.attacker { background: var(--color-sim-rival); color: var(--color-sim-on-rival); }
+.combat-badge eras-icon { inline-size: 0.8rem; block-size: 0.8rem; }
+eras-game-card.prompt-chosen {
+  outline: 3px solid var(--color-card-g);
+  outline-offset: 3px;
+  box-shadow: 0 0 18px 6px color-mix(in srgb, var(--color-card-g) 75%, transparent);
+  animation: chosen-pulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes chosen-pulse { to { box-shadow: 0 0 6px 2px color-mix(in srgb, var(--color-card-g) 45%, transparent); } }
+eras-game-card.can-play { box-shadow: 0 0 0 2px var(--color-sim-ally), 0 0 14px 3px color-mix(in srgb, var(--color-sim-ally) 70%, transparent); }
+eras-game-card.can-activate { box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 14px 3px color-mix(in srgb, var(--color-sim-gold) 70%, transparent); }
+eras-game-card.can-play.can-activate {
+  box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 0 4px var(--color-sim-ally), 0 0 16px 4px color-mix(in srgb, var(--color-sim-gold) 60%, transparent);
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg, var(--shadow-md));
+}
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full, 999px);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.action eras-icon { inline-size: 1.1rem; block-size: 1.1rem; }
+.action.play { border-color: var(--color-sim-ally); }
+.action.effect, .action.activate { border-color: var(--color-sim-gold); }
+.action:hover { border-color: var(--color-primary); }
+.action.attack { border-color: var(--color-danger); color: var(--color-danger); }
+.action.effect { border-color: var(--color-primary); }
+.action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

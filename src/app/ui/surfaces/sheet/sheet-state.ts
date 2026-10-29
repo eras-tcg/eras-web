@@ -4,4 +4,8 @@ import { Injectable, signal } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class SheetState {
   readonly lowered = signal(false);
+  /** How many sheets are open. */
+  readonly open = signal(0);
+  /** Held to look at the page through the sheet: it turns almost transparent and lets the pointer through. */
+  readonly seeThrough = signal(false);
 }

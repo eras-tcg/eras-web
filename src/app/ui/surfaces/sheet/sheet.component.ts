@@ -1,5 +1,6 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, input, output, signal, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, input, output, signal, DestroyRef, ElementRef } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { SheetState } from './sheet-state';
 import { IconComponent } from '../../primitives/icon/icon.component';
@@ -46,7 +47,7 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   `,
   styleUrl: './sheet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()' },
+  host: { '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()', '[class.see-through]': 'state.seeThrough()' },
 })
 export class SheetComponent {
   readonly title = input.required<string>();
@@ -60,7 +61,7 @@ export class SheetComponent {
   protected readonly collapsed = signal(false);
 
   private readonly ref = inject(DialogRef, { optional: true });
-  private readonly state = inject(SheetState);
+  protected readonly state = inject(SheetState);
 
   constructor() {
     // Lowered, the backdrop lets the page through: it can be looked at, and the page blocks its own actions
@@ -73,6 +74,28 @@ export class SheetComponent {
       if (pane) pane.style.pointerEvents = this.collapsed() ? 'none' : '';
       this.state.lowered.set(this.collapsed());
     });
-    inject(DestroyRef).onDestroy(() => this.state.lowered.set(false));
+    // Seen through: its backdrop does not darken the page either
+    effect(() => {
+      const backdrop = this.ref?.overlayRef.backdropElement;
+      if (backdrop) backdrop.style.opacity = this.state.seeThrough() ? '0' : '';
+    });
+    this.state.open.update((n) => n + 1);
+    // How much of the screen it takes from the bottom (--sheet-height): what floats above it keeps clear of it
+    const root = inject(DOCUMENT).documentElement;
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    const measure = () => {
+      const top = host.getBoundingClientRect().top;
+      root.style.setProperty('--sheet-height', `${Math.max(0, window.innerHeight - top)}px`);
+    };
+    const resize = new ResizeObserver(measure);
+    resize.observe(host);
+    host.addEventListener('transitionend', measure);
+    inject(DestroyRef).onDestroy(() => {
+      resize.disconnect();
+      if (this.state.open() <= 1) root.style.removeProperty('--sheet-height');
+      this.state.open.update((n) => Math.max(0, n - 1));
+      this.state.lowered.set(false);
+      this.state.seeThrough.set(false);
+    });
   }
 }

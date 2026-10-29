@@ -57,7 +57,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
     .back {
       border: 1px solid rgb(255 255 255 / 25%);
       // Fixed card-back art colors: the same in both themes, like a physical card
-      background: repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px);
+      background: var(--color-card-back);
     }
     .strength {
       position: absolute;

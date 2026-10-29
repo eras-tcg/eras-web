@@ -144,8 +144,8 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
     }
     .send:hover, .send:focus-visible { border-color: var(--color-primary); color: var(--color-primary); outline: none; }
     .send eras-icon { inline-size: 1rem; block-size: 1rem; }
-    eras-game-card.can-play { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px 3px rgb(59 130 246 / 70%); }
-    eras-game-card.can-activate { box-shadow: 0 0 0 2px #f5b301, 0 0 14px 3px rgb(245 179 1 / 70%); }
+    eras-game-card.can-play { box-shadow: 0 0 0 2px var(--color-sim-ally), 0 0 14px 3px color-mix(in srgb, var(--color-sim-ally) 70%, transparent); }
+    eras-game-card.can-activate { box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 14px 3px color-mix(in srgb, var(--color-sim-gold) 70%, transparent); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -174,7 +174,9 @@ export class ZoneDialogComponent {
   protected readonly canAct = computed(() => this.editable() && !this.data.readonly);
 
   protected isHidden(c: CardSlot): boolean {
-    return c.faceDown && !this.peeked().has(c.instanceId) && !this.game.seeAll();
+    // In the editor mode my own deck is looked at as it is
+    const myDeck = this.data.zone === 'deck' && !this.data.opponent && this.game.editorMode();
+    return c.faceDown && !this.peeked().has(c.instanceId) && !this.game.seeAll() && !myDeck;
   }
 
   protected label(c: CardSlot, i: number): string {

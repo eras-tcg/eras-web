@@ -1,5 +1,5 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
 import { zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
@@ -14,6 +14,10 @@ import { BoardDialogs } from './board-dialogs';
 import { BoardDrag } from './board-drag';
 import { SimCardComponent } from './sim-card.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+
+/** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
+const HAND_UPRIGHT_FAN = 2.9;
 
 type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
 
@@ -23,7 +27,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
  */
 @Component({
   selector: 'eras-player-half',
-  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, ButtonComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, ButtonComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent],
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +38,8 @@ export class PlayerHalfComponent {
   readonly opponent = input(false, { transform: booleanAttribute });
   /** "Zonas espejadas": the rival's lives and gem marker swap places with their piles. */
   readonly mirrored = input(false, { transform: booleanAttribute });
+  /** "Mano recta": the hand in a row instead of a fan. */
+  readonly straightHand = input(false, { transform: booleanAttribute });
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
   private readonly lookOnly = inject(SheetState).lowered;
 
@@ -48,7 +54,52 @@ export class PlayerHalfComponent {
   protected readonly nearby = signal<CardSlot | null>(null);
   /** Own creature summoned from hand/piles: ask whether it was by effect (draws a card). */
   protected readonly effectSummon = signal<{ instanceId: string; fromZone: ZoneName } | null>(null);
-  protected readonly peekCount = signal(5);
+  /**
+   * How far the hand's fan is turned, in cards. Only a hand wider than its place turns, and only until the cards at
+   * its ends are inside it (handTurnMax, measured on the page).
+   */
+  private readonly handTurnWanted = signal(0);
+  protected readonly handTurnMax = signal(0);
+  private readonly handCards = viewChild<ElementRef<HTMLElement>>('handCards');
+
+  constructor() {
+    // What sticks out on each side, in cards: past its place (plus half a card for the lean and the arrow), or the end
+    // cards dropping below the edge (the fan drops fan² × 0.18rem: from about 3 cards out they sink too far)
+    const measure = () => {
+      const row = this.handCards()?.nativeElement;
+      const place = row?.offsetParent as HTMLElement | null;
+      const card = row?.firstElementChild as HTMLElement | null;
+      const n = this.player().hand.length;
+      if (!row || !place || !card || !n) return this.handTurnMax.set(0);
+      const step = card.offsetWidth * 0.84;
+      const outside = (n * step - place.clientWidth) / 2;
+      const sideways = outside > 0 ? (outside + card.offsetWidth * 0.5) / step : 0;
+      const sinking = this.straightHand() ? 0 : Math.max(0, (n - 1) / 2 - HAND_UPRIGHT_FAN);
+      this.handTurnMax.set(Math.min((n - 1) / 2, Math.max(sideways, sinking)));
+    };
+    // Measured again when the hand or the straight-hand preference changes (it reads both)
+    afterRenderEffect(() => measure());
+    const resize = new ResizeObserver(() => measure());
+    afterRenderEffect(() => {
+      const row = this.handCards()?.nativeElement;
+      if (row) resize.observe(row);
+    });
+    inject(DestroyRef).onDestroy(() => resize.disconnect());
+  }
+  protected readonly handTurn = computed(() => Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurnWanted())));
+
+  protected turnHandBy(step: number): void {
+    this.handTurnWanted.set(Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurn() + step)));
+  }
+
+  /** The wheel over the hand turns it (down or right: towards the right end). */
+  protected turnHand(e: WheelEvent): void {
+    if (!this.handTurnMax()) return;
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!delta) return;
+    e.preventDefault();
+    this.turnHandBy(Math.sign(delta) * 0.5);
+  }
 
   protected readonly targeting = computed(() => this.game.pendingTargetSource() !== null);
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
@@ -190,8 +241,8 @@ export class PlayerHalfComponent {
       this.game.target(this.zoneId(zone));
       return;
     }
-    // The whole deck is only looked at (and ordered) in a test room
-    if (zone === 'deck' && !this.game.editorRoom()) return;
+    // My deck has its menu (right click); the rival's is looked at only in a test room or with the hidden cards shown
+    if (zone === 'deck' && (!this.opponent() || !this.game.editorMode() || (!this.game.editorRoom() && !this.game.seeAll()))) return;
     if (this.player()[zone].length) this.dialogs.zone(zone, this.opponent());
   }
 
@@ -201,16 +252,6 @@ export class PlayerHalfComponent {
   }
 
   // ── Deck and life actions ─────────────────────────────────────────────
-
-  protected topTo(to: ZoneName, faceDown: boolean): void {
-    const top = this.player().deck[0];
-    if (top) this.game.moveCard(top.instanceId, 'deck', to, { toPosition: to === 'lifeStack' ? 'top' : undefined, faceDown });
-  }
-
-  protected peek(position: 'top' | 'bottom'): void {
-    const n = Math.max(1, Math.min(this.peekCount() || 1, this.player().deck.length));
-    this.dialogs.deckPeek(position, n);
-  }
 
   protected async confirmThen(message: string, action: () => void): Promise<void> {
     if (await this.modal.confirm({ title: 'Confirmar', message, confirmLabel: 'Aceptar' })) action();

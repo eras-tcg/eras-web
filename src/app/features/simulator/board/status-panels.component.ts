@@ -132,7 +132,9 @@ export class StatusPanelsComponent {
     const loser = Object.values(s.players ?? {}).find((p) => p.userId !== s.winnerId)?.username ?? 'Tu rival';
     const detail = s.endReason === 'surrender'
       ? (won ? `${loser} se rindió` : 'Te rendiste')
-      : (won ? `${loser} se quedó sin vidas` : 'Te quedaste sin vidas');
+      : s.endReason === 'deck'
+        ? (won ? `${loser} no pudo robar al inicio de su turno` : 'No pudiste robar al inicio de tu turno')
+        : (won ? `${loser} se quedó sin vidas` : 'Te quedaste sin vidas');
     return { won, title: won ? '¡Ganaste!' : `Ganó ${winner}`, detail };
   });
   protected readonly options = computed(() => {

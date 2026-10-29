@@ -72,6 +72,7 @@
 <!-- Hand -->
 <eras-game-zone
   class="hand"
+  [class.straight]="straightHand()"
   label="Mano"
   [attr.data-pile]="p.userId + ':hand'"
   [count]="p.hand.length"
@@ -79,15 +80,42 @@
   (dragover)="!opponent() && dragOver($event, 'hand')"
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
+  (wheel)="turnHand($event)"
 >
   <!-- A fan: only the upper half of each card shows (the rest is off the table); they overlap just a little -->
-  <div class="hand-cards">
-    @for (s of p.hand; track s.instanceId; let i = $index) {
-      <div class="in-hand" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2">
-        <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
-      </div>
-    }
+  <!-- The cards' window: with the straight hand, what is past its ends fades out -->
+  <div class="hand-window">
+    <div #handCards class="hand-cards" [class.straight]="straightHand()" [style.--hand-turn]="handTurn()">
+      @for (s of p.hand; track s.instanceId; let i = $index) {
+        <div class="in-hand" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
+          <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
+        </div>
+      }
+    </div>
   </div>
+  @if (handTurnMax() > 0) {
+    <!-- A big hand turns (or the wheel turns it) so the cards at its ends stand up and can be seen whole -->
+    <button
+      type="button"
+      erasIconButton
+      icon="chevron-left"
+      class="hand-turn start"
+      aria-label="Rotar la mano: ver las cartas de la izquierda"
+      title="Rotar la mano (también con la rueda del mouse)"
+      [disabled]="handTurn() <= -handTurnMax()"
+      (click)="turnHandBy(-1); $event.stopPropagation()"
+    ></button>
+    <button
+      type="button"
+      erasIconButton
+      icon="chevron-right"
+      class="hand-turn end"
+      aria-label="Rotar la mano: ver las cartas de la derecha"
+      title="Rotar la mano (también con la rueda del mouse)"
+      [disabled]="handTurn() >= handTurnMax()"
+      (click)="turnHandBy(1); $event.stopPropagation()"
+    ></button>
+  }
   @if (effectSummon()) {
     <div class="effect-prompt" role="alertdialog" aria-label="¿Invocación por efecto?">
       <span>¿Invocación por efecto?</span>
@@ -120,14 +148,8 @@
   </eras-game-zone>
   <ng-template #deckMenu>
     <eras-menu>
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="game.drawCard()">Robar</button>
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="peek('top')">Ver las {{ peekCount() }} de arriba</button>
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="peek('bottom')">Ver las {{ peekCount() }} de abajo</button>
-      <button erasMenuItem (triggered)="peekCount.set(peekCount() >= 10 ? 1 : peekCount() + 1)">Cantidad a ver: {{ peekCount() }} (cambiar)</button>
-      <hr />
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('lifeStack', true)">Tope a vidas</button>
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('tributeZone', false)">Tope a tributos</button>
-      <button erasMenuItem [disabled]="!p.deck.length" (triggered)="topTo('discardPile', false)">Tope al descarte</button>
+      <!-- Right click; drawing is a double click on the deck. Looking at it (and sending its cards anywhere) is here -->
+      <button erasMenuItem [disabled]="!p.deck.length || !game.editorMode()" (triggered)="dialogs.zone('deck', false)">Ver el mazo</button>
       <hr />
       <button erasMenuItem (triggered)="confirmThen('¿Barajar el mazo?', game.shuffleDeck.bind(game))">Barajar</button>
       <button erasMenuItem (triggered)="confirmThen('¿Enviar el descarte al fondo del mazo (orden aleatorio)?', game.deckIncludeDiscard.bind(game))">Descarte al fondo</button>

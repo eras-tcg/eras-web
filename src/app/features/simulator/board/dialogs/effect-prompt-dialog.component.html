@@ -1,0 +1,110 @@
+<eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+  @if (prompt.effects?.length) {
+    <ul class="offered" aria-label="Efectos que se pueden encadenar">
+      @for (e of prompt.effects; track $index) {
+        <li>
+          <button
+            type="button"
+            class="offered-effect"
+            [class.chosen]="chosen().has(effectKey(e))"
+            [disabled]="sending()"
+            [attr.aria-pressed]="chosen().has(effectKey(e))"
+            (click)="toggle(effectKey(e))"
+          >
+            <!-- Inherited: the Recurso that gives it, small at the corner -->
+            <eras-card-with-source [imageUrl]="cardOf(e.sourceId)?.imageUrl ?? null" [sourceName]="e.inheritedFromName" [sourceImage]="e.inheritedFromImage" />
+            <span class="offered-body">
+              <span class="offered-head">
+                <strong>{{ e.sourceName }}</strong>
+                <span class="badge">{{ e.label }}</span>
+                @if (chosen().has(effectKey(e))) {
+                  <span class="link-tag"><eras-icon name="check" /> {{ chosenTag(effectKey(e)) }}</span>
+                }
+              </span>
+              <span class="offered-text">{{ e.text }}</span>
+              @if (cardOf(e.sourceId); as c) {
+                @if (zoneOf(c); as zone) {
+                  <span class="zone">{{ zone }}</span>
+                }
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (prompt.effectText && !inChain()) {
+    <!-- An effect already in the chain shows its text there, above this sheet -->
+    <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
+  }
+  @if (prompt.reorderRest) {
+    @if (prompt.restToTop) {
+      <p class="hint">Haz clic en las cartas que descartas. Arrastra las demás para ordenarlas: vuelven al tope de tu mazo en ese orden (la de la izquierda queda arriba).</p>
+    } @else {
+      <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
+    }
+  }
+  @if (!prompt.effects?.length) {
+  @if (hiddenCount() > 0) {
+    <label class="show-all">
+      <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
+      Mostrar también las que no cumplen ({{ hiddenCount() }})
+    </label>
+  }
+  <div
+    class="cards"
+    cdkDropList
+    cdkDropListOrientation="horizontal"
+    [cdkDropListDisabled]="!prompt.reorderRest"
+    (cdkDropListDropped)="reorder($event)"
+    role="group"
+    [attr.aria-label]="prompt.title"
+  >
+    @for (c of shown(); track c.instanceId) {
+      <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest || chosen().has(c.instanceId)">
+        <button
+          type="button"
+          class="pick"
+          [class.static]="prompt.kind === 'CONFIRM'"
+          [class.chosen]="chosen().has(c.instanceId)"
+          [class.locked]="!valid.has(c.instanceId)"
+          [disabled]="!valid.has(c.instanceId) || sending() || prompt.kind === 'CONFIRM'"
+          [attr.aria-pressed]="chosen().has(c.instanceId)"
+          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? '' : ', no cumple el efecto')"
+          (click)="toggle(c.instanceId)"
+        >
+          <eras-game-card [imageUrl]="c.imageUrl" [class.new-card]="game.newInHand().has(c.instanceId)" />
+          <span class="tag">
+            @if (chosen().has(c.instanceId)) {
+              <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
+            } @else if (prompt.kind === 'CONFIRM') {
+              {{ c.cardName }}
+            } @else if (!valid.has(c.instanceId)) {
+              No cumple
+            } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
+              {{ effectLabel }}
+            } @else {
+              {{ c.cardName }}
+            }
+          </span>
+          @if (zoneOf(c); as zone) {
+            <span class="zone">{{ zone }}</span>
+          }
+        </button>
+      </div>
+    } @empty {
+      <p class="hint">No hay cartas que cumplan.</p>
+    }
+  </div>
+  }
+  <ng-container sheet-footer>
+    <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
+      @if (prompt.kind === 'CONFIRM') {
+        <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
+        <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
+      } @else {
+        <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
+        <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
+      }
+    </eras-stack>
+  </ng-container>
+</eras-sheet>

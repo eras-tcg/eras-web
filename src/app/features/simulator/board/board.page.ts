@@ -25,34 +25,18 @@ import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
+import { persistedFlag } from '@core/storage/persisted-flag';
+import { SidebarItemComponent } from './sidebar-item.component';
 
-const MIRRORED_KEY = 'eras-sim-mirrored';
-const SIDEBAR_KEY = 'eras-sim-sidebar-expanded';
-const DYNAMIC_KEY = 'eras-sim-sidebar-dynamic';
-const HEADER_KEY = 'eras-sim-header-hidden';
-
-function readFlag(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function writeFlag(key: string, on: boolean): void {
-  try {
-    localStorage.setItem(key, on ? '1' : '0');
-  } catch {
-    // Not remembered (private window, blocked storage)
-  }
-}
+/** How long the left button must be held anywhere to look through the panels. */
+const LONG_PRESS_MS = 350;
 
 const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent],
+  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent, SidebarItemComponent],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -72,8 +56,13 @@ export class BoardPage {
 
   protected readonly game = inject(GameStore);
   private readonly animations = inject(BoardAnimations);
+  private readonly sheet = inject(SheetState);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */
-  protected readonly lookOnly = inject(SheetState).lowered;
+  protected readonly lookOnly = this.sheet.lowered;
+  /** Held to look at the table through the choice and the chain (both turn almost transparent). */
+  protected readonly seeThrough = this.sheet.seeThrough;
+  /** There is something over the table to look through: a sheet from the bottom (a choice…) or a chain. */
+  protected readonly canSeeThrough = computed(() => this.sheet.open() > 0 || !!this.game.state()?.chain?.length);
   private readonly document = inject(DOCUMENT);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly cards = inject(CardsStore);
@@ -93,14 +82,18 @@ export class BoardPage {
   protected readonly rivalOwns = computed(() => !!this.game.state()?.hostId && this.game.state()?.hostId === this.game.opponentState()?.userId);
   protected readonly dismissedLeft = signal(false);
   /** "Zonas espejadas": the rival's lives and gems swap with their piles. Remembered on the device. */
-  protected readonly mirrored = signal(readFlag(MIRRORED_KEY));
+  protected readonly mirrored = persistedFlag('eras-sim-mirrored');
   /** The site's navigation bar is hidden to give the table more height. Remembered on the device. */
-  protected readonly headerHidden = signal(readFlag(HEADER_KEY));
+  protected readonly headerHidden = persistedFlag('eras-sim-header-hidden');
   /** The options sidebar: expanded (names beside the icons), or dynamic (it expands while the pointer is on it). */
-  protected readonly sidebarExpanded = signal(readFlag(SIDEBAR_KEY));
-  protected readonly sidebarDynamic = signal(readFlag(DYNAMIC_KEY));
+  protected readonly sidebarExpanded = persistedFlag('eras-sim-sidebar-expanded');
+  protected readonly sidebarDynamic = persistedFlag('eras-sim-sidebar-dynamic');
   protected readonly sidebarHover = signal(false);
   protected readonly sidebarOpen = computed(() => (this.sidebarDynamic() ? this.sidebarHover() : this.sidebarExpanded()));
+  /** "Mano recta": the hands in a row instead of a fan. Remembered on the device. */
+  protected readonly straightHand = persistedFlag('eras-sim-straight-hand');
+  /** The latest actions shown as notices over the table (top left). Remembered on the device. */
+  protected readonly noticesOff = persistedFlag('eras-sim-notices-off');
   /** Browser full screen: the field cards get the extra room. */
   protected readonly fullscreen = signal(false);
   /** Test room: the other side, to look at the table from it. */
@@ -177,7 +170,9 @@ export class BoardPage {
     inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-hide-header'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
-    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open'));
+    // Only with a sheet at the bottom do the alerts and the chain have to keep above it
+    effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
+    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 
@@ -224,23 +219,66 @@ export class BoardPage {
       });
     });
     inject(DestroyRef).onDestroy(() => open?.close());
+
+    // A long press on the table (left button, not on the panels) also looks through, while it is held; moving cancels it (a drag)
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let start: { x: number; y: number } | null = null;
+    const cancel = () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      start = null;
+    };
+    const down = (e: PointerEvent) => {
+      if (e.button !== 0 || !this.canSeeThrough()) return;
+      // Not over the panels themselves (a choice, the chain): a long press there is choosing, not looking
+      const target = e.target as Element | null;
+      if (target?.closest('.cdk-overlay-container, .chain-panel, .eras-prompt-spotlight')) return;
+      cancel();
+      start = { x: e.clientX, y: e.clientY };
+      timer = setTimeout(() => {
+        timer = null;
+        this.seeThrough.set(true);
+      }, LONG_PRESS_MS);
+    };
+    const move = (e: PointerEvent) => {
+      if (timer && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) cancel();
+    };
+    const up = () => {
+      cancel();
+      this.seeThrough.set(false);
+    };
+    const win = this.document.defaultView;
+    win?.addEventListener('pointerdown', down, true);
+    win?.addEventListener('pointermove', move, true);
+    win?.addEventListener('pointerup', up, true);
+    win?.addEventListener('pointercancel', up, true);
+    win?.addEventListener('blur', up);
+    inject(DestroyRef).onDestroy(() => {
+      cancel();
+      this.seeThrough.set(false);
+      win?.removeEventListener('pointerdown', down, true);
+      win?.removeEventListener('pointermove', move, true);
+      win?.removeEventListener('pointerup', up, true);
+      win?.removeEventListener('pointercancel', up, true);
+      win?.removeEventListener('blur', up);
+    });
+    // Nothing left to look through: back to normal
+    effect(() => {
+      if (!this.canSeeThrough()) untracked(() => this.seeThrough.set(false));
+    });
   }
 
-  protected toggleMirrored(): void {
-    this.mirrored.update((on) => !on);
-    writeFlag(MIRRORED_KEY, this.mirrored());
+  /** The button: transparent at once while it is held (released anywhere, the window's pointerup ends it). */
+  protected holdSeeThrough(e: PointerEvent): void {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    this.seeThrough.set(true);
   }
 
   protected toggleSidebar(): void {
     this.sidebarExpanded.update((on) => !on);
-    writeFlag(SIDEBAR_KEY, this.sidebarExpanded());
     // Collapsing it by hand leaves it collapsed until hovered again
     if (!this.sidebarExpanded()) this.sidebarHover.set(false);
-  }
-
-  protected toggleDynamic(): void {
-    this.sidebarDynamic.update((on) => !on);
-    writeFlag(DYNAMIC_KEY, this.sidebarDynamic());
   }
 
   protected async toggleFullscreen(): Promise<void> {
@@ -250,11 +288,6 @@ export class BoardPage {
     } catch {
       // The browser refused it (no user gesture, not allowed): nothing changes
     }
-  }
-
-  protected toggleHeader(): void {
-    this.headerHidden.update((on) => !on);
-    writeFlag(HEADER_KEY, this.headerHidden());
   }
 
   private nextPopup(): void {

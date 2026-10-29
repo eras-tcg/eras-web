@@ -57,6 +57,11 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       (dragend)="drag.end()"
     />
 
+    @if (game.pendingTargetSource() === slot().instanceId) {
+      <!-- Choosing its target: cancel it from the card itself -->
+      <button type="button" class="cancel-target" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
+    }
+
     @if (combatRole(); as role) {
       <span class="combat-badge" [class.attacker]="role === 'attacker'">
         <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
@@ -139,6 +144,23 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
     </ng-template>
   `,
   styles: `
+    .cancel-target {
+      position: absolute;
+      inset-block-end: 0.3rem;
+      inset-inline: 50% auto;
+      z-index: 3;
+      transform: translateX(-50%);
+      padding: 0.15rem 0.5rem;
+      border: none;
+      border-radius: var(--radius-pill);
+      background: var(--color-danger);
+      color: #fff;
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      white-space: nowrap;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+    }
     :host { position: relative; display: inline-block; }
     eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
     :host(.tapped-field) {

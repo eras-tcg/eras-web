@@ -9,6 +9,9 @@
   position: relative;
   --sidebar-closed: 2.75rem;
   --sidebar-open: 17.5rem;
+  // The table's side columns (lives / piles): the halves and the middle strip share them, so the gem bar is as
+  // wide as the field
+  --side: 15rem;
 }
 
 // In a game: room on the right for the collapsed options sidebar (expanded, it lies over the table)
@@ -41,7 +44,6 @@
   gap: 2px;
   inline-size: var(--sidebar-closed);
   padding: var(--space-2) var(--space-1);
-  overflow: hidden auto;
   border-inline-start: var(--border-width) solid var(--color-border);
   background: var(--color-surface);
   transition: inline-size var(--duration-fast, 120ms) var(--easing-standard, ease);
@@ -49,6 +51,7 @@
 
 .sidebar.open {
   inline-size: var(--sidebar-open);
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
 }
 
@@ -60,6 +63,7 @@
 }
 
 .sidebar .item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -71,8 +75,8 @@
   color: var(--color-text);
   font: inherit;
   font-size: var(--font-size-sm);
+  line-height: 1.3;
   text-align: start;
-  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -80,11 +84,19 @@
   background: var(--color-surface-muted);
 }
 
+// An option that is on: its box is painted
+.sidebar .item.on {
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  color: var(--color-text);
+}
+
 .sidebar .item.on eras-icon {
   color: var(--color-primary);
 }
 
 .sidebar .notice {
+  position: relative;
+  margin-block-start: auto;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -95,7 +107,7 @@
   color: #b45309;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  white-space: nowrap;
+  line-height: 1.3;
 }
 
 .sidebar .notice eras-icon {
@@ -118,13 +130,31 @@
   block-size: 1.25rem;
 }
 
-.sidebar .item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.sidebar:not(.open) .item span,
+.sidebar:not(.open) .notice span {
+  display: none;
 }
 
-.sidebar:not(.open) .item span {
-  display: none;
+// Compact: the name shows as a card beside the bar while the pointer is on the icon
+.sidebar:not(.open) .item:hover span,
+.sidebar:not(.open) .item:focus-visible span,
+.sidebar:not(.open) .notice:hover span {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: calc(100% + var(--space-2));
+  display: block;
+  inline-size: max-content;
+  max-inline-size: 16rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular, 400);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .sidebar .item:focus-visible {
@@ -205,10 +235,10 @@
 // Status and phases | gem bar | controls: the strip across the middle of the table (at the top before a game)
 .strip {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -219,12 +249,17 @@
   margin-block: var(--space-2);
 }
 
+.strip > :first-child {
+  padding-inline-start: var(--space-3);
+}
+
 .strip > :last-child {
   justify-self: end;
+  padding-inline-end: var(--space-2);
 }
 
 .strip .gems {
-  min-inline-size: 12rem;
+  min-inline-size: 0;
 }
 
 @media (max-width: 70rem) {

@@ -12,9 +12,6 @@
         @if (!game.connected()) {
           <span class="warn">Sin conexión, reintentando…</span>
         }
-        @if (game.pendingTargetSource()) {
-          <button erasButton variant="danger" size="sm" type="button" (click)="game.pendingTargetSource.set(null)">Cancelar objetivo</button>
-        }
       </eras-stack>
       @if (gems) {
         <eras-shared-bar class="gems" [index]="sharedIndex()" (positionSelected)="selectShared($event)" />
@@ -56,78 +53,83 @@
     (mouseenter)="sidebarHover.set(true)"
     (mouseleave)="sidebarHover.set(false)"
   >
-    <button type="button" class="item" [title]="headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación'" (click)="toggleHeader()">
+    <button type="button" class="item" (click)="toggleHeader()">
       <eras-icon [name]="headerHidden() ? 'chevron-down' : 'chevron-up'" />
       <span>{{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}</span>
     </button>
-    <button type="button" class="item" [title]="sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú'" (click)="toggleSidebar()">
-      <eras-icon [name]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" />
-      <span>{{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}</span>
-    </button>
+    @if (!sidebarDynamic()) {
+      <button type="button" class="item" (click)="toggleSidebar()">
+        <eras-icon [name]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" />
+        <span>{{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}</span>
+      </button>
+    }
     @if (sidebarExpanded() || sidebarDynamic()) {
-      <button type="button" class="item" [class.on]="sidebarDynamic()" title="Dinámico: se expande al pasar el mouse" (click)="toggleDynamic()">
+      <button type="button" class="item" [class.on]="sidebarDynamic()" [attr.aria-pressed]="sidebarDynamic()" (click)="toggleDynamic()">
         <eras-icon name="refresh" />
-        <span>Dinámico{{ sidebarDynamic() ? ' ✓' : '' }}</span>
+        <span>Menú dinámico (se expande al pasar el mouse)</span>
       </button>
     }
     <hr />
     @if (game.editorRoom()) {
-      <div class="notice" title="Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba">
-        <eras-icon name="edit" />
-        <span>Partida de prueba</span>
-      </div>
       @if (otherSide(); as other) {
-        <button type="button" class="item" [title]="'Ver desde ' + other.username" (click)="game.followActive.set(false); game.playSide(other.userId)">
+        <button type="button" class="item" (click)="game.followActive.set(false); game.playSide(other.userId)">
           <eras-icon name="user" />
           <span>Ver desde {{ other.username }}</span>
         </button>
       }
-      <button type="button" class="item" [class.on]="game.followActive()" title="Cambiar de lado según quién actúa" (click)="game.followActive.set(!game.followActive())">
+      <button type="button" class="item" [class.on]="game.followActive()" [attr.aria-pressed]="game.followActive()" (click)="game.followActive.set(!game.followActive())">
         <eras-icon name="swap" />
-        <span>Cambiar de lado según quién actúa{{ game.followActive() ? ' ✓' : '' }}</span>
+        <span>Cambiar de lado según quién actúa</span>
       </button>
-      <button type="button" class="item" [class.on]="game.revealHidden()" title="Mostrar cartas ocultas (manos, vidas, mazo)" (click)="game.revealHidden.set(!game.revealHidden())">
+      <button type="button" class="item" [class.on]="game.revealHidden()" [attr.aria-pressed]="game.revealHidden()" (click)="game.revealHidden.set(!game.revealHidden())">
         <eras-icon name="eye" />
-        <span>Mostrar cartas ocultas{{ game.revealHidden() ? ' ✓' : '' }}</span>
+        <span>Mostrar cartas ocultas (manos, vidas, mazo)</span>
       </button>
-      <button type="button" class="item" title="Crear carta de prueba" (click)="dialogs.dummyCard()">
+      <button type="button" class="item" (click)="dialogs.dummyCard()">
         <eras-icon name="square-plus" />
         <span>Crear carta de prueba</span>
       </button>
     } @else if (!editMode.active()) {
       <!-- With the site's edit mode on, the editor mode is on -->
-      <button type="button" class="item" [class.on]="game.editorMode()" title="Modo editor (acciones manuales)" (click)="game.setEditorMode(!game.editorMode())">
+      <button type="button" class="item" [class.on]="game.editorMode()" [attr.aria-pressed]="game.editorMode()" (click)="game.setEditorMode(!game.editorMode())">
         <eras-icon name="edit" />
-        <span>Modo editor{{ game.editorMode() ? ' ✓' : '' }}</span>
+        <span>Modo editor (acciones manuales)</span>
       </button>
     }
-    <button type="button" class="item" [class.on]="mirrored()" title="Zonas espejadas" (click)="toggleMirrored()">
+    <button type="button" class="item" [class.on]="mirrored()" [attr.aria-pressed]="mirrored()" (click)="toggleMirrored()">
       <eras-icon name="layers" />
-      <span>Zonas espejadas{{ mirrored() ? ' ✓' : '' }}</span>
+      <span>Zonas espejadas</span>
     </button>
-    <button type="button" class="item" [class.on]="fullscreen()" title="Pantalla completa (cartas del campo más grandes)" (click)="toggleFullscreen()">
+    <button type="button" class="item" [class.on]="fullscreen()" [attr.aria-pressed]="fullscreen()" (click)="toggleFullscreen()">
       <eras-icon name="maximize" />
-      <span>Pantalla completa{{ fullscreen() ? ' ✓' : '' }}</span>
+      <span>Pantalla completa (cartas del campo más grandes)</span>
     </button>
     <hr />
-    <button type="button" class="item" title="Ver mi mazo" (click)="dialogs.decklist()">
+    <button type="button" class="item" (click)="dialogs.decklist()">
       <eras-icon name="cards" />
       <span>Ver mi mazo</span>
     </button>
-    <button type="button" class="item" title="Historial" (click)="dialogs.log()">
+    <button type="button" class="item" (click)="dialogs.log()">
       <eras-icon name="list" />
       <span>Historial</span>
     </button>
     @if (inProgress()) {
-      <button type="button" class="item danger" title="Rendirse" (click)="surrender()">
+      <button type="button" class="item danger" (click)="surrender()">
         <eras-icon name="flag" />
         <span>Rendirse</span>
       </button>
     }
-    <button type="button" class="item" title="Salir" (click)="exit()">
+    <button type="button" class="item" (click)="exit()">
       <eras-icon name="logout" />
       <span>Salir</span>
     </button>
+    @if (game.editorRoom()) {
+      <!-- At the foot: a test room -->
+      <div class="notice">
+        <eras-icon name="edit" />
+        <span>Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba</span>
+      </div>
+    }
   </aside>
   }
 

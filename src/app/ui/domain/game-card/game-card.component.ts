@@ -63,13 +63,17 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
       position: absolute;
       inset-block-start: -0.4rem;
       inset-inline-end: -0.4rem;
-      padding: 0 0.35rem;
+      // As big as the card allows: readable at a glance on the field
+      min-inline-size: 1.6em;
+      padding: 0.05em 0.4em;
+      border: 2px solid rgb(27 29 36 / 70%);
       border-radius: var(--radius-pill);
       background: #f59e0b;
       color: #1b1d24;
-      font-size: var(--font-size-xs);
+      font-size: clamp(0.8rem, calc(var(--game-card-width, 4.5rem) * 0.17), 1.35rem);
       font-weight: var(--font-weight-bold);
-      line-height: 1.4;
+      line-height: 1.3;
+      text-align: center;
     }
     .strength.up { background: #22c55e; }
     .strength.down { background: #ef4444; color: #fff; }

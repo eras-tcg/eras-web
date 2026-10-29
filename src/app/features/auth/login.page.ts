@@ -19,7 +19,7 @@ export class LoginPage {
   /** Page that sent the user here (?returnUrl=), opened again after signing in. */
   readonly returnUrl = input<string>();
 
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   protected readonly loading = signal(false);

@@ -1,6 +1,9 @@
 <eras-auth-layout heading="Iniciar sesión" subtitle="Entra con tu cuenta para ver cartas, mazos y jugar.">
   <form [formGroup]="form" (ngSubmit)="submit()">
     <eras-stack [gap]="4">
+      @if (auth.expired() && !error()) {
+        <eras-alert>Tu sesión expiró. Vuelve a iniciar sesión para seguir donde estabas.</eras-alert>
+      }
       @if (error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }

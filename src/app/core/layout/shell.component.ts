@@ -12,6 +12,7 @@ import { ADMIN_TOOLS } from '../navigation/admin-tools';
 import { MAIN_NAV } from '../navigation/nav-items';
 import { ThemeService } from '../theme/theme.service';
 
+import { VersionService } from '../version/version.service';
 @Component({
   selector: 'eras-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CdkMenuTrigger, MenuComponent, MenuItemDirective, ButtonComponent, IconComponent],
@@ -24,6 +25,7 @@ export class ShellComponent {
   protected readonly editMode = inject(EditModeService);
   protected readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
+  protected readonly version = inject(VersionService);
 
   protected readonly nav = MAIN_NAV;
   protected readonly menuOpen = signal(false);
@@ -49,6 +51,7 @@ export class ShellComponent {
     const host = inject<ElementRef<HTMLElement>>(ElementRef);
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
+      this.version.start();
       const header = host.nativeElement.querySelector('header');
       if (!header) return;
       const observer = new ResizeObserver(() =>

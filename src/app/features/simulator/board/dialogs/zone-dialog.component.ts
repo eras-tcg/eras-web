@@ -321,7 +321,8 @@ export class ZoneDialogComponent {
   }
 
   protected bulkMove(to: ZoneName): void {
-    for (const c of this.cards().filter((x) => this.selected().has(x.instanceId))) this.move(c, to);
+    const ids = this.cards().filter((c) => this.selected().has(c.instanceId)).map((c) => c.instanceId);
+    this.game.bulkMove(ids, this.data.zone, to, { targetPlayerId: this.targetPlayer(), toPosition: to === 'deck' ? 'top' : undefined, faceDown: to === 'lifeStack' ? true : undefined });
     this.selected.set(new Set());
   }
 

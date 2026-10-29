@@ -86,7 +86,7 @@ export class BoardEffects {
 
     switch (action.kind) {
       case 'mill':
-        for (const c of me.deck.slice(0, action.count)) this.game.moveCard(c.instanceId, 'deck', 'tributeZone');
+        this.game.bulkMove(me.deck.slice(0, action.count).map((c) => c.instanceId), 'deck', 'tributeZone');
         return true;
       case 'draw':
         for (let i = 0; i < Math.min(action.count, me.deck.length); i++) this.game.drawCard();
@@ -183,7 +183,7 @@ export class BoardEffects {
       case 'destroyLife': {
         const ids = await this.pick({ title: 'Destruir vida boca arriba', cards: (opp?.lifeStack ?? []).filter((c) => !c.faceDown), max: 1, exact: true });
         if (!ids) return false;
-        for (const id of ids) this.game.moveCard(id, 'lifeStack', 'discardPile', { targetPlayerId: oppId });
+        this.game.bulkMove(ids, 'lifeStack', 'discardPile', { targetPlayerId: oppId });
         return true;
       }
       default:
@@ -209,7 +209,7 @@ export class BoardEffects {
   ): Promise<boolean> {
     const ids = await this.pick({ title, cards, max: count, exact: exact && cards.length >= count, ...(filter ? this.filtered(filter) : {}) });
     if (!ids) return false;
-    for (const id of ids) this.game.moveCard(id, from, to, opts);
+    this.game.bulkMove(ids, from, to, opts);
     return true;
   }
 

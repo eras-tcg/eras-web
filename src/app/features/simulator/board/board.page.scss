@@ -77,9 +77,9 @@
   border-block-start: var(--border-width) solid var(--color-border);
 }
 
-// Animations off (sidebar): no transitions or keyframes anywhere on the table
-.board.no-animations,
-.board.no-animations * {
+// Animations off: none on the table
+.no-animations,
+.no-animations * {
   transition: none !important;
   animation: none !important;
 }

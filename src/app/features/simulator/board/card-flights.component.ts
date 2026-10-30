@@ -70,8 +70,10 @@ export class CardFlightsComponent {
         const card = this.document.querySelector<HTMLElement>(`[data-hand-id="${c.instanceId}"] eras-game-card`);
         const target = card ?? this.document.querySelector(`[data-pile="${p.userId}:hand"]`);
         if (!target) return;
-        const rect = deck.getBoundingClientRect();
-        const width = card?.offsetWidth ?? rect.width;
+        // It leaves from the deck's top card, at its size (the empty pile when it was the last one)
+        const top = deck.querySelector<HTMLElement>('eras-game-card');
+        const rect = (top ?? deck).getBoundingClientRect();
+        const width = top?.offsetWidth ?? Math.min(rect.width, (rect.height * 63) / 88);
         const from: Seen = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width, height: (width * 88) / 63, tapped: false, imageUrl: c.imageUrl };
         const faceUp = p.userId === me && !c.faceDown;
         this.fly(from, target, !faceUp, { fromBack: true, delay: i * DRAW_STAGGER, duration: DRAW_DURATION, hide: card });
@@ -122,7 +124,8 @@ export class CardFlightsComponent {
    */
   private fly(from: Seen, target: Element, faceDown: boolean, options: { fromBack?: boolean; delay?: number; duration?: number; hide?: HTMLElement | null } = {}): void {
     const to = target.getBoundingClientRect();
-    const toCard = target.querySelector<HTMLElement>('eras-game-card');
+    // It lands at the size of the card there: the target itself, or the card shown on that pile
+    const toCard = target instanceof HTMLElement && target.matches('eras-game-card') ? target : target.querySelector<HTMLElement>('eras-game-card');
     const scale = toCard ? toCard.offsetWidth / from.width : 0.75;
     const dx = to.left + to.width / 2 - from.x;
     const dy = to.top + to.height / 2 - from.y;
@@ -134,7 +137,8 @@ export class CardFlightsComponent {
       top: `${from.y - from.height / 2}px`,
       width: `${from.width}px`,
       height: `${from.height}px`,
-      zIndex: '40',
+      // Over the engine's dialogs (overlay layer): a card drawn by an effect flies while one is open or closing
+      zIndex: '1050',
       pointerEvents: 'none',
       perspective: '800px',
     });

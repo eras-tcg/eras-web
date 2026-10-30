@@ -56,14 +56,14 @@
   <div
     class="cards"
     cdkDropList
-    cdkDropListOrientation="horizontal"
+    cdkDropListOrientation="mixed"
     [cdkDropListDisabled]="!prompt.reorderRest"
     (cdkDropListDropped)="reorder($event)"
     role="group"
     [attr.aria-label]="prompt.title"
   >
     @for (c of shown(); track c.instanceId) {
-      <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest || chosen().has(c.instanceId)">
+      <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest">
         <button
           type="button"
           class="pick"

@@ -16,10 +16,14 @@ interface Seen {
 
 const PILES: ZoneName[] = ['hand', 'deck', 'lifeStack', 'tributeZone', 'discardPile'];
 const DURATION = 650;
+/** A draw: each card leaves the deck a little after the one before. */
+const DRAW_DURATION = 550;
+const DRAW_STAGGER = 120;
 
 /**
  * Animates the cards that leave the field: a copy flies from where the card was to the zone it went to,
  * straightening if it was exhausted and turning over if it ends face down (deck, lives, the rival's hand).
+ * Draws too: a card that goes from the deck to the hand flies there face down and turns face up if it is yours.
  */
 @Component({
   selector: 'eras-card-flights',
@@ -31,6 +35,10 @@ export class CardFlightsComponent {
   private readonly document = inject(DOCUMENT);
   private readonly animations = inject(BoardAnimations);
   private seen = new Map<string, Seen>();
+  /** The cards in each deck last time; null until the first state (joining a game does not draw). */
+  private deckIds: Set<string> | null = null;
+  /** The last timeline event already seen. */
+  private lastSeq = 0;
 
   constructor() {
     afterRenderEffect({
@@ -44,8 +52,44 @@ export class CardFlightsComponent {
           if (to) this.fly(from, to.element, to.faceDown);
         }
         this.seen = this.measure(state);
+        this.draws(state);
       },
     });
+  }
+
+  /**
+   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, and those of
+   * a new DRAW event (an effect that looked at the top cards took them out of the deck before drawing).
+   */
+  private draws(state: GameState): void {
+    const before = this.deckIds;
+    const players = Object.values(state.players ?? {});
+    this.deckIds = new Set(players.flatMap((p) => p.deck.map((c) => c.instanceId)));
+    const timeline = state.timeline ?? [];
+    // A new game starts a new timeline
+    if (Math.max(0, ...timeline.map((e) => e.seq)) < this.lastSeq) this.lastSeq = 0;
+    const events = timeline.filter((e) => e.seq > this.lastSeq);
+    this.lastSeq = Math.max(this.lastSeq, ...events.map((e) => e.seq));
+    if (!before) return;
+    const drawnByEvent = new Set(events.filter((e) => e.type === 'DRAW' && e.cardInstanceId).map((e) => e.cardInstanceId));
+    const me = this.game.myState()?.userId;
+    for (const p of players) {
+      const deck = this.document.querySelector<HTMLElement>(`[data-pile="${p.userId}:deck"]`);
+      if (!deck) continue;
+      const drawn = p.hand.filter((c) => before.has(c.instanceId) || drawnByEvent.has(c.instanceId));
+      drawn.forEach((c, i) => {
+        const card = this.document.querySelector<HTMLElement>(`[data-hand-id="${c.instanceId}"] eras-game-card`);
+        const target = card ?? this.document.querySelector(`[data-pile="${p.userId}:hand"]`);
+        if (!target) return;
+        // It leaves from the deck's top card, at its size (the empty pile when it was the last one)
+        const top = deck.querySelector<HTMLElement>('eras-game-card');
+        const rect = (top ?? deck).getBoundingClientRect();
+        const width = top?.offsetWidth ?? Math.min(rect.width, (rect.height * 63) / 88);
+        const from: Seen = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width, height: (width * 88) / 63, tapped: false, imageUrl: c.imageUrl };
+        const faceUp = p.userId === me && !c.faceDown;
+        this.fly(from, target, !faceUp, { fromBack: true, delay: i * DRAW_STAGGER, duration: DRAW_DURATION, hide: card });
+      });
+    }
   }
 
   /** The zone a card went to, and whether it shows its back there. */
@@ -85,9 +129,14 @@ export class CardFlightsComponent {
     return seen;
   }
 
-  private fly(from: Seen, target: Element, faceDown: boolean): void {
+  /**
+   * A copy of the card flies from `from` to `target`. `fromBack`: it starts face down (a card leaving the deck);
+   * `hide`: the real card waits hidden until the copy lands.
+   */
+  private fly(from: Seen, target: Element, faceDown: boolean, options: { fromBack?: boolean; delay?: number; duration?: number; hide?: HTMLElement | null } = {}): void {
     const to = target.getBoundingClientRect();
-    const toCard = target.querySelector<HTMLElement>('eras-game-card');
+    // It lands at the size of the card there: the target itself, or the card shown on that pile
+    const toCard = target instanceof HTMLElement && target.matches('eras-game-card') ? target : target.querySelector<HTMLElement>('eras-game-card');
     const scale = toCard ? toCard.offsetWidth / from.width : 0.75;
     const dx = to.left + to.width / 2 - from.x;
     const dy = to.top + to.height / 2 - from.y;
@@ -99,7 +148,8 @@ export class CardFlightsComponent {
       top: `${from.y - from.height / 2}px`,
       width: `${from.width}px`,
       height: `${from.height}px`,
-      zIndex: '40',
+      // Over the engine's dialogs (overlay layer): a card drawn by an effect flies while one is open or closing
+      zIndex: '1050',
       pointerEvents: 'none',
       perspective: '800px',
     });
@@ -129,16 +179,24 @@ export class CardFlightsComponent {
     flight.append(inner);
     this.document.body.append(flight);
 
-    const start = `translate(0px, 0px) rotate(${from.tapped ? 90 : 0}deg) rotateY(0deg) scale(1)`;
+    const start = `translate(0px, 0px) rotate(${from.tapped ? 90 : 0}deg) rotateY(${options.fromBack ? 180 : 0}deg) scale(1)`;
     const end = `translate(${dx}px, ${dy}px) rotate(0deg) rotateY(${faceDown ? 180 : 0}deg) scale(${scale})`;
     const reduced = this.animations.off() || this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.animations.hold(reduced ? 1 : DURATION);
+    const delay = reduced ? 0 : (options.delay ?? 0);
+    const duration = reduced ? 1 : (options.duration ?? DURATION);
+    this.animations.hold(delay + duration);
+    if (options.hide) options.hide.style.visibility = 'hidden';
     const animation = inner.animate([{ transform: start }, { transform: end }], {
-      duration: reduced ? 1 : DURATION,
+      duration,
+      delay,
       easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      fill: 'forwards',
+      fill: 'both',
     });
-    animation.onfinish = () => flight.remove();
-    animation.oncancel = () => flight.remove();
+    const done = () => {
+      flight.remove();
+      if (options.hide) options.hide.style.visibility = '';
+    };
+    animation.onfinish = done;
+    animation.oncancel = done;
   }
 }

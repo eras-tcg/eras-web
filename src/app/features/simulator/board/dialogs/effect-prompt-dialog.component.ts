@@ -158,9 +158,11 @@ export class EffectPromptDialogComponent {
     this.chosen.set(next);
   }
 
+  /** The drop indexes are of the cards shown, which may leave out the ones that do not meet the effect. */
   protected reorder(event: CdkDragDrop<CardSlot[]>): void {
+    const shown = this.shown();
     const list = [...this.order()];
-    moveItemInArray(list, event.previousIndex, event.currentIndex);
+    moveItemInArray(list, list.indexOf(shown[event.previousIndex]), list.indexOf(shown[event.currentIndex]));
     this.order.set(list);
   }
 

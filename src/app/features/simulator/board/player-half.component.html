@@ -87,7 +87,7 @@
   <div class="hand-window">
     <div #handCards class="hand-cards" [class.straight]="straightHand()" [style.--hand-turn]="handTurn()">
       @for (s of p.hand; track s.instanceId; let i = $index) {
-        <div class="in-hand" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
+        <div class="in-hand" [attr.data-hand-id]="s.instanceId" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
           <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
         </div>
       }
@@ -173,7 +173,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown" />
+      <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
   </eras-game-zone>
 
@@ -191,7 +191,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown" />
+      <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
   </eras-game-zone>
 

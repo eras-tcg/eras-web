@@ -37,6 +37,13 @@ describe('mergeCards', () => {
     expect(named.name).toBe('Roto-G0');
     expect(unnamed.name).toBe('Nueva Carta');
   });
+
+  it('keeps the image name when the metadata names another card', () => {
+    const meta: CardMeta[] = [{ id: 'm1', edition: 'ST1', cardNumber: 1, subEdition: null, colorIdentity: 'B', cardName: 'Damon' }];
+    const [card] = mergeCards([drive({ name: 'Bruja Mensajera' })], meta);
+    expect(card.name).toBe('Bruja Mensajera');
+    expect(card.meta?.id).toBe('m1');
+  });
 });
 
 describe('cardImageUrl', () => {

@@ -1,4 +1,8 @@
 <eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+  @if (prompt.sourceImageUrl && !prompt.effects?.length) {
+    <!-- The card that is resolving, at a glance -->
+    <img class="source-card" [src]="prompt.sourceImageUrl" [alt]="prompt.sourceName" draggable="false" />
+  }
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
@@ -37,7 +41,9 @@
     <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
   }
   @if (prompt.reorderRest) {
-    @if (prompt.restToTop) {
+    @if (prompt.max === 0) {
+      <p class="hint">Arrastra las cartas para ordenarlas: van {{ prompt.restToTop ? 'al tope' : 'al fondo' }} de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
+    } @else if (prompt.restToTop) {
       <p class="hint">Haz clic en las cartas que descartas. Arrastra las demás para ordenarlas: vuelven al tope de tu mazo en ese orden (la de la izquierda queda arriba).</p>
     } @else {
       <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>

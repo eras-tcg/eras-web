@@ -13,7 +13,8 @@ export class HomeApi {
     return this.http.get<HomeContent>(this.api.url('/api/drive/front-content/home'));
   }
 
-  save(request: HomeSaveRequest): Observable<unknown> {
-    return this.http.post(this.api.url('/api/drive/front-content/home'), request);
+  /** The server answers plain text ("Home content updated"), not JSON. */
+  save(request: HomeSaveRequest): Observable<string> {
+    return this.http.post(this.api.url('/api/drive/front-content/home'), request, { responseType: 'text' });
   }
 }

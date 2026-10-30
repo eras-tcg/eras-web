@@ -62,6 +62,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
     if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
+    if (this.prompt.reorderRest && this.prompt.max === 0) return 'Confirmar orden';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';

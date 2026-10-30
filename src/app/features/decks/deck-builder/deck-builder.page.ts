@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -79,6 +80,7 @@ export class DeckBuilderPage {
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
   private readonly modal = inject(ModalService);
+  private readonly router = inject(Router);
 
   protected readonly maxCards = MAX_CARDS;
   protected readonly typeLabels = CARD_TYPE_LABELS;
@@ -285,6 +287,29 @@ export class DeckBuilderPage {
   protected contextRemove(event: MouseEvent, card: CatalogCard): void {
     event.preventDefault();
     this.remove(card);
+  }
+
+  /** Starts a new deck; with unsaved changes it asks first. */
+  protected async newDeck(): Promise<void> {
+    if (this.draft.dirty() && this.draft.total() > 0) {
+      const ok = await this.modal.confirm({
+        title: 'Cambios sin guardar',
+        message: 'Si creas un mazo nuevo se pierden los cambios de este.',
+        confirmLabel: 'Crear sin guardar',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    this.draft.reset();
+    this.loadedFor = null;
+    this.selected.set(null);
+    this.loadError.set(null);
+    this.saveError.set(null);
+    this.savedNotice.set(false);
+    this.copyNotice.set(false);
+    this.importWarnings.set([]);
+    // Out of the loaded deck's address (the draft is clean now: leaving does not ask again)
+    await this.router.navigate(['/deck-builder']);
   }
 
   // ── Leaving with unsaved changes ──────────────────────────────────────

@@ -253,6 +253,8 @@ export interface EffectPrompt {
    */
   purpose?: PromptPurpose | null;
   sourceName: string;
+  /** The art of the card whose effect asks it (to see at a glance what is resolving). */
+  sourceImageUrl?: string | null;
   title: string;
   instruction: string;
   /** What happens to a chosen card ("A tu mano", "Tributar", "Destruir"). */

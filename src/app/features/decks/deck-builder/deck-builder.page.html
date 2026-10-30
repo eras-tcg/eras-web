@@ -55,6 +55,16 @@
         Guardar
       </button>
       <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
+      <button
+        erasButton
+        variant="secondary"
+        size="sm"
+        type="button"
+        [disabled]="draft.id() === null && draft.total() === 0 && !draft.dirty()"
+        (click)="newDeck()"
+      >
+        <eras-icon name="plus" /> Nuevo mazo
+      </button>
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
       <eras-file-button accept=".txt,text/plain" (file)="importList($event)">Importar lista</eras-file-button>

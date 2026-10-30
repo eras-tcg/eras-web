@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 
-/** A card at its printed proportions (63×88). Optional corner `badge` text. */
+/** A card at its printed proportions (63×88). Optional small `badge` at the top (it leaves the printed name visible). */
 @Component({
   selector: 'eras-card-image',
   template: `
@@ -10,7 +10,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       <span class="missing">{{ alt() }}</span>
     }
     @if (badge()) {
-      <span class="badge">{{ badge() }}</span>
+      <span class="badge" [class.info]="badgeTone() === 'info'">{{ badge() }}</span>
     }
   `,
   styles: `
@@ -27,16 +27,23 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
     .missing { padding: var(--space-2); color: var(--color-text-subtle); font-size: var(--font-size-sm); text-align: center; }
     .badge {
       position: absolute;
-      inset-inline: var(--space-1);
-      inset-block-end: var(--space-1);
-      padding: var(--space-1);
-      border-radius: var(--radius-sm);
-      background: var(--color-danger);
+      inset-block-start: 12%;
+      inset-inline-start: 50%;
+      max-inline-size: 90%;
+      padding: 0.1rem 0.4rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-danger) 75%, transparent);
       color: #fff;
-      font-size: var(--font-size-xs);
+      font-size: 0.625rem;
       font-weight: var(--font-weight-bold);
-      text-align: center;
+      line-height: 1.4;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transform: translateX(-50%);
+      pointer-events: none;
     }
+    .badge.info { background: color-mix(in srgb, var(--color-info) 75%, transparent); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -44,5 +51,7 @@ export class CardImageComponent {
   readonly src = input<string | null>(null);
   readonly alt = input('');
   readonly badge = input<string | null>(null);
+  /** danger (red: missing data) or info (blue). */
+  readonly badgeTone = input<'danger' | 'info'>('danger');
   readonly eager = input(false, { transform: booleanAttribute });
 }

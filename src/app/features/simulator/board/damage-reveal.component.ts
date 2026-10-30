@@ -177,7 +177,8 @@ export class DamageRevealComponent {
     }
     const events = timeline.filter((e) => (e.type === 'LIFE_DAMAGE' || e.type === 'CLASH') && e.seq > (this.lastSeq ?? 0));
     this.lastSeq = Math.max(this.lastSeq, maxSeq);
-    if (!events.length || !state) return;
+    // Animations off: the history and the notices tell it
+    if (!events.length || !state || this.animations.off()) return;
     for (const e of events) this.queue.push({ ...(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e)), id: ++this.ids });
     // The choices wait until all of them have been shown
     this.release ??= this.animations.begin();

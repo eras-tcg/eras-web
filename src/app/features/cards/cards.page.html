@@ -28,6 +28,14 @@
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
           }
+          <!-- Marks on the cards, hidden unless asked for (remembered on the device) -->
+          <eras-stack direction="row" [gap]="1" align="center" wrap>
+            <span class="marks-label">Marcar:</span>
+            <button erasChip [selected]="showUnprogrammed()" title="Cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
+            @if (canManage()) {
+              <button erasChip [selected]="showNoMeta()" title="Cartas sin metadatos" (click)="showNoMeta.set(!showNoMeta())">Sin metadatos</button>
+            }
+          </eras-stack>
         </eras-stack>
 
         @if (displayed().length === 0) {
@@ -35,7 +43,7 @@
         } @else {
           <eras-grid [minColumn]="view().size + 'px'" [gap]="3">
             @for (card of visible(); track card.id) {
-              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="card.meta ? null : 'Sin metadatos'" (selected)="open(card)" />
+              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="badge(card)" [badgeTone]="card.meta ? 'info' : 'danger'" (selected)="open(card)" />
             }
           </eras-grid>
           @if (visible().length < displayed().length) {

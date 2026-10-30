@@ -77,6 +77,13 @@
   border-block-start: var(--border-width) solid var(--color-border);
 }
 
+// Animations off: none on the table
+.no-animations,
+.no-animations * {
+  transition: none !important;
+  animation: none !important;
+}
+
 .board {
   display: flex;
   flex-direction: column;
@@ -436,3 +443,4 @@
 :host-context(body.eras-sheet-open) .toasts {
   max-block-size: calc(100dvh - var(--app-header-height, 3rem) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
 }
+

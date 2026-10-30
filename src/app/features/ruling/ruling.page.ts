@@ -13,7 +13,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { TabsComponent } from '@ui/surfaces/tabs/tabs.component';
 
-type Section = 'definitions' | 'setup' | 'cards' | 'resources' | 'board' | 'turn' | 'combat' | 'effects' | 'keywords';
+type Section = 'basics' | 'setup' | 'board' | 'turn' | 'resources' | 'combat' | 'cards' | 'keywords';
 
 const ZONES: PlaymatZone[] = [
   { number: 1, name: 'Vidas', area: 'lives' },
@@ -25,7 +25,7 @@ const ZONES: PlaymatZone[] = [
   { number: 7, name: 'Gemas', area: 'gems' },
 ];
 
-/** "Aprender a jugar": rules summary, card types, gem simulator and the play mat. */
+/** "Cómo jugar": a friendly guide to a first game (not the full rules), the gem simulator, the play mat and the keywords. */
 @Component({
   selector: 'eras-ruling-page',
   imports: [PageComponent, TabsComponent, ProseComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent, GemTrackComponent, PlaymatComponent],
@@ -40,17 +40,16 @@ const ZONES: PlaymatZone[] = [
 })
 export class RulingPage {
   protected readonly sections = [
-    { key: 'definitions', label: 'Definiciones' },
-    { key: 'setup', label: 'Preparación' },
-    { key: 'cards', label: 'Tipos de carta' },
-    { key: 'resources', label: 'Recursos' },
-    { key: 'board', label: 'Zonas de juego' },
-    { key: 'turn', label: 'El turno' },
-    { key: 'combat', label: 'Combate' },
-    { key: 'effects', label: 'Efectos y cadenas' },
+    { key: 'basics', label: 'En un minuto' },
+    { key: 'setup', label: 'Tu mazo' },
+    { key: 'board', label: 'La mesa' },
+    { key: 'turn', label: 'Tu turno' },
+    { key: 'resources', label: 'Gemas' },
+    { key: 'combat', label: 'Atacar' },
+    { key: 'cards', label: 'Cartas y efectos' },
     { key: 'keywords', label: 'Habilidades' },
   ];
-  protected readonly section = signal<Section>('definitions');
+  protected readonly section = signal<Section>('basics');
   protected readonly zones = ZONES;
   private readonly cards = inject(CardsStore);
   protected readonly cardsLoading = this.cards.loading;

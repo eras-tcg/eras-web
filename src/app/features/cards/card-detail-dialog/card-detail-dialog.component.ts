@@ -55,7 +55,7 @@ export class CardDetailDialogComponent {
   protected readonly variants = computed(() => nameVariants(this.gridCard(), this.store.cards(), this.editions.releaseDates()));
   protected readonly variantIndex = computed(() => this.variants().findIndex((c) => c.id === this.card().id));
 
-  protected readonly view = computed(() => cardDetailView(this.card(), this.store.ref()));
+  protected readonly view = computed(() => cardDetailView(this.card(), this.store.ref(), this.store.unprogrammedOf(this.card())));
 
   protected readonly busy = signal(false);
   protected readonly actionError = signal<string | null>(null);

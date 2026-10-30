@@ -1,11 +1,59 @@
 <eras-page title="Usuarios" [subtitle]="(users().length | plural: 'cuenta') + (unverified() ? ' · ' + unverified() + ' sin verificar' : '')">
-  <button page-actions erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+  <ng-container ngProjectAs="[page-actions]">
+    <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+    <button erasButton type="button" [disabled]="creating()" (click)="openCreate()"><eras-icon name="plus" /> Nuevo usuario</button>
+  </ng-container>
 
   @if (fb.feedback(); as f) {
     <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
   }
   @if (roles() === null && !loading() && users().length) {
     <eras-alert>Sin el permiso manage_roles no se puede cambiar el rol de un usuario.</eras-alert>
+  }
+
+  @if (creating()) {
+    <!-- New account: UsersService's registration (role USER and an e-mail to validate it), then the chosen role -->
+    <eras-card>
+      <form (submit)="create(); $event.preventDefault()">
+        <eras-stack [gap]="4">
+          <strong>Nuevo usuario</strong>
+          @if (createError(); as message) {
+            <eras-alert tone="danger">{{ message }}</eras-alert>
+          }
+          <eras-grid minColumn="14rem" [gap]="3">
+            <eras-form-field label="Usuario" required>
+              <input autocomplete="off" [value]="newUsername()" (input)="newUsername.set($any($event.target).value)" />
+            </eras-form-field>
+            <eras-form-field label="Correo" required>
+              <input type="email" autocomplete="off" [value]="newEmail()" (input)="newEmail.set($any($event.target).value)" />
+            </eras-form-field>
+            <eras-form-field label="Contraseña" required>
+              <input type="password" autocomplete="new-password" [value]="newUserPassword()" (input)="newUserPassword.set($any($event.target).value)" />
+            </eras-form-field>
+            <eras-form-field label="Repite la contraseña" required>
+              <input type="password" autocomplete="new-password" [value]="newUserConfirm()" (input)="newUserConfirm.set($any($event.target).value)" />
+            </eras-form-field>
+            @if (roles(); as roleList) {
+              <eras-form-field label="Rol">
+                <select (change)="newRoleId.set($any($event.target).value)">
+                  <option value="" [selected]="!newRoleId()">USER (por defecto)</option>
+                  @for (r of roleList; track r.id) {
+                    @if (r.name !== 'USER') {
+                      <option [value]="r.id" [selected]="r.id === newRoleId()">{{ r.name }}</option>
+                    }
+                  }
+                </select>
+              </eras-form-field>
+            }
+          </eras-grid>
+          <span class="muted">La contraseña necesita mayúscula, minúscula, número y un carácter especial. A la cuenta le llega un correo con el enlace para validarla.</span>
+          <eras-stack direction="row" [gap]="2">
+            <button erasButton type="submit" [loading]="registering()" [disabled]="registering()">Crear usuario</button>
+            <button erasButton variant="ghost" type="button" (click)="creating.set(false)">Cancelar</button>
+          </eras-stack>
+        </eras-stack>
+      </form>
+    </eras-card>
   }
 
   @if (editing(); as user) {

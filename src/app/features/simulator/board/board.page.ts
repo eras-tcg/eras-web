@@ -55,7 +55,7 @@ export class BoardPage {
   readonly roomId = input.required<string>();
 
   protected readonly game = inject(GameStore);
-  private readonly animations = inject(BoardAnimations);
+  protected readonly animations = inject(BoardAnimations);
   private readonly sheet = inject(SheetState);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */
   protected readonly lookOnly = this.sheet.lowered;
@@ -152,6 +152,7 @@ export class BoardPage {
       const name = s.players?.[s.currentTurnUserId]?.username ?? 'Rival';
       const who = mine ? 'Tu turno' : 'Turno de ' + name;
       untracked(() => {
+        if (this.animations.off()) return;
         // A new turn always shows its start, even when it went straight on to the main phase
         if (newTurn && s.currentPhase !== 'START') this.popups.push({ who, phase: PHASE_LABELS['START'], mine });
         this.popups.push({ who, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine });
@@ -220,9 +221,12 @@ export class BoardPage {
     });
     inject(DestroyRef).onDestroy(() => open?.close());
 
-    // A long press on the table (left button, not on the panels) also looks through, while it is held; moving cancels it (a drag)
+    // A long press on the table (left button, not on the panels) also looks through, while it is held; moving cancels it (a drag).
+    // With a choice open (expanded), pressing outside it (its backdrop) looks through at once, while it is held.
     let timer: ReturnType<typeof setTimeout> | null = null;
     let start: { x: number; y: number } | null = null;
+    // The click that ends looking through the backdrop must not close the choice
+    let swallowClick = false;
     const cancel = () => {
       if (timer) clearTimeout(timer);
       timer = null;
@@ -230,8 +234,13 @@ export class BoardPage {
     };
     const down = (e: PointerEvent) => {
       if (e.button !== 0 || !this.canSeeThrough()) return;
-      // Not over the panels themselves (a choice, the chain): a long press there is choosing, not looking
       const target = e.target as Element | null;
+      if (target?.classList.contains('cdk-overlay-backdrop') && this.sheet.open() > 0 && !this.lookOnly()) {
+        cancel();
+        this.seeThrough.set(true);
+        return;
+      }
+      // Not over the panels themselves (a choice, the chain): a long press there is choosing, not looking
       if (target?.closest('.cdk-overlay-container, .chain-panel, .eras-prompt-spotlight')) return;
       cancel();
       start = { x: e.clientX, y: e.clientY };
@@ -245,12 +254,23 @@ export class BoardPage {
     };
     const up = () => {
       cancel();
+      if (this.seeThrough()) swallowClick = true;
       this.seeThrough.set(false);
     };
+    const click = (e: MouseEvent) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    // A press that did not end in a click (released elsewhere) must not swallow the next one
+    const clearSwallow = () => setTimeout(() => (swallowClick = false));
     const win = this.document.defaultView;
     win?.addEventListener('pointerdown', down, true);
     win?.addEventListener('pointermove', move, true);
     win?.addEventListener('pointerup', up, true);
+    win?.addEventListener('pointerup', clearSwallow);
+    win?.addEventListener('click', click, true);
     win?.addEventListener('pointercancel', up, true);
     win?.addEventListener('blur', up);
     inject(DestroyRef).onDestroy(() => {
@@ -259,6 +279,8 @@ export class BoardPage {
       win?.removeEventListener('pointerdown', down, true);
       win?.removeEventListener('pointermove', move, true);
       win?.removeEventListener('pointerup', up, true);
+      win?.removeEventListener('pointerup', clearSwallow);
+      win?.removeEventListener('click', click, true);
       win?.removeEventListener('pointercancel', up, true);
       win?.removeEventListener('blur', up);
     });

@@ -9,7 +9,21 @@ export function mergeCards(drive: readonly DriveCard[], meta: readonly CardMeta[
   for (const m of meta) {
     if (m.edition && m.cardNumber != null) byKey.set(metaKey(m.edition, m.cardNumber, m.subEdition, m.colorIdentity), m);
   }
-  return drive.map((d) => ({ ...d, meta: byKey.get(metaKey(d.edition, d.number, d.sub_edition, d.color_identity)) ?? null }));
+  return drive.map((d) => {
+    const m = byKey.get(metaKey(d.edition, d.number, d.sub_edition, d.color_identity)) ?? null;
+    return { ...d, name: printedName(d.name, m?.cardName), meta: m };
+  });
+}
+
+/**
+ * The image's file name turns every space into a hyphen ("Roto G0"): when the metadata's name is the same but for
+ * hyphens and spaces, it is the printed one ("Roto-G0"). A name that really differs keeps the image's (metadata left
+ * from another card of the slot must not rename it).
+ */
+export function printedName(imageName: string | null, metaName: string | null | undefined): string | null {
+  if (!metaName) return imageName;
+  const plain = (s: string) => s.replace(/[-\s]+/g, ' ').trim().toLowerCase();
+  return !imageName || plain(imageName) === plain(metaName) ? metaName : imageName;
 }
 
 /** Image URL with a cache-buster, so a replaced image is not served from cache. */

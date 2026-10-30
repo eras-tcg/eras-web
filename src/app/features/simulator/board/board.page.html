@@ -1,4 +1,4 @@
-<div class="board">
+<div class="board" [class.no-animations]="animations.off()">
   <!-- Game status | gem bar | phases: the strip across the middle of the table (at the top before a game) -->
   <ng-template #strip let-gems="gems">
     <div class="strip" [class.with-gems]="gems">
@@ -76,6 +76,7 @@
       </button>
     }
     <button type="button" erasSidebarItem icon="list" [on]="!noticesOff()" (click)="noticesOff.set(!noticesOff())">Avisos de las últimas acciones</button>
+    <button type="button" erasSidebarItem icon="sparkles" [on]="!animations.off()" (click)="animations.off.set(!animations.off())">Animaciones</button>
     <button type="button" erasSidebarItem icon="cards" [on]="straightHand()" (click)="straightHand.set(!straightHand())">Mano recta (sin curva)</button>
     <button type="button" erasSidebarItem icon="layers" [on]="mirrored()" (click)="mirrored.set(!mirrored())">Zonas espejadas</button>
     <button type="button" erasSidebarItem icon="maximize" [on]="fullscreen()" (click)="toggleFullscreen()">
@@ -174,7 +175,7 @@
       class="see-through-btn"
       [class.on]="seeThrough()"
       [attr.aria-pressed]="seeThrough()"
-      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic en cualquier parte)"
+      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic fuera de la elección, o en cualquier parte de la mesa)"
       (pointerdown)="holdSeeThrough($event)"
       (keydown.space)="seeThrough.set(true); $event.preventDefault()"
       (keyup.space)="seeThrough.set(false)"

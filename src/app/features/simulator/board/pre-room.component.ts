@@ -5,6 +5,7 @@ import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { firstValueFrom } from 'rxjs';
+import { CardsStore } from '@data/cards/cards.store';
 import { DecksStore } from '@data/decks/decks.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState } from '@data/simulator/simulator.model';
@@ -48,6 +49,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 export class PreRoomComponent {
   protected readonly game = inject(GameStore);
   private readonly decks = inject(DecksStore);
+  private readonly cards = inject(CardsStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly rooms = inject(RoomsApi);
@@ -93,6 +95,29 @@ export class PreRoomComponent {
     return q ? this.allDecks().filter((d) => d.deckName.toLowerCase().includes(q)) : this.allDecks();
   });
 
+  /**
+   * Decks with cards the simulator does not run yet: they cannot be chosen (the server refuses them too), except in a
+   * test room, where those cards are tried by hand. Deck id → the names of those cards ("×2 Roto-G0").
+   */
+  protected readonly unplayable = computed(() => {
+    const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
+    const result = new Map<string, string>();
+    if (this.game.editorRoom()) return result;
+    for (const deck of this.allDecks()) {
+      const names = new Map<string, number>();
+      for (const id of deck.cards) {
+        const card = byId.get(id);
+        if (card && this.cards.unprogrammedOf(card)) names.set(card.name ?? '?', (names.get(card.name ?? '?') ?? 0) + 1);
+      }
+      if (names.size) result.set(deck.id, [...names].map(([name, n]) => (n > 1 ? `×${n} ${name}` : name)).join(', '));
+    }
+    return result;
+  });
+
+  protected chooseDeck(id: string): void {
+    if (!this.unplayable().has(id)) this.game.setDeck(id);
+  }
+
   /** The Iniciadores of my deck, one per card. */
   protected readonly myStarters = computed(() => {
     const seen = new Set<string>();
@@ -124,6 +149,7 @@ export class PreRoomComponent {
   });
 
   constructor() {
+    void this.cards.load();
     void this.decks.loadPublic();
     const id = this.auth.user()?.id;
     if (id) void this.decks.loadMine(id);

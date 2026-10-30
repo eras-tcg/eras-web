@@ -1,9 +1,15 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { persistedFlag } from '@core/storage/persisted-flag';
 
 /** Animations playing on the board: the engine's choices wait until they are over. */
 @Injectable()
 export class BoardAnimations {
   private readonly running = signal(0);
+  /**
+   * The player turned the animations off (cards flying, damage and clashes, the turn and phase pop-ups, transitions):
+   * the table changes at once. Remembered on the device.
+   */
+  readonly off = persistedFlag('eras-sim-animations-off');
   readonly idle = computed(() => this.running() === 0);
 
   /** Marks an animation of `ms` milliseconds as playing. */

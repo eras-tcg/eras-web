@@ -133,15 +133,24 @@
     } @else {
       <eras-grid minColumn="9.5rem" [gap]="3">
         @for (deck of matches(); track deck.id) {
-          <div class="deck" [class.chosen]="mine()?.deckId === deck.id">
+          @let blocked = unplayable().get(deck.id);
+          <div
+            class="deck"
+            [class.chosen]="mine()?.deckId === deck.id"
+            [class.blocked]="!!blocked"
+            [attr.title]="blocked ? 'No se puede jugar en el simulador: tiene cartas sin programar (' + blocked + ')' : null"
+          >
             <eras-deck-cover
               [name]="deck.deckName"
               [author]="myIds().has(deck.id) ? null : (deck.username ?? null)"
               [imageUrl]="deck.deckImage ?? null"
               [cardCount]="deck.cards.length"
               [isPrivate]="!!deck.privateDeck"
-              (selected)="game.setDeck(deck.id)"
+              (selected)="chooseDeck(deck.id)"
             />
+            @if (blocked) {
+              <span class="blocked-note">Sin programar: {{ blocked }}</span>
+            }
           </div>
         } @empty {
           <eras-empty-state title="Ningún mazo coincide con la búsqueda" />

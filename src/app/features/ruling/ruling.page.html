@@ -1,67 +1,90 @@
-<eras-page title="Aprender a jugar" subtitle="Reglas básicas de ERAS" width="wide">
-  <eras-tabs label="Secciones del manual" [tabs]="sections" [selected]="section()" (selectedChange)="section.set($any($event))" />
+<eras-page title="Cómo jugar" subtitle="Lo necesario para tu primera partida de ERAS" width="wide">
+  <eras-tabs label="Secciones de la guía" [tabs]="sections" [selected]="section()" (selectedChange)="section.set($any($event))" />
 
   @switch (section()) {
-    @case ('definitions') {
+    @case ('basics') {
       <eras-prose>
-        <h2>Definiciones</h2>
-        <p><strong>Mazo:</strong> un mazo tiene <strong>50 cartas</strong>. Todas deben pertenecer al mismo <strong>color o clase</strong> de la criatura con el keyword <strong>Iniciador</strong> (el blanco es genérico y sirve para todos los mazos). Cada carta puede incluirse hasta <strong>4 copias</strong>.</p>
-        <p><strong>Línea frontal:</strong> zona donde tus criaturas se enfrentan directamente con las del oponente. Desde aquí pueden declarar ataques, bloquear criaturas enemigas y usar efectos que las afecten. Al estar en primera línea, también quedan expuestas a los efectos de las criaturas rivales.</p>
-        <p><strong>Retaguardia:</strong> a diferencia de la línea frontal, las criaturas en la retaguardia están protegidas del oponente. Desde aquí no pueden declarar ataques, bloquear criaturas enemigas ni afectarlas con sus efectos. En esta zona también se juegan las estructuras y utilidades.</p>
-        <p><strong>Tributos:</strong> zona donde se colocan las cartas usadas como coste o enviadas por efectos del juego.</p>
-        <p><strong>Descarte:</strong> zona donde se colocan las utilidades usadas o las cartas enviadas por efectos del juego. Si una criatura es destruida por enfrentamiento o por un efecto rival, va a esta zona sin pasar por los tributos.</p>
-        <p><strong>Vidas:</strong> al comenzar la partida, cada jugador coloca 6 cartas del tope de su mazo boca abajo en la sección de vidas, formando una pila. Estas cartas representan tus vidas: si en algún momento te quedas sin vidas, pierdes la partida de inmediato.</p>
-        <p>La forma más común de perder vidas es a través de ataques. Cuando un jugador declara un ataque, el oponente revela una vida y sigue estos pasos:</p>
+        <h2>ERAS en un minuto</h2>
+        <p>ERAS es un juego de cartas para dos jugadores. Cada uno arma un mazo con criaturas, utilidades y estructuras, y se turnan para jugarlas.</p>
+        <p><strong>Para ganar</strong>, deja a tu rival sin vidas: los ataques que no bloquea se las van quitando. También gana quien deja al otro sin cartas para robar.</p>
+        <p>Lo esencial de cada turno:</p>
         <ol>
-          <li>Si es una utilidad o estructura: puede jugarla de inmediato sin pagar su coste, o añadirla a su mano.</li>
-          <li>
-            Si es una criatura, compara su fuerza con la de la criatura atacante:
-            <ol>
-              <li>Si tiene más fuerza: puede añadirla a su mano o reforzar, colocándola boca arriba al fondo de sus vidas (solo puede reforzar si la criatura fue revelada por un ataque).</li>
-              <li>Si tiene menos fuerza: debe tributarla.</li>
-            </ol>
-          </li>
+          <li>Recibes <strong>gemas</strong> (más cada turno) y <strong>robas</strong> una carta.</li>
+          <li>Usas tus gemas para <strong>jugar cartas</strong>: invocar criaturas, usar utilidades, poner estructuras.</li>
+          <li>Atacas con tus criaturas de la <strong>línea frontal</strong> para quitarle vidas al rival.</li>
+          <li>Terminas el turno y le toca a tu rival.</li>
         </ol>
+        <p>Las otras secciones explican cada parte con un poco más de detalle. Si prefieres aprender jugando, entra al <strong>Simulador</strong>: te muestra lo que puedes hacer en cada momento y aplica las reglas por ti.</p>
         <img src="/images/ruling/card-iniciales.png" width="922" height="588" alt="Ejemplo de cartas al comienzo de una partida" loading="lazy" />
       </eras-prose>
     }
 
-    @case ('cards') {
+    @case ('setup') {
       <eras-prose>
-        <h2>Tipos de carta</h2>
-        <p><strong>Criaturas:</strong> cartas que participan en combate y pueden usar <strong>invocaciones especiales</strong>.</p>
-        <h3>Invocaciones especiales</h3>
+        <h2>Tu mazo</h2>
         <ul>
-          <li><strong>Ritual:</strong> se paga el coste de invocación especial en gemas y se tributan uno o más aliados de <strong>nivel inferior</strong>, según lo requiera la carta.</li>
-          <li><strong>Evolución:</strong> se paga el coste en gemas y la criatura evoluciona colocándose sobre la criatura objetivo, <strong>heredando su efecto</strong> (la parte inferior de la carta).</li>
-          <li><strong>Ascenso:</strong> se paga el coste en gemas y se cumple el requerimiento de la carta tributando a la criatura que va a ascender.</li>
-          <li><strong>Materialización:</strong> se paga el coste en gemas y las criaturas usadas se colocan bajo la criatura materializada como <strong>materiales</strong>.</li>
+          <li>Tiene <strong>50 cartas</strong>, con un máximo de <strong>4 copias</strong> de cada una.</li>
+          <li>Incluye al menos un <strong>Iniciador</strong>: la criatura con la que empiezas. Su color o clase marca qué cartas puedes usar (las blancas sirven en cualquier mazo).</li>
+          <li>Puedes armarlo en el <strong>Constructor</strong> o empezar con una de las estructuras iniciales (ST).</li>
         </ul>
-        <h3>Reglas importantes</h3>
+        <h2>Empezar una partida</h2>
+        <ol>
+          <li>Se decide al azar quién empieza.</li>
+          <li>Cada jugador aparta su Iniciador, baraja y <strong>roba 5 cartas</strong>.</li>
+          <li>Si no te gusta tu mano, puedes cambiar las cartas que quieras una vez (<strong>mulligan</strong>).</li>
+          <li>Agregas el Iniciador a tu mano: empiezas con <strong>6 cartas</strong>.</li>
+          <li>Pones las 6 cartas de arriba de tu mazo bocabajo: son tus <strong>vidas</strong>.</li>
+        </ol>
+      </eras-prose>
+    }
+
+    @case ('board') {
+      <eras-grid minColumn="22rem" [gap]="5">
+        <eras-playmat [zones]="zones" />
+        <eras-prose>
+          <h2>La mesa</h2>
+          <p>Cada jugador tiene su lado de la mesa con estas zonas:</p>
+          <ol>
+            <li><strong>Vidas:</strong> 6 cartas bocabajo. Si se acaban, pierdes.</li>
+            <li><strong>Línea frontal:</strong> donde tus criaturas atacan y bloquean. También es donde el rival puede alcanzarlas.</li>
+            <li><strong>Retaguardia:</strong> un lugar seguro: aquí las criaturas no atacan ni bloquean, y no pueden ser atacadas. Aquí se juegan también las estructuras.</li>
+            <li><strong>Mazo:</strong> de donde robas.</li>
+            <li><strong>Tributos:</strong> las cartas que entregas como pago.</li>
+            <li><strong>Descarte:</strong> las utilidades ya usadas y las criaturas destruidas.</li>
+            <li><strong>Gemas:</strong> tu contador de gemas.</li>
+          </ol>
+        </eras-prose>
+      </eras-grid>
+    }
+    @case ('turn') {
+      <eras-prose>
+        <h2>Tu turno</h2>
+        <h3>1. Inicio</h3>
+        <p>Tu contador de gemas sube 1 (hasta 5), recibes esas gemas, <strong>robas 1 carta</strong> y tus cartas agotadas vuelven a estar activas. Puedes pasar criaturas de la retaguardia a la línea frontal.</p>
+        <h3>2. Fase principal</h3>
+        <p>Haz lo que quieras, en el orden que quieras, mientras puedas pagarlo:</p>
         <ul>
-          <li>Al realizar una <strong>invocación especial</strong> o por efecto, <strong>antes</strong> de cualquier acción o habilidad, <strong>roba 1 carta</strong>.</li>
-          <li>Si una invocación requiere más de una criatura, la criatura <strong>invocadora</strong> siempre es la de <strong>mayor nivel</strong>.</li>
-          <li>Al evolucionar, la criatura mantiene todos sus <strong>estados y condiciones</strong>.</li>
-          <li>Si la criatura que evoluciona está en la retaguardia, <strong>puede</strong> subir a la <strong>línea frontal</strong>.</li>
+          <li><strong>Invocar criaturas</strong> pagando su coste.</li>
+          <li><strong>Jugar utilidades</strong>: hacen su efecto y van al descarte.</li>
+          <li><strong>Jugar una estructura</strong> por turno: se queda en la mesa dándote su efecto.</li>
+          <li><strong>Atacar</strong> con tus criaturas de la línea frontal, de una en una.</li>
         </ul>
-        <p><strong>Utilidades:</strong> cartas que generan efectos inmediatos, respuestas o modifican el estado del juego. Si se voltea desde tus vidas, puede jugarse o llevarse a tu mano.</p>
-        <p><strong>Estructuras:</strong> cartas que permanecen en el campo generando efectos continuos. Solo puedes jugar 1 estructura por turno, pagando su coste en gemas. Si se voltea desde tus vidas, puede jugarse en tu campo.</p>
+        <h3>3. Final</h3>
+        <p>Pierdes las gemas que no usaste, puedes volver a subir criaturas a la línea frontal y le pasas el turno a tu rival.</p>
       </eras-prose>
     }
 
     @case ('resources') {
       <eras-grid minColumn="22rem" [gap]="5">
         <eras-prose>
-          <h2>Sistema de gemas</h2>
-          <p>Tanto tú como tu rival usan <strong>gemas</strong> como recurso principal para jugar cartas y realizar acciones. Cada jugador tiene su propio <strong>contador de gemas</strong>, que determina cuántas gemas obtiene al inicio de su turno.</p>
-          <h3>¿Cómo se ganan?</h3>
-          <p>Al comenzar tu turno recibes tantas gemas como indique tu contador. El contador sube +1 cada turno, hasta un máximo de <strong>5</strong> (si está en 3, comienzas con 3 gemas; el siguiente turno sube a 4).</p>
-          <h3>¿Cómo se gastan?</h3>
-          <p>Puedes gastar gemas para jugar cartas, y no estás limitado a las tuyas: el límite real de gasto es <code>tus gemas + gemas del rival</code>. Con 3 y 3 puedes gastar hasta 6, en varias acciones (por ejemplo 1 + 2 + 3).</p>
-          <h3>¿Y si gastas más de lo que tienes?</h3>
-          <p>Quedas en negativo, y eso tiene consecuencias: <strong>no puedes declarar ataques</strong> y le entregas esas gemas extra a tu rival en su próximo turno.</p>
-          <h3>Ejemplo</h3>
-          <p>Tienes 3 gemas y tu rival 3. Gastas 5: quedas en -2 y esas 2 gemas pasan a tu rival, que en su turno recibe sus gemas normales más las 2 extra.</p>
+          <h2>Las gemas</h2>
+          <p>Las <strong>gemas</strong> pagan casi todo: jugar cartas, invocar criaturas y algunos efectos. El número de la esquina de cada carta es lo que cuesta.</p>
+          <h3>Cada turno tienes más</h3>
+          <p>Tu contador empieza en 0 y sube <strong>1 por turno</strong> hasta llegar a <strong>5</strong>. Al empezar tu turno recibes tantas gemas como marque. Las que no gastes se pierden al terminar el turno.</p>
+          <h3>Puedes pedir prestado</h3>
+          <p>Puedes gastar hasta <code>tus gemas + las del rival</code>. Si gastas más de las tuyas quedas en negativo: <strong>ese turno no puedes atacar</strong> y la diferencia se la regalas a tu rival en su próximo turno.</p>
+          <p><em>Ejemplo:</em> tienes 3 gemas y tu rival 3. Juegas una carta de 5: quedas en −2, no atacas y tu rival empieza su turno con 2 gemas extra.</p>
+          <p>Prueba el simulador de al lado para verlo turno a turno.</p>
         </eras-prose>
 
         <eras-card>
@@ -98,111 +121,50 @@
       </eras-grid>
     }
 
-    @case ('setup') {
-      <eras-prose>
-        <h2>Cómo se gana</h2>
-        <p>Pierdes la partida si te quedas <strong>sin vidas</strong> o si al inicio de tu turno <strong>no puedes robar</strong> porque tu mazo está vacío.</p>
-        <h2>Preparar la partida</h2>
-        <ol>
-          <li>Se decide al azar quién comienza.</li>
-          <li>Cada jugador separa su <strong>Iniciador</strong> y lo muestra.</li>
-          <li>Baraja el resto del mazo y roba <strong>5 cartas</strong>.</li>
-          <li>Puede hacer <strong>mulligan</strong>: devuelve al fondo del mazo las cartas que no quiera y roba esa misma cantidad, quedando otra vez con 5. Luego baraja su mazo.</li>
-          <li>Añade el Iniciador a su mano: comienza con <strong>6 cartas</strong>.</li>
-          <li>Coloca las <strong>6 cartas</strong> del tope de su mazo bocabajo como sus vidas.</li>
-          <li>Su marcador de gemas empieza en <strong>0</strong>.</li>
-        </ol>
-      </eras-prose>
-    }
-
-    @case ('turn') {
-      <eras-prose>
-        <h2>El turno</h2>
-        <p>Cada turno tiene tres fases y siempre se recorren en orden, aunque no hagas nada en alguna.</p>
-        <h3>1. Inicio del turno</h3>
-        <ol>
-          <li>Si tu marcador de gemas es menor que 5, sube en 1.</li>
-          <li>Ganas tantas gemas como indique el marcador y <strong>robas 1 carta</strong>.</li>
-          <li>Tus cartas agotadas se <strong>reactivan</strong>.</li>
-          <li>Puedes subir a la línea frontal las criaturas de tu retaguardia que quieras, todas a la vez.</li>
-          <li>Se disparan los efectos «al inicio del turno» (los tuyos tienen prioridad).</li>
-        </ol>
-        <h3>2. Fase principal</h3>
-        <p>En el orden y la cantidad que quieras, mientras pagues sus costes:</p>
-        <ul>
-          <li>Jugar cartas de tu mano.</li>
-          <li>Invocar criaturas, de forma normal o especial.</li>
-          <li>Declarar ataques con criaturas de tu línea frontal (uno a la vez).</li>
-          <li>Activar los efectos que se usan en tu turno.</li>
-        </ul>
-        <h3>3. Final del turno</h3>
-        <ol>
-          <li>Declaras el final de tu turno.</li>
-          <li>Las gemas que no gastaste se pierden.</li>
-          <li>Puedes volver a subir criaturas de tu retaguardia a la línea frontal, todas a la vez.</li>
-          <li>Se disparan los efectos «al final del turno».</li>
-        </ol>
-        <p>Los efectos que duran «por el turno» terminan al cambiar de turno, y en ese momento se reinician los límites de «una vez por turno».</p>
-      </eras-prose>
-    }
-
     @case ('combat') {
       <eras-prose>
-        <h2>Combate</h2>
-        <p>Una criatura de tu <strong>línea frontal</strong> puede atacar al oponente o a una criatura enemiga <strong>agotada</strong> (con Enfrentar, también a una activa). Para atacar se <strong>agota</strong>, y solo puede haber un combate a la vez.</p>
-        <h3>1. Ataque</h3>
-        <p>Se disparan los efectos «Al Atacar» y los que reaccionan a la declaración del ataque. Se resuelven todos antes de seguir.</p>
-        <h3>2. Bloqueo</h3>
+        <h2>Atacar</h2>
+        <p>Una criatura activa de tu <strong>línea frontal</strong> puede atacar. Al atacar se <strong>agota</strong> (se gira) y no puede volver a atacar ese turno.</p>
+        <h3>Si tu rival bloquea</h3>
+        <p>Tu rival puede interponer una de sus criaturas activas de la línea frontal. Las dos <strong>comparan fuerza</strong>: la más débil es destruida (si empatan, las dos).</p>
+        <h3>Si no bloquea</h3>
+        <p>Tu rival da vuelta su vida de arriba:</p>
         <ul>
-          <li>Primero se resuelven los efectos del comienzo del bloqueo (por ejemplo, Provocar).</li>
-          <li>El defensor puede bloquear con <strong>una</strong> criatura activa de su línea frontal; bloquear la agota. Una vez declarado, el bloqueador no cambia.</li>
-          <li>Si atacaste a una criatura y nadie bloquea, esa criatura pasa a ser el bloqueador. Si la atacaste con Enfrentar estando activa, ella misma no puede declararse bloqueadora: solo puede bloquear otra.</li>
+          <li><strong>Una criatura más débil o igual</strong> que tu atacante: la pierde (va a sus tributos).</li>
+          <li><strong>Una criatura más fuerte:</strong> se salva; se la lleva a la mano o la deja al fondo de sus vidas como refuerzo.</li>
+          <li><strong>Una utilidad o estructura:</strong> la juega gratis o se la lleva a la mano.</li>
         </ul>
-        <h3>3. Enfrentamiento</h3>
-        <p>Si hay bloqueador, la criatura con <strong>menos fuerza</strong> es destruida (con igual fuerza, ambas). La destruida va al Descarte.</p>
-        <h3>4. Daño directo</h3>
-        <p>Si no hubo enfrentamiento, el atacante daña la vida superior del defensor, que se revela:</p>
-        <ul>
-          <li><strong>Utilidad o estructura:</strong> el defensor puede jugarla sin pagar su coste o llevarla a su mano.</li>
-          <li><strong>Criatura con fuerza menor o igual al daño:</strong> se tributa.</li>
-          <li><strong>Criatura con más fuerza:</strong> va a la mano o, si se reveló en ese momento, puede <strong>Reforzar</strong>: vuelve bocarriba al fondo de las vidas.</li>
-        </ul>
-        <h3>5. Final del combate</h3>
-        <p>Se disparan los efectos «Al Final Del Ataque». Si el atacante sale del campo antes, el combate termina de inmediato y estos efectos no se disparan.</p>
+        <p>También puedes atacar a una criatura enemiga que esté <strong>agotada</strong>: se enfrentan como si hubiera bloqueado.</p>
       </eras-prose>
     }
 
-    @case ('effects') {
+    @case ('cards') {
       <eras-prose>
-        <h2>Efectos y cadenas</h2>
-        <p>El texto de un efecto se lee así: <strong>momento</strong> (cuándo se usa), <strong>condición</strong> («si…», «cuando…»), <strong>coste</strong> (lo que va antes del «;», incluidos los objetivos que eliges) y <strong>resolución</strong> (lo que pasa después).</p>
+        <h2>Cartas y efectos</h2>
+        <h3>Tres tipos de carta</h3>
         <ul>
-          <li>Sin «puedes», el efecto es <strong>obligatorio</strong>.</li>
-          <li>Si varios efectos se disparan a la vez, forman una <strong>cadena</strong> y se resuelven del último al primero. El orden es: obligatorios del jugador activo, obligatorios del oponente, opcionales del jugador activo y opcionales del oponente.</li>
-          <li>La prioridad alterna: el jugador activo agrega efectos hasta pasar, luego el oponente. La cadena se resuelve cuando ambos pasan seguidos.</li>
-          <li>Lo que ocurre mientras una cadena se arma o se resuelve (por ejemplo, un material tributado como coste) <strong>no</strong> entra en esa cadena: sus efectos esperan y forman una cadena nueva.</li>
-          <li>Las <strong>reacciones</strong> («cuando esta carta fuera a…») se aplican antes del evento: un modificador lo cambia (como Asalto) y un reemplazo lo sustituye. No forman cadena.</li>
+          <li><strong>Criaturas:</strong> atacan, bloquean y tienen <strong>fuerza</strong> y <strong>nivel</strong>.</li>
+          <li><strong>Utilidades:</strong> un efecto de una vez, y al descarte.</li>
+          <li><strong>Estructuras:</strong> se quedan en la mesa con un efecto que dura.</li>
         </ul>
-        <h3>Conectores</h3>
+        <h3>Invocaciones especiales</h3>
+        <p>Algunas criaturas poderosas no se invocan solo con gemas: piden algo más, como usar otras criaturas tuyas. La carta te dice cómo (Ritual, Evolución, Ascenso o Materialización). Cada vez que invocas así, <strong>robas 1 carta</strong>.</p>
+        <h3>Leer un efecto</h3>
         <ul>
-          <li><strong>«A y B»:</strong> se hace cada parte que sea posible.</li>
-          <li><strong>«A. Luego, B»:</strong> en orden, pero B no depende de A.</li>
-          <li><strong>«A. Si lo haces, B»:</strong> B solo ocurre si A ocurrió.</li>
+          <li>El texto empieza diciendo <strong>cuándo</strong> funciona (por ejemplo «En Invocación» o «Al Atacar»).</li>
+          <li>Si dice <strong>«puedes»</strong>, eliges si usarlo; si no, ocurre siempre.</li>
+          <li>Lo que va antes del <strong>«;»</strong> es lo que pagas; lo que va después es lo que pasa.</li>
         </ul>
-        <h3>Límites</h3>
-        <ul>
-          <li><strong>Una vez por turno:</strong> cada copia, para su controlador.</li>
-          <li><strong>Una vez por turno entre copias:</strong> compartido entre todas las cartas con el mismo nombre.</li>
-          <li>Desde la <strong>retaguardia</strong> una criatura no puede afectar a cartas enemigas con sus efectos.</li>
-          <li>Una invocación por efecto entra en la retaguardia salvo que la carta diga otra cosa.</li>
-        </ul>
+        <h3>Cuando pasan varias cosas a la vez</h3>
+        <p>Si varios efectos ocurren juntos se apilan en una <strong>cadena</strong> y se resuelven del último al primero. No te preocupes por el orden exacto: el simulador lo arma por ti y te pregunta cuando tienes que elegir.</p>
+        <p>Para las reglas completas y los casos difíciles, consulta el reglamento oficial.</p>
       </eras-prose>
     }
 
     @case ('keywords') {
       <eras-prose>
         <h2>Habilidades</h2>
-        <p>Palabras clave que resumen un efecto. El número entre llaves cambia según la carta (por ejemplo, Letalidad 2).</p>
+        <p>Algunas cartas tienen una <strong>habilidad</strong>: una palabra que resume un efecto que se repite en muchas cartas. No necesitas aprenderlas todas: consulta esta lista cuando aparezca una. El número cambia según la carta (por ejemplo, Letalidad 2).</p>
         @if (keywords().length) {
           <dl class="keywords">
             @for (k of keywords(); track k.name) {
@@ -218,22 +180,5 @@
       </eras-prose>
     }
 
-    @case ('board') {
-      <eras-grid minColumn="22rem" [gap]="5">
-        <eras-playmat [zones]="zones" />
-        <eras-prose>
-          <h2>Zonas del tablero</h2>
-          <ol>
-            <li><strong>Vidas:</strong> cartas que representan la resistencia del jugador.</li>
-            <li><strong>Línea frontal:</strong> zona donde combaten las criaturas.</li>
-            <li><strong>Retaguardia:</strong> zona para criaturas invocadas o estructuras.</li>
-            <li><strong>Mazo:</strong> cartas disponibles para robar.</li>
-            <li><strong>Tributos:</strong> cartas enviadas como coste.</li>
-            <li><strong>Descarte:</strong> cartas usadas o destruidas.</li>
-            <li><strong>Gemas:</strong> donde va el contador de las gemas que ganaste en tu último turno o en el actual.</li>
-          </ol>
-        </eras-prose>
-      </eras-grid>
-    }
   }
 </eras-page>

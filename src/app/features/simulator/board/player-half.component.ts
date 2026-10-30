@@ -15,6 +15,7 @@ import { BoardDrag } from './board-drag';
 import { SimCardComponent } from './sim-card.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
 const HAND_UPRIGHT_FAN = 2.9;
@@ -27,7 +28,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
  */
 @Component({
   selector: 'eras-player-half',
-  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, ButtonComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent],
+  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, ButtonComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent],
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

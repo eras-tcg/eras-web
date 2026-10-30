@@ -26,6 +26,9 @@ export interface ApplyProgress {
   errors: string[];
   startedAt: string | null;
   finishedAt: string | null;
+  /** The batch being applied, from 1 (several changes at the same time) */
+  batch?: number;
+  batches?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,9 +40,9 @@ export class StagedChangesApi {
     return this.http.get<StagedChange[]>(this.api.url('/api/drive/staged'));
   }
 
-  /** Starts applying all of them in the background. */
-  applyAll(): Observable<ApplyProgress> {
-    return this.http.post<ApplyProgress>(this.api.url('/api/drive/staged/apply'), null);
+  /** Starts applying them in the background, in batches: all of them, or only the given ids. */
+  applyAll(ids?: readonly string[]): Observable<ApplyProgress> {
+    return this.http.post<ApplyProgress>(this.api.url('/api/drive/staged/apply'), ids?.length ? { ids } : null);
   }
 
   applyStatus(): Observable<ApplyProgress> {

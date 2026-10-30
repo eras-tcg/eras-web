@@ -20,6 +20,39 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { feedbackState } from './admin-feedback';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
 
+/** UsersService answers a registration with English messages (by field, or one "error"): in Spanish for the form. */
+const REGISTRATION_ERRORS: [RegExp, string][] = [
+  [/username already exists/i, 'Ese nombre de usuario ya existe'],
+  [/email already exists/i, 'Ese correo ya tiene una cuenta'],
+  [/email should be valid/i, 'El correo no es válido'],
+  [/email is required/i, 'Falta el correo'],
+  [/password must be between (\d+) and (\d+) characters/i, 'La contraseña debe tener entre $1 y $2 caracteres'],
+  [/password must contain at least one uppercase letter/i, 'La contraseña necesita una mayúscula'],
+  [/password must contain at least one lowercase letter/i, 'La contraseña necesita una minúscula'],
+  [/password must contain at least one digit/i, 'La contraseña necesita un número'],
+  [/password must contain at least one special character \((.*)\)/i, 'La contraseña necesita un carácter especial ($1)'],
+  [/password is required/i, 'Falta la contraseña'],
+];
+
+/** The registration's error, in Spanish when it is a known one. */
+export function registrationError(e: unknown): string {
+  const body = (e as { error?: unknown } | null)?.error;
+  let parsed: unknown = body;
+  if (typeof body === 'string') {
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      parsed = body;
+    }
+  }
+  const messages = typeof parsed === 'string' ? [parsed] : parsed && typeof parsed === 'object' ? Object.values(parsed).map(String) : [];
+  const spanish = messages.map((m) => {
+    const hit = REGISTRATION_ERRORS.find(([re]) => re.test(m));
+    return hit ? m.replace(hit[0], hit[1]) : m;
+  });
+  return spanish.filter(Boolean).join('. ') || apiErrorMessage(e, 'No se pudo crear el usuario');
+}
+
 /** User accounts (manage_users). Changing a user's role also needs manage_roles (to list roles). */
 @Component({
   selector: 'eras-users-page',
@@ -57,6 +90,16 @@ export class UsersPage {
   protected readonly savingPassword = signal(false);
   protected readonly passwordError = signal<string | null>(null);
   protected readonly passwordOk = signal(false);
+
+  // ── New account ───────────────────────────────────────────────────────
+  protected readonly creating = signal(false);
+  protected readonly newUsername = signal('');
+  protected readonly newEmail = signal('');
+  protected readonly newUserPassword = signal('');
+  protected readonly newUserConfirm = signal('');
+  protected readonly newRoleId = signal('');
+  protected readonly registering = signal(false);
+  protected readonly createError = signal<string | null>(null);
 
   protected readonly isSelf = (u: UserRecord) => u.id === this.auth.user()?.id;
 
@@ -133,6 +176,60 @@ export class UsersPage {
     } finally {
       this.savingPassword.set(false);
     }
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.newUsername.set('');
+    this.newEmail.set('');
+    this.newUserPassword.set('');
+    this.newUserConfirm.set('');
+    this.newRoleId.set('');
+    this.createError.set(null);
+    this.creating.set(true);
+  }
+
+  /** Registers the account (role USER, validated by e-mail), then gives it the chosen role. */
+  protected async create(): Promise<void> {
+    const username = this.newUsername().trim();
+    const email = this.newEmail().trim();
+    this.createError.set(null);
+    if (!username || !email || !this.newUserPassword()) return this.createError.set('Completa usuario, correo y contraseña');
+    if (this.newUserPassword() !== this.newUserConfirm()) return this.createError.set('Las contraseñas no coinciden');
+    this.registering.set(true);
+    this.fb.clear();
+    // The account is saved before the e-mail is sent: a mail failure still leaves it created (without validating)
+    let mailNote = ' Le llegará un correo para validar la cuenta antes de entrar.';
+    try {
+      await firstValueFrom(this.api.register(username, email, this.newUserPassword()));
+    } catch (e) {
+      const message = registrationError(e);
+      if (!/mail/i.test(message)) {
+        this.createError.set(message);
+        this.registering.set(false);
+        return;
+      }
+      mailNote = ' No se pudo enviar el correo de validación: la cuenta queda sin validar.';
+    }
+    let roleNote = '';
+    const roleId = this.newRoleId();
+    try {
+      const users = await firstValueFrom(this.api.listUsers());
+      this.users.set(users);
+      const created = users.find((u) => u.username === username);
+      if (roleId && created) {
+        await firstValueFrom(this.api.updateUser(created.id, { username, email, roleId }));
+        const role = this.roles()?.find((r) => r.id === roleId)?.name ?? '';
+        this.users.update((list) => list.map((u) => (u.id === created.id ? { ...u, role } : u)));
+        roleNote = ` con el rol ${role}`;
+      }
+    } catch {
+      roleNote = roleId ? ' (no se pudo asignar el rol: cámbialo desde Editar)' : '';
+    } finally {
+      this.registering.set(false);
+    }
+    this.creating.set(false);
+    this.fb.ok(`Usuario ${username} creado${roleNote}.${mailNote}`);
   }
 
   protected async remove(user: UserRecord): Promise<void> {

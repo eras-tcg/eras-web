@@ -131,7 +131,7 @@ export class CardFlightsComponent {
 
     const start = `translate(0px, 0px) rotate(${from.tapped ? 90 : 0}deg) rotateY(0deg) scale(1)`;
     const end = `translate(${dx}px, ${dy}px) rotate(0deg) rotateY(${faceDown ? 180 : 0}deg) scale(${scale})`;
-    const reduced = this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = this.animations.off() || this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.animations.hold(reduced ? 1 : DURATION);
     const animation = inner.animate([{ transform: start }, { transform: end }], {
       duration: reduced ? 1 : DURATION,

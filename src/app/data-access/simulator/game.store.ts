@@ -1,7 +1,8 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
+import { persistedFlag } from '@core/storage/persisted-flag';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
 import { rulesView } from './legal-actions';
 import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
@@ -80,6 +81,31 @@ export class GameStore {
 
   toggleRevealHidden(): void {
     this.revealChoice.set(!this.revealHidden());
+  }
+
+  /**
+   * "Efectos opcionales apagados": the engine does not offer my optional triggered effects ("En Juego" ones still).
+   * Remembered on the device and set on the server in every game I enter.
+   */
+  readonly optionalOff = persistedFlag('eras-sim-optional-off');
+  /** The room and value last sent, so a slow echo does not send it again. */
+  private optionalSent: string | null = null;
+
+  toggleOptionalOff(): void {
+    this.optionalOff.set(!this.optionalOff());
+  }
+
+  constructor() {
+    // The server keeps it per game: what the device remembers is sent when they differ
+    effect(() => {
+      const mine = this.myState();
+      const want = this.optionalOff();
+      if (!mine || !!mine.skipOptional === want) return;
+      const key = `${this.roomId()}|${mine.userId}|${want}`;
+      if (this.optionalSent === key) return;
+      this.optionalSent = key;
+      untracked(() => this.send('SET_SKIP_OPTIONAL', { value: want }));
+    });
   }
   /** For one action: the side it is done as (a test room's other side, from its zones' dialogs). */
   private actAsOnce: string | null = null;

@@ -28,7 +28,8 @@ export interface CardTextGroup {
 
 /**
  * Full view of one card: name, printing badges (with previous/next printing arrows),
- * facts, effect text and the image. Admin actions go into [detail-actions].
+ * facts, effect text and the image. Admin actions go into [detail-actions]; controls for the card (as the deck
+ * builder's copies bar) into [detail-top], right under the printing badges.
  */
 @Component({
   selector: 'eras-card-detail',
@@ -39,7 +40,10 @@ export interface CardTextGroup {
   host: { '[class.stacked]': 'stacked()' },
 })
 export class CardDetailComponent {
-  /** Image on top and info below, for narrow containers (side panels). */
+  /**
+   * One column for narrow containers (side panels), compact: name and printing, [detail-top], the image, the facts
+   * and the effect text.
+   */
   readonly stacked = input(false, { transform: booleanAttribute });
   readonly name = input.required<string>();
   readonly edition = input.required<string>();

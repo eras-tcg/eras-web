@@ -17,6 +17,11 @@ export class CardsApi {
     return this.http.get<CardMeta[]>(this.api.url('/api/cards/search'));
   }
 
+  /** Cards the simulator does not run in full: metadata id → what is missing. */
+  listUnprogrammed(): Observable<Record<string, string>> {
+    return this.http.get<Record<string, string>>(this.api.url('/api/simulator/unprogrammed'));
+  }
+
   getRef(): Observable<CardRefData> {
     return this.http.get<CardRefData>(this.api.url('/api/cards/ref'));
   }

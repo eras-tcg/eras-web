@@ -75,4 +75,16 @@
 .pick:hover { border-color: var(--color-border); }
 .pick.chosen, .deck.chosen { border-color: var(--color-success); }
 .deck { border: 3px solid transparent; border-radius: var(--radius-md); }
+// A deck with cards the simulator does not run: shown, but it cannot be chosen
+.deck.blocked { position: relative; opacity: 0.55; filter: grayscale(0.6); }
+.deck.blocked eras-deck-cover { pointer-events: none; }
+.blocked-note {
+  display: -webkit-box;
+  margin-block-start: var(--space-1);
+  overflow: hidden;
+  color: var(--color-info);
+  font-size: var(--font-size-xs);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

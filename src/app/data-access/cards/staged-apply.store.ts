@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from './cards.store';
@@ -7,7 +8,8 @@ const POLL_MS = 1500;
 
 /**
  * Applying all the staged changes, followed from anywhere in the app: the server does the work, this store asks
- * how it goes while it runs. Leaving the page does not stop it, and coming back (or reloading) shows it again.
+ * how it goes while it runs. Leaving the page does not stop it, and coming back (or reloading) shows it again. A
+ * hidden tab may slow its timers down, so coming back to the tab asks again at once.
  */
 @Injectable({ providedIn: 'root' })
 export class StagedApplyStore {
@@ -25,8 +27,16 @@ export class StagedApplyStore {
   /** Called once a run ends (the page reloads its list). */
   private readonly finishedListeners = new Set<() => void>();
 
-  async start(): Promise<void> {
-    this.track(await firstValueFrom(this.api.applyAll()));
+  constructor() {
+    const doc = inject(DOCUMENT);
+    doc.addEventListener('visibilitychange', () => {
+      if (doc.visibilityState === 'visible' && this.running()) void this.refresh();
+    });
+  }
+
+  /** Starts applying the given changes (all of them without ids). */
+  async start(ids?: readonly string[]): Promise<void> {
+    this.track(await firstValueFrom(this.api.applyAll(ids)));
   }
 
   /** Asks the server how it goes (on opening the page) and keeps asking while it runs. */

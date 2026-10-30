@@ -1,0 +1,77 @@
+// A card of the deck with its buttons in the corners: − bottom left, + bottom right, cover top left (they show on
+// hover or focus; always on touch). The count stays top right.
+.entry {
+  position: relative;
+}
+
+.entry-actions {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) ease;
+}
+
+.entry:hover .entry-actions,
+.entry:focus-within .entry-actions {
+  opacity: 1;
+}
+
+.entry-actions .minus {
+  inset-block-end: var(--space-1);
+  inset-inline-start: var(--space-1);
+}
+
+.entry-actions .plus {
+  inset-block-end: var(--space-1);
+  inset-inline-end: var(--space-1);
+}
+
+.entry-actions .cover {
+  inset-block-start: var(--space-1);
+  inset-inline-start: var(--space-1);
+}
+
+@media (hover: none) {
+  .entry-actions {
+    opacity: 1;
+  }
+}
+
+.entry-actions button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.entry-actions button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.entry-actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.entry-actions button.is-cover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  opacity: 1;
+}
+
+.entry-actions eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

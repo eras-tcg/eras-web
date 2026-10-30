@@ -340,15 +340,52 @@
   grid-template-rows: repeat(2, minmax(0, 1fr));
   grid-template-areas:
     'deck tributes'
-    'discard .';
+    'controls discard';
   gap: var(--space-2);
   min-block-size: 0;
 }
 
+// The rival's side, mirrored: the Descarte over the Tributos (the controls are only on my side)
 :host(.opponent) .piles {
   grid-template-areas:
-    'discard .'
+    '. discard'
     'deck tributes';
+}
+
+// Under my deck: the switches of the game (optional effects…)
+.pile-controls {
+  grid-area: controls;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.optional-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+
+  eras-icon {
+    flex: none;
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  &.off {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
 }
 
 .pile.deck { grid-area: deck; }

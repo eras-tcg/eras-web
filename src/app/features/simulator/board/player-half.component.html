@@ -194,4 +194,22 @@
       <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown" />
     }
   </eras-game-zone>
+
+  @if (!opponent() && game.status() === 'IN_PROGRESS') {
+    <!-- The zone under the deck is kept for the game's switches -->
+    <div class="pile-controls">
+      <!-- Optional triggered effects: offered (as the rules say) or let go without asking -->
+      <button
+        type="button"
+        class="optional-toggle"
+        [class.off]="game.optionalOff()"
+        [attr.aria-pressed]="game.optionalOff()"
+        [title]="game.optionalOff() ? 'Los efectos opcionales que se activan solos pierden su momento sin preguntarte (los En Juego sí se ofrecen). Clic para volver a ofrecerlos.' : 'Clic para que el simulador no te ofrezca los efectos opcionales que se activan solos (se recuerda en este dispositivo).'"
+        (click)="game.toggleOptionalOff()"
+      >
+        <eras-icon name="zap" />
+        <span>{{ game.optionalOff() ? 'Opcionales apagados' : 'Opcionales activos' }}</span>
+      </button>
+    </div>
+  }
 </div>

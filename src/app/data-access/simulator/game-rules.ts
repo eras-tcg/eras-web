@@ -15,6 +15,11 @@ export function isHidden(slot: CardSlot, zone: ZoneName, opponent: boolean): boo
   return slot.faceDown || (opponent && zone === 'hand');
 }
 
+/** Your own face-down cards in the Tributos and the Descarte: you know them, so you see them (with a corner of their back). */
+export function knownToOwner(slot: CardSlot, zone: ZoneName, opponent: boolean): boolean {
+  return !opponent && slot.faceDown && (zone === 'tributeZone' || zone === 'discardPile');
+}
+
 /** Warnings shown when joining with a deck (incomplete, missing images or metadata). */
 export function deckWarnings(originalDeck: readonly CardSlot[]): string[] {
   const warnings: string[] = [];

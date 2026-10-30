@@ -173,7 +173,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown" />
+      <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
   </eras-game-zone>
 
@@ -191,7 +191,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown" />
+      <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
   </eras-game-zone>
 

@@ -1,3 +1,4 @@
+import { knownToOwner } from '@data/simulator/game-rules';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
@@ -176,13 +177,20 @@ export class ZoneDialogComponent {
   protected isHidden(c: CardSlot): boolean {
     // In the editor mode my own deck is looked at as it is
     const myDeck = this.data.zone === 'deck' && !this.data.opponent && this.game.editorMode();
-    return c.faceDown && !this.peeked().has(c.instanceId) && !this.game.seeAll() && !myDeck;
+    return c.faceDown && !this.peeked().has(c.instanceId) && !this.shownAnyway(c) && !myDeck;
   }
 
-  /** Hidden but shown by "Mostrar cartas ocultas" (not my own deck in the editor mode, nor one I chose to look at). */
+  /**
+   * Hidden but shown: by "Mostrar cartas ocultas", or my own face-down card in the Tributos or the Descarte (not my
+   * own deck in the editor mode, nor one I chose to look at).
+   */
   protected isPeeked(c: CardSlot): boolean {
     const myDeck = this.data.zone === 'deck' && !this.data.opponent && this.game.editorMode();
-    return c.faceDown && this.game.seeAll() && !this.peeked().has(c.instanceId) && !myDeck;
+    return c.faceDown && this.shownAnyway(c) && !this.peeked().has(c.instanceId) && !myDeck;
+  }
+
+  private shownAnyway(c: CardSlot): boolean {
+    return this.game.seeAll() || knownToOwner(c, this.data.zone, !!this.data.opponent);
   }
 
   protected label(c: CardSlot, i: number): string {

@@ -1,7 +1,7 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
-import { displayStrength, isHidden, strengthChange } from '@data/simulator/game-rules';
+import { displayStrength, isHidden, knownToOwner, strengthChange } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
@@ -61,9 +61,10 @@ export class SimCardComponent {
   protected readonly effectsOpen = signal(false);
 
   /** Hidden from me (in a test room everything can be shown). */
-  protected readonly hidden = computed(() => !this.game.seeAll() && isHidden(this.slot(), this.zone(), this.opponent()));
-  /** Hidden from me but shown by "Mostrar cartas ocultas". */
-  protected readonly peeked = computed(() => this.game.seeAll() && isHidden(this.slot(), this.zone(), this.opponent()));
+  protected readonly hidden = computed(() => !this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
+  /** Hidden but shown: by "Mostrar cartas ocultas", or my own face-down card in the Tributos or the Descarte. */
+  protected readonly peeked = computed(() => this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
+  private readonly shownAnyway = computed(() => this.game.seeAll() || knownToOwner(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
   /** Your card has effect text (its own or inherited from its materials). */
   protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);

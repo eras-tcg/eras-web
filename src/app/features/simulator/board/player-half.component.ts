@@ -1,6 +1,6 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
-import { zoneTargetId } from '@data/simulator/game-rules';
+import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
@@ -103,6 +103,11 @@ export class PlayerHalfComponent {
   }
 
   protected readonly targeting = computed(() => this.game.pendingTargetSource() !== null);
+  /** A face-down card on top of a pile is shown anyway: "Mostrar cartas ocultas", or mine in the Tributos or the Descarte. */
+  protected pileShown(card: CardSlot, zone: ZoneName): boolean {
+    return this.game.seeAll() || knownToOwner(card, zone, this.opponent());
+  }
+
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
   /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
   protected readonly tributeActions = computed(() => {

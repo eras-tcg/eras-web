@@ -8,7 +8,7 @@
             <div class="art" [style.--materials]="s.materials.length">
               @for (m of s.materials; track m.instanceId; let i = $index) {
                 <div class="material" [style.--i]="i">
-                  <eras-game-card [imageUrl]="m.imageUrl" [name]="m.cardName ?? null" [hidden]="m.faceDown && !game.seeAll()" />
+                  <eras-game-card [imageUrl]="m.imageUrl" [name]="m.cardName ?? null" [hidden]="m.faceDown && !game.seeAll()" [peeked]="m.faceDown && game.seeAll()" />
                   @if (!m.faceDown || game.seeAll()) {
                     <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (m.cardName ?? 'el material')" (click)="openDetail(m)"></button>
                   }

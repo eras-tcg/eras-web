@@ -65,6 +65,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                   [imageUrl]="c.imageUrl"
                   [name]="c.cardName"
                   [hidden]="isHidden(c)"
+                  [peeked]="isPeeked(c)"
                   [class.can-play]="actionsOf(c).includes('ritual')"
                   [class.can-activate]="actionsOf(c).includes('activate')"
                 />
@@ -176,6 +177,12 @@ export class ZoneDialogComponent {
     // In the editor mode my own deck is looked at as it is
     const myDeck = this.data.zone === 'deck' && !this.data.opponent && this.game.editorMode();
     return c.faceDown && !this.peeked().has(c.instanceId) && !this.game.seeAll() && !myDeck;
+  }
+
+  /** Hidden but shown by "Mostrar cartas ocultas" (not my own deck in the editor mode, nor one I chose to look at). */
+  protected isPeeked(c: CardSlot): boolean {
+    const myDeck = this.data.zone === 'deck' && !this.data.opponent && this.game.editorMode();
+    return c.faceDown && this.game.seeAll() && !this.peeked().has(c.instanceId) && !myDeck;
   }
 
   protected label(c: CardSlot, i: number): string {

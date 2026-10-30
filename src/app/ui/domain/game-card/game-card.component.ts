@@ -12,6 +12,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
     } @else {
       <span class="back" aria-hidden="true"></span>
     }
+    @if (peeked() && !hidden()) {
+      <!-- A hidden card shown anyway: its back still covers the lower right corner -->
+      <span class="back peek" aria-hidden="true"></span>
+    }
     @if (strength() !== null) {
       <span class="strength" [class.up]="modifier() > 0" [class.down]="modifier() < 0">
         {{ modifier() > 0 ? '▲' : modifier() < 0 ? '▼' : '' }}{{ strength() }}
@@ -58,6 +62,14 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
       border: 1px solid rgb(255 255 255 / 25%);
       // Fixed card-back art colors: the same in both themes, like a physical card
       background: var(--color-card-back);
+    }
+    // Past position t of a "to bottom right" gradient lies 2·(1−t)² of the card: fading from 52% to 72% leaves about
+    // 70% of the card in sight and its back over the last 30%, the lower right corner
+    .peek {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mask-image: linear-gradient(to bottom right, transparent 52%, #000 72%);
     }
     .strength {
       position: absolute;
@@ -106,6 +118,8 @@ export class GameCardComponent {
   /** Shown instead of the art when there is none (a test card). */
   readonly name = input<string | null>(null);
   readonly hidden = input(false, { transform: booleanAttribute });
+  /** A card hidden from this player that is shown anyway ("Mostrar cartas ocultas"): its back covers a corner. */
+  readonly peeked = input(false, { transform: booleanAttribute });
   readonly tapped = input(false, { transform: booleanAttribute });
   readonly strength = input<number | null>(null);
   readonly modifier = input(0);

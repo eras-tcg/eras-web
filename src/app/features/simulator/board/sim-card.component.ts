@@ -62,6 +62,8 @@ export class SimCardComponent {
 
   /** Hidden from me (in a test room everything can be shown). */
   protected readonly hidden = computed(() => !this.game.seeAll() && isHidden(this.slot(), this.zone(), this.opponent()));
+  /** Hidden from me but shown by "Mostrar cartas ocultas". */
+  protected readonly peeked = computed(() => this.game.seeAll() && isHidden(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
   /** Your card has effect text (its own or inherited from its materials). */
   protected readonly hasEffects = computed(() => !this.opponent() && this.effectsHelper.effects(this.slot(), this.zone()).length > 0);

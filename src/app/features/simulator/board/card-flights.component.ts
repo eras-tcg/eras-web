@@ -37,6 +37,8 @@ export class CardFlightsComponent {
   private seen = new Map<string, Seen>();
   /** The cards in each deck last time; null until the first state (joining a game does not draw). */
   private deckIds: Set<string> | null = null;
+  /** The last timeline event already seen. */
+  private lastSeq = 0;
 
   constructor() {
     afterRenderEffect({
@@ -55,17 +57,23 @@ export class CardFlightsComponent {
     });
   }
 
-  /** Cards that were in a deck and are now in a hand fly from that deck to their place in the hand. */
+  /**
+   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, and those of
+   * a new DRAW event (an effect that looked at the top cards took them out of the deck before drawing).
+   */
   private draws(state: GameState): void {
     const before = this.deckIds;
     const players = Object.values(state.players ?? {});
     this.deckIds = new Set(players.flatMap((p) => p.deck.map((c) => c.instanceId)));
+    const events = (state.timeline ?? []).filter((e) => e.seq > this.lastSeq);
+    this.lastSeq = Math.max(this.lastSeq, ...events.map((e) => e.seq));
     if (!before) return;
+    const drawnByEvent = new Set(events.filter((e) => e.type === 'DRAW' && e.cardInstanceId).map((e) => e.cardInstanceId));
     const me = this.game.myState()?.userId;
     for (const p of players) {
       const deck = this.document.querySelector<HTMLElement>(`[data-pile="${p.userId}:deck"]`);
       if (!deck) continue;
-      const drawn = p.hand.filter((c) => before.has(c.instanceId));
+      const drawn = p.hand.filter((c) => before.has(c.instanceId) || drawnByEvent.has(c.instanceId));
       drawn.forEach((c, i) => {
         const card = this.document.querySelector<HTMLElement>(`[data-hand-id="${c.instanceId}"] eras-game-card`);
         const target = card ?? this.document.querySelector(`[data-pile="${p.userId}:hand"]`);

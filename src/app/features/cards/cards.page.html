@@ -35,7 +35,7 @@
         } @else {
           <eras-grid [minColumn]="view().size + 'px'" [gap]="3">
             @for (card of visible(); track card.id) {
-              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="badge(card)" (selected)="open(card)" />
+              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="badge(card)" [badgeTone]="card.meta ? 'info' : 'danger'" (selected)="open(card)" />
             }
           </eras-grid>
           @if (visible().length < displayed().length) {

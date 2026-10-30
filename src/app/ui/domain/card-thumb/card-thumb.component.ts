@@ -7,7 +7,7 @@ import { CardImageComponent } from '../card-image/card-image.component';
   imports: [CardImageComponent],
   template: `
     <button type="button" [attr.aria-label]="label()" [class.dimmed]="dimmed()" [class.active]="active()" (click)="selected.emit()">
-      <eras-card-image [src]="imageUrl()" [alt]="name()" [badge]="badge()" />
+      <eras-card-image [src]="imageUrl()" [alt]="name()" [badge]="badge()" [badgeTone]="badgeTone()" />
       @if (count() > 1 || (showSingleCount() && count() === 1)) {
         <span class="count">×{{ count() }}</span>
       }
@@ -47,6 +47,7 @@ export class CardThumbComponent {
   readonly name = input('');
   readonly imageUrl = input<string | null>(null);
   readonly badge = input<string | null>(null);
+  readonly badgeTone = input<'danger' | 'info'>('danger');
   readonly count = input(0);
   /** Also show "×1" (e.g. in a search list, where 1 means "one already in the deck"). */
   readonly showSingleCount = input(false, { transform: booleanAttribute });

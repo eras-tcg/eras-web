@@ -3,7 +3,7 @@
   <div pane-start>
     @if (selected(); as card) {
       @if (detail(); as v) {
-        <!-- Name, printing, copies bar, image, properties, effects -->
+        <!-- Name, printing, copies bar, image and effects (the properties are on the card itself) -->
         <eras-card-detail
           stacked
           [name]="v.name"
@@ -12,7 +12,6 @@
           [color]="v.color"
           [colorLabel]="v.colorLabel"
           [imageUrl]="v.imageUrl"
-          [facts]="v.facts"
           [textGroups]="v.groups"
           [notice]="v.notice"
         >
@@ -108,10 +107,11 @@
                   (selected)="selected.set(entry.card)"
                 />
                 <div class="entry-actions">
-                  <button type="button" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" title="Quitar una copia" (click)="remove(entry.card)">−</button>
-                  <button type="button" [attr.aria-label]="'Añadir una copia de ' + entry.card.name" title="Añadir una copia" [disabled]="!draft.canAdd(entry.card)" (click)="add(entry.card)">+</button>
+                  <button type="button" class="minus" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" title="Quitar una copia" (click)="remove(entry.card)">−</button>
+                  <button type="button" class="plus" [attr.aria-label]="'Añadir una copia de ' + entry.card.name" title="Añadir una copia" [disabled]="!draft.canAdd(entry.card)" (click)="add(entry.card)">+</button>
                   <button
                     type="button"
+                    class="cover"
                     [class.is-cover]="draft.isCover(entry.card)"
                     [attr.aria-label]="draft.isCover(entry.card) ? 'Es la carta representativa del mazo' : 'Usar como carta representativa'"
                     [title]="draft.isCover(entry.card) ? 'Carta representativa' : 'Usar como carta representativa'"

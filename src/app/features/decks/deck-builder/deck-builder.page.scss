@@ -1,22 +1,35 @@
-﻿// A card of the deck with its buttons over the bottom of the image (they show on hover or focus; always on touch)
+// A card of the deck with its buttons in the corners: − bottom left, + bottom right, cover top left (they show on
+// hover or focus; always on touch). The count stays top right.
 .entry {
   position: relative;
 }
 
 .entry-actions {
   position: absolute;
-  inset-inline: var(--space-1);
-  inset-block-end: var(--space-1);
-  display: flex;
-  justify-content: center;
-  gap: var(--space-1);
+  inset: 0;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--duration-base) ease;
 }
 
 .entry:hover .entry-actions,
 .entry:focus-within .entry-actions {
   opacity: 1;
+}
+
+.entry-actions .minus {
+  inset-block-end: var(--space-1);
+  inset-inline-start: var(--space-1);
+}
+
+.entry-actions .plus {
+  inset-block-end: var(--space-1);
+  inset-inline-end: var(--space-1);
+}
+
+.entry-actions .cover {
+  inset-block-start: var(--space-1);
+  inset-inline-start: var(--space-1);
 }
 
 @media (hover: none) {
@@ -26,6 +39,7 @@
 }
 
 .entry-actions button {
+  position: absolute;
   display: grid;
   place-items: center;
   inline-size: 1.75rem;
@@ -37,6 +51,7 @@
   color: var(--color-text);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .entry-actions button:hover:not(:disabled) {

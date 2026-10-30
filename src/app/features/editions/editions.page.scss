@@ -1,14 +1,11 @@
-.rows { display: grid; gap: var(--space-6); }
-.edition { display: grid; gap: var(--space-3); min-inline-size: 0; }
-.head { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
-// The card: a fixed-height row, the art flush to its left edge and as tall as the card (card-shaped)
+.rows { display: grid; gap: var(--space-4); }
+// An edition: a fixed-height card, its art flush to the left edge and as tall as the card (card-shaped)
 .summary {
-  --summary-height: 6rem;
+  --summary-height: 12rem;
   display: grid;
-  flex: 1 1 20rem;
   grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr);
-  min-inline-size: 0;
   block-size: var(--summary-height);
+  min-inline-size: 0;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -24,7 +21,8 @@
   font-size: var(--font-size-sm);
 }
 .cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-.info { display: grid; grid-template-rows: auto 1fr; gap: var(--space-1); align-content: start; padding: var(--space-2) var(--space-3); min-inline-size: 0; }
+// Title, description (it takes the room left) and the buttons at the bottom
+.info { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-2); padding: var(--space-3) var(--space-4); min-inline-size: 0; }
 h2 { margin: 0; font-size: var(--font-size-lg); }
 .code { margin-inline-end: var(--space-2); color: var(--color-primary); }
 .count { margin-inline-start: var(--space-2); font-family: var(--font-family-base); font-weight: 400; }
@@ -33,41 +31,13 @@ h2 { margin: 0; font-size: var(--font-size-lg); }
   margin: 0;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
 .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-// The cards in one row, scrolled sideways
-.strip {
-  display: grid;
-  grid-auto-columns: 9rem;
-  grid-auto-flow: column;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0 0 var(--space-2);
-  overflow-x: auto;
-  list-style: none;
-  scroll-snap-type: x proximity;
-  overscroll-behavior-x: contain;
-}
-.strip li { scroll-snap-align: start; }
-.more {
-  display: grid;
-  place-content: center;
-  gap: var(--space-1);
-  inline-size: 100%;
-  block-size: 100%;
-  min-block-size: 8rem;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
-.more:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.strip-empty { display: grid; place-items: center; min-block-size: 6rem; }
 @media (max-width: 40rem) {
-  .strip { grid-auto-columns: 7rem; }
+  .summary { --summary-height: 10rem; }
+  .description { -webkit-line-clamp: 2; }
 }

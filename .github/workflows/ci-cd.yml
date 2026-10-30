@@ -1,11 +1,7 @@
-# Build on GitHub, publish to GHCR, deploy with eras-tcg/infra (self-hosted runner in the VPS).
-#   PR to main      -> lint + test + build only
-#   push to main     -> build next/staging/prod images + deploy to next.erastcg.com
-#   Run workflow     -> deploy an existing image to next, staging or production
-#
-# staging and production replace the Vue front (service "eras-frontend": same container names,
-# ports and vhosts as eras-tcg/erasFront), so the cutover and its rollback are both a Run workflow:
-# here with an eras-web tag, or in erasFront with a Vue tag (docs/HANDOFF.md).
+# Build on GitHub, deploy to AWS (S3 + CloudFront) with eras-tcg/infra deploy-site-aws.yml.
+#   PR to main   -> lint + test + build only
+#   push to main -> build (configuration "aws") + deploy staging.erastcg.com + deploy erastcg.com (waits for approval)
+#   Rollback     -> re-run the deploy job of an earlier run (its build artifact is kept 90 days)
 name: CI/CD
 
 on:
@@ -13,17 +9,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: Target environment
-        type: choice
-        options: [next, staging, production]
-        required: true
-      image_tag:
-        description: Commit sha of an image already published (see a previous run)
-        type: string
-        required: true
 
 permissions:
   contents: read
@@ -34,7 +19,6 @@ concurrency:
 
 jobs:
   lint-test:
-    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,57 +31,37 @@ jobs:
       - run: npm test -- --watch=false
 
   build:
-    if: github.event_name != 'workflow_dispatch'
     needs: lint-test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [next, staging, prod]
-    permissions:
-      contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Login to GHCR
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
+      - uses: actions/setup-node@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build (and push on main)
-        uses: docker/build-push-action@v6
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # One build for both environments: the API and /wake are relative to the site's own domain.
+      - run: npx ng build --configuration aws
+      - uses: actions/upload-artifact@v4
         with:
-          context: .
-          push: ${{ github.event_name == 'push' }}
-          build-args: ENVIRONMENT=${{ matrix.environment }}
-          tags: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-${{ matrix.environment }}
-          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          cache-from: type=gha,scope=${{ matrix.environment }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.environment }}
+          name: site
+          path: dist/eras-web/browser
+          retention-days: 90
 
-  deploy-next:
+  deploy-staging:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
-    permissions:
-      contents: read
-      packages: read
-    uses: eras-tcg/infra/.github/workflows/deploy.yml@main
+    uses: eras-tcg/infra/.github/workflows/deploy-site-aws.yml@main
+    secrets: inherit
     with:
-      service: eras-web
-      environment: next
-      image: ghcr.io/eras-tcg/eras-web:${{ github.sha }}-next
-      nginx_vhost: nginx/next.erastcg.com
+      environment: staging
+      artifact: site
 
-  redeploy:
-    if: github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: read
-      packages: read
-    uses: eras-tcg/infra/.github/workflows/deploy.yml@main
+  deploy-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy-staging
+    uses: eras-tcg/infra/.github/workflows/deploy-site-aws.yml@main
+    secrets: inherit
     with:
-      service: ${{ inputs.environment == 'next' && 'eras-web' || 'eras-frontend' }}
-      environment: ${{ inputs.environment }}
-      image: ghcr.io/eras-tcg/eras-web:${{ inputs.image_tag }}-${{ inputs.environment == 'production' && 'prod' || inputs.environment }}
-      nginx_vhost: ${{ inputs.environment == 'production' && 'nginx/erastcg.com' || inputs.environment == 'staging' && 'nginx/staging.erastcg.com' || 'nginx/next.erastcg.com' }}
+      environment: production
+      artifact: site

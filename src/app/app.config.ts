@@ -4,6 +4,7 @@ import localeEs from '@angular/common/locales/es';
 import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
+import { serverInterceptor } from '@core/server/server.interceptor';
 import { routes } from './app.routes';
 
 // Dates and numbers in Spanish (DatePipe, DecimalPipe)
@@ -13,7 +14,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor])),
     { provide: LOCALE_ID, useValue: 'es' },
   ],
 };

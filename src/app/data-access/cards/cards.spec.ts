@@ -30,6 +30,13 @@ describe('mergeCards', () => {
     expect(merged.meta?.id).toBe('m1');
     expect(orphan.meta).toBeNull();
   });
+
+  it("takes the metadata's name: the file name has no real hyphens", () => {
+    const meta: CardMeta[] = [{ id: 'm1', edition: 'ST1', cardNumber: 1, subEdition: null, colorIdentity: 'B', cardName: 'Roto-G0' }];
+    const [named, unnamed] = mergeCards([drive({ name: 'Roto G0' }), drive({ id: 'd2', number: 9, name: 'Nueva Carta' })], meta);
+    expect(named.name).toBe('Roto-G0');
+    expect(unnamed.name).toBe('Nueva Carta');
+  });
 });
 
 describe('cardImageUrl', () => {

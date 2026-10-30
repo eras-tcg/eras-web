@@ -103,6 +103,12 @@ export class CardsPage {
     });
   }
 
+  /** Missing metadata first; with metadata, whether the simulator runs it. */
+  protected badge(card: CatalogCard): string | null {
+    if (!card.meta) return 'Sin metadatos';
+    return this.store.unprogrammedOf(card) ? 'Sin programar' : null;
+  }
+
   protected showMore(): void {
     if (this.renderCount() < this.displayed().length) this.renderCount.update((n) => n + PAGE_SIZE);
   }

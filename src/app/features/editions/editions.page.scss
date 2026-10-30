@@ -1,10 +1,33 @@
 .rows { display: grid; gap: var(--space-6); }
 .edition { display: grid; gap: var(--space-3); min-inline-size: 0; }
 .head { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
-.cover { inline-size: 4.5rem; block-size: 4.5rem; flex: none; border-radius: var(--radius-md); object-fit: cover; }
-.info { display: grid; flex: 1 1 16rem; gap: var(--space-1); min-inline-size: 0; }
+// The card: a fixed-height row, the art flush to its left edge and as tall as the card (card-shaped)
+.summary {
+  --summary-height: 6rem;
+  display: grid;
+  flex: 1 1 20rem;
+  grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr);
+  min-inline-size: 0;
+  block-size: var(--summary-height);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.cover {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
+}
+.cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.info { display: grid; grid-template-rows: auto 1fr; gap: var(--space-1); align-content: start; padding: var(--space-2) var(--space-3); min-inline-size: 0; }
 h2 { margin: 0; font-size: var(--font-size-lg); }
 .code { margin-inline-end: var(--space-2); color: var(--color-primary); }
+.count { margin-inline-start: var(--space-2); font-family: var(--font-family-base); font-weight: 400; }
 .description {
   display: -webkit-box;
   margin: 0;

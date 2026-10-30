@@ -63,6 +63,7 @@ const DRAG_TYPE = 'application/x-eras-card';
   ],
   providers: [DeckDraft],
   templateUrl: './deck-builder.page.html',
+  styleUrl: './deck-builder.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:beforeunload)': 'warnBeforeLeaving($event)' },
 })
@@ -114,7 +115,7 @@ export class DeckBuilderPage {
   protected readonly selected = signal<CatalogCard | null>(null);
   protected readonly detail = computed(() => {
     const card = this.selected();
-    return card ? cardDetailView(card, this.cards.ref()) : null;
+    return card ? cardDetailView(card, this.cards.ref(), this.cards.unprogrammedOf(card)) : null;
   });
 
   protected readonly showMetrics = signal(true);

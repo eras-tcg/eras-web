@@ -87,6 +87,8 @@ export interface PlayerState {
   deckId: string | null;
   /** Gem marker (0..5). */
   resourceCount: number;
+  /** The engine does not offer their optional triggered effects ("En Juego" ones still). */
+  skipOptional?: boolean;
   hand: CardSlot[];
   deck: CardSlot[];
   originalDeck: CardSlot[];

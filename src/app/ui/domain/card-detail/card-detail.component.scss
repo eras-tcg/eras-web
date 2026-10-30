@@ -136,15 +136,65 @@ dd {
   inset-block-start: 0;
 }
 
+.top:empty {
+  display: none;
+}
+
+/* One column in reading order: name, printing, [detail-top], image, notice, facts, effects; compact facts */
 :host(.stacked) .detail {
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+:host(.stacked) .info {
+  display: contents;
+}
+
+:host(.stacked) .name {
+  font-size: var(--font-size-lg);
+}
+
+:host(.stacked) .printing {
+  margin-block-start: calc(-1 * var(--space-2));
+  font-size: var(--font-size-xs);
 }
 
 :host(.stacked) .image {
   position: static;
-  grid-row: 1;
+  order: 1;
   inline-size: min(100%, 16rem);
-  justify-self: center;
+  align-self: center;
+}
+
+:host(.stacked) .notice,
+:host(.stacked) .facts,
+:host(.stacked) .text-group,
+:host(.stacked) .actions {
+  order: 2;
+}
+
+:host(.stacked) .facts {
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: var(--space-1);
+}
+
+:host(.stacked) .fact {
+  gap: 0;
+  padding: var(--space-1) var(--space-2);
+}
+
+:host(.stacked) dt {
+  font-size: 0.625rem;
+}
+
+:host(.stacked) dd {
+  font-size: var(--font-size-sm);
+}
+
+:host(.stacked) .text-group {
+  gap: var(--space-1);
+  padding: var(--space-2);
 }
 
 @media (max-width: 44rem) {

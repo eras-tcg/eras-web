@@ -38,6 +38,9 @@
       }
     </div>
 
+    <!-- Controls right under the name (stacked: before the image) -->
+    <div class="top"><ng-content select="[detail-top]" /></div>
+
     @if (notice()) {
       <p class="notice">{{ notice() }}</p>
     }

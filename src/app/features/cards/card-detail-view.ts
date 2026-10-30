@@ -14,8 +14,11 @@ export interface CardDetailView {
   notice: string | null;
 }
 
-/** Inputs of `<eras-card-detail>` for a catalog card. */
-export function cardDetailView(card: CatalogCard, ref: CardRefData | null): CardDetailView {
+/**
+ * Inputs of `<eras-card-detail>` for a catalog card. {@code unprogrammed}: what of its metadata the simulator does not
+ * run yet (null when everything is programmed).
+ */
+export function cardDetailView(card: CatalogCard, ref: CardRefData | null, unprogrammed: string | null = null): CardDetailView {
   const meta = card.meta;
   const facts: CardFact[] = [];
   const add = (label: string, value: unknown, wide = false) => {
@@ -56,6 +59,10 @@ export function cardDetailView(card: CatalogCard, ref: CardRefData | null): Card
     imageUrl: cardImageUrl(card),
     facts,
     groups,
-    notice: meta ? null : 'Esta carta todavía no tiene metadatos.',
+    notice: !meta
+      ? 'Esta carta todavía no tiene metadatos.'
+      : unprogrammed
+        ? `Esta carta no está programada en el simulador: ${unprogrammed} (se juega a mano).`
+        : null,
   };
 }

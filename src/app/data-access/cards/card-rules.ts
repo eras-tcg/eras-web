@@ -9,7 +9,11 @@ export function mergeCards(drive: readonly DriveCard[], meta: readonly CardMeta[
   for (const m of meta) {
     if (m.edition && m.cardNumber != null) byKey.set(metaKey(m.edition, m.cardNumber, m.subEdition, m.colorIdentity), m);
   }
-  return drive.map((d) => ({ ...d, meta: byKey.get(metaKey(d.edition, d.number, d.sub_edition, d.color_identity)) ?? null }));
+  return drive.map((d) => {
+    const m = byKey.get(metaKey(d.edition, d.number, d.sub_edition, d.color_identity)) ?? null;
+    // The image's file name turns every space into a hyphen ("Roto G0"): the metadata has the printed name ("Roto-G0")
+    return { ...d, name: m?.cardName || d.name, meta: m };
+  });
 }
 
 /** Image URL with a cache-buster, so a replaced image is not served from cache. */

@@ -1,4 +1,4 @@
-/** Gem (resource) rules, for the "Aprender a jugar" simulator. Same behaviour as the legacy page. */
+/** Gem (resource) rules, for the "Cómo jugar" simulator. Same behaviour as the legacy page. */
 
 export const MAX_COUNTER = 5;
 

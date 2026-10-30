@@ -77,6 +77,13 @@
   border-block-start: var(--border-width) solid var(--color-border);
 }
 
+// Animations off (sidebar): no transitions or keyframes anywhere on the table
+.board.no-animations,
+.board.no-animations * {
+  transition: none !important;
+  animation: none !important;
+}
+
 .board {
   display: flex;
   flex-direction: column;
@@ -435,4 +442,28 @@
 // A sheet open at the bottom: the alerts and the chain keep above it
 :host-context(body.eras-sheet-open) .toasts {
   max-block-size: calc(100dvh - var(--app-header-height, 3rem) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
+}
+
+// The optional effects switch, in the strip next to whose turn it is
+.optional-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+
+  eras-icon {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  &.off {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
 }

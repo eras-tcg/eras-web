@@ -3,25 +3,25 @@
   <div pane-start>
     @if (selected(); as card) {
       @if (detail(); as v) {
-        <eras-stack [gap]="4">
-          <eras-stack direction="row" [gap]="2" align="center" justify="center">
-            <button erasButton variant="secondary" size="sm" type="button" aria-label="Quitar una copia" [disabled]="draft.countOf(card.id) === 0" (click)="remove(card)">−</button>
+        <!-- Name, printing, copies bar, image, properties, effects -->
+        <eras-card-detail
+          stacked
+          [name]="v.name"
+          [edition]="v.edition"
+          [number]="v.number"
+          [color]="v.color"
+          [colorLabel]="v.colorLabel"
+          [imageUrl]="v.imageUrl"
+          [facts]="v.facts"
+          [textGroups]="v.groups"
+          [notice]="v.notice"
+        >
+          <eras-stack ngProjectAs="[detail-top]" direction="row" [gap]="2" align="center" justify="center">
+            <button erasButton variant="secondary" size="sm" type="button" aria-label="Quitar una copia" [disabled]="draft.countOf(card.id) === 0" (click)="remove(card)">−1</button>
             <span>{{ draft.countOf(card.id) }} en el mazo</span>
-            <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+</button>
+            <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+1</button>
           </eras-stack>
-          <eras-card-detail
-            stacked
-            [name]="v.name"
-            [edition]="v.edition"
-            [number]="v.number"
-            [color]="v.color"
-            [colorLabel]="v.colorLabel"
-            [imageUrl]="v.imageUrl"
-            [facts]="v.facts"
-            [textGroups]="v.groups"
-            [notice]="v.notice"
-          />
-        </eras-stack>
+        </eras-card-detail>
       }
     } @else {
       <eras-empty-state title="Selecciona una carta" description="Haz clic en una carta para ver su detalle." />
@@ -91,13 +91,14 @@
 
     <eras-dropzone [active]="dragOver()" (dragover)="dragOverDeck($event)" (dragleave)="dragOver.set(false)" (drop)="drop($event)">
       @if (draft.total() === 0) {
-        <eras-empty-state title="El mazo está vacío" description="Arrastra cartas aquí o usa el botón + de la búsqueda." />
+        <eras-empty-state title="El mazo está vacío" description="Arrastra cartas aquí o haz clic derecho en una carta de la búsqueda." />
       } @else {
         @for (group of draft.groups(); track group.type) {
           <eras-section-header [title]="(typeLabels[group.type] ?? group.type) + ' (' + group.count + ')'" />
           <eras-grid minColumn="7.5rem" [gap]="3">
             @for (entry of group.entries; track entry.card.id) {
-              <eras-stack [gap]="1" (contextmenu)="contextRemove($event, entry.card)">
+              <!-- The buttons sit over the card, to save space -->
+              <div class="entry" (contextmenu)="contextRemove($event, entry.card)">
                 <eras-card-thumb
                   [name]="entry.card.name ?? ''"
                   [imageUrl]="imageUrl(entry.card)"
@@ -106,23 +107,22 @@
                   [active]="selected()?.id === entry.card.id"
                   (selected)="selected.set(entry.card)"
                 />
-                <eras-stack direction="row" [gap]="1" justify="center" align="center">
-                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" (click)="remove(entry.card)">−</button>
-                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Añadir una copia de ' + entry.card.name" [disabled]="!draft.canAdd(entry.card)" (click)="add(entry.card)">+</button>
+                <div class="entry-actions">
+                  <button type="button" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" title="Quitar una copia" (click)="remove(entry.card)">−</button>
+                  <button type="button" [attr.aria-label]="'Añadir una copia de ' + entry.card.name" title="Añadir una copia" [disabled]="!draft.canAdd(entry.card)" (click)="add(entry.card)">+</button>
                   <button
-                    erasButton
-                    variant="ghost"
-                    size="sm"
                     type="button"
-                    [attr.aria-label]="draft.isCover(entry.card) ? 'Es la portada del mazo' : 'Usar como portada'"
+                    [class.is-cover]="draft.isCover(entry.card)"
+                    [attr.aria-label]="draft.isCover(entry.card) ? 'Es la carta representativa del mazo' : 'Usar como carta representativa'"
+                    [title]="draft.isCover(entry.card) ? 'Carta representativa' : 'Usar como carta representativa'"
                     [attr.aria-pressed]="draft.isCover(entry.card)"
                     [disabled]="draft.isCover(entry.card)"
                     (click)="draft.setCover(entry.card)"
                   >
-                    {{ draft.isCover(entry.card) ? '★' : '☆' }}
+                    <eras-icon name="image" />
                   </button>
-                </eras-stack>
-              </eras-stack>
+                </div>
+              </div>
             }
           </eras-grid>
         }
@@ -171,7 +171,7 @@
       } @else {
         <eras-grid minColumn="6.5rem" [gap]="2">
           @for (card of visibleResults(); track card.id) {
-            <eras-stack [gap]="1" draggable="true" (dragstart)="dragStart($event, card)" (contextmenu)="contextAdd($event, card)">
+            <div draggable="true" [attr.title]="'Clic derecho o arrastrar para añadir ' + (card.name ?? '')" (dragstart)="dragStart($event, card)" (contextmenu)="contextAdd($event, card)">
               <eras-card-thumb
                 [name]="card.name ?? ''"
                 [imageUrl]="imageUrl(card)"
@@ -181,10 +181,7 @@
                 [active]="selected()?.id === card.id"
                 (selected)="selected.set(card)"
               />
-              <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Añadir ' + card.name" [disabled]="!draft.canAdd(card)" (click)="add(card)">
-                <eras-icon name="plus" />
-              </button>
-            </eras-stack>
+            </div>
           }
         </eras-grid>
         @if (visibleResults().length < resultCount()) {

@@ -121,7 +121,7 @@ export const routes: Routes = [
       },
       {
         path: 'ruling',
-        title: 'Aprender a jugar · ERAS',
+        title: 'Cómo jugar · ERAS',
         canMatch: [authGuard],
         loadComponent: () => import('@features/ruling/ruling.page').then((m) => m.RulingPage),
       },

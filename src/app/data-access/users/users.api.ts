@@ -11,6 +11,10 @@ export class UsersAdminApi {
   private readonly api = inject(ApiConfig);
 
   // Users (manage_users)
+  /** A new account (UsersService's registration): role USER, and an e-mail to validate it. */
+  register(username: string, email: string, password: string): Observable<string> {
+    return this.http.post(this.api.url('/api/auth/register'), { username, email, password }, { responseType: 'text' });
+  }
   listUsers(): Observable<UserRecord[]> {
     return this.http.get<UserRecord[]>(this.api.url('/api/users'));
   }

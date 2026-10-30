@@ -1,0 +1,62 @@
+﻿// A card of the deck with its buttons over the bottom of the image (they show on hover or focus; always on touch)
+.entry {
+  position: relative;
+}
+
+.entry-actions {
+  position: absolute;
+  inset-inline: var(--space-1);
+  inset-block-end: var(--space-1);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-base) ease;
+}
+
+.entry:hover .entry-actions,
+.entry:focus-within .entry-actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .entry-actions {
+    opacity: 1;
+  }
+}
+
+.entry-actions button {
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.entry-actions button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.entry-actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.entry-actions button.is-cover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  opacity: 1;
+}
+
+.entry-actions eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

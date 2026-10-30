@@ -17,21 +17,26 @@
       @for (edition of store.editions(); track edition.editionId) {
         @let cards = cardsOf(edition.editionId);
         <section class="edition" [attr.aria-labelledby]="'ed-' + edition.editionId">
+          <!-- A card: the edition's art on the whole height at the left; title and description at the right -->
           <header class="head">
-            @if (edition.editionImage) {
-              <img class="cover" [src]="edition.editionImage" alt="" loading="lazy" />
-            }
-            <div class="info">
-              <h2 [id]="'ed-' + edition.editionId">
-                <span class="code">{{ edition.editionId }}</span>
-                @if (edition.editionName) {
-                  {{ edition.editionName }}
+            <div class="summary">
+              <div class="cover">
+                @if (edition.editionImage) {
+                  <img [src]="edition.editionImage" alt="" loading="lazy" />
+                } @else {
+                  <span>{{ edition.editionId }}</span>
                 }
-              </h2>
-              @if (edition.editionDescription) {
-                <p class="description">{{ edition.editionDescription }}</p>
-              }
-              <span class="muted">{{ cards.length || edition.numberOfCards || 0 }} cartas</span>
+              </div>
+              <div class="info">
+                <h2 [id]="'ed-' + edition.editionId">
+                  <span class="code">{{ edition.editionId }}</span>
+                  @if (edition.editionName) {
+                    {{ edition.editionName }}
+                  }
+                  <span class="muted count">{{ cards.length || edition.numberOfCards || 0 }} cartas</span>
+                </h2>
+                <p class="description">{{ edition.editionDescription || 'Sin descripción.' }}</p>
+              </div>
             </div>
             <div class="actions">
               <button erasButton variant="secondary" size="sm" type="button" (click)="openCards(edition)">Ver todas</button>

@@ -65,7 +65,10 @@ export class CardFlightsComponent {
     const before = this.deckIds;
     const players = Object.values(state.players ?? {});
     this.deckIds = new Set(players.flatMap((p) => p.deck.map((c) => c.instanceId)));
-    const events = (state.timeline ?? []).filter((e) => e.seq > this.lastSeq);
+    const timeline = state.timeline ?? [];
+    // A new game starts a new timeline
+    if (Math.max(0, ...timeline.map((e) => e.seq)) < this.lastSeq) this.lastSeq = 0;
+    const events = timeline.filter((e) => e.seq > this.lastSeq);
     this.lastSeq = Math.max(this.lastSeq, ...events.map((e) => e.seq));
     if (!before) return;
     const drawnByEvent = new Set(events.filter((e) => e.type === 'DRAW' && e.cardInstanceId).map((e) => e.cardInstanceId));

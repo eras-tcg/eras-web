@@ -3,7 +3,7 @@
 .summary {
   --summary-height: 12rem;
   display: grid;
-  grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr);
+  grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr) auto;
   block-size: var(--summary-height);
   min-inline-size: 0;
   overflow: hidden;
@@ -21,8 +21,8 @@
   font-size: var(--font-size-sm);
 }
 .cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-// Title, description (it takes the room left) and the buttons at the bottom
-.info { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-2); padding: var(--space-3) var(--space-4); min-inline-size: 0; }
+// Title and description (it takes the room left)
+.info { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); min-inline-size: 0; }
 h2 { margin: 0; font-size: var(--font-size-lg); }
 .code { margin-inline-end: var(--space-2); color: var(--color-primary); }
 .count { margin-inline-start: var(--space-2); font-family: var(--font-family-base); font-weight: 400; }
@@ -36,8 +36,13 @@ h2 { margin: 0; font-size: var(--font-size-lg); }
   font-size: var(--font-size-sm);
 }
 .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+// The buttons in a column at the right, as wide as the widest
+.actions { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+.actions button { justify-content: center; min-inline-size: 11rem; min-block-size: 2.75rem; font-size: var(--font-size-md); }
 @media (max-width: 40rem) {
-  .summary { --summary-height: 10rem; }
+  // Narrow: the buttons go under the text
+  .summary { --summary-height: 10rem; grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr); block-size: auto; min-block-size: var(--summary-height); }
+  .cover { grid-row: span 2; }
+  .actions { flex-direction: row; flex-wrap: wrap; padding-block-start: 0; }
   .description { -webkit-line-clamp: 2; }
 }

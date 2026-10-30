@@ -62,7 +62,7 @@ export function cardDetailView(card: CatalogCard, ref: CardRefData | null, unpro
     notice: !meta
       ? 'Esta carta todavía no tiene metadatos.'
       : unprogrammed
-        ? `Esta carta no está programada en el simulador: ${unprogrammed} (se juega a mano).`
+        ? `Esta carta todavía no se puede jugar en el simulador: falta programar ${unprogrammed}. Un mazo que la tenga no se puede elegir en una partida.`
         : null,
   };
 }

@@ -140,6 +140,14 @@ dd {
   display: none;
 }
 
+/* Stacked: the controls centered over the image, a little apart from the printing badges */
+:host(.stacked) .top {
+  display: flex;
+  align-self: stretch;
+  justify-content: center;
+  margin-block-start: var(--space-2);
+}
+
 /* One column in reading order: name, printing, [detail-top], image, notice, facts, effects; compact facts */
 :host(.stacked) .detail {
   display: flex;

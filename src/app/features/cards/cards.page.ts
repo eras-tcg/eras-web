@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
+import { persistedFlag } from '@core/storage/persisted-flag';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName } from '@data/cards/card-rules';
@@ -14,6 +15,7 @@ import { PageComponent } from '@ui/layout/page/page.component';
 import { SplitComponent } from '@ui/layout/split/split.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { ChipComponent } from '@ui/primitives/chip/chip.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -37,11 +39,15 @@ const PAGE_SIZE = 40;
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
+    ChipComponent,
     IconComponent,
     SpinnerComponent,
     InViewDirective,
   ],
   templateUrl: './cards.page.html',
+  styles: `
+    .marks-label { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CardsPage {
@@ -61,7 +67,10 @@ export class CardsPage {
   protected readonly showFilters = signal(this.wide);
   protected readonly renderCount = signal(PAGE_SIZE);
 
-  private readonly canManage = computed(() => this.editMode.allows('manage_cards'));
+  protected readonly canManage = computed(() => this.editMode.allows('manage_cards'));
+  /** Marks on the cards ("Sin programar", "Sin metadatos"): hidden unless turned on. Remembered on the device. */
+  protected readonly showUnprogrammed = persistedFlag('eras-cards-mark-unprogrammed');
+  protected readonly showNoMeta = persistedFlag('eras-cards-mark-no-meta');
 
   /** Filtered and sorted, before collapsing repeated names (the count shows collapsed). */
   private readonly filtered = computed(() =>
@@ -103,10 +112,10 @@ export class CardsPage {
     });
   }
 
-  /** Missing metadata first; with metadata, whether the simulator runs it. */
+  /** Missing metadata first; with metadata, whether the simulator runs it. Each one only when its mark is on. */
   protected badge(card: CatalogCard): string | null {
-    if (!card.meta) return 'Sin metadatos';
-    return this.store.unprogrammedOf(card) ? 'Sin programar' : null;
+    if (!card.meta) return this.showNoMeta() ? 'Sin metadatos' : null;
+    return this.showUnprogrammed() && this.store.unprogrammedOf(card) ? 'Sin programar' : null;
   }
 
   protected showMore(): void {

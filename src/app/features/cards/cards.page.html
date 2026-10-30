@@ -28,6 +28,14 @@
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
           }
+          <!-- Marks on the cards, hidden unless asked for (remembered on the device) -->
+          <eras-stack direction="row" [gap]="1" align="center" wrap>
+            <span class="marks-label">Marcar:</span>
+            <button erasChip [selected]="showUnprogrammed()" title="Cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
+            @if (canManage()) {
+              <button erasChip [selected]="showNoMeta()" title="Cartas sin metadatos" (click)="showNoMeta.set(!showNoMeta())">Sin metadatos</button>
+            }
+          </eras-stack>
         </eras-stack>
 
         @if (displayed().length === 0) {

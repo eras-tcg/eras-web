@@ -97,19 +97,14 @@ export class PreRoomComponent {
 
   /**
    * Decks with cards the simulator does not run yet: they cannot be chosen (the server refuses them too), except in a
-   * test room, where those cards are tried by hand. Deck id → the names of those cards ("×2 Roto-G0").
+   * test room, where those cards are tried by hand.
    */
   protected readonly unplayable = computed(() => {
     const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
-    const result = new Map<string, string>();
+    const result = new Set<string>();
     if (this.game.editorRoom()) return result;
     for (const deck of this.allDecks()) {
-      const names = new Map<string, number>();
-      for (const id of deck.cards) {
-        const card = byId.get(id);
-        if (card && this.cards.unprogrammedOf(card)) names.set(card.name ?? '?', (names.get(card.name ?? '?') ?? 0) + 1);
-      }
-      if (names.size) result.set(deck.id, [...names].map(([name, n]) => (n > 1 ? `×${n} ${name}` : name)).join(', '));
+      if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) result.add(deck.id);
     }
     return result;
   });

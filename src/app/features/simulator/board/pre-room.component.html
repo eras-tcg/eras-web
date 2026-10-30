@@ -133,12 +133,12 @@
     } @else {
       <eras-grid minColumn="9.5rem" [gap]="3">
         @for (deck of matches(); track deck.id) {
-          @let blocked = unplayable().get(deck.id);
+          @let blocked = unplayable().has(deck.id);
           <div
             class="deck"
             [class.chosen]="mine()?.deckId === deck.id"
             [class.blocked]="!!blocked"
-            [attr.title]="blocked ? 'No se puede jugar en el simulador: tiene cartas sin programar (' + blocked + ')' : null"
+            [attr.title]="blocked ? 'No se puede jugar en el simulador: tiene cartas sin programar' : null"
           >
             <eras-deck-cover
               [name]="deck.deckName"
@@ -149,7 +149,7 @@
               (selected)="chooseDeck(deck.id)"
             />
             @if (blocked) {
-              <span class="blocked-note">Sin programar: {{ blocked }}</span>
+              <span class="blocked-note">Tiene cartas sin programar</span>
             }
           </div>
         } @empty {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
@@ -82,6 +83,10 @@ export class DeckBuilderPage {
   protected readonly maxCards = MAX_CARDS;
   protected readonly typeLabels = CARD_TYPE_LABELS;
   protected readonly imageUrl = cardImageUrl;
+
+  protected badge(card: CatalogCard): string | null {
+    return this.showUnprogrammed() && this.cards.unprogrammedOf(card) ? 'Sin programar' : null;
+  }
   protected readonly canSave = computed(() => this.auth.user() !== null && this.auth.can('manage_decks'));
 
   // ── Messages ──────────────────────────────────────────────────────────
@@ -96,6 +101,8 @@ export class DeckBuilderPage {
   protected readonly quickType = signal('');
   protected readonly filters = signal<CardFilters>(EMPTY_FILTERS);
   protected readonly view = signal<CardView>({ ...DEFAULT_VIEW, size: 110 });
+  /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
+  protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
   protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.quickType());
 

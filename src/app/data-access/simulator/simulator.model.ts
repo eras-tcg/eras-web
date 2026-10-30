@@ -162,6 +162,8 @@ export interface GameState {
   specialSummonable?: Record<string, string[]> | null;
   /** Players who already played a structure normally this turn (one per turn). */
   structurePlayed?: string[] | null;
+  /** Utilities in each player's hand that cannot be played now (their "En Juego" cannot be activated), by player id. */
+  unplayable?: Record<string, string[]> | null;
   /** Who won the game that just ended, and why. */
   winnerId?: string | null;
   endReason?: 'lives' | 'surrender' | 'deck' | null;

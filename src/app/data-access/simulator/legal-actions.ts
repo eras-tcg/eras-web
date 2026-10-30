@@ -26,6 +26,8 @@ export interface RulesView {
   specialSummonable: string[] | null;
   /** I already played a structure normally this turn (only one per turn). */
   structurePlayed: boolean;
+  /** Utilities of my hand whose "En Juego" cannot be activated now, as the server says: they cannot be played. */
+  unplayable: string[];
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
@@ -45,6 +47,7 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     activatable: (me && state?.activatable?.[me]) || [],
     specialSummonable: state?.specialSummonable ? ((me && state.specialSummonable[me]) || []) : null,
     structurePlayed: !!me && !!state?.structurePlayed?.includes(me),
+    unplayable: (me && state?.unplayable?.[me]) || [],
   };
 }
 
@@ -197,7 +200,8 @@ export function legalActions(view: RulesView, slot: CardSlot, zone: ZoneName): L
     if (slot.cardType === 'creature' && slot.cost != null && canPay(view, summonCost(view, slot, slot.cost))) actions.push('summon');
     if (slot.cardType === 'creature' && canSpecial(view, slot)) actions.push('ritual');
     const structureLeft = slot.cardType !== 'structure' || !view.structurePlayed;
-    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && structureLeft && canPay(view, playCost(view, slot))) actions.push('play');
+    const playable = structureLeft && !view.unplayable.includes(slot.instanceId);
+    if ((slot.cardType === 'utility' || slot.cardType === 'structure') && playable && canPay(view, playCost(view, slot))) actions.push('play');
   } else if (zone === 'tributeZone') {
     // "como si estuviera en tu mano para invocaciones especiales" (Falanx): only the server knows
     if (view.specialSummonable?.includes(slot.instanceId)) actions.push('ritual');

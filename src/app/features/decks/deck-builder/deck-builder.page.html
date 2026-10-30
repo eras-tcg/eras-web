@@ -101,6 +101,8 @@
                 <eras-card-thumb
                   [name]="entry.card.name ?? ''"
                   [imageUrl]="imageUrl(entry.card)"
+                  [badge]="badge(entry.card)"
+                  badgeTone="info"
                   [count]="entry.count"
                   showSingleCount
                   [active]="selected()?.id === entry.card.id"
@@ -152,6 +154,7 @@
           <button erasChip [selected]="quickType() === t" (click)="toggleQuickType(t)">{{ typeLabels[t] ?? t }}</button>
         }
         <button erasChip [selected]="!view().collapse" (click)="view.set({ ...view(), collapse: !view().collapse })">Todas las impresiones</button>
+        <button erasChip [selected]="showUnprogrammed()" title="Marca las cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
       </eras-stack>
       <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
         <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
@@ -175,6 +178,8 @@
               <eras-card-thumb
                 [name]="card.name ?? ''"
                 [imageUrl]="imageUrl(card)"
+                [badge]="badge(card)"
+                badgeTone="info"
                 [count]="draft.copiesOf(card)"
                 showSingleCount
                 [dimmed]="!draft.canAdd(card)"

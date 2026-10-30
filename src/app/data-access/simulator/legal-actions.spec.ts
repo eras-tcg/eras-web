@@ -35,6 +35,7 @@ const open: RulesView = {
   activatable: [],
   specialSummonable: null,
   structurePlayed: false,
+  unplayable: [],
 };
 
 describe('legalActions', () => {
@@ -62,6 +63,11 @@ describe('legalActions', () => {
     // One structure per turn
     expect(legalActions(open, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual(['play']);
     expect(legalActions({ ...open, structurePlayed: true }, slot('s', { cardType: 'structure', cost: 1 }), 'hand')).toEqual([]);
+  });
+
+  it('does not offer to play a utility whose "En Juego" cannot be activated (the server says which)', () => {
+    expect(legalActions({ ...open, unplayable: ['u'] }, slot('u', { cardType: 'utility', cost: 0 }), 'hand')).toEqual([]);
+    expect(legalActions({ ...open, unplayable: ['x'] }, slot('u', { cardType: 'utility', cost: 0 }), 'hand')).toEqual(['play']);
   });
 
   it('Caza Nocturna costs 1 less below 0 gems', () => {

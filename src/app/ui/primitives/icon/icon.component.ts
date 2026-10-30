@@ -54,6 +54,11 @@ const ICONS = {
   swap: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
   image: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21',
   alert: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
+  info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01',
+  // Card types: three claw marks (Criatura), a flask (Utilidad), a tower (Estructura)
+  creature: 'M6 3c2 5 2 11-1 18M12 2c2 6 2 13-1 20M18 3c2 5 2 11-1 18',
+  utility: 'M9 3h6M10 3v5.5L4.6 18.2A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.8-2.8L14 8.5V3M7 15h10',
+  structure: 'M4 21h16M5 21V9h3V5h2v2h4V5h2v4h3v12M10 21v-5a2 2 0 0 1 4 0v5M9 12h.01M15 12h.01',
 } as const;
 
 export type IconName = keyof typeof ICONS;

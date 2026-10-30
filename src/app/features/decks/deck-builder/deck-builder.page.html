@@ -142,14 +142,19 @@
     </eras-dropzone>
 
     @if (draft.total() > 0) {
-      <eras-section-header title="Métricas">
-        <button erasButton variant="ghost" size="sm" type="button" [attr.aria-expanded]="showMetrics()" (click)="showMetrics.set(!showMetrics())">
-          {{ showMetrics() ? 'Ocultar' : 'Mostrar' }}
-        </button>
-      </eras-section-header>
-      @if (showMetrics()) {
-        <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
-      }
+      <!-- Always in sight at the bottom of the deck while its list scrolls; compact it to see more cards -->
+      <div class="metrics-dock" [class.compact]="!showMetrics()">
+        <eras-section-header title="Métricas">
+          <button erasButton variant="ghost" size="sm" type="button" [attr.aria-expanded]="showMetrics()" (click)="showMetrics.set(!showMetrics())">
+            {{ showMetrics() ? 'Compactar' : 'Mostrar' }}
+          </button>
+        </eras-section-header>
+        @if (showMetrics()) {
+          <div class="metrics-body">
+            <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
+          </div>
+        }
+      </div>
     }
   </eras-stack>
 

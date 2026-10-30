@@ -12,6 +12,7 @@
   [source]="game.targetingSourceId() === slot().instanceId || game.pendingTargetSource() === slot().instanceId"
   [selectable]="game.pendingTargetSource() !== null"
   [small]="small()"
+  [info]="info()"
   [attr.draggable]="canDrag() ? 'true' : null"
   tabindex="0"
   role="button"

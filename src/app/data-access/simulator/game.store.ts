@@ -3,6 +3,7 @@ import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
+import { ProfileStore } from '@data/profile/profile.store';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
 import { rulesView } from './legal-actions';
 import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
@@ -30,6 +31,7 @@ function wsUrl(): string {
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
+  private readonly profile = inject(ProfileStore);
   private client: Client | null = null;
   private timers = new Set<ReturnType<typeof setTimeout>>();
 
@@ -94,6 +96,12 @@ export class GameStore {
   toggleOptionalOff(): void {
     this.optionalOff.set(!this.optionalOff());
   }
+
+  /**
+   * "Información": the table shows more about the cards and zones in sight (cost, type, classes and level of the
+   * cards on the field; how many cards each pile, line and hand holds). Remembered on the device.
+   */
+  readonly showInfo = persistedFlag('eras-sim-info');
 
   constructor() {
     // The server keeps it per game: what the device remembers is sent when they differ
@@ -176,7 +184,7 @@ export class GameStore {
           this.connected.set(true);
           this.client?.subscribe(`/topic/room/${roomId}`, (msg) => this.onMessage(msg.body));
           // The socket dropped and came back by itself: be in the room again and get its current state
-          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
+          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '', avatar: this.profile.avatar() });
           reconnecting = true;
           resolve();
         },
@@ -389,7 +397,7 @@ export class GameStore {
   }
 
   joinRoom(deckId: string | null): void {
-    this.send('JOIN_ROOM', { deckId, username: this.auth.user()?.username ?? '' });
+    this.send('JOIN_ROOM', { deckId, username: this.auth.user()?.username ?? '', avatar: this.profile.avatar() });
   }
   drawCard(): void {
     this.send('DRAW_CARD');
@@ -448,9 +456,6 @@ export class GameStore {
   /** The owner takes a player out of the room (in a game, only a disconnected one). */
   kickPlayer(userId: string): void {
     this.send('KICK_PLAYER', { userId });
-  }
-  resolveEffectSummon(instanceId: string, fromZone: ZoneName, draw: boolean): void {
-    this.send('EFFECT_SUMMON_RESOLVE', { instanceId, fromZone, draw });
   }
   viewDeck(position: 'top' | 'bottom', n: number): void {
     this.send('VIEW_DECK', { position, n });

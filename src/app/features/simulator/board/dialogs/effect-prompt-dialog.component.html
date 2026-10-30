@@ -1,8 +1,12 @@
-<eras-sheet size="lg" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
-  @if (prompt.sourceImageUrl && !prompt.effects?.length) {
-    <!-- The card that is resolving, at a glance -->
-    <img class="source-card" [src]="prompt.sourceImageUrl" [alt]="prompt.sourceName" draggable="false" />
+<eras-sheet [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+  <!-- The card that is resolving at a fixed size on the left, the choice beside it -->
+  <div class="layout" [class.with-source]="withSource">
+  @if (withSource) {
+    <aside class="source" aria-label="Carta que se resuelve">
+      <img [src]="prompt.sourceImageUrl" [alt]="prompt.sourceName" draggable="false" />
+    </aside>
   }
+  <div class="body">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
@@ -111,6 +115,8 @@
     }
   </div>
   }
+  </div>
+  </div>
   <ng-container sheet-footer>
     <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
       @if (prompt.kind === 'CONFIRM') {

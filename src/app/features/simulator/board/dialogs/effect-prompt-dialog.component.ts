@@ -37,6 +37,8 @@ export class EffectPromptDialogComponent {
   private readonly modal = inject(ModalService);
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
+  /** The card whose effect asks is shown beside the choice (offering effects to chain shows each card instead). */
+  protected readonly withSource = !!this.prompt.sourceImageUrl && !this.prompt.effects?.length;
   protected readonly valid = new Set(this.prompt.validIds);
   /** The most the chosen cards' levels may add up to, or null without that limit. */
   protected readonly levelSum = this.prompt.maxLevelSum ?? null;

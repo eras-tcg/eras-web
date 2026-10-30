@@ -75,3 +75,23 @@
   inline-size: 1rem;
   block-size: 1rem;
 }
+
+// The metrics stay at the bottom of the deck's pane while the list scrolls under them
+.metrics-dock {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 2;
+  display: grid;
+  gap: var(--space-2);
+  margin-inline: calc(var(--space-2) * -1);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  border-block-start: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 -6px 16px -10px rgb(0 0 0 / 35%);
+}
+
+.metrics-body {
+  max-block-size: 40dvh;
+  overflow: auto;
+}
+

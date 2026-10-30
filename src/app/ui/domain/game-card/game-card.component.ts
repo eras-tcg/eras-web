@@ -1,8 +1,27 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
+
+/** What the table shows of a card with its information on: cost, type, classes and level. */
+export interface GameCardInfo {
+  cost: number | null;
+  type: 'creature' | 'utility' | 'structure' | null;
+  classes: readonly string[];
+  level: number | null;
+}
+
+const TYPE_LABELS = { creature: 'Criatura', utility: 'Utilidad', structure: 'Estructura' } as const;
+
+function roman(n: number): string {
+  const parts: [number, string][] = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+  let out = '';
+  for (const [value, letters] of parts) while (n >= value) { out += letters; n -= value; }
+  return out || '0';
+}
 
 /** A card on the game table: image or back, tapped rotation, strength and attachment badges, target glow. */
 @Component({
   selector: 'eras-game-card',
+  imports: [IconComponent],
   template: `
     @if (!hidden() && imageUrl()) {
       <img [src]="imageUrl()" alt="" draggable="false" />
@@ -20,6 +39,27 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
       <span class="strength" [class.up]="modifier() > 0" [class.down]="modifier() < 0">
         {{ modifier() > 0 ? '▲' : modifier() < 0 ? '▼' : '' }}{{ strength() }}
       </span>
+    }
+    @if (info(); as i) {
+      <!-- The table's information: cost and type at the top left, level at the bottom left, classes along the bottom -->
+      <span class="info-side">
+        @if (i.cost !== null) {
+          <span class="info-cost" [attr.aria-label]="'Coste ' + i.cost">{{ i.cost }}</span>
+        }
+        @if (i.type) {
+          <span class="info-type" [title]="typeLabels[i.type]" [attr.aria-label]="typeLabels[i.type]"><eras-icon [name]="i.type" /></span>
+        }
+      </span>
+      @if (i.level !== null) {
+        <span class="info-level" [attr.aria-label]="'Nivel ' + i.level">{{ romanOf(i.level) }}</span>
+      }
+      @if (i.classes.length) {
+        <span class="info-classes">
+          @for (c of i.classes; track c) {
+            <span>{{ c }}</span>
+          }
+        </span>
+      }
     }
     @if (materials()) {
       <span class="badge materials" [attr.aria-label]="materials() + ' materiales'">{{ materials() }}</span>
@@ -102,6 +142,79 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
       line-height: 1.4;
     }
     .materials { inset-inline-start: -0.3rem; background: #111; }
+    /* The table's information, sized with the card so it stays inside it (and off its neighbours) */
+    .info-side {
+      position: absolute;
+      inset-block-start: 4%;
+      inset-inline-start: 4%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2em;
+      font-size: clamp(0.62rem, calc(var(--game-card-width, 4.5rem) * 0.13), 1.05rem);
+      pointer-events: none;
+    }
+    .info-cost {
+      display: grid;
+      place-items: center;
+      inline-size: 1.75em;
+      block-size: 1.75em;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: #1e3a8a;
+      color: #fff;
+      font-weight: var(--font-weight-bold);
+      font-variant-numeric: tabular-nums;
+      box-shadow: inset 0 0 0 2px #93c5fd;
+    }
+    .info-type {
+      display: grid;
+      place-items: center;
+      inline-size: 1.6em;
+      block-size: 1.6em;
+      border-radius: 50%;
+      background: rgb(17 17 24 / 82%);
+      color: #f5f5f5;
+    }
+    .info-type eras-icon { inline-size: 1em; block-size: 1em; }
+    .info-level {
+      position: absolute;
+      inset-block-end: 4%;
+      inset-inline-start: 4%;
+      min-inline-size: 1.7em;
+      padding: 0.05em 0.3em;
+      border: 2px solid #f59e0b;
+      border-radius: var(--radius-pill);
+      background: rgb(17 17 24 / 85%);
+      color: #fcd34d;
+      font: var(--font-weight-bold) clamp(0.6rem, calc(var(--game-card-width, 4.5rem) * 0.12), 1rem) / 1.2 Georgia, 'Times New Roman', serif;
+      text-align: center;
+      pointer-events: none;
+    }
+    .info-classes {
+      position: absolute;
+      inset-inline: 6% 6%;
+      inset-block-end: 18%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.2em;
+      max-block-size: 2.7em;
+      overflow: hidden;
+      font-size: clamp(0.5rem, calc(var(--game-card-width, 4.5rem) * 0.1), 0.8rem);
+      pointer-events: none;
+    }
+    .info-classes span {
+      max-inline-size: 100%;
+      padding: 0.05em 0.45em;
+      overflow: hidden;
+      border-radius: var(--radius-pill);
+      background: rgb(17 17 24 / 82%);
+      color: #f5f5f5;
+      font-weight: var(--font-weight-bold);
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .resources { inset-inline-end: -0.3rem; background: #16a34a; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,6 +243,13 @@ export class GameCardComponent {
   readonly small = input(false, { transform: booleanAttribute });
   /** A target is being chosen. */
   readonly selectable = input(false, { transform: booleanAttribute });
+  /** The table's information about it (cost, type, classes, level); null shows none. */
+  readonly info = input<GameCardInfo | null>(null);
+
+  protected readonly typeLabels = TYPE_LABELS;
+  protected romanOf(level: number): string {
+    return roman(level);
+  }
 
   protected readonly materials = computed(() => (this.hidden() ? 0 : this.materialsCount()));
   protected readonly resources = computed(() => (this.hidden() ? 0 : this.resourcesCount()));

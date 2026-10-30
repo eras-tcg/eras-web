@@ -1,13 +1,12 @@
 @let p = player();
 <!-- Lives and gem marker -->
 <div class="lives">
-  <span class="name">{{ p.username }}@if (!p.connected) { <span class="offline">(desconectado)</span> }</span>
   <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
   <eras-game-zone
     class="life-zone"
     label="Vidas"
     [attr.data-pile]="p.userId + ':lifeStack'"
-    [count]="p.lifeStack.length"
+    [count]="game.showInfo() ? p.lifeStack.length : null"
     [dropActive]="over() === 'lifeStack'"
     [targeted]="isTargeted('lifeStack')"
     [selectable]="targeting()"
@@ -27,6 +26,8 @@
       }
     </div>
   </eras-game-zone>
+  <!-- The player's plate: their icon and name, under their lives (over them on the rival's side) -->
+  <eras-player-plate [username]="p.username" [avatar]="p.avatar" [connected]="p.connected" />
   <ng-template #lifeMenu>
     <eras-menu>
       <button erasMenuItem (triggered)="viewLives()">Ver vidas</button>
@@ -53,7 +54,15 @@
 >
   @for (line of lines; track line) {
     <div class="line" [class.front]="line === 'front'" role="group" [attr.aria-label]="line === 'front' ? 'Línea frontal' : 'Retaguardia'">
-      <span class="line-label">{{ line === 'front' ? 'Línea frontal' : 'Retaguardia' }}</span>
+      <span class="line-label">
+        {{ line === 'front' ? 'Línea frontal' : 'Retaguardia' }}
+        @if (game.showInfo()) {
+          <!-- How many creatures, structures and utilities the line holds -->
+          @for (t of typeCounts(rows()[line]); track t.type) {
+            <span class="line-count" [title]="t.count + ' ' + t.label"><eras-icon [name]="t.type" />{{ t.count }}</span>
+          }
+        }
+      </span>
       @for (s of rows()[line]; track s.instanceId) {
         <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
           <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
@@ -73,9 +82,9 @@
 <eras-game-zone
   class="hand"
   [class.straight]="straightHand()"
-  label="Mano"
   [attr.data-pile]="p.userId + ':hand'"
-  [count]="p.hand.length"
+  [count]="game.showInfo() ? p.hand.length : null"
+  countIcon="cards"
   [dropActive]="over() === 'hand' && !opponent()"
   (dragover)="!opponent() && dragOver($event, 'hand')"
   (dragleave)="dragLeave()"
@@ -116,13 +125,6 @@
       (click)="turnHandBy(1); $event.stopPropagation()"
     ></button>
   }
-  @if (effectSummon()) {
-    <div class="effect-prompt" role="alertdialog" aria-label="¿Invocación por efecto?">
-      <span>¿Invocación por efecto?</span>
-      <button erasButton size="sm" type="button" (click)="resolveEffectSummon(true)">Sí, robar</button>
-      <button erasButton variant="secondary" size="sm" type="button" (click)="resolveEffectSummon(false)">No</button>
-    </div>
-  }
 </eras-game-zone>
 
 <!-- Deck and piles -->
@@ -131,7 +133,7 @@
     class="pile deck"
     label="Mazo"
     [attr.data-pile]="p.userId + ':deck'"
-    [count]="p.deck.length"
+    [count]="game.showInfo() ? p.deck.length : null"
     [dropActive]="over() === 'deck'"
     [targeted]="isTargeted('deck')"
     [selectable]="targeting()"
@@ -161,7 +163,7 @@
     class="pile tributes"
     label="Tributos"
     [attr.data-pile]="p.userId + ':tributeZone'"
-    [count]="p.tributeZone.length"
+    [count]="game.showInfo() ? p.tributeZone.length : null"
     [dropActive]="over() === 'tributeZone'"
     [targeted]="isTargeted('tributeZone')"
     [selectable]="targeting()"
@@ -181,7 +183,7 @@
     class="pile discard"
     label="Descarte"
     [attr.data-pile]="p.userId + ':discardPile'"
-    [count]="p.discardPile.length"
+    [count]="game.showInfo() ? p.discardPile.length : null"
     [dropActive]="over() === 'discardPile'"
     [targeted]="isTargeted('discardPile')"
     [selectable]="targeting()"
@@ -209,6 +211,18 @@
       >
         <eras-icon name="zap" />
         <span>{{ game.optionalOff() ? 'Opcionales apagados' : 'Opcionales activos' }}</span>
+      </button>
+      <!-- More about the cards and zones in sight: cost, type, classes and level; how many cards each zone holds -->
+      <button
+        type="button"
+        class="optional-toggle info-toggle"
+        [class.on]="game.showInfo()"
+        [attr.aria-pressed]="game.showInfo()"
+        title="Muestra el coste, tipo, clases y nivel de las cartas del campo y cuántas cartas hay en cada zona (se recuerda en este dispositivo)."
+        (click)="game.showInfo.set(!game.showInfo())"
+      >
+        <eras-icon name="info" />
+        <span>Información</span>
       </button>
     </div>
   }

@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect,
 import { displayStrength, isHidden, knownToOwner, strengthChange } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
-import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
+import { GameCardComponent, GameCardInfo } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { LegalAction, challenges, inFrontLine, legalActions, specialKindLabel } from '@data/simulator/legal-actions';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
@@ -64,6 +64,14 @@ export class SimCardComponent {
   protected readonly hidden = computed(() => !this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
   /** Hidden but shown: by "Mostrar cartas ocultas", or my own face-down card in the Tributos or the Descarte. */
   protected readonly peeked = computed(() => this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
+  /** With the table's information on: cost, type, classes and level of a card of the field that is face up. */
+  protected readonly info = computed<GameCardInfo | null>(() => {
+    const s = this.slot();
+    if (!this.game.showInfo() || this.zone() !== 'field' || this.hidden()) return null;
+    const type = s.cardType === 'creature' || s.cardType === 'utility' || s.cardType === 'structure' ? s.cardType : null;
+    const level = s.level == null ? null : s.level + (s.continuousLevel ?? 0);
+    return { cost: s.cost ?? null, type, classes: s.classes ?? [], level };
+  });
   private readonly shownAnyway = computed(() => this.game.seeAll() || knownToOwner(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
   /** Your card has effect text (its own or inherited from its materials). */

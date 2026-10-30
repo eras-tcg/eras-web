@@ -25,6 +25,8 @@ export interface CardSlot {
   /** Abilities and strength its continuous effects give it now (they stop when their condition does). */
   continuousKeywords?: string[];
   continuousStrength?: number;
+  /** Levels gained from continuous effects (Xiromorfo). */
+  continuousLevel?: number;
   specialCost?: number | null;
   requirement?: string | null;
   /** Strength gained or lost until the end of the turn. */
@@ -79,6 +81,8 @@ export type ZoneName = (typeof ZONES)[number];
 export interface PlayerState {
   userId: string;
   username: string;
+  /** Their icon from the profile, "icon:color"; null for the default. */
+  avatar?: string | null;
   connected: boolean;
   /** Pre-room: the deck's name, the starter chosen (a card id of the deck) and whether they confirmed. */
   deckName?: string | null;

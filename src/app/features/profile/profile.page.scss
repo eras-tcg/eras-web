@@ -1,0 +1,92 @@
+// How the player is shown on the table: icon and name on a plate
+.plate-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 16%, var(--color-surface)), var(--color-surface));
+  justify-self: start;
+
+  eras-avatar {
+    --avatar-size: 3rem;
+  }
+}
+
+.plate-name {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg, 1.125rem);
+}
+
+.choice-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: var(--space-2);
+}
+
+.icon-choice,
+.color-choice {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+
+  &[aria-checked='true'] {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.icon-choice {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+
+  eras-icon {
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+  }
+}
+
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+// The identity colors are fixed, like the icon's ground
+.color-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-weight: var(--font-weight-bold);
+
+  &::before {
+    content: '';
+    inline-size: 0.9rem;
+    block-size: 0.9rem;
+    border-radius: 50%;
+    background: var(--swatch);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 25%);
+  }
+
+  &[data-color='B'] { --swatch: #1d4ed8; }
+  &[data-color='G'] { --swatch: #15803d; }
+  &[data-color='P'] { --swatch: #6d28d9; }
+  &[data-color='R'] { --swatch: #b91c1c; }
+  &[data-color='W'] { --swatch: #e7e5e4; }
+}

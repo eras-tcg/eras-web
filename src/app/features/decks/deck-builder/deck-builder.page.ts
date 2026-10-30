@@ -127,7 +127,8 @@ export class DeckBuilderPage {
     return card ? cardDetailView(card, this.cards.ref(), this.cards.unprogrammedOf(card)) : null;
   });
 
-  protected readonly showMetrics = signal(true);
+  /** The metrics at the bottom of the deck, open or compact (remembered on the device). */
+  protected readonly showMetrics = persistedFlag('eras-deck-builder-metrics-open', true);
   protected readonly dragOver = signal(false);
 
   private loadedFor: string | null = null;

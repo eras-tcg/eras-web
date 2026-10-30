@@ -2,6 +2,52 @@
   <eras-grid minColumn="20rem" [gap]="5">
     <eras-card padding="lg">
       <eras-stack [gap]="4">
+        <eras-section-header title="Tu ícono de jugador" />
+        <!-- How the rival sees you on the table -->
+        <div class="plate-preview" aria-label="Vista previa en el tablero">
+          <eras-avatar [avatar]="avatarDraftValue()" />
+          <span class="plate-name">{{ username() }}</span>
+        </div>
+        @if (avatarFeedback(); as f) {
+          <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+        }
+        <div class="choice-label" id="avatar-icons-label">Emblema</div>
+        <div class="icon-grid" role="radiogroup" aria-labelledby="avatar-icons-label">
+          @for (a of avatarIcons; track a.icon) {
+            <button
+              type="button"
+              class="icon-choice"
+              role="radio"
+              [attr.aria-checked]="avatarDraft().icon === a.icon"
+              [attr.aria-label]="a.label"
+              [title]="a.label"
+              (click)="pickIcon(a.icon)"
+            >
+              <eras-icon [name]="a.icon" />
+            </button>
+          }
+        </div>
+        <div class="choice-label" id="avatar-colors-label">Color</div>
+        <div class="color-row" role="radiogroup" aria-labelledby="avatar-colors-label">
+          @for (c of avatarColors; track c.color) {
+            <button
+              type="button"
+              class="color-choice"
+              role="radio"
+              [attr.data-color]="c.color"
+              [attr.aria-checked]="avatarDraft().color === c.color"
+              (click)="pickColor(c.color)"
+            >
+              {{ c.label }}
+            </button>
+          }
+        </div>
+        <button erasButton type="button" [loading]="profile.saving()" [disabled]="profile.saving() || !avatarChanged()" (click)="saveAvatar()">Guardar ícono</button>
+      </eras-stack>
+    </eras-card>
+
+    <eras-card padding="lg">
+      <eras-stack [gap]="4">
         <eras-section-header title="Información de cuenta" />
         @if (canEditAccount()) {
           @if (accountLoading()) {

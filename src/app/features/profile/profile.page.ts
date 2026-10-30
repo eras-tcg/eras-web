@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
+import { AVATAR_COLORS, AVATAR_ICONS, Avatar, AvatarColor, formatAvatar, parseAvatar } from '@ui/domain/avatar/avatar';
+import { ProfileStore } from '@data/profile/profile.store';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
+import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
@@ -21,8 +25,9 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent],
+  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
   templateUrl: './profile.page.html',
+  styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfilePage {
@@ -30,6 +35,15 @@ export class ProfilePage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
+
+  // ── Player icon (shown beside the name in the simulator) ───────────────
+  protected readonly profile = inject(ProfileStore);
+  protected readonly avatarIcons = AVATAR_ICONS;
+  protected readonly avatarColors = AVATAR_COLORS;
+  protected readonly avatarDraft = signal<Avatar>(parseAvatar(null));
+  protected readonly avatarDraftValue = computed(() => formatAvatar(this.avatarDraft()));
+  protected readonly avatarChanged = computed(() => this.avatarDraftValue() !== formatAvatar(parseAvatar(this.profile.avatar())));
+  protected readonly avatarFeedback = signal<Feedback>(null);
   protected readonly canEditAccount = computed(() => this.auth.can('manage_users'));
 
   // ── Account (manage_users) ─────────────────────────────────────────────
@@ -56,6 +70,30 @@ export class ProfilePage {
 
   constructor() {
     if (this.canEditAccount()) void this.loadAccount();
+    // The saved icon is where the choice starts (and comes back to once it is saved)
+    effect(() => {
+      const saved = this.profile.avatar();
+      untracked(() => this.avatarDraft.set(parseAvatar(saved)));
+    });
+  }
+
+  protected pickIcon(icon: IconName): void {
+    this.avatarDraft.update((a) => ({ ...a, icon }));
+    this.avatarFeedback.set(null);
+  }
+
+  protected pickColor(color: AvatarColor): void {
+    this.avatarDraft.update((a) => ({ ...a, color }));
+    this.avatarFeedback.set(null);
+  }
+
+  protected async saveAvatar(): Promise<void> {
+    try {
+      await this.profile.saveAvatar(this.avatarDraftValue());
+      this.avatarFeedback.set({ tone: 'success', text: 'Ícono guardado. Se verá en tus próximas partidas.' });
+    } catch (e) {
+      this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo guardar el ícono') });
+    }
   }
 
   private async loadAccount(): Promise<void> {

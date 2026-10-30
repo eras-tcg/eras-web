@@ -87,7 +87,7 @@
   <div class="hand-window">
     <div #handCards class="hand-cards" [class.straight]="straightHand()" [style.--hand-turn]="handTurn()">
       @for (s of p.hand; track s.instanceId; let i = $index) {
-        <div class="in-hand" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
+        <div class="in-hand" [attr.data-hand-id]="s.instanceId" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
           <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
         </div>
       }

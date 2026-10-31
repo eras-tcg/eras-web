@@ -41,24 +41,23 @@ function roman(n: number): string {
       </span>
     }
     @if (info(); as i) {
-      <!-- The table's information: cost and type at the top left, level at the bottom left, classes along the bottom -->
-      <span class="info-side">
-        @if (i.cost !== null) {
-          <span class="info-cost" [attr.aria-label]="'Coste ' + i.cost">{{ i.cost }}</span>
-        }
-        @if (i.type) {
-          <span class="info-type" [title]="typeLabels[i.type]" [attr.aria-label]="typeLabels[i.type]"><eras-icon [name]="i.type" /></span>
-        }
-      </span>
-      @if (i.level !== null) {
-        <span class="info-level" [attr.aria-label]="'Nivel ' + i.level">{{ romanOf(i.level) }}</span>
+      <!-- The table's information while it is held, each over its place on the printed card: cost at the top left, type
+           on the top edge, level in its circle at the bottom left; the classes as badges in the middle -->
+      @if (i.cost !== null) {
+        <span class="info-cost" [attr.aria-label]="'Coste ' + i.cost">{{ i.cost }}</span>
+      }
+      @if (i.type) {
+        <span class="info-type" role="img" [attr.aria-label]="typeLabels[i.type]" [title]="typeLabels[i.type]"><eras-icon [name]="i.type" /></span>
       }
       @if (i.classes.length) {
         <span class="info-classes">
           @for (c of i.classes; track c) {
-            <span>{{ c }}</span>
+            <span class="info-class">{{ c }}</span>
           }
         </span>
+      }
+      @if (i.level !== null) {
+        <span class="info-level" [attr.aria-label]="'Nivel ' + i.level">{{ romanOf(i.level) }}</span>
       }
     }
     @if (materials()) {
@@ -143,79 +142,89 @@ function roman(n: number): string {
     }
     .materials { inset-inline-start: -0.3rem; background: #111; }
     /* The table's information, sized with the card so it stays inside it (and off its neighbours) */
-    .info-side {
-      position: absolute;
-      inset-block-start: 4%;
-      inset-inline-start: 4%;
+    :host(.with-info) { container-type: inline-size; }
+    .info-cost, .info-type, .info-classes, .info-level { position: absolute; pointer-events: none; }
+    /* Cost, level and strength share one size; each is centered on its printed place */
+    :host(.with-info) { --info-size: max(1.35rem, 21cqi); --info-font: max(0.75rem, 11.5cqi); }
+    .info-cost, .info-level { transform: translate(-50%, -50%); }
+    /* Over the printed cost hexagon */
+    .info-cost {
+      inset-block-start: 6.6%;
+      inset-inline-start: 7.5%;
+      display: grid;
+      place-items: center;
+      inline-size: var(--info-size);
+      aspect-ratio: 1;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: linear-gradient(160deg, #3b5bdb, #1e2f7a);
+      color: #fff;
+      font-size: var(--info-font);
+      font-weight: var(--font-weight-bold);
+      font-variant-numeric: tabular-nums;
+    }
+    /* The type's icon alone, over the printed type at the middle of the top edge */
+    .info-type {
+      inset-block-start: 0;
+      inset-inline-start: 50%;
+      display: grid;
+      place-items: center;
+      inline-size: var(--info-size);
+      aspect-ratio: 1;
+      border: 1px solid rgb(245 197 66 / 70%);
+      border-radius: 50%;
+      background: rgb(12 12 20 / 90%);
+      color: #f4f4f6;
+      transform: translate(-50%, -25%);
+    }
+    .info-type eras-icon { inline-size: 68%; block-size: 68%; }
+    /* The classes, one badge above the other at the middle of the card */
+    .info-classes {
+      inset-inline: 6%;
+      inset-block-start: 50%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.2em;
-      font-size: clamp(0.62rem, calc(var(--game-card-width, 4.5rem) * 0.13), 1.05rem);
-      pointer-events: none;
+      gap: 0.25em;
+      transform: translateY(-50%);
     }
-    .info-cost {
-      display: grid;
-      place-items: center;
-      inline-size: 1.75em;
-      block-size: 1.75em;
-      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-      background: #1e3a8a;
-      color: #fff;
-      font-weight: var(--font-weight-bold);
-      font-variant-numeric: tabular-nums;
-      box-shadow: inset 0 0 0 2px #93c5fd;
-    }
-    .info-type {
-      display: grid;
-      place-items: center;
-      inline-size: 1.6em;
-      block-size: 1.6em;
-      border-radius: 50%;
-      background: rgb(17 17 24 / 82%);
-      color: #f5f5f5;
-    }
-    .info-type eras-icon { inline-size: 1em; block-size: 1em; }
-    .info-level {
-      position: absolute;
-      inset-block-end: 4%;
-      inset-inline-start: 4%;
-      min-inline-size: 1.7em;
-      padding: 0.05em 0.3em;
-      border: 2px solid #f59e0b;
-      border-radius: var(--radius-pill);
-      background: rgb(17 17 24 / 85%);
-      color: #fcd34d;
-      font: var(--font-weight-bold) clamp(0.6rem, calc(var(--game-card-width, 4.5rem) * 0.12), 1rem) / 1.2 Georgia, 'Times New Roman', serif;
-      text-align: center;
-      pointer-events: none;
-    }
-    .info-classes {
-      position: absolute;
-      inset-inline: 6% 6%;
-      inset-block-end: 18%;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.2em;
-      max-block-size: 2.7em;
-      overflow: hidden;
-      font-size: clamp(0.5rem, calc(var(--game-card-width, 4.5rem) * 0.1), 0.8rem);
-      pointer-events: none;
-    }
-    .info-classes span {
+    .info-class {
       max-inline-size: 100%;
-      padding: 0.05em 0.45em;
       overflow: hidden;
+      padding: 0.15em 0.6em;
       border-radius: var(--radius-pill);
-      background: rgb(17 17 24 / 82%);
-      color: #f5f5f5;
+      background: rgb(12 12 20 / 85%);
+      box-shadow: 0 0 0 1px rgb(255 255 255 / 25%);
+      color: #f4f4f6;
+      font-size: max(0.55rem, 8.5cqi);
       font-weight: var(--font-weight-bold);
-      line-height: 1.25;
+      line-height: 1.3;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .resources { inset-inline-end: -0.3rem; background: #16a34a; }
+    /* Over the printed level circle, at the bottom left */
+    .info-level {
+      inset-block-start: 93%;
+      inset-inline-start: 6.5%;
+      display: grid;
+      place-items: center;
+      inline-size: var(--info-size);
+      aspect-ratio: 1;
+      border: 2px solid #f5c542;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #3a2a10, #120c04);
+      color: #f5c542;
+      font: var(--font-weight-bold) calc(var(--info-font) * 0.85)/1 Georgia, 'Times New Roman', serif;
+    }
+    /* The strength as big as the cost and the level; it only grows to fit the arrow of a change */
+    :host(.with-info) .strength {
+      display: grid;
+      place-items: center;
+      min-inline-size: var(--info-size);
+      block-size: var(--info-size);
+      padding: 0 0.3em;
+      font-size: var(--info-font);
+      line-height: 1;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -224,6 +233,7 @@ function roman(n: number): string {
     '[class.source]': 'source()',
     '[class.small]': 'small()',
     '[class.selectable]': 'selectable()',
+    '[class.with-info]': 'info() !== null',
   },
 })
 export class GameCardComponent {

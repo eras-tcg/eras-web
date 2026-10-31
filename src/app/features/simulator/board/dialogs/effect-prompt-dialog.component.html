@@ -1,11 +1,8 @@
-<eras-sheet [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
-  <!-- The card that is resolving at a fixed size on the left, the choice beside it -->
-  <div class="layout" [class.with-source]="withSource">
-  @if (withSource) {
-    <aside class="source" aria-label="Carta que se resuelve">
-      <img [src]="prompt.sourceImageUrl" [alt]="prompt.sourceName" draggable="false" />
-    </aside>
-  }
+@if (panel(); as p) {
+  <!-- The card the choice is about, beside it: its effects, the one that asks lit up -->
+  <eras-effect-card-panel class="side" [class.lowered]="sheet.lowered()" [class.see-through]="sheet.seeThrough()" [slot]="p.slot" [name]="p.name" [image]="p.image" [activeText]="p.text" />
+}
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
   <div class="body">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
@@ -32,7 +29,7 @@
               <span class="offered-text">{{ e.text }}</span>
               @if (cardOf(e.sourceId); as c) {
                 @if (zoneOf(c); as zone) {
-                  <span class="zone">{{ zone }}</span>
+                  <span class="zone"><eras-icon [name]="zoneIcon(zone)" /> {{ zone }}</span>
                 }
               }
             </span>
@@ -40,22 +37,16 @@
         </li>
       }
     </ul>
-  } @else if (prompt.effectText && !inChain()) {
+  } @else if (prompt.effectText && !inChain() && !panel()) {
     <!-- An effect already in the chain shows its text there, above this sheet -->
     <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
   }
-  @if (prompt.reorderRest) {
-    @if (prompt.max === 0) {
-      <p class="hint">Arrastra las cartas para ordenarlas: van {{ prompt.restToTop ? 'al tope' : 'al fondo' }} de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
-    } @else if (prompt.restToTop) {
-      <p class="hint">Haz clic en las cartas que descartas. Arrastra las demás para ordenarlas: vuelven al tope de tu mazo en ese orden (la de la izquierda queda arriba).</p>
-    } @else {
-      <p class="hint">Haz clic en una carta válida para llevarla a tu mano. Arrastra las demás para ordenarlas: irán al fondo de tu mazo en ese orden (la de la izquierda queda más arriba).</p>
-    }
-  }
-  @if (!prompt.effects?.length) {
+  @if (!prompt.effects?.length && cardsShown()) {
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
+  }
+  @if (commonZone(); as zone) {
+    <p class="from-zone"><eras-icon [name]="zoneIcon(zone)" /> Desde: {{ zone }}</p>
   }
   @if (hiddenCount() > 0) {
     <label class="show-all">
@@ -102,8 +93,10 @@
               {{ effectLabel }}
             }
           </span>
-          @if (zoneOf(c); as zone) {
-            <span class="zone">{{ zone }}</span>
+          @if (!commonZone()) {
+            @if (zoneOf(c); as zone) {
+              <span class="zone"><eras-icon [name]="zoneIcon(zone)" /> {{ zone }}</span>
+            }
           }
         </button>
         @if (!c.faceDown || game.seeAll()) {
@@ -115,7 +108,6 @@
     }
   </div>
   }
-  </div>
   </div>
   <ng-container sheet-footer>
     <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>

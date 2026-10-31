@@ -3,6 +3,15 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 /** 24x24 stroke icons. To change the icon set, change only this file. */
 const ICONS = {
   plus: 'M12 5v14M5 12h14',
+  link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+  // The zones of the game table
+  'zone-hand': 'M9 4h6a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8 7 4.6 8.2a1 1 0 0 0-.6 1.3l3.4 8.9M16 7l3.4 1.2a1 1 0 0 1 .6 1.3l-3.4 8.9',
+  'zone-deck': 'M6 8h10a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM8 5h10a1 1 0 0 1 1 1v11M10 2h10a1 1 0 0 1 1 1v11',
+  'zone-discard': 'M7 21V10a5 5 0 0 1 10 0v11M4 21h16M12 8v6M9.5 10.5h5',
+  'zone-tribute': 'M12 3c1 3.5 5 5.6 5 10a5 5 0 0 1-10 0c0-2.4 1.4-4 2.5-5 0 2 1 3.2 2.2 3.2C11.7 8.4 12.4 6 12 3z',
+  'zone-life': 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  'zone-front': 'M14.5 4H20v5.5L10 19.5 4.5 14zM7 12l5 5M5 19l2-2',
+  'zone-rear': 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z',
   x: 'M6 6l12 12M18 6L6 18',
   edit: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
   sun: 'M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',

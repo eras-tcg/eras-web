@@ -1,9 +1,10 @@
 @let p = player();
 <!-- Lives and gem marker -->
 <div class="lives">
-  <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
+  <eras-resource-pips [attr.data-gems]="p.userId" [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
   <eras-game-zone
     class="life-zone"
+    [class.attack-zone]="attackDrag()"
     label="Vidas"
     [attr.data-pile]="p.userId + ':lifeStack'"
     [count]="game.showInfo() ? p.lifeStack.length : null"
@@ -25,6 +26,7 @@
         </div>
       }
     </div>
+    <eras-chain-marks ring [links]="pileLinks().lifeStack" [me]="game.myState()?.userId" />
   </eras-game-zone>
   <!-- The player's plate: their icon and name, under their lives (over them on the rival's side) -->
   <eras-player-plate [username]="p.username" [avatar]="p.avatar" [connected]="p.connected" />
@@ -85,8 +87,9 @@
   [attr.data-pile]="p.userId + ':hand'"
   [count]="game.showInfo() ? p.hand.length : null"
   countIcon="cards"
-  [dropActive]="over() === 'hand' && !opponent()"
-  (dragover)="!opponent() && dragOver($event, 'hand')"
+  [dropActive]="over() === 'hand' && (!opponent() || attackDrag())"
+  [class.attack-zone]="attackDrag()"
+  (dragover)="(!opponent() || attackDrag()) && dragOver($event, 'hand')"
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
   (wheel)="turnHand($event)"
@@ -147,6 +150,7 @@
     @if (p.deck.length) {
       <eras-game-card hidden />
     }
+    <eras-chain-marks ring [links]="pileLinks().deck" [me]="game.myState()?.userId" />
   </eras-game-zone>
   <ng-template #deckMenu>
     <eras-menu>
@@ -177,6 +181,7 @@
     @if (topTribute(); as t) {
       <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
+    <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
 
   <eras-game-zone
@@ -195,6 +200,7 @@
     @if (topDiscard(); as d) {
       <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
+    <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>
 
   @if (!opponent() && game.status() === 'IN_PROGRESS') {
@@ -218,8 +224,17 @@
         class="optional-toggle info-toggle"
         [class.on]="game.showInfo()"
         [attr.aria-pressed]="game.showInfo()"
-        title="Muestra el coste, tipo, clases y nivel de las cartas del campo y cuántas cartas hay en cada zona (se recuerda en este dispositivo)."
-        (click)="game.showInfo.set(!game.showInfo())"
+        title="Mantén presionado para ver el coste, tipo, clases y nivel de las cartas del campo y cuántas cartas hay en cada zona."
+        (pointerdown)="holdInfo($event)"
+        (pointerup)="game.showInfo.set(false)"
+        (pointercancel)="game.showInfo.set(false)"
+        (lostpointercapture)="game.showInfo.set(false)"
+        (keydown.space)="game.showInfo.set(true); $event.preventDefault()"
+        (keyup.space)="game.showInfo.set(false)"
+        (keydown.enter)="game.showInfo.set(true)"
+        (keyup.enter)="game.showInfo.set(false)"
+        (blur)="game.showInfo.set(false)"
+        (contextmenu)="$event.preventDefault()"
       >
         <eras-icon name="info" />
         <span>Información</span>

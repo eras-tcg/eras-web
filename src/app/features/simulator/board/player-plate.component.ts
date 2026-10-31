@@ -6,7 +6,7 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
   selector: 'eras-player-plate',
   imports: [AvatarComponent],
   template: `
-    <eras-avatar [avatar]="avatar()" />
+    <eras-avatar [url]="avatar()" [name]="username()" />
     <span class="name">{{ username() }}</span>
     @if (!connected()) {
       <span class="offline">desconectado</span>

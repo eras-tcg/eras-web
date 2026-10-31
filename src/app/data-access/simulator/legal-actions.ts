@@ -105,6 +105,14 @@ export function challenges(attacker: CardSlot, target: CardSlot): boolean {
   return false;
 }
 
+/**
+ * The enemy creatures this one can attack (as the server checks it): those of the Línea frontal that are exhausted,
+ * or active ones it can face (Enfrentar).
+ */
+export function attackableCreatures(attacker: CardSlot, enemies: readonly CardSlot[]): CardSlot[] {
+  return enemies.filter((c) => c.cardType === 'creature' && inFrontLine(c) && (c.tapped || challenges(attacker, c)));
+}
+
 /** Requerimiento of a Ritual: one creature of level N, or several whose levels add up to N. */
 export function requirement(slot: CardSlot): { sum: boolean; level: number } | null {
   const text = slot.requirement?.toLowerCase() ?? '';

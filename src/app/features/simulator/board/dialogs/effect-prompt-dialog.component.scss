@@ -8,8 +8,9 @@
 .cards {
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: var(--space-3) var(--space-2);
   min-block-size: 12rem;
 }
 .slot { display: flex; }
@@ -29,7 +30,7 @@
   color: inherit;
   cursor: pointer;
 }
-.pick:hover:not(:disabled) { background: var(--color-surface-muted); }
+.pick:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-primary) 60%, transparent); }
 .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
 .pick.locked { opacity: 0.4; cursor: not-allowed; }
 .slot { position: relative; }
@@ -84,21 +85,11 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
   font-weight: var(--font-weight-bold);
 }
 .link-tag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-success); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
-.offered-text { font-size: var(--font-size-sm); line-height: 1.45; }
+.offered-text { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--font-size-sm); line-height: 1.45; color: var(--color-text-muted); }
 .effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
 .show-all { display: inline-flex; align-items: center; gap: var(--space-2); justify-self: start; color: var(--color-text-muted); font-size: var(--font-size-sm); cursor: pointer; }
-.zone { color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
-
-// The card that is resolving: a fixed column on the left, the text and the choice beside it
-.layout {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.layout.with-source {
-  grid-template-columns: 12.5rem minmax(0, 1fr);
-  align-items: start;
-}
+.zone { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.zone eras-icon { inline-size: 0.85rem; block-size: 0.85rem; }
 
 .body {
   display: grid;
@@ -106,29 +97,62 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
   min-inline-size: 0;
 }
 
-.source {
-  position: sticky;
-  inset-block-start: 0;
-}
+// The card the choice is about floats at the left edge of the screen, as tall as it allows; the sheet stays centered
+:host {
+  --effect-panel-width: 17rem;
+  --effect-panel-gap: var(--space-3);
 
-.source img {
   display: block;
-  inline-size: 100%;
-  aspect-ratio: 63 / 88;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 40%);
 }
 
-// On a narrow screen the card goes above, smaller
-@media (max-width: 640px) {
-  .layout.with-source {
-    grid-template-columns: minmax(0, 1fr);
+.side {
+  position: fixed;
+  inset-block-end: var(--space-3);
+  inset-inline-start: var(--effect-panel-gap);
+  max-block-size: calc(100vh - 2 * var(--space-3));
+  transition: opacity var(--duration-fast, 120ms) ease, transform var(--duration-normal, 200ms) var(--easing-standard, ease-out);
+}
+
+// Lowered to look at the table, or held to see through: the panel steps aside too
+.side.lowered {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-1rem);
+}
+
+.side.see-through {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+// Centered, it narrows so it does not reach the panel
+eras-sheet.with-panel {
+  --sheet-width: min(60rem, calc(100vw - 2 * (var(--effect-panel-width) + 2 * var(--effect-panel-gap))));
+}
+
+// On a narrow screen there is no room beside it: the sheet alone, as wide as usual
+@media (max-width: 64rem) {
+  .side {
+    display: none;
   }
 
-  .source {
-    position: static;
-    inline-size: 8rem;
+  eras-sheet.with-panel {
+    --sheet-width: 64rem;
   }
 }
 
+.from-zone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.from-zone eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

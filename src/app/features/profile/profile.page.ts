@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
-import { AVATAR_COLORS, AVATAR_ICONS, Avatar, AvatarColor, formatAvatar, parseAvatar } from '@ui/domain/avatar/avatar';
-import { ProfileStore } from '@data/profile/profile.store';
+import { AvatarStore } from '@core/auth/avatar.store';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
-import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
@@ -36,14 +35,11 @@ export class ProfilePage {
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
 
-  // ── Player icon (shown beside the name in the simulator) ───────────────
-  protected readonly profile = inject(ProfileStore);
-  protected readonly avatarIcons = AVATAR_ICONS;
-  protected readonly avatarColors = AVATAR_COLORS;
-  protected readonly avatarDraft = signal<Avatar>(parseAvatar(null));
-  protected readonly avatarDraftValue = computed(() => formatAvatar(this.avatarDraft()));
-  protected readonly avatarChanged = computed(() => this.avatarDraftValue() !== formatAvatar(parseAvatar(this.profile.avatar())));
+  // ── Player icon (navbar and beside the name in the simulator) ──────────
+  protected readonly avatar = inject(AvatarStore);
   protected readonly avatarFeedback = signal<Feedback>(null);
+  /** The largest image accepted (the server scales it to a square). */
+  private readonly maxAvatarBytes = 5 * 1024 * 1024;
   protected readonly canEditAccount = computed(() => this.auth.can('manage_users'));
 
   // ── Account (manage_users) ─────────────────────────────────────────────
@@ -70,29 +66,32 @@ export class ProfilePage {
 
   constructor() {
     if (this.canEditAccount()) void this.loadAccount();
-    // The saved icon is where the choice starts (and comes back to once it is saved)
-    effect(() => {
-      const saved = this.profile.avatar();
-      untracked(() => this.avatarDraft.set(parseAvatar(saved)));
-    });
   }
 
-  protected pickIcon(icon: IconName): void {
-    this.avatarDraft.update((a) => ({ ...a, icon }));
+  protected async uploadAvatar(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > this.maxAvatarBytes) {
+      this.avatarFeedback.set({ tone: 'danger', text: 'La imagen pesa más de 5 MB' });
+      return;
+    }
     this.avatarFeedback.set(null);
-  }
-
-  protected pickColor(color: AvatarColor): void {
-    this.avatarDraft.update((a) => ({ ...a, color }));
-    this.avatarFeedback.set(null);
-  }
-
-  protected async saveAvatar(): Promise<void> {
     try {
-      await this.profile.saveAvatar(this.avatarDraftValue());
+      await this.avatar.upload(file);
       this.avatarFeedback.set({ tone: 'success', text: 'Ícono guardado. Se verá en tus próximas partidas.' });
     } catch (e) {
       this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo guardar el ícono') });
+    }
+  }
+
+  protected async removeAvatar(): Promise<void> {
+    this.avatarFeedback.set(null);
+    try {
+      await this.avatar.remove();
+      this.avatarFeedback.set({ tone: 'success', text: 'Ícono quitado. Se verá la inicial de tu nombre.' });
+    } catch (e) {
+      this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo quitar el ícono') });
     }
   }
 

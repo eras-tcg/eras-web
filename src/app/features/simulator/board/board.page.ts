@@ -23,6 +23,9 @@ import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
 import { DamageRevealComponent } from './damage-reveal.component';
+import { ChainLinkRevealComponent } from './chain-link-reveal.component';
+import { BoardFxComponent } from './board-fx.component';
+import { MatchBannerComponent } from './match-banner.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
 import { persistedFlag } from '@core/storage/persisted-flag';
@@ -36,7 +39,7 @@ const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: '
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent, SidebarItemComponent],
+  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, ChainLinkRevealComponent, BoardFxComponent, MatchBannerComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent, SidebarItemComponent],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
   styleUrl: './board.page.scss',
@@ -56,6 +59,7 @@ export class BoardPage {
 
   protected readonly game = inject(GameStore);
   protected readonly animations = inject(BoardAnimations);
+  private readonly drag = inject(BoardDrag);
   private readonly sheet = inject(SheetState);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */
   protected readonly lookOnly = this.sheet.lowered;
@@ -174,6 +178,9 @@ export class BoardPage {
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
     effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
     inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
+    // While something plays, the next updates wait: each one is seen after the animation before it
+    effect(() => this.game.holdUpdates.set(!this.animations.idle()));
+    inject(DestroyRef).onDestroy(() => this.game.holdUpdates.set(false));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 
@@ -273,6 +280,14 @@ export class BoardPage {
     win?.addEventListener('click', click, true);
     win?.addEventListener('pointercancel', up, true);
     win?.addEventListener('blur', up);
+    // A drag is not a long press, and after one the browser sends no pointerup: a drag ends whatever was held
+    const dragged = () => {
+      up();
+      this.drag.end();
+    };
+    win?.addEventListener('dragstart', cancel, true);
+    win?.addEventListener('dragend', dragged, true);
+    win?.addEventListener('drop', dragged);
     inject(DestroyRef).onDestroy(() => {
       cancel();
       this.seeThrough.set(false);
@@ -283,6 +298,9 @@ export class BoardPage {
       win?.removeEventListener('click', click, true);
       win?.removeEventListener('pointercancel', up, true);
       win?.removeEventListener('blur', up);
+      win?.removeEventListener('dragstart', cancel, true);
+      win?.removeEventListener('dragend', dragged, true);
+      win?.removeEventListener('drop', dragged);
     });
     // Nothing left to look through: back to normal
     effect(() => {

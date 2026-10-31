@@ -3,7 +3,6 @@ import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
-import { ProfileStore } from '@data/profile/profile.store';
 import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
 import { rulesView } from './legal-actions';
 import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
@@ -31,7 +30,6 @@ function wsUrl(): string {
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
-  private readonly profile = inject(ProfileStore);
   private client: Client | null = null;
   private timers = new Set<ReturnType<typeof setTimeout>>();
 
@@ -98,12 +96,16 @@ export class GameStore {
   }
 
   /**
-   * "Información": the table shows more about the cards and zones in sight (cost, type, classes and level of the
-   * cards on the field; how many cards each pile, line and hand holds). Remembered on the device.
+   * "Información", while its button is held: the table shows more about the cards and zones in sight (cost, type,
+   * classes and level of the cards on the field; how many cards each pile, line and hand holds).
    */
-  readonly showInfo = persistedFlag('eras-sim-info');
+  readonly showInfo = signal(false);
 
   constructor() {
+    // The board let go: show what waited (a frame later, so animations that start now hold it again)
+    effect(() => {
+      if (!this.holdUpdates()) untracked(() => requestAnimationFrame(() => this.drain()));
+    });
     // The server keeps it per game: what the device remembers is sent when they differ
     effect(() => {
       const mine = this.myState();
@@ -184,7 +186,7 @@ export class GameStore {
           this.connected.set(true);
           this.client?.subscribe(`/topic/room/${roomId}`, (msg) => this.onMessage(msg.body));
           // The socket dropped and came back by itself: be in the room again and get its current state
-          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '', avatar: this.profile.avatar() });
+          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
           reconnecting = true;
           resolve();
         },
@@ -206,6 +208,7 @@ export class GameStore {
     this.timers.clear();
     this.roomId.set(null);
     this.state.set(null);
+    this.incoming.length = 0;
     this.seat.set(null);
     this.connected.set(false);
     this.error.set(null);
@@ -238,8 +241,39 @@ export class GameStore {
     this.timers.add(t);
   }
 
+  /**
+   * While the board plays an animation, the updates that arrive wait in line and are shown one by one once it ends:
+   * what an effect does is seen after its chain link is shown, not under it. Errors are shown at once.
+   */
+  readonly holdUpdates = signal(false);
+  private readonly incoming: GameState[] = [];
+  private draining = false;
+
   private onMessage(body: string): void {
     const update = JSON.parse(body) as GameState;
+    if (update.error) {
+      this.apply(update);
+      return;
+    }
+    this.incoming.push(update);
+    this.drain();
+  }
+
+  /** Shows the next update in line, and the one after it a frame later (once the board has drawn and animated it). */
+  private drain(): void {
+    if (this.draining || this.holdUpdates() || !this.incoming.length) return;
+    this.apply(this.incoming.shift()!);
+    if (!this.incoming.length) return;
+    this.draining = true;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        this.draining = false;
+        this.drain();
+      }),
+    );
+  }
+
+  private apply(update: GameState): void {
     const me = this.userId();
     if (update.error) {
       // The room is gone (closed while I was away)
@@ -397,7 +431,7 @@ export class GameStore {
   }
 
   joinRoom(deckId: string | null): void {
-    this.send('JOIN_ROOM', { deckId, username: this.auth.user()?.username ?? '', avatar: this.profile.avatar() });
+    this.send('JOIN_ROOM', { deckId, username: this.auth.user()?.username ?? '' });
   }
   drawCard(): void {
     this.send('DRAW_CARD');

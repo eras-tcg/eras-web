@@ -5,44 +5,22 @@
         <eras-section-header title="Tu ícono de jugador" />
         <!-- How the rival sees you on the table -->
         <div class="plate-preview" aria-label="Vista previa en el tablero">
-          <eras-avatar [avatar]="avatarDraftValue()" />
+          <eras-avatar [url]="avatar.url()" [name]="username()" />
           <span class="plate-name">{{ username() }}</span>
         </div>
         @if (avatarFeedback(); as f) {
           <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
         }
-        <div class="choice-label" id="avatar-icons-label">Emblema</div>
-        <div class="icon-grid" role="radiogroup" aria-labelledby="avatar-icons-label">
-          @for (a of avatarIcons; track a.icon) {
-            <button
-              type="button"
-              class="icon-choice"
-              role="radio"
-              [attr.aria-checked]="avatarDraft().icon === a.icon"
-              [attr.aria-label]="a.label"
-              [title]="a.label"
-              (click)="pickIcon(a.icon)"
-            >
-              <eras-icon [name]="a.icon" />
-            </button>
+        <p class="hint">Una imagen JPG, PNG o GIF de hasta 5 MB. Se recorta al centro en un cuadrado.</p>
+        <input #file type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAvatar(file)" />
+        <eras-stack direction="row" [gap]="2" wrap>
+          <button erasButton type="button" [loading]="avatar.saving()" [disabled]="avatar.saving()" (click)="file.click()">
+            <eras-icon name="image" /> {{ avatar.url() ? 'Cambiar imagen' : 'Subir imagen' }}
+          </button>
+          @if (avatar.url()) {
+            <button erasButton variant="secondary" type="button" [disabled]="avatar.saving()" (click)="removeAvatar()">Quitar</button>
           }
-        </div>
-        <div class="choice-label" id="avatar-colors-label">Color</div>
-        <div class="color-row" role="radiogroup" aria-labelledby="avatar-colors-label">
-          @for (c of avatarColors; track c.color) {
-            <button
-              type="button"
-              class="color-choice"
-              role="radio"
-              [attr.data-color]="c.color"
-              [attr.aria-checked]="avatarDraft().color === c.color"
-              (click)="pickColor(c.color)"
-            >
-              {{ c.label }}
-            </button>
-          }
-        </div>
-        <button erasButton type="button" [loading]="profile.saving()" [disabled]="profile.saving() || !avatarChanged()" (click)="saveAvatar()">Guardar ícono</button>
+        </eras-stack>
       </eras-stack>
     </eras-card>
 

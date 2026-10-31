@@ -28,7 +28,9 @@
   </div>
 
   <!-- ── Middle: the deck ────────────────────────────────────────────── -->
-  <eras-stack [gap]="4">
+  <!-- The deck: its list scrolls; the metrics are a drawer at the bottom that opens upwards -->
+  <div class="deck-column">
+  <eras-stack [gap]="4" class="deck-scroll">
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       <eras-form-field label="Nombre del mazo">
         <input placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
@@ -141,22 +143,28 @@
       }
     </eras-dropzone>
 
-    @if (draft.total() > 0) {
-      <!-- Always in sight at the bottom of the deck while its list scrolls; compact it to see more cards -->
-      <div class="metrics-dock" [class.compact]="!showMetrics()">
-        <eras-section-header title="Métricas">
-          <button erasButton variant="ghost" size="sm" type="button" [attr.aria-expanded]="showMetrics()" (click)="showMetrics.set(!showMetrics())">
-            {{ showMetrics() ? 'Compactar' : 'Mostrar' }}
-          </button>
-        </eras-section-header>
-        @if (showMetrics()) {
-          <div class="metrics-body">
-            <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
-          </div>
-        }
-      </div>
-    }
   </eras-stack>
+  @if (draft.total() > 0) {
+    <section class="metrics-drawer" [class.open]="showMetrics()" aria-labelledby="metrics-title">
+      <button
+        type="button"
+        class="drawer-handle"
+        [attr.aria-expanded]="showMetrics()"
+        aria-controls="metrics-body"
+        [attr.aria-label]="showMetrics() ? 'Ocultar las métricas' : 'Mostrar las métricas'"
+        (click)="showMetrics.set(!showMetrics())"
+      >
+        <span id="metrics-title">Métricas</span>
+        <eras-icon [name]="showMetrics() ? 'chevron-down' : 'chevron-up'" />
+      </button>
+      @if (showMetrics()) {
+        <div id="metrics-body" class="drawer-body">
+          <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
+        </div>
+      }
+    </section>
+  }
+  </div>
 
   <!-- ── Right: search ───────────────────────────────────────────────── -->
   <div pane-end>

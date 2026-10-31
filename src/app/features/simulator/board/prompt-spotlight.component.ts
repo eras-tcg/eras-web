@@ -50,6 +50,18 @@ export class PromptSpotlightComponent {
     });
     const view = this.document.defaultView;
     view?.addEventListener('resize', draw);
+    // The chain panel changes size (a link more, the sheet opening shrinks its box) or scrolls: its copy follows
+    const resize = new ResizeObserver(draw);
+    const watchChain = () => {
+      // Again on every update: the panel comes and goes with the chain
+      this.game.state();
+      resize.disconnect();
+      const chain = this.document.querySelector('.chain-panel');
+      if (chain) resize.observe(chain);
+      if (chain?.parentElement) resize.observe(chain.parentElement);
+    };
+    afterRenderEffect({ read: watchChain });
+    this.document.addEventListener('scroll', draw, { capture: true, passive: true });
     // The choice opens a moment after the update: draw again when an overlay opens or closes
     const observer = new MutationObserver((changes) => {
       // Not its own copies
@@ -59,7 +71,10 @@ export class PromptSpotlightComponent {
     observer.observe(this.overlays.getContainerElement(), { childList: true, subtree: true });
     inject(DestroyRef).onDestroy(() => {
       observer.disconnect();
+      resize.disconnect();
       view?.removeEventListener('resize', draw);
+      this.document.removeEventListener('scroll', draw, { capture: true });
+      this.showChain(null);
       this.layer.remove();
     });
   }
@@ -71,20 +86,31 @@ export class PromptSpotlightComponent {
     return layer;
   }
 
+  /** The chain panel itself is hidden while its copy stands in for it, so the two are never seen out of step. */
+  private hiddenChain: HTMLElement | null = null;
+  private showChain(chain: HTMLElement | null): void {
+    if (this.hiddenChain && this.hiddenChain !== chain) this.hiddenChain.style.visibility = '';
+    this.hiddenChain = chain;
+    if (chain) chain.style.visibility = 'hidden';
+  }
+
   private draw(ids: string[]): void {
     this.layer.replaceChildren();
     // Inside the last overlay (the choice), right before its pane: above its backdrop, below the choice
     const wrappers = this.overlays.getContainerElement().querySelectorAll(':scope > .cdk-global-overlay-wrapper');
     const pane = wrappers.item(wrappers.length - 1)?.querySelector(':scope > .cdk-overlay-pane');
     if (!ids.length || !pane?.parentElement) {
+      this.showChain(null);
       this.layer.remove();
       return;
     }
     if (this.layer.nextSibling !== pane) pane.parentElement.insertBefore(this.layer, pane);
     const chain = this.document.querySelector<HTMLElement>('.chain-panel');
-    for (const element of [...ids.map((id) => this.elementOf(id)), chain]) {
+    this.showChain(null);
+    if (chain) this.layer.append(this.chainCopy(chain));
+    this.showChain(chain);
+    for (const element of ids.map((id) => this.elementOf(id))) {
       if (!element) continue;
-      const card = element !== chain;
       const rect = element.getBoundingClientRect();
       const width = element.offsetWidth;
       const height = element.offsetHeight;
@@ -92,12 +118,7 @@ export class PromptSpotlightComponent {
       copy.removeAttribute('id');
       copy.style.position = 'fixed';
       copy.style.margin = '0';
-      if (!card) {
-        copy.dataset['chainCopy'] = '';
-        copy.style.transition = 'opacity 120ms ease';
-        if (this.seeThrough()) copy.style.opacity = '0.12';
-      }
-      if (card) copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
+      copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
       // The size the card takes from where it is
       copy.style.setProperty('--game-card-width', getComputedStyle(element).getPropertyValue('--game-card-width'));
       copy.style.width = `${width}px`;
@@ -109,9 +130,43 @@ export class PromptSpotlightComponent {
     }
   }
 
+  /**
+   * The chain panel's copy, cut to the part of it in view: its box (the notices column) scrolls and shrinks while a
+   * sheet is open, so the copy sits in a frame of that box's size and position.
+   */
+  private chainCopy(chain: HTMLElement): HTMLElement {
+    const box = (chain.parentElement ?? chain).getBoundingClientRect();
+    const rect = chain.getBoundingClientRect();
+    const frame = this.document.createElement('div');
+    frame.dataset['chainCopy'] = '';
+    Object.assign(frame.style, {
+      position: 'fixed',
+      left: `${box.left}px`,
+      top: `${box.top}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
+      overflow: 'hidden',
+      transition: 'opacity 120ms ease',
+      opacity: this.seeThrough() ? '0.12' : '',
+    });
+    const copy = chain.cloneNode(true) as HTMLElement;
+    copy.removeAttribute('id');
+    Object.assign(copy.style, {
+      position: 'absolute',
+      margin: '0',
+      visibility: 'visible',
+      left: `${rect.left - box.left}px`,
+      top: `${rect.top - box.top}px`,
+      width: `${chain.offsetWidth}px`,
+    });
+    frame.append(copy);
+    return frame;
+  }
+
   /** The card on the field, or the pile it is in. */
   private elementOf(id: string): HTMLElement | null {
-    const card = this.document.querySelector<HTMLElement>(`[data-instance-id="${id}"] eras-game-card`);
+    // A card of the field, or of a hand (the card itself, not the whole hand)
+    const card = this.document.querySelector<HTMLElement>(`[data-instance-id="${id}"] eras-game-card, [data-hand-id="${id}"] eras-game-card`);
     if (card) return card;
     for (const p of Object.values(this.game.state()?.players ?? {})) {
       for (const zone of ZONES) {

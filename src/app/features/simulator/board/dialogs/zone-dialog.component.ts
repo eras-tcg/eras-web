@@ -15,6 +15,7 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
 import { firstValueFrom } from 'rxjs';
 import { SendToData, SendToDialogComponent, SendToOption } from './send-to-dialog.component';
+import { CardPeekComponent } from '../card-peek.component';
 
 export interface ZoneDialogData {
   zone: ZoneName;
@@ -35,7 +36,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent],
   template: `
     <eras-modal size="xl" [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -83,6 +84,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                 }
                 <span class="position">{{ positionLabel(i) }}</span>
               </button>
+              <eras-card-peek [card]="isHidden(c) ? null : c" [mine]="true" />
               @if (actionsOf(c).includes('ritual')) {
                 <button erasButton size="sm" type="button" (click)="special(c)">{{ kindLabel(c) }}</button>
               }
@@ -107,7 +109,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
       padding: 0;
       list-style: none;
     }
-    li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+    li { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
     .pick {
       position: relative;
       display: flex;

@@ -44,7 +44,7 @@
         </button>
 
         <button type="button" class="account" [cdkMenuTriggerFor]="accountMenu" aria-label="Menú de la cuenta">
-          <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+          <eras-avatar class="avatar" aria-hidden="true" [url]="avatar.url()" [name]="user.username" />
           <span class="account-name">{{ user.username }}</span>
           <eras-icon name="chevron-down" />
         </button>

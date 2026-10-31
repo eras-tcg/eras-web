@@ -6,13 +6,14 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent, GameCardInfo } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
-import { LegalAction, challenges, inFrontLine, legalActions, specialKindLabel } from '@data/simulator/legal-actions';
+import { LegalAction, inFrontLine, legalActions, specialKindLabel, attackableCreatures } from '@data/simulator/legal-actions';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
 import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
@@ -20,7 +21,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
  */
 @Component({
   selector: 'eras-sim-card',
-  imports: [GameCardComponent, CdkContextMenuTrigger, CdkConnectedOverlay, CdkOverlayOrigin, MenuComponent, MenuItemDirective, IconComponent],
+  imports: [GameCardComponent, CdkContextMenuTrigger, CdkConnectedOverlay, CdkOverlayOrigin, MenuComponent, MenuItemDirective, IconComponent, ChainMarksComponent],
   templateUrl: './sim-card.component.html',
   styleUrl: './sim-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,9 +80,20 @@ export class SimCardComponent {
   protected readonly change = computed(() => strengthChange(this.slot()));
   protected readonly strength = computed(() => (this.zone() === 'field' && !this.hidden() && this.slot().cardType === 'creature' ? displayStrength(this.slot()) : null));
   protected readonly selected = computed(() => this.game.selectedId() === this.slot().instanceId);
+  /** The chain links this card has activated (a card of the hand that activates is revealed). */
+  protected readonly chainLinks = computed(() => chainLinksOf(this.game.state()?.chain, [this.slot()]));
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
   /** Cards of the hand can be dropped to play them by the rules; anything else is moved only in editor mode. */
-  protected readonly canDrag = computed(() => !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode()));
+  protected readonly canDrag = computed(() => !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()));
+  /** One of your creatures that can attack now: dragged onto a target, it attacks. */
+  protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
+  /** An enemy creature that the creature being dragged to attack can attack: it lights up as a target. */
+  protected readonly attackable = computed(() => {
+    const dragging = this.drag.dragging();
+    if (!dragging?.attack || !this.opponent() || this.zone() !== 'field') return false;
+    const attacker = this.game.myState()?.field.find((c) => c.instanceId === dragging.instanceId);
+    return !!attacker && attackableCreatures(attacker, [this.slot()]).length > 0;
+  });
   /** Its role in the combat in progress, if any. */
   protected readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
     const c = this.game.state()?.combat;
@@ -141,7 +153,7 @@ export class SimCardComponent {
       case 'attack': {
         const opponent = this.game.opponentState();
         // Enemies of the Línea frontal: exhausted ones, or active ones it can face (Enfrentar)
-        const creatures = (opponent?.field ?? []).filter((c) => c.cardType === 'creature' && inFrontLine(c) && (c.tapped || challenges(s, c)));
+        const creatures = attackableCreatures(s, opponent?.field ?? []);
         const target = await this.dialogs.attackTarget({ attacker: s, opponentName: opponent?.username ?? 'Rival', creatures });
         if (target !== undefined) this.game.attack(s.instanceId, target);
         return;
@@ -180,7 +192,7 @@ export class SimCardComponent {
       event.preventDefault();
       return;
     }
-    this.drag.start(event, { instanceId: this.slot().instanceId, fromZone: this.zone() });
+    this.drag.start(event, { instanceId: this.slot().instanceId, fromZone: this.zone(), attack: this.canAttack() });
   }
 
   protected async remove(): Promise<void> {

@@ -6,6 +6,7 @@ import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.compon
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
+import { CardPeekComponent } from '../card-peek.component';
 
 export interface CardPickerData {
   title: string;
@@ -24,7 +25,7 @@ export interface CardPickerData {
 /** Choose cards for an effect. Closes with the chosen instance ids (undefined when cancelled). */
 @Component({
   selector: 'eras-card-picker-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CardPeekComponent],
   template: `
     <eras-sheet size="lg" [title]="data.title" [subtitle]="subtitle()" (closed)="ref.close()">
       @if (data.matches && hiddenCount() > 0) {
@@ -40,6 +41,7 @@ export interface CardPickerData {
       } @else {
         <div class="cards" role="group" [attr.aria-label]="data.title">
           @for (c of visible(); track c.instanceId) {
+            <div class="slot">
             <button
               type="button"
               class="pick"
@@ -52,6 +54,8 @@ export interface CardPickerData {
               <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
               <span class="name">{{ c.cardName }}</span>
             </button>
+            <eras-card-peek [card]="c" />
+            </div>
           }
         </div>
       }
@@ -64,6 +68,7 @@ export interface CardPickerData {
     </eras-sheet>
   `,
   styles: `
+    .slot { position: relative; display: flex; }
     .cards {
       display: flex;
       flex-wrap: wrap;

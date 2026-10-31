@@ -9,6 +9,7 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
+import { CardPeekComponent } from '../card-peek.component';
 
 export interface DeckPeekData {
   position: 'top' | 'bottom';
@@ -21,7 +22,7 @@ export interface DeckPeekData {
  */
 @Component({
   selector: 'eras-deck-peek-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [CardPeekComponent, SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
   template: `
     <eras-sheet [title]="(data.position === 'top' ? 'Tope' : 'Fondo') + ' del mazo'" [subtitle]="cards().length + ' cartas, en orden'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -32,6 +33,7 @@ export interface DeckPeekData {
             <li>
               <span class="pos">{{ i + 1 }}</span>
               <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" [attr.aria-label]="c.cardName" />
+              <eras-card-peek [card]="c" [mine]="true" />
               <eras-stack direction="row" [gap]="1">
                 <button erasButton variant="ghost" size="sm" type="button" aria-label="Mover antes" [disabled]="i === 0" (click)="shift(i, -1)">◀</button>
                 <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Sacar ' + (c.cardName ?? 'carta')">Sacar…</button>
@@ -59,6 +61,7 @@ export interface DeckPeekData {
     </eras-sheet>
   `,
   styles: `
+    li { position: relative; }
     .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
     li { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
     .pos { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }

@@ -13,6 +13,9 @@ import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.comp
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardInfoData, CardInfoDialogComponent } from './card-info-dialog.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
+import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { IconName } from '@ui/primitives/icon/icon.component';
+import { EffectCardPanelComponent } from '../effect-card-panel.component';
 
 export interface EffectPromptData {
   prompt: EffectPrompt;
@@ -27,7 +30,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +40,27 @@ export class EffectPromptDialogComponent {
   private readonly modal = inject(ModalService);
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
+  protected readonly sheet = inject(SheetState);
+
+  /**
+   * The card beside the choice, with its effects and the one that asks lit up: the effect's card, or the card the
+   * choice is about. Not when effects are offered to chain: each one is shown with its card in the choice itself.
+   */
+  protected readonly panel = computed(() => {
+    if (this.prompt.effects?.length) return null;
+    const link = this.prompt.effectId ? this.game.state()?.chain?.find((e) => e.id === this.prompt.effectId) : null;
+    const slot = this.onTable(link?.sourceInstanceId ?? this.prompt.subjectId);
+    if (!slot && !this.prompt.sourceImageUrl) return null;
+    return { slot, name: this.prompt.sourceName || slot?.cardName || '', image: this.prompt.sourceImageUrl ?? null, text: this.prompt.effectText ?? link?.text ?? null };
+  });
+  /** A yes / no about the card already in the panel: the sheet does not show it again. */
+  protected readonly cardsShown = computed(() => {
+    const own = this.panel()?.slot?.instanceId;
+    return !(this.prompt.kind === 'CONFIRM' && own && this.prompt.cards.every((c) => c.instanceId === own));
+  });
+
+  /** A choice with its card beside it, or with effects to chain, takes the wide sheet. */
+  protected readonly withSource = !!this.prompt.sourceImageUrl || !!this.prompt.effects?.length;
   protected readonly valid = new Set(this.prompt.validIds);
   /** The most the chosen cards' levels may add up to, or null without that limit. */
   protected readonly levelSum = this.prompt.maxLevelSum ?? null;
@@ -62,6 +86,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
     if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
+    if (this.prompt.reorderRest && this.prompt.max === 0) return 'Confirmar orden';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
@@ -96,6 +121,22 @@ export class EffectPromptDialogComponent {
       if (zone) return ZONE_LABELS[zone];
     }
     return null;
+  }
+
+  /** The zone every card shown comes from, said once above them (each card says its own when they differ), or null. */
+  protected readonly commonZone = computed(() => {
+    const zones = new Set(this.shown().map((c) => this.zoneOf(c)));
+    return zones.size === 1 ? [...zones][0] : null;
+  });
+
+  /** The icon of a zone, beside its name. */
+  protected zoneIcon(zone: string): IconName {
+    if (zone === 'Línea frontal') return 'zone-front';
+    if (zone === 'Retaguardia') return 'zone-rear';
+    if (zone.startsWith('Material')) return 'layers';
+    if (zone.startsWith('Recurso')) return 'sparkles';
+    const icons: Record<string, IconName> = { Mano: 'zone-hand', Mazo: 'zone-deck', Vidas: 'zone-life', Tributos: 'zone-tribute', Descarte: 'zone-discard' };
+    return icons[zone] ?? 'cards';
   }
 
   /** The card of the field a Material or Recurso belongs to (shown big, with it small at its corner), or null. */
@@ -144,6 +185,21 @@ export class EffectPromptDialogComponent {
 
   protected cardOf(id: string): CardSlot | null {
     return this.prompt.cards.find((c) => c.instanceId === id) ?? null;
+  }
+
+  /** A card anywhere on the table (a zone, or attached to a card of the field), by its instance id. */
+  private onTable(id: string | null | undefined): CardSlot | null {
+    if (!id) return null;
+    for (const p of Object.values(this.game.state()?.players ?? {})) {
+      for (const zone of ZONES) {
+        for (const c of p[zone]) {
+          if (c.instanceId === id) return c;
+          const attached = [...c.materials, ...c.resources].find((a) => a.instanceId === id);
+          if (attached) return attached;
+        }
+      }
+    }
+    return this.cardOf(id);
   }
 
   protected toggle(id: string): void {

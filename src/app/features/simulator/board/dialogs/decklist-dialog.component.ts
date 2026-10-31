@@ -5,25 +5,28 @@ import { CardSlot } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
+import { CardPeekComponent } from '../card-peek.component';
 
 const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure: 2 };
 
 /** The deck you joined with: every card, as cards, in order (creatures by level, then utilities and structures), only to look at. */
 @Component({
   selector: 'eras-decklist-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, CardPeekComponent],
   template: `
     <eras-modal size="xl" title="Tu mazo" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       <ol class="cards" aria-label="Cartas de tu mazo">
         @for (c of cards(); track c.instanceId) {
           <li>
             <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [attr.aria-label]="c.cardName" />
+            <eras-card-peek [card]="c" [mine]="true" />
           </li>
         }
       </ol>
     </eras-modal>
   `,
   styles: `
+    li { position: relative; }
     .cards {
       --game-card-width: 7.5rem;
       display: grid;

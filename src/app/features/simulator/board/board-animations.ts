@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, signal, untracked } from '@angular/core';
 import { persistedFlag } from '@core/storage/persisted-flag';
 
 /** Animations playing on the board: the engine's choices wait until they are over. */
@@ -11,6 +11,20 @@ export class BoardAnimations {
    */
   readonly off = persistedFlag('eras-sim-animations-off');
   readonly idle = computed(() => this.running() === 0);
+  private readonly waiting: (() => void)[] = [];
+
+  constructor() {
+    effect(() => {
+      if (!this.idle()) return;
+      untracked(() => this.waiting.splice(0).forEach((fn) => fn()));
+    });
+  }
+
+  /** Runs `fn` now if nothing is playing, else once everything playing has ended (in the order asked). */
+  whenIdle(fn: () => void): void {
+    if (this.idle()) fn();
+    else this.waiting.push(fn);
+  }
 
   /** Marks an animation of `ms` milliseconds as playing. */
   hold(ms: number): void {

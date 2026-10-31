@@ -75,3 +75,68 @@
   inline-size: 1rem;
   block-size: 1rem;
 }
+
+// The deck's column fills its pane: the list scrolls, the metrics drawer stays at the bottom and opens upwards
+.deck-column {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.deck-scroll {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+}
+
+.metrics-drawer {
+  flex: none;
+  display: grid;
+  margin-inline: calc(var(--space-4) * -1);
+  margin-block-end: calc(var(--space-4) * -1);
+  border-block-start: 1px solid var(--color-border);
+  border-end-start-radius: var(--radius-lg);
+  border-end-end-radius: var(--radius-lg);
+  background: var(--color-surface-muted, var(--color-surface));
+}
+
+.drawer-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+
+  eras-icon {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.drawer-body {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+// Narrow screens: the panes do not scroll on their own, so the drawer is simply at the end
+@media (max-width: 48rem) {
+  .deck-column {
+    block-size: auto;
+  }
+
+  .deck-scroll {
+    overflow: visible;
+  }
+}
+

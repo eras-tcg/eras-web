@@ -4,6 +4,8 @@ import { ZoneName } from '@data/simulator/simulator.model';
 export interface DraggedCard {
   instanceId: string;
   fromZone: ZoneName;
+  /** One of your creatures that can attack now: dropped on an enemy creature, the rival's lives or hand, it attacks. */
+  attack?: boolean;
 }
 
 const DRAG_TYPE = 'application/x-eras-slot';

@@ -95,7 +95,17 @@ export class GameStore {
     this.optionalOff.set(!this.optionalOff());
   }
 
+  /**
+   * "Información", while its button is held: the table shows more about the cards and zones in sight (cost, type,
+   * classes and level of the cards on the field; how many cards each pile, line and hand holds).
+   */
+  readonly showInfo = signal(false);
+
   constructor() {
+    // The board let go: show what waited (a frame later, so animations that start now hold it again)
+    effect(() => {
+      if (!this.holdUpdates()) untracked(() => requestAnimationFrame(() => this.drain()));
+    });
     // The server keeps it per game: what the device remembers is sent when they differ
     effect(() => {
       const mine = this.myState();
@@ -198,6 +208,7 @@ export class GameStore {
     this.timers.clear();
     this.roomId.set(null);
     this.state.set(null);
+    this.incoming.length = 0;
     this.seat.set(null);
     this.connected.set(false);
     this.error.set(null);
@@ -230,8 +241,39 @@ export class GameStore {
     this.timers.add(t);
   }
 
+  /**
+   * While the board plays an animation, the updates that arrive wait in line and are shown one by one once it ends:
+   * what an effect does is seen after its chain link is shown, not under it. Errors are shown at once.
+   */
+  readonly holdUpdates = signal(false);
+  private readonly incoming: GameState[] = [];
+  private draining = false;
+
   private onMessage(body: string): void {
     const update = JSON.parse(body) as GameState;
+    if (update.error) {
+      this.apply(update);
+      return;
+    }
+    this.incoming.push(update);
+    this.drain();
+  }
+
+  /** Shows the next update in line, and the one after it a frame later (once the board has drawn and animated it). */
+  private drain(): void {
+    if (this.draining || this.holdUpdates() || !this.incoming.length) return;
+    this.apply(this.incoming.shift()!);
+    if (!this.incoming.length) return;
+    this.draining = true;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        this.draining = false;
+        this.drain();
+      }),
+    );
+  }
+
+  private apply(update: GameState): void {
     const me = this.userId();
     if (update.error) {
       // The room is gone (closed while I was away)
@@ -448,9 +490,6 @@ export class GameStore {
   /** The owner takes a player out of the room (in a game, only a disconnected one). */
   kickPlayer(userId: string): void {
     this.send('KICK_PLAYER', { userId });
-  }
-  resolveEffectSummon(instanceId: string, fromZone: ZoneName, draw: boolean): void {
-    this.send('EFFECT_SUMMON_RESOLVE', { instanceId, fromZone, draw });
   }
   viewDeck(position: 'top' | 'bottom', n: number): void {
     this.send('VIEW_DECK', { position, n });

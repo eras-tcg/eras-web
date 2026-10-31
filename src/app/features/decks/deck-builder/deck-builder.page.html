@@ -28,7 +28,9 @@
   </div>
 
   <!-- ── Middle: the deck ────────────────────────────────────────────── -->
-  <eras-stack [gap]="4">
+  <!-- The deck: its list scrolls; the metrics are a drawer at the bottom that opens upwards -->
+  <div class="deck-column">
+  <eras-stack [gap]="4" class="deck-scroll">
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       <eras-form-field label="Nombre del mazo">
         <input placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
@@ -55,6 +57,16 @@
         Guardar
       </button>
       <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
+      <button
+        erasButton
+        variant="secondary"
+        size="sm"
+        type="button"
+        [disabled]="draft.id() === null && draft.total() === 0 && !draft.dirty()"
+        (click)="newDeck()"
+      >
+        <eras-icon name="plus" /> Nuevo mazo
+      </button>
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
       <eras-file-button accept=".txt,text/plain" (file)="importList($event)">Importar lista</eras-file-button>
@@ -131,17 +143,28 @@
       }
     </eras-dropzone>
 
-    @if (draft.total() > 0) {
-      <eras-section-header title="Métricas">
-        <button erasButton variant="ghost" size="sm" type="button" [attr.aria-expanded]="showMetrics()" (click)="showMetrics.set(!showMetrics())">
-          {{ showMetrics() ? 'Ocultar' : 'Mostrar' }}
-        </button>
-      </eras-section-header>
-      @if (showMetrics()) {
-        <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
-      }
-    }
   </eras-stack>
+  @if (draft.total() > 0) {
+    <section class="metrics-drawer" [class.open]="showMetrics()" aria-labelledby="metrics-title">
+      <button
+        type="button"
+        class="drawer-handle"
+        [attr.aria-expanded]="showMetrics()"
+        aria-controls="metrics-body"
+        [attr.aria-label]="showMetrics() ? 'Ocultar las métricas' : 'Mostrar las métricas'"
+        (click)="showMetrics.set(!showMetrics())"
+      >
+        <span id="metrics-title">Métricas</span>
+        <eras-icon [name]="showMetrics() ? 'chevron-down' : 'chevron-up'" />
+      </button>
+      @if (showMetrics()) {
+        <div id="metrics-body" class="drawer-body">
+          <eras-deck-metrics [entries]="draft.entries()" [total]="draft.total()" />
+        </div>
+      }
+    </section>
+  }
+  </div>
 
   <!-- ── Right: search ───────────────────────────────────────────────── -->
   <div pane-end>

@@ -1,21 +1,22 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
 import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
-import { fieldRows, legalActions } from '@data/simulator/legal-actions';
+import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
 import { BoardDrag } from './board-drag';
+import { PlayerPlateComponent } from './player-plate.component';
 import { SimCardComponent } from './sim-card.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
 const HAND_UPRIGHT_FAN = 2.9;
@@ -28,7 +29,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
  */
 @Component({
   selector: 'eras-player-half',
-  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, ButtonComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent],
+  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent],
   templateUrl: './player-half.component.html',
   styleUrl: './player-half.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,10 +52,11 @@ export class PlayerHalfComponent {
   private readonly fieldEl = viewChild<ElementRef<HTMLElement>>('field');
 
   protected readonly over = signal<string | null>(null);
+  /** One of your creatures is dragged to attack: the rival's lives and hand take it as a direct attack. */
+  protected readonly attackDrag = computed(() => this.opponent() && !!this.drag.dragging()?.attack);
   /** Creature the dragged card would interact with if dropped now. */
   protected readonly nearby = signal<CardSlot | null>(null);
   /** Own creature summoned from hand/piles: ask whether it was by effect (draws a card). */
-  protected readonly effectSummon = signal<{ instanceId: string; fromZone: ZoneName } | null>(null);
   /**
    * How far the hand's fan is turned, in cards. Only a hand wider than its place turns, and only until the cards at
    * its ends are inside it (handTurnMax, measured on the page).
@@ -103,11 +105,39 @@ export class PlayerHalfComponent {
   }
 
   protected readonly targeting = computed(() => this.game.pendingTargetSource() !== null);
+  /** "Información" shows while the button is held: the pointer is captured so letting go anywhere hides it. */
+  protected holdInfo(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.game.showInfo.set(true);
+  }
+
+  /** How many creatures, structures and utilities a line holds (only the types it has). */
+  protected typeCounts(cards: readonly CardSlot[]): { type: 'creature' | 'structure' | 'utility'; label: string; count: number }[] {
+    const types = [
+      { type: 'creature' as const, label: 'criaturas' },
+      { type: 'structure' as const, label: 'estructuras' },
+      { type: 'utility' as const, label: 'utilidades' },
+    ];
+    return types.map((t) => ({ ...t, count: cards.filter((c) => c.cardType === t.type && !c.faceDown).length })).filter((t) => t.count > 0);
+  }
+
   /** A face-down card on top of a pile is shown anyway: "Mostrar cartas ocultas", or mine in the Tributos or the Descarte. */
   protected pileShown(card: CardSlot, zone: ZoneName): boolean {
     return this.game.seeAll() || knownToOwner(card, zone, this.opponent());
   }
 
+  /** The chain links activated from each pile, shown over it (on a ring when there are several). */
+  protected readonly pileLinks = computed(() => {
+    const chain = this.game.state()?.chain;
+    const p = this.player();
+    return {
+      deck: chainLinksOf(chain, p.deck),
+      lifeStack: chainLinksOf(chain, p.lifeStack),
+      tributeZone: chainLinksOf(chain, p.tributeZone),
+      discardPile: chainLinksOf(chain, p.discardPile),
+    };
+  });
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
   /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
   protected readonly tributeActions = computed(() => {
@@ -163,6 +193,18 @@ export class PlayerHalfComponent {
     const card = this.drag.read(event);
     if (!card) return;
 
+    // Your creature dropped to attack: on an enemy creature it can attack, or on the rival's lives or hand (direct)
+    if (card.attack && this.opponent()) {
+      const attacker = this.game.myState()?.field.find((c) => c.instanceId === card.instanceId);
+      if (!attacker) return;
+      if (to === 'field') {
+        if (nearby && attackableCreatures(attacker, [nearby]).length) this.game.attack(attacker.instanceId, nearby.instanceId);
+      } else if (to === 'lifeStack' || to === 'hand') {
+        this.game.attack(attacker.instanceId, null);
+      }
+      return;
+    }
+
     // Outside editor mode only the rules' drops: a card of the hand onto the field (or onto a creature for its special summon)
     if (!this.game.editorMode() && (this.opponent() || card.fromZone !== 'hand' || to !== 'field')) return;
 
@@ -200,11 +242,10 @@ export class PlayerHalfComponent {
         return;
       }
       if (!this.game.editorMode()) return;
-      const summon = this.game.status() === 'IN_PROGRESS' && card.fromZone !== 'field' && dragged?.cardType === 'creature';
-      // Manual move: into the line it was dropped on (only creatures go to the Línea frontal)
+      // Manual move: the card is placed where it was dropped, nothing else (only creatures go to the Línea frontal).
+      // Summons by the rules are in the card's actions.
       const front = pos.y < 50 && dragged?.cardType === 'creature';
       this.game.moveCard(card.instanceId, card.fromZone, 'field', { x: pos.x, y: front ? 25 : 75 });
-      if (summon) this.effectSummon.set({ instanceId: card.instanceId, fromZone: card.fromZone });
       return;
     }
     if (to === 'deckBottom') {
@@ -232,12 +273,6 @@ export class PlayerHalfComponent {
     }
     const card = this.lifeHalf(event) === 'top' ? lives[0] : lives[lives.length - 1];
     this.drag.start(event, { instanceId: card.instanceId, fromZone: 'lifeStack' });
-  }
-
-  protected resolveEffectSummon(draw: boolean): void {
-    const pending = this.effectSummon();
-    if (pending) this.game.resolveEffectSummon(pending.instanceId, pending.fromZone, draw);
-    this.effectSummon.set(null);
   }
 
   // ── Clicks on piles ───────────────────────────────────────────────────

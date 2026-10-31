@@ -1,13 +1,13 @@
 @let p = player();
 <!-- Lives and gem marker -->
 <div class="lives">
-  <span class="name">{{ p.username }}@if (!p.connected) { <span class="offline">(desconectado)</span> }</span>
-  <eras-resource-pips [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
+  <eras-resource-pips [attr.data-gems]="p.userId" [value]="p.resourceCount ?? 0" [editable]="!opponent() && game.editorMode()" (valueChange)="game.setMarker($event)" />
   <eras-game-zone
     class="life-zone"
+    [class.attack-zone]="attackDrag()"
     label="Vidas"
     [attr.data-pile]="p.userId + ':lifeStack'"
-    [count]="p.lifeStack.length"
+    [count]="game.showInfo() ? p.lifeStack.length : null"
     [dropActive]="over() === 'lifeStack'"
     [targeted]="isTargeted('lifeStack')"
     [selectable]="targeting()"
@@ -26,7 +26,10 @@
         </div>
       }
     </div>
+    <eras-chain-marks ring [links]="pileLinks().lifeStack" [me]="game.myState()?.userId" />
   </eras-game-zone>
+  <!-- The player's plate: their icon and name, under their lives (over them on the rival's side) -->
+  <eras-player-plate [username]="p.username" [avatar]="p.avatar" [connected]="p.connected" />
   <ng-template #lifeMenu>
     <eras-menu>
       <button erasMenuItem (triggered)="viewLives()">Ver vidas</button>
@@ -53,7 +56,15 @@
 >
   @for (line of lines; track line) {
     <div class="line" [class.front]="line === 'front'" role="group" [attr.aria-label]="line === 'front' ? 'Línea frontal' : 'Retaguardia'">
-      <span class="line-label">{{ line === 'front' ? 'Línea frontal' : 'Retaguardia' }}</span>
+      <span class="line-label">
+        {{ line === 'front' ? 'Línea frontal' : 'Retaguardia' }}
+        @if (game.showInfo()) {
+          <!-- How many creatures, structures and utilities the line holds -->
+          @for (t of typeCounts(rows()[line]); track t.type) {
+            <span class="line-count" [title]="t.count + ' ' + t.label"><eras-icon [name]="t.type" />{{ t.count }}</span>
+          }
+        }
+      </span>
       @for (s of rows()[line]; track s.instanceId) {
         <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
           <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
@@ -73,11 +84,12 @@
 <eras-game-zone
   class="hand"
   [class.straight]="straightHand()"
-  label="Mano"
   [attr.data-pile]="p.userId + ':hand'"
-  [count]="p.hand.length"
-  [dropActive]="over() === 'hand' && !opponent()"
-  (dragover)="!opponent() && dragOver($event, 'hand')"
+  [count]="game.showInfo() ? p.hand.length : null"
+  countIcon="cards"
+  [dropActive]="over() === 'hand' && (!opponent() || attackDrag())"
+  [class.attack-zone]="attackDrag()"
+  (dragover)="(!opponent() || attackDrag()) && dragOver($event, 'hand')"
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
   (wheel)="turnHand($event)"
@@ -116,13 +128,6 @@
       (click)="turnHandBy(1); $event.stopPropagation()"
     ></button>
   }
-  @if (effectSummon()) {
-    <div class="effect-prompt" role="alertdialog" aria-label="¿Invocación por efecto?">
-      <span>¿Invocación por efecto?</span>
-      <button erasButton size="sm" type="button" (click)="resolveEffectSummon(true)">Sí, robar</button>
-      <button erasButton variant="secondary" size="sm" type="button" (click)="resolveEffectSummon(false)">No</button>
-    </div>
-  }
 </eras-game-zone>
 
 <!-- Deck and piles -->
@@ -131,7 +136,7 @@
     class="pile deck"
     label="Mazo"
     [attr.data-pile]="p.userId + ':deck'"
-    [count]="p.deck.length"
+    [count]="game.showInfo() ? p.deck.length : null"
     [dropActive]="over() === 'deck'"
     [targeted]="isTargeted('deck')"
     [selectable]="targeting()"
@@ -145,6 +150,7 @@
     @if (p.deck.length) {
       <eras-game-card hidden />
     }
+    <eras-chain-marks ring [links]="pileLinks().deck" [me]="game.myState()?.userId" />
   </eras-game-zone>
   <ng-template #deckMenu>
     <eras-menu>
@@ -161,7 +167,7 @@
     class="pile tributes"
     label="Tributos"
     [attr.data-pile]="p.userId + ':tributeZone'"
-    [count]="p.tributeZone.length"
+    [count]="game.showInfo() ? p.tributeZone.length : null"
     [dropActive]="over() === 'tributeZone'"
     [targeted]="isTargeted('tributeZone')"
     [selectable]="targeting()"
@@ -175,13 +181,14 @@
     @if (topTribute(); as t) {
       <eras-game-card [imageUrl]="t.imageUrl" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
+    <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
 
   <eras-game-zone
     class="pile discard"
     label="Descarte"
     [attr.data-pile]="p.userId + ':discardPile'"
-    [count]="p.discardPile.length"
+    [count]="game.showInfo() ? p.discardPile.length : null"
     [dropActive]="over() === 'discardPile'"
     [targeted]="isTargeted('discardPile')"
     [selectable]="targeting()"
@@ -193,6 +200,7 @@
     @if (topDiscard(); as d) {
       <eras-game-card [imageUrl]="d.imageUrl" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
+    <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>
 
   @if (!opponent() && game.status() === 'IN_PROGRESS') {
@@ -209,6 +217,27 @@
       >
         <eras-icon name="zap" />
         <span>{{ game.optionalOff() ? 'Opcionales apagados' : 'Opcionales activos' }}</span>
+      </button>
+      <!-- More about the cards and zones in sight: cost, type, classes and level; how many cards each zone holds -->
+      <button
+        type="button"
+        class="optional-toggle info-toggle"
+        [class.on]="game.showInfo()"
+        [attr.aria-pressed]="game.showInfo()"
+        title="Mantén presionado para ver el coste, tipo, clases y nivel de las cartas del campo y cuántas cartas hay en cada zona."
+        (pointerdown)="holdInfo($event)"
+        (pointerup)="game.showInfo.set(false)"
+        (pointercancel)="game.showInfo.set(false)"
+        (lostpointercapture)="game.showInfo.set(false)"
+        (keydown.space)="game.showInfo.set(true); $event.preventDefault()"
+        (keyup.space)="game.showInfo.set(false)"
+        (keydown.enter)="game.showInfo.set(true)"
+        (keyup.enter)="game.showInfo.set(false)"
+        (blur)="game.showInfo.set(false)"
+        (contextmenu)="$event.preventDefault()"
+      >
+        <eras-icon name="info" />
+        <span>Información</span>
       </button>
     </div>
   }

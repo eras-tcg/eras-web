@@ -5,8 +5,10 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { AuthService } from '../auth/auth.service';
+import { AvatarStore } from '../auth/avatar.store';
 import { EditModeService } from '../auth/edit-mode.service';
 import { ADMIN_TOOLS } from '../navigation/admin-tools';
 import { MAIN_NAV } from '../navigation/nav-items';
@@ -15,7 +17,7 @@ import { ThemeService } from '../theme/theme.service';
 import { VersionService } from '../version/version.service';
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CdkMenuTrigger, MenuComponent, MenuItemDirective, ButtonComponent, IconComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CdkMenuTrigger, MenuComponent, MenuItemDirective, ButtonComponent, IconComponent, AvatarComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,7 +35,7 @@ export class ShellComponent {
     this.auth.user();
     return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
   });
-  protected readonly initial = computed(() => (this.auth.user()?.username ?? '?').charAt(0).toUpperCase());
+  protected readonly avatar = inject(AvatarStore);
 
   private readonly navigated = this.router.events.pipe(filter((e) => e instanceof NavigationEnd));
 

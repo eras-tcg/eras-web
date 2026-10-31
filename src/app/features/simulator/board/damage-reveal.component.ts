@@ -33,6 +33,8 @@ interface Clash {
 type Shown = (Hit | Clash) & { id: number };
 
 const SHOW_MS = 2600;
+/** How long the attacker's charge lasts (eras-board-fx): the reveal of its blow comes after it. */
+export const CHARGE_MS = 800;
 
 /**
  * Combat, shown big: direct damage (the attacker, the damage and the revealed life) and clashes (both
@@ -182,7 +184,12 @@ export class DamageRevealComponent {
     for (const e of events) this.queue.push({ ...(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e)), id: ++this.ids });
     // The choices wait until all of them have been shown
     this.release ??= this.animations.begin();
-    if (!this.current()) this.next();
+    // An attack's blow is shown once the attacker has charged at its target (blocked: at the blocker)
+    const charged = events.some((e) => e.type === 'CLASH' || (e.type === 'LIFE_DAMAGE' && !e.effectId && e.data?.['attackerId']));
+    if (!this.current() && !this.timer) {
+      if (charged) this.timer = setTimeout(() => this.next(), CHARGE_MS);
+      else this.next();
+    }
   }
 
   private finder(state: GameState): (id: unknown) => CardSlot | null {

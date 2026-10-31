@@ -2,6 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
+import { AvatarStore } from '@core/auth/avatar.store';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
@@ -21,8 +24,9 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent],
+  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
   templateUrl: './profile.page.html',
+  styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfilePage {
@@ -30,6 +34,12 @@ export class ProfilePage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
+
+  // ── Player icon (navbar and beside the name in the simulator) ──────────
+  protected readonly avatar = inject(AvatarStore);
+  protected readonly avatarFeedback = signal<Feedback>(null);
+  /** The largest image accepted (the server scales it to a square). */
+  private readonly maxAvatarBytes = 5 * 1024 * 1024;
   protected readonly canEditAccount = computed(() => this.auth.can('manage_users'));
 
   // ── Account (manage_users) ─────────────────────────────────────────────
@@ -56,6 +66,33 @@ export class ProfilePage {
 
   constructor() {
     if (this.canEditAccount()) void this.loadAccount();
+  }
+
+  protected async uploadAvatar(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > this.maxAvatarBytes) {
+      this.avatarFeedback.set({ tone: 'danger', text: 'La imagen pesa más de 5 MB' });
+      return;
+    }
+    this.avatarFeedback.set(null);
+    try {
+      await this.avatar.upload(file);
+      this.avatarFeedback.set({ tone: 'success', text: 'Ícono guardado. Se verá en tus próximas partidas.' });
+    } catch (e) {
+      this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo guardar el ícono') });
+    }
+  }
+
+  protected async removeAvatar(): Promise<void> {
+    this.avatarFeedback.set(null);
+    try {
+      await this.avatar.remove();
+      this.avatarFeedback.set({ tone: 'success', text: 'Ícono quitado. Se verá la inicial de tu nombre.' });
+    } catch (e) {
+      this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo quitar el ícono') });
+    }
   }
 
   private async loadAccount(): Promise<void> {

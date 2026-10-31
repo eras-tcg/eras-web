@@ -12,18 +12,10 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
-import { renderEffect, renderKeywordEffect, usageLimitLabel } from '@data/cards/card-rules';
-import { CardEffect, KeywordEffect } from '@data/cards/card.model';
 import { displayStrength } from '@data/simulator/game-rules';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
-
-/** An effect for display: its moment ("Al Atacar") and tags ("una vez por turno") apart from its text. */
-interface EffectLine {
-  moment: string | null;
-  tags: string[];
-  text: string;
-}
+import { effectLines } from '../card-effect-lines';
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -65,18 +57,8 @@ export class CardInfoDialogComponent {
     return this.cards.cards().find((c) => c.id === cardId)?.meta ?? null;
   }
 
-  /** The effects and keyword abilities as lines: the moment and the usage limit come from the card's data. */
-  private lines(effects: CardEffect[] | null | undefined, keywords: KeywordEffect[] | null | undefined): EffectLine[] {
-    const ref = this.cards.ref();
-    const text = (l: { segments: { text: string }[] }) => l.segments.map((x) => x.text).join('').trim();
-    return [
-      ...(effects ?? []).map((e) => ({
-        moment: e.instance ?? null,
-        tags: [usageLimitLabel(e.ussageLimit)].filter((t): t is string => !!t),
-        text: text(renderEffect(e, ref, false)),
-      })),
-      ...(keywords ?? []).map((k) => ({ moment: null, tags: [], text: text(renderKeywordEffect(k, ref)) })),
-    ].filter((l) => l.text);
+  private lines(effects: Parameters<typeof effectLines>[0], keywords: Parameters<typeof effectLines>[1]) {
+    return effectLines(effects, keywords, this.cards.ref());
   }
 
   /** The card's own effects and keywords. */

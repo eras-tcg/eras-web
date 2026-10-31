@@ -193,6 +193,10 @@
   <!-- The card a choice is about stays bright above the choice's backdrop -->
   <eras-prompt-spotlight />
   <eras-damage-reveal />
+  <!-- Each effect that joins the chain, big for a moment, chained to the link before it -->
+  <eras-chain-link-reveal />
+  <!-- The players face to face when the game starts, and the end of the game -->
+  <eras-match-banner (leave)="exit()" />
   @if (phasePopup(); as popup) {
     <div class="phase-popup" [class.rival]="!popup.mine" role="status" aria-live="polite">
       <span class="who">{{ popup.who }}</span>
@@ -200,14 +204,10 @@
     </div>
   }
 
-  <!-- Live notices: revealed cards and the latest actions -->
+  <!-- Attacks, targets, strength and gems changing, shuffles, cards revealed -->
+  <eras-board-fx />
+  <!-- Live notices: the latest actions -->
   <div class="notices" aria-live="polite">
-    @for (card of game.revealed(); track card.id) {
-      <div class="revealed">
-        <span>Carta revelada{{ card.name ? ': ' + card.name : '' }}</span>
-        <img [src]="card.imageUrl" alt="" />
-      </div>
-    }
     @if (!noticesOff()) {
       @for (line of game.recentLog(); track line.id) {
         <div class="log-line">{{ line.text }}</div>

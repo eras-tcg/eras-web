@@ -3,6 +3,15 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 /** 24x24 stroke icons. To change the icon set, change only this file. */
 const ICONS = {
   plus: 'M12 5v14M5 12h14',
+  link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+  // The zones of the game table
+  'zone-hand': 'M9 4h6a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8 7 4.6 8.2a1 1 0 0 0-.6 1.3l3.4 8.9M16 7l3.4 1.2a1 1 0 0 1 .6 1.3l-3.4 8.9',
+  'zone-deck': 'M6 8h10a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM8 5h10a1 1 0 0 1 1 1v11M10 2h10a1 1 0 0 1 1 1v11',
+  'zone-discard': 'M7 21V10a5 5 0 0 1 10 0v11M4 21h16M12 8v6M9.5 10.5h5',
+  'zone-tribute': 'M12 3c1 3.5 5 5.6 5 10a5 5 0 0 1-10 0c0-2.4 1.4-4 2.5-5 0 2 1 3.2 2.2 3.2C11.7 8.4 12.4 6 12 3z',
+  'zone-life': 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  'zone-front': 'M14.5 4H20v5.5L10 19.5 4.5 14zM7 12l5 5M5 19l2-2',
+  'zone-rear': 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z',
   x: 'M6 6l12 12M18 6L6 18',
   edit: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
   sun: 'M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
@@ -54,6 +63,11 @@ const ICONS = {
   swap: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
   image: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21',
   alert: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
+  info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01',
+  // Card types: three claw marks (Criatura), a flask (Utilidad), a tower (Estructura)
+  creature: 'M6 3c2 5 2 11-1 18M12 2c2 6 2 13-1 20M18 3c2 5 2 11-1 18',
+  utility: 'M9 3h6M10 3v5.5L4.6 18.2A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.8-2.8L14 8.5V3M7 15h10',
+  structure: 'M4 21h16M5 21V9h3V5h2v2h4V5h2v4h3v12M10 21v-5a2 2 0 0 1 4 0v5M9 12h.01M15 12h.01',
 } as const;
 
 export type IconName = keyof typeof ICONS;

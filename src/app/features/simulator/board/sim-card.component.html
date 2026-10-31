@@ -12,6 +12,7 @@
   [source]="game.targetingSourceId() === slot().instanceId || game.pendingTargetSource() === slot().instanceId"
   [selectable]="game.pendingTargetSource() !== null"
   [small]="small()"
+  [info]="info()"
   [attr.draggable]="canDrag() ? 'true' : null"
   tabindex="0"
   role="button"
@@ -23,6 +24,7 @@
   [class.can-activate]="canActivate()"
   [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
   [class.new-card]="zone() === 'hand' && game.newInHand().has(slot().instanceId)"
+  [class.attack-target]="attackable()"
   [class.combat-attacker]="combatRole() === 'attacker'"
   [class.combat-defender]="combatRole() === 'blocker' || combatRole() === 'target'"
   cdkOverlayOrigin
@@ -33,6 +35,10 @@
   (dragstart)="onDragStart($event)"
   (dragend)="drag.end()"
 />
+
+@if (chainLinks().length) {
+  <eras-chain-marks [links]="chainLinks()" [me]="game.myState()?.userId" />
+}
 
 @if (game.pendingTargetSource() === slot().instanceId) {
   <!-- Choosing its target: cancel it from the card itself -->

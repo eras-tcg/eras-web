@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RulesView, attackGemsOk, canPay, canRitual, fieldRows, legalActions, playCost, rulesView } from './legal-actions';
+import { RulesView, attackGemsOk, attackableCreatures, canPay, canRitual, fieldRows, legalActions, playCost, rulesView } from './legal-actions';
 import { CardSlot, GameState } from './simulator.model';
 
 const slot = (id: string, over: Partial<CardSlot> = {}): CardSlot => ({
@@ -155,5 +155,18 @@ describe('fieldRows', () => {
     const rows = fieldRows([slot('b', { x: 70 }), slot('r', { y: 75, x: 10 }), slot('a', { x: 20 })]);
     expect(rows.front.map((s) => s.instanceId)).toEqual(['a', 'b']);
     expect(rows.back.map((s) => s.instanceId)).toEqual(['r']);
+  });
+});
+
+describe('attackableCreatures', () => {
+  it('takes exhausted enemies of the Línea frontal, and active ones only with Enfrentar for their level', () => {
+    const tapped = slot('t', { tapped: true });
+    const active = slot('a', { level: 2 });
+    const rear = slot('r', { tapped: true, y: 75 });
+    const utility = slot('u', { tapped: true, cardType: 'utility' });
+    const ids = (attacker: CardSlot) => attackableCreatures(attacker, [tapped, active, rear, utility]).map((c) => c.instanceId);
+    expect(ids(slot('x'))).toEqual(['t']);
+    expect(ids(slot('x', { keywords: ['Enfrentar 2'] }))).toEqual(['t', 'a']);
+    expect(ids(slot('x', { keywords: ['Enfrentar 1'] }))).toEqual(['t']);
   });
 });

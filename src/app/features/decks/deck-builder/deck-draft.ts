@@ -69,6 +69,14 @@ export class DeckDraft {
     }
   }
 
+  /** A new, empty deck (the builder without a deck loaded). */
+  reset(): void {
+    this.id.set(null);
+    this.saved.set(null);
+    this.state.set(EMPTY);
+    this.missing.set(0);
+  }
+
   rename(name: string): void {
     this.state.update((s) => ({ ...s, name }));
   }

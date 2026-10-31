@@ -2,6 +2,30 @@
   <eras-grid minColumn="20rem" [gap]="5">
     <eras-card padding="lg">
       <eras-stack [gap]="4">
+        <eras-section-header title="Tu ícono de jugador" />
+        <!-- How the rival sees you on the table -->
+        <div class="plate-preview" aria-label="Vista previa en el tablero">
+          <eras-avatar [url]="avatar.url()" [name]="username()" />
+          <span class="plate-name">{{ username() }}</span>
+        </div>
+        @if (avatarFeedback(); as f) {
+          <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+        }
+        <p class="hint">Una imagen JPG, PNG o GIF de hasta 5 MB. Se recorta al centro en un cuadrado.</p>
+        <input #file type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAvatar(file)" />
+        <eras-stack direction="row" [gap]="2" wrap>
+          <button erasButton type="button" [loading]="avatar.saving()" [disabled]="avatar.saving()" (click)="file.click()">
+            <eras-icon name="image" /> {{ avatar.url() ? 'Cambiar imagen' : 'Subir imagen' }}
+          </button>
+          @if (avatar.url()) {
+            <button erasButton variant="secondary" type="button" [disabled]="avatar.saving()" (click)="removeAvatar()">Quitar</button>
+          }
+        </eras-stack>
+      </eras-stack>
+    </eras-card>
+
+    <eras-card padding="lg">
+      <eras-stack [gap]="4">
         <eras-section-header title="Información de cuenta" />
         @if (canEditAccount()) {
           @if (accountLoading()) {

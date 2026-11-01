@@ -25,7 +25,7 @@ export interface CardSlot {
   /** Abilities and strength its continuous effects give it now (they stop when their condition does). */
   continuousKeywords?: string[];
   continuousStrength?: number;
-  /** Levels gained from continuous effects (Xiromorfo). */
+  /** Levels gained from continuous effects (Xiromorfo); already counted in `level`. */
   continuousLevel?: number;
   specialCost?: number | null;
   requirement?: string | null;

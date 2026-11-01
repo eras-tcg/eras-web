@@ -70,8 +70,8 @@ export class SimCardComponent {
     const s = this.slot();
     if (!this.game.showInfo() || this.zone() !== 'field' || this.hidden()) return null;
     const type = s.cardType === 'creature' || s.cardType === 'utility' || s.cardType === 'structure' ? s.cardType : null;
-    const level = s.level == null ? null : s.level + (s.continuousLevel ?? 0);
-    return { cost: s.cost ?? null, type, classes: s.classes ?? [], level };
+    // The server's level is already the one now (printed plus continuous levels)
+    return { cost: s.cost ?? null, type, classes: s.classes ?? [], level: s.level ?? null };
   });
   private readonly shownAnyway = computed(() => this.game.seeAll() || knownToOwner(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);

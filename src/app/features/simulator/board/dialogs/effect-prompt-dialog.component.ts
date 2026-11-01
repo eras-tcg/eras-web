@@ -72,7 +72,9 @@ export class EffectPromptDialogComponent {
   protected readonly orderOnly = !!this.prompt.topOrBottom;
   protected readonly shown = computed(() => (this.showAll() || this.showsEverything ? this.order() : this.order().filter((c) => this.valid.has(c.instanceId))));
   protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
-  protected readonly chosen = signal<Set<string>>(new Set());
+  /** Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. */
+  private readonly required = new Set(this.prompt.requiredIds ?? []);
+  protected readonly chosen = signal<Set<string>>(new Set(this.required));
   protected readonly sending = signal(false);
   protected readonly canConfirm = computed(() => {
     const n = this.chosen().size;
@@ -207,6 +209,7 @@ export class EffectPromptDialogComponent {
 
   protected toggle(id: string): void {
     if (this.prompt.effects?.length ? !this.prompt.effects.some((e) => this.effectKey(e) === id) : !this.selectableId(id)) return;
+    if (this.required.has(id)) return;
     const next = new Set(this.chosen());
     if (next.has(id)) next.delete(id);
     else if (next.size < this.prompt.max) next.add(id);

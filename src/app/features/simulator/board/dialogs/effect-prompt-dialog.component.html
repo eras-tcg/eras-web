@@ -120,7 +120,7 @@
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
       } @else {
-        <span class="count">{{ chosen().size }} de {{ prompt.max }}{{ prompt.exactOrNone ? ' (todas o ninguna)' : '' }}</span>
+        <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
         <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
       }
     </eras-stack>

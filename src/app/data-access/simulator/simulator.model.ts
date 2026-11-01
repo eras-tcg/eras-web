@@ -273,6 +273,8 @@ export interface EffectPrompt {
   max: number;
   /** The cards not chosen can be reordered (they go to the deck bottom in that order). */
   reorderRest: boolean;
+  /** Cards that must be among those chosen ("incluida esta carta"). */
+  requiredIds?: string[] | null;
   /** The rest goes back to the deck top instead of its bottom. */
   restToTop?: boolean;
   /** The card the choice is about (the creature summoned by Ritual, the life card…). */

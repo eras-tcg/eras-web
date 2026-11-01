@@ -68,12 +68,15 @@ export class EffectPromptDialogComponent {
   /** Cards that do not meet the effect are hidden unless asked (all of them are needed to order the rest). */
   protected readonly showAll = signal(false);
   private readonly showsEverything = this.prompt.reorderRest || this.prompt.kind === 'CONFIRM';
+  /** The cards are only ordered, not picked: "al tope o al fondo" is answered with the buttons. */
+  protected readonly orderOnly = !!this.prompt.topOrBottom;
   protected readonly shown = computed(() => (this.showAll() || this.showsEverything ? this.order() : this.order().filter((c) => this.valid.has(c.instanceId))));
   protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   protected readonly chosen = signal<Set<string>>(new Set());
   protected readonly sending = signal(false);
   protected readonly canConfirm = computed(() => {
     const n = this.chosen().size;
+    if (this.prompt.exactOrNone && n > 0 && n !== this.prompt.max) return false;
     return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
   });
 
@@ -240,6 +243,12 @@ export class EffectPromptDialogComponent {
   protected answer(yes: boolean): void {
     this.sending.set(true);
     this.game.resolvePrompt(this.prompt.id, yes ? this.prompt.validIds.slice(0, 1) : []);
+  }
+
+  /** "al tope o al fondo": every card in the order set, sent where the player picked. */
+  protected sendLooked(top: boolean): void {
+    this.sending.set(true);
+    this.game.resolvePrompt(this.prompt.id, top ? this.prompt.validIds.slice(0, 1) : [], this.order().map((c) => c.instanceId));
   }
 
   /** The board closes this dialog when the engine moves on to the next step. */

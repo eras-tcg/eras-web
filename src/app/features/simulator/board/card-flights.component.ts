@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
-import { CardSlot, GameState, ZoneName } from '@data/simulator/simulator.model';
+import { CardSlot, GameEvent, GameState, ZoneName } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
 
 /** Where a field card was drawn last time, to fly it from there when it leaves the field. */
@@ -28,6 +28,14 @@ const SUMMON_DURATION = 600;
 const BURST_DURATION = 750;
 /** A destroyed card cracks where it was before it flies to the Descarte. */
 const SHATTER_DURATION = 420;
+
+/** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
+interface Hop {
+  from: ZoneName;
+  to: ZoneName;
+  /** Moves of one update play in turns, in the order they happened ("coloca 1 carta al tope. Luego: tributa 2"). */
+  delay: number;
+}
 
 /**
  * Animates the cards that leave the field: a copy flies from where the card was to the zone it went to,
@@ -63,6 +71,8 @@ export class CardFlightsComponent {
    * the cards held where they were until then.
    */
   private deferring = false;
+  /** The pile-to-pile moves of this update, by card, in order. */
+  private hops = new Map<string, Hop[]>();
 
   /** Runs an animation now, or once what plays ends. */
   private run(fn: () => void): void {
@@ -78,6 +88,7 @@ export class CardFlightsComponent {
         this.deferring = !this.animations.idle();
         const onField = new Set(Object.values(state.players ?? {}).flatMap((p) => p.field.map((c) => c.instanceId)));
         const destroyed = this.destroyedNow(state);
+        this.hops = this.hopsNow(state);
         for (const [id, from] of this.seen) {
           if (onField.has(id)) continue;
           const to = this.destination(state, id);
@@ -145,14 +156,56 @@ export class CardFlightsComponent {
     return new Set(events.map((e) => e.cardInstanceId).filter((id): id is string => !!id));
   }
 
-  /** Cards that left a hand for a pile (the mulligan, a tribute, a discard) fly from where they were in it. */
+  /**
+   * The moves from pile to pile of this update (its new timeline events), by card. They play in turns, in the order they
+   * happened: a run of moves alike (the same kind, from and to the same zones, as the 2 cards of "tributa 2") is one turn.
+   */
+  private hopsNow(state: GameState): Map<string, Hop[]> {
+    const piles = new Set<string>(PILES);
+    const events = (state.timeline ?? [])
+      .filter((e): e is GameEvent & { cardInstanceId: string; fromZone: ZoneName; toZone: ZoneName } =>
+        e.seq > this.lastSeq && !!e.cardInstanceId && piles.has(e.fromZone ?? '') && piles.has(e.toZone ?? '') && e.fromZone !== e.toZone)
+      .sort((a, b) => a.seq - b.seq);
+    const hops = new Map<string, Hop[]>();
+    let turn = -1;
+    let last = '';
+    for (const e of events) {
+      const key = `${e.type}|${e.playerId}|${e.fromZone}|${e.toZone}`;
+      if (key !== last) turn++;
+      last = key;
+      hops.set(e.cardInstanceId, [...(hops.get(e.cardInstanceId) ?? []), { from: e.fromZone, to: e.toZone, delay: turn * DURATION }]);
+    }
+    return hops;
+  }
+
+  /**
+   * Cards that left a hand for a pile (the mulligan, a tribute, a discard) fly from where they were in it. One that went
+   * through another pile first ("colócala al tope de tu mazo", then tributed from there) stops there on its way.
+   */
   private handLeaves(state: GameState, onField: Set<string>): void {
     if (!this.handSeen.size) return;
-    const inHand = new Set(Object.values(state.players ?? {}).flatMap((p) => p.hand.map((c) => c.instanceId)));
+    const players = Object.values(state.players ?? {});
+    const inHand = new Set(players.flatMap((p) => p.hand.map((c) => c.instanceId)));
     for (const [id, from] of this.handSeen) {
       if (inHand.has(id) || onField.has(id)) continue;
       const to = this.destination(state, id);
-      if (to) this.fly(from, to.element, to.faceDown);
+      if (!to) continue;
+      const hops = this.hops.get(id) ?? [];
+      const owner = players.find((p) => PILES.some((z) => (p[z] as CardSlot[]).some((c) => c.instanceId === id)))?.userId;
+      if (hops.length < 2 || hops[0].from !== 'hand' || !owner) {
+        this.fly(from, to.element, to.faceDown, { delay: hops.at(-1)?.delay ?? 0 });
+        continue;
+      }
+      let at: Seen = from;
+      hops.forEach((hop, i) => {
+        const last = i === hops.length - 1;
+        const stop = last ? null : this.document.querySelector<HTMLElement>(`[data-pile="${owner}:${hop.to}"]`);
+        const target = last ? to.element : stop;
+        if (!target) return;
+        const downThere = last ? to.faceDown : hop.to === 'deck' || hop.to === 'lifeStack';
+        this.fly(at, target, downThere, { delay: hop.delay, fromBack: i > 0 && (hop.from === 'deck' || hop.from === 'lifeStack') });
+        at = { ...(this.pileSeen(`${owner}:${hop.to}`) ?? at), imageUrl: at.imageUrl };
+      });
     }
   }
 
@@ -171,7 +224,8 @@ export class CardFlightsComponent {
           if (zone === 'hand' && was.endsWith(':deck')) continue;
           const from = this.pileSeen(was);
           const to = this.destination(state, c.instanceId);
-          if (from && to) this.fly({ ...from, imageUrl: c.imageUrl }, to.element, to.faceDown, { fromBack: was.endsWith(':deck') || was.endsWith(':lifeStack') });
+          const delay = this.hops.get(c.instanceId)?.at(-1)?.delay ?? 0;
+          if (from && to) this.fly({ ...from, imageUrl: c.imageUrl }, to.element, to.faceDown, { fromBack: was.endsWith(':deck') || was.endsWith(':lifeStack'), delay });
         }
       }
     }

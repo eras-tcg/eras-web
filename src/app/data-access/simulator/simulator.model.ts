@@ -207,6 +207,9 @@ export interface PendingEffect {
   text: string;
   /** Its chain link: 1 for the first one activated (it resolves last). */
   link: number;
+  /** An inherited effect: the Recurso that gives it, shown small on its card. */
+  inheritedFromName?: string | null;
+  inheritedFromImage?: string | null;
   /** Set while it resolves. */
   resolutionId?: string | null;
 }
@@ -284,6 +287,13 @@ export interface EffectPrompt {
   effectText?: string | null;
   /** The levels of the cards chosen may add up to this at most. */
   maxLevelSum?: number | null;
+  /** Exactly `max` cards or none ("puedes enviar 5 de tus tributos…"). */
+  exactOrNone?: boolean;
+  /**
+   * "envíalas al tope o al fondo de tu mazo": order the cards and send them in one answer; choosing a card (any valid one)
+   * sends them to the top, none to the bottom, and the order is that of every card.
+   */
+  topOrBottom?: boolean;
 }
 
 /** An effect offered to be chained (a card can trigger several at once: its own and the inherited ones). */

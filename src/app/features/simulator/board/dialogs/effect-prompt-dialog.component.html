@@ -68,10 +68,10 @@
         <button
           type="button"
           class="pick"
-          [class.static]="prompt.kind === 'CONFIRM'"
+          [class.static]="prompt.kind === 'CONFIRM' || orderOnly"
           [class.chosen]="chosen().has(c.instanceId)"
           [class.locked]="!selectable(c)"
-          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM'"
+          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM' || orderOnly"
           [attr.aria-pressed]="chosen().has(c.instanceId)"
           [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : ', supera la suma de niveles') : ', no cumple el efecto')"
           (click)="toggle(c.instanceId)"
@@ -85,6 +85,8 @@
           <span class="tag">
             @if (chosen().has(c.instanceId)) {
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
+            } @else if (orderOnly) {
+              {{ $index + 1 }}º
             } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
               No cumple
             } @else if (levelSum !== null && !selectable(c)) {
@@ -111,11 +113,14 @@
   </div>
   <ng-container sheet-footer>
     <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
-      @if (prompt.kind === 'CONFIRM') {
+      @if (orderOnly) {
+        <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="sendLooked(false)"><eras-icon name="chevron-down" /> Al fondo</button>
+        <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="sendLooked(true)"><eras-icon name="chevron-up" /> Al tope</button>
+      } @else if (prompt.kind === 'CONFIRM') {
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
       } @else {
-        <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
+        <span class="count">{{ chosen().size }} de {{ prompt.max }}{{ prompt.exactOrNone ? ' (todas o ninguna)' : '' }}</span>
         <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
       }
     </eras-stack>

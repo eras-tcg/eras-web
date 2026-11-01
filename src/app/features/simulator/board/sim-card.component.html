@@ -25,8 +25,8 @@
   [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
   [class.new-card]="zone() === 'hand' && game.newInHand().has(slot().instanceId)"
   [class.attack-target]="attackable()"
-  [class.combat-attacker]="combatRole() === 'attacker'"
-  [class.combat-defender]="combatRole() === 'blocker' || combatRole() === 'target'"
+  [class.combat-attacker]="combatShown() === 'attacker'"
+  [class.combat-defender]="combatShown() === 'blocker' || combatShown() === 'target'"
   cdkOverlayOrigin
   #origin="cdkOverlayOrigin"
   (click)="onClick($event)"
@@ -45,7 +45,7 @@
   <button type="button" class="cancel-target" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
 }
 
-@if (combatRole(); as role) {
+@if (combatShown(); as role) {
   <span class="combat-badge" [class.attacker]="role === 'attacker'">
     <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
     {{ role === 'attacker' ? 'Ataca' : role === 'blocker' ? 'Bloquea' : 'Atacada' }}

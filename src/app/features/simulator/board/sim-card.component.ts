@@ -14,6 +14,10 @@ import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
+import { BoardAnimations } from './board-animations';
+
+/** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
+const TAP_MS = 300;
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
@@ -94,8 +98,17 @@ export class SimCardComponent {
     const attacker = this.game.myState()?.field.find((c) => c.instanceId === dragging.instanceId);
     return !!attacker && attackableCreatures(attacker, [this.slot()]).length > 0;
   });
+  /**
+   * Its role in the combat as shown: an attacker exhausted to attack (or by the cost of the effect that makes it attack)
+   * turns sideways first, then it is marked as attacking.
+   */
+  protected readonly combatShown = signal<'attacker' | 'blocker' | 'target' | null>(null);
+  private readonly animations = inject(BoardAnimations, { optional: true });
+  private wasTapped: boolean | null = null;
+  private tapEndsAt = 0;
+  private roleTimer: ReturnType<typeof setTimeout> | null = null;
   /** Its role in the combat in progress, if any. */
-  protected readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
+  private readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
     const c = this.game.state()?.combat;
     const id = this.slot().instanceId;
     if (!c || this.zone() !== 'field') return null;
@@ -126,6 +139,25 @@ export class SimCardComponent {
   constructor() {
     effect(() => {
       if (!this.selected()) this.effectsOpen.set(false);
+    });
+    effect((onCleanup) => {
+      const tapped = this.slot().tapped && this.zone() === 'field';
+      const role = this.combatRole();
+      const animate = !!this.animations && !this.animations.off();
+      // Exhausted just now: what comes with it (its attack, the effect it paid for) waits until it has turned
+      if (animate && this.wasTapped === false && tapped) {
+        this.tapEndsAt = Date.now() + TAP_MS;
+        this.animations!.hold(TAP_MS);
+      }
+      this.wasTapped = tapped;
+      if (this.roleTimer) clearTimeout(this.roleTimer);
+      const wait = this.tapEndsAt - Date.now();
+      if (role && animate && wait > 0) {
+        this.roleTimer = setTimeout(() => this.combatShown.set(role), wait);
+      } else {
+        this.combatShown.set(role);
+      }
+      onCleanup(() => this.roleTimer && clearTimeout(this.roleTimer));
     });
   }
 

@@ -1,31 +1,52 @@
-// The prismatic foil's glitter: specks of light in several colors (grids of odd sizes, so no pattern shows), faint
-// all over and bright where a band of light sweeps across. The sweep starts and ends off the card, then waits.
-// Include it in a positioned pseudo-element over the card; it brings its own keyframes.
+// A fine grain of sparkles: fractal noise cut to its brightest specks (an irregular glitter, never a grid)
+$sparkle-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 14 -8.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+// The prismatic foil's glitter, like a starlight card: a grain of sparkles in every color (a rainbow seen through
+// the grain, drifting), faint all over and blazing where a band of light sweeps across. The sweep starts and ends
+// off the card, then waits. Include it in a positioned pseudo-element over the card; it brings its own keyframes.
 @mixin glitter($delay: 0s) {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    radial-gradient(circle, var(--color-hub-text) 0 0.7px, transparent 1.3px) 0 0 / 13px 11px,
-    radial-gradient(circle, var(--color-rarity-uc) 0 0.6px, transparent 1.2px) 5px 7px / 17px 19px,
-    radial-gradient(circle, var(--color-rarity-sec) 0 0.9px, transparent 1.6px) 9px 2px / 23px 29px,
-    radial-gradient(circle, var(--color-rarity-sr) 0 0.7px, transparent 1.4px) 3px 13px / 31px 37px,
-    radial-gradient(circle, var(--color-hub-text) 0 1.1px, transparent 2px) 21px 17px / 41px 43px;
+  background: linear-gradient(
+      115deg,
+      var(--color-rarity-sec),
+      var(--color-rarity-sr),
+      var(--color-hub-text),
+      var(--color-rarity-uc),
+      var(--color-card-b),
+      var(--color-card-p),
+      var(--color-rarity-sec)
+    )
+    0 0 / 200% 200%;
   content: '';
+  mix-blend-mode: screen;
   pointer-events: none;
+  // The grain, kept where the band of light is or (faint) anywhere
   mask:
-    linear-gradient(rgb(0 0 0 / 30%) 0 0),
-    linear-gradient(115deg, transparent 35%, #000 50%, transparent 65%) 100% 0 / 300% 100% no-repeat;
-  animation: glitter-sweep 3.2s ease-in-out $delay infinite;
+    $sparkle-grain 0 0 / 180px 180px,
+    linear-gradient(115deg, transparent 30%, #000 50%, transparent 70%) 100% 0 / 300% 100% no-repeat,
+    linear-gradient(rgb(0 0 0 / 35%) 0 0);
+  mask-composite: intersect, add;
+  animation:
+    glitter-sweep 3.2s ease-in-out $delay infinite,
+    glitter-drift 6s ease-in-out infinite alternate;
 
   @keyframes glitter-sweep {
     0% {
-      mask-position: 0 0, 100% 0;
+      mask-position: 0 0, 100% 0, 0 0;
     }
 
     60%,
     100% {
-      mask-position: 0 0, 0% 0;
+      mask-position: 0 0, 0% 0, 0 0;
+    }
+  }
+
+  // The colors under the grain drift (back and forth, so it never jumps)
+  @keyframes glitter-drift {
+    to {
+      background-position: 100% 100%;
     }
   }
 }

@@ -148,8 +148,7 @@ export function productFor(edition: Edition, request: OpeningRequest): ShopProdu
   return shopProducts(edition).find((p) => p.kind === kind) ?? null;
 }
 
-/** The query that opens `product`: a pack gets its type drawn with `drawPack` (see packOdds). */
-export function openingQuery(edition: Edition, product: ShopProduct, drawPack: () => string): OpeningRequest & { edition: string } {
-  if (product.kind !== 'pack') return { edition: edition.editionId, mode: product.kind };
-  return { edition: edition.editionId, mode: 'pack', packType: drawPack() };
+/** The query that opens `product` (a pack's type is drawn by the server, and the opening learns it then). */
+export function openingQuery(edition: Edition, product: ShopProduct): OpeningRequest & { edition: string } {
+  return { edition: edition.editionId, mode: product.kind };
 }

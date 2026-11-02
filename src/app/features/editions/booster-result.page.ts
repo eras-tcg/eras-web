@@ -3,12 +3,11 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, e
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { FoilKind, OpenedPack, PackTier, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, rollFoil, shuffle, upgradeOnePack } from '@data/editions/booster-rules';
-import { DecksStore } from '@data/decks/decks.store';
-import { pickRandomPackFromBox } from '@data/editions/edition-rules';
+import { FoilKind, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
-import { OpeningRequest, isSubEdition, productFor } from '@data/shop/shop-rules';
-import { WalletStore } from '@core/wallet/wallet.store';
+import { OpeningRequest, productFor } from '@data/shop/shop-rules';
+import { PurchasedPack, WalletStore } from '@core/wallet/wallet.store';
+import { CollectionStore } from '@data/collection/collection.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -48,9 +47,9 @@ const PACK_MAX_PX = 260;
 const PACK_GAP_PX = 12;
 
 /**
- * Opening of something bought in the Editions shop: /booster-result?edition=E1&mode=pack|box&packType=… (for a
- * pack, the type that came out at random). Only a fresh purchase opens (WalletStore ticket); otherwise it offers
- * to buy. First every pack bought lies on the table, shuffled and as big as fits without scrolling (SR, SEC and GOD
+ * Opening of something bought in the Editions shop: /booster-result?edition=E1&mode=pack|box|structure. The
+ * server draws what was bought (and adds it to the player's collection); this page only shows it. Only a fresh
+ * purchase opens (WalletStore ticket); otherwise it offers to buy. First every pack bought lies on the table, shuffled and as big as fits without scrolling (SR, SEC and GOD
  * packs with their aura); "Abrir" tears them in that order without telling their type. Each pack's cards, shuffled,
  * lie face down, the SR and SEC ones glowing; the plain ones turn in order while the special ones only tremble,
  * then the special ones turn one by one, slower and with a bigger flourish; then a second pass turns the foil ones
@@ -87,7 +86,7 @@ export class BoosterResultPage {
   private readonly editions = inject(EditionsStore);
   private readonly modal = inject(ModalService);
   private readonly checkout = inject(ShopCheckout);
-  private readonly decks = inject(DecksStore);
+  private readonly collection = inject(CollectionStore);
 
   protected readonly ready = computed(() => this.cards.cards().length > 0 && this.editions.editions().length > 0);
   protected readonly editionData = computed(() => this.editions.editions().find((e) => e.editionId === this.edition()) ?? null);
@@ -101,7 +100,8 @@ export class BoosterResultPage {
   protected readonly isBox = computed(() => this.current().mode === 'box');
   protected readonly isStructure = computed(() => this.current().mode === 'structure');
   protected readonly label = computed(() =>
-    this.isBox() ? 'Booster box' : this.isStructure() ? 'Structure deck' : `Sobre ${this.current().packType ?? ''}`.trim(),
+    // A pack's type stays hidden until it is open
+    this.isBox() ? 'Booster box' : this.isStructure() ? 'Structure deck' : `Sobre ${this.phase() === 'done' ? (this.current().packType ?? '') : ''}`.trim(),
   );
 
   protected readonly phase = signal<Phase>('unpaid');
@@ -165,7 +165,8 @@ export class BoosterResultPage {
       const product = this.product();
       started = true;
       untracked(() => {
-        if (edition && product && this.wallet.takeTicket(purchaseTicket(edition, product))) void this.deal();
+        const packs = edition && product ? this.wallet.takeTicket(purchaseTicket(edition, product)) : null;
+        if (packs) this.deal(packs);
       });
     });
   }
@@ -180,9 +181,7 @@ export class BoosterResultPage {
     const edition = this.editionData();
     const product = this.product();
     if (!edition || !product || !(await this.checkout.purchase(edition, product))) return;
-    this.wallet.takeTicket(purchaseTicket(edition, product));
-    if (product.kind === 'pack') this.request.set({ ...this.current(), packType: pickRandomPackFromBox(edition) });
-    void this.deal();
+    this.deal(this.wallet.takeTicket(purchaseTicket(edition, product)) ?? []);
   }
 
   /** Opens the packs one after another. */
@@ -226,57 +225,33 @@ export class BoosterResultPage {
   }
 
   /**
-   * Draws what was bought (its cards unseen yet) and lays it on the table: a pack; a box's packs, one of them going up
-   * a rarity (always in an edition's box, half the times in a sub-edition's); or a structure deck, whole (the public
-   * deck named after it, or else one of each of its cards).
+   * Lays on the table what the server drew for the purchase (already in the player's collection): its packs, each
+   * card with its finish (a structure deck's are plain), shuffled for the show.
    */
-  private async deal(): Promise<void> {
-    const edition = this.editionData();
-    if (!edition) return;
+  private deal(drawn: readonly PurchasedPack[]): void {
     this.stopTimers();
-    const pool = cardsByRarity(this.cards.cards(), edition.editionId);
-    const types = edition.packTypes ?? [];
-    const request = this.current();
-    let packs: OpenedPack[];
-    if (request.mode === 'structure') {
-      packs = [{ packType: 'Structure', cards: await this.structureCards(edition.editionId) }];
-    } else if (!types.length) {
-      return;
-    } else if (request.mode === 'box') {
-      packs = upgradeOnePack(openBoxPacks(edition, pool), types, pool, isSubEdition(edition.editionId) ? 0.5 : 1);
-    } else {
-      const type = types.find((p) => p.name === request.packType) ?? types[0];
-      packs = [{ packType: type.name, cards: openPack(type, pool) }];
-    }
-    // They come out in no order, and so do the cards inside each one
-    // They come out in no order, and so do the cards inside each one; each card may come out foil (not a
-    // structure deck's, which is a fixed product)
-    const foils = request.mode !== 'structure';
-    this.packs.set(
-      shuffle(
-        packs.map((p) => {
-          const cards = shuffle(p.cards);
-          return { ...p, cards, foils: cards.map(() => (foils ? rollFoil() : null)) };
-        }),
-      ),
-    );
+    const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
+    const packs: OpenedPack[] = drawn.map((p) => {
+      const cards = shuffle(p.cards.filter((c) => byId.has(c.id)));
+      return {
+        packType: p.packType,
+        cards: cards.map((c) => byId.get(c.id)!),
+        foils: cards.map((c) => (c.finish === 'plain' ? null : c.finish)),
+        ...(p.upgradedFrom ? { upgradedFrom: p.upgradedFrom } : {}),
+      };
+    });
+    // A pack's type is the server's: the title tells it once the opening is over
+    if (this.current().mode === 'pack' && packs[0]) this.request.set({ ...this.current(), packType: packs[0].packType });
+    this.packs.set(shuffle(packs));
     this.packIndex.set(0);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
     this.trembling.set(new Set());
     this.upgradeShown.set(false);
     this.phase.set('packs');
+    void this.collection.load();
     // Once every pack is dealt, the upgraded one (if any) shakes a moment and goes up
     if (this.packs().some((p) => p.upgradedFrom)) this.later(() => this.upgradeShown.set(true), this.packs().length * 45 + UPGRADE_SHAKE_MS);
-  }
-
-  /** A structure deck's cards: its public deck (named like the edition, "ST1"), or one of each card of the edition. */
-  private async structureCards(editionId: string): Promise<CatalogCard[]> {
-    await this.decks.loadPublic();
-    const deck = this.decks.publicDecks().find((d) => d.deckName.trim().toUpperCase() === editionId.toUpperCase());
-    const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
-    const fromDeck = (deck?.cards ?? []).map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c);
-    return fromDeck.length ? fromDeck : this.cards.cards().filter((c) => c.edition === editionId && !!c.meta);
   }
 
   /** How long a pack takes to break open here. */

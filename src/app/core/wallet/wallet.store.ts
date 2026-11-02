@@ -10,10 +10,23 @@ interface WalletResponse {
   reward?: number;
 }
 
+/** A pack as the server drew it on a purchase: its type, the type it was if it went up a rarity, its cards. */
+export interface PurchasedPack {
+  packType: string;
+  upgradedFrom: string | null;
+  cards: { id: string; finish: 'plain' | 'foil' | 'prism' }[];
+}
+
+interface PurchaseResponse {
+  gems: number;
+  packs: PurchasedPack[];
+}
+
 /**
  * The signed-in account's simulated gems, kept by the server (DriveManager /api/drive/wallet): the same balance on
  * every device. Reading it gives the daily reward once a day (`reward` says how much, so the shop can tell); a
- * purchase is charged by the server at its own price.
+ * purchase is charged by the server at its own price, and drawn there too (what came out is already in the player's
+ * collection): the opening only shows it.
  */
 @Injectable({ providedIn: 'root' })
 export class WalletStore {
@@ -27,8 +40,8 @@ export class WalletStore {
   /** Why the last purchase was refused, in Spanish (null when it went through). */
   readonly error = signal<string | null>(null);
 
-  /** What was just paid for and not opened yet (see `purchase` and `takeTicket`). */
-  private ticket: string | null = null;
+  /** What was just paid for and not opened yet, and what came out (see `purchase` and `takeTicket`). */
+  private ticket: { name: string; packs: PurchasedPack[] } | null = null;
 
   constructor() {
     // Loaded for whoever signs in; cleared on sign-out
@@ -61,9 +74,9 @@ export class WalletStore {
   async purchase(editionId: string, product: 'pack' | 'box' | 'structure', ticket: string): Promise<boolean> {
     this.error.set(null);
     try {
-      const done = await firstValueFrom(this.http.post<WalletResponse>(this.api.url('/api/drive/wallet/me/purchase'), { editionId, product }));
+      const done = await firstValueFrom(this.http.post<PurchaseResponse>(this.api.url('/api/drive/wallet/me/purchase'), { editionId, product }));
       this.gems.set(done.gems);
-      this.ticket = ticket;
+      this.ticket = { name: ticket, packs: done.packs ?? [] };
       return true;
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo hacer la compra'));
@@ -72,10 +85,11 @@ export class WalletStore {
     }
   }
 
-  /** True once if `ticket` was just paid for (it is used up). */
-  takeTicket(ticket: string): boolean {
-    const paid = this.ticket === ticket;
-    if (paid) this.ticket = null;
-    return paid;
+  /** What came out of `ticket` if it was just paid for, once (it is used up); null otherwise. */
+  takeTicket(ticket: string): PurchasedPack[] | null {
+    if (this.ticket?.name !== ticket) return null;
+    const packs = this.ticket.packs;
+    this.ticket = null;
+    return packs;
   }
 }

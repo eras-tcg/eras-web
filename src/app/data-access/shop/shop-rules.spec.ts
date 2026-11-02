@@ -28,7 +28,7 @@ describe('structure decks', () => {
     const st = { editionId: 'ST1', packTypes: [pack('Normal')] };
     expect(shopProducts(st)).toEqual([{ kind: 'structure', name: 'Structure deck', price: STRUCTURE_PRICE }]);
     expect(productFor(st, { mode: 'structure' })?.kind).toBe('structure');
-    expect(openingQuery(st, shopProducts(st)[0], () => 'x')).toEqual({ edition: 'ST1', mode: 'structure' });
+    expect(openingQuery(st, shopProducts(st)[0])).toEqual({ edition: 'ST1', mode: 'structure' });
   });
 });
 
@@ -90,9 +90,9 @@ describe('productFor and openingQuery', () => {
     expect(productFor(edition, { mode: 'box' })?.kind).toBe('box');
     expect(productFor(edition, { mode: 'pack', packType: 'SR' })?.kind).toBe('pack');
     for (const product of shopProducts(edition)) {
-      const query = openingQuery(edition, product, () => 'SR');
+      const query = openingQuery(edition, product);
       expect(productFor(edition, query)?.kind).toBe(product.kind);
     }
-    expect(openingQuery(edition, shopProducts(edition)[0], () => 'SR')).toEqual({ edition: 'E1', mode: 'pack', packType: 'SR' });
+    expect(openingQuery(edition, shopProducts(edition)[0])).toEqual({ edition: 'E1', mode: 'pack' });
   });
 });

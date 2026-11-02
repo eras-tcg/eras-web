@@ -2,7 +2,6 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
-import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { ShopProduct, openingQuery, shopProducts } from '@data/shop/shop-rules';
 import { WalletStore } from '@core/wallet/wallet.store';
@@ -67,6 +66,6 @@ export class EditionShopPage {
   protected async buy(product: ShopProduct): Promise<void> {
     const edition = this.edition();
     if (!edition || !(await this.checkout.purchase(edition, product))) return;
-    void this.router.navigate(['/booster-result'], { queryParams: openingQuery(edition, product, () => pickRandomPackFromBox(edition)) });
+    void this.router.navigate(['/booster-result'], { queryParams: openingQuery(edition, product) });
   }
 }

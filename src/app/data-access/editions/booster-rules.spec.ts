@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
-import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle, upgradeOnePack } from './booster-rules';
+import { FOIL_ODDS, cardsByRarity, groupOpening, rollFoil, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle, upgradeOnePack } from './booster-rules';
 import { Edition, PackType } from './edition.model';
 
 const card = (id: string, rarity: string | null, over: Partial<CatalogCard> = {}): CatalogCard => ({
@@ -181,3 +181,25 @@ describe('groupOpening', () => {
     ]);
   });
 });
+
+describe('rollFoil', () => {
+  it('gives prism, foil or nothing by its odds', () => {
+    expect(rollFoil(() => 0)).toBe('prism');
+    expect(rollFoil(() => FOIL_ODDS.prism + 0.001)).toBe('foil');
+    expect(rollFoil(() => FOIL_ODDS.prism + FOIL_ODDS.foil + 0.001)).toBeNull();
+  });
+});
+
+describe('groupOpening with foils', () => {
+  it('counts the foil copies apart, prism and foil before the plain ones', () => {
+    const c = card('c1', 'C');
+    const [group] = groupOpening([c, c, c, c], [null, 'foil', null, 'prism']);
+    expect(group.cards.map((o) => [o.foil, o.count])).toEqual([
+      ['prism', 1],
+      ['foil', 1],
+      [null, 2],
+    ]);
+    expect(group.count).toBe(4);
+  });
+});
+

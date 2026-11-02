@@ -55,6 +55,8 @@ export function rollQuantity(options: readonly ProbOption[], random: Random = Ma
 export interface OpenedPack {
   packType: string;
   cards: CatalogCard[];
+  /** The foil of each card, in the same order (none when absent). */
+  foils?: (FoilKind | null)[];
   /** It went up a rarity (see upgradeOnePack): the type it was. */
   upgradedFrom?: string;
 }
@@ -145,10 +147,28 @@ export function revealOrder<T>(cards: readonly T[], special: (card: T) => boolea
   return { plain, special: last };
 }
 
+/**
+ * A card can come out foil: a second pass of the opening turns it around and it comes back shining. Two levels:
+ * "foil" (holographic) and "prism" (prismatic, rarer). The chance is per card, whatever its rarity.
+ */
+export type FoilKind = 'foil' | 'prism';
+export const FOIL_ODDS: Record<FoilKind, number> = { foil: 0.1, prism: 0.02 };
+const FOIL_RANK: Record<FoilKind | 'none', number> = { prism: 0, foil: 1, none: 2 };
+
+/** Whether one card comes out foil, and which. */
+export function rollFoil(random: Random = Math.random): FoilKind | null {
+  const roll = random();
+  if (roll < FOIL_ODDS.prism) return 'prism';
+  if (roll < FOIL_ODDS.prism + FOIL_ODDS.foil) return 'foil';
+  return null;
+}
+
 export interface OpenedCard {
   card: CatalogCard;
   rarity: string;
   count: number;
+  /** The foil copies of a card count apart from its plain ones. */
+  foil: FoilKind | null;
 }
 
 export interface RarityGroup {
@@ -157,16 +177,23 @@ export interface RarityGroup {
   count: number;
 }
 
-/** Counts repeated pulls and groups them rarest first, by card number inside each rarity. */
-export function groupOpening(picked: readonly CatalogCard[]): RarityGroup[] {
+/**
+ * Counts repeated pulls (`foils[i]` is the foil of `picked[i]`, if any) and groups them rarest first; inside each
+ * rarity by card number, the prismatic copy first, then the foil one, then the plain ones.
+ */
+export function groupOpening(picked: readonly CatalogCard[], foils: readonly (FoilKind | null)[] = []): RarityGroup[] {
   const counts = new Map<string, OpenedCard>();
-  for (const card of picked) {
-    const current = counts.get(card.id);
+  picked.forEach((card, i) => {
+    const foil = foils[i] ?? null;
+    const key = `${card.id}|${foil ?? ''}`;
+    const current = counts.get(key);
     if (current) current.count++;
-    else counts.set(card.id, { card, rarity: card.meta?.rarity || 'C', count: 1 });
-  }
+    else counts.set(key, { card, rarity: card.meta?.rarity || 'C', count: 1, foil });
+  });
   return RARITY_DISPLAY_ORDER.map((rarity) => {
-    const cards = [...counts.values()].filter((c) => c.rarity === rarity).sort((a, b) => (a.card.number ?? 0) - (b.card.number ?? 0));
+    const cards = [...counts.values()]
+      .filter((c) => c.rarity === rarity)
+      .sort((a, b) => (a.card.number ?? 0) - (b.card.number ?? 0) || FOIL_RANK[a.foil ?? 'none'] - FOIL_RANK[b.foil ?? 'none']);
     return { rarity, cards, count: cards.reduce((sum, c) => sum + c.count, 0) };
   }).filter((g) => g.cards.length > 0);
 }

@@ -1,9 +1,9 @@
-<!-- Behind: turning rays and a glow, growing while it charges -->
+<!-- Behind: turning rays, growing while it charges -->
 <span class="rays"></span>
-<span class="glow"></span>
 
-<!-- The pack, as its shards (together they are the whole pack): it shakes, cracks, then they fly -->
+<!-- The pack, as its shards (together they are the whole pack): it shakes (its glow with it), cracks, then they fly -->
 <span class="body">
+  <span class="glow"></span>
   @for (shard of shards; track $index) {
     <span class="shard" [style.clip-path]="'polygon(' + shard.clip + ')'" [style.--dx]="shard.dx + '%'" [style.--dy]="shard.dy + '%'" [style.--rot]="shard.rot + 'deg'"></span>
   }
@@ -13,9 +13,8 @@
   </svg>
 </span>
 
-<!-- The break: a flash, a shockwave and sparks -->
+<!-- The break: a flash and sparks -->
 <span class="flash"></span>
-<span class="ring"></span>
 @for (spark of sparks; track $index) {
   <span class="spark" [style.--angle]="spark.angle + 'deg'" [style.--dist]="spark.dist + 'px'" [style.--size]="spark.size + 'px'"></span>
 }

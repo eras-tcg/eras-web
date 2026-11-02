@@ -1,5 +1,5 @@
 // A pack breaking open in --break (ms, from the component): it charges until 55% of it, cracking from 30%, and
-// shatters at 55%. The light is the hub's glow and accent, the same for every pack (it does not tell its type).
+// shatters at 55%; the shards and sparks are shot out and slow down exponentially. The light is the hub's glow and accent, the same for every pack (it does not tell its type).
 :host {
   --boom: calc(var(--break) * 0.55);
   --after: calc(var(--break) * 0.45);
@@ -41,6 +41,7 @@
 }
 
 .glow {
+  z-index: -1;
   background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--color-hub-accent) 60%, transparent) 25%, transparent 55%);
   opacity: 0;
   animation: glow var(--break) ease-in both;
@@ -125,7 +126,8 @@
   inset: 0;
   border-radius: var(--radius-lg);
   background: var(--art, none) center / cover, var(--color-surface-muted);
-  animation: fly var(--after) cubic-bezier(0.12, 0.7, 0.3, 1) var(--boom) both;
+  // Shot out, then slowing down exponentially (an "ease-out expo" curve)
+  animation: fly var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
 }
 
 @keyframes fly {
@@ -208,34 +210,6 @@
   }
 }
 
-.ring {
-  position: absolute;
-  inset-block-start: 45%;
-  inset-inline-start: 50%;
-  inline-size: 60%;
-  aspect-ratio: 1;
-  border: 3px solid var(--light);
-  border-radius: 50%;
-  box-shadow:
-    0 0 1rem var(--color-hub-accent),
-    inset 0 0 1rem var(--color-hub-accent);
-  opacity: 0;
-  pointer-events: none;
-  translate: -50% -50%;
-  animation: ring calc(var(--after) * 0.85) ease-out var(--boom) both;
-}
-
-@keyframes ring {
-  0% {
-    opacity: 1;
-    transform: scale(0.2);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(4.5);
-  }
-}
 
 .spark {
   position: absolute;
@@ -250,7 +224,7 @@
     0 0 12px var(--color-hub-accent);
   opacity: 0;
   pointer-events: none;
-  animation: spark var(--after) cubic-bezier(0.1, 0.8, 0.3, 1) var(--boom) both;
+  animation: spark var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
 }
 
 @keyframes spark {
@@ -269,7 +243,6 @@
   .rays,
   .glow,
   .flash,
-  .ring,
   .spark {
     display: none;
   }

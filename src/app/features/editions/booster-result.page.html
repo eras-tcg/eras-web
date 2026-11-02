@@ -63,7 +63,15 @@
               } @else {
                 <div class="cards">
                   @for (card of pack.cards; track $index; let i = $index) {
-                    <eras-opening-card [src]="imageUrl(card)" [alt]="card.name ?? ''" [aura]="aura(card)" [up]="faceUp().has(i)" [shake]="trembling().has(i)" />
+                    <eras-opening-card
+                      [src]="imageUrl(card)"
+                      [alt]="card.name ?? ''"
+                      [aura]="aura(card)"
+                      [foil]="foilOf(i)"
+                      [up]="faceUp().has(i)"
+                      [shake]="trembling().has(i)"
+                      [revealFoil]="foiled().has(i)"
+                    />
                   }
                 </div>
               }
@@ -77,10 +85,10 @@
             <p class="hint">{{ total() }} cartas obtenidas · toca una para verla</p>
             <!-- One card after another, rarest first -->
             <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
-              @for (opened of obtained(); track opened.card.id; let i = $index) {
+              @for (opened of obtained(); track opened.card.id + (opened.foil ?? ''); let i = $index) {
                 <eras-card-thumb
                   class="arrive"
-                  [class]="aura(opened.card) ? 'aura-' + aura(opened.card) : ''"
+                  [class]="(aura(opened.card) ? 'aura-' + aura(opened.card) : '') + (opened.foil ? ' foil-' + opened.foil : '')"
                   [style.animation-delay.ms]="i < 24 ? i * 35 : 840"
                   [name]="opened.card.name ?? ''"
                   [imageUrl]="imageUrl(opened.card)"

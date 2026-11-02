@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, e
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { OpenedPack, PackTier, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, shuffle, upgradeOnePack } from '@data/editions/booster-rules';
+import { FoilKind, OpenedPack, PackTier, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, rollFoil, shuffle, upgradeOnePack } from '@data/editions/booster-rules';
 import { DecksStore } from '@data/decks/decks.store';
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -31,13 +31,15 @@ type Phase = 'unpaid' | 'packs' | 'opening' | 'done';
 /** The rarities that shine (their aura) when they turn face up. */
 const SHINY = new Set(['SR', 'SEC']);
 /** A pack breaking open (it charges, cracks and shatters): one pack, and each of a box's (quicker). */
-const BREAK_MS = { pack: 1600, box: 1000 };
+const BREAK_MS = { pack: 2600, box: 1500 };
 /** Time between two plain cards turning, and between two special ones (slower), in a pack and in a box. */
 const PLAIN_MS = { pack: 300, box: 110 };
 const SPECIAL_MS = { pack: 1600, box: 1000 };
 /** Pause after the plain cards, before the special ones. */
 const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
+/** The foils' pass: how long each foil card takes to turn around and show its foil, in a pack and in a box. */
+const FOIL_MS = { pack: 1500, box: 1000 };
 /** How long the pack that goes up a rarity shakes on the table before it does. */
 const UPGRADE_SHAKE_MS = 1400;
 const CARD_RATIO = 63 / 88;
@@ -51,7 +53,8 @@ const PACK_GAP_PX = 12;
  * to buy. First every pack bought lies on the table, shuffled and as big as fits without scrolling (SR, SEC and GOD
  * packs with their aura); "Abrir" tears them in that order without telling their type. Each pack's cards, shuffled,
  * lie face down, the SR and SEC ones glowing; the plain ones turn in order while the special ones only tremble,
- * then the special ones turn one by one, slower and with a bigger flourish. Only at the end the full list shows.
+ * then the special ones turn one by one, slower and with a bigger flourish; then a second pass turns the foil ones
+ * around, coming back with their foil. Only at the end the full list shows.
  * "Saltar animación" goes straight to it.
  */
 @Component({
@@ -109,6 +112,8 @@ export class BoosterResultPage {
   protected readonly tearing = signal(false);
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
   protected readonly trembling = signal<ReadonlySet<number>>(new Set());
+  /** The cards of the pack whose foil already showed (the second pass). */
+  protected readonly foiled = signal<ReadonlySet<number>>(new Set());
   /** packs: whether the pack that goes up a rarity already showed it (until then it wears its old aura). */
   protected readonly upgradeShown = signal(false);
 
@@ -120,7 +125,12 @@ export class BoosterResultPage {
   );
   protected readonly openingPack = computed(() => this.packs()[this.packIndex()] ?? null);
   /** Everything that came out, one card after another, rarest first (each with how many came). */
-  protected readonly obtained = computed(() => groupOpening(this.packs().flatMap((p) => p.cards)).flatMap((g) => g.cards));
+  protected readonly obtained = computed(() =>
+    groupOpening(
+      this.packs().flatMap((p) => p.cards),
+      this.packs().flatMap((p) => p.foils ?? p.cards.map(() => null)),
+    ).flatMap((g) => g.cards),
+  );
   protected readonly total = computed(() => this.packs().reduce((sum, p) => sum + p.cards.length, 0));
 
   protected readonly imageUrl = cardImageUrl;
@@ -222,9 +232,20 @@ export class BoosterResultPage {
       packs = [{ packType: type.name, cards: openPack(type, pool) }];
     }
     // They come out in no order, and so do the cards inside each one
-    this.packs.set(shuffle(packs.map((p) => ({ ...p, cards: shuffle(p.cards) }))));
+    // They come out in no order, and so do the cards inside each one; each card may come out foil (not a
+    // structure deck's, which is a fixed product)
+    const foils = request.mode !== 'structure';
+    this.packs.set(
+      shuffle(
+        packs.map((p) => {
+          const cards = shuffle(p.cards);
+          return { ...p, cards, foils: cards.map(() => (foils ? rollFoil() : null)) };
+        }),
+      ),
+    );
     this.packIndex.set(0);
     this.faceUp.set(new Set());
+    this.foiled.set(new Set());
     this.trembling.set(new Set());
     this.upgradeShown.set(false);
     this.phase.set('packs');
@@ -250,6 +271,7 @@ export class BoosterResultPage {
     if (index >= this.packs().length) return this.later(() => this.phase.set('done'), BETWEEN_PACKS_MS);
     this.packIndex.set(index);
     this.faceUp.set(new Set());
+    this.foiled.set(new Set());
     this.trembling.set(new Set());
     this.tearing.set(true);
     this.later(() => {
@@ -273,7 +295,7 @@ export class BoosterResultPage {
     const pack = this.openingPack();
     if (!pack) return;
     const order = revealOrder(pack.cards, this.special).special;
-    if (n >= order.length) return this.later(() => this.openPackAt(this.packIndex() + 1), order.length ? BETWEEN_PACKS_MS : 0);
+    if (n >= order.length) return this.later(() => this.foilPass(0), order.length ? BETWEEN_PACKS_MS : 0);
     const index = order[n];
     this.trembling.update((set) => {
       const next = new Set(set);
@@ -282,6 +304,21 @@ export class BoosterResultPage {
     });
     this.faceUp.update((set) => new Set(set).add(index));
     this.later(() => this.turnSpecial(n + 1), this.isBox() ? SPECIAL_MS.box : SPECIAL_MS.pack);
+  }
+
+  /** The second pass: the foil cards, one by one, turn around and come back with their foil; then the next pack. */
+  private foilPass(n: number): void {
+    const pack = this.openingPack();
+    if (!pack) return;
+    const order = (pack.foils ?? []).map((foil, i) => (foil ? i : -1)).filter((i) => i >= 0);
+    if (n >= order.length) return this.openPackAt(this.packIndex() + 1);
+    this.foiled.update((set) => new Set(set).add(order[n]));
+    this.later(() => this.foilPass(n + 1), this.isBox() ? FOIL_MS.box : FOIL_MS.pack);
+  }
+
+  /** The foil of a card of the pack being opened. */
+  protected foilOf(index: number): FoilKind | null {
+    return this.openingPack()?.foils?.[index] ?? null;
   }
 
   private later(run: () => void, ms: number): void {

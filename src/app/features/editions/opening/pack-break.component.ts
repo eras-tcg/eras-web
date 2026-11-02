@@ -32,8 +32,8 @@ const SPARK_COUNT = 22;
 
 /**
  * A pack breaking open, in `duration` ms: it charges (it shakes harder and harder while rays of light turn and glow
- * behind it), cracks (the cracks draw themselves and light leaks through), then shatters: a flash, its shards fly
- * away turning, a shockwave rings out and sparks burst all around. Its color says nothing of the pack's type.
+ * behind it), cracks (the cracks draw themselves and light leaks through), then shatters: a flash, its shards are
+ * shot away turning and slow down exponentially, and sparks burst all around. Its color says nothing of the pack's type.
  */
 @Component({
   selector: 'eras-pack-break',
@@ -44,7 +44,7 @@ const SPARK_COUNT = 22;
 })
 export class PackBreakComponent {
   readonly art = input<string | null>(null);
-  readonly duration = input(1600);
+  readonly duration = input(2600);
 
   protected readonly shards = SHARDS;
   /** Drawn once per pack, so no two bursts look alike. */

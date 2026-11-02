@@ -139,8 +139,42 @@ eras-card-thumb.aura-sec {
     aura-card 1.8s ease-in-out 0.4s infinite;
 }
 
+// A foil copy in the list: its sheen over the card (holographic, or prismatic and stronger)
+eras-card-thumb.foil-foil,
+eras-card-thumb.foil-prism {
+  position: relative;
+  overflow: hidden;
+}
+
+eras-card-thumb.foil-foil::after,
+eras-card-thumb.foil-prism::after {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: color-dodge;
+  content: '';
+  pointer-events: none;
+}
+
+eras-card-thumb.foil-foil::after {
+  background: linear-gradient(115deg, transparent 20%, color-mix(in srgb, var(--color-card-b) 55%, transparent) 35%, color-mix(in srgb, var(--color-rarity-sr) 55%, transparent) 50%, color-mix(in srgb, var(--color-rarity-sec) 55%, transparent) 65%, transparent 80%) 0 0 / 250% 250%;
+  animation: list-foil 3s linear infinite;
+}
+
+eras-card-thumb.foil-prism::after {
+  background: linear-gradient(135deg, var(--color-rarity-sec), var(--color-rarity-sr), var(--color-rarity-uc), var(--color-card-b), var(--color-card-p)) 0 0 / 300% 300%;
+  opacity: 0.6;
+  animation: list-foil 4s linear infinite;
+}
+
+@keyframes list-foil {
+  to {
+    background-position: 250% 250%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .arrive,
+  eras-card-thumb::after,
   eras-card-thumb.aura-sr,
   eras-card-thumb.aura-sec {
     animation: none;

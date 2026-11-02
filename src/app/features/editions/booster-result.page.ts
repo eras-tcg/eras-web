@@ -37,7 +37,7 @@ import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-d
     SpinnerComponent,
   ],
   template: `
-    <eras-page [title]="title()" [subtitle]="subtitle()" width="wide">
+    <eras-page [title]="title()" width="wide">
       <ng-container ngProjectAs="[page-actions]">
         <button erasButton variant="ghost" type="button" (click)="back()"><eras-icon name="chevron-left" /> Volver</button>
         <button erasButton type="button" [disabled]="!ready()" (click)="reroll()"><eras-icon name="box" /> Volver a abrir</button>
@@ -95,11 +95,6 @@ export class BoosterResultPage {
   protected readonly groups = signal<RarityGroup[]>([]);
   protected readonly total = computed(() => this.groups().reduce((sum, g) => sum + g.count, 0));
   protected readonly title = computed(() => (this.isBox() ? 'Apertura de caja' : this.random() === '1' ? 'Sobre al azar de una caja' : 'Apertura de sobre'));
-  protected readonly subtitle = computed(() => {
-    const e = this.editionData();
-    const name = e?.editionName ? `${this.edition()} — ${e.editionName}` : this.edition();
-    return !this.isBox() && this.packType() ? `${name} · ${this.packType()}` : name;
-  });
   protected readonly imageUrl = cardImageUrl;
   protected readonly rarityName = (r: string) => RARITY_NAMES[r] ?? r;
   protected readonly asRarity = (r: string) => r as Rarity;

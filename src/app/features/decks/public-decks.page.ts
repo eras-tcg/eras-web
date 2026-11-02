@@ -37,7 +37,7 @@ import { PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
     IconComponent,
   ],
   template: `
-    <eras-page title="Mazos públicos" subtitle="Mazos compartidos por la comunidad" width="wide">
+    <eras-page title="Mazos públicos" width="wide">
       <ng-container ngProjectAs="[page-actions]">
         <eras-sort-control
           [options]="sortOptions"

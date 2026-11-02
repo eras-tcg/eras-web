@@ -1,4 +1,4 @@
-<eras-page title="Usuarios" [subtitle]="(users().length | plural: 'cuenta') + (unverified() ? ' · ' + unverified() + ' sin verificar' : '')">
+<eras-page title="Usuarios">
   <ng-container ngProjectAs="[page-actions]">
     <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
     <button erasButton type="button" [disabled]="creating()" (click)="openCreate()"><eras-icon name="plus" /> Nuevo usuario</button>

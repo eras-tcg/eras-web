@@ -1,4 +1,4 @@
-<eras-page title="Simulador" subtitle="Crea una sala o únete a una abierta. Los mazos se eligen dentro de la sala." width="wide">
+<eras-page title="Simulador" width="wide">
   <button page-actions erasButton variant="secondary" type="button" [loading]="busy() === 'test'" [disabled]="!!busy()" (click)="create(true)" title="Juegas solo los dos lados, con acciones manuales y cartas de prueba">Modo solo</button>
   <button page-actions erasButton type="button" [loading]="busy() === 'create'" [disabled]="!!busy()" (click)="create()">Crear sala</button>
 

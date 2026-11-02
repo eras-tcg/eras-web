@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
 import { ScreenBarComponent } from '@core/layout/screen-bar.component';
 
 /**
- * Standard screen frame, game-like: one top row ("back" to the parent screen, the title with its optional
- * subtitle and actions, the quick buttons), then the content.
+ * Standard screen frame, game-like: one top row ("back" to the parent screen, the title and the page's actions,
+ * the quick buttons), then the content.
  * <eras-page title="Ediciones"><button page-actions erasButton>Nueva</button> ... </eras-page>
  */
 @Component({
@@ -13,9 +13,6 @@ import { ScreenBarComponent } from '@core/layout/screen-bar.component';
     <eras-screen-bar class="bar">
       <header class="heading">
         <h1 class="title">{{ title() }}</h1>
-        @if (subtitle()) {
-          <p class="subtitle">{{ subtitle() }}</p>
-        }
       </header>
       <div class="actions"><ng-content select="[page-actions]" /></div>
     </eras-screen-bar>
@@ -28,7 +25,6 @@ import { ScreenBarComponent } from '@core/layout/screen-bar.component';
 })
 export class PageComponent {
   readonly title = input.required<string>();
-  readonly subtitle = input<string | null>(null);
   readonly width = input<'narrow' | 'default' | 'wide'>('default');
   /** Exactly one screen high (below the header); the content fills the rest instead of scrolling the page. */
   readonly fill = input(false, { transform: booleanAttribute });

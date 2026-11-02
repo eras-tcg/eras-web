@@ -13,7 +13,7 @@ import { LinkTileComponent } from '@ui/surfaces/link-tile/link-tile.component';
   selector: 'eras-admin-page',
   imports: [PageComponent, GridComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, LinkTileComponent],
   template: `
-    <eras-page title="Administración" subtitle="Herramientas para gestionar cuentas, cartas y partidas">
+    <eras-page title="Administración">
       @if (groups().length === 0) {
         <eras-empty-state title="No tienes herramientas de administración" />
       } @else {

@@ -22,7 +22,7 @@ import { feedbackState } from './admin-feedback';
   selector: 'eras-permissions-page',
   imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
-    <eras-page title="Permisos" subtitle="Códigos que se asignan a los roles">
+    <eras-page title="Permisos">
       <button page-actions erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
 
       @if (fb.feedback(); as f) {

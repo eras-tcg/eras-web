@@ -20,6 +20,9 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { fitItemWidth } from './fit-grid';
+import { OpeningCardComponent } from './opening/opening-card.component';
+import { OpeningPackComponent } from './opening/opening-pack.component';
+import { PackBreakComponent } from './opening/pack-break.component';
 import { ShopCheckout, purchaseTicket } from './shop-checkout';
 
 /** unpaid: offered for sale · packs: the bought packs on the table · opening: one by one · done: the full list. */
@@ -27,7 +30,8 @@ type Phase = 'unpaid' | 'packs' | 'opening' | 'done';
 
 /** The rarities that shine (their aura) when they turn face up. */
 const SHINY = new Set(['SR', 'SEC']);
-const TEAR_MS = 850;
+/** A pack breaking open (it charges, cracks and shatters): one pack, and each of a box's (quicker). */
+const BREAK_MS = { pack: 1600, box: 1000 };
 /** Time between two plain cards turning, and between two special ones (slower), in a pack and in a box. */
 const PLAIN_MS = { pack: 300, box: 110 };
 const SPECIAL_MS = { pack: 1600, box: 1000 };
@@ -62,6 +66,9 @@ const PACK_GAP_PX = 12;
     ButtonComponent,
     IconComponent,
     SpinnerComponent,
+    OpeningPackComponent,
+    OpeningCardComponent,
+    PackBreakComponent,
   ],
   templateUrl: './booster-result.page.html',
   styleUrl: './booster-result.page.scss',
@@ -97,7 +104,7 @@ export class BoosterResultPage {
   protected readonly phase = signal<Phase>('unpaid');
   /** The bought packs, in opening order. */
   protected readonly packs = signal<OpenedPack[]>([]);
-  /** opening: the pack being opened, whether it is still tearing, its cards face up and the ones trembling. */
+  /** opening: the pack being opened, whether it is still breaking open, its cards face up and the ones trembling. */
   protected readonly packIndex = signal(0);
   protected readonly tearing = signal(false);
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
@@ -128,11 +135,13 @@ export class BoosterResultPage {
     void this.cards.load();
     void this.editions.load();
     inject(DestroyRef).onDestroy(() => this.stopTimers());
-    // Follow the table's size while it is on screen
+    // Follow the table's size while it is on screen; measured right away too, as the observer only reports on a
+    // painted frame (a tab in the background paints none)
     effect((onCleanup) => {
       const element = this.table()?.nativeElement;
       if (!element) return;
-      const observer = new ResizeObserver(([entry]) => this.room.set({ width: entry.contentRect.width, height: entry.contentRect.height }));
+      this.room.set(contentSize(element));
+      const observer = new ResizeObserver(() => this.room.set(contentSize(element)));
       observer.observe(element);
       onCleanup(() => observer.disconnect());
     });
@@ -173,7 +182,7 @@ export class BoosterResultPage {
     if (!this.isStructure()) return this.openPackAt(0);
     // A structure deck: it tears open and its whole list shows
     this.tearing.set(true);
-    this.later(() => this.skip(), TEAR_MS);
+    this.later(() => this.skip(), BREAK_MS.pack);
   }
 
   /** Straight to the full list. */
@@ -232,6 +241,11 @@ export class BoosterResultPage {
     return fromDeck.length ? fromDeck : this.cards.cards().filter((c) => c.edition === editionId && !!c.meta);
   }
 
+  /** How long a pack takes to break open here. */
+  protected breakMs(): number {
+    return this.isBox() ? BREAK_MS.box : BREAK_MS.pack;
+  }
+
   private openPackAt(index: number): void {
     if (index >= this.packs().length) return this.later(() => this.phase.set('done'), BETWEEN_PACKS_MS);
     this.packIndex.set(index);
@@ -241,7 +255,7 @@ export class BoosterResultPage {
     this.later(() => {
       this.tearing.set(false);
       this.passCard(0);
-    }, TEAR_MS);
+    }, this.breakMs());
   }
 
   /** Goes through the cards in order: a plain one turns, a special one only trembles (it turns at the end). */
@@ -278,4 +292,14 @@ export class BoosterResultPage {
     this.timers.forEach(clearTimeout);
     this.timers = [];
   }
+}
+
+/** The room inside an element, without its padding. */
+function contentSize(element: HTMLElement): { width: number; height: number } {
+  const style = getComputedStyle(element);
+  const px = (value: string) => parseFloat(value) || 0;
+  return {
+    width: element.clientWidth - px(style.paddingLeft) - px(style.paddingRight),
+    height: element.clientHeight - px(style.paddingTop) - px(style.paddingBottom),
+  };
 }

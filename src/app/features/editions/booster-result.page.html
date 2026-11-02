@@ -21,9 +21,7 @@
         @case ('unpaid') {
           <!-- Reached without buying (a reload, a link): it is offered for sale -->
           <div class="offer">
-            <div class="pack big" [class.box]="isBox()" [style.--art]="art">
-              <span class="pack-label">{{ label() }}</span>
-            </div>
+            <eras-opening-pack big [box]="isBox()" [art]="art" [label]="label()" />
             <button erasButton type="button" [disabled]="product()!.price > wallet.gems()" (click)="buy()">
               <eras-icon name="gem" /> Comprar · {{ product()!.price | number: '1.0-0' : 'es' }}
             </button>
@@ -39,42 +37,33 @@
           <div class="table" role="button" tabindex="0" [attr.aria-label]="packs().length > 1 ? 'Abrir los ' + packs().length + ' sobres' : 'Abrir el sobre'" (click)="start()" (keydown.enter)="start()" (keydown.space)="start()">
             <div #table class="packs" [style.--pack-width.px]="packWidth()">
               @for (pack of packs(); track $index; let i = $index) {
-                <!-- No name: only the aura tells a special pack; the one going up a rarity shakes, then bursts into its new aura -->
-                <div
-                  class="pack dealt"
-                  [class]="'tier-' + tierOf(pack.upgradedFrom && !upgradeShown() ? pack.upgradedFrom : pack.packType)"
-                  [class.upgraded]="!!pack.upgradedFrom"
-                  [class.lifted]="!!pack.upgradedFrom && upgradeShown()"
-                  [style.--art]="art"
+                <!-- No name: only the aura tells a special pack; the one going up a rarity shakes, then turns into its new aura -->
+                <eras-opening-pack
+                  dealt
+                  [art]="art"
+                  [tier]="tierOf(pack.upgradedFrom && !upgradeShown() ? pack.upgradedFrom : pack.packType)"
+                  [upgraded]="!!pack.upgradedFrom"
+                  [lifted]="!!pack.upgradedFrom && upgradeShown()"
                   [style.animation-delay.ms]="i * 45"
-                ></div>
+                />
               }
             </div>
           </div>
         }
 
         @case ('opening') {
-          <!-- 2. One pack after another, without telling its type: it tears, its cards lie face down -->
+          <!-- 2. One pack after another, without telling its type: it breaks open, its cards lie face down -->
           @if (openingPack(); as pack) {
             <div class="opening">
               @if (packs().length > 1) {
                 <p class="progress">Sobre {{ packIndex() + 1 }} de {{ packs().length }}</p>
               }
               @if (tearing()) {
-                <div class="pack big tearing" [style.--art]="art"></div>
+                <eras-pack-break [art]="art" [duration]="breakMs()" />
               } @else {
                 <div class="cards">
                   @for (card of pack.cards; track $index; let i = $index) {
-                    @let up = faceUp().has(i);
-                    @let glow = aura(card);
-                    <div class="flip" [class]="glow ? 'aura-' + glow : ''" [class.up]="up" [class.shake]="trembling().has(i)" [class.big]="up && !!glow">
-                      <span class="face back" aria-hidden="true"></span>
-                      <span class="face front">
-                        @if (imageUrl(card); as src) {
-                          <img [src]="src" [alt]="up ? (card.name ?? '') : ''" />
-                        }
-                      </span>
-                    </div>
+                    <eras-opening-card [src]="imageUrl(card)" [alt]="card.name ?? ''" [aura]="aura(card)" [up]="faceUp().has(i)" [shake]="trembling().has(i)" />
                   }
                 </div>
               }

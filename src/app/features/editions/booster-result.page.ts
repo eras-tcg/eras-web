@@ -114,6 +114,8 @@ export class BoosterResultPage {
   protected readonly trembling = signal<ReadonlySet<number>>(new Set());
   /** The cards of the pack whose foil already showed (the second pass). */
   protected readonly foiled = signal<ReadonlySet<number>>(new Set());
+  /** opening: the pack is all shown and stays still until a click moves on. */
+  protected readonly waiting = signal(false);
   /** packs: whether the pack that goes up a rarity already showed it (until then it wears its old aura). */
   protected readonly upgradeShown = signal(false);
 
@@ -195,9 +197,17 @@ export class BoosterResultPage {
     this.later(() => this.skip(), BREAK_MS.pack);
   }
 
+  /** A click once a pack is all shown: the next one (or, after the last, the full list). */
+  protected next(): void {
+    if (!this.waiting()) return;
+    this.waiting.set(false);
+    this.openPackAt(this.packIndex() + 1);
+  }
+
   /** Straight to the full list. */
   protected skip(): void {
     this.stopTimers();
+    this.waiting.set(false);
     this.tearing.set(false);
     this.phase.set('done');
   }
@@ -268,7 +278,7 @@ export class BoosterResultPage {
   }
 
   private openPackAt(index: number): void {
-    if (index >= this.packs().length) return this.later(() => this.phase.set('done'), BETWEEN_PACKS_MS);
+    if (index >= this.packs().length) return this.phase.set('done');
     this.packIndex.set(index);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
@@ -290,7 +300,7 @@ export class BoosterResultPage {
     this.later(() => this.passCard(index + 1), this.isBox() ? PLAIN_MS.box : PLAIN_MS.pack);
   }
 
-  /** The special cards, one by one and slowly; then the next pack. */
+  /** The special cards, one by one and slowly; then the foils' pass. */
   private turnSpecial(n: number): void {
     const pack = this.openingPack();
     if (!pack) return;
@@ -306,12 +316,12 @@ export class BoosterResultPage {
     this.later(() => this.turnSpecial(n + 1), this.isBox() ? SPECIAL_MS.box : SPECIAL_MS.pack);
   }
 
-  /** The second pass: the foil cards, one by one, turn around and come back with their foil; then the next pack. */
+  /** The second pass: the foil cards, one by one, turn around and come back with their foil; then it waits for a click. */
   private foilPass(n: number): void {
     const pack = this.openingPack();
     if (!pack) return;
     const order = (pack.foils ?? []).map((foil, i) => (foil ? i : -1)).filter((i) => i >= 0);
-    if (n >= order.length) return this.openPackAt(this.packIndex() + 1);
+    if (n >= order.length) return this.waiting.set(true);
     this.foiled.update((set) => new Set(set).add(order[n]));
     this.later(() => this.foilPass(n + 1), this.isBox() ? FOIL_MS.box : FOIL_MS.pack);
   }

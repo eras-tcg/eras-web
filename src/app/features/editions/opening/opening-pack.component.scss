@@ -155,8 +155,8 @@
   }
 }
 
-/* Going up a rarity: it shakes with its old aura, then bursts into light, turns around as it swells, and lands
-   with its new one */
+/* Going up a rarity: it shakes with its old aura, then turns all the way around like a card showing its foil (it
+   rises, grows, and comes back) in a burst of light, with its new one */
 :host(.upgraded:not(.lifted)) {
   animation:
     deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both,
@@ -175,12 +175,12 @@
 
 :host(.lifted) {
   z-index: 2;
-  animation: level-up 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: level-up 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) both;
 }
 
 :host(.lifted.tier-god) {
   animation:
-    level-up 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    level-up 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) both,
     spin 2.4s linear infinite,
     god-halo 2s ease-in-out infinite;
 }
@@ -189,22 +189,20 @@
   inset: -60%;
   border-radius: 50%;
   background: radial-gradient(circle, var(--color-hub-glow) 0%, color-mix(in srgb, var(--aura, var(--color-hub-glow)) 70%, transparent) 30%, transparent 65%);
-  animation: level-up-light 1.3s ease-out both;
+  animation: level-up-light 1.1s ease-out both;
 }
 
 @keyframes level-up {
   0% {
-    transform: perspective(800px) rotateY(0);
+    transform: perspective(900px) rotateY(0);
   }
 
-  40% {
-    transform: perspective(800px) translateY(-0.75rem) scale(1.25) rotateY(200deg);
-    filter: brightness(1.8);
+  50% {
+    transform: perspective(900px) translateY(-0.75rem) scale(1.18) rotateY(180deg);
   }
 
   100% {
-    transform: perspective(800px) rotateY(360deg);
-    filter: none;
+    transform: perspective(900px) rotateY(360deg);
   }
 }
 

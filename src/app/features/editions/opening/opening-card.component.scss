@@ -254,8 +254,12 @@
 
 @keyframes sparkle {
   0% {
-    opacity: 1;
+    opacity: 0;
     transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(0.4);
+  }
+
+  1% {
+    opacity: 1;
   }
 
   100% {

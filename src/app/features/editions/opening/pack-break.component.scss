@@ -227,10 +227,15 @@
   animation: spark var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
 }
 
+// Hidden until the break (its fill shows the first keyframe while it waits): no dot in the middle meanwhile
 @keyframes spark {
   0% {
-    opacity: 1;
+    opacity: 0;
     transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0);
+  }
+
+  1% {
+    opacity: 1;
   }
 
   100% {

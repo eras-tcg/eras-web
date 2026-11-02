@@ -54,7 +54,17 @@
         @case ('opening') {
           <!-- 2. One pack after another, without telling its type: it breaks open, its cards lie face down -->
           @if (openingPack(); as pack) {
-            <div class="opening">
+            <!-- Once the pack is all shown it stays still: a click (or Enter) moves on to the next one -->
+            <div
+              class="opening"
+              [class.waiting]="waiting()"
+              [attr.role]="waiting() ? 'button' : null"
+              [attr.tabindex]="waiting() ? 0 : null"
+              [attr.aria-label]="waiting() ? (packIndex() + 1 < packs().length ? 'Abrir el siguiente sobre' : 'Ver todas las cartas') : null"
+              (click)="next()"
+              (keydown.enter)="next()"
+              (keydown.space)="next()"
+            >
               @if (packs().length > 1) {
                 <p class="progress">Sobre {{ packIndex() + 1 }} de {{ packs().length }}</p>
               }

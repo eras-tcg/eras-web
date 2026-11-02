@@ -83,10 +83,18 @@ eras-icon[name='gem'] {
 /* 2. Opening: the pack breaks open, then its cards turn one by one */
 .opening {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
   inline-size: 100%;
+  min-block-size: 0;
+}
+
+// The whole screen is the button to go on
+.opening.waiting {
+  cursor: pointer;
 }
 
 .progress {

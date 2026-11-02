@@ -152,7 +152,7 @@ export function revealOrder<T>(cards: readonly T[], special: (card: T) => boolea
  * "foil" (holographic) and "prism" (prismatic, rarer). The chance is per card, whatever its rarity.
  */
 export type FoilKind = 'foil' | 'prism';
-export const FOIL_ODDS: Record<FoilKind, number> = { foil: 0.1, prism: 0.02 };
+export const FOIL_ODDS: Record<FoilKind, number> = { foil: 0.5, prism: 0.1 };
 const FOIL_RANK: Record<FoilKind | 'none', number> = { prism: 0, foil: 1, none: 2 };
 
 /** Whether one card comes out foil, and which. */

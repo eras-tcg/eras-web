@@ -154,29 +154,39 @@ eras-card-thumb.foil-prism {
   overflow: hidden;
 }
 
+// Soft bands with no edge, repeating; the layer, wider than the card, slides exactly one period along x
+// (the period / sin of the angle), so every loop ends where the next one starts
 eras-card-thumb.foil-foil::after,
 eras-card-thumb.foil-prism::after {
   position: absolute;
-  inset: 0;
-  mix-blend-mode: color-dodge;
+  inset: -50% -320px;
+  // Overlay keeps the card's own light and dark (a dodge over the whole card washes it out white)
+  mix-blend-mode: overlay;
   content: '';
   pointer-events: none;
 }
 
 eras-card-thumb.foil-foil::after {
-  background: linear-gradient(115deg, transparent 20%, color-mix(in srgb, var(--color-card-b) 55%, transparent) 35%, color-mix(in srgb, var(--color-rarity-sr) 55%, transparent) 50%, color-mix(in srgb, var(--color-rarity-sec) 55%, transparent) 65%, transparent 80%) 0 0 / 250% 250%;
-  animation: list-foil 3s linear infinite;
+  background: repeating-linear-gradient(115deg, var(--color-card-b) 0, var(--color-rarity-uc) 60px, var(--color-rarity-sr) 120px, var(--color-rarity-sec) 180px, var(--color-card-b) 240px);
+  opacity: 0.7;
+  animation: list-foil 4s linear infinite;
 }
 
 eras-card-thumb.foil-prism::after {
-  background: linear-gradient(135deg, var(--color-rarity-sec), var(--color-rarity-sr), var(--color-rarity-uc), var(--color-card-b), var(--color-card-p)) 0 0 / 300% 300%;
-  opacity: 0.6;
-  animation: list-foil 4s linear infinite;
+  background: repeating-linear-gradient(135deg, var(--color-rarity-sec) 0, var(--color-rarity-sr) 45px, var(--color-rarity-uc) 90px, var(--color-card-b) 135px, var(--color-card-p) 180px, var(--color-rarity-sec) 225px);
+  opacity: 0.85;
+  animation: list-prism 3s linear infinite;
 }
 
 @keyframes list-foil {
   to {
-    background-position: 250% 250%;
+    transform: translateX(calc(240px / 0.9063));
+  }
+}
+
+@keyframes list-prism {
+  to {
+    transform: translateX(calc(225px / 0.7071));
   }
 }
 

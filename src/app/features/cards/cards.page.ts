@@ -6,6 +6,9 @@ import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } 
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
+import { bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { Finish } from '@data/collection/collection.model';
+import { CollectionStore } from '@data/collection/collection.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -47,6 +50,7 @@ const PAGE_SIZE = 40;
   templateUrl: './cards.page.html',
   styles: `
     .marks-label { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .lacking { filter: grayscale(1); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +60,7 @@ export class CardsPage {
 
   protected readonly store = inject(CardsStore);
   protected readonly editions = inject(EditionsStore);
+  private readonly collection = inject(CollectionStore);
   private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
@@ -71,6 +76,8 @@ export class CardsPage {
   /** Marks on the cards ("Sin programar", "Sin metadatos"): hidden unless turned on. Remembered on the device. */
   protected readonly showUnprogrammed = persistedFlag('eras-cards-mark-unprogrammed');
   protected readonly showNoMeta = persistedFlag('eras-cards-mark-no-meta');
+  /** The player's collection on the cards: each in its finest finish owned, in grey when they have none. */
+  protected readonly showCollection = persistedFlag('eras-cards-show-collection');
 
   /** Filtered and sorted, before collapsing repeated names (the count shows collapsed). */
   private readonly filtered = computed(() =>
@@ -82,6 +89,17 @@ export class CardsPage {
   protected readonly count = computed(() => this.collapsed().length);
   protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()));
   protected readonly imageUrl = cardImageUrl;
+  protected readonly shineOf = shineOf;
+
+  /** Ids of every printing by name: a card shown once per name counts the copies of all its printings. */
+  private readonly printings = computed(() => {
+    const byName = new Map<string, string[]>();
+    for (const card of this.store.cards()) {
+      const name = (card.name ?? '').toLowerCase();
+      if (name) byName.set(name, [...(byName.get(name) ?? []), card.id]);
+    }
+    return byName;
+  });
 
   constructor() {
     void this.store.load();
@@ -116,6 +134,12 @@ export class CardsPage {
   protected badge(card: CatalogCard): string | null {
     if (!card.meta) return this.showNoMeta() ? 'Sin metadatos' : null;
     return this.showUnprogrammed() && this.store.unprogrammedOf(card) ? 'Sin programar' : null;
+  }
+
+  /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */
+  protected owned(card: CatalogCard): Finish | null {
+    const ids = this.view().collapse && card.name ? (this.printings().get(card.name.toLowerCase()) ?? [card.id]) : [card.id];
+    return bestFinishAmong(this.collection.collection(), ids);
   }
 
   protected showMore(): void {

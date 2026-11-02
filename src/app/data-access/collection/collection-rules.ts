@@ -87,6 +87,19 @@ export function bestFinish(copies: OwnedCopies | undefined): Finish | null {
 }
 
 /**
+ * The finest finish a player owns among some printings of a card (the catalog shows one per name), or null when
+ * they own none of them.
+ */
+export function bestFinishAmong(collection: Collection | null, cardIds: readonly string[]): Finish | null {
+  let best: Finish | null = null;
+  for (const id of cardIds) {
+    const finish = bestFinish(collection?.cards[id]);
+    if (finish && (!best || FINISHES.indexOf(finish) > FINISHES.indexOf(best))) best = finish;
+  }
+  return best;
+}
+
+/**
  * The finish of each of a deck's `count` copies of a card, taken from the player's copies the finest first; a copy
  * they lack is null.
  */

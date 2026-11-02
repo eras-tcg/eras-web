@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { bestFinish, breakPlan, craftedSummary, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { bestFinish, bestFinishAmong, breakPlan, craftedSummary, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -41,5 +41,12 @@ describe('collection rules', () => {
     expect(deckCopyFinishes({ plain: 1, foil: 1 }, 4)).toEqual(['foil', 'plain', null, null]);
     expect(shineOf('plain')).toBeNull();
     expect(shineOf('prism')).toBe('prism');
+  });
+
+  it('takes the finest finish among the printings of a card', () => {
+    expect(bestFinishAmong(collection, ['a', 'b'])).toBe('prism');
+    expect(bestFinishAmong(collection, ['a', 'z'])).toBe('foil');
+    expect(bestFinishAmong(collection, ['z'])).toBeNull();
+    expect(bestFinishAmong(null, ['a'])).toBeNull();
   });
 });

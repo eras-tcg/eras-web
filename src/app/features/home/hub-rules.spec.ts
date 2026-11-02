@@ -36,6 +36,13 @@ describe('hubSlides', () => {
     expect(slides[1]).toEqual({ kind: 'decks', decks: [deck('d1'), deck('d2')] });
   });
 
+  it('illustrates a news item with its edition artwork when known', () => {
+    const item = { ...news('n1'), editionId: 'A' };
+    expect(hubSlides(null, [], [item], [edition('A')])[0]).toEqual({ kind: 'news', news: item, image: 'A.webp' });
+    expect(hubSlides(null, [], [item], [edition('B')])[0]).toEqual({ kind: 'news', news: item, image: null });
+    expect(hubSlides(null, [], [news('n2')], [edition('A')])[0]).toEqual({ kind: 'news', news: news('n2'), image: null });
+  });
+
   it('has no edition or deck slide without them', () => {
     expect(hubSlides(null, [null, null], [news('n1')]).map((s) => s.kind)).toEqual(['news']);
   });

@@ -50,11 +50,14 @@ export class HomePage {
   protected readonly menu = MAIN_MENU;
   protected readonly myDecks = signal<number | null>(null);
   protected readonly step = computed(() => nextStep(this.myDecks(), Math.floor(Date.now() / 86_400_000)));
-  protected readonly slides = computed(() => hubSlides(this.home.content().edition, this.home.content().decks, NEWS));
+  protected readonly slides = computed(() =>
+    hubSlides(this.home.content().edition, this.home.content().decks, NEWS, this.editions.editions()),
+  );
   protected readonly saveError = signal<string | null>(null);
 
   constructor() {
     void this.home.load();
+    void this.editions.load(); // artwork of the news
     const user = this.auth.user();
     if (user) void this.loadMyDecks(user.id);
 

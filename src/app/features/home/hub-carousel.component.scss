@@ -40,24 +40,31 @@
   color: var(--color-text-muted);
 }
 
-.slide-edition {
+.slide-edition,
+.has-art {
   position: relative;
   justify-content: flex-end;
   background-position: center;
   background-size: cover;
   color: var(--color-hub-text);
+}
+
+.slide-edition {
   cursor: pointer;
 }
 
-.slide-edition .eyebrow {
+.slide-edition .eyebrow,
+.has-art .eyebrow {
   color: var(--color-text-muted);
 }
 
-.slide-edition .slide-text {
+.slide-edition .slide-text,
+.has-art .slide-text {
   color: var(--color-hub-muted);
 }
 
-.slide-edition::before {
+.slide-edition::before,
+.has-art::before {
   position: absolute;
   inset: 0;
   background: linear-gradient(0deg, var(--color-hub-scrim) 5%, transparent 85%);

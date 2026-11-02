@@ -3,29 +3,46 @@ export interface NewsItem {
   dateLabel: string;
   title: string;
   excerpt: string;
+  /** Edition whose artwork illustrates the item, if any. */
+  editionId?: string;
 }
 
-/** Static until there is a news backend (same content as the Vue home). */
+/** Static placeholder content until there is a news backend. */
 export const NEWS: NewsItem[] = [
   {
-    date: '2026-03-11',
-    dateLabel: '11 mar 2026',
-    title: 'Primera edición',
+    date: '2026-11-04T20:00',
+    dateLabel: 'mié 4 nov · 20:00',
+    title: 'Llega ERAS 2.0',
     excerpt:
-      'También está disponible la primera edición, por favor siéntase libre de crear mazos y compartirlos con el resto, su motivación es nuestra motivación.',
+      'La nueva versión de la web abre sus puertas: inicio renovado, tienda con sobres y cajas, colección con fragmentos y misiones diarias y semanales.',
+    editionId: 'E2',
   },
   {
-    date: '2026-03-11',
-    dateLabel: '11 mar 2026',
-    title: 'Estructuras',
-    excerpt:
-      'Los mazos de estructura ya están disponibles, puedes verlos en la barra de navegación en la sección de Mazos, también puedes crear los tuyos propios si te registras.',
+    date: '2026-11-05T20:00',
+    dateLabel: 'jue 5 nov · 20:00',
+    title: 'El comienzo del fin de los tiempos',
+    excerpt: 'La primera edición llega a la tienda. Abre sus sobres y empieza a armar tu colección desde el principio.',
+    editionId: 'E1',
   },
   {
-    date: '2026-03-11',
-    dateLabel: '11 mar 2026',
-    title: '¡Por fin página nueva!',
-    excerpt:
-      'Primera noticia del sistema, aún sin contenido pero con ganas de llenarla de cosas interesantes. Ninguna de las noticias es accesible en profundidad (dicho menú está en desarrollo).',
+    date: '2026-11-06T20:00',
+    dateLabel: 'vie 6 nov · 20:00',
+    title: 'Enfrentamientos Interdimensionales',
+    excerpt: 'Segunda parada de la semana: los sobres y cajas de E1.1 ya están disponibles en la tienda.',
+    editionId: 'E1.1',
+  },
+  {
+    date: '2026-11-07T20:00',
+    dateLabel: 'sáb 7 nov · 20:00',
+    title: 'Ocaso Del Mundo Conocido',
+    excerpt: 'E1.2 se suma a la tienda. Busca sus cartas foil y prismáticas en cada apertura.',
+    editionId: 'E1.2',
+  },
+  {
+    date: '2026-11-08T20:00',
+    dateLabel: 'dom 8 nov · 20:00',
+    title: 'Compromiso Y Evolución',
+    excerpt: 'Cerramos la semana con E1.3: las cuatro primeras ediciones quedan disponibles para abrir, romper y fabricar.',
+    editionId: 'E1.3',
   },
 ];

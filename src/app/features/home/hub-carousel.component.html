@@ -41,10 +41,12 @@
       </div>
     }
     @case ('news') {
-      <article class="slide slide-news">
-        <span class="eyebrow">Noticias · <time [attr.datetime]="current.news.date">{{ current.news.dateLabel }}</time></span>
-        <h2 class="slide-title">{{ current.news.title }}</h2>
-        <p class="slide-text">{{ current.news.excerpt }}</p>
+      <article class="slide slide-news" [class.has-art]="current.image" [style.background-image]="current.image ? 'url(' + current.image + ')' : null">
+        <span class="slide-body">
+          <span class="eyebrow">Noticias · <time [attr.datetime]="current.news.date">{{ current.news.dateLabel }}</time></span>
+          <h2 class="slide-title">{{ current.news.title }}</h2>
+          <p class="slide-text">{{ current.news.excerpt }}</p>
+        </span>
       </article>
     }
   }

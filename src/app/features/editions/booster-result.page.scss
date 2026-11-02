@@ -1,4 +1,5 @@
-// The opening fills the screen left below the top row (the page is `fill`); only the summary of a box scrolls.
+// The opening fills the screen left below the top row (the page is `fill`): the table of packs, then each pack
+// tearing and its cards turning, then (only at the end) the full list, the one part that scrolls.
 
 eras-icon[name='gem'] {
   color: var(--color-hub-accent);
@@ -25,7 +26,24 @@ eras-icon[name='gem'] {
   gap: var(--space-4);
 }
 
-/* The pack (or box): the edition's artwork in a foil frame, card-shaped */
+/* Auras: SR amber, SEC pink (the rarity colors), GOD every color turning */
+.tier-sr,
+.aura-sr {
+  --aura: var(--color-rarity-sr);
+}
+
+.tier-sec,
+.aura-sec {
+  --aura: var(--color-rarity-sec);
+}
+
+@property --spin {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* A pack: the edition's artwork in a foil frame, card-shaped */
 .pack {
   position: relative;
   display: flex;
@@ -33,19 +51,25 @@ eras-icon[name='gem'] {
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-1);
-  block-size: min(58dvh, 30rem);
+  inline-size: var(--pack-width, 8rem);
   aspect-ratio: 63 / 88;
-  padding: var(--space-5) var(--space-3);
-  overflow: hidden;
-  border: 3px solid var(--color-hub-accent);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-muted) center / cover;
-  box-shadow: var(--shadow-lg);
+  padding: var(--space-3) var(--space-2);
+  border: 2px solid var(--aura, var(--color-hub-accent));
+  border-radius: var(--radius-md);
+  // The edition's artwork comes as --art (a GOD pack paints its ring behind it)
+  background: var(--art, none) center / cover, var(--color-surface-muted);
+  box-shadow: var(--shadow-md);
   color: var(--color-hub-text);
-  font: inherit;
 }
 
-// A box: other packs peeking behind
+.pack.big {
+  --pack-width: min(42dvh * 63 / 88, 21rem);
+
+  padding: var(--space-5) var(--space-3);
+  border-width: 3px;
+  border-radius: var(--radius-lg);
+}
+
 .pack.box {
   box-shadow:
     0.6rem -0.6rem 0 -0.15rem color-mix(in srgb, var(--color-hub-accent) 70%, var(--color-surface)),
@@ -53,35 +77,34 @@ eras-icon[name='gem'] {
     var(--shadow-lg);
 }
 
-// Foil: darkened bottom for the label and a light sweeping across
+// The foot darkened for the label, and a light sweeping across the foil
 .pack::before {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 85%, transparent), transparent 45%);
+  border-radius: inherit;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 85%, transparent), transparent 50%);
   content: '';
 }
 
 .pack::after {
   position: absolute;
-  inset: -50%;
-  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--color-hub-glow) 45%, transparent) 50%, transparent 60%);
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--color-hub-glow) 40%, transparent) 50%, transparent 65%) -200% 0 / 200% 100% no-repeat;
   content: '';
   animation: sheen 3.2s var(--easing-standard) infinite;
 }
 
 @keyframes sheen {
-  from {
-    transform: translateX(-60%);
-  }
-
   60%,
   to {
-    transform: translateX(60%);
+    background-position: 200% 0;
   }
 }
 
 .pack-label,
-.pack-hint {
+.tier {
   position: relative;
   z-index: 1;
   text-align: center;
@@ -90,60 +113,192 @@ eras-icon[name='gem'] {
 
 .pack-label {
   font-family: var(--font-family-display);
-  font-size: var(--font-size-xl);
-  letter-spacing: 0.05em;
+  font-size: var(--font-size-sm);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.pack-hint {
-  color: var(--color-hub-muted);
-  font-size: var(--font-size-sm);
+.big .pack-label {
+  font-size: var(--font-size-xl);
 }
 
-.sealed {
-  cursor: pointer;
-  animation: float 2.4s ease-in-out infinite;
+.tier {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--aura, var(--color-hub-accent));
+  color: var(--color-sim-on-moment);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-shadow: none;
 }
 
-.sealed:hover {
-  animation: wobble 0.5s ease-in-out infinite;
+// The aura itself: a soft pulsing halo in the tier's color
+.tier-sr,
+.tier-sec {
+  box-shadow:
+    0 0 0 1px var(--aura),
+    0 0 1.25rem color-mix(in srgb, var(--aura) 75%, transparent);
+  animation: aura 1.8s ease-in-out infinite;
 }
 
-@keyframes float {
+@keyframes aura {
   50% {
-    transform: translateY(-0.5rem);
+    box-shadow:
+      0 0 0 1px var(--aura),
+      0 0 2.25rem color-mix(in srgb, var(--aura) 95%, transparent);
   }
 }
 
-@keyframes wobble {
-  25% {
-    transform: rotate(-2deg) scale(1.02);
-  }
+// GOD: a thick ring of every color turning around the pack, and a halo shifting between SR and SEC
+.tier-god {
+  --aura: var(--color-hub-glow);
 
-  75% {
-    transform: rotate(2deg) scale(1.02);
+  border: 4px solid transparent;
+  background:
+    var(--art, none) center / cover padding-box,
+    conic-gradient(from var(--spin), var(--color-rarity-sec), var(--color-rarity-sr), var(--color-hub-glow), var(--color-rarity-r), var(--color-rarity-uc), var(--color-rarity-sec)) border-box;
+  box-shadow:
+    0 0 1.5rem color-mix(in srgb, var(--color-rarity-sec) 85%, transparent),
+    0 0 3rem color-mix(in srgb, var(--color-rarity-sr) 55%, transparent);
+  animation:
+    spin 2.4s linear infinite,
+    god-halo 2s ease-in-out infinite;
+}
+
+@keyframes god-halo {
+  50% {
+    box-shadow:
+      0 0 2rem color-mix(in srgb, var(--color-rarity-sr) 95%, transparent),
+      0 0 4rem color-mix(in srgb, var(--color-rarity-sec) 70%, transparent);
   }
 }
 
-// Tearing open: it shakes, swells and bursts into light
-.sealed.opening {
-  pointer-events: none;
-  animation: burst 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.tier-god .tier {
+  background: conic-gradient(from var(--spin), var(--color-rarity-sec), var(--color-rarity-sr), var(--color-hub-glow), var(--color-rarity-sec));
+}
+
+@keyframes spin {
+  to {
+    --spin: 360deg;
+  }
+}
+
+/* 1. The table: every pack bought, dealt in */
+.table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  inline-size: 100%;
+  max-block-size: 100%;
+}
+
+.packs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  min-block-size: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+// One pack: big; many (a box): small enough for all of them to show
+.table:not(.many) .pack {
+  --pack-width: min(42dvh * 63 / 88, 21rem);
+}
+
+.table.many .pack {
+  --pack-width: clamp(4.5rem, 7.5vw, 7rem);
+}
+
+.table.many .pack-label {
+  font-size: 0.65rem;
+}
+
+.dealt {
+  animation: deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dealt.tier-sr,
+.dealt.tier-sec {
+  animation:
+    deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    aura 1.8s ease-in-out 0.45s infinite;
+}
+
+.dealt.tier-god {
+  animation:
+    deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    spin 2.4s linear infinite,
+    god-halo 2s ease-in-out infinite;
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translateY(-2.5rem) rotate(-6deg);
+  }
+}
+
+.open {
+  font-size: var(--font-size-md);
+}
+
+/* 2. Opening: the pack tears, then its cards turn one by one */
+.opening {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  inline-size: 100%;
+}
+
+.progress {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress strong {
+  color: var(--color-text);
+  letter-spacing: 0.04em;
+}
+
+// It shakes, swells and bursts into light
+.tearing {
+  animation: burst 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.tearing.tier-god {
+  animation:
+    burst 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    spin 2.4s linear infinite;
 }
 
 @keyframes burst {
-  0%,
-  45% {
-    transform: rotate(0);
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
   }
 
-  10%,
-  30% {
+  15%,
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  25%,
+  45% {
     transform: rotate(-4deg) scale(1.04);
   }
 
-  20%,
-  40% {
+  35% {
     transform: rotate(4deg) scale(1.04);
   }
 
@@ -154,43 +309,20 @@ eras-icon[name='gem'] {
   }
 }
 
-/* A pack's cards: dealt face down, they turn over */
-.reveal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-5);
-  inline-size: 100%;
-  max-block-size: 100%;
-  overflow-y: auto;
-  overscroll-behavior: none;
-}
-
-.table {
+.cards {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
-  padding: var(--space-3);
+  max-inline-size: 70rem;
 }
 
 .flip {
   position: relative;
-  inline-size: clamp(5.5rem, 11vw, 9.5rem);
+  inline-size: clamp(5rem, 9vw, 8.5rem);
   aspect-ratio: 63 / 88;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
   perspective: 900px;
-  animation: deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes deal {
-  from {
-    opacity: 0;
-    transform: translateY(-2.5rem) rotate(-6deg);
-  }
+  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .face {
@@ -199,7 +331,7 @@ eras-icon[name='gem'] {
   overflow: hidden;
   border-radius: var(--radius-md);
   backface-visibility: hidden;
-  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .back {
@@ -220,10 +352,6 @@ eras-icon[name='gem'] {
   object-fit: cover;
 }
 
-.flip:not(.up):hover .back {
-  transform: translateY(-4px);
-}
-
 .flip.up .back {
   transform: rotateY(-180deg);
 }
@@ -232,28 +360,36 @@ eras-icon[name='gem'] {
   transform: rotateY(0);
 }
 
-// The rare ones shine once face up
-.shine .front,
-eras-card-thumb.shine {
+// A card that shines: the halo of its rarity, a moment bigger
+.flip.aura-sr .front,
+.flip.aura-sec .front {
   box-shadow:
-    0 0 0 2px var(--color-hub-accent),
-    0 0 1.5rem color-mix(in srgb, var(--color-hub-glow) 70%, transparent);
-  animation: glow 1.8s ease-in-out infinite;
+    0 0 0 2px var(--aura),
+    0 0 1.75rem color-mix(in srgb, var(--aura) 85%, transparent);
+  animation: aura-card 1.6s ease-in-out infinite;
 }
 
-eras-card-thumb.shine {
-  border-radius: var(--radius-md);
+.flip.aura-sr,
+.flip.aura-sec {
+  z-index: 1;
+  animation: pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@keyframes glow {
-  50% {
-    box-shadow:
-      0 0 0 2px var(--color-hub-accent),
-      0 0 2.5rem color-mix(in srgb, var(--color-hub-glow) 95%, transparent);
+@keyframes pop {
+  40% {
+    transform: scale(1.18);
   }
 }
 
-/* A box: its summary scrolls, the cards arrive one after another */
+@keyframes aura-card {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--aura),
+      0 0 2.75rem color-mix(in srgb, var(--aura) 100%, transparent);
+  }
+}
+
+/* 3. The full list: it scrolls, the cards arrive one after another */
 .summary {
   display: flex;
   flex-direction: column;
@@ -266,23 +402,32 @@ eras-card-thumb.shine {
 }
 
 .arrive {
+  border-radius: var(--radius-md);
   animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-eras-card-thumb.arrive.shine {
+eras-card-thumb.aura-sr,
+eras-card-thumb.aura-sec {
+  box-shadow:
+    0 0 0 2px var(--aura),
+    0 0 1.5rem color-mix(in srgb, var(--aura) 70%, transparent);
   animation:
     deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both,
-    glow 1.8s ease-in-out 0.4s infinite;
+    aura-card 1.8s ease-in-out 0.4s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pack::after,
-  .sealed,
-  .sealed:hover,
+  .dealt,
+  .tier-sr,
+  .tier-sec,
+  .tier-god,
   .flip,
   .arrive,
-  .shine .front,
-  eras-card-thumb.shine {
+  .flip.aura-sr .front,
+  .flip.aura-sec .front,
+  eras-card-thumb.aura-sr,
+  eras-card-thumb.aura-sec {
     animation: none;
   }
 

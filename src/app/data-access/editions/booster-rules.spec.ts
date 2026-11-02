@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
-import { cardsByRarity, groupOpening, openBox, openPack, rollQuantity } from './booster-rules';
+import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, openingOrder, packTier, rollQuantity } from './booster-rules';
 import { Edition, PackType } from './edition.model';
 
 const card = (id: string, rarity: string | null, over: Partial<CatalogCard> = {}): CatalogCard => ({
@@ -83,6 +83,49 @@ describe('openBox', () => {
     const picked = openBox(edition, cardsByRarity(catalog, 'E1'), () => 0);
     // 1 fixed Normal + 2 Rara + 2 flex Normal = 5 packs of 1 card
     expect(picked.map((c) => c.id)).toEqual(['c1', 's5', 's5', 'c1', 'c1']);
+  });
+});
+
+describe('openBoxPacks', () => {
+  it('keeps every pack with its type and cards', () => {
+    const edition: Edition = {
+      editionId: 'E1',
+      packTypes: [pack({ C: 1, R: 0 }), { name: 'Rara', cardsPerRarity: { C: 0, UC: 0, R: 0, SR: 1, SEC: 0 } }],
+      boxConfig: {
+        totalPacks: 3,
+        entries: [
+          { packTypeName: 'Rara', mode: 'FIXED', quantity: 1, probOptions: [] },
+          { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+        ],
+      },
+    };
+    const packs = openBoxPacks(edition, cardsByRarity(catalog, 'E1'), () => 0);
+    expect(packs.map((p) => [p.packType, p.cards.map((c) => c.id)])).toEqual([
+      ['Rara', ['s5']],
+      ['Normal', ['c1']],
+      ['Normal', ['c1']],
+    ]);
+  });
+});
+
+describe('packTier', () => {
+  const type = (name: string, sr: number, sec: number) => ({ name, cardsPerRarity: { C: 7, UC: 3, R: 1, SR: sr, SEC: sec } });
+
+  it('ranks a pack by what it brings', () => {
+    expect(packTier(type('R PACK', 0, 0))).toBe('none');
+    expect(packTier(type('SR PACK', 1, 0))).toBe('sr');
+    expect(packTier(type('SEC PACK', 0, 1))).toBe('sec');
+    expect(packTier(type('Mega', 5, 5))).toBe('god');
+    expect(packTier(type('Doble secreta', 0, 2))).toBe('god');
+    expect(packTier(type('GOD PACK', 0, 0))).toBe('god');
+    expect(packTier(undefined)).toBe('none');
+  });
+});
+
+describe('openingOrder', () => {
+  it('opens the plain packs first and the most special last, keeping the order inside each tier', () => {
+    const tiers = { a: 'sec', b: 'none', c: 'god', d: 'none', e: 'sr' } as const;
+    expect(openingOrder(['a', 'b', 'c', 'd', 'e'], (p) => tiers[p as keyof typeof tiers])).toEqual(['b', 'd', 'e', 'a', 'c']);
   });
 });
 

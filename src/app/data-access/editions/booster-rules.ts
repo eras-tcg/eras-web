@@ -51,19 +51,23 @@ export function rollQuantity(options: readonly ProbOption[], random: Random = Ma
   return Math.trunc(Number(options[options.length - 1]?.quantity)) || 0;
 }
 
-/** A whole box: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */
-export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): CatalogCard[] {
+/** A pack as it comes out of an opening: its type and its cards, in pull order. */
+export interface OpenedPack {
+  packType: string;
+  cards: CatalogCard[];
+}
+
+/** A whole box, pack by pack: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */
+export function openBoxPacks(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): OpenedPack[] {
   const packs = edition.packTypes ?? [];
   const entries = edition.boxConfig?.entries ?? [];
   const total = edition.boxConfig?.totalPacks ?? 0;
   const packNamed = (name: string) => packs.find((p) => p.name === name);
-  const picked: CatalogCard[] = [];
-  let placed = 0;
+  const opened: OpenedPack[] = [];
 
   const open = (pack: PackType | undefined, times: number) => {
     if (!pack) return;
-    for (let i = 0; i < times; i++) picked.push(...openPack(pack, pool, random));
-    placed += times;
+    for (let i = 0; i < times; i++) opened.push({ packType: pack.name, cards: openPack(pack, pool, random) });
   };
 
   for (const entry of entries.filter((e) => e.mode === 'FIXED')) open(packNamed(entry.packTypeName), entry.quantity || 0);
@@ -71,8 +75,37 @@ export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, rand
     if (entry.probOptions?.length) open(packNamed(entry.packTypeName), rollQuantity(entry.probOptions, random));
   }
   const flex = entries.find((e) => e.mode === 'FLEX');
-  if (flex) open(packNamed(flex.packTypeName), Math.max(0, total - placed));
-  return picked;
+  if (flex) open(packNamed(flex.packTypeName), Math.max(0, total - opened.length));
+  return opened;
+}
+
+/** A whole box, its cards together. */
+export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): CatalogCard[] {
+  return openBoxPacks(edition, pool, random).flatMap((p) => p.cards);
+}
+
+/** How special a pack type looks before opening it: none, SR, SEC or GOD (the aura it shows). */
+export type PackTier = 'none' | 'sr' | 'sec' | 'god';
+
+const TIER_ORDER: PackTier[] = ['none', 'sr', 'sec', 'god'];
+
+/** GOD: named so, or two secrets or more, or five SR+SEC or more; else SEC or SR by the best rarity it brings. */
+export function packTier(pack: Pick<PackType, 'name' | 'cardsPerRarity'> | undefined): PackTier {
+  if (!pack) return 'none';
+  const sr = pack.cardsPerRarity?.SR ?? 0;
+  const sec = pack.cardsPerRarity?.SEC ?? 0;
+  if (/\bgod\b/i.test(pack.name) || sec >= 2 || sr + sec >= 5) return 'god';
+  if (sec > 0) return 'sec';
+  if (sr > 0) return 'sr';
+  return 'none';
+}
+
+/** Opening order: the plain packs first, the most special last (the suspense grows). Stable inside each tier. */
+export function openingOrder<T>(packs: readonly T[], tierOf: (pack: T) => PackTier): T[] {
+  return packs
+    .map((pack, index) => ({ pack, index, rank: TIER_ORDER.indexOf(tierOf(pack)) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((p) => p.pack);
 }
 
 export interface OpenedCard {

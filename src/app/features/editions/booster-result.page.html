@@ -1,6 +1,9 @@
 <eras-page [title]="label()" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
-    @if (phase() === 'open' && allUp() && product(); as p) {
+    @if (phase() === 'packs' || phase() === 'opening') {
+      <button erasButton variant="secondary" type="button" (click)="skip()"><eras-icon name="chevron-right" /> Saltar animación</button>
+    }
+    @if (phase() === 'done' && product(); as p) {
       <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
     }
     <eras-wallet-badge />
@@ -17,11 +20,12 @@
       <eras-empty-state title="Este producto no está a la venta" />
     } @else {
       @let edition = editionData()!;
+      @let art = edition.editionImage ? 'url(' + edition.editionImage + ')' : null;
       @switch (phase()) {
         @case ('unpaid') {
           <!-- Reached without buying (a reload, a link): it is offered for sale -->
           <div class="offer">
-            <div class="pack" [class.box]="isBox()" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
+            <div class="pack big" [class.box]="isBox()" [style.--art]="art">
               <span class="pack-label">{{ label() }}</span>
             </div>
             <button erasButton type="button" [disabled]="product()!.price > wallet.gems()" (click)="buy()">
@@ -32,68 +36,84 @@
             }
           </div>
         }
-        @case ('open') {
-          @if (isBox()) {
-            <!-- A box: straight to its cards, rarest first -->
-            <div class="summary">
-              <p class="hint">{{ picked().length }} cartas obtenidas</p>
-              @for (group of groups(); track group.rarity) {
-                <eras-section-header [title]="rarityName(group.rarity) + ' (' + group.count + ')'">
-                  <eras-rarity-badge [rarity]="asRarity(group.rarity)" />
-                </eras-section-header>
-                <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
-                  @for (opened of group.cards; track opened.card.id; let i = $index) {
-                    <eras-card-thumb
-                      class="arrive"
-                      [class.shine]="shiny(opened.card)"
-                      [style.animation-delay.ms]="i < 24 ? i * 40 : 960"
-                      [name]="opened.card.name ?? ''"
-                      [imageUrl]="imageUrl(opened.card)"
-                      [count]="opened.count"
-                      (selected)="openCard(opened.card)"
-                    />
+
+        @case ('packs') {
+          <!-- 1. Every pack bought on the table; the special ones with their aura -->
+          <div class="table" [class.many]="packs().length > 1">
+            <div class="packs">
+              @for (pack of packs(); track $index; let i = $index) {
+                @let tier = tierOf(pack.packType);
+                <div class="pack dealt" [class]="'tier-' + tier" [style.--art]="art" [style.animation-delay.ms]="i * 45">
+                  <span class="pack-label">{{ pack.packType }}</span>
+                  @if (tier !== 'none') {
+                    <span class="tier">{{ tier.toUpperCase() }}</span>
                   }
-                </eras-grid>
+                </div>
               }
             </div>
-          } @else {
-            <!-- A pack: its cards face down, turned one by one -->
-            <div class="reveal">
-              <div class="table">
-                @for (card of picked(); track $index; let i = $index) {
-                  @let up = faceUp().has(i);
-                  <button
-                    type="button"
-                    class="flip"
-                    [class.up]="up"
-                    [class.shine]="up && shiny(card)"
-                    [style.animation-delay.ms]="i * 60"
-                    [attr.aria-label]="up ? 'Ver ' + (card.name ?? 'carta') : 'Voltear carta ' + (i + 1)"
-                    (click)="up ? openCard(card) : flip(i)"
-                  >
-                    <span class="face back" aria-hidden="true"></span>
-                    <span class="face front" aria-hidden="true">
-                      @if (imageUrl(card); as src) {
-                        <img [src]="src" alt="" />
-                      }
-                    </span>
-                  </button>
+            <button erasButton type="button" class="open" (click)="start()">
+              <eras-icon name="sparkles" /> {{ packs().length > 1 ? 'Abrir ' + packs().length + ' sobres' : 'Abrir sobre' }}
+            </button>
+          </div>
+        }
+
+        @case ('opening') {
+          <!-- 2. One pack after another: it tears, then its cards turn one by one -->
+          @if (openingPack(); as pack) {
+            @let tier = tierOf(pack.packType);
+            <div class="opening">
+              <p class="progress">
+                @if (packs().length > 1) {
+                  Sobre {{ packIndex() + 1 }} de {{ packs().length }} ·
                 }
-              </div>
-              @if (!allUp()) {
-                <button erasButton variant="secondary" type="button" (click)="revealAll()"><eras-icon name="eye" /> Revelar todo</button>
+                <strong>{{ pack.packType }}</strong>
+              </p>
+              @if (tearing()) {
+                <div class="pack big tearing" [class]="'tier-' + tier" [style.--art]="art">
+                  <span class="pack-label">{{ pack.packType }}</span>
+                </div>
               } @else {
-                <p class="hint">{{ picked().length }} cartas obtenidas · toca una para verla</p>
+                <div class="cards">
+                  @for (card of pack.cards; track $index; let i = $index) {
+                    @let up = i < shown();
+                    <div class="flip" [class.up]="up" [class]="up && aura(card) ? 'aura-' + aura(card) : ''">
+                      <span class="face back" aria-hidden="true"></span>
+                      <span class="face front">
+                        @if (imageUrl(card); as src) {
+                          <img [src]="src" [alt]="up ? (card.name ?? '') : ''" />
+                        }
+                      </span>
+                    </div>
+                  }
+                </div>
               }
             </div>
           }
         }
+
         @default {
-          <!-- Sealed (and tearing open): one tap opens it -->
-          <button type="button" class="pack sealed" [class.box]="isBox()" [class.opening]="phase() === 'opening'" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null" (click)="open()">
-            <span class="pack-label">{{ label() }}</span>
-            <span class="pack-hint">Toca para abrir</span>
-          </button>
+          <!-- 3. Only at the end: everything that came out, rarest first -->
+          <div class="summary">
+            <p class="hint">{{ total() }} cartas obtenidas · toca una para verla</p>
+            @for (group of groups(); track group.rarity) {
+              <eras-section-header [title]="rarityName(group.rarity) + ' (' + group.count + ')'">
+                <eras-rarity-badge [rarity]="asRarity(group.rarity)" />
+              </eras-section-header>
+              <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
+                @for (opened of group.cards; track opened.card.id; let i = $index) {
+                  <eras-card-thumb
+                    class="arrive"
+                    [class]="aura(opened.card) ? 'aura-' + aura(opened.card) : ''"
+                    [style.animation-delay.ms]="i < 24 ? i * 35 : 840"
+                    [name]="opened.card.name ?? ''"
+                    [imageUrl]="imageUrl(opened.card)"
+                    [count]="opened.count"
+                    (selected)="openCard(opened.card)"
+                  />
+                }
+              </eras-grid>
+            }
+          </div>
         }
       }
     }

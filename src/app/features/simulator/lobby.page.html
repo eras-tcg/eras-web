@@ -1,73 +1,61 @@
-<eras-page title="Simulador" width="wide">
-  <button page-actions erasButton variant="secondary" type="button" [loading]="busy() === 'test'" [disabled]="!!busy()" (click)="create(true)">Modo solo</button>
-  <button page-actions erasButton type="button" [loading]="busy() === 'create'" [disabled]="!!busy()" (click)="create()">Crear sala</button>
+<!-- The same frame as Jugar: the edition's art on the right, the options on the left -->
+<eras-hub-screen title="Online" [back]="{ route: '/play', label: 'Jugar' }">
+  <eras-hub-menu variant="sub" label="Salas" [items]="actions" [busy]="busy()" (picked)="pick($event)" />
 
-  <eras-stack [gap]="5">
-    @if (game.removed(); as why) {
-      <eras-alert>{{ why }}.</eras-alert>
-    }
-    @if (error(); as message) {
-      <eras-alert tone="danger">{{ message }}</eras-alert>
-    }
-    @if (roomId() && busy() === roomId()?.trim()) {
-      <eras-alert>Buscando la sala <strong>{{ roomId() }}</strong>…</eras-alert>
-    }
+  @if (game.removed(); as why) {
+    <eras-alert>{{ why }}.</eras-alert>
+  }
+  @if (error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+  @if (missing(); as room) {
+    <eras-alert tone="danger">La sala <strong>{{ room }}</strong> no existe. Revisa el código o crea una sala nueva.</eras-alert>
+  }
 
-    <eras-card>
-      <eras-stack [gap]="3">
-        <eras-section-header title="Unirse con un código" />
-        @if (missing(); as room) {
-          <eras-alert tone="danger">
-            <eras-stack direction="row" [gap]="2" align="center" wrap>
-              <span>La sala <strong>{{ room }}</strong> no existe. Revisa el código o crea una sala nueva.</span>
-              <button erasButton size="sm" type="button" [disabled]="!!busy()" (click)="create()">Crear una sala</button>
-            </eras-stack>
-          </eras-alert>
+  <!-- Joining by code: a bare line to type it on -->
+  <form class="join" (submit)="$event.preventDefault(); join(code())">
+    <input
+      class="code"
+      type="text"
+      aria-label="Código de la sala"
+      placeholder="Código de la sala"
+      autocomplete="off"
+      [value]="code()"
+      (input)="code.set($any($event.target).value); missing.set(null)"
+    />
+    <button erasButton type="submit" [loading]="!!busy() && busy() === code().trim()" [disabled]="!!busy() || !code().trim()">Unirse</button>
+  </form>
+
+  <!-- The open rooms: each one a row with the accent bar -->
+  <section class="rooms" aria-labelledby="rooms-title">
+    <header class="rooms-head">
+      <h2 id="rooms-title">Salas abiertas</h2>
+      <button type="button" erasIconButton size="sm" icon="refresh" title="Actualizar" aria-label="Actualizar las salas" (click)="refresh()"></button>
+    </header>
+    @if (list(); as rooms) {
+      <ul class="list">
+        @for (r of rooms; track r.roomId) {
+          <li>
+            <button type="button" class="room" [class.mine]="isMine(r)" [disabled]="!!busy() || !canJoin(r)" (click)="join(r.roomId!)">
+              <span class="room-text">
+                <span class="room-name">Sala {{ r.roomId }}</span>
+                <span class="room-meta">{{ playersOf(r) }} · {{ labels[r.status] }}{{ isMine(r) ? ' · estás aquí' : '' }}</span>
+              </span>
+              <span class="room-action">
+                @if (busy() === r.roomId) {
+                  <eras-spinner />
+                } @else {
+                  {{ isMine(r) ? 'Volver' : canJoin(r) ? 'Unirse' : 'Llena' }} <eras-icon name="chevron-right" />
+                }
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="empty">No hay salas abiertas: crea una.</li>
         }
-        <form (submit)="$event.preventDefault(); join(code())">
-          <eras-stack direction="row" [gap]="2" align="end" wrap>
-            <eras-form-field label="Código de la sala">
-              <input type="text" placeholder="Ej. 1a2b3c4d" autocomplete="off" [value]="code()" (input)="code.set($any($event.target).value); missing.set(null)" />
-            </eras-form-field>
-            <button erasButton variant="secondary" type="submit" [loading]="!!busy() && busy() === code().trim()" [disabled]="!!busy() || !code().trim()">Unirse</button>
-          </eras-stack>
-        </form>
-      </eras-stack>
-    </eras-card>
-
-    <eras-stack [gap]="3">
-      <eras-section-header title="Salas abiertas">
-        <button erasButton variant="ghost" size="sm" type="button" (click)="refresh()">Actualizar</button>
-      </eras-section-header>
-      @if (list(); as rooms) {
-        @if (rooms.length) {
-          @for (r of rooms; track r.roomId) {
-            <eras-card>
-              <eras-stack direction="row" [gap]="3" align="center" justify="space-between" wrap>
-                <eras-stack [gap]="1">
-                  <strong>Sala {{ r.roomId }}</strong>
-                  <span>{{ playersOf(r) }} · {{ labels[r.status] }}{{ isMine(r) ? ' · estás en esta sala' : '' }}</span>
-                </eras-stack>
-                <button
-                  erasButton
-                  size="sm"
-                  type="button"
-                  [variant]="isMine(r) ? 'primary' : 'secondary'"
-                  [loading]="busy() === r.roomId"
-                  [disabled]="!!busy() || !canJoin(r)"
-                  (click)="join(r.roomId!)"
-                >
-                  {{ isMine(r) ? 'Volver' : canJoin(r) ? 'Unirse' : 'Llena' }}
-                </button>
-              </eras-stack>
-            </eras-card>
-          }
-        } @else {
-          <eras-empty-state title="No hay salas abiertas" />
-        }
-      } @else {
-        <eras-empty-state title="Buscando salas…"><eras-spinner /></eras-empty-state>
-      }
-    </eras-stack>
-  </eras-stack>
-</eras-page>
+      </ul>
+    } @else {
+      <eras-spinner />
+    }
+  </section>
+</eras-hub-screen>

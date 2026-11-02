@@ -35,6 +35,8 @@ export class HubScreenComponent {
 
   /** Screen name; without it the screen is the home (player card instead of "back"). */
   readonly title = input<string | null>(null);
+  /** Where "back" leads (the home unless the screen hangs from another, as Online from Jugar), and its name. */
+  readonly back = input<{ route: string; label: string }>({ route: '/home', label: 'el inicio' });
   /** Choose a new artwork (the home); other screens keep the last one. */
   readonly reroll = input(false, { transform: booleanAttribute });
 

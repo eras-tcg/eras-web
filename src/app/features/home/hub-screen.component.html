@@ -4,7 +4,7 @@
   @if (title(); as name) {
     <!-- The same as every other screen: a round "back" and the title with its accent bar -->
     <div class="heading">
-      <a class="back" routerLink="/home" aria-label="Volver al inicio"><eras-icon name="chevron-left" /></a>
+      <a class="back" [routerLink]="back().route" [attr.aria-label]="'Volver a ' + back().label"><eras-icon name="chevron-left" /></a>
       <h1 class="title">{{ name }}</h1>
     </div>
   } @else if (auth.user(); as user) {

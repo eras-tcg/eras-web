@@ -16,14 +16,15 @@
   }
 }
 
+// In viewport units so a part that travels on its own layer (see below) moves exactly as far as the page
 html[data-nav='forward'] {
-  --eras-nav-out: -4%;
-  --eras-nav-in: 6%;
+  --eras-nav-out: -4vw;
+  --eras-nav-in: 6vw;
 }
 
 html[data-nav='back'] {
-  --eras-nav-out: 4%;
-  --eras-nav-in: -6%;
+  --eras-nav-out: 4vw;
+  --eras-nav-in: -6vw;
 }
 
 html[data-nav='same'] {
@@ -35,6 +36,18 @@ html[data-nav='same'] {
 }
 
 ::view-transition-new(root) {
+  animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+// A named part only one of the screens has (the hub artwork coming from Cartas, the screen bar going to the
+// home) has nothing to morph into: it leaves or enters with the page, or the page would slide under it
+::view-transition-old(hub-art):only-child,
+::view-transition-old(screen-bar):only-child {
+  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(hub-art):only-child,
+::view-transition-new(screen-bar):only-child {
   animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
 }
 

@@ -67,7 +67,7 @@ export const routes: Routes = [
       },
       {
         path: 'my-decks',
-        title: 'Mis mazos · ERAS',
+        title: 'Mazos · ERAS',
         canMatch: [authGuard],
         loadComponent: () => import('@features/decks/my-decks.page').then((m) => m.MyDecksPage),
       },

@@ -1,0 +1,115 @@
+<eras-page title="Mazos" subtitle="Tus mazos, públicos y privados" width="wide" fill>
+  @if (store.error(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
+  @if (actionError(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
+
+  <div class="layout" [class.folded]="!showFilters()">
+    <!-- Filters, with the sorting and the fold button on their own bar -->
+    <aside class="filters" aria-label="Filtros y orden">
+      @if (showFilters()) {
+        <div class="filters-bar">
+          <eras-sort-control
+            [options]="sortOptions"
+            [key]="sortKey()"
+            [direction]="direction()"
+            (keyChange)="sortKey.set($any($event))"
+            (directionChange)="direction.set($event)"
+          />
+          <button erasButton variant="ghost" size="sm" type="button" class="fold" aria-label="Ocultar filtros" [attr.aria-expanded]="true" (click)="showFilters.set(false)">
+            <eras-icon name="chevron-left" />
+          </button>
+        </div>
+        <div class="filters-body">
+          <eras-deck-filters-bar
+            panel
+            showVisibility
+            [filters]="filters()"
+            [editions]="editions()"
+            [shown]="decks().length"
+            [total]="store.myDecks().length"
+            (filtersChange)="filters.set($event)"
+          />
+        </div>
+      } @else {
+        <div class="rail">
+          <button erasButton variant="ghost" size="sm" type="button" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
+            <eras-icon name="filter" />
+            @if (filtersActive()) {
+              <span class="dot" aria-hidden="true"></span>
+            }
+          </button>
+          <button
+            erasButton
+            variant="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-label]="direction() === 'asc' ? 'Orden ascendente' : 'Orden descendente'"
+            (click)="direction.set(direction() === 'asc' ? 'desc' : 'asc')"
+          >
+            <eras-icon [name]="direction() === 'asc' ? 'sort-asc' : 'sort-desc'" />
+          </button>
+        </div>
+      }
+    </aside>
+
+    <section class="decks" aria-label="Tus mazos">
+      <div class="decks-head">
+        <span>{{ countLabel() }}</span>
+        @if (filtersActive()) {
+          <button erasButton variant="ghost" size="sm" type="button" (click)="filters.set(emptyFilters)"><eras-icon name="x" /> Limpiar filtros</button>
+        }
+      </div>
+
+      <!-- The only part that scrolls -->
+      <div class="scroll">
+        @if (store.loading() && store.myDecks().length === 0) {
+          <eras-empty-state title="Cargando tus mazos…"><eras-spinner /></eras-empty-state>
+        } @else {
+          @if (!store.error() && store.myDecks().length === 0) {
+            <p class="note">Aún no tienes mazos guardados.</p>
+          } @else if (decks().length === 0) {
+            <p class="note">Ningún mazo coincide con los filtros.</p>
+          }
+          <!-- Two columns on phones (40vw), 11rem covers elsewhere -->
+          <eras-grid minColumn="min(11rem, 40vw)" [gap]="4">
+            <a *erasCan="'manage_decks'" class="new-deck" routerLink="/deck-builder">
+              <span class="new-ring" aria-hidden="true"><eras-icon name="plus" /></span>
+              <span class="new-label">Nuevo mazo</span>
+            </a>
+            @for (deck of decks(); track deck.id) {
+              <eras-deck-cover
+                [name]="deck.deckName"
+                [imageUrl]="deck.deckImage ?? null"
+                [cardCount]="deck.cards.length"
+                [isPrivate]="!!deck.privateDeck"
+                (selected)="view(deck)"
+              >
+                <ng-container ngProjectAs="[cover-actions]">
+                  <ng-container *erasCan="'manage_decks'">
+                    <a erasButton variant="secondary" size="sm" routerLink="/deck-builder" [queryParams]="editQuery(deck)" [attr.aria-label]="'Editar ' + deck.deckName">
+                      <eras-icon name="edit" />
+                    </a>
+                    <button
+                      erasButton
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      [attr.aria-label]="'Borrar ' + deck.deckName"
+                      [disabled]="deleting() === deck.id"
+                      (click)="remove(deck)"
+                    >
+                      <eras-icon name="x" />
+                    </button>
+                  </ng-container>
+                </ng-container>
+              </eras-deck-cover>
+            }
+          </eras-grid>
+        }
+      </div>
+    </section>
+  </div>
+</eras-page>

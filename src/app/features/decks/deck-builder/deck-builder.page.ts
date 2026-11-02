@@ -36,6 +36,7 @@ import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from '../proxy-print-dialog/proxy-print-dialog.component';
 import { BuilderFiltersData, BuilderFiltersDialogComponent } from './builder-filters-dialog.component';
 import { CollectionPanelComponent } from './collection-panel.component';
+import { FragmentsBarComponent } from './fragments-bar.component';
 import { DeckDraft } from './deck-draft';
 import { DeckMetricsComponent } from './deck-metrics.component';
 
@@ -70,6 +71,7 @@ const DRAG_TYPE = 'application/x-eras-card';
     SpinnerComponent,
     InViewDirective,
     CollectionPanelComponent,
+    FragmentsBarComponent,
   ],
   providers: [DeckDraft],
   templateUrl: './deck-builder.page.html',

@@ -34,7 +34,12 @@
                   <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>
                   <span class="tile-prices">
                     @for (product of products(edition); track product.kind) {
-                      <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : product.kind === 'structure' ? 'structure' : 'sobre' }}</span></span>
+                      @if (product.kind === 'structure' && wallet.structures().has(edition.editionId)) {
+                        <!-- A structure deck is bought once -->
+                        <span class="price"><eras-icon name="check" /><span class="price-what">ya lo tienes</span></span>
+                      } @else {
+                        <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : product.kind === 'structure' ? 'structure' : 'sobre' }}</span></span>
+                      }
                     } @empty {
                       <span class="price-what">No está a la venta</span>
                     }

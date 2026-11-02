@@ -8,6 +8,8 @@ import { AuthService } from '../auth/auth.service';
 interface WalletResponse {
   gems: number;
   reward?: number;
+  /** The structure decks already bought (each only once). */
+  structures?: string[];
 }
 
 /** A pack as the server drew it on a purchase: its type, the type it was if it went up a rarity, its cards. */
@@ -37,6 +39,8 @@ export class WalletStore {
   readonly gems = signal(0);
   /** Gems just given as the daily reward (0 when none). */
   readonly reward = signal(0);
+  /** The structure decks this account already bought: each can be bought only once. */
+  readonly structures = signal<ReadonlySet<string>>(new Set());
   /** Why the last purchase was refused, in Spanish (null when it went through). */
   readonly error = signal<string | null>(null);
 
@@ -50,6 +54,7 @@ export class WalletStore {
       untracked(() => {
         this.gems.set(0);
         this.reward.set(0);
+        this.structures.set(new Set());
         if (id) void this.refresh();
       });
     });
@@ -61,6 +66,7 @@ export class WalletStore {
       const me = await firstValueFrom(this.http.get<WalletResponse>(this.api.url('/api/drive/wallet/me')));
       this.gems.set(me.gems);
       if (me.reward) this.reward.set(me.reward);
+      this.structures.set(new Set(me.structures ?? []));
     } catch {
       // An older server without wallets: no gems
     }
@@ -76,6 +82,7 @@ export class WalletStore {
     try {
       const done = await firstValueFrom(this.http.post<PurchaseResponse>(this.api.url('/api/drive/wallet/me/purchase'), { editionId, product }));
       this.gems.set(done.gems);
+      if (product === 'structure') this.structures.update((owned) => new Set(owned).add(editionId));
       this.ticket = { name: ticket, packs: done.packs ?? [] };
       return true;
     } catch (e) {

@@ -39,6 +39,8 @@ export class EditionShopPage {
   private readonly router = inject(Router);
 
   protected readonly edition = computed(() => this.store.editions().find((e) => e.editionId === this.editionId()) ?? null);
+  /** A structure deck this account already bought (each one only once). */
+  protected readonly owned = (product: ShopProduct) => product.kind === 'structure' && this.wallet.structures().has(this.editionId());
   protected readonly products = computed(() => {
     const edition = this.edition();
     return edition ? shopProducts(edition) : [];

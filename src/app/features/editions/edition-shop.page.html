@@ -38,11 +38,16 @@
                   erasButton
                   type="button"
                   class="buy"
-                  [disabled]="product.price > wallet.gems()"
-                  [attr.aria-label]="'Comprar ' + product.name + ' por ' + product.price + ' gemas'"
+                  [disabled]="owned(product) || product.price > wallet.gems()"
+                  [attr.aria-label]="owned(product) ? 'Ya tienes este structure deck' : 'Comprar ' + product.name + ' por ' + product.price + ' gemas'"
                   (click)="buy(product)"
                 >
-                  <eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}
+                  <!-- A structure deck is bought once -->
+                  @if (owned(product)) {
+                    <eras-icon name="check" /> Ya lo tienes
+                  } @else {
+                    <eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}
+                  }
                 </button>
               </article>
             }

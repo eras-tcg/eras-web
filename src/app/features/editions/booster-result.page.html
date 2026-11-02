@@ -1,7 +1,10 @@
 <eras-page [title]="label()" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
     @if (phase() === 'done' && product(); as p) {
-      <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
+      <!-- A structure deck is bought once: no "Comprar otro" -->
+      @if (p.kind !== 'structure') {
+        <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
+      }
     }
   </ng-container>
 

@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { Deck } from '@data/decks/deck.model';
 import { Edition } from '@data/editions/edition.model';
 import { hubSlides, nextStep, pickBackground } from './hub-rules';
 import { NewsItem } from './news';
 
 const edition = (editionId: string, editionImage: string | null = `${editionId}.webp`): Edition => ({ editionId, editionImage });
-const deck = (id: string): Deck => ({ id, deckName: id, cards: [] });
 const news = (title: string): NewsItem => ({ date: '2026-01-01', dateLabel: '1 ene 2026', title, excerpt: '' });
 
 describe('pickBackground', () => {
@@ -30,21 +28,19 @@ describe('pickBackground', () => {
 });
 
 describe('hubSlides', () => {
-  it('orders edition, decks and news, skipping what is missing', () => {
-    const slides = hubSlides(edition('A'), [null, deck('d1'), null, deck('d2')], [news('n1'), news('n2')]);
-    expect(slides.map((s) => s.kind)).toEqual(['edition', 'decks', 'news', 'news']);
-    expect(slides[1]).toEqual({ kind: 'decks', decks: [deck('d1'), deck('d2')] });
+  it('puts the edition before the news', () => {
+    expect(hubSlides(edition('A'), [news('n1'), news('n2')]).map((s) => s.kind)).toEqual(['edition', 'news', 'news']);
   });
 
   it('illustrates a news item with its edition artwork when known', () => {
     const item = { ...news('n1'), editionId: 'A' };
-    expect(hubSlides(null, [], [item], [edition('A')])[0]).toEqual({ kind: 'news', news: item, image: 'A.webp' });
-    expect(hubSlides(null, [], [item], [edition('B')])[0]).toEqual({ kind: 'news', news: item, image: null });
-    expect(hubSlides(null, [], [news('n2')], [edition('A')])[0]).toEqual({ kind: 'news', news: news('n2'), image: null });
+    expect(hubSlides(null, [item], [edition('A')])[0]).toEqual({ kind: 'news', news: item, image: 'A.webp' });
+    expect(hubSlides(null, [item], [edition('B')])[0]).toEqual({ kind: 'news', news: item, image: null });
+    expect(hubSlides(null, [news('n2')], [edition('A')])[0]).toEqual({ kind: 'news', news: news('n2'), image: null });
   });
 
-  it('has no edition or deck slide without them', () => {
-    expect(hubSlides(null, [null, null], [news('n1')]).map((s) => s.kind)).toEqual(['news']);
+  it('has no edition slide without one', () => {
+    expect(hubSlides(null, [news('n1')]).map((s) => s.kind)).toEqual(['news']);
   });
 });
 

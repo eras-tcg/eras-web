@@ -26,22 +26,12 @@
         <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
         <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
       </div>
-      @for (deck of home.content().decks; track $index; let i = $index) {
-        <div class="editor-row">
-          <span class="editor-label">Mazo #{{ i + 1 }}</span>
-          <span class="editor-value">{{ deck?.deckName ?? 'Vacío' }}</span>
-          <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
-            <eras-icon name="edit" />
-          </button>
-        </div>
-      }
     </div>
   } @else {
     <eras-hub-carousel
       [slides]="slides()"
       [loading]="home.loading()"
       (editionSelected)="openCards($event)"
-      (deckSelected)="openDeck($event)"
     />
   }
 

@@ -97,59 +97,6 @@
   -webkit-line-clamp: 3;
 }
 
-.deck-list {
-  display: flex;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  list-style: none;
-  scrollbar-width: none;
-}
-
-.deck {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  inline-size: 5.5rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.deck-art {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 5 / 7;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-muted) center / cover;
-  transition:
-    transform var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard);
-}
-
-.deck:hover .deck-art {
-  border-color: var(--color-hub-accent);
-  transform: translateY(-2px);
-}
-
-.deck-name,
-.deck-author {
-  overflow: hidden;
-  font-size: var(--font-size-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.deck-author {
-  color: var(--color-text-muted);
-}
-
 .nav {
   position: absolute;
   inset-block-start: 50%;
@@ -253,9 +200,5 @@
 
   .slide-text {
     -webkit-line-clamp: 1;
-  }
-
-  .deck {
-    inline-size: 3.75rem;
   }
 }

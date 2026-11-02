@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
-import { Deck } from '@data/decks/deck.model';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { HubSlide } from './hub-rules';
@@ -7,7 +6,7 @@ import { HubSlide } from './hub-rules';
 const SLIDE_MS = 7000;
 
 /**
- * Carousel of the home hub (featured edition, featured decks, news). Advances by itself every few seconds,
+ * Carousel of the home hub (featured edition, news). Advances by itself every few seconds,
  * except while the pointer or the focus is on it, the tab is hidden or the user prefers reduced motion.
  */
 @Component({
@@ -31,7 +30,6 @@ export class HubCarouselComponent {
   readonly loading = input(false);
 
   readonly editionSelected = output<string>();
-  readonly deckSelected = output<Deck>();
 
   protected readonly index = signal(0);
   protected readonly paused = signal(false);

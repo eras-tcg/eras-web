@@ -18,28 +18,6 @@
         </span>
       </button>
     }
-    @case ('decks') {
-      <div class="slide slide-decks">
-        <span class="eyebrow">Mazos destacados</span>
-        <ul class="deck-list">
-          @for (deck of current.decks; track deck.id) {
-            <li>
-              <button type="button" class="deck" (click)="deckSelected.emit(deck)">
-                <span class="deck-art" [style.background-image]="deck.deckImage ? 'url(' + deck.deckImage + ')' : null">
-                  @if (!deck.deckImage) {
-                    <eras-icon name="stack" />
-                  }
-                </span>
-                <span class="deck-name">{{ deck.deckName }}</span>
-                @if (deck.username) {
-                  <span class="deck-author">{{ deck.username }}</span>
-                }
-              </button>
-            </li>
-          }
-        </ul>
-      </div>
-    }
     @case ('news') {
       <article class="slide slide-news" [class.has-art]="current.image" [style.background-image]="current.image ? 'url(' + current.image + ')' : null">
         <span class="slide-body">

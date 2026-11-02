@@ -1,5 +1,4 @@
 import type { IconName } from '@ui/primitives/icon/icon.component';
-import { Deck } from '@data/decks/deck.model';
 import { Edition } from '@data/editions/edition.model';
 import { NewsItem } from './news';
 
@@ -16,18 +15,12 @@ export function pickBackground(editions: Edition[], previousId: string | null, r
 
 export type HubSlide =
   | { kind: 'edition'; edition: Edition }
-  | { kind: 'decks'; decks: Deck[] }
   | { kind: 'news'; news: NewsItem; image: string | null };
 
-/**
- * Carousel of the hub: featured edition, then the featured decks (one slide), then each news item with the artwork
- * of its edition when that edition is among `editions`.
- */
-export function hubSlides(edition: Edition | null, decks: (Deck | null)[], news: NewsItem[], editions: Edition[] = []): HubSlide[] {
+/** Carousel of the hub: featured edition, then each news item with the artwork of its edition when known. */
+export function hubSlides(edition: Edition | null, news: NewsItem[], editions: Edition[] = []): HubSlide[] {
   const slides: HubSlide[] = [];
   if (edition) slides.push({ kind: 'edition', edition });
-  const featured = decks.filter((d): d is Deck => d !== null);
-  if (featured.length > 0) slides.push({ kind: 'decks', decks: featured });
   const art = new Map(editions.map((e) => [e.editionId, e.editionImage ?? null]));
   for (const item of news) slides.push({ kind: 'news', news: item, image: (item.editionId && art.get(item.editionId)) || null });
   return slides;

@@ -85,3 +85,9 @@
     white-space: nowrap;
   }
 }
+
+// Edit mode: the gems can be set, so they look like it
+.item.editable {
+  outline: 1px dashed var(--color-warning);
+  outline-offset: -2px;
+}

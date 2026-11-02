@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
 import { EditModeService } from '../auth/edit-mode.service';
@@ -27,6 +28,7 @@ export class AppToolsComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly wallet = inject(WalletStore);
   private readonly router = inject(Router);
+  private readonly modal = inject(ModalService);
 
   readonly onArt = input(false, { transform: booleanAttribute });
   /** Show "sign out": only the home's main menu has it. */
@@ -36,6 +38,14 @@ export class AppToolsComponent {
     this.auth.user();
     return ADMIN_PERMISSIONS.some((p) => this.auth.can(p));
   });
+
+  /** Edit mode: sets the account's gems to what is typed. */
+  protected async editGems(): Promise<void> {
+    const typed = await this.modal.prompt({ title: 'Editar gemas', label: 'Gemas de tu cuenta', value: String(this.wallet.gems()), confirmLabel: 'Guardar' });
+    const gems = Math.floor(Number(typed));
+    if (typed === undefined || !Number.isFinite(gems) || gems < 0) return;
+    await this.wallet.setGems(gems);
+  }
 
   protected signOut(): void {
     this.auth.logout();

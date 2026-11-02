@@ -58,6 +58,13 @@ export class CollectionStore {
     return this.crafting(() => firstValueFrom(this.api.craftUntil(cardId, finish)));
   }
 
+  /** Sets the signed-in account's fragments (administrators, to test). */
+  setFragments(fragments: Record<string, number>): Promise<boolean> {
+    const id = this.auth.user()?.id;
+    if (!id) return Promise.resolve(false);
+    return this.change(() => firstValueFrom(this.api.setFragments(id, fragments)), 'No se pudieron guardar los fragmentos');
+  }
+
   breakExtras(): Promise<boolean> {
     return this.change(() => firstValueFrom(this.api.breakExtras()), 'No se pudieron romper las copias sobrantes');
   }

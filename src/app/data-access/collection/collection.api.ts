@@ -26,6 +26,11 @@ export class CollectionApi {
     return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft-until'), { cardId, finish });
   }
 
+  /** Administrators (manage_users): sets an account's fragments of some rarities. */
+  setFragments(userId: string, fragments: Record<string, number>): Observable<Collection> {
+    return this.http.post<Collection>(this.api.url(`/api/drive/collection/${encodeURIComponent(userId)}/fragments`), { fragments });
+  }
+
   breakExtras(): Observable<Collection> {
     return this.http.post<Collection>(this.api.url('/api/drive/collection/me/break-extras'), {});
   }

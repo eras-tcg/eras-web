@@ -149,19 +149,11 @@ export function revealOrder<T>(cards: readonly T[], special: (card: T) => boolea
 
 /**
  * A card can come out foil: a second pass of the opening turns it around and it comes back shining. Two levels:
- * "foil" (holographic) and "prism" (prismatic, rarer). The chance is per card, whatever its rarity.
+ * "foil" (holographic) and "prism" (prismatic, rarer). The server draws it (its odds are DriveManager's
+ * CollectionRules), the same for every card whatever its rarity.
  */
 export type FoilKind = 'foil' | 'prism';
-export const FOIL_ODDS: Record<FoilKind, number> = { foil: 0.5, prism: 0.1 };
 const FOIL_RANK: Record<FoilKind | 'none', number> = { prism: 0, foil: 1, none: 2 };
-
-/** Whether one card comes out foil, and which. */
-export function rollFoil(random: Random = Math.random): FoilKind | null {
-  const roll = random();
-  if (roll < FOIL_ODDS.prism) return 'prism';
-  if (roll < FOIL_ODDS.prism + FOIL_ODDS.foil) return 'foil';
-  return null;
-}
 
 export interface OpenedCard {
   card: CatalogCard;

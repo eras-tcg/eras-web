@@ -85,6 +85,21 @@ export class WalletStore {
     }
   }
 
+  /** Sets the signed-in account's gems (administrators, to test: manage_users); false when refused. */
+  async setGems(gems: number): Promise<boolean> {
+    const id = this.auth.user()?.id;
+    if (!id) return false;
+    try {
+      const done = await firstValueFrom(
+        this.http.post<WalletResponse>(this.api.url(`/api/drive/wallet/${encodeURIComponent(id)}/grant`), { gems: gems - this.gems() }),
+      );
+      this.gems.set(done.gems);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** What came out of `ticket` if it was just paid for, once (it is used up); null otherwise. */
   takeTicket(ticket: string): PurchasedPack[] | null {
     if (this.ticket?.name !== ticket) return null;

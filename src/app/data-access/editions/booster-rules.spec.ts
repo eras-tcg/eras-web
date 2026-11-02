@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
-import { FOIL_ODDS, cardsByRarity, groupOpening, rollFoil, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle, upgradeOnePack } from './booster-rules';
+import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle, upgradeOnePack } from './booster-rules';
 import { Edition, PackType } from './edition.model';
 
 const card = (id: string, rarity: string | null, over: Partial<CatalogCard> = {}): CatalogCard => ({
@@ -179,14 +179,6 @@ describe('groupOpening', () => {
       ['c1', 2],
       ['c2', 1],
     ]);
-  });
-});
-
-describe('rollFoil', () => {
-  it('gives prism, foil or nothing by its odds', () => {
-    expect(rollFoil(() => 0)).toBe('prism');
-    expect(rollFoil(() => FOIL_ODDS.prism + 0.001)).toBe('foil');
-    expect(rollFoil(() => FOIL_ODDS.prism + FOIL_ODDS.foil + 0.001)).toBeNull();
   });
 });
 

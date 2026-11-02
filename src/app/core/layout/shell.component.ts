@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -39,6 +40,10 @@ export class ShellComponent {
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
+    // The hub screens fit the window: the page neither scrolls nor bounces (rubber-band) there
+    const body = inject(DOCUMENT).body;
+    effect(() => body.classList.toggle('eras-hub', this.hub()));
+
     // Publish the header height (it changes with the banners) for full-screen pages:
     // they size themselves with calc(100dvh - var(--app-header-height)).
     const host = inject<ElementRef<HTMLElement>>(ElementRef);

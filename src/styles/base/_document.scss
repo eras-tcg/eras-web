@@ -92,6 +92,13 @@ body.eras-hide-header eras-shell header.header {
   display: none;
 }
 
+// Hub screens (home, Jugar, Social) fit the window: no scrolling and no overscroll bounce
+html:has(body.eras-hub),
+body.eras-hub {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 // A chain is shown above the choices: they leave it room at the top
 body.eras-chain-open {
   --sheet-max-block-size: 58vh;

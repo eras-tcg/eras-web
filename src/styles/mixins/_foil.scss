@@ -1,0 +1,31 @@
+// The prismatic foil's glitter: specks of light in several colors (grids of odd sizes, so no pattern shows), faint
+// all over and bright where a band of light sweeps across. The sweep starts and ends off the card, then waits.
+// Include it in a positioned pseudo-element over the card; it brings its own keyframes.
+@mixin glitter($delay: 0s) {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle, var(--color-hub-text) 0 0.7px, transparent 1.3px) 0 0 / 13px 11px,
+    radial-gradient(circle, var(--color-rarity-uc) 0 0.6px, transparent 1.2px) 5px 7px / 17px 19px,
+    radial-gradient(circle, var(--color-rarity-sec) 0 0.9px, transparent 1.6px) 9px 2px / 23px 29px,
+    radial-gradient(circle, var(--color-rarity-sr) 0 0.7px, transparent 1.4px) 3px 13px / 31px 37px,
+    radial-gradient(circle, var(--color-hub-text) 0 1.1px, transparent 2px) 21px 17px / 41px 43px;
+  content: '';
+  pointer-events: none;
+  mask:
+    linear-gradient(rgb(0 0 0 / 30%) 0 0),
+    linear-gradient(115deg, transparent 35%, #000 50%, transparent 65%) 100% 0 / 300% 100% no-repeat;
+  animation: glitter-sweep 3.2s ease-in-out $delay infinite;
+
+  @keyframes glitter-sweep {
+    0% {
+      mask-position: 0 0, 100% 0;
+    }
+
+    60%,
+    100% {
+      mask-position: 0 0, 0% 0;
+    }
+  }
+}

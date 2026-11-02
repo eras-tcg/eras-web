@@ -1,3 +1,5 @@
+@use 'mixins/foil';
+
 // The opening fills the screen left below the top row (the page is `fill`): the table of packs, then each pack
 // breaking open and its cards turning, then (only at the end) the full list, the one part that scrolls. The pack,
 // its break and the cards have their own components (./opening).
@@ -178,6 +180,11 @@ eras-card-thumb.foil-prism::after {
   animation: list-prism 3s linear infinite;
 }
 
+// Prismatic: glitter on top, a light sweeping through it
+eras-card-thumb.foil-prism::before {
+  @include foil.glitter;
+}
+
 @keyframes list-foil {
   to {
     transform: translateX(calc(240px / 0.9063));
@@ -193,6 +200,7 @@ eras-card-thumb.foil-prism::after {
 @media (prefers-reduced-motion: reduce) {
   .arrive,
   eras-card-thumb::after,
+  eras-card-thumb::before,
   eras-card-thumb.aura-sr,
   eras-card-thumb.aura-sec {
     animation: none;

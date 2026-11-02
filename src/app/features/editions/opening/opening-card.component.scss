@@ -1,3 +1,5 @@
+@use 'mixins/foil';
+
 // A card dealt face down; it turns over (the two faces turn around the vertical axis)
 :host {
   position: relative;
@@ -202,6 +204,11 @@
     prism-turn 4s linear 0.9s infinite;
 }
 
+// Prismatic: glitter on top, a light sweeping through it
+:host(.foiled.foil-prism) .front::after {
+  @include foil.glitter(0.9s);
+}
+
 :host(.foiled.foil-prism) .front {
   box-shadow:
     0 0 0 2px var(--color-hub-glow),
@@ -277,6 +284,7 @@
   .face,
   .foil,
   .foil::before,
+  .front::after,
   .sparkle {
     animation: none !important;
     transition: none;

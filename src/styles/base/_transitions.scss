@@ -46,6 +46,16 @@ html[data-nav='same'] {
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+// The quick buttons only change size between screens: no cross-fade, the new ones stretch from the old box
+::view-transition-old(app-tools) {
+  display: none;
+}
+
+::view-transition-new(app-tools) {
+  block-size: 100%;
+  animation: none;
+}
+
 // A title that changes: the old one leaves upwards, the new one rises in
 ::view-transition-old(screen-title) {
   animation: eras-screen-out 160ms ease-in both;

@@ -1,3 +1,17 @@
+// The page is one screen high (fill): the three panes take what is left below the title
+.bench {
+  flex: 1;
+  block-size: auto;
+  min-block-size: 0;
+}
+
+// Narrow screens: the panes stack and the page scrolls
+@media (max-width: 48rem) {
+  .builder.builder {
+    block-size: auto;
+  }
+}
+
 // A card of the deck with its buttons in the corners: − bottom left, + bottom right, cover top left (they show on
 // hover or focus; always on touch). The count stays top right.
 .entry {

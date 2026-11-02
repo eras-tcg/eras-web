@@ -1,24 +1,23 @@
-import { CdkMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { AuthService } from '../auth/auth.service';
 import { EditModeService } from '../auth/edit-mode.service';
 import { ADMIN_TOOLS } from '../navigation/admin-tools';
-import { MAIN_NAV } from '../navigation/nav-items';
 import { ThemeService } from '../theme/theme.service';
 
 /**
- * Quick controls of the signed-in user: edit-mode switch, theme and the main menu (every section plus the
- * account). Shown in the top bar of every page and on the home hub, which has no bar.
+ * Quick buttons at the top right of every screen (icon over a label): edit mode, theme, administration and
+ * sign out. The sections are not here: they are reached from the home hub. Without a session only the theme shows.
+ * `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
   selector: 'eras-app-tools',
-  imports: [CdkMenuTrigger, MenuComponent, MenuItemDirective, IconComponent],
+  imports: [RouterLink, IconComponent],
   templateUrl: './app-tools.component.html',
   styleUrl: './app-tools.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { role: 'navigation', 'aria-label': 'Opciones', '[class.on-art]': 'onArt()' },
 })
 export class AppToolsComponent {
   protected readonly auth = inject(AuthService);
@@ -26,15 +25,12 @@ export class AppToolsComponent {
   protected readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
 
-  protected readonly nav = MAIN_NAV;
+  readonly onArt = input(false, { transform: booleanAttribute });
+
   protected readonly hasAdminTools = computed(() => {
     this.auth.user();
     return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
   });
-
-  protected go(url: string): void {
-    void this.router.navigateByUrl(url);
-  }
 
   protected logout(): void {
     this.auth.logout();

@@ -16,21 +16,7 @@
     </a>
   }
 
-  <nav class="quick" aria-label="Opciones">
-    @if (editMode.available()) {
-      <button type="button" class="quick-item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
-        <eras-icon name="edit" /><span class="quick-label">Modo edición</span>
-      </button>
-    }
-    <button type="button" class="quick-item" (click)="theme.toggle()">
-      <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
-      <span class="quick-label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
-    </button>
-    @if (hasAdminTools()) {
-      <a class="quick-item" routerLink="/admin"><eras-icon name="shield" /><span class="quick-label">Administración</span></a>
-    }
-    <button type="button" class="quick-item" (click)="logout()"><eras-icon name="logout" /><span class="quick-label">Salir</span></button>
-  </nav>
+  <eras-app-tools class="quick" onArt />
 </header>
 
 <div class="side">

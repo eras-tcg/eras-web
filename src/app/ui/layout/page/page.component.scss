@@ -1,7 +1,14 @@
 :host {
   display: block;
+  inline-size: 100%;
   margin-inline: auto;
-  padding: var(--space-6) var(--layout-gutter) var(--space-8);
+  padding: max(var(--space-4), env(safe-area-inset-top)) var(--layout-gutter) var(--space-8);
+}
+
+// Stays in place while the screens change (view transitions)
+.bar {
+  margin-block-end: var(--space-4);
+  view-transition-name: screen-bar;
 }
 
 :host(.width-narrow) {
@@ -23,8 +30,21 @@
   margin-block-end: var(--space-5);
 }
 
+.heading {
+  min-inline-size: 0;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 4px solid var(--color-hub-accent);
+}
+
+// The game's display face, big and in capitals, like the hub's menu
 .title {
-  font-size: var(--font-size-2xl);
+  margin: 0;
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  view-transition-name: screen-title;
 }
 
 .subtitle {
@@ -54,8 +74,12 @@
   display: flex;
   flex-direction: column;
   inline-size: 100%;
-  block-size: calc(100dvh - var(--app-header-height, 3.5rem));
-  padding-block: var(--space-4);
+  block-size: calc(100dvh - var(--app-header-height, 0px));
+  padding-block: max(var(--space-3), env(safe-area-inset-top)) var(--space-4);
+}
+
+:host(.fill) .bar {
+  margin-block-end: var(--space-2);
 }
 
 :host(.fill) .header {

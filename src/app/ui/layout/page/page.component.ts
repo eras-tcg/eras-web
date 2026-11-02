@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { ScreenBarComponent } from '@core/layout/screen-bar.component';
 
 /**
- * Standard page frame: title, optional subtitle and actions, then the content.
+ * Standard screen frame, game-like: a top strip ("back" to the parent screen and the quick buttons), a big
+ * title with optional subtitle and actions, then the content.
  * <eras-page title="Ediciones"><button page-actions erasButton>Nueva</button> ... </eras-page>
  */
 @Component({
   selector: 'eras-page',
+  imports: [ScreenBarComponent],
   template: `
+    <eras-screen-bar class="bar" />
     <header class="header">
-      <div>
+      <div class="heading">
         <h1 class="title">{{ title() }}</h1>
         @if (subtitle()) {
           <p class="subtitle">{{ subtitle() }}</p>

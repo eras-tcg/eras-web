@@ -30,6 +30,8 @@
   inset-inline-end: 0;
   z-index: -1;
   block-size: 120%;
+  // Stays in place between the hub screens (view transitions)
+  view-transition-name: hub-art;
   aspect-ratio: var(--hub-card-ratio);
   background:
     radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-card-p) 45%, transparent), transparent 60%),
@@ -123,6 +125,7 @@
 
 .title {
   margin: 0;
+  view-transition-name: screen-title;
   font-family: var(--font-family-display);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-regular);
@@ -130,45 +133,8 @@
   text-transform: uppercase;
 }
 
-/* Quick buttons over the artwork: icon over a label */
 .quick {
-  display: flex;
-  gap: var(--space-2);
   margin-inline-start: auto;
-}
-
-.quick-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  min-inline-size: 4.5rem;
-  padding: var(--space-1) var(--space-2);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: none;
-  color: var(--color-hub-text);
-  font: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-  text-shadow: 0 1px 3px var(--color-hub-scrim);
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--easing-standard);
-}
-
-.quick-item:hover {
-  background: color-mix(in srgb, var(--color-hub-scrim) 40%, transparent);
-}
-
-.quick-item eras-icon {
-  inline-size: 1.6rem;
-  block-size: 1.6rem;
-  filter: drop-shadow(0 1px 2px var(--color-hub-scrim));
-}
-
-.quick-item.on {
-  color: var(--color-warning);
 }
 
 /* Left column */
@@ -244,24 +210,6 @@
 
   .player-name {
     font-size: var(--font-size-lg);
-  }
-
-  .quick {
-    gap: 0;
-  }
-
-  .quick-item {
-    min-inline-size: 0;
-    padding: var(--space-2);
-  }
-
-  .quick-label {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .heading .back,

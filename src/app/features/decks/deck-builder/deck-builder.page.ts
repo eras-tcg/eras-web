@@ -20,6 +20,7 @@ import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
+import { PageComponent } from '@ui/layout/page/page.component';
 import { WorkbenchComponent } from '@ui/layout/workbench/workbench.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ChipComponent } from '@ui/primitives/chip/chip.component';
@@ -45,6 +46,7 @@ const DRAG_TYPE = 'application/x-eras-card';
 @Component({
   selector: 'eras-deck-builder-page',
   imports: [
+    PageComponent,
     WorkbenchComponent,
     StackComponent,
     GridComponent,

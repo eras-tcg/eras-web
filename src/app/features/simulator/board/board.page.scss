@@ -1,7 +1,7 @@
-// Game table: exactly one screen below the header (--app-header-height comes from the shell), no page scroll
+// Game table: exactly one screen below the banners (--app-header-height comes from the shell), no page scroll
 :host {
   display: block;
-  block-size: calc(100dvh - var(--app-header-height, 3rem));
+  block-size: calc(100dvh - var(--app-header-height, 0px));
   // No padding at the top and bottom: the hands go past the edges of the table (only their upper half shows)
   padding: 0 var(--space-3);
   // clip, not hidden: the hands go past the edges and focusing one of their cards must not scroll the table
@@ -282,7 +282,7 @@
 .notices {
   position: fixed;
   inset-inline-start: var(--space-3);
-  inset-block-start: calc(var(--app-header-height, 3rem) + var(--space-3));
+  inset-block-start: calc(var(--app-header-height, 0px) + var(--space-3));
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-start;
@@ -429,6 +429,6 @@
 
 // A sheet open at the bottom: the alerts and the chain keep above it
 :host-context(body.eras-sheet-open) .toasts {
-  max-block-size: calc(100dvh - var(--app-header-height, 3rem) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
+  max-block-size: calc(100dvh - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
 }
 

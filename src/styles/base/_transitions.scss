@@ -1,0 +1,71 @@
+// Screen changes (router view transitions, see core/navigation/view-transitions.ts).
+// html[data-nav]: "forward" into a deeper screen slides in from the right, "back" from the left, "same" fades.
+// The named parts (hub artwork, screen bar, quick buttons, title) morph from one screen to the next instead.
+
+@keyframes eras-screen-out {
+  to {
+    opacity: 0;
+    transform: translateX(var(--eras-nav-out, 0)) scale(var(--eras-nav-scale, 1));
+  }
+}
+
+@keyframes eras-screen-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--eras-nav-in, 0)) scale(var(--eras-nav-scale, 1));
+  }
+}
+
+html[data-nav='forward'] {
+  --eras-nav-out: -4%;
+  --eras-nav-in: 6%;
+}
+
+html[data-nav='back'] {
+  --eras-nav-out: 4%;
+  --eras-nav-in: -6%;
+}
+
+html[data-nav='same'] {
+  --eras-nav-scale: 0.985;
+}
+
+::view-transition-old(root) {
+  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+::view-transition-group(hub-art),
+::view-transition-group(screen-bar),
+::view-transition-group(app-tools),
+::view-transition-group(screen-title) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+// A title that changes: the old one leaves upwards, the new one rises in
+::view-transition-old(screen-title) {
+  animation: eras-screen-out 160ms ease-in both;
+}
+
+::view-transition-new(screen-title) {
+  animation: eras-title-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+}
+
+@keyframes eras-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

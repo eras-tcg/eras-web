@@ -87,8 +87,6 @@ export class BoardPage {
   protected readonly dismissedLeft = signal(false);
   /** "Zonas espejadas": the rival's lives and gems swap with their piles. Remembered on the device. */
   protected readonly mirrored = persistedFlag('eras-sim-mirrored');
-  /** The site's navigation bar is hidden to give the table more height. Remembered on the device. */
-  protected readonly headerHidden = persistedFlag('eras-sim-header-hidden');
   /** The options sidebar: expanded (names beside the icons), or dynamic (it expands while the pointer is on it). */
   protected readonly sidebarExpanded = persistedFlag('eras-sim-sidebar-expanded');
   protected readonly sidebarDynamic = persistedFlag('eras-sim-sidebar-dynamic');
@@ -170,9 +168,6 @@ export class BoardPage {
       this.document.body.classList.toggle('eras-acting-me', !!acting && acting === me);
       this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
     });
-    // The site's navigation bar, hidden while on the table if asked
-    effect(() => this.document.body.classList.toggle('eras-hide-header', this.headerHidden() && this.inGame()));
-    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-hide-header'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it

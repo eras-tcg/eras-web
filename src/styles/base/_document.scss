@@ -87,11 +87,6 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
-// The simulator can hide the site's navigation bar to give the table the whole height
-body.eras-hide-header eras-shell header.header {
-  display: none;
-}
-
 // Hub screens (home, Jugar, Social) fit the window: no scrolling and no overscroll bounce
 html:has(body.eras-hub),
 body.eras-hub {

@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
@@ -10,12 +10,12 @@ import { VersionService } from '../version/version.service';
 import { AppToolsComponent } from './app-tools.component';
 
 /**
- * App frame. There is no navigation bar: the home hub is the menu, and every other page has a slim bar with
- * "back to home" and the quick tools (sections menu, theme, edit mode).
+ * App frame. There is no navigation bar: the home hub is the menu and every screen draws its own top strip
+ * ("back" and the quick buttons, see <eras-screen-bar>). The header only carries the banners.
  */
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, RouterLink, IconComponent, AppToolsComponent],
+  imports: [RouterOutlet, IconComponent, AppToolsComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,9 +34,7 @@ export class ShellComponent {
     { initialValue: '' },
   );
 
-  /** The simulator board uses the whole screen: the bar gets compact there. */
-  protected readonly compact = computed(() => /^\/simulator\/[^/]+\/board/.test(this.url()));
-  /** The hub screens (home, Jugar, Social) draw their own top row. */
+  /** The hub screens (home, Jugar, Social): they fit the window exactly. */
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
@@ -52,9 +50,10 @@ export class ShellComponent {
       this.version.start();
       const header = host.nativeElement.querySelector('header');
       if (!header) return;
-      const observer = new ResizeObserver(() =>
-        document.documentElement.style.setProperty('--app-header-height', header.getBoundingClientRect().height + 'px'),
-      );
+      // Published right away too: a header that never shows (no banner) is never reported by the observer
+      const publish = () => document.documentElement.style.setProperty('--app-header-height', header.getBoundingClientRect().height + 'px');
+      publish();
+      const observer = new ResizeObserver(publish);
       observer.observe(header);
       destroyRef.onDestroy(() => observer.disconnect());
     });

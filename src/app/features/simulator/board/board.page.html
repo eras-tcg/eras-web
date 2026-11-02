@@ -52,9 +52,6 @@
   >
     <!-- Preferences: how the table looks and behaves -->
     <span class="group-label">Preferencias</span>
-    <button type="button" erasSidebarItem [icon]="headerHidden() ? 'chevron-down' : 'chevron-up'" (click)="headerHidden.set(!headerHidden())">
-      {{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}
-    </button>
     @if (!sidebarDynamic()) {
       <button type="button" erasSidebarItem [icon]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" (click)="toggleSidebar()">
         {{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}

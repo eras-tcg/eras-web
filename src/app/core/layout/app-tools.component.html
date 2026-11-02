@@ -1,45 +1,15 @@
 @if (editMode.available()) {
-  <button
-    type="button"
-    class="edit-switch"
-    role="switch"
-    [class.on]="editMode.active()"
-    [attr.aria-checked]="editMode.active()"
-    (click)="editMode.toggle()"
-  >
-    <eras-icon name="edit" />
-    <span class="edit-label">Modo edición</span>
-    <span class="track" aria-hidden="true"><span class="knob"></span></span>
+  <button type="button" class="item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
+    <eras-icon name="edit" /><span class="label">Modo edición</span>
   </button>
 }
-
-<button
-  type="button"
-  class="tool"
-  [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema oscuro'"
-  (click)="theme.toggle()"
->
+<button type="button" class="item" (click)="theme.toggle()">
   <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+  <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
 </button>
-
-@if (auth.user(); as user) {
-  <button type="button" class="tool" [cdkMenuTriggerFor]="mainMenu" aria-label="Menú">
-    <eras-icon name="menu" />
-  </button>
-  <ng-template #mainMenu>
-    <eras-menu>
-      <span class="eras-menu-label">Sesión iniciada como <strong>{{ user.username }}</strong></span>
-      @for (item of nav; track item.route) {
-        <button erasMenuItem (triggered)="go(item.route)"><eras-icon [name]="item.icon" /> {{ item.label }}</button>
-      }
-      <hr />
-      <button erasMenuItem (triggered)="go('/my-decks')"><eras-icon name="stack" /> Mis mazos</button>
-      <button erasMenuItem (triggered)="go('/profile')"><eras-icon name="user" /> Mi perfil</button>
-      @if (hasAdminTools()) {
-        <button erasMenuItem (triggered)="go('/admin')"><eras-icon name="shield" /> Administración</button>
-      }
-      <hr />
-      <button erasMenuItem (triggered)="logout()"><eras-icon name="logout" /> Cerrar sesión</button>
-    </eras-menu>
-  </ng-template>
+@if (auth.user()) {
+  @if (hasAdminTools()) {
+    <a class="item" routerLink="/admin"><eras-icon name="shield" /><span class="label">Administración</span></a>
+  }
+  <button type="button" class="item" (click)="logout()"><eras-icon name="logout" /><span class="label">Salir</span></button>
 }

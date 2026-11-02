@@ -1,20 +1,5 @@
-<header class="header" [class.compact]="compact()" [class.hub]="hub()">
-  <!-- The hub screens draw their own top row: the header keeps only the banners there -->
-  @if (!hub()) {
-    <div class="bar">
-      @if (auth.user()) {
-        <a class="back" routerLink="/home" aria-label="Volver al inicio">
-          <eras-icon name="chevron-left" />
-          <img class="logo" src="favicon.svg" alt="" />
-          <span class="back-text">Inicio</span>
-        </a>
-      } @else {
-        <span class="brand"><img class="logo" src="favicon.svg" alt="" /><span class="brand-text">ERAS</span></span>
-      }
-      <eras-app-tools class="tools" />
-    </div>
-  }
-
+<!-- No navigation bar: each screen draws its own top strip. The header only carries the banners. -->
+<header class="header">
   @if (version.updateAvailable()) {
     <div class="update-banner" role="status">
       <eras-icon name="refresh" /> Hay una versión nueva de ERAS.
@@ -27,6 +12,11 @@
     </div>
   }
 </header>
+
+@if (!auth.user()) {
+  <!-- Signed out (login, validate): only the theme, floating -->
+  <eras-app-tools class="guest-tools" />
+}
 
 <main class="main">
   <router-outlet />

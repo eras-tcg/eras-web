@@ -1,105 +1,78 @@
 :host {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  // The same buttons on every screen: they stay put while the screens change (view transitions)
+  view-transition-name: app-tools;
 }
 
-// Round icon buttons in the color of the bar they sit on (light text over the home artwork)
-.tool {
-  display: grid;
-  place-items: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
-  padding: 0;
+// Over the hub's artwork: the --color-hub-* tokens, the same in every theme
+:host(.on-art) {
+  color: var(--color-hub-text);
+  text-shadow: 0 1px 3px var(--color-hub-scrim);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 4.5rem;
+  padding: var(--space-1) var(--space-2);
   border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--easing-standard);
-}
-
-.tool:hover,
-.tool[aria-expanded='true'] {
-  background: color-mix(in srgb, currentColor 14%, transparent);
-}
-
-.tool eras-icon {
-  inline-size: 1.15rem;
-  block-size: 1.15rem;
-}
-
-.edit-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
-  border: var(--border-width) solid currentColor;
-  border-radius: var(--radius-pill);
-  background: transparent;
+  border-radius: var(--radius-md);
+  background: none;
   color: inherit;
   font: inherit;
-  font-size: var(--font-size-sm);
-  opacity: 0.85;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
   cursor: pointer;
   transition:
     color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    background-color var(--duration-fast) var(--easing-standard),
-    opacity var(--duration-fast) var(--easing-standard);
+    background-color var(--duration-fast) var(--easing-standard);
 }
 
-.edit-switch:hover {
-  opacity: 1;
+.item:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }
 
-.edit-switch eras-icon {
-  inline-size: 1rem;
-  block-size: 1rem;
+:host(.on-art) .item:hover {
+  background: color-mix(in srgb, var(--color-hub-scrim) 40%, transparent);
+  color: var(--color-hub-text);
 }
 
-.track {
-  position: relative;
-  inline-size: 2rem;
-  block-size: 1.15rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-border);
-  transition: background-color var(--duration-base) var(--easing-standard);
+.item eras-icon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 }
 
-.knob {
-  position: absolute;
-  inset-block-start: 0.15rem;
-  inset-inline-start: 0.15rem;
-  inline-size: 0.85rem;
-  block-size: 0.85rem;
-  border-radius: 50%;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-base) var(--easing-standard);
+:host(.on-art) .item eras-icon {
+  filter: drop-shadow(0 1px 2px var(--color-hub-scrim));
 }
 
-.edit-switch.on {
-  border-color: var(--color-warning);
-  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+.item.on {
   color: var(--color-warning);
-  opacity: 1;
 }
 
-.edit-switch.on .track {
-  background: var(--color-warning);
-}
-
-.edit-switch.on .knob {
-  transform: translateX(0.85rem);
-}
-
+// Narrow screens: icons only (the label stays for screen readers)
 @media (max-width: 63.99rem) {
-  .edit-label {
-    display: none;
+  :host {
+    gap: 0;
   }
 
-  .edit-switch {
-    padding-inline-start: var(--space-2);
+  .item {
+    min-inline-size: 0;
+    padding: var(--space-2);
+  }
+
+  .label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

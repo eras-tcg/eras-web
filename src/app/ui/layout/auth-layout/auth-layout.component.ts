@@ -12,7 +12,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     <div class="frame">
       <img class="logo" src="favicon.svg" alt="" />
       <div class="brand" aria-hidden="true">ERAS</div>
-      <p class="tagline">Juego de cartas coleccionables</p>
       <section class="panel" [attr.aria-labelledby]="'auth-heading'">
         <h1 id="auth-heading" class="heading">{{ heading() }}</h1>
         @if (subtitle()) {
@@ -47,15 +46,11 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       filter: drop-shadow(0 6px 18px rgb(42 82 116 / 35%));
     }
     .brand {
+      margin-block-end: var(--space-4);
       font-family: var(--font-family-display);
       font-size: clamp(2.5rem, 8vw, 3.5rem);
       letter-spacing: 0.08em;
       line-height: 1;
-    }
-    .tagline {
-      margin: 0 0 var(--space-4);
-      color: var(--color-text-muted);
-      font-size: var(--font-size-sm);
     }
     .panel {
       inline-size: 100%;

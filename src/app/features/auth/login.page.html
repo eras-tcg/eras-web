@@ -1,4 +1,4 @@
-<eras-auth-layout heading="Iniciar sesión" subtitle="Entra con tu cuenta para ver cartas, mazos y jugar.">
+<eras-auth-layout heading="Iniciar sesión">
   <form [formGroup]="form" (ngSubmit)="submit()">
     <eras-stack [gap]="4">
       @if (auth.expired() && !error()) {
@@ -24,5 +24,4 @@
       <button erasButton type="submit" [loading]="loading()">Entrar</button>
     </eras-stack>
   </form>
-  <span auth-footer>Las cuentas son privadas: pide la tuya a un administrador.</span>
 </eras-auth-layout>

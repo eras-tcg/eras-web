@@ -6,7 +6,6 @@ eras-icon[name='gem'] {
 }
 
 .stage {
-  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -17,12 +16,11 @@ eras-icon[name='gem'] {
   overflow: clip;
 }
 
-// "Saltar": a quiet button in the bottom right corner
-.skip {
-  position: absolute;
-  inset-block-end: var(--space-2);
-  inset-inline-end: var(--space-2);
-  z-index: 3;
+// "Saltar": a quiet button in its own row at the foot, on the right (the stage leaves it that room)
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
 .hint {

@@ -10,9 +10,6 @@
   }
 
   <div class="stage">
-    @if (phase() === 'packs' || phase() === 'opening') {
-      <button erasButton variant="ghost" size="sm" type="button" class="skip" (click)="skip(); $event.stopPropagation()">Saltar <eras-icon name="chevron-right" /></button>
-    }
     @if (!ready()) {
       <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
     } @else if (!editionData() || !product()) {
@@ -108,4 +105,11 @@
       }
     }
   </div>
+
+  <!-- "Saltar": its own row at the foot, so it never covers a pack or a card -->
+  @if (phase() === 'packs' || phase() === 'opening') {
+    <div class="foot">
+      <button erasButton variant="ghost" size="sm" type="button" (click)="skip()">Saltar <eras-icon name="chevron-right" /></button>
+    </div>
+  }
 </eras-page>

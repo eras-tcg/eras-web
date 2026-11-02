@@ -6,6 +6,7 @@
     class="life-zone"
     [class.attack-zone]="attackDrag()"
     label="Vidas"
+    [labelShown]="game.showInfo()"
     [attr.data-pile]="p.userId + ':lifeStack'"
     [count]="game.showInfo() ? p.lifeStack.length : null"
     [dropActive]="over() === 'lifeStack'"
@@ -72,8 +73,8 @@
       }
     </div>
   }
-  @if (p.field.length === 0) {
-    <span class="hint">{{ opponent() ? 'Campo del rival' : 'Arrastra cartas aquí' }}</span>
+  @if (p.field.length === 0 && opponent()) {
+    <span class="hint">Campo del rival</span>
   }
   @if (nearby() && !opponent()) {
     <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>
@@ -135,6 +136,7 @@
   <eras-game-zone
     class="pile deck"
     label="Mazo"
+    [labelShown]="game.showInfo()"
     [attr.data-pile]="p.userId + ':deck'"
     [count]="game.showInfo() ? p.deck.length : null"
     [dropActive]="over() === 'deck'"
@@ -166,6 +168,7 @@
   <eras-game-zone
     class="pile tributes"
     label="Tributos"
+    [labelShown]="game.showInfo()"
     [attr.data-pile]="p.userId + ':tributeZone'"
     [count]="game.showInfo() ? p.tributeZone.length : null"
     [dropActive]="over() === 'tributeZone'"
@@ -179,7 +182,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
+      <eras-game-card [upsideDown]="opponent()" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
     <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -187,6 +190,7 @@
   <eras-game-zone
     class="pile discard"
     label="Descarte"
+    [labelShown]="game.showInfo()"
     [attr.data-pile]="p.userId + ':discardPile'"
     [count]="game.showInfo() ? p.discardPile.length : null"
     [dropActive]="over() === 'discardPile'"
@@ -198,7 +202,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
+      <eras-game-card [upsideDown]="opponent()" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
     <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>

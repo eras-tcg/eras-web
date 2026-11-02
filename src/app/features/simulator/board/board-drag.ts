@@ -43,6 +43,14 @@ export class BoardDrag {
 
   /** Drop position in % of the element (x, y), from the owner's point of view. */
   position(event: DragEvent, element: HTMLElement, mirrored = false): { x: number; y: number } {
+    // Over one of the field's lines (the browser finds it even on the leaning table, where the halves of the box on
+    // screen are not the lines): its middle, front line above 50
+    const line = event.target instanceof Element ? event.target.closest('.line') : null;
+    if (line && element.contains(line)) {
+      const rect = line.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      return { x: Math.max(0, Math.min(100, x)), y: line.classList.contains('front') ? 25 : 75 };
+    }
     const rect = element.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;

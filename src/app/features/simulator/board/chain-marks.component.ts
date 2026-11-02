@@ -61,6 +61,8 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     .mark.resolving { animation: mark-in 0.4s ease backwards, pulse 0.9s ease-in-out infinite alternate; }
     /* On a card: down its left edge, under the printed cost */
     :host(:not(.ring)) .mark { inset-block-start: calc(26% + var(--y) * 1.45rem); inset-inline-start: -0.35rem; }
+    /* On the rival's card (turned round): up its right edge, from the bottom, where its cost is then */
+    :host(.upside-down:not(.ring)) .mark { inset-block: auto calc(26% + var(--y) * 1.45rem); inset-inline: auto -0.35rem; }
     /* On a pile: at the center, or on a ring around it */
     :host(.ring) .mark {
       inset-block-start: calc(50% + var(--y) * 32%);
@@ -75,12 +77,14 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.ring]': 'ring()' },
+  host: { '[class.ring]': 'ring()', '[class.upside-down]': 'upsideDown()' },
 })
 export class ChainMarksComponent {
   readonly links = input<readonly PendingEffect[]>([]);
   /** Laid out on a ring centered on the box (a pile); otherwise down the card's left edge. */
   readonly ring = input(false, { transform: booleanAttribute });
+  /** On the rival's card, turned round: the marks go up its other edge. */
+  readonly upsideDown = input(false, { transform: booleanAttribute });
   /** The player looking: their links are cyan, the rival's pink. */
   readonly me = input<string | null | undefined>(null);
 

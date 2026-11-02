@@ -105,9 +105,45 @@
   position: relative;
   display: grid;
   flex: 1;
+  min-block-size: 0;
+}
+
+// The plane of the table: rival's half, middle strip, your half
+.plane {
+  display: grid;
   grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: var(--space-2);
   min-block-size: 0;
+}
+
+// "Mesa en perspectiva": the plane leans back on its bottom edge, as seen from your seat. The eye is --depth table
+// heights away; the plane is as much taller than the table as the leaning takes away, so its far edge still reaches
+// the top. Phones keep the flat table (it scrolls there and has no room to lose)
+@media (min-width: 48rem) {
+  // --tilt comes from the slider (up to 24deg)
+  .table.tilted {
+    --depth: 2.2;
+
+    container-type: size;
+  }
+
+  .table.tilted .plane {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: calc(100% * var(--depth) / (var(--depth) * cos(var(--tilt)) - sin(var(--tilt))));
+    transform-origin: 50% 100%;
+    transform: perspective(calc(var(--depth) * 100cqh)) rotateX(var(--tilt));
+    // Your hand stands up from the plane (player-half), facing you
+    transform-style: preserve-3d;
+    // In 3D the plane and the zones on it lie at the same depth: the browser could take a click or a drop for the
+    // plane. Only what lies on it takes the pointer
+    pointer-events: none;
+  }
+
+  .table.tilted .plane > * {
+    pointer-events: auto;
+  }
 }
 
 // Alerts float at the top of the table instead of pushing it down. They stay above the choices' backdrop
@@ -311,7 +347,7 @@
     overflow: visible;
   }
 
-  .table {
+  .plane {
     grid-template-rows: auto auto auto;
   }
 }
@@ -435,3 +471,16 @@
   max-block-size: calc(100dvh - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
 }
 
+
+// "Mesa en perspectiva": the slider under its name, as wide as the name
+.tilt-item input {
+  display: block;
+  inline-size: 100%;
+  margin-block-start: var(--space-1);
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.tilt-item {
+  cursor: default;
+}

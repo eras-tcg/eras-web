@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, inject, output, signal, untracked, viewChild } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { Mission, MissionBoard } from '@core/missions/mission.model';
+import { MissionsStore } from '@core/missions/missions.store';
+import { missionText } from '@data/missions/mission-rules';
 import { POST_GAME_LABELS, postGameOptions } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { PlayerState, PostGameChoice, RoomStatus } from '@data/simulator/simulator.model';
@@ -8,20 +11,48 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { BoardAnimations } from './board-animations';
 
 type Banner = { kind: 'start' } | { kind: 'end'; won: boolean; reason: string };
+/** A mission the game moved on: what it asks, how far it was and is now (of its target), and whether it got done. */
+interface MissionStep {
+  key: string;
+  text: string;
+  before: number;
+  after: number;
+  target: number;
+  done: boolean;
+  gems: number;
+}
 
 const START_MS = 2800;
 
 /** How the game was won, said from the side of whoever reads it. */
 function winCondition(reason: string | null | undefined, won: boolean, loser: string): string {
   if (reason === 'surrender') return won ? `${loser} se rindió` : 'Te rendiste';
+  if (reason === 'abandon') return won ? `${loser} abandonó la partida` : 'Abandonaste la partida';
   if (reason === 'deck') return won ? `${loser} no pudo robar al inicio de su turno` : 'No pudiste robar al inicio de tu turno';
   return won ? `${loser} se quedó sin vidas` : 'Te quedaste sin vidas';
+}
+
+/** The missions of `after` that moved on since `before` (none without a `before`: it is read when the game starts). */
+function missionSteps(before: MissionBoard | null, after: MissionBoard | null): MissionStep[] {
+  if (!before || !after) return [];
+  const steps: MissionStep[] = [];
+  for (const period of ['daily', 'weekly'] as const) {
+    for (const m of after[period]) {
+      const was: Mission | undefined = before[period].find((b) => b.id === m.id);
+      const from = Math.min(was?.progress ?? 0, m.target);
+      const to = Math.min(m.progress, m.target);
+      if (to <= from) continue;
+      steps.push({ key: `${period}|${m.id}`, text: missionText(m), before: from, after: to, target: m.target, done: to >= m.target, gems: m.gems });
+    }
+  }
+  return steps;
 }
 
 /**
  * The game's start and end over the whole screen, always (even with the animations off). Start: both players face
  * to face, their icon and name, with "VS" between them (a moment; a click skips it). End: both players again,
- * "Victoria" or "Derrota" and how it was won, with the post-game choices (new game, change deck, leave).
+ * "Victoria" or "Derrota" and how it was won, then (online) how far the game took the player's missions, with the
+ * post-game choices (new game, change deck, leave).
  */
 @Component({
   selector: 'eras-match-banner',
@@ -55,6 +86,26 @@ function winCondition(reason: string | null | undefined, won: boolean, loser: st
         </div>
         @if (b.kind === 'end') {
           <span class="reason">{{ b.reason }}</span>
+          @if (missionSteps().length) {
+            <!-- After the result: how far this game took the player's missions -->
+            <section class="missions" aria-label="Avance en las misiones">
+              <h2 class="missions-title">Misiones</h2>
+              <ul class="mission-list">
+                @for (m of missionSteps(); track m.key) {
+                  <li class="mission" [class.done]="m.done">
+                    <span class="mission-text">{{ m.text }}</span>
+                    <span class="mission-count">{{ m.after }} / {{ m.target }}</span>
+                    <span class="mission-bar" aria-hidden="true">
+                      <span class="mission-fill" [style.--from.%]="(m.before / m.target) * 100" [style.--to.%]="(m.after / m.target) * 100"></span>
+                    </span>
+                    @if (m.done) {
+                      <span class="mission-done"><eras-icon name="check" /> ¡Completada! <eras-icon name="gem" /> {{ m.gems }} por reclamar</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </section>
+          }
           <div class="choices">
             @if (myChoice(); as c) {
               <span class="waiting">Elegiste: {{ labels[c] }}. Esperando al rival…</span>
@@ -141,6 +192,28 @@ function winCondition(reason: string | null | undefined, won: boolean, loser: st
     .loser { filter: grayscale(0.85) brightness(0.6); }
     .crown { position: absolute; inset-block-start: -2.4rem; inline-size: 2.2rem; block-size: 2.2rem; color: #fde68a; filter: drop-shadow(0 0 8px #f59e0b); animation: slam 0.5s ease 0.7s backwards; }
     .choices { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); animation: appear 0.4s ease 1s backwards; }
+    /* The missions the game moved on: after the result, each bar grows from where it was to where it is now */
+    .missions { display: grid; gap: var(--space-2); inline-size: min(28rem, 100%); animation: appear 0.4s ease 1.2s backwards; }
+    .missions-title { margin: 0; font: 400 var(--font-size-sm)/1.2 var(--font-family-display); letter-spacing: 0.12em; text-transform: uppercase; color: rgb(244 244 246 / 70%); text-align: center; }
+    .mission-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+    .mission {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-1) var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid rgb(255 255 255 / 18%);
+      border-radius: var(--radius-md);
+      background: rgb(255 255 255 / 6%);
+    }
+    .mission.done { border-color: #fde68a; background: rgb(253 230 138 / 10%); }
+    .mission-text { font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); }
+    .mission-count { font-size: var(--font-size-sm); font-variant-numeric: tabular-nums; color: rgb(244 244 246 / 80%); }
+    .mission-bar { grid-column: 1 / -1; block-size: 0.4rem; overflow: hidden; border-radius: var(--radius-pill); background: rgb(255 255 255 / 15%); }
+    .mission-fill { display: block; block-size: 100%; inline-size: var(--to); border-radius: inherit; background: #38bdf8; animation: mission-grow 0.9s ease 1.5s backwards; }
+    .mission.done .mission-fill { background: #fde68a; }
+    .mission-done { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 0.3em; color: #fde68a; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); animation: appear 0.4s ease 2.4s backwards; }
+    .mission-done eras-icon { inline-size: 0.9rem; block-size: 0.9rem; }
+    @keyframes mission-grow { from { inline-size: var(--from); } }
     .choice {
       padding: var(--space-2) var(--space-6);
       border: 1px solid rgb(255 255 255 / 60%);
@@ -175,6 +248,11 @@ export class MatchBannerComponent {
   private readonly game = inject(GameStore);
   private readonly auth = inject(AuthService);
   private readonly animations = inject(BoardAnimations);
+  private readonly missions = inject(MissionsStore);
+  /** The missions as they were when the game started (online only: solo mode counts for none). */
+  private readonly missionsBefore = signal<MissionBoard | null>(null);
+  /** At the end: the missions this game moved on. */
+  protected readonly missionSteps = computed(() => (this.end() ? missionSteps(this.missionsBefore(), this.missions.board()) : []));
   private readonly screen = viewChild<ElementRef<HTMLElement>>('screen');
   protected readonly labels = POST_GAME_LABELS;
   /** The start, for a moment. */
@@ -196,7 +274,8 @@ export class MatchBannerComponent {
     const me = this.auth.user()?.id;
     const iSurrendered = !!surrenderer && surrenderer === me;
     const theirChoice = surrenderer && surrenderer !== me ? (this.game.postGameChoices()[surrenderer] ?? null) : null;
-    return postGameOptions(iSurrendered, theirChoice);
+    // Alone (the rival left): no rematch
+    return postGameOptions(iSurrendered, theirChoice).filter((o) => o !== 'new_game' || !!this.game.opponentState());
   });
   protected readonly me = computed(() => this.game.myState());
   protected readonly rival = computed(() => this.game.opponentState());
@@ -246,7 +325,11 @@ export class MatchBannerComponent {
     const before = this.lastStatus;
     this.lastStatus = status;
     if (before === null || before === status) return;
-    // The game starts (after the mulligan, or right away)
+    // Online, the missions are read when the game starts and again when it ends: the end shows how far it took them
+    if (!this.game.editorRoom()) {
+      if (status === 'IN_PROGRESS' && before !== 'IN_PROGRESS') void this.missions.load().then(() => this.missionsBefore.set(this.missions.board()));
+      if (status === 'POST_GAME') void this.missions.load();
+    }
     // The game starts (after the mulligan, or right away): shown even with the animations off
     if (status === 'IN_PROGRESS' && (before === 'MULLIGAN' || before === 'SELECTING_STARTER' || before === 'WAITING' || before === 'POST_GAME')) {
       this.close();

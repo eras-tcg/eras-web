@@ -155,8 +155,9 @@ export class PreRoomComponent {
   }
 
   /** Frees my seat (the board's exit guard sends it); the room passes on if I own it. */
+  /** Back: solo mode to "Jugar" (where it started), an online room to the rooms. */
   protected leave(): void {
-    void this.router.navigateByUrl('/simulator');
+    void this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator');
   }
 
   protected async copy(): Promise<void> {

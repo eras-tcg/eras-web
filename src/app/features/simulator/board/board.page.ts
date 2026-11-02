@@ -29,10 +29,14 @@ import { MatchBannerComponent } from './match-banner.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
 import { persistedFlag } from '@core/storage/persisted-flag';
+import { persistedNumber } from '@core/storage/persisted-number';
 import { SidebarItemComponent } from './sidebar-item.component';
 
 /** How long the left button must be held anywhere to look through the panels. */
 const LONG_PRESS_MS = 350;
+const isPlaying = (status: string | null) => status === 'IN_PROGRESS' || status === 'MULLIGAN' || status === 'SELECTING_STARTER';
+/** "Mesa en perspectiva" at the end of its slider: how far the table leans back, in degrees. */
+const TABLE_TILT_MAX = 24;
 
 const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
 
@@ -77,6 +81,8 @@ export class BoardPage {
 
   protected readonly phaseLabel = computed(() => PHASE_LABELS[this.game.phase()] ?? this.game.phase());
   protected readonly inProgress = computed(() => this.game.status() === 'IN_PROGRESS');
+  /** A game in course, from the starters' choice to its end (online, only surrendering leaves it). */
+  protected readonly playing = computed(() => isPlaying(this.game.status()));
   /** Test room: whose turn it is, by name (both sides are mine). */
   /** Inside a game (after the pre-room): the options sidebar and the hidden navigation bar apply. */
   protected readonly inGame = computed(() => !!this.game.status() && this.game.status() !== 'WAITING');
@@ -94,6 +100,13 @@ export class BoardPage {
   protected readonly sidebarOpen = computed(() => (this.sidebarDynamic() ? this.sidebarHover() : this.sidebarExpanded()));
   /** "Mano recta": the hands in a row instead of a fan. Remembered on the device. */
   protected readonly straightHand = persistedFlag('eras-sim-straight-hand');
+  /**
+   * "Mesa en perspectiva": how far the table leans back, as seen from your seat (not on phones), from flat (0) to
+   * TABLE_TILT_MAX (1). Only a slider, no number. Remembered on the device.
+   */
+  protected readonly tilt = persistedNumber('eras-sim-tilt', 0, 0, 1);
+  protected readonly tilted = computed(() => this.tilt() > 0);
+  protected readonly tiltAngle = computed(() => `${this.tilt() * TABLE_TILT_MAX}deg`);
   /** The latest actions shown as notices over the table (top left). Remembered on the device. */
   protected readonly noticesOff = persistedFlag('eras-sim-notices-off');
   /** Browser full screen: the field cards get the extra room. */
@@ -192,7 +205,7 @@ export class BoardPage {
       if (!this.game.removed()) return;
       untracked(() => {
         this.leaving = true;
-        void this.router.navigateByUrl('/simulator', { replaceUrl: true });
+        void this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator', { replaceUrl: true });
       });
     });
 
@@ -362,8 +375,9 @@ export class BoardPage {
     if (await this.modal.confirm({ title: 'Rendirse', message: '¿Seguro que quieres rendirte?', confirmLabel: 'Rendirse', danger: true })) this.game.surrender();
   }
 
+  /** Out of the board: solo mode goes back to "Jugar" (where it started), an online room to the rooms. */
   protected async exit(): Promise<void> {
-    await this.router.navigateByUrl('/simulator');
+    await this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator');
   }
 
   /** The owner takes the disconnected rival out of the room (the game ends; the pre-room waits for another). */
@@ -373,23 +387,29 @@ export class BoardPage {
   }
 
   /**
-   * Route guard. Leaving a game in course asks first and keeps the seat (the owner may wait for you or take you
-   * out); leaving the pre-room or a finished game frees the seat. Leaving always disconnects.
+   * Route guard. Leaving an online game in course loses it (asked first): the seat is freed and the rival wins.
+   * Leaving solo mode closes its room. Leaving the pre-room or a finished game frees the seat. Leaving always
+   * disconnects.
    */
   async confirmLeave(): Promise<boolean> {
-    const status = this.game.status();
-    const playing = status === 'IN_PROGRESS' || status === 'MULLIGAN' || status === 'SELECTING_STARTER';
-    if (!this.leaving && playing) {
+    const playing = isPlaying(this.game.status());
+    if (!this.leaving && playing && !this.game.editorRoom() && !this.game.removed()) {
       const ok = await this.modal.confirm({
-        title: 'Salir de la partida',
-        message: this.game.isHost()
-          ? 'La partida sigue sin ti y puedes volver desde el enlace de la sala. Si no vuelves pronto, tu rival pasa a ser el dueño de la sala.'
-          : 'La partida sigue sin ti y puedes volver desde el enlace de la sala, pero el dueño de la sala puede sacarte mientras no estés.',
-        confirmLabel: 'Salir',
+        title: 'Abandonar la partida',
+        message: 'Si sales ahora, pierdes la partida y tu rival gana.',
+        confirmLabel: 'Abandonar',
+        danger: true,
       });
       if (!ok) return false;
+      if (this.game.myState()) this.game.leaveRoom();
+      this.game.disconnect();
+      return true;
     }
-    if (!playing && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
+    if (!this.leaving && playing && this.game.editorRoom()) {
+      const ok = await this.modal.confirm({ title: 'Salir del modo solo', message: 'La partida se cierra.', confirmLabel: 'Salir' });
+      if (!ok) return false;
+    }
+    if ((!playing || this.game.editorRoom()) && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
     // Going back to the lobby of the same room keeps the connection (it reconnects there)
     this.game.disconnect();
     return true;

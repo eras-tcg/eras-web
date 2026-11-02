@@ -41,7 +41,10 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
       letter-spacing: 0.06em;
       text-align: center;
       text-transform: uppercase;
+      transition: opacity var(--duration-fast) var(--easing-standard);
     }
+    /* Title out of sight (its room kept, so the content does not move when it shows) */
+    :host(.label-off) .label { opacity: 0; }
     /* The number of cards, big and centered over the pile (only with the table's information on) */
     .count {
       position: absolute;
@@ -75,11 +78,14 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
     '[class.drop-active]': 'dropActive()',
     '[class.targeted]': 'targeted()',
     '[class.selectable]': 'selectable()',
+    '[class.label-off]': '!labelShown()',
   },
 })
 export class GameZoneComponent {
   /** Its title; empty for none. */
   readonly label = input('');
+  /** The title shows (false: hidden, its room kept). */
+  readonly labelShown = input(true);
   /** How many cards it holds, shown big; null hides it. */
   readonly count = input<number | null>(null);
   /** An icon beside that number (the hand's cards). */

@@ -21,7 +21,6 @@
 
 /* Top row: as every screen's */
 .room-bar { display: flex; align-items: center; gap: var(--space-3); }
-.room-bar [erasIconButton] { margin-inline-start: auto; }
 .back {
   display: grid;
   flex-shrink: 0;
@@ -50,13 +49,16 @@
 }
 
 /* Versus: the two seats facing each other, "VS" between them */
-.stage { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-4); }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: var(--space-4); }
 .versus {
   font-family: var(--font-family-display);
   font-size: clamp(2rem, 5vw, 3.5rem);
   letter-spacing: 0.05em;
   color: var(--color-hub-accent);
   text-shadow: 0 0 1.25rem color-mix(in srgb, var(--color-hub-accent) 55%, transparent);
+  // Level with the cards (the seats line up at the top, whatever is under them)
+  align-self: start;
+  margin-block-start: 7rem;
 }
 .seat {
   display: grid;
@@ -67,7 +69,10 @@
   border-radius: var(--radius-lg, var(--radius-md));
   background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-hub-accent) 12%, transparent), transparent 70%);
 }
-.seat.empty { place-items: center; border: 2px dashed var(--color-border); background: none; }
+.seat.empty { background: none; }
+.plate.waiting { background: var(--color-surface); color: var(--color-text-muted); }
+.plate.waiting .name { color: var(--color-text); }
+.seat.playing .starter-empty { border-color: var(--color-hub-accent); border-style: solid; }
 .seat.playing .starter-slot eras-game-card { box-shadow: 0 0 0 3px var(--color-hub-accent), 0 10px 24px rgb(0 0 0 / 35%); }
 
 // The starter, large; a confirmed player's glows
@@ -135,7 +140,6 @@
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .actions:empty { display: none; }
 
-.waiting { display: grid; gap: var(--space-2); justify-items: center; max-inline-size: 18rem; text-align: center; }
 .pulse { inline-size: 0.75rem; block-size: 0.75rem; border-radius: 50%; background: var(--color-hub-accent); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse {
   0%, 100% { opacity: 0.35; transform: scale(0.8); }

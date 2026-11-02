@@ -1,9 +1,7 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
-import { apiErrorMessage } from '@core/http/api-error';
-import { RoomsApi } from '@data/simulator/rooms.api';
-import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
 import { coverFinish, ownedCount, shineOf } from '@data/collection/collection-rules';
 import { CollectionStore } from '@data/collection/collection.store';
@@ -34,6 +32,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 @Component({
   selector: 'eras-pre-room',
   imports: [
+    NgTemplateOutlet,
     GridComponent,
     AlertComponent,
     ToggleGroupComponent,
@@ -57,28 +56,7 @@ export class PreRoomComponent {
   private readonly cards = inject(CardsStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly rooms = inject(RoomsApi);
   private readonly collection = inject(CollectionStore);
-
-  /** The owner waiting alone may play both sides (a test room, "solo mode"). */
-  protected readonly canPlayAlone = computed(() => this.game.isHost() && !this.game.editorRoom() && !this.rival());
-  protected readonly goingAlone = signal(false);
-  protected readonly aloneError = signal<string | null>(null);
-
-  protected async playAlone(): Promise<void> {
-    const room = this.game.roomId();
-    if (!room || this.goingAlone()) return;
-    this.goingAlone.set(true);
-    this.aloneError.set(null);
-    try {
-      // The room's broadcast brings the other side
-      await firstValueFrom(this.rooms.playAlone(room));
-    } catch (e) {
-      this.aloneError.set(apiErrorMessage(e, 'No se pudo pasar a partida de prueba'));
-    } finally {
-      this.goingAlone.set(false);
-    }
-  }
 
   protected readonly me = computed(() => this.auth.user()?.id ?? '');
   protected readonly search = signal('');
@@ -86,8 +64,15 @@ export class PreRoomComponent {
 
   protected readonly mine = computed(() => this.game.myState());
   private readonly rival = computed(() => this.game.opponentState());
-  /** Me first, then the rival (or an empty seat). */
-  protected readonly seats = computed<(PlayerState | null)[]>(() => [this.mine() ?? null, this.rival() ?? null]);
+  /**
+   * Me first, then the rival (or an empty seat). In solo mode the order stays put (the owner first): choosing the
+   * other side's deck only moves the highlight, the seats do not swap.
+   */
+  protected readonly seats = computed<(PlayerState | null)[]>(() => {
+    const seats = [this.mine() ?? null, this.rival() ?? null];
+    const host = this.game.state()?.hostId;
+    return this.game.editorRoom() && seats[1]?.userId === host ? [seats[1], seats[0]] : seats;
+  });
 
   protected readonly allDecks = computed(() => {
     const mine = this.decks.myDecks();

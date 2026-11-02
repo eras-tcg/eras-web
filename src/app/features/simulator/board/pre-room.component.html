@@ -6,15 +6,7 @@
       <h1 class="title">{{ game.editorRoom() ? 'Modo solo' : 'Sala ' + game.roomId() }}</h1>
     </div>
     @if (!game.editorRoom()) {
-      <button
-        type="button"
-        erasIconButton
-        size="md"
-        [icon]="copied() ? 'check' : 'link'"
-        [title]="copied() ? 'Enlace copiado' : 'Copiar el enlace para que tu rival entre'"
-        aria-label="Copiar el enlace de la sala"
-        (click)="copy()"
-      ></button>
+      <ng-container [ngTemplateOutlet]="copyLink" />
     }
   </header>
 
@@ -63,16 +55,16 @@
             }
           </div>
         } @else {
-          <div class="waiting">
-            <span class="pulse" aria-hidden="true"></span>
-            <strong>Esperando rival…</strong>
-            <span class="muted">Comparte el enlace de la sala.</span>
-            @if (canPlayAlone()) {
-              <button erasButton variant="secondary" size="sm" type="button" [loading]="goingAlone()" (click)="playAlone()">Jugar solo los dos lados</button>
-              @if (aloneError(); as e) {
-                <span class="error">{{ e }}</span>
-              }
-            }
+          <!-- Nobody yet: the same seat, in outline, with the waiting message where the nameplate goes -->
+          <div class="starter-slot">
+            <div class="starter-empty"><span class="pulse" aria-hidden="true"></span></div>
+          </div>
+          <div class="plate waiting">
+            <span class="plate-text">
+              <span class="name">Esperando rival…</span>
+              <span class="deck-name">Comparte el enlace de la sala</span>
+            </span>
+            <ng-container [ngTemplateOutlet]="copyLink" />
           </div>
         }
       </div>
@@ -142,3 +134,16 @@
     }
   </section>
 </div>
+
+<!-- Copying the room's link (beside the room's code and beside the waiting message) -->
+<ng-template #copyLink>
+  <button
+    type="button"
+    erasIconButton
+    size="md"
+    [icon]="copied() ? 'check' : 'link'"
+    [title]="copied() ? 'Enlace copiado' : 'Copiar el enlace para que tu rival entre'"
+    aria-label="Copiar el enlace de la sala"
+    (click)="copy()"
+  ></button>
+</ng-template>

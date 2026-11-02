@@ -10,9 +10,9 @@ import { ThemeService } from '../theme/theme.service';
 import { WalletStore } from '../wallet/wallet.store';
 
 /**
- * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop), edit mode and
- * administration (administrators only), and sign out (`logout`, the home's main menu only). The sections are reached from the home hub; the theme is in the profile's
- * preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
+ * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop) and edit mode
+ * (administrators only); on the home's main menu (`home`) also administration (administrators only) and sign out.
+ * The sections are reached from the home hub; the theme is in the profile's preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
   selector: 'eras-app-tools',
@@ -31,8 +31,8 @@ export class AppToolsComponent {
   private readonly modal = inject(ModalService);
 
   readonly onArt = input(false, { transform: booleanAttribute });
-  /** Show "sign out": only the home's main menu has it. */
-  readonly logout = input(false, { transform: booleanAttribute });
+  /** The home's main menu: the only screen with administration and sign out. */
+  readonly home = input(false, { transform: booleanAttribute });
 
   protected readonly isAdmin = computed(() => {
     this.auth.user();

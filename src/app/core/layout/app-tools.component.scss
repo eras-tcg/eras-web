@@ -57,6 +57,12 @@
   color: var(--color-warning);
 }
 
+// Sign out stands apart: red, also over the hub's artwork
+.item.sign-out,
+:host(.on-art) .item.sign-out:hover {
+  color: var(--color-danger);
+}
+
 .gems eras-icon {
   color: var(--color-hub-accent);
 }

@@ -1,5 +1,5 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input } from '@angular/core';
+import { DOCUMENT, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -12,7 +12,8 @@ import { WalletStore } from '../wallet/wallet.store';
 
 /**
  * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop) and edit mode
- * (administrators only); on the home's main menu (`home`) also administration (administrators only) and sign out.
+ * (administrators only); on the home's main menu (`home`) also administration (administrators only) and sign out;
+ * last, on every screen and with or without a session, full screen.
  * The sections are reached from the home hub; the theme is in the profile's preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
@@ -21,7 +22,12 @@ import { WalletStore } from '../wallet/wallet.store';
   templateUrl: './app-tools.component.html',
   styleUrl: './app-tools.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { role: 'navigation', 'aria-label': 'Opciones', '[class.on-art]': 'onArt()' },
+  host: {
+    role: 'navigation',
+    'aria-label': 'Opciones',
+    '[class.on-art]': 'onArt()',
+    '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
+  },
 })
 export class AppToolsComponent {
   protected readonly auth = inject(AuthService);
@@ -31,10 +37,14 @@ export class AppToolsComponent {
   protected readonly missions = inject(MissionsStore);
   private readonly router = inject(Router);
   private readonly modal = inject(ModalService);
+  private readonly document = inject(DOCUMENT);
 
   readonly onArt = input(false, { transform: booleanAttribute });
   /** The home's main menu: the only screen with administration and sign out. */
   readonly home = input(false, { transform: booleanAttribute });
+
+  /** Also follows Esc and the board's own full screen button. */
+  protected readonly fullscreen = signal(!!this.document.fullscreenElement);
 
   protected readonly isAdmin = computed(() => {
     this.auth.user();
@@ -47,6 +57,15 @@ export class AppToolsComponent {
     const gems = Math.floor(Number(typed));
     if (typed === undefined || !Number.isFinite(gems) || gems < 0) return;
     await this.wallet.setGems(gems);
+  }
+
+  protected async toggleFullscreen(): Promise<void> {
+    try {
+      if (this.document.fullscreenElement) await this.document.exitFullscreen();
+      else await this.document.documentElement.requestFullscreen();
+    } catch {
+      // The browser refused it (no user gesture, not allowed): nothing changes
+    }
   }
 
   protected signOut(): void {

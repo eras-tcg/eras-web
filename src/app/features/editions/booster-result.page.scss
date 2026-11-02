@@ -158,8 +158,7 @@ eras-card-thumb.foil-prism {
 
 // Soft bands with no edge, repeating; the layer, wider than the card, slides exactly one period along x
 // (the period / sin of the angle), so every loop ends where the next one starts
-eras-card-thumb.foil-foil::after,
-eras-card-thumb.foil-prism::after {
+eras-card-thumb.foil-foil::after {
   position: absolute;
   inset: -50% -320px;
   // Overlay keeps the card's own light and dark (a dodge over the whole card washes it out white)
@@ -174,27 +173,18 @@ eras-card-thumb.foil-foil::after {
   animation: list-foil 4s linear infinite;
 }
 
-eras-card-thumb.foil-prism::after {
-  background: repeating-linear-gradient(135deg, var(--color-rarity-sec) 0, var(--color-rarity-sr) 45px, var(--color-rarity-uc) 90px, var(--color-card-b) 135px, var(--color-card-p) 180px, var(--color-rarity-sec) 225px);
-  // Only a tint under the glitter
-  opacity: 0.3;
-  animation: list-prism 3s linear infinite;
+// Prismatic: a starlight grain of dots, and the light sweeping across it
+eras-card-thumb.foil-prism::before {
+  @include foil.glitter-dots;
 }
 
-// Prismatic: glitter on top, a light sweeping through it
-eras-card-thumb.foil-prism::before {
-  @include foil.glitter;
+eras-card-thumb.foil-prism::after {
+  @include foil.glitter-light;
 }
 
 @keyframes list-foil {
   to {
     transform: translateX(calc(240px / 0.9063));
-  }
-}
-
-@keyframes list-prism {
-  to {
-    transform: translateX(calc(225px / 0.7071));
   }
 }
 

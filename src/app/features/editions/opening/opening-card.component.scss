@@ -166,7 +166,7 @@
   }
 }
 
-// The foil layer: a rainbow sheen sliding across (foil), or every color turning, stronger (prism)
+// The foil layer: a rainbow sheen sliding across (foil), or a starlight grain (prism)
 .foil {
   position: absolute;
   inset: 0;
@@ -195,31 +195,22 @@
 }
 
 :host(.foil-prism) .foil {
-  background:
-    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--color-hub-text) 70%, transparent), transparent 18%),
-    conic-gradient(from var(--prism-spin), var(--color-rarity-sec), var(--color-rarity-sr), var(--color-rarity-uc), var(--color-card-b), var(--color-card-p), var(--color-rarity-sec));
-  // Only a tint under the glitter
-  opacity: 0.35;
-  animation:
-    foil-in 0.4s ease-out 0.5s both,
-    prism-turn 4s linear 0.9s infinite;
+  mix-blend-mode: normal;
 }
 
-// Prismatic: glitter on top, a light sweeping through it
-:host(.foiled.foil-prism) .front::after {
-  @include foil.glitter(0.9s);
+// Prismatic: a starlight grain of dots, and the light sweeping across it
+:host(.foil-prism) .foil::before {
+  @include foil.glitter-dots;
+}
+
+:host(.foil-prism) .foil::after {
+  @include foil.glitter-light(0.9s);
 }
 
 :host(.foiled.foil-prism) .front {
   box-shadow:
     0 0 0 2px var(--color-hub-glow),
     0 0 1.5rem color-mix(in srgb, var(--color-rarity-sec) 70%, transparent);
-}
-
-@property --prism-spin {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
 }
 
 @keyframes foil-in {
@@ -231,12 +222,6 @@
 @keyframes foil-slide {
   to {
     transform: translateX(calc(240px / 0.9063));
-  }
-}
-
-@keyframes prism-turn {
-  to {
-    --prism-spin: 360deg;
   }
 }
 
@@ -285,7 +270,7 @@
   .face,
   .foil,
   .foil::before,
-  .front::after,
+  .foil::after,
   .sparkle {
     animation: none !important;
     transition: none;

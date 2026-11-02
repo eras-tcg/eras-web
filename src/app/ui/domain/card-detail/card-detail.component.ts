@@ -37,7 +37,7 @@ export interface CardTextGroup {
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.stacked]': 'stacked()' },
+  host: { '[class.stacked]': 'stacked()', '[class.foil-foil]': "foil() === 'foil'", '[class.foil-prism]': "foil() === 'prism'" },
 })
 export class CardDetailComponent {
   /**
@@ -51,6 +51,8 @@ export class CardDetailComponent {
   readonly color = input<string | null>(null);
   readonly colorLabel = input<string | null>(null);
   readonly imageUrl = input<string | null>(null);
+  /** A foil copy shines over its image: holographic (foil) or starlight (prism). */
+  readonly foil = input<'foil' | 'prism' | null>(null);
   readonly facts = input<CardFact[]>([]);
   readonly textGroups = input<CardTextGroup[]>([]);
   readonly notice = input<string | null>(null);

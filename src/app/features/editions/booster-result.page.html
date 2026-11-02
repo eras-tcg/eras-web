@@ -54,7 +54,7 @@
         @case ('opening') {
           <!-- 2. One pack after another, without telling its type: it breaks open, its cards lie face down -->
           @if (openingPack(); as pack) {
-            <!-- Once the pack is all shown it stays still: a click (or Enter) moves on to the next one -->
+            <!-- Once the pack is all shown it stays still: a click (or Enter) moves on to the next one; a click on a card shows it -->
             <div
               class="opening"
               [class.waiting]="waiting()"
@@ -81,6 +81,7 @@
                       [up]="faceUp().has(i)"
                       [shake]="trembling().has(i)"
                       [revealFoil]="foiled().has(i)"
+                      (click)="inspect($event, card, i)"
                     />
                   }
                 </div>
@@ -103,7 +104,7 @@
                   [name]="opened.card.name ?? ''"
                   [imageUrl]="imageUrl(opened.card)"
                   [count]="opened.count"
-                  (selected)="openCard(opened.card)"
+                  (selected)="openCard(opened.card, opened.foil)"
                 />
               }
             </eras-grid>

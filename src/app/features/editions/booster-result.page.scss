@@ -94,9 +94,13 @@ eras-icon[name='gem'] {
   min-block-size: 0;
 }
 
-// The whole screen is the button to go on
+// The whole screen is the button to go on; each card, to see it
 .opening.waiting {
   cursor: pointer;
+}
+
+.opening.waiting eras-opening-card {
+  cursor: zoom-in;
 }
 
 .progress {
@@ -156,21 +160,8 @@ eras-card-thumb.foil-prism {
   overflow: hidden;
 }
 
-// Soft bands with no edge, repeating; the layer, wider than the card, slides exactly one period along x
-// (the period / sin of the angle), so every loop ends where the next one starts
 eras-card-thumb.foil-foil::after {
-  position: absolute;
-  inset: -50% -320px;
-  // Overlay keeps the card's own light and dark (a dodge over the whole card washes it out white)
-  mix-blend-mode: overlay;
-  content: '';
-  pointer-events: none;
-}
-
-eras-card-thumb.foil-foil::after {
-  background: repeating-linear-gradient(115deg, var(--color-card-b) 0, var(--color-rarity-uc) 60px, var(--color-rarity-sr) 120px, var(--color-rarity-sec) 180px, var(--color-card-b) 240px);
-  opacity: 0.7;
-  animation: list-foil 4s linear infinite;
+  @include foil.rainbow;
 }
 
 // Prismatic: a starlight grain of dots, and the light sweeping across it
@@ -180,12 +171,6 @@ eras-card-thumb.foil-prism::before {
 
 eras-card-thumb.foil-prism::after {
   @include foil.glitter-light;
-}
-
-@keyframes list-foil {
-  to {
-    transform: translateX(calc(240px / 0.9063));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,31 @@
+// The foil: a rainbow of soft bands with no edge, repeating every 240px; the layer, wider than the card, slides one
+// period along x (240px / sin 115deg), so every loop ends where the next one starts. Blended with overlay, it keeps
+// the card's own light and dark. Include it in a pseudo-element over the card.
+@mixin rainbow {
+  position: absolute;
+  inset: -50% -320px;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    115deg,
+    var(--color-card-b) 0,
+    var(--color-rarity-uc) 60px,
+    var(--color-rarity-sr) 120px,
+    var(--color-rarity-sec) 180px,
+    var(--color-card-b) 240px
+  );
+  content: '';
+  mix-blend-mode: overlay;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: foil-rainbow 4s linear infinite;
+
+  @keyframes foil-rainbow {
+    to {
+      transform: translateX(calc(240px / 0.9063));
+    }
+  }
+}
+
 // The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random:
 // public/images/foil/starlight-grid.svg, a 96px tile of 2px cells, 1px dots), over the whole card, in gold and rainbow.
 // glitter-dots: the dots, faint, everywhere. glitter-light: crosses of dots flashing here and there, and a band of
@@ -15,16 +43,18 @@ $crosses: url('/images/foil/starlight-crosses.svg') 0 0 / 192px 192px;
   background: linear-gradient(
       115deg,
       var(--color-rarity-sr),
-      color-mix(in srgb, var(--color-rarity-sec) 75%, var(--color-hub-text)),
-      color-mix(in srgb, var(--color-rarity-sr) 85%, var(--color-hub-text)),
-      color-mix(in srgb, var(--color-rarity-uc) 75%, var(--color-hub-text)),
-      color-mix(in srgb, var(--color-card-b) 70%, var(--color-hub-text)),
+      var(--color-rarity-sec),
+      var(--color-rarity-sr),
+      var(--color-rarity-uc),
+      var(--color-card-b),
+      var(--color-card-p),
       var(--color-rarity-sr)
     )
     0 0 / 200% 200%;
   content: '';
   mix-blend-mode: screen;
   pointer-events: none;
+  filter: saturate(1.4);
 
   // The colors drift (back and forth, so they never jump)
   @keyframes glitter-drift {
@@ -37,7 +67,7 @@ $crosses: url('/images/foil/starlight-crosses.svg') 0 0 / 192px 192px;
 @mixin glitter-dots {
   @include -gold-rainbow;
 
-  mask: $grid, linear-gradient(rgb(0 0 0 / 50%) 0 0);
+  mask: $grid, linear-gradient(rgb(0 0 0 / 30%) 0 0);
   mask-composite: intersect;
   animation: glitter-drift 6s ease-in-out infinite alternate;
 }
@@ -50,12 +80,12 @@ $crosses: url('/images/foil/starlight-crosses.svg') 0 0 / 192px 192px;
   mask:
     $crosses,
     $grid,
-    linear-gradient(115deg, transparent 30%, #000 50%, transparent 70%) 100% 0 / 300% 100% no-repeat,
+    linear-gradient(115deg, transparent 40%, #000 50%, transparent 60%) 100% 0 / 300% 100% no-repeat,
     repeating-linear-gradient(#000 0 2px, transparent 2px 8px),
     repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 8px),
     linear-gradient(rgb(0 0 0 / 35%) 0 0);
   mask-composite: add, intersect, intersect, add, add;
-  filter: brightness(1.3);
+  filter: saturate(1.4) brightness(1.3);
   animation:
     glitter-sweep 3.2s ease-in-out $delay infinite,
     glitter-drift 6s ease-in-out infinite alternate;

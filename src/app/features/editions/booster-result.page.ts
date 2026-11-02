@@ -212,10 +212,17 @@ export class BoosterResultPage {
     this.phase.set('done');
   }
 
-  protected openCard(card: CatalogCard): void {
-    const flat = this.obtained().map((c) => c.card);
-    const data: CardDetailDialogData = { cards: flat, index: flat.indexOf(card) };
+  /** A card that came out, in detail with its foil (it alone: no arrows to other cards or printings). */
+  protected openCard(card: CatalogCard, foil: FoilKind | null): void {
+    const data: CardDetailDialogData = { cards: [card], index: 0, copy: { foil } };
     this.modal.open(CardDetailDialogComponent, { data });
+  }
+
+  /** A click on a card of the pack once it is all shown: that card in detail (not the next pack). */
+  protected inspect(event: Event, card: CatalogCard, index: number): void {
+    if (!this.waiting()) return;
+    event.stopPropagation();
+    this.openCard(card, this.foilOf(index));
   }
 
   /**

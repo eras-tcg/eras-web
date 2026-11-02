@@ -7,6 +7,7 @@ import { nameVariants } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
 import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
+import { FoilKind } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -22,6 +23,8 @@ export interface CardDetailDialogData {
   /** The grid as currently filtered and sorted; prev/next walk through it. */
   cards: readonly CatalogCard[];
   index: number;
+  /** A copy obtained (as in a pack's opening): its foil shines, and it does not switch to other printings. */
+  copy?: { foil: FoilKind | null };
 }
 
 /** One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. */
@@ -34,7 +37,7 @@ export interface CardDetailDialogData {
   host: { '(document:keydown)': 'onKey($event)' },
 })
 export class CardDetailDialogComponent {
-  private readonly data = inject<CardDetailDialogData>(DIALOG_DATA);
+  protected readonly data = inject<CardDetailDialogData>(DIALOG_DATA);
   protected readonly ref = inject(DialogRef);
   private readonly store = inject(CardsStore);
   private readonly editions = inject(EditionsStore);

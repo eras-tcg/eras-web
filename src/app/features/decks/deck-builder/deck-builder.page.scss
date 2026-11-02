@@ -12,17 +12,57 @@
   }
 }
 
-// The deck's toolbar: the count with saving on the right; the other actions the same size each, two per row; how
-// the copies show, beside the extras
+// The deck's header: its name on a bare line, with the public/private switch beside it
+.deck-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deck-name {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-block-end: 1px solid var(--color-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.deck-name:focus {
+  border-block-end-color: var(--color-hub-accent);
+}
+
+// The count, then the icons on the right; the other actions the same size each, two per row
 .deck-bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
 
 .deck-bar strong {
   margin-inline-end: auto;
+}
+
+.lacking-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: help;
+}
+
+.lacking-note eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
 }
 
 .deck-tools {
@@ -33,18 +73,6 @@
 
 .deck-tools > * {
   inline-size: 100%;
-}
-
-.deck-view {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-2);
-}
-
-.deck-view eras-toggle-group {
-  flex: 1;
-  min-inline-size: 12rem;
 }
 
 // A card the player does not own (in the search) or not enough copies of (in the deck): in grey

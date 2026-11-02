@@ -40,34 +40,49 @@
   <!-- The deck: its list scrolls; the metrics are a drawer at the bottom that opens upwards -->
   <div class="deck-column">
   <eras-stack [gap]="4" class="deck-scroll">
-    <eras-stack direction="row" [gap]="2" align="center" wrap>
-      <eras-form-field label="Nombre del mazo">
-        <input placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
-      </eras-form-field>
+    <!-- The deck's name (just a line under it) and whether it is public -->
+    <div class="deck-head">
+      <input class="deck-name" aria-label="Nombre del mazo" placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
       <button
-        erasChip
-        [selected]="draft.isPrivate()"
+        type="button"
+        erasIconButton
+        size="md"
+        [icon]="draft.isPrivate() ? 'lock' : 'globe'"
+        [title]="draft.isPrivate() ? 'Mazo privado: solo tú lo ves (clic para hacerlo público)' : 'Mazo público: todos lo ven (clic para hacerlo privado)'"
         [attr.aria-label]="draft.isPrivate() ? 'Mazo privado (clic para hacerlo público)' : 'Mazo público (clic para hacerlo privado)'"
+        [attr.aria-pressed]="draft.isPrivate()"
         (click)="draft.togglePrivate()"
-      >
-        {{ draft.isPrivate() ? 'Privado' : 'Público' }}
-      </button>
-    </eras-stack>
+      ></button>
+    </div>
 
-    <!-- The deck's count, and saving it -->
+    <!-- The count (a warning icon when the player lacks cards), how the copies show, and saving -->
     <div class="deck-bar">
       <strong>{{ draft.total() }} / {{ maxCards }} cartas</strong>
-      <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
+      @if (missing() > 0) {
+        <span class="lacking-note" [title]="'No puedes jugar este mazo: te ' + (missing() === 1 ? 'falta 1 carta' : 'faltan ' + missing() + ' cartas') + ' de tu colección (en gris)'">
+          <eras-icon name="alert" /> {{ missing() }}
+        </span>
+      }
       <button
-        erasButton
-        size="sm"
         type="button"
-        [loading]="draft.saving()"
+        erasIconButton
+        size="md"
+        [icon]="groupCopies() ? 'stack' : 'cards'"
+        [title]="groupCopies() ? 'Copias agrupadas (×N): clic para ver cada copia por separado' : 'Cada copia por separado: clic para agruparlas'"
+        aria-label="Agrupar las copias"
+        [attr.aria-pressed]="groupCopies()"
+        (click)="groupCopies.set(!groupCopies())"
+      ></button>
+      <button
+        type="button"
+        erasIconButton
+        size="md"
+        icon="save"
+        title="Guardar"
+        aria-label="Guardar el mazo"
         [disabled]="!canSave() || draft.saving() || !draft.dirty() || draft.total() === 0"
         (click)="save()"
-      >
-        Guardar
-      </button>
+      ></button>
     </div>
 
     <!-- What else can be done with the deck: the same size each -->
@@ -89,30 +104,7 @@
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
     </div>
 
-    <!-- How the copies show, and the collection's extras -->
-    <div class="deck-view">
-      <eras-toggle-group label="Copias" [options]="copyViews" [selected]="[groupCopies() ? 'grouped' : 'each']" (toggled)="groupCopies.set($event === 'grouped')" />
-      @if (signedIn()) {
-        <button
-          erasButton
-          variant="secondary"
-          size="sm"
-          type="button"
-          title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
-          [disabled]="collection.extras() === 0 || collection.busy()"
-          (click)="breakExtras()"
-        >
-          Romper sobrantes ({{ collection.extras() }})
-        </button>
-      }
-    </div>
 
-    @if (missing() > 0) {
-      <eras-alert tone="danger">
-        No puedes jugar este mazo: te {{ missing() === 1 ? 'falta 1 carta' : 'faltan ' + missing() + ' cartas' }} de tu colección (en gris).
-        Ábrelas en la tienda o fabrícalas con fragmentos.
-      </eras-alert>
-    }
 
     @if (!canSave()) {
       <eras-alert>Puedes armar, exportar e imprimir el mazo; para guardarlo necesitas iniciar sesión con permiso de mazos.</eras-alert>
@@ -231,11 +223,7 @@
   <!-- ── Right: search ───────────────────────────────────────────────── -->
   <div pane-end>
     <eras-stack [gap]="3">
-      <eras-form-field label="Buscar cartas">
-        <input type="search" placeholder="Nombre o edición…" [value]="query()" (input)="query.set($any($event.target).value)" />
-      </eras-form-field>
       <!-- The quick filters, each kind in its own row -->
-      <eras-toggle-group label="Tipo" [options]="typeOptions()" [selected]="[quickType()]" (toggled)="toggleQuickType($event)" />
       <eras-toggle-group label="Mostrar todas las…" [options]="showOptions()" [selected]="shown()" (toggled)="toggleShown($event)" />
       @if (signedIn()) {
         <eras-toggle-group label="Colección" [options]="ownershipOptions" [selected]="[ownership() || 'all']" (toggled)="ownership.set($event === 'all' ? '' : $any($event))" />
@@ -243,6 +231,19 @@
       <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
         <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
         <eras-stack direction="row" [gap]="1">
+          @if (signedIn()) {
+            <button
+              erasButton
+              variant="ghost"
+              size="sm"
+              type="button"
+              title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
+              [disabled]="collection.extras() === 0 || collection.busy()"
+              (click)="breakExtras()"
+            >
+              Romper sobrantes ({{ collection.extras() }})
+            </button>
+          }
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar</button>
           }
@@ -250,6 +251,10 @@
         </eras-stack>
       </eras-stack>
 
+      <!-- The text search, last of the options (the type is in the filters' dialog) -->
+      <eras-form-field label="Buscar cartas">
+        <input type="search" placeholder="Nombre o edición…" [value]="query()" (input)="query.set($any($event.target).value)" />
+      </eras-form-field>
       @if (cards.error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }

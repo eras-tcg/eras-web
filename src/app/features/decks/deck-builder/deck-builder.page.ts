@@ -25,10 +25,12 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { WorkbenchComponent } from '@ui/layout/workbench/workbench.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ChipComponent } from '@ui/primitives/chip/chip.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-deck-dialog.component';
+import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
@@ -66,13 +68,13 @@ const DRAG_TYPE = 'application/x-eras-card';
     FormFieldComponent,
     DropzoneComponent,
     ButtonComponent,
-    ChipComponent,
     IconComponent,
     SpinnerComponent,
     InViewDirective,
     CollectionPanelComponent,
     FragmentsBarComponent,
     ToggleGroupComponent,
+    IconButtonComponent,
   ],
   providers: [DeckDraft],
   templateUrl: './deck-builder.page.html',
@@ -136,23 +138,15 @@ export class DeckBuilderPage {
 
   // ── Search ────────────────────────────────────────────────────────────
   protected readonly query = signal('');
-  protected readonly quickType = signal('');
   protected readonly filters = signal<CardFilters>(EMPTY_FILTERS);
   protected readonly view = signal<CardView>({ ...DEFAULT_VIEW, size: 110 });
   /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
   protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
-  protected readonly typeOptions = computed<ToggleOption[]>(() =>
-    this.cards.options().types.map((t) => ({ value: t, label: CARD_TYPE_LABELS[t] ?? t })),
-  );
   protected readonly ownershipOptions: ToggleOption[] = [
     { value: 'all', label: 'Todas' },
     { value: 'owned', label: 'Las que tengo', text: 'Tengo' },
     { value: 'missing', label: 'Las que no tengo', text: 'No tengo' },
-  ];
-  protected readonly copyViews: ToggleOption[] = [
-    { value: 'grouped', label: 'Agrupadas (×N)', text: 'Agrupadas' },
-    { value: 'each', label: 'Cada copia por separado', text: 'Separadas' },
   ];
   /** "Mostrar todas las…": printings, finishes (signed in) and the cards not programmed yet, each on or off. */
   protected readonly showOptions = computed<ToggleOption[]>(() => [
@@ -173,12 +167,11 @@ export class DeckBuilderPage {
   protected readonly allFinishes = signal(false);
   /** Only the cards the player has, or only the ones they lack ('' for all). */
   protected readonly ownership = signal<'' | 'owned' | 'missing'>('');
-  protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.quickType() || !!this.ownership());
+  protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.ownership());
 
   private readonly results = computed(() => {
     const q = this.query().trim().toLowerCase();
-    const type = this.quickType();
-    const base = filterCards(this.cards.cards(), type ? { ...this.filters(), type } : this.filters(), false).filter(
+    const base = filterCards(this.cards.cards(), this.filters(), false).filter(
       (c) => !q || (c.name ?? '').toLowerCase().includes(q) || fullEditionId(c).toLowerCase().includes(q),
     );
     const sorted = sortCards(base, this.view().sort, this.view().direction);
@@ -303,7 +296,6 @@ export class DeckBuilderPage {
   protected clearFilters(): void {
     this.filters.set(EMPTY_FILTERS);
     this.query.set('');
-    this.quickType.set('');
     this.ownership.set('');
   }
 
@@ -328,10 +320,6 @@ export class DeckBuilderPage {
       danger: true,
     });
     if (ok) await this.collection.breakExtras();
-  }
-
-  protected toggleQuickType(type: string): void {
-    this.quickType.set(this.quickType() === type ? '' : type);
   }
 
   protected showMore(): void {
@@ -437,15 +425,15 @@ export class DeckBuilderPage {
 
   // ── Leaving with unsaved changes ──────────────────────────────────────
 
-  /** Used by the route's canDeactivate guard. */
+  /** Used by the route's canDeactivate guard: with unsaved changes it asks whether to save or discard them. */
   async confirmLeave(): Promise<boolean> {
     if (!this.draft.dirty() || this.draft.total() === 0) return true;
-    return this.modal.confirm({
-      title: 'Cambios sin guardar',
-      message: 'Si sales ahora se pierden los cambios del mazo.',
-      confirmLabel: 'Salir sin guardar',
-      danger: true,
-    });
+    const data: LeaveDeckData = { canSave: this.canSave() };
+    const choice = await firstValueFrom(this.modal.open<LeaveChoice, LeaveDeckData>(LeaveDeckDialogComponent, { data }).closed);
+    if (choice === 'discard') return true;
+    if (choice !== 'save') return false;
+    await this.save();
+    return !this.draft.dirty();
   }
 
   protected warnBeforeLeaving(event: BeforeUnloadEvent): void {

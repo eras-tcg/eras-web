@@ -54,11 +54,13 @@
       </button>
     </eras-stack>
 
-    <eras-stack direction="row" [gap]="2" align="center" wrap>
+    <!-- The deck's count, and saving it -->
+    <div class="deck-bar">
       <strong>{{ draft.total() }} / {{ maxCards }} cartas</strong>
-      <button erasChip [selected]="groupCopies()" title="Las copias de una carta juntas (×N), o cada una por separado" (click)="groupCopies.set(!groupCopies())">Agrupar copias</button>
+      <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
       <button
         erasButton
+        size="sm"
         type="button"
         [loading]="draft.saving()"
         [disabled]="!canSave() || draft.saving() || !draft.dirty() || draft.total() === 0"
@@ -66,7 +68,10 @@
       >
         Guardar
       </button>
-      <button erasButton variant="ghost" size="sm" type="button" [disabled]="!draft.canDiscard()" (click)="draft.discard()">Descartar cambios</button>
+    </div>
+
+    <!-- What else can be done with the deck: the same size each -->
+    <div class="deck-tools">
       <button
         erasButton
         variant="secondary"
@@ -77,13 +82,20 @@
       >
         <eras-icon name="plus" /> Nuevo mazo
       </button>
-      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
+      <!-- A button like the others that opens the file picker -->
+      <button erasButton variant="secondary" size="sm" type="button" (click)="listFile.click()">Importar lista</button>
+      <input #listFile type="file" accept=".txt,text/plain" hidden (change)="pickList($event)" />
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
-      <eras-file-button accept=".txt,text/plain" (file)="importList($event)">Importar lista</eras-file-button>
+      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
+    </div>
+
+    <!-- How the copies show, and the collection's extras -->
+    <div class="deck-view">
+      <eras-toggle-group label="Copias" [options]="copyViews" [selected]="[groupCopies() ? 'grouped' : 'each']" (toggled)="groupCopies.set($event === 'grouped')" />
       @if (signedIn()) {
         <button
           erasButton
-          variant="ghost"
+          variant="secondary"
           size="sm"
           type="button"
           title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
@@ -93,7 +105,7 @@
           Romper sobrantes ({{ collection.extras() }})
         </button>
       }
-    </eras-stack>
+    </div>
 
     @if (missing() > 0) {
       <eras-alert tone="danger">
@@ -222,20 +234,12 @@
       <eras-form-field label="Buscar cartas">
         <input type="search" placeholder="Nombre o edición…" [value]="query()" (input)="query.set($any($event.target).value)" />
       </eras-form-field>
-      <eras-stack direction="row" [gap]="1" wrap>
-        @for (t of cards.options().types; track t) {
-          <button erasChip [selected]="quickType() === t" (click)="toggleQuickType(t)">{{ typeLabels[t] ?? t }}</button>
-        }
-        <button erasChip [selected]="!view().collapse" (click)="view.set({ ...view(), collapse: !view().collapse })">Todas las impresiones</button>
-        @if (signedIn()) {
-          <button erasChip [selected]="allFinishes()" title="Cada acabado que tienes de una carta, por separado" (click)="allFinishes.set(!allFinishes())">Todas las rarezas</button>
-        }
-        <button erasChip [selected]="showUnprogrammed()" title="Marca las cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
-        @if (signedIn()) {
-          <button erasChip [selected]="ownership() === 'owned'" (click)="toggleOwnership('owned')">Las que tengo</button>
-          <button erasChip [selected]="ownership() === 'missing'" (click)="toggleOwnership('missing')">Las que no tengo</button>
-        }
-      </eras-stack>
+      <!-- The quick filters, each kind in its own row -->
+      <eras-toggle-group label="Tipo" [options]="typeOptions()" [selected]="[quickType()]" (toggled)="toggleQuickType($event)" />
+      <eras-toggle-group label="Mostrar todas las…" [options]="showOptions()" [selected]="shown()" (toggled)="toggleShown($event)" />
+      @if (signedIn()) {
+        <eras-toggle-group label="Colección" [options]="ownershipOptions" [selected]="[ownership() || 'all']" (toggled)="ownership.set($event === 'all' ? '' : $any($event))" />
+      }
       <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
         <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
         <eras-stack direction="row" [gap]="1">

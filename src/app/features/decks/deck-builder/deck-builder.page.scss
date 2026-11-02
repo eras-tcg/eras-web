@@ -12,6 +12,41 @@
   }
 }
 
+// The deck's toolbar: the count with saving on the right; the other actions the same size each, two per row; how
+// the copies show, beside the extras
+.deck-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deck-bar strong {
+  margin-inline-end: auto;
+}
+
+.deck-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.deck-tools > * {
+  inline-size: 100%;
+}
+
+.deck-view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.deck-view eras-toggle-group {
+  flex: 1;
+  min-inline-size: 12rem;
+}
+
 // A card the player does not own (in the search) or not enough copies of (in the deck): in grey
 .lacking eras-card-thumb {
   filter: grayscale(1);

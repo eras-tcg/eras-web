@@ -18,7 +18,6 @@ import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.componen
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { FileButtonComponent } from '@ui/forms/file-button/file-button.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
@@ -29,6 +28,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ChipComponent } from '@ui/primitives/chip/chip.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
@@ -63,7 +63,6 @@ const DRAG_TYPE = 'application/x-eras-card';
     DeckMetricsComponent,
     AlertComponent,
     EmptyStateComponent,
-    FileButtonComponent,
     FormFieldComponent,
     DropzoneComponent,
     ButtonComponent,
@@ -73,6 +72,7 @@ const DRAG_TYPE = 'application/x-eras-card';
     InViewDirective,
     CollectionPanelComponent,
     FragmentsBarComponent,
+    ToggleGroupComponent,
   ],
   providers: [DeckDraft],
   templateUrl: './deck-builder.page.html',
@@ -142,6 +142,33 @@ export class DeckBuilderPage {
   /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
   protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
+  protected readonly typeOptions = computed<ToggleOption[]>(() =>
+    this.cards.options().types.map((t) => ({ value: t, label: CARD_TYPE_LABELS[t] ?? t })),
+  );
+  protected readonly ownershipOptions: ToggleOption[] = [
+    { value: 'all', label: 'Todas' },
+    { value: 'owned', label: 'Las que tengo', text: 'Tengo' },
+    { value: 'missing', label: 'Las que no tengo', text: 'No tengo' },
+  ];
+  protected readonly copyViews: ToggleOption[] = [
+    { value: 'grouped', label: 'Agrupadas (×N)', text: 'Agrupadas' },
+    { value: 'each', label: 'Cada copia por separado', text: 'Separadas' },
+  ];
+  /** "Mostrar todas las…": printings, finishes (signed in) and the cards not programmed yet, each on or off. */
+  protected readonly showOptions = computed<ToggleOption[]>(() => [
+    { value: 'printings', label: 'Todas las impresiones', text: 'Impresiones' },
+    ...(this.signedIn() ? [{ value: 'finishes', label: 'Todas las rarezas (acabados que tienes)', text: 'Rarezas' }] : []),
+    { value: 'unprogrammed', label: 'Marcar las cartas sin programar', text: 'Sin programar' },
+  ]);
+  protected readonly shown = computed(() =>
+    [!this.view().collapse && 'printings', this.allFinishes() && 'finishes', this.showUnprogrammed() && 'unprogrammed'].filter((v): v is string => !!v),
+  );
+  protected toggleShown(value: string): void {
+    if (value === 'printings') this.view.set({ ...this.view(), collapse: !this.view().collapse });
+    if (value === 'finishes') this.allFinishes.set(!this.allFinishes());
+    if (value === 'unprogrammed') this.showUnprogrammed.set(!this.showUnprogrammed());
+  }
+
   /** Every finish the player owns of a card as its own entry, instead of only the finest. */
   protected readonly allFinishes = signal(false);
   /** Only the cards the player has, or only the ones they lack ('' for all). */
@@ -280,10 +307,6 @@ export class DeckBuilderPage {
     this.ownership.set('');
   }
 
-  protected toggleOwnership(value: 'owned' | 'missing'): void {
-    this.ownership.set(this.ownership() === value ? '' : value);
-  }
-
   /** One printing per name, as collapsed, but one the player owns when they have any of that name. */
   private preferOwned(collapsed: readonly CatalogCard[], all: readonly CatalogCard[]): CatalogCard[] {
     if (!this.signedIn()) return [...collapsed];
@@ -328,6 +351,14 @@ export class DeckBuilderPage {
     link.download = `${this.draft.name() || 'mazo'}.txt`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
+  /** The file chosen for "Importar lista" (the input is cleared, so the same file can be picked again). */
+  protected pickList(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) void this.importList(file);
   }
 
   protected async importList(file: File): Promise<void> {

@@ -13,8 +13,9 @@ export interface CraftMissingData {
 }
 
 /**
- * Crafting every card a deck lacks: what it costs rarity by rarity against the fragments the player has; "Fabricar"
- * only when every rarity is covered (all of them are crafted together, or none).
+ * Crafting every card a deck lacks: what it costs rarity by rarity against the fragments the player has, and what
+ * would be left (negative when short); "Fabricar" only when every rarity is covered (all of them are crafted
+ * together, or none).
  */
 @Component({
   selector: 'eras-craft-missing-dialog',
@@ -26,7 +27,7 @@ export interface CraftMissingData {
       } @else {
         <table class="costs">
           <thead>
-            <tr><th>Rareza</th><th>Copias</th><th>Cuesta</th><th>Tienes</th></tr>
+            <tr><th>Rareza</th><th>Copias</th><th>Cuesta</th><th>Tienes</th><th>Quedan</th></tr>
           </thead>
           <tbody>
             @for (row of costs(); track row.rarity) {
@@ -35,6 +36,7 @@ export interface CraftMissingData {
                 <td>{{ row.copies }}</td>
                 <td>{{ row.cost | number: '1.0-0' : 'es' }}</td>
                 <td>{{ row.owned | number: '1.0-0' : 'es' }}</td>
+                <td class="left">{{ row.owned - row.cost | number: '1.0-0' : 'es' }}</td>
               </tr>
             }
           </tbody>
@@ -42,9 +44,9 @@ export interface CraftMissingData {
         @if (uncraftable() > 0) {
           <p class="hint">{{ uncraftable() }} {{ uncraftable() === 1 ? 'copia no se puede fabricar' : 'copias no se pueden fabricar' }} (cartas sin datos).</p>
         }
-        <p class="hint" [class.short]="!enough()">
-          {{ enough() ? 'Tienes fragmentos suficientes.' : 'No te alcanzan los fragmentos de las rarezas marcadas.' }}
-        </p>
+        @if (!enough()) {
+          <p class="hint short">No te alcanzan los fragmentos de las rarezas marcadas.</p>
+        }
       }
       @if (collection.error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
@@ -65,6 +67,7 @@ export interface CraftMissingData {
     .costs th:first-child, .costs td:first-child { text-align: start; }
     .costs th { color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
     .costs tbody tr { border-block-start: 1px solid var(--color-border); }
+    .left { font-weight: var(--font-weight-bold); }
     .short { color: var(--color-danger); }
     .hint { margin: var(--space-3) 0 0; color: var(--color-text-muted); }
     .hint.short { color: var(--color-danger); }

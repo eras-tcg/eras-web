@@ -2,16 +2,18 @@
 
 <header class="top">
   @if (title(); as name) {
+    <!-- The same as every other screen: a round "back" and the title with its accent bar -->
     <div class="heading">
-      <a class="back" routerLink="/home" aria-label="Volver al inicio"><eras-icon name="chevron-left" /> Inicio</a>
+      <a class="back" routerLink="/home" aria-label="Volver al inicio"><eras-icon name="chevron-left" /></a>
       <h1 class="title">{{ name }}</h1>
     </div>
   } @else if (auth.user(); as user) {
+    <!-- The player's nameplate: the icon in a ring, the name, and the way to the profile -->
     <a class="player" routerLink="/profile" aria-label="Mi perfil">
-      <eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" />
+      <span class="player-ring"><eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" /></span>
       <span class="player-text">
         <span class="player-name">{{ user.username }}</span>
-        <span class="player-meta">{{ playerMeta() ?? 'Jugador de ERAS' }}</span>
+        <span class="player-link">Ver perfil <eras-icon name="chevron-right" /></span>
       </span>
     </a>
   }

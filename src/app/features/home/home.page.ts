@@ -49,10 +49,6 @@ export class HomePage {
 
   protected readonly menu = MAIN_MENU;
   protected readonly myDecks = signal<number | null>(null);
-  protected readonly playerMeta = computed(() => {
-    const count = this.myDecks();
-    return count === null ? null : `${count} ${count === 1 ? 'mazo' : 'mazos'}`;
-  });
   protected readonly step = computed(() => nextStep(this.myDecks(), Math.floor(Date.now() / 86_400_000)));
   protected readonly slides = computed(() => hubSlides(this.home.content().edition, this.home.content().decks, NEWS));
   protected readonly saveError = signal<string | null>(null);

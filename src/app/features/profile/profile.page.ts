@@ -9,7 +9,6 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -26,7 +25,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
+  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

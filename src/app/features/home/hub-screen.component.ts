@@ -14,9 +14,9 @@ const BACKGROUND_KEY = 'eras-hub-background';
 /**
  * Frame of the game-like screens (home, Jugar, Social): edition artwork on the right using the whole height, a
  * flat column in the theme's background color on the left for the menu, and the quick buttons at the top right.
- * The home shows the player; the other screens a way back.
+ * The home shows the player's nameplate; the other screens a way back and their title, as every other screen.
  *
- * <eras-hub-screen reroll playerMeta="3 mazos"> <eras-hub-menu hub-menu … /> …more left-column content… </eras-hub-screen>
+ * <eras-hub-screen reroll> <eras-hub-menu hub-menu … /> …more left-column content… </eras-hub-screen>
  */
 @Component({
   selector: 'eras-hub-screen',
@@ -33,8 +33,6 @@ export class HubScreenComponent {
 
   /** Screen name; without it the screen is the home (player card instead of "back"). */
   readonly title = input<string | null>(null);
-  /** Line under the player's name (home). */
-  readonly playerMeta = input<string | null>(null);
   /** Choose a new artwork (the home); other screens keep the last one. */
   readonly reroll = input(false, { transform: booleanAttribute });
 

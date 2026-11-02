@@ -20,11 +20,8 @@
       <eras-icon name="edit" /><span class="label">Modo edición</span>
     </button>
   }
-  @if (home() && isAdmin()) {
+  @if (hub() && isAdmin()) {
     <a class="item" routerLink="/admin"><eras-icon name="shield" /><span class="label">Administración</span></a>
-  }
-  @if (home()) {
-    <button type="button" class="item sign-out" (click)="signOut()"><eras-icon name="logout" /><span class="label">Cerrar sesión</span></button>
   }
 } @else {
   <!-- Signed out there is no profile to keep the theme in: it stays here -->
@@ -33,8 +30,11 @@
     <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
   </button>
 }
-<!-- Always the last one, on every screen -->
+<!-- On every screen, the last one but for sign out -->
 <button type="button" class="item" role="switch" [attr.aria-checked]="fullscreen()" (click)="toggleFullscreen()">
   <eras-icon [name]="fullscreen() ? 'minimize' : 'maximize'" />
   <span class="label">{{ fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa' }}</span>
 </button>
+@if (auth.user() && hub()) {
+  <button type="button" class="item sign-out" (click)="signOut()"><eras-icon name="logout" /><span class="label">Cerrar sesión</span></button>
+}

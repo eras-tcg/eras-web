@@ -12,8 +12,9 @@ import { WalletStore } from '../wallet/wallet.store';
 
 /**
  * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop) and edit mode
- * (administrators only); on the home's main menu (`home`) also administration (administrators only) and sign out;
- * last, on every screen and with or without a session, full screen.
+ * (administrators only); on the hub screens (`hub`: home, play, social…) also administration (administrators only) and sign out, so the
+ * buttons do not change between them;
+ * full screen on every screen (with or without a session), only ever followed by sign out.
  * The sections are reached from the home hub; the theme is in the profile's preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
@@ -40,8 +41,8 @@ export class AppToolsComponent {
   private readonly document = inject(DOCUMENT);
 
   readonly onArt = input(false, { transform: booleanAttribute });
-  /** The home's main menu: the only screen with administration and sign out. */
-  readonly home = input(false, { transform: booleanAttribute });
+  /** The hub screens: the only ones with administration and sign out. */
+  readonly hub = input(false, { transform: booleanAttribute });
 
   /** Also follows Esc and the board's own full screen button. */
   protected readonly fullscreen = signal(!!this.document.fullscreenElement);

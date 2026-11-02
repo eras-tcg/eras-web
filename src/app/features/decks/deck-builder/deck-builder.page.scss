@@ -12,6 +12,12 @@
   }
 }
 
+// A card the player does not own (in the search) or not enough copies of (in the deck): in grey
+.lacking eras-card-thumb {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 // A card of the deck with its buttons in the corners: − bottom left, + bottom right, cover top left (they show on
 // hover or focus; always on touch). The count stays top right.
 .entry {

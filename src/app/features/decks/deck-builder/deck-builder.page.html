@@ -21,6 +21,9 @@
             <span>{{ draft.countOf(card.id) }} en el mazo</span>
             <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+1</button>
           </eras-stack>
+          @if (signedIn() && card.meta) {
+            <eras-collection-panel ngProjectAs="[detail-under-image]" [card]="card" />
+          }
         </eras-card-detail>
       }
     } @else {
@@ -71,7 +74,27 @@
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
       <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
       <eras-file-button accept=".txt,text/plain" (file)="importList($event)">Importar lista</eras-file-button>
+      @if (signedIn()) {
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
+          [disabled]="collection.extras() === 0 || collection.busy()"
+          (click)="breakExtras()"
+        >
+          Romper sobrantes ({{ collection.extras() }})
+        </button>
+      }
     </eras-stack>
+
+    @if (missing() > 0) {
+      <eras-alert tone="danger">
+        No puedes jugar este mazo: te {{ missing() === 1 ? 'falta 1 carta' : 'faltan ' + missing() + ' cartas' }} de tu colección (en gris).
+        Ábrelas en la tienda o fabrícalas con fragmentos.
+      </eras-alert>
+    }
 
     @if (!canSave()) {
       <eras-alert>Puedes armar, exportar e imprimir el mazo; para guardarlo necesitas iniciar sesión con permiso de mazos.</eras-alert>
@@ -110,7 +133,7 @@
           <eras-grid minColumn="7.5rem" [gap]="3">
             @for (entry of group.entries; track entry.card.id) {
               <!-- The buttons sit over the card, to save space -->
-              <div class="entry" (contextmenu)="contextRemove($event, entry.card)">
+              <div class="entry" [class.lacking]="lacking(entry) > 0" [attr.title]="lacking(entry) > 0 ? 'Te faltan ' + lacking(entry) + ' de tu colección' : null" (contextmenu)="contextRemove($event, entry.card)">
                 <eras-card-thumb
                   [name]="entry.card.name ?? ''"
                   [imageUrl]="imageUrl(entry.card)"
@@ -179,6 +202,10 @@
         }
         <button erasChip [selected]="!view().collapse" (click)="view.set({ ...view(), collapse: !view().collapse })">Todas las impresiones</button>
         <button erasChip [selected]="showUnprogrammed()" title="Marca las cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
+        @if (signedIn()) {
+          <button erasChip [selected]="ownership() === 'owned'" (click)="toggleOwnership('owned')">Las que tengo</button>
+          <button erasChip [selected]="ownership() === 'missing'" (click)="toggleOwnership('missing')">Las que no tengo</button>
+        }
       </eras-stack>
       <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
         <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
@@ -198,7 +225,13 @@
       } @else {
         <eras-grid minColumn="6.5rem" [gap]="2">
           @for (card of visibleResults(); track card.id) {
-            <div draggable="true" [attr.title]="'Clic derecho o arrastrar para añadir ' + (card.name ?? '')" (dragstart)="dragStart($event, card)" (contextmenu)="contextAdd($event, card)">
+            <div
+              draggable="true"
+              [class.lacking]="!owns(card)"
+              [attr.title]="(owns(card) ? '' : 'No la tienes. ') + 'Clic derecho o arrastrar para añadir ' + (card.name ?? '')"
+              (dragstart)="dragStart($event, card)"
+              (contextmenu)="contextAdd($event, card)"
+            >
               <eras-card-thumb
                 [name]="card.name ?? ''"
                 [imageUrl]="imageUrl(card)"

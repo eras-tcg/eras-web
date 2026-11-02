@@ -29,7 +29,8 @@ export interface CardTextGroup {
 /**
  * Full view of one card: name, printing badges (with previous/next printing arrows),
  * facts, effect text and the image. Admin actions go into [detail-actions]; controls for the card (as the deck
- * builder's copies bar) into [detail-top], right under the printing badges.
+ * builder's copies bar) into [detail-top], right under the printing badges, and [detail-under-image] right under
+ * the image.
  */
 @Component({
   selector: 'eras-card-detail',

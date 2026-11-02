@@ -7,8 +7,10 @@ import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } 
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName, fullEditionId } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
+import { missingCopies } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
 import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
-import { Deck } from '@data/decks/deck.model';
+import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
@@ -33,6 +35,7 @@ import { cardDetailView } from '../../cards/card-detail-view';
 import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from '../proxy-print-dialog/proxy-print-dialog.component';
 import { BuilderFiltersData, BuilderFiltersDialogComponent } from './builder-filters-dialog.component';
+import { CollectionPanelComponent } from './collection-panel.component';
 import { DeckDraft } from './deck-draft';
 import { DeckMetricsComponent } from './deck-metrics.component';
 
@@ -41,7 +44,9 @@ const DRAG_TYPE = 'application/x-eras-card';
 
 /**
  * Deck builder: search the catalog (right), build the deck (middle), inspect a card (left).
- * Anyone can build and export; saving needs manage_decks.
+ * Anyone can build and export; saving needs manage_decks. Any card can go in a deck, but a signed-in player plays
+ * only decks whose every copy is in their collection: the cards they lack show in grey (in the search, and the deck's
+ * copies beyond what they own), and the card on the left can be broken or crafted.
  */
 @Component({
   selector: 'eras-deck-builder-page',
@@ -64,6 +69,7 @@ const DRAG_TYPE = 'application/x-eras-card';
     IconComponent,
     SpinnerComponent,
     InViewDirective,
+    CollectionPanelComponent,
   ],
   providers: [DeckDraft],
   templateUrl: './deck-builder.page.html',
@@ -78,6 +84,7 @@ export class DeckBuilderPage {
 
   protected readonly draft = inject(DeckDraft);
   protected readonly cards = inject(CardsStore);
+  protected readonly collection = inject(CollectionStore);
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
@@ -92,6 +99,18 @@ export class DeckBuilderPage {
     return this.showUnprogrammed() && this.cards.unprogrammedOf(card) ? 'Sin programar' : null;
   }
   protected readonly canSave = computed(() => this.auth.user() !== null && this.auth.can('manage_decks'));
+  protected readonly signedIn = computed(() => this.auth.user() !== null);
+
+  // ── Collection ────────────────────────────────────────────────────────
+  /** Copies the deck needs that the player does not own (signed in only). */
+  protected readonly missing = computed(() => (this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0));
+  protected owns(card: CatalogCard): boolean {
+    return !this.signedIn() || this.collection.owned(card.id) > 0;
+  }
+  /** A deck's copies of a card the player does not have. */
+  protected lacking(entry: DeckEntry): number {
+    return this.signedIn() ? Math.max(0, entry.count - this.collection.owned(entry.card.id)) : 0;
+  }
 
   // ── Messages ──────────────────────────────────────────────────────────
   protected readonly loadError = signal<string | null>(null);
@@ -108,7 +127,9 @@ export class DeckBuilderPage {
   /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
   protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
-  protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.quickType());
+  /** Only the cards the player has, or only the ones they lack ('' for all). */
+  protected readonly ownership = signal<'' | 'owned' | 'missing'>('');
+  protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.quickType() || !!this.ownership());
 
   private readonly results = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -117,7 +138,9 @@ export class DeckBuilderPage {
       (c) => !q || (c.name ?? '').toLowerCase().includes(q) || fullEditionId(c).toLowerCase().includes(q),
     );
     const sorted = sortCards(base, this.view().sort, this.view().direction);
-    return this.view().collapse ? collapseByName(sorted, this.editions.releaseDates()) : sorted;
+    const shown = this.view().collapse ? this.preferOwned(collapseByName(sorted, this.editions.releaseDates()), sorted) : sorted;
+    const ownership = this.ownership();
+    return ownership ? shown.filter((c) => this.owns(c) === (ownership === 'owned')) : shown;
   });
   protected readonly resultCount = computed(() => this.results().length);
   protected readonly visibleResults = computed(() => this.results().slice(0, this.renderCount()));
@@ -216,6 +239,34 @@ export class DeckBuilderPage {
     this.filters.set(EMPTY_FILTERS);
     this.query.set('');
     this.quickType.set('');
+    this.ownership.set('');
+  }
+
+  protected toggleOwnership(value: 'owned' | 'missing'): void {
+    this.ownership.set(this.ownership() === value ? '' : value);
+  }
+
+  /** One printing per name, as collapsed, but one the player owns when they have any of that name. */
+  private preferOwned(collapsed: readonly CatalogCard[], all: readonly CatalogCard[]): CatalogCard[] {
+    if (!this.signedIn()) return [...collapsed];
+    const owned = new Map<string, CatalogCard>();
+    for (const c of all) {
+      const name = (c.name ?? '').toLowerCase();
+      if (name && !owned.has(name) && this.collection.owned(c.id) > 0) owned.set(name, c);
+    }
+    return collapsed.map((c) => (this.collection.owned(c.id) > 0 ? c : (owned.get((c.name ?? '').toLowerCase()) ?? c)));
+  }
+
+  /** Breaks every copy beyond the 4 a deck can use, keeping the finest, after asking. */
+  protected async breakExtras(): Promise<void> {
+    const extras = this.collection.extras();
+    const ok = await this.modal.confirm({
+      title: 'Romper copias sobrantes',
+      message: `Tienes ${extras} ${extras === 1 ? 'copia' : 'copias'} de más (más de 4 de una misma carta). Se rompen por fragmentos y te quedas con las 4 mejores de cada una.`,
+      confirmLabel: 'Romper',
+      danger: true,
+    });
+    if (ok) await this.collection.breakExtras();
   }
 
   protected toggleQuickType(type: string): void {

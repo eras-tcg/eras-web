@@ -78,4 +78,6 @@
   </div>
 
   <eras-card-image class="image" [src]="imageUrl()" [alt]="name()" [foil]="foil()" eager />
+  <!-- Controls for the card right under its image (as the deck builder's collection) -->
+  <div class="under"><ng-content select="[detail-under-image]" /></div>
 </div>

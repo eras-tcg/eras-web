@@ -198,7 +198,8 @@
   background:
     radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--color-hub-text) 70%, transparent), transparent 18%),
     conic-gradient(from var(--prism-spin), var(--color-rarity-sec), var(--color-rarity-sr), var(--color-rarity-uc), var(--color-card-b), var(--color-card-p), var(--color-rarity-sec));
-  opacity: 0.85;
+  // Only a tint under the glitter
+  opacity: 0.35;
   animation:
     foil-in 0.4s ease-out 0.5s both,
     prism-turn 4s linear 0.9s infinite;

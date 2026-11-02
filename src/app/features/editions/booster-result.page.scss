@@ -176,7 +176,8 @@ eras-card-thumb.foil-foil::after {
 
 eras-card-thumb.foil-prism::after {
   background: repeating-linear-gradient(135deg, var(--color-rarity-sec) 0, var(--color-rarity-sr) 45px, var(--color-rarity-uc) 90px, var(--color-card-b) 135px, var(--color-card-p) 180px, var(--color-rarity-sec) 225px);
-  opacity: 0.85;
+  // Only a tint under the glitter
+  opacity: 0.3;
   animation: list-prism 3s linear infinite;
 }
 

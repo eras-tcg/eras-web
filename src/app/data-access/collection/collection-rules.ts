@@ -1,4 +1,5 @@
 import { MAX_COPIES } from '../decks/deck-rules';
+import { CatalogCard } from '../cards/card.model';
 import { DeckEntry } from '../decks/deck.model';
 import { Collection, Finish, OwnedCopies } from './collection.model';
 
@@ -115,4 +116,34 @@ export function deckCopyFinishes(copies: OwnedCopies | undefined, count: number)
 /** The shine a finish shows on a card (a plain copy shows none). */
 export function shineOf(finish: Finish | null | undefined): 'foil' | 'prism' | null {
   return finish === 'foil' || finish === 'prism' ? finish : null;
+}
+
+/** A deck's copies of one card that the player lacks. */
+export interface MissingCard {
+  card: CatalogCard;
+  count: number;
+}
+
+/** The copies a deck needs that the collection lacks, card by card. */
+export function missingCards(entries: readonly DeckEntry[], collection: Collection | null): MissingCard[] {
+  return entries.map((e) => ({ card: e.card, count: e.count - ownedCount(collection, e.card.id) })).filter((m) => m.count > 0);
+}
+
+/** What crafting a deck's missing cards takes, by rarity: copies, fragments needed and fragments owned. */
+export interface CraftCost {
+  rarity: string;
+  copies: number;
+  cost: number;
+  owned: number;
+}
+
+/** The cost of crafting every missing card, rarity by rarity (cards without metadata cannot be crafted: left out). */
+export function craftCosts(missing: readonly MissingCard[], fragments: Record<string, number>): CraftCost[] {
+  const byRarity = new Map<string, number>();
+  for (const m of missing) {
+    if (!m.card.meta) continue;
+    const rarity = m.card.meta.rarity || 'C';
+    byRarity.set(rarity, (byRarity.get(rarity) ?? 0) + m.count);
+  }
+  return [...byRarity].map(([rarity, copies]) => ({ rarity, copies, cost: copies * CRAFT_COST, owned: fragments[rarity] ?? 0 }));
 }

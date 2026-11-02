@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { bestFinish, bestFinishAmong, breakPlan, craftedSummary, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { bestFinish, bestFinishAmong, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -48,5 +48,16 @@ describe('collection rules', () => {
     expect(bestFinishAmong(collection, ['a', 'z'])).toBe('foil');
     expect(bestFinishAmong(collection, ['z'])).toBeNull();
     expect(bestFinishAmong(null, ['a'])).toBeNull();
+  });
+
+  it('prices crafting a deck\'s missing cards by rarity', () => {
+    const sr = { id: 'b', meta: { rarity: 'SR' } } as CatalogCard;
+    const c = { id: 'z', meta: { rarity: 'C' } } as CatalogCard;
+    const missing = missingCards([{ card: card('a'), count: 2 }, { card: sr, count: 7 }, { card: c, count: 2 }], collection);
+    expect(missing.map((m) => [m.card.id, m.count])).toEqual([['b', 1], ['z', 2]]);
+    expect(craftCosts(missing, { C: 40 })).toEqual([
+      { rarity: 'SR', copies: 1, cost: 30, owned: 0 },
+      { rarity: 'C', copies: 2, cost: 60, owned: 40 },
+    ]);
   });
 });

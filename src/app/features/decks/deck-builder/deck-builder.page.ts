@@ -6,7 +6,7 @@ import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } 
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName, fullEditionId } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { bestFinish, deckCopyFinishes, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
+import { bestFinish, deckCopyFinishes, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
@@ -28,6 +28,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { CraftMissingData, CraftMissingDialogComponent } from './craft-missing-dialog.component';
 import { DeckOption, DeckOptionsData, DeckOptionsDialogComponent } from './deck-options-dialog.component';
 import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-deck-dialog.component';
 import { firstValueFrom } from 'rxjs';
@@ -325,13 +326,20 @@ export class DeckBuilderPage {
     if (this.renderCount() < this.resultCount()) this.renderCount.update((n) => n + PAGE_SIZE);
   }
 
-  /** The options icon: importing a list, exporting it or printing proxies. */
+  /** The options icon: crafting the missing cards, importing a list, exporting it or printing proxies. */
   protected async openOptions(): Promise<void> {
-    const data: DeckOptionsData = { empty: this.draft.total() === 0 };
+    const data: DeckOptionsData = { empty: this.draft.total() === 0, missing: this.signedIn() ? this.missing() : null };
     const choice = await firstValueFrom(this.modal.open<DeckOption, DeckOptionsData>(DeckOptionsDialogComponent, { data }).closed);
     if (choice?.action === 'import') await this.importList(choice.file);
     if (choice?.action === 'export') this.exportList();
     if (choice?.action === 'proxies') this.openProxies();
+    if (choice?.action === 'craft-missing') this.craftMissing();
+  }
+
+  /** What crafting the deck's missing cards costs, and crafting them all when the fragments are enough. */
+  private craftMissing(): void {
+    const data: CraftMissingData = { missing: missingCards(this.draft.entries(), this.collection.collection()) };
+    this.modal.open(CraftMissingDialogComponent, { data });
   }
 
   protected openProxies(): void {

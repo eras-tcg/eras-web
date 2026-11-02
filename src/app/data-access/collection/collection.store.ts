@@ -54,6 +54,11 @@ export class CollectionStore {
     return this.crafting(() => firstValueFrom(this.api.craft(cardId, count)));
   }
 
+  /** Crafts several cards at once (card id → copies): all of them or none. */
+  async craftMany(cards: Record<string, number>): Promise<Finish[]> {
+    return this.crafting(() => firstValueFrom(this.api.craftMany(cards)));
+  }
+
   async craftUntil(cardId: string, finish: Finish, maxFragments: number): Promise<Finish[]> {
     return this.crafting(() => firstValueFrom(this.api.craftUntil(cardId, finish, maxFragments)));
   }

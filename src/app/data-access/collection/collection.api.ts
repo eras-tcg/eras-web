@@ -22,6 +22,11 @@ export class CollectionApi {
     return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft'), { cardId, count });
   }
 
+  /** Several cards at once (card id → copies): all of them or none. */
+  craftMany(cards: Record<string, number>): Observable<Crafted> {
+    return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft-many'), { cards });
+  }
+
   /** Until a copy comes out at least as fine as `finish`, spending at most `maxFragments`. */
   craftUntil(cardId: string, finish: Finish, maxFragments: number): Observable<Crafted> {
     return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft-until'), { cardId, finish, maxFragments });

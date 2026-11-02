@@ -15,6 +15,8 @@ import { BoardEffects } from './board-effects';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
 import { BoardAnimations } from './board-animations';
+import { isTouchOnly } from './board-touch';
+import { DOCUMENT } from '@angular/common';
 
 /** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
 const TAP_MS = 300;
@@ -22,6 +24,7 @@ const TAP_MS = 300;
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
  * click shows details (field) or flips it, right click opens the manual actions, own cards can be dragged.
+ * On a touch screen: a tap shows the actions, a long press opens the manual ones, and nothing is dragged.
  */
 @Component({
   selector: 'eras-sim-card',
@@ -88,7 +91,11 @@ export class SimCardComponent {
   protected readonly chainLinks = computed(() => chainLinksOf(this.game.state()?.chain, [this.slot()]));
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
   /** Cards of the hand can be dropped to play them by the rules; anything else is moved only in editor mode. */
-  protected readonly canDrag = computed(() => !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()));
+  /** A touch screen: a long press is the menu (on iPhone it would start a drag instead); taps play and attack. */
+  private readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
+  protected readonly canDrag = computed(
+    () => !this.touchOnly && !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()),
+  );
   /** One of your creatures that can attack now: dragged onto a target, it attacks. */
   protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
   /** An enemy creature that the creature being dragged to attack can attack: it lights up as a target. */

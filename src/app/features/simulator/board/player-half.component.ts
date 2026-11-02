@@ -17,6 +17,8 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
+import { isTouchOnly } from './board-touch';
+import { DOCUMENT } from '@angular/common';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
 const HAND_UPRIGHT_FAN = 2.9;
@@ -31,7 +33,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   selector: 'eras-player-half',
   imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent],
   templateUrl: './player-half.component.html',
-  styleUrl: './player-half.component.scss',
+  styleUrls: ['./player-half.component.scss', './player-half.component.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.opponent]': 'opponent()', '[class.mirrored]': 'mirrored()' },
 })
@@ -43,7 +45,9 @@ export class PlayerHalfComponent {
   /** "Mano recta": the hand in a row instead of a fan. */
   readonly straightHand = input(false, { transform: booleanAttribute });
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
-  private readonly lookOnly = inject(SheetState).lowered;
+  protected readonly lookOnly = inject(SheetState).lowered;
+  /** A touch screen: no dragging, the hints speak of tapping. */
+  protected readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
 
   protected readonly game = inject(GameStore);
   protected readonly drag = inject(BoardDrag);

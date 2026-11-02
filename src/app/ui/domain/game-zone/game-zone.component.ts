@@ -36,9 +36,10 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
     :host(.selectable) { cursor: crosshair; }
     .label {
       color: var(--color-text-muted);
-      font-size: 0.8rem;
+      /* Smaller on a phone's compact table */
+      font-size: var(--zone-label-size, 0.8rem);
       font-weight: var(--font-weight-bold);
-      letter-spacing: 0.06em;
+      letter-spacing: var(--zone-label-spacing, 0.06em);
       text-align: center;
       text-transform: uppercase;
     }

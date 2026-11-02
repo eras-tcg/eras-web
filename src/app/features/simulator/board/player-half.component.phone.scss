@@ -1,0 +1,77 @@
+// Phones in landscape (little height): the field gets the room. The hands only peek (a tapped card rises whole),
+// the line labels lie over the cards and the side columns narrow (--side, from the board)
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    --hand-card: 4.5rem;
+    --hand-peek: 2.25rem;
+    --zone-label-size: 0.55rem;
+    --zone-label-spacing: 0;
+
+    // The three columns of the table even on a narrow phone (the narrow-screen layout stacks them)
+    grid-template-columns: var(--side, 7.5rem) minmax(0, 1fr) var(--side, 7.5rem);
+    grid-template-rows: minmax(0, 1fr) var(--hand-peek);
+    grid-template-areas:
+      'lives field piles'
+      'lives hand piles';
+    gap: var(--space-1);
+  }
+
+  :host(.opponent) {
+    --hand-peek: 1.25rem;
+
+    grid-template-rows: var(--hand-peek) minmax(0, 1fr);
+    grid-template-areas:
+      'lives hand piles'
+      'lives field piles';
+  }
+
+  :host(.opponent.mirrored) {
+    grid-template-areas:
+      'piles hand lives'
+      'piles field lives';
+  }
+
+  .hand-cards {
+    inset-block-start: calc(var(--hand-reach) - 0.25rem);
+  }
+
+  :host(.opponent) .hand-cards {
+    inset-block: auto calc(var(--hand-reach) - 0.25rem);
+  }
+
+  :host(:not(.opponent)) .in-hand:hover,
+  :host(:not(.opponent)) .in-hand.raised,
+  :host(:not(.opponent)) .in-hand:has(:focus-visible) {
+    transform: translateY(calc((var(--hand-card) * 88 / 63 - var(--hand-peek)) * -1)) rotate(0deg);
+  }
+
+  .line {
+    gap: var(--space-1);
+    padding: 0.1rem var(--space-1);
+  }
+
+  .line-label {
+    inset-block-start: 0;
+    inset-inline-start: var(--space-1);
+    font-size: 0.55rem;
+    opacity: 0.7;
+  }
+
+  .placed {
+    --game-card-width: min(var(--field-card-max, 9rem), calc((100cqh - 0.3rem) * 63 / 88));
+  }
+
+  .piles,
+  .lives {
+    gap: var(--space-1);
+  }
+
+  .pile eras-game-card {
+    --game-card-width: min(calc(100cqw - 0.25rem), calc((100cqh - 1rem) * 63 / 88));
+  }
+
+  .optional-toggle {
+    padding: 0.1rem var(--space-1);
+    font-size: 0.6rem;
+  }
+}

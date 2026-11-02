@@ -1,0 +1,74 @@
+// Phones upright: the table does not fit; it asks to turn the phone, over everything (choices included)
+.rotate-hint {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 47.99rem) {
+  .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-2);
+    padding: var(--space-6);
+    background: var(--color-bg, var(--color-surface));
+    text-align: center;
+  }
+
+  .see-through-btn {
+    display: none;
+  }
+
+  .rotate-hint eras-icon {
+    inline-size: 3rem;
+    block-size: 3rem;
+    color: var(--color-primary);
+  }
+
+  .rotate-hint strong {
+    font-size: var(--font-size-xl);
+  }
+
+  .rotate-hint span {
+    color: var(--color-text-muted);
+  }
+}
+
+// Phones in landscape (little height): narrow side columns and a one-row strip, so the field gets the room
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    --side: 7.5rem;
+  }
+
+  .table {
+    gap: var(--space-1);
+  }
+
+  .strip,
+  .strip.with-gems {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--space-1);
+    padding: 0;
+    font-size: var(--font-size-xs);
+  }
+
+  .strip .gems {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .phases button {
+    padding: 0.1rem var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+}
+
+// Touch screens: a long press opens a card's menu, so no text selection or picture callout on the table
+@media (hover: none) and (pointer: coarse) {
+  :host {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}

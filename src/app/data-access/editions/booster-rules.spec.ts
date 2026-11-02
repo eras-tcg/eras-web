@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
-import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, openingOrder, packTier, rollQuantity } from './booster-rules';
+import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle } from './booster-rules';
 import { Edition, PackType } from './edition.model';
 
 const card = (id: string, rarity: string | null, over: Partial<CatalogCard> = {}): CatalogCard => ({
@@ -122,10 +122,19 @@ describe('packTier', () => {
   });
 });
 
-describe('openingOrder', () => {
-  it('opens the plain packs first and the most special last, keeping the order inside each tier', () => {
-    const tiers = { a: 'sec', b: 'none', c: 'god', d: 'none', e: 'sr' } as const;
-    expect(openingOrder(['a', 'b', 'c', 'd', 'e'], (p) => tiers[p as keyof typeof tiers])).toEqual(['b', 'd', 'e', 'a', 'c']);
+describe('shuffle', () => {
+  it('keeps every item, in a new order, without touching the original', () => {
+    const items = ['a', 'b', 'c', 'd'];
+    const out = shuffle(items, seq(0, 0, 0));
+    expect([...out].sort()).toEqual(items);
+    expect(out).not.toEqual(items);
+    expect(items).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('revealOrder', () => {
+  it('turns the plain cards first and the special ones last, each in their order', () => {
+    expect(revealOrder(['C', 'SR', 'UC', 'SEC', 'R'], (r) => r === 'SR' || r === 'SEC')).toEqual({ plain: [0, 2, 4], special: [1, 3] });
   });
 });
 

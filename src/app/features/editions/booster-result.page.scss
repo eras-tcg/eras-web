@@ -187,38 +187,32 @@ eras-icon[name='gem'] {
   }
 }
 
-/* 1. The table: every pack bought, dealt in */
+/* 1. The table: every pack bought, dealt in, sized (--pack-width, from the component) so all of them fit */
 .table {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-5);
-  inline-size: 100%;
-  max-block-size: 100%;
+  align-self: stretch;
+  gap: var(--space-4);
+  min-block-size: 0;
 }
 
 .packs {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
+  align-content: center;
   justify-content: center;
-  gap: var(--space-3);
+  // The same gap the component uses to size the packs
+  gap: 12px;
+  inline-size: 100%;
   min-block-size: 0;
-  padding: var(--space-3);
-  overflow-y: auto;
-  overscroll-behavior: none;
+  overflow: hidden;
 }
 
-// One pack: big; many (a box): small enough for all of them to show
-.table:not(.many) .pack {
-  --pack-width: min(42dvh * 63 / 88, 21rem);
-}
-
-.table.many .pack {
-  --pack-width: clamp(4.5rem, 7.5vw, 7rem);
-}
-
-.table.many .pack-label {
-  font-size: 0.65rem;
+.packs .pack-label {
+  font-size: clamp(0.6rem, calc(var(--pack-width, 8rem) * 0.08), 1.15rem);
 }
 
 .dealt {
@@ -360,24 +354,88 @@ eras-icon[name='gem'] {
   transform: rotateY(0);
 }
 
-// A card that shines: the halo of its rarity, a moment bigger
-.flip.aura-sr .front,
-.flip.aura-sec .front {
+// Face down, an SR or SEC card already glows in its rarity's color; the plain ones do not
+.flip.aura-sr:not(.up) .back,
+.flip.aura-sec:not(.up) .back {
+  border-color: var(--aura);
   box-shadow:
     0 0 0 2px var(--aura),
-    0 0 1.75rem color-mix(in srgb, var(--aura) 85%, transparent);
+    0 0 1.5rem color-mix(in srgb, var(--aura) 80%, transparent);
   animation: aura-card 1.6s ease-in-out infinite;
 }
 
-.flip.aura-sr,
-.flip.aura-sec {
+// Passed over while the plain cards turn: it only trembles
+.flip.shake {
   z-index: 1;
-  animation: pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: tremble 0.32s ease-in-out infinite;
 }
 
-@keyframes pop {
-  40% {
-    transform: scale(1.18);
+@keyframes tremble {
+  25% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+
+  75% {
+    transform: translateX(3px) rotate(2deg);
+  }
+}
+
+// Turned at last: it rises, grows, bursts in its color and settles, glowing
+.flip.big {
+  z-index: 2;
+  animation: reveal-big 1.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.flip.big .face {
+  transition-duration: 0.9s;
+}
+
+.flip.big.up .front {
+  box-shadow:
+    0 0 0 2px var(--aura),
+    0 0 1.75rem color-mix(in srgb, var(--aura) 85%, transparent);
+  animation: aura-card 1.6s ease-in-out 1.3s infinite;
+}
+
+.flip.big::after {
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--aura) 90%, transparent) 0%, transparent 65%);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  animation: burst-light 1.3s ease-out;
+}
+
+@keyframes reveal-big {
+  0% {
+    transform: none;
+  }
+
+  35% {
+    transform: translateY(-1.5rem) scale(1.45);
+  }
+
+  65% {
+    transform: translateY(-0.5rem) scale(1.3);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes burst-light {
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
   }
 }
 
@@ -424,8 +482,12 @@ eras-card-thumb.aura-sec {
   .tier-god,
   .flip,
   .arrive,
-  .flip.aura-sr .front,
-  .flip.aura-sec .front,
+  .flip.shake,
+  .flip.big,
+  .flip.big::after,
+  .flip.aura-sr .back,
+  .flip.aura-sec .back,
+  .flip.big.up .front,
   eras-card-thumb.aura-sr,
   eras-card-thumb.aura-sec {
     animation: none;

@@ -37,9 +37,9 @@
         }
 
         @case ('packs') {
-          <!-- 1. Every pack bought on the table; the special ones with their aura -->
-          <div class="table" [class.many]="packs().length > 1">
-            <div class="packs">
+          <!-- 1. Every pack bought on the table, shuffled, as big as fits; the special ones with their aura -->
+          <div class="table">
+            <div #table class="packs" [style.--pack-width.px]="packWidth()">
               @for (pack of packs(); track $index; let i = $index) {
                 @let tier = tierOf(pack.packType);
                 <div class="pack dealt" [class]="'tier-' + tier" [style.--art]="art" [style.animation-delay.ms]="i * 45">
@@ -57,25 +57,20 @@
         }
 
         @case ('opening') {
-          <!-- 2. One pack after another: it tears, then its cards turn one by one -->
+          <!-- 2. One pack after another, without telling its type: it tears, its cards lie face down -->
           @if (openingPack(); as pack) {
-            @let tier = tierOf(pack.packType);
             <div class="opening">
-              <p class="progress">
-                @if (packs().length > 1) {
-                  Sobre {{ packIndex() + 1 }} de {{ packs().length }} ·
-                }
-                <strong>{{ pack.packType }}</strong>
-              </p>
+              @if (packs().length > 1) {
+                <p class="progress">Sobre {{ packIndex() + 1 }} de {{ packs().length }}</p>
+              }
               @if (tearing()) {
-                <div class="pack big tearing" [class]="'tier-' + tier" [style.--art]="art">
-                  <span class="pack-label">{{ pack.packType }}</span>
-                </div>
+                <div class="pack big tearing" [style.--art]="art"></div>
               } @else {
                 <div class="cards">
                   @for (card of pack.cards; track $index; let i = $index) {
-                    @let up = i < shown();
-                    <div class="flip" [class.up]="up" [class]="up && aura(card) ? 'aura-' + aura(card) : ''">
+                    @let up = faceUp().has(i);
+                    @let glow = aura(card);
+                    <div class="flip" [class]="glow ? 'aura-' + glow : ''" [class.up]="up" [class.shake]="trembling().has(i)" [class.big]="up && !!glow">
                       <span class="face back" aria-hidden="true"></span>
                       <span class="face front">
                         @if (imageUrl(card); as src) {

@@ -87,8 +87,6 @@ export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, rand
 /** How special a pack type looks before opening it: none, SR, SEC or GOD (the aura it shows). */
 export type PackTier = 'none' | 'sr' | 'sec' | 'god';
 
-const TIER_ORDER: PackTier[] = ['none', 'sr', 'sec', 'god'];
-
 /** GOD: named so, or two secrets or more, or five SR+SEC or more; else SEC or SR by the best rarity it brings. */
 export function packTier(pack: Pick<PackType, 'name' | 'cardsPerRarity'> | undefined): PackTier {
   if (!pack) return 'none';
@@ -100,12 +98,25 @@ export function packTier(pack: Pick<PackType, 'name' | 'cardsPerRarity'> | undef
   return 'none';
 }
 
-/** Opening order: the plain packs first, the most special last (the suspense grows). Stable inside each tier. */
-export function openingOrder<T>(packs: readonly T[], tierOf: (pack: T) => PackTier): T[] {
-  return packs
-    .map((pack, index) => ({ pack, index, rank: TIER_ORDER.indexOf(tierOf(pack)) }))
-    .sort((a, b) => a.rank - b.rank || a.index - b.index)
-    .map((p) => p.pack);
+/** A shuffled copy (Fisher–Yates): packs come out of a box in no order, and so do the cards of a pack. */
+export function shuffle<T>(items: readonly T[], random: Random = Math.random): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * How a pack's cards turn: first the plain ones, in their order; the special ones (`special`: SR, SEC) wait and
+ * turn last, one by one, in their order too.
+ */
+export function revealOrder<T>(cards: readonly T[], special: (card: T) => boolean): { plain: number[]; special: number[] } {
+  const plain: number[] = [];
+  const last: number[] = [];
+  cards.forEach((card, i) => (special(card) ? last : plain).push(i));
+  return { plain, special: last };
 }
 
 export interface OpenedCard {

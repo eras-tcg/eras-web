@@ -1,9 +1,9 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { OpenedPack, PackTier, RARITY_NAMES, cardsByRarity, groupOpening, openBoxPacks, openPack, openingOrder, packTier } from '@data/editions/booster-rules';
+import { OpenedPack, PackTier, RARITY_NAMES, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { OpeningRequest, productFor } from '@data/shop/shop-rules';
@@ -20,6 +20,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { fitItemWidth } from './fit-grid';
 import { ShopCheckout, purchaseTicket } from './shop-checkout';
 
 /** unpaid: offered for sale · packs: the bought packs on the table · opening: one by one · done: the full list. */
@@ -28,18 +29,25 @@ type Phase = 'unpaid' | 'packs' | 'opening' | 'done';
 /** The rarities that shine (their aura) when they turn face up. */
 const SHINY = new Set(['SR', 'SEC']);
 const TEAR_MS = 850;
-/** Time between two cards turning, in a pack and in a box (many more packs: quicker). */
-const CARD_MS = { pack: 380, box: 140 };
-/** Extra pause on a card that shines. */
-const SHINE_MS = 700;
+/** Time between two plain cards turning, and between two special ones (slower), in a pack and in a box. */
+const PLAIN_MS = { pack: 300, box: 110 };
+const SPECIAL_MS = { pack: 1600, box: 1000 };
+/** Pause after the plain cards, before the special ones. */
+const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
+const CARD_RATIO = 63 / 88;
+/** The packs on the table: never bigger than this, and this far apart. */
+const PACK_MAX_PX = 260;
+const PACK_GAP_PX = 12;
 
 /**
  * Opening of something bought in the Editions shop: /booster-result?edition=E1&mode=pack|box&packType=… (for a
  * pack, the type that came out at random). Only a fresh purchase opens (WalletStore ticket); otherwise it offers
- * to buy. First every pack bought lies on the table (SR, SEC and GOD packs with their aura); "Abrir" tears them
- * one after another, the plain ones first, turning their cards one by one (SR and SEC shine). Only at the end the
- * full list shows. "Saltar animación" goes straight to it.
+ * to buy. First every pack bought lies on the table, shuffled and as big as fits without scrolling (SR, SEC and GOD
+ * packs with their aura); "Abrir" tears them in that order without telling their type. Each pack's cards, shuffled,
+ * lie face down, the SR and SEC ones glowing; the plain ones turn in order while the special ones only tremble,
+ * then the special ones turn one by one, slower and with a bigger flourish. Only at the end the full list shows.
+ * "Saltar animación" goes straight to it.
  */
 @Component({
   selector: 'eras-booster-result-page',
@@ -86,10 +94,18 @@ export class BoosterResultPage {
   protected readonly phase = signal<Phase>('unpaid');
   /** The bought packs, in opening order. */
   protected readonly packs = signal<OpenedPack[]>([]);
-  /** opening: the pack being opened, whether it is still tearing, and how many of its cards are face up. */
+  /** opening: the pack being opened, whether it is still tearing, its cards face up and the ones trembling. */
   protected readonly packIndex = signal(0);
   protected readonly tearing = signal(false);
-  protected readonly shown = signal(0);
+  protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
+  protected readonly trembling = signal<ReadonlySet<number>>(new Set());
+
+  /** The table's free room, to size the packs so that all of them fit. */
+  private readonly table = viewChild<ElementRef<HTMLElement>>('table');
+  private readonly room = signal({ width: 0, height: 0 });
+  protected readonly packWidth = computed(() =>
+    fitItemWidth(this.packs().length, this.room().width, this.room().height, CARD_RATIO, PACK_GAP_PX, PACK_MAX_PX),
+  );
   protected readonly openingPack = computed(() => this.packs()[this.packIndex()] ?? null);
   protected readonly groups = computed(() => groupOpening(this.packs().flatMap((p) => p.cards)));
   protected readonly total = computed(() => this.packs().reduce((sum, p) => sum + p.cards.length, 0));
@@ -99,6 +115,7 @@ export class BoosterResultPage {
   protected readonly asRarity = (r: string) => r as Rarity;
   /** The aura of a card: its rarity when it shines (SR, SEC), none otherwise. */
   protected readonly aura = (card: CatalogCard) => (SHINY.has(card.meta?.rarity ?? '') ? (card.meta?.rarity ?? '').toLowerCase() : null);
+  private readonly special = (card: CatalogCard) => SHINY.has(card.meta?.rarity ?? '');
 
   private readonly reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -107,6 +124,14 @@ export class BoosterResultPage {
     void this.cards.load();
     void this.editions.load();
     inject(DestroyRef).onDestroy(() => this.stopTimers());
+    // Follow the table's size while it is on screen
+    effect((onCleanup) => {
+      const element = this.table()?.nativeElement;
+      if (!element) return;
+      const observer = new ResizeObserver(([entry]) => this.room.set({ width: entry.contentRect.width, height: entry.contentRect.height }));
+      observer.observe(element);
+      onCleanup(() => observer.disconnect());
+    });
     // Once the catalog is in: a fresh purchase gets its packs on the table, anything else is offered for sale
     let started = false;
     effect(() => {
@@ -171,31 +196,50 @@ export class BoosterResultPage {
       const type = types.find((p) => p.name === request.packType) ?? types[0];
       packs = [{ packType: type.name, cards: openPack(type, pool) }];
     }
-    this.packs.set(openingOrder(packs, (p) => this.tierOf(p.packType)));
+    // They come out in no order, and so do the cards inside each one
+    this.packs.set(shuffle(packs.map((p) => ({ ...p, cards: shuffle(p.cards) }))));
     this.packIndex.set(0);
-    this.shown.set(0);
+    this.faceUp.set(new Set());
+    this.trembling.set(new Set());
     this.phase.set('packs');
   }
 
   private openPackAt(index: number): void {
     if (index >= this.packs().length) return this.later(() => this.phase.set('done'), BETWEEN_PACKS_MS);
     this.packIndex.set(index);
-    this.shown.set(0);
+    this.faceUp.set(new Set());
+    this.trembling.set(new Set());
     this.tearing.set(true);
     this.later(() => {
       this.tearing.set(false);
-      this.revealNext();
+      this.passCard(0);
     }, TEAR_MS);
   }
 
-  private revealNext(): void {
+  /** Goes through the cards in order: a plain one turns, a special one only trembles (it turns at the end). */
+  private passCard(index: number): void {
     const pack = this.openingPack();
     if (!pack) return;
-    const next = this.shown();
-    if (next >= pack.cards.length) return this.later(() => this.openPackAt(this.packIndex() + 1), BETWEEN_PACKS_MS);
-    this.shown.set(next + 1);
-    const pause = (this.isBox() ? CARD_MS.box : CARD_MS.pack) + (this.aura(pack.cards[next]) ? SHINE_MS : 0);
-    this.later(() => this.revealNext(), pause);
+    if (index >= pack.cards.length) return this.later(() => this.turnSpecial(0), BEFORE_SPECIAL_MS);
+    if (this.special(pack.cards[index])) this.trembling.update((set) => new Set(set).add(index));
+    else this.faceUp.update((set) => new Set(set).add(index));
+    this.later(() => this.passCard(index + 1), this.isBox() ? PLAIN_MS.box : PLAIN_MS.pack);
+  }
+
+  /** The special cards, one by one and slowly; then the next pack. */
+  private turnSpecial(n: number): void {
+    const pack = this.openingPack();
+    if (!pack) return;
+    const order = revealOrder(pack.cards, this.special).special;
+    if (n >= order.length) return this.later(() => this.openPackAt(this.packIndex() + 1), order.length ? BETWEEN_PACKS_MS : 0);
+    const index = order[n];
+    this.trembling.update((set) => {
+      const next = new Set(set);
+      next.delete(index);
+      return next;
+    });
+    this.faceUp.update((set) => new Set(set).add(index));
+    this.later(() => this.turnSpecial(n + 1), this.isBox() ? SPECIAL_MS.box : SPECIAL_MS.pack);
   }
 
   private later(run: () => void, ms: number): void {

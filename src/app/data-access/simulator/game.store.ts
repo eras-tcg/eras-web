@@ -23,8 +23,8 @@ function wsUrl(): string {
 }
 
 /**
- * Live game room over STOMP (/topic/room/{id} in, /app/room/{id}/action out).
- * Every broadcast carries the full state; this store keeps it plus the transient effects
+ * Live game room over STOMP (/user/queue/room/{id} in, /app/room/{id}/action out).
+ * Every update carries the full state as this player may see it; this store keeps it plus the transient effects
  * (revealed cards, targeting glow, recent log lines). Same protocol as the legacy app.
  */
 @Injectable({ providedIn: 'root' })
@@ -184,7 +184,8 @@ export class GameStore {
         onConnect: () => {
           clearTimeout(timeout);
           this.connected.set(true);
-          this.client?.subscribe(`/topic/room/${roomId}`, (msg) => this.onMessage(msg.body));
+          // My own queue: the server sends each player the room as they may see it (no rival's hand, no deck order)
+          this.client?.subscribe(`/user/queue/room/${roomId}`, (msg) => this.onMessage(msg.body));
           // The socket dropped and came back by itself: be in the room again and get its current state
           if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
           reconnecting = true;

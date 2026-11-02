@@ -121,7 +121,10 @@ export interface GameLogEntry {
   inheritedFromImage?: string | null;
 }
 
-/** Every broadcast on /topic/room/{id} carries the whole room state. */
+/**
+ * Every update on /user/queue/room/{id} carries the whole room state as this player may see it: outside a test room, the
+ * rival's hand, both decks and face-down cards come with only their instanceId and place.
+ */
 export interface GameState {
   roomId: string;
   status: RoomStatus;

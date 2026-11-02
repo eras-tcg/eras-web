@@ -305,21 +305,12 @@ eras-icon[name='gem'] {
   font-variant-numeric: tabular-nums;
 }
 
-.progress strong {
-  color: var(--color-text);
-  letter-spacing: 0.04em;
-}
 
 // It shakes, swells and bursts into light
 .tearing {
   animation: burst 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.tearing.tier-god {
-  animation:
-    burst 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-    spin 2.4s linear infinite;
-}
 
 @keyframes burst {
   0% {

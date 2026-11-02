@@ -46,7 +46,7 @@
               </eras-form-field>
             }
           </eras-grid>
-          <span class="muted">La contraseña necesita mayúscula, minúscula, número y un carácter especial. A la cuenta le llega un correo con el enlace para validarla.</span>
+          <span class="muted">La contraseña necesita al menos 8 caracteres. A la cuenta le llega un correo con el enlace para validarla.</span>
           <eras-stack direction="row" [gap]="2">
             <button erasButton type="submit" [loading]="registering()" [disabled]="registering()">Crear usuario</button>
             <button erasButton variant="ghost" type="button" (click)="creating.set(false)">Cancelar</button>

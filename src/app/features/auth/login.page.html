@@ -17,7 +17,7 @@
       <eras-form-field
         label="Contraseña"
         required
-        [error]="form.controls.password.touched && form.controls.password.invalid ? 'Ingresa tu contraseña' : null"
+        [error]="!form.controls.password.touched ? null : form.controls.password.hasError('required') ? 'Ingresa tu contraseña' : form.controls.password.hasError('minlength') ? 'La contraseña tiene al menos 8 caracteres' : null"
       >
         <input type="password" formControlName="password" autocomplete="current-password" />
       </eras-form-field>

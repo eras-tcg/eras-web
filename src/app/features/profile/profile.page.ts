@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordProblem } from '@core/auth/password-rules';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AvatarStore } from '@core/auth/avatar.store';
@@ -70,7 +71,7 @@ export class ProfilePage {
   protected readonly passwordForm = this.fb.group(
     {
       oldPassword: ['', Validators.required],
-      newPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
       confirm: ['', Validators.required],
     },
     { validators: matching('newPassword', 'confirm') },
@@ -144,6 +145,7 @@ export class ProfilePage {
     if (control.hasError('required')) {
       return { oldPassword: 'Ingresa tu contraseña actual', newPassword: 'Ingresa la nueva contraseña', confirm: 'Repite la nueva contraseña' }[field];
     }
+    if (field === 'newPassword' && (control.hasError('minlength') || control.hasError('maxlength'))) return passwordProblem(control.value);
     if (field === 'confirm' && this.passwordForm.hasError('mismatch')) return 'Las contraseñas no coinciden';
     return null;
   }

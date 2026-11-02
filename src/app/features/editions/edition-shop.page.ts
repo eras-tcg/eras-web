@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
-import { BoxContent, ShopProduct, boxContents, openingQuery, shopProducts } from '@data/shop/shop-rules';
+import { ShopProduct, openingQuery, shopProducts } from '@data/shop/shop-rules';
 import { WalletStore } from '@core/wallet/wallet.store';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -19,8 +19,9 @@ import { ShopCheckout } from './shop-checkout';
 
 /**
  * One edition in the shop (/editions/:editionId): its artwork on the right; on the left its odds and its cards
- * (dialogs, no page change) and the two things it sells: a pack, whose type comes at random with the box's
- * odds, and the booster box, with how many packs of each type it brings. One screen high.
+ * (dialogs, no page change) and what it sells, just name and price: a pack, whose type comes at random with the
+ * box's odds, and the booster box (what they bring is in "Probabilidades"); a structure deck sells itself whole.
+ * One screen high.
  */
 @Component({
   selector: 'eras-edition-shop-page',
@@ -39,24 +40,16 @@ export class EditionShopPage {
   private readonly router = inject(Router);
 
   protected readonly edition = computed(() => this.store.editions().find((e) => e.editionId === this.editionId()) ?? null);
-  private readonly products = computed(() => {
+  protected readonly products = computed(() => {
     const edition = this.edition();
     return edition ? shopProducts(edition) : [];
   });
   protected readonly pack = computed(() => this.products().find((p) => p.kind === 'pack') ?? null);
-  protected readonly box = computed(() => this.products().find((p) => p.kind === 'box') ?? null);
-  protected readonly contents = computed(() => {
-    const edition = this.edition();
-    return edition ? boxContents(edition) : [];
-  });
+  protected readonly structure = computed(() => this.products().some((p) => p.kind === 'structure'));
 
   constructor() {
     void this.store.load();
     this.wallet.refresh();
-  }
-
-  protected range(row: BoxContent): string {
-    return row.min === row.max ? String(row.min) : `${row.min}–${row.max}`;
   }
 
   protected openOdds(): void {

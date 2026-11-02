@@ -18,7 +18,6 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { feedbackState } from './admin-feedback';
-import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 /** UsersService answers a registration with English messages (by field, or one "error"): in Spanish for the form. */
 const REGISTRATION_ERRORS: [RegExp, string][] = [
@@ -56,7 +55,7 @@ export function registrationError(e: unknown): string {
 /** User accounts (manage_users). Changing a user's role also needs manage_roles (to list roles). */
 @Component({
   selector: 'eras-users-page',
-  imports: [PluralPipe, PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   templateUrl: './users.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

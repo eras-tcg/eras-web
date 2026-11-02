@@ -55,6 +55,8 @@ export function rollQuantity(options: readonly ProbOption[], random: Random = Ma
 export interface OpenedPack {
   packType: string;
   cards: CatalogCard[];
+  /** It went up a rarity (see upgradeOnePack): the type it was. */
+  upgradedFrom?: string;
 }
 
 /** A whole box, pack by pack: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */
@@ -96,6 +98,30 @@ export function packTier(pack: Pick<PackType, 'name' | 'cardsPerRarity'> | undef
   if (sec > 0) return 'sec';
   if (sr > 0) return 'sr';
   return 'none';
+}
+
+const TIER_RANK: Record<PackTier, number> = { none: 0, sr: 1, sec: 2, god: 3 };
+
+/**
+ * A box's bonus: with chance `chance` (1 for an edition, ½ for a sub-edition), one random pack that can go up a
+ * rarity becomes the next pack type up (R → SR → SEC → GOD, by packTier) and gets that type's cards.
+ */
+export function upgradeOnePack(
+  packs: readonly OpenedPack[],
+  types: readonly PackType[],
+  pool: Map<string, CatalogCard[]>,
+  chance: number,
+  random: Random = Math.random,
+): OpenedPack[] {
+  if (random() >= chance) return [...packs];
+  const rank = (name: string) => TIER_RANK[packTier(types.find((t) => t.name === name))];
+  const nextUp = (name: string) =>
+    [...types].filter((t) => rank(t.name) > rank(name)).sort((a, b) => rank(a.name) - rank(b.name))[0];
+  const candidates = packs.map((p, i) => (nextUp(p.packType) ? i : -1)).filter((i) => i >= 0);
+  if (!candidates.length) return [...packs];
+  const index = candidates[Math.floor(random() * candidates.length)];
+  const target = nextUp(packs[index].packType)!;
+  return packs.map((p, i) => (i === index ? { packType: target.name, cards: openPack(target, pool, random), upgradedFrom: p.packType } : p));
 }
 
 /** A shuffled copy (Fisher–Yates): packs come out of a box in no order, and so do the cards of a pack. */

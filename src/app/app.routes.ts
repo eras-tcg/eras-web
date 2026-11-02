@@ -34,12 +34,12 @@ export const routes: Routes = [
       },
       {
         path: 'editions',
-        title: 'Ediciones · ERAS',
+        title: 'Tienda · ERAS',
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),
       },
       {
         path: 'editions/:editionId',
-        title: 'Ediciones · ERAS',
+        title: 'Tienda · ERAS',
         loadComponent: () => import('@features/editions/edition-shop.page').then((m) => m.EditionShopPage),
       },
       {

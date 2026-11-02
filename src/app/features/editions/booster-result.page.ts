@@ -3,18 +3,17 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, e
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { OpenedPack, PackTier, RARITY_NAMES, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
+import { OpenedPack, PackTier, cardsByRarity, groupOpening, openBoxPacks, openPack, packTier, revealOrder, shuffle, upgradeOnePack } from '@data/editions/booster-rules';
+import { DecksStore } from '@data/decks/decks.store';
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
-import { OpeningRequest, productFor } from '@data/shop/shop-rules';
+import { OpeningRequest, isSubEdition, productFor } from '@data/shop/shop-rules';
 import { WalletStore } from '@core/wallet/wallet.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
-import { Rarity, RarityBadgeComponent } from '@ui/domain/rarity-badge/rarity-badge.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
@@ -55,9 +54,7 @@ const PACK_GAP_PX = 12;
     DecimalPipe,
     PageComponent,
     GridComponent,
-    SectionHeaderComponent,
     CardThumbComponent,
-    RarityBadgeComponent,
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
@@ -78,6 +75,7 @@ export class BoosterResultPage {
   private readonly editions = inject(EditionsStore);
   private readonly modal = inject(ModalService);
   private readonly checkout = inject(ShopCheckout);
+  private readonly decks = inject(DecksStore);
 
   protected readonly ready = computed(() => this.cards.cards().length > 0 && this.editions.editions().length > 0);
   protected readonly editionData = computed(() => this.editions.editions().find((e) => e.editionId === this.edition()) ?? null);
@@ -89,7 +87,10 @@ export class BoosterResultPage {
     return edition ? productFor(edition, this.current()) : null;
   });
   protected readonly isBox = computed(() => this.current().mode === 'box');
-  protected readonly label = computed(() => (this.isBox() ? 'Booster box' : `Sobre ${this.current().packType ?? ''}`.trim()));
+  protected readonly isStructure = computed(() => this.current().mode === 'structure');
+  protected readonly label = computed(() =>
+    this.isBox() ? 'Booster box' : this.isStructure() ? 'Structure deck' : `Sobre ${this.current().packType ?? ''}`.trim(),
+  );
 
   protected readonly phase = signal<Phase>('unpaid');
   /** The bought packs, in opening order. */
@@ -107,12 +108,11 @@ export class BoosterResultPage {
     fitItemWidth(this.packs().length, this.room().width, this.room().height, CARD_RATIO, PACK_GAP_PX, PACK_MAX_PX),
   );
   protected readonly openingPack = computed(() => this.packs()[this.packIndex()] ?? null);
-  protected readonly groups = computed(() => groupOpening(this.packs().flatMap((p) => p.cards)));
+  /** Everything that came out, one card after another, rarest first (each with how many came). */
+  protected readonly obtained = computed(() => groupOpening(this.packs().flatMap((p) => p.cards)).flatMap((g) => g.cards));
   protected readonly total = computed(() => this.packs().reduce((sum, p) => sum + p.cards.length, 0));
 
   protected readonly imageUrl = cardImageUrl;
-  protected readonly rarityName = (r: string) => RARITY_NAMES[r] ?? r;
-  protected readonly asRarity = (r: string) => r as Rarity;
   /** The aura of a card: its rarity when it shines (SR, SEC), none otherwise. */
   protected readonly aura = (card: CatalogCard) => (SHINY.has(card.meta?.rarity ?? '') ? (card.meta?.rarity ?? '').toLowerCase() : null);
   private readonly special = (card: CatalogCard) => SHINY.has(card.meta?.rarity ?? '');
@@ -140,7 +140,7 @@ export class BoosterResultPage {
       const product = this.product();
       started = true;
       untracked(() => {
-        if (edition && product && this.wallet.takeTicket(purchaseTicket(edition, product))) this.deal();
+        if (edition && product && this.wallet.takeTicket(purchaseTicket(edition, product))) void this.deal();
       });
     });
   }
@@ -157,7 +157,7 @@ export class BoosterResultPage {
     if (!edition || !product || !(await this.checkout.purchase(edition, product))) return;
     this.wallet.takeTicket(purchaseTicket(edition, product));
     if (product.kind === 'pack') this.request.set({ ...this.current(), packType: pickRandomPackFromBox(edition) });
-    this.deal();
+    void this.deal();
   }
 
   /** Opens the packs one after another. */
@@ -165,7 +165,10 @@ export class BoosterResultPage {
     if (this.phase() !== 'packs') return;
     if (this.reduceMotion) return this.skip();
     this.phase.set('opening');
-    this.openPackAt(0);
+    if (!this.isStructure()) return this.openPackAt(0);
+    // A structure deck: it tears open and its whole list shows
+    this.tearing.set(true);
+    this.later(() => this.skip(), TEAR_MS);
   }
 
   /** Straight to the full list. */
@@ -176,22 +179,30 @@ export class BoosterResultPage {
   }
 
   protected openCard(card: CatalogCard): void {
-    const flat = this.groups().flatMap((g) => g.cards.map((c) => c.card));
+    const flat = this.obtained().map((c) => c.card);
     const data: CardDetailDialogData = { cards: flat, index: flat.indexOf(card) };
     this.modal.open(CardDetailDialogComponent, { data });
   }
 
-  /** Draws the packs (their cards unseen yet) and lays them on the table. */
-  private deal(): void {
+  /**
+   * Draws what was bought (its cards unseen yet) and lays it on the table: a pack; a box's packs, one of them going up
+   * a rarity (always in an edition's box, half the times in a sub-edition's); or a structure deck, whole (the public
+   * deck named after it, or else one of each of its cards).
+   */
+  private async deal(): Promise<void> {
     const edition = this.editionData();
-    const types = edition?.packTypes ?? [];
-    if (!edition || !types.length) return;
+    if (!edition) return;
     this.stopTimers();
     const pool = cardsByRarity(this.cards.cards(), edition.editionId);
+    const types = edition.packTypes ?? [];
     const request = this.current();
     let packs: OpenedPack[];
-    if (request.mode === 'box') {
-      packs = openBoxPacks(edition, pool);
+    if (request.mode === 'structure') {
+      packs = [{ packType: 'Structure', cards: await this.structureCards(edition.editionId) }];
+    } else if (!types.length) {
+      return;
+    } else if (request.mode === 'box') {
+      packs = upgradeOnePack(openBoxPacks(edition, pool), types, pool, isSubEdition(edition.editionId) ? 0.5 : 1);
     } else {
       const type = types.find((p) => p.name === request.packType) ?? types[0];
       packs = [{ packType: type.name, cards: openPack(type, pool) }];
@@ -202,6 +213,15 @@ export class BoosterResultPage {
     this.faceUp.set(new Set());
     this.trembling.set(new Set());
     this.phase.set('packs');
+  }
+
+  /** A structure deck's cards: its public deck (named like the edition, "ST1"), or one of each card of the edition. */
+  private async structureCards(editionId: string): Promise<CatalogCard[]> {
+    await this.decks.loadPublic();
+    const deck = this.decks.publicDecks().find((d) => d.deckName.trim().toUpperCase() === editionId.toUpperCase());
+    const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
+    const fromDeck = (deck?.cards ?? []).map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c);
+    return fromDeck.length ? fromDeck : this.cards.cards().filter((c) => c.edition === editionId && !!c.meta);
   }
 
   private openPackAt(index: number): void {

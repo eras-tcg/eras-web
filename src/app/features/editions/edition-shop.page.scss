@@ -76,41 +76,12 @@
   block-size: 1.6rem;
 }
 
-.offer-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-inline-size: 0;
-}
-
 .offer-name {
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-regular);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.offer-hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.contents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  margin: 0;
-  padding: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  list-style: none;
-}
-
-.contents strong {
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
 }
 
 .buy {

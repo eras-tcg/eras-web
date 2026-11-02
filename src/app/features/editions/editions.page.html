@@ -1,4 +1,4 @@
-<eras-page title="Ediciones" width="wide" fill>
+<eras-page title="Tienda" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
     <button *erasEdit="'manage_editions'" erasButton variant="secondary" size="sm" type="button" (click)="openForm()">
       <eras-icon name="plus" /> Nueva edición
@@ -30,7 +30,7 @@
               <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>
               <span class="tile-prices">
                 @for (product of products(edition); track product.kind) {
-                  <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : 'sobre' }}</span></span>
+                  <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : product.kind === 'structure' ? 'structure' : 'sobre' }}</span></span>
                 } @empty {
                   <span class="price-what">No está a la venta</span>
                 }

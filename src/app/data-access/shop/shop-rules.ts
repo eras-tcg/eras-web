@@ -8,13 +8,20 @@ export const PACK_PRICE = 100;
 /** A booster box of an edition (E1, E2…) and of a sub-edition (E1.1, E1.2…). */
 export const BOX_PRICE = 2400;
 export const SUB_EDITION_BOX_PRICE = 1200;
+/** A structure deck (ST1, ST2…), whole. */
+export const STRUCTURE_PRICE = 500;
+
+/** A structure deck has an ST code (ST1, ST2…): it sells itself whole, not in packs. */
+export function isStructure(editionId: string): boolean {
+  return editionId.toUpperCase().startsWith('ST');
+}
 
 /** A sub-edition has a dotted code (E1.1, E1.2…); editions and structures do not (E1, ST1…). */
 export function isSubEdition(editionId: string): boolean {
   return editionId.includes('.');
 }
 
-export type ProductKind = 'pack' | 'box';
+export type ProductKind = 'pack' | 'box' | 'structure';
 
 export interface ShopProduct {
   kind: ProductKind;
@@ -30,10 +37,12 @@ export function boxPrice(editionId: string): number {
 }
 
 /**
- * What an edition sells: a pack (its type drawn at random, see packOdds) and, with a box configured, the booster
- * box. Never a chosen pack type: the point of buying is not knowing which one comes.
+ * What an edition sells: a structure deck, itself whole; any other edition, a pack (its type drawn at random, see
+ * packOdds) and, with a box configured, the booster box. Never a chosen pack type: the point of buying is not
+ * knowing which one comes.
  */
 export function shopProducts(edition: Edition): ShopProduct[] {
+  if (isStructure(edition.editionId)) return [{ kind: 'structure', name: 'Structure deck', price: STRUCTURE_PRICE }];
   if (!canSimulatePack(edition)) return [];
   const products: ShopProduct[] = [{ kind: 'pack', name: 'Sobre', price: PACK_PRICE }];
   const packs = edition.boxConfig?.totalPacks ?? 0;
@@ -127,7 +136,7 @@ export function boxContents(edition: Edition): BoxContent[] {
   });
 }
 
-/** An opening as /booster-result describes it (its query: mode and, for a pack, the type that came out). */
+/** An opening as /booster-result describes it (its query: mode pack | box | structure and, for a pack, the type that came out). */
 export interface OpeningRequest {
   mode: string;
   packType?: string;
@@ -135,10 +144,12 @@ export interface OpeningRequest {
 
 /** The product an opening belongs to (null when the edition does not sell it). */
 export function productFor(edition: Edition, request: OpeningRequest): ShopProduct | null {
-  return shopProducts(edition).find((p) => p.kind === (request.mode === 'box' ? 'box' : 'pack')) ?? null;
+  const kind = request.mode === 'box' || request.mode === 'structure' ? request.mode : 'pack';
+  return shopProducts(edition).find((p) => p.kind === kind) ?? null;
 }
 
 /** The query that opens `product`: a pack gets its type drawn with `drawPack` (see packOdds). */
 export function openingQuery(edition: Edition, product: ShopProduct, drawPack: () => string): OpeningRequest & { edition: string } {
-  return product.kind === 'box' ? { edition: edition.editionId, mode: 'box' } : { edition: edition.editionId, mode: 'pack', packType: drawPack() };
+  if (product.kind !== 'pack') return { edition: edition.editionId, mode: product.kind };
+  return { edition: edition.editionId, mode: 'pack', packType: drawPack() };
 }

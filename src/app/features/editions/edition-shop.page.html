@@ -21,36 +21,28 @@
         }
 
         <div class="info">
-          <button erasButton variant="secondary" type="button" [disabled]="!pack()" (click)="openOdds()"><eras-icon name="list" /> Probabilidades</button>
+          @if (!structure()) {
+            <button erasButton variant="secondary" type="button" [disabled]="!pack()" (click)="openOdds()"><eras-icon name="list" /> Probabilidades</button>
+          }
           <button erasButton variant="secondary" type="button" (click)="openCards()"><eras-icon name="cards" /> Cartas incluidas</button>
         </div>
 
-        @if (pack(); as p) {
+        @if (products().length) {
+          <!-- Only the name and the price: what each one brings is in "Probabilidades" -->
           <div class="offers">
-            <article class="offer">
-              <span class="offer-icon" aria-hidden="true"><eras-icon name="layers" /></span>
-              <div class="offer-text">
-                <h2 class="offer-name">Sobre</h2>
-                <p class="offer-hint">Un tipo de sobre al azar, con la misma probabilidad que dentro de una caja.</p>
-              </div>
-              <button erasButton type="button" class="buy" [disabled]="p.price > wallet.gems()" [attr.aria-label]="'Comprar un sobre por ' + p.price + ' gemas'" (click)="buy(p)">
-                <eras-icon name="gem" /> {{ p.price | number: '1.0-0' : 'es' }}
-              </button>
-            </article>
-
-            @if (box(); as b) {
-              <article class="offer box">
-                <span class="offer-icon" aria-hidden="true"><eras-icon name="box" /></span>
-                <div class="offer-text">
-                  <h2 class="offer-name">Booster box · {{ b.packs }} sobres</h2>
-                  <ul class="contents">
-                    @for (row of contents(); track $index) {
-                      <li><strong>{{ range(row) }}</strong> × {{ row.packType }}</li>
-                    }
-                  </ul>
-                </div>
-                <button erasButton type="button" class="buy" [disabled]="b.price > wallet.gems()" [attr.aria-label]="'Comprar una booster box por ' + b.price + ' gemas'" (click)="buy(b)">
-                  <eras-icon name="gem" /> {{ b.price | number: '1.0-0' : 'es' }}
+            @for (product of products(); track product.kind) {
+              <article class="offer" [class.box]="product.kind === 'box'">
+                <span class="offer-icon" aria-hidden="true"><eras-icon [name]="product.kind === 'pack' ? 'layers' : 'box'" /></span>
+                <h2 class="offer-name">{{ product.kind === 'box' ? 'Booster box · ' + product.packs + ' sobres' : product.name }}</h2>
+                <button
+                  erasButton
+                  type="button"
+                  class="buy"
+                  [disabled]="product.price > wallet.gems()"
+                  [attr.aria-label]="'Comprar ' + product.name + ' por ' + product.price + ' gemas'"
+                  (click)="buy(product)"
+                >
+                  <eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}
                 </button>
               </article>
             }

@@ -7,7 +7,7 @@ export interface ScreenLink {
 const HOME: ScreenLink = { route: '/home', label: 'Inicio' };
 const PLAY: ScreenLink = { route: '/play', label: 'Jugar' };
 const SOCIAL: ScreenLink = { route: '/social', label: 'Social' };
-const EDITIONS: ScreenLink = { route: '/editions', label: 'Ediciones' };
+const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 

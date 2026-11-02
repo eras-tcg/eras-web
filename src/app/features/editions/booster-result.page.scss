@@ -103,15 +103,11 @@ eras-icon[name='gem'] {
   }
 }
 
-.pack-label,
-.tier {
+.pack-label {
   position: relative;
   z-index: 1;
   text-align: center;
   text-shadow: 0 1px 3px var(--color-hub-scrim);
-}
-
-.pack-label {
   font-family: var(--font-family-display);
   font-size: var(--font-size-sm);
   line-height: 1.1;
@@ -123,18 +119,6 @@ eras-icon[name='gem'] {
   font-size: var(--font-size-xl);
 }
 
-.tier {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--aura, var(--color-hub-accent));
-  color: var(--color-sim-on-moment);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-shadow: none;
-}
 
 // The aura itself: a soft pulsing halo in the tier's color
 .tier-sr,
@@ -177,9 +161,6 @@ eras-icon[name='gem'] {
   }
 }
 
-.tier-god .tier {
-  background: conic-gradient(from var(--spin), var(--color-rarity-sec), var(--color-rarity-sr), var(--color-hub-glow), var(--color-rarity-sec));
-}
 
 @keyframes spin {
   to {
@@ -191,6 +172,8 @@ eras-icon[name='gem'] {
 .table {
   display: flex;
   flex: 1;
+  // A click anywhere opens the packs
+  cursor: pointer;
   flex-direction: column;
   align-items: center;
   align-self: stretch;
@@ -211,8 +194,27 @@ eras-icon[name='gem'] {
   overflow: hidden;
 }
 
-.packs .pack-label {
-  font-size: clamp(0.6rem, calc(var(--pack-width, 8rem) * 0.08), 1.15rem);
+// The pack that went up a rarity: a burst of light as it lands
+.pack.upgraded::before {
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-hub-glow) 90%, transparent), transparent 70%);
+  animation: level-up 1.4s ease-out 0.6s both;
+}
+
+@keyframes level-up {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
 }
 
 .dealt {
@@ -238,10 +240,6 @@ eras-icon[name='gem'] {
     opacity: 0;
     transform: translateY(-2.5rem) rotate(-6deg);
   }
-}
-
-.open {
-  font-size: var(--font-size-md);
 }
 
 /* 2. Opening: the pack tears, then its cards turn one by one */

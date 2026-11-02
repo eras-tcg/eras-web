@@ -54,11 +54,11 @@ export class WalletStore {
   }
 
   /**
-   * Buys a "pack" or a "box" of an edition; false (and nothing paid) when the server refuses (`error` says why).
+   * Buys a "pack", a "box" or a "structure" deck; false (and nothing paid) when the server refuses (`error` says why).
    * `ticket` names what was bought, so the opening can check it was paid: reloading it, or reaching its URL
    * directly, does not open it for free.
    */
-  async purchase(editionId: string, product: 'pack' | 'box', ticket: string): Promise<boolean> {
+  async purchase(editionId: string, product: 'pack' | 'box' | 'structure', ticket: string): Promise<boolean> {
     this.error.set(null);
     try {
       const done = await firstValueFrom(this.http.post<WalletResponse>(this.api.url('/api/drive/wallet/me/purchase'), { editionId, product }));

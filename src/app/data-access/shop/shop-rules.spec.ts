@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BoxEntry, Edition } from '../editions/edition.model';
-import { BOX_PRICE, PACK_PRICE, SUB_EDITION_BOX_PRICE, boxContents, boxPrice, isSubEdition, openingQuery, packOdds, productFor, shopProducts } from './shop-rules';
+import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, boxContents, boxPrice, isSubEdition, openingQuery, packOdds, productFor, shopProducts } from './shop-rules';
 
 const pack = (name: string) => ({ name, cardsPerRarity: { C: 6, UC: 3, R: 1, SR: 0, SEC: 0 } });
 
@@ -20,6 +20,15 @@ describe('shopProducts', () => {
     const products = shopProducts(box([{ packTypeName: 'Normal', mode: 'FIXED', quantity: 24, probOptions: [] }]));
     expect(products.map((p) => p.kind)).toEqual(['pack', 'box']);
     expect(products[1]).toMatchObject({ name: 'Booster box', packs: 24, price: BOX_PRICE });
+  });
+});
+
+describe('structure decks', () => {
+  it('sell themselves whole, never in packs', () => {
+    const st = { editionId: 'ST1', packTypes: [pack('Normal')] };
+    expect(shopProducts(st)).toEqual([{ kind: 'structure', name: 'Structure deck', price: STRUCTURE_PRICE }]);
+    expect(productFor(st, { mode: 'structure' })?.kind).toBe('structure');
+    expect(openingQuery(st, shopProducts(st)[0], () => 'x')).toEqual({ edition: 'ST1', mode: 'structure' });
   });
 });
 

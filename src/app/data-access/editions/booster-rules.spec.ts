@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
-import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle } from './booster-rules';
+import { cardsByRarity, groupOpening, openBox, openBoxPacks, openPack, packTier, revealOrder, rollQuantity, shuffle, upgradeOnePack } from './booster-rules';
 import { Edition, PackType } from './edition.model';
 
 const card = (id: string, rarity: string | null, over: Partial<CatalogCard> = {}): CatalogCard => ({
@@ -119,6 +119,34 @@ describe('packTier', () => {
     expect(packTier(type('Doble secreta', 0, 2))).toBe('god');
     expect(packTier(type('GOD PACK', 0, 0))).toBe('god');
     expect(packTier(undefined)).toBe('none');
+  });
+});
+
+describe('upgradeOnePack', () => {
+  const types: PackType[] = [
+    { name: 'R PACK', cardsPerRarity: { C: 1, UC: 0, R: 1, SR: 0, SEC: 0 } },
+    { name: 'SR PACK', cardsPerRarity: { C: 1, UC: 0, R: 0, SR: 1, SEC: 0 } },
+    { name: 'SEC PACK', cardsPerRarity: { C: 1, UC: 0, R: 0, SR: 0, SEC: 1 } },
+    { name: 'GOD PACK', cardsPerRarity: { C: 0, UC: 0, R: 0, SR: 5, SEC: 5 } },
+  ];
+  const pool = cardsByRarity(catalog, 'E1');
+  const opened = (packType: string) => ({ packType, cards: [] });
+
+  it('takes one pack to the next type up, with that type\'s cards', () => {
+    const out = upgradeOnePack([opened('R PACK'), opened('GOD PACK')], types, pool, 1, () => 0);
+    expect(out[0]).toMatchObject({ packType: 'SR PACK', upgradedFrom: 'R PACK' });
+    expect(out[0].cards.map((c) => c.id)).toEqual(['c1', 's5']);
+    expect(out[1]).toEqual(opened('GOD PACK'));
+  });
+
+  it('turns a SEC pack into a GOD pack, and never touches a GOD pack', () => {
+    expect(upgradeOnePack([opened('GOD PACK'), opened('SEC PACK')], types, pool, 1, () => 0)[1].packType).toBe('GOD PACK');
+    expect(upgradeOnePack([opened('GOD PACK')], types, pool, 1, () => 0)).toEqual([opened('GOD PACK')]);
+  });
+
+  it('happens only with its chance', () => {
+    expect(upgradeOnePack([opened('R PACK')], types, pool, 0.5, () => 0.7)).toEqual([opened('R PACK')]);
+    expect(upgradeOnePack([opened('R PACK')], types, pool, 0.5, () => 0.2)[0].upgradedFrom).toBe('R PACK');
   });
 });
 

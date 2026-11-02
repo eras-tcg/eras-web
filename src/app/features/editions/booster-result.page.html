@@ -37,22 +37,21 @@
         }
 
         @case ('packs') {
-          <!-- 1. Every pack bought on the table, shuffled, as big as fits; the special ones with their aura -->
-          <div class="table">
+          <!-- 1. Every pack bought on the table, shuffled, as big as fits -->
+          <!-- Any click (or Enter) opens them: there is no button -->
+          <div class="table" role="button" tabindex="0" [attr.aria-label]="packs().length > 1 ? 'Abrir los ' + packs().length + ' sobres' : 'Abrir el sobre'" (click)="start()" (keydown.enter)="start()" (keydown.space)="start()">
             <div #table class="packs" [style.--pack-width.px]="packWidth()">
               @for (pack of packs(); track $index; let i = $index) {
-                @let tier = tierOf(pack.packType);
-                <div class="pack dealt" [class]="'tier-' + tier" [style.--art]="art" [style.animation-delay.ms]="i * 45">
-                  <span class="pack-label">{{ pack.packType }}</span>
-                  @if (tier !== 'none') {
-                    <span class="tier">{{ tier.toUpperCase() }}</span>
-                  }
-                </div>
+                <!-- No name: only the aura tells a special pack; the one that went up a rarity flashes as it lands -->
+                <div
+                  class="pack dealt"
+                  [class]="'tier-' + tierOf(pack.packType)"
+                  [class.upgraded]="!!pack.upgradedFrom"
+                  [style.--art]="art"
+                  [style.animation-delay.ms]="i * 45"
+                ></div>
               }
             </div>
-            <button erasButton type="button" class="open" (click)="start()">
-              <eras-icon name="sparkles" /> {{ packs().length > 1 ? 'Abrir ' + packs().length + ' sobres' : 'Abrir sobre' }}
-            </button>
           </div>
         }
 
@@ -89,24 +88,20 @@
           <!-- 3. Only at the end: everything that came out, rarest first -->
           <div class="summary">
             <p class="hint">{{ total() }} cartas obtenidas · toca una para verla</p>
-            @for (group of groups(); track group.rarity) {
-              <eras-section-header [title]="rarityName(group.rarity) + ' (' + group.count + ')'">
-                <eras-rarity-badge [rarity]="asRarity(group.rarity)" />
-              </eras-section-header>
-              <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
-                @for (opened of group.cards; track opened.card.id; let i = $index) {
-                  <eras-card-thumb
-                    class="arrive"
-                    [class]="aura(opened.card) ? 'aura-' + aura(opened.card) : ''"
-                    [style.animation-delay.ms]="i < 24 ? i * 35 : 840"
-                    [name]="opened.card.name ?? ''"
-                    [imageUrl]="imageUrl(opened.card)"
-                    [count]="opened.count"
-                    (selected)="openCard(opened.card)"
-                  />
-                }
-              </eras-grid>
-            }
+            <!-- One card after another, rarest first -->
+            <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
+              @for (opened of obtained(); track opened.card.id; let i = $index) {
+                <eras-card-thumb
+                  class="arrive"
+                  [class]="aura(opened.card) ? 'aura-' + aura(opened.card) : ''"
+                  [style.animation-delay.ms]="i < 24 ? i * 35 : 840"
+                  [name]="opened.card.name ?? ''"
+                  [imageUrl]="imageUrl(opened.card)"
+                  [count]="opened.count"
+                  (selected)="openCard(opened.card)"
+                />
+              }
+            </eras-grid>
           </div>
         }
       }

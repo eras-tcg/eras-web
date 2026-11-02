@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { breakPlan, craftedSummary, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { bestFinish, breakPlan, craftedSummary, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -32,5 +32,14 @@ describe('collection rules', () => {
   it('counts what a craft gave by finish', () => {
     expect(craftedSummary(['plain', 'foil', 'plain', 'prism'])).toBe('2 normales, 1 foil, 1 prismática');
     expect(craftedSummary(['plain'])).toBe('1 normal');
+  });
+
+  it('puts the finest finishes first, for the list and for a deck\'s copies', () => {
+    expect(ownedFinishes({ plain: 2, prism: 1 })).toEqual(['prism', 'plain']);
+    expect(bestFinish({ plain: 2, foil: 1 })).toBe('foil');
+    expect(bestFinish(undefined)).toBeNull();
+    expect(deckCopyFinishes({ plain: 1, foil: 1 }, 4)).toEqual(['foil', 'plain', null, null]);
+    expect(shineOf('plain')).toBeNull();
+    expect(shineOf('prism')).toBe('prism');
   });
 });

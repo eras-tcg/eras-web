@@ -7,7 +7,8 @@ import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } 
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, collapseByName, fullEditionId } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { missingCopies } from '@data/collection/collection-rules';
+import { bestFinish, deckCopyFinishes, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
+import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
@@ -109,6 +110,18 @@ export class DeckBuilderPage {
   protected owns(card: CatalogCard): boolean {
     return !this.signedIn() || this.collection.owned(card.id) > 0;
   }
+  /** The finest finish the player owns of a card (null when none). */
+  protected best(card: CatalogCard): Finish | null {
+    return bestFinish(this.collection.collection()?.cards[card.id]);
+  }
+  /** Each of the deck's copies of a card with its finish (the player's finest first; null for one they lack). */
+  protected copyFinishes(entry: DeckEntry): (Finish | null)[] {
+    return deckCopyFinishes(this.collection.collection()?.cards[entry.card.id], entry.count);
+  }
+  protected readonly shineOf = shineOf;
+  /** The deck's copies of a card together (one card, ×N) or each by itself, smaller (remembered on the device). */
+  protected readonly groupCopies = persistedFlag('eras-deck-builder-group-copies', true);
+
   /** A deck's copies of a card the player does not have. */
   protected lacking(entry: DeckEntry): number {
     return this.signedIn() ? Math.max(0, entry.count - this.collection.owned(entry.card.id)) : 0;
@@ -129,6 +142,8 @@ export class DeckBuilderPage {
   /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
   protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
+  /** Every finish the player owns of a card as its own entry, instead of only the finest. */
+  protected readonly allFinishes = signal(false);
   /** Only the cards the player has, or only the ones they lack ('' for all). */
   protected readonly ownership = signal<'' | 'owned' | 'missing'>('');
   protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.quickType() || !!this.ownership());
@@ -144,11 +159,26 @@ export class DeckBuilderPage {
     const ownership = this.ownership();
     return ownership ? shown.filter((c) => this.owns(c) === (ownership === 'owned')) : shown;
   });
-  protected readonly resultCount = computed(() => this.results().length);
-  protected readonly visibleResults = computed(() => this.results().slice(0, this.renderCount()));
+  /** The search's cards as shown: each with the finest finish the player owns, or one per finish they own. */
+  private readonly items = computed(() =>
+    this.results().flatMap((card) => {
+      const finishes = ownedFinishes(this.collection.collection()?.cards[card.id]);
+      if (this.allFinishes() && finishes.length > 1) return finishes.map((finish) => ({ card, finish, key: `${card.id}|${finish}` }));
+      return [{ card, finish: finishes[0] ?? null, key: card.id }];
+    }),
+  );
+  protected readonly resultCount = computed(() => this.items().length);
+  protected readonly visibleResults = computed(() => this.items().slice(0, this.renderCount()));
 
   // ── Detail ────────────────────────────────────────────────────────────
   protected readonly selected = signal<CatalogCard | null>(null);
+  /** The finish of the copy picked (from "Todas las rarezas" or a deck's copy); otherwise the finest owned shows. */
+  protected readonly selectedFinish = signal<Finish | null | undefined>(undefined);
+  protected readonly detailShine = computed(() => {
+    const card = this.selected();
+    const picked = this.selectedFinish();
+    return shineOf(picked !== undefined ? picked : card ? this.best(card) : null);
+  });
   protected readonly detail = computed(() => {
     const card = this.selected();
     return card ? cardDetailView(card, this.cards.ref(), this.cards.unprogrammedOf(card)) : null;
@@ -200,9 +230,15 @@ export class DeckBuilderPage {
 
   // ── Deck actions ──────────────────────────────────────────────────────
 
+  /** Shows a card on the left, as the copy picked (`finish`) or, without one, its finest owned. */
+  protected select(card: CatalogCard | null, finish?: Finish | null): void {
+    this.selected.set(card);
+    this.selectedFinish.set(finish);
+  }
+
   protected add(card: CatalogCard): void {
     this.draft.add(card);
-    this.selected.set(card);
+    this.select(card);
     this.savedNotice.set(false);
   }
 
@@ -358,7 +394,7 @@ export class DeckBuilderPage {
     }
     this.draft.reset();
     this.loadedFor = null;
-    this.selected.set(null);
+    this.select(null);
     this.loadError.set(null);
     this.saveError.set(null);
     this.savedNotice.set(false);

@@ -17,6 +17,7 @@
           [color]="v.color"
           [colorLabel]="v.colorLabel"
           [imageUrl]="v.imageUrl"
+          [foil]="detailShine()"
           [textGroups]="v.groups"
           [notice]="v.notice"
         >
@@ -55,6 +56,7 @@
 
     <eras-stack direction="row" [gap]="2" align="center" wrap>
       <strong>{{ draft.total() }} / {{ maxCards }} cartas</strong>
+      <button erasChip [selected]="groupCopies()" title="Las copias de una carta juntas (×N), o cada una por separado" (click)="groupCopies.set(!groupCopies())">Agrupar copias</button>
       <button
         erasButton
         type="button"
@@ -134,6 +136,7 @@
       } @else {
         @for (group of draft.groups(); track group.type) {
           <eras-section-header [title]="(typeLabels[group.type] ?? group.type) + ' (' + group.count + ')'" />
+          @if (groupCopies()) {
           <eras-grid minColumn="7.5rem" [gap]="3">
             @for (entry of group.entries; track entry.card.id) {
               <!-- The buttons sit over the card, to save space -->
@@ -145,8 +148,9 @@
                   badgeTone="info"
                   [count]="entry.count"
                   showSingleCount
+                  [foil]="shineOf(best(entry.card))"
                   [active]="selected()?.id === entry.card.id"
-                  (selected)="selected.set(entry.card)"
+                  (selected)="select(entry.card)"
                 />
                 <div class="entry-actions">
                   <button type="button" class="minus" [attr.aria-label]="'Quitar una copia de ' + entry.card.name" title="Quitar una copia" (click)="remove(entry.card)">−</button>
@@ -167,6 +171,24 @@
               </div>
             }
           </eras-grid>
+          } @else {
+          <!-- Every copy by itself, smaller: each with its finish (the player's finest first), in grey when lacking -->
+          <eras-grid minColumn="4.75rem" [gap]="2">
+            @for (entry of group.entries; track entry.card.id) {
+              @for (finish of copyFinishes(entry); track $index) {
+                <div class="copy" [class.lacking]="finish === null" [attr.title]="finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
+                  <eras-card-thumb
+                    [name]="entry.card.name ?? ''"
+                    [imageUrl]="imageUrl(entry.card)"
+                    [foil]="shineOf(finish)"
+                    [active]="selected()?.id === entry.card.id"
+                    (selected)="select(entry.card, finish)"
+                  />
+                </div>
+              }
+            }
+          </eras-grid>
+          }
         }
       }
     </eras-dropzone>
@@ -205,6 +227,9 @@
           <button erasChip [selected]="quickType() === t" (click)="toggleQuickType(t)">{{ typeLabels[t] ?? t }}</button>
         }
         <button erasChip [selected]="!view().collapse" (click)="view.set({ ...view(), collapse: !view().collapse })">Todas las impresiones</button>
+        @if (signedIn()) {
+          <button erasChip [selected]="allFinishes()" title="Cada acabado que tienes de una carta, por separado" (click)="allFinishes.set(!allFinishes())">Todas las rarezas</button>
+        }
         <button erasChip [selected]="showUnprogrammed()" title="Marca las cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
         @if (signedIn()) {
           <button erasChip [selected]="ownership() === 'owned'" (click)="toggleOwnership('owned')">Las que tengo</button>
@@ -228,7 +253,8 @@
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else {
         <eras-grid minColumn="6.5rem" [gap]="2">
-          @for (card of visibleResults(); track card.id) {
+          @for (item of visibleResults(); track item.key) {
+            @let card = item.card;
             <div
               draggable="true"
               [class.lacking]="!owns(card)"
@@ -244,8 +270,9 @@
                 [count]="draft.copiesOf(card)"
                 showSingleCount
                 [dimmed]="!draft.canAdd(card)"
+                [foil]="shineOf(item.finish)"
                 [active]="selected()?.id === card.id"
-                (selected)="selected.set(card)"
+                (selected)="select(card, item.finish)"
               />
             </div>
           }

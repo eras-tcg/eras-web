@@ -75,3 +75,31 @@ export function craftedSummary(finishes: readonly Finish[]): string {
     .map(([f, n]) => `${n} ${FINISH_COUNTED[f][n === 1 ? 0 : 1]}`)
     .join(', ');
 }
+
+/** The finishes of a card a player owns, the finest first (none when they have no copy). */
+export function ownedFinishes(copies: OwnedCopies | undefined): Finish[] {
+  return [...FINISHES].reverse().filter((f) => (copies?.[f] ?? 0) > 0);
+}
+
+/** The finest finish of a card a player owns, or null when they have none. */
+export function bestFinish(copies: OwnedCopies | undefined): Finish | null {
+  return ownedFinishes(copies)[0] ?? null;
+}
+
+/**
+ * The finish of each of a deck's `count` copies of a card, taken from the player's copies the finest first; a copy
+ * they lack is null.
+ */
+export function deckCopyFinishes(copies: OwnedCopies | undefined, count: number): (Finish | null)[] {
+  const out: (Finish | null)[] = [];
+  for (const finish of ownedFinishes(copies)) {
+    for (let i = 0; i < (copies?.[finish] ?? 0) && out.length < count; i++) out.push(finish);
+  }
+  while (out.length < count) out.push(null);
+  return out;
+}
+
+/** The shine a finish shows on a card (a plain copy shows none). */
+export function shineOf(finish: Finish | null | undefined): 'foil' | 'prism' | null {
+  return finish === 'foil' || finish === 'prism' ? finish : null;
+}

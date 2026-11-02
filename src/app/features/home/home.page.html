@@ -1,68 +1,97 @@
-<eras-home-layout featureTitle="Edición destacada" mainTitle="Mazos destacados" sideTitle="Noticias">
-  <eras-stack home-toolbar direction="row" [gap]="2" align="center" justify="end" wrap>
-    @if (home.editing()) {
-      <span class="sr-only" role="status">Editando la portada</span>
-      <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
-      <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
-    } @else {
-      <button *erasEdit="'manage_home'" erasButton variant="secondary" size="sm" type="button" (click)="startEdit()">
-        <eras-icon name="edit" /> Editar portada
-      </button>
+<div class="hub">
+  <div class="art" aria-hidden="true" [style.background-image]="background()?.editionImage ? 'url(' + background()!.editionImage + ')' : null"></div>
+
+  <header class="top">
+    @if (auth.user(); as user) {
+      <a class="player" routerLink="/profile" aria-label="Mi perfil">
+        <eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" />
+        <span class="player-text">
+          <span class="player-name">{{ user.username }}</span>
+          <span class="player-meta">
+            @if (myDecks() === null) {
+              Jugador de ERAS
+            } @else {
+              {{ myDecks() }} {{ myDecks() === 1 ? 'mazo' : 'mazos' }}
+            }
+          </span>
+        </span>
+      </a>
     }
-  </eras-stack>
+    <eras-app-tools class="tools" />
+  </header>
 
-  @if (home.error(); as error) {
-    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
-  }
-  @if (saveError(); as error) {
-    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
-  }
-
-  <div home-feature>
-    @if (home.loading()) {
-      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
-    } @else if (home.content().edition; as edition) {
-      <eras-featured-edition
-        fill
-        [code]="edition.editionId"
-        [name]="edition.editionName ?? null"
-        [description]="edition.editionDescription ?? null"
-        [imageUrl]="edition.editionImage ?? null"
-        (selected)="openCards(edition.editionId)"
-      >
+  <section class="panel" aria-label="Novedades">
+    @if (editMode.allows('manage_home')) {
+      <div class="edit-bar">
         @if (home.editing()) {
-          <button featured-actions erasButton size="sm" type="button" (click)="pickEdition()">
-            <eras-icon name="edit" /> Cambiar
-          </button>
+          <span class="sr-only" role="status">Editando la portada</span>
+          <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
+          <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
+        } @else {
+          <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()"><eras-icon name="edit" /> Editar portada</button>
         }
-      </eras-featured-edition>
-    } @else if (home.editing()) {
-      <button erasButton variant="secondary" type="button" (click)="pickEdition()">
-        <eras-icon name="plus" /> Elegir edición destacada
+      </div>
+    }
+    @if (home.error(); as error) {
+      <eras-alert tone="danger">{{ error }}</eras-alert>
+    }
+    @if (saveError(); as error) {
+      <eras-alert tone="danger">{{ error }}</eras-alert>
+    }
+
+    @if (home.editing()) {
+      <div class="editor">
+        <div class="editor-row">
+          <span class="editor-label">Edición destacada</span>
+          <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
+          <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
+        </div>
+        @for (deck of home.content().decks; track $index; let i = $index) {
+          <div class="editor-row">
+            <span class="editor-label">Mazo #{{ i + 1 }}</span>
+            <span class="editor-value">{{ deck?.deckName ?? 'Vacío' }}</span>
+            <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
+              <eras-icon name="edit" />
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <eras-hub-carousel
+        [slides]="slides()"
+        [loading]="home.loading()"
+        (editionSelected)="openCards($event)"
+        (deckSelected)="openDeck($event)"
+      />
+    }
+
+    @if (step(); as next) {
+      <a class="mission" [routerLink]="next.route">
+        <eras-icon class="mission-icon" [name]="next.icon" />
+        <span class="mission-text">
+          <span class="eyebrow">Siguiente paso</span>
+          <span class="mission-title">{{ next.title }}</span>
+          <span class="mission-hint">{{ next.text }}</span>
+        </span>
+        <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
+      </a>
+    }
+  </section>
+
+  <eras-hub-actions class="actions" />
+
+  <div class="corner">
+    @if (background(); as art) {
+      <button type="button" class="credit" (click)="openCards(art.editionId)">
+        <eras-icon name="image" /> {{ art.editionName || art.editionId }}
       </button>
     }
+    <a class="play" routerLink="/simulator">
+      <span class="play-icon"><eras-icon name="play" /></span>
+      <span class="play-text">
+        <span class="play-title">Jugar ahora</span>
+        <span class="play-hint">Crea o únete a una sala</span>
+      </span>
+    </a>
   </div>
-
-  @for (deck of home.loading() ? [] : home.content().decks; track $index; let i = $index) {
-    <eras-deck-cover
-      [style.visibility]="deck || home.editing() ? null : 'hidden'"
-      home-main
-      fit
-      [rank]="i + 1"
-      [name]="deck?.deckName ?? null"
-      [author]="deck?.username ?? null"
-      [imageUrl]="deck?.deckImage ?? null"
-      (selected)="openDeck(deck)"
-    >
-      @if (home.editing()) {
-        <button cover-actions erasButton size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
-          <eras-icon name="edit" />
-        </button>
-      }
-    </eras-deck-cover>
-  }
-
-  @for (item of news; track item.title) {
-    <eras-news-card home-side [date]="item.date" [dateLabel]="item.dateLabel" [title]="item.title" [excerpt]="item.excerpt" />
-  }
-</eras-home-layout>
+</div>

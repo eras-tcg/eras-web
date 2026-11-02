@@ -1,0 +1,69 @@
+@if (loading()) {
+  <div class="slide slide-empty"><eras-spinner /></div>
+} @else if (slide(); as current) {
+  @switch (current.kind) {
+    @case ('edition') {
+      <button
+        type="button"
+        class="slide slide-edition"
+        [style.background-image]="current.edition.editionImage ? 'url(' + current.edition.editionImage + ')' : null"
+        (click)="editionSelected.emit(current.edition.editionId)"
+      >
+        <span class="slide-body">
+          <span class="eyebrow">Edición destacada</span>
+          <span class="slide-title">{{ current.edition.editionName || current.edition.editionId }}</span>
+          @if (current.edition.editionDescription) {
+            <span class="slide-text">{{ current.edition.editionDescription }}</span>
+          }
+        </span>
+      </button>
+    }
+    @case ('decks') {
+      <div class="slide slide-decks">
+        <span class="eyebrow">Mazos destacados</span>
+        <ul class="deck-list">
+          @for (deck of current.decks; track deck.id) {
+            <li>
+              <button type="button" class="deck" (click)="deckSelected.emit(deck)">
+                <span class="deck-art" [style.background-image]="deck.deckImage ? 'url(' + deck.deckImage + ')' : null">
+                  @if (!deck.deckImage) {
+                    <eras-icon name="stack" />
+                  }
+                </span>
+                <span class="deck-name">{{ deck.deckName }}</span>
+                @if (deck.username) {
+                  <span class="deck-author">{{ deck.username }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @case ('news') {
+      <article class="slide slide-news">
+        <span class="eyebrow">Noticias · <time [attr.datetime]="current.news.date">{{ current.news.dateLabel }}</time></span>
+        <h2 class="slide-title">{{ current.news.title }}</h2>
+        <p class="slide-text">{{ current.news.excerpt }}</p>
+      </article>
+    }
+  }
+  @if (slides().length > 1) {
+    <button type="button" class="nav prev" aria-label="Anterior" (click)="move(-1)"><eras-icon name="chevron-left" /></button>
+    <button type="button" class="nav next" aria-label="Siguiente" (click)="move(1)"><eras-icon name="chevron-right" /></button>
+    <div class="dots">
+      @for (s of slides(); track $index; let i = $index) {
+        <button
+          type="button"
+          class="dot"
+          [class.on]="i === index() % slides().length"
+          [attr.aria-label]="'Ir a la diapositiva ' + (i + 1)"
+          [attr.aria-current]="i === index() % slides().length"
+          (click)="index.set(i)"
+        ></button>
+      }
+    </div>
+  }
+} @else {
+  <div class="slide slide-empty">Sin novedades por ahora.</div>
+}

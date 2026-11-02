@@ -1,0 +1,217 @@
+// Glass panel over the hub artwork (--color-hub-* tokens)
+:host {
+  position: relative;
+  flex: 0 1 15rem;
+  min-block-size: 11rem;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-hub-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-hub-panel);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: var(--space-5) var(--space-8, 3rem) var(--space-6);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  animation: slide-in var(--duration-base) var(--easing-standard);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem);
+  }
+}
+
+.slide-empty {
+  align-items: center;
+  color: var(--color-hub-muted);
+}
+
+.slide-edition {
+  position: relative;
+  justify-content: flex-end;
+  background-position: center;
+  background-size: cover;
+  cursor: pointer;
+}
+
+.slide-edition::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--color-hub-scrim) 5%, transparent 85%);
+  content: '';
+}
+
+.slide-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.slide-title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-tight);
+  letter-spacing: 0.03em;
+}
+
+.slide-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-hub-muted);
+  font-size: var(--font-size-sm);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.deck-list {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  inline-size: 5.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.deck-art {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 5 / 7;
+  border: var(--border-width) solid var(--color-hub-line);
+  border-radius: var(--radius-md);
+  background: var(--color-hub-panel) center / cover;
+  transition:
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+}
+
+.deck:hover .deck-art {
+  border-color: var(--color-hub-accent);
+  transform: translateY(-2px);
+}
+
+.deck-name,
+.deck-author {
+  overflow: hidden;
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-author {
+  color: var(--color-hub-muted);
+}
+
+.nav {
+  position: absolute;
+  inset-block-start: 50%;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-hub-scrim) 55%, transparent);
+  color: var(--color-hub-text);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.nav:hover {
+  color: var(--color-hub-accent);
+}
+
+.prev {
+  inset-inline-start: var(--space-2);
+}
+
+.next {
+  inset-inline-end: var(--space-2);
+}
+
+.dots {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-hub-line);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    inline-size var(--duration-fast) var(--easing-standard);
+}
+
+.dot.on {
+  inline-size: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-hub-accent);
+}
+
+.eyebrow {
+  color: var(--color-hub-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 63.99rem) {
+  .slide-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--font-size-xl);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .slide-text {
+    -webkit-line-clamp: 2;
+  }
+
+  .slide {
+    padding-inline: var(--space-8, 2.75rem);
+  }
+}

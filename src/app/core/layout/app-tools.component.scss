@@ -1,0 +1,105 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+// Round icon buttons in the color of the bar they sit on (light text over the home artwork)
+.tool {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-standard);
+}
+
+.tool:hover,
+.tool[aria-expanded='true'] {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.tool eras-icon {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.edit-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard),
+    opacity var(--duration-fast) var(--easing-standard);
+}
+
+.edit-switch:hover {
+  opacity: 1;
+}
+
+.edit-switch eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.track {
+  position: relative;
+  inline-size: 2rem;
+  block-size: 1.15rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+  transition: background-color var(--duration-base) var(--easing-standard);
+}
+
+.knob {
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-start: 0.15rem;
+  inline-size: 0.85rem;
+  block-size: 0.85rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-base) var(--easing-standard);
+}
+
+.edit-switch.on {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+  opacity: 1;
+}
+
+.edit-switch.on .track {
+  background: var(--color-warning);
+}
+
+.edit-switch.on .knob {
+  transform: translateX(0.85rem);
+}
+
+@media (max-width: 63.99rem) {
+  .edit-label {
+    display: none;
+  }
+
+  .edit-switch {
+    padding-inline-start: var(--space-2);
+  }
+}

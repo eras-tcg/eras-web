@@ -1,0 +1,17 @@
+<ul class="action-list">
+  @for (action of actions; track action.route) {
+    <li>
+      <a class="action" [routerLink]="action.route">
+        <span class="action-ring"><eras-icon [name]="action.icon" /></span>
+        <span class="action-label">{{ action.label }}</span>
+      </a>
+    </li>
+  }
+</ul>
+<ul class="shortcut-list">
+  @for (item of shortcuts; track item.route) {
+    <li>
+      <a class="shortcut" [routerLink]="item.route"><eras-icon [name]="item.icon" /> {{ item.label }}</a>
+    </li>
+  }
+</ul>

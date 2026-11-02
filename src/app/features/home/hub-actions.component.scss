@@ -1,0 +1,130 @@
+// Main sections as big round buttons, over the hub artwork (--color-hub-* tokens)
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.action-list,
+.shortcut-list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.action-list {
+  gap: var(--space-5);
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-ring {
+  display: grid;
+  place-items: center;
+  inline-size: 5.25rem;
+  block-size: 5.25rem;
+  border: 2px solid var(--color-hub-line);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-hub-text) 14%, transparent), var(--color-hub-panel) 70%);
+  box-shadow: var(--shadow-md);
+  transition:
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard);
+}
+
+.action-ring eras-icon {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+}
+
+.action:hover .action-ring,
+.action:focus-visible .action-ring {
+  border-color: var(--color-hub-accent);
+  box-shadow: 0 0 1.25rem color-mix(in srgb, var(--color-hub-accent) 45%, transparent);
+  transform: translateY(-3px);
+}
+
+.action-label {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shortcut-list {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-line);
+  border-radius: var(--radius-pill);
+  background: var(--color-hub-panel);
+  color: var(--color-hub-muted);
+  font-size: var(--font-size-xs);
+  text-decoration: none;
+}
+
+.shortcut:hover {
+  border-color: var(--color-hub-accent);
+  color: var(--color-hub-text);
+}
+
+.shortcut eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+}
+
+// Narrow screens: a bar fixed at the bottom; the shortcuts stay in the main menu (☰)
+@media (max-width: 63.99rem) {
+  :host {
+    position: sticky;
+    inset-block-end: 0;
+    align-self: end;
+    margin-inline: calc(-1 * max(var(--layout-gutter), env(safe-area-inset-left)));
+    padding: var(--space-2) var(--layout-gutter) max(var(--space-2), env(safe-area-inset-bottom));
+    border-block-start: var(--border-width) solid var(--color-hub-line);
+    background: color-mix(in srgb, var(--color-hub-scrim) 92%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .shortcut-list {
+    display: none;
+  }
+
+  .action-list {
+    justify-content: space-around;
+    gap: var(--space-2);
+  }
+
+  .action {
+    gap: var(--space-1);
+  }
+
+  .action-ring {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .action-ring eras-icon {
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+  }
+
+  .action-label {
+    font-size: var(--font-size-xs);
+  }
+}

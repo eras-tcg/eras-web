@@ -2,8 +2,9 @@
 :host {
   position: relative;
   overflow: hidden;
-  flex-shrink: 0;
-  block-size: 14rem;
+  // Gives way first when the window is short
+  flex: 0 1 14rem;
+  min-block-size: 8.5rem;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -221,5 +222,33 @@
 
   .slide {
     padding-inline: var(--space-8, 2.75rem);
+  }
+}
+
+// Short windows: a tighter slide, so the column fits without scrolling
+@media (max-height: 44rem) {
+  :host {
+    min-block-size: 7rem;
+  }
+
+  .slide {
+    gap: var(--space-1);
+    padding-block: var(--space-3) var(--space-5);
+  }
+
+  .slide-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--font-size-xl);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .slide-text {
+    -webkit-line-clamp: 1;
+  }
+
+  .deck {
+    inline-size: 3.75rem;
   }
 }

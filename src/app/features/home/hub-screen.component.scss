@@ -1,16 +1,20 @@
-// Left column: flat theme background. Right: the artwork, faded into that background.
+// A solid theme background with the edition artwork on the right, at the card's own proportion and the full
+// height (the whole image shows, nothing scrolls); its left edge fades into the background.
 // What sits on the artwork (quick buttons, credit) uses the --color-hub-* tokens, the same in every theme.
 :host {
+  // Proportion of the card images (744 × 1039)
+  --hub-card-ratio: 744 / 1039;
+
   position: relative;
   display: grid;
-  flex: 1;
+  // Exactly the window's height (not flex-grown): the content has to fit, never stretch the page
+  flex: none;
   grid-template:
     'top top' auto
-    'side .' 1fr
-    / minmax(24rem, 36%) 1fr;
+    'side .' minmax(0, 1fr)
+    / minmax(22rem, 36%) 1fr;
   gap: var(--space-4) var(--space-6);
   block-size: calc(100dvh - var(--app-header-height, 0px));
-  min-block-size: 34rem;
   padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--layout-gutter), env(safe-area-inset-right))
     max(var(--space-5), env(safe-area-inset-bottom)) max(var(--layout-gutter), env(safe-area-inset-left));
   overflow: hidden;
@@ -19,15 +23,17 @@
   isolation: isolate;
 }
 
+// 20% taller than the screen and centered: 10% of the card is cut at the top and at the bottom
 .art {
   position: absolute;
-  inset-block: 0;
+  inset-block-start: -10%;
   inset-inline-end: 0;
   z-index: -1;
-  inline-size: 70%;
+  block-size: 120%;
+  aspect-ratio: var(--hub-card-ratio);
   background:
-    radial-gradient(circle at 60% 35%, color-mix(in srgb, var(--color-card-p) 45%, transparent), transparent 60%),
-    radial-gradient(circle at 85% 85%, color-mix(in srgb, var(--color-card-b) 40%, transparent), transparent 55%),
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-card-p) 45%, transparent), transparent 60%),
+    radial-gradient(circle at 70% 85%, color-mix(in srgb, var(--color-card-b) 40%, transparent), transparent 55%),
     var(--color-hub-scrim);
   background-position: center;
   background-size: cover;
@@ -37,9 +43,9 @@
   position: absolute;
   inset: 0;
   background:
-    // Solid at the very edge so the artwork never shows a seam against the column
-    linear-gradient(90deg, var(--color-bg) 0%, var(--color-bg) 3%, color-mix(in srgb, var(--color-bg) 70%, transparent) 16%, transparent 45%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 55%, transparent) 0%, transparent 22%);
+    // Solid at the very edge so the card never shows a seam against the background
+    linear-gradient(90deg, var(--color-bg) 0%, var(--color-bg) 2%, color-mix(in srgb, var(--color-bg) 65%, transparent) 18%, transparent 50%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 16%);
   content: '';
 }
 
@@ -172,8 +178,7 @@
   flex-direction: column;
   gap: var(--space-4);
   min-block-size: 0;
-  overflow-y: auto;
-  scrollbar-width: none;
+  overflow: hidden;
 }
 
 .credit {
@@ -202,29 +207,31 @@
   block-size: 0.85rem;
 }
 
-/* Narrow screens: the artwork on top fading into the background, everything else in one column */
+/* Narrow screens: the card on top (as wide as fits), the menu and panels at the bottom over its faded lower part */
 @media (max-width: 63.99rem) {
   :host {
     grid-template:
       'top' auto
-      'side' 1fr
+      'side' minmax(0, 1fr)
       / minmax(0, 1fr);
-    block-size: auto;
-    min-block-size: calc(100dvh - var(--app-header-height, 0px));
-    padding-block-start: max(var(--space-4), env(safe-area-inset-top));
-    overflow: visible;
+    padding-block: max(var(--space-4), env(safe-area-inset-top)) 0;
   }
 
+  // The whole card, as wide as fits
   .art {
-    inline-size: 100%;
-    block-size: min(55vh, 28rem);
+    inset-block-start: 0;
+    inset-inline: 0;
     inset-block-end: auto;
+    inline-size: min(100%, calc((100dvh - var(--app-header-height, 0px)) * 744 / 1039));
+    block-size: auto;
+    margin-inline: auto;
   }
 
   .art::after {
     background:
-      linear-gradient(0deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 60%, transparent) 30%, transparent 65%),
-      linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 55%, transparent) 0%, transparent 30%);
+      linear-gradient(0deg, var(--color-bg) 0%, var(--color-bg) 4%, color-mix(in srgb, var(--color-bg) 60%, transparent) 30%, transparent 60%),
+      linear-gradient(90deg, var(--color-bg) 0%, transparent 10%, transparent 90%, var(--color-bg) 100%),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 20%);
   }
 
   .player {
@@ -263,10 +270,10 @@
     text-shadow: 0 1px 3px var(--color-hub-scrim);
   }
 
-  // Leave the artwork visible above the menu
+  // The column sits at the bottom, over the faded end of the card
   .side {
-    padding-block-start: min(22vh, 10rem);
-    overflow: visible;
+    justify-content: flex-end;
+    padding-block-end: max(var(--space-4), env(safe-area-inset-bottom));
   }
 
   // Under the quick buttons, over the artwork

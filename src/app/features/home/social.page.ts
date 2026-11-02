@@ -33,6 +33,7 @@ const SOCIAL_MENU: HubMenuItem[] = [
       display: flex;
       flex: 1;
       flex-direction: column;
+      min-block-size: 0;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

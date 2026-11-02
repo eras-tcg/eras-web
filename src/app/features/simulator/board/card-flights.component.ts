@@ -36,7 +36,8 @@ const SHATTER_DURATION = 420;
  * On the field, a card that changes line (Línea frontal ↔ Retaguardia) travels in an arc from where it was, and a
  * card that enters it (a summon) comes from its hand or its pile and lands with a burst of light. A destroyed card
  * cracks before it leaves. Cards leaving a hand (the mulligan, a tribute, a discard), going from pile to pile (a
- * life healed from the deck) or joining a creature as a Material or Recurso fly there too.
+ * life healed from the deck) or joining a creature as a Material or Recurso fly there too. The opening hand is not
+ * dealt: the cards kept in the mulligan are already the hand, only the ones drawn to replace those sent to the bottom fly.
  */
 @Component({
   selector: 'eras-card-flights',
@@ -63,6 +64,10 @@ export class CardFlightsComponent {
    * the cards held where they were until then.
    */
   private deferring = false;
+  /** Each player still choosing their mulligan: the five cards shown to them (the top of their deck). */
+  private mulliganTop = new Map<string, Set<string>>();
+  /** Cards that do not fly in this update: what a mulligan settled (the hand kept, the starter, the lives). */
+  private settled = new Set<string>();
 
   /** Runs an animation now, or once what plays ends. */
   private run(fn: () => void): void {
@@ -76,10 +81,11 @@ export class CardFlightsComponent {
         const state = this.game.state();
         if (!state) return;
         this.deferring = !this.animations.idle();
+        this.settled = this.mulliganSettled(state);
         const onField = new Set(Object.values(state.players ?? {}).flatMap((p) => p.field.map((c) => c.instanceId)));
         const destroyed = this.destroyedNow(state);
         for (const [id, from] of this.seen) {
-          if (onField.has(id)) continue;
+          if (onField.has(id) || this.settled.has(id)) continue;
           const to = this.destination(state, id);
           if (!to) continue;
           // Destroyed: it cracks where it was, then flies
@@ -100,8 +106,29 @@ export class CardFlightsComponent {
           Object.values(state.players ?? {}).flatMap((p) => PILES.flatMap((z) => (p[z] as CardSlot[]).map((c) => [c.instanceId, `${p.userId}:${z}`] as const))),
         );
         this.draws(state);
+        this.mulliganTop = new Map(
+          Object.values(state.players ?? {})
+            .filter((p) => state.status === 'MULLIGAN' && !p.hand.length)
+            .map((p) => [p.userId, new Set(p.deck.slice(0, 5).map((c) => c.instanceId))]),
+        );
       },
     });
+  }
+
+  /**
+   * A player who confirmed their mulligan in this update: the cards they kept, their starter joining the hand and
+   * their lives just appear. Only the cards drawn to replace those sent to the bottom are drawn from the deck.
+   */
+  private mulliganSettled(state: GameState): Set<string> {
+    const settled = new Set<string>();
+    for (const p of Object.values(state.players ?? {})) {
+      const top = this.mulliganTop.get(p.userId);
+      if (!top || !p.hand.length) continue;
+      const replaced = (c: CardSlot) => !top.has(c.instanceId) && !!this.deckIds?.has(c.instanceId);
+      p.hand.filter((c) => !replaced(c)).forEach((c) => settled.add(c.instanceId));
+      p.lifeStack.forEach((c) => settled.add(c.instanceId));
+    }
+    return settled;
   }
 
   /**
@@ -123,7 +150,7 @@ export class CardFlightsComponent {
     for (const p of players) {
       const deck = this.document.querySelector<HTMLElement>(`[data-pile="${p.userId}:deck"]`);
       if (!deck) continue;
-      const drawn = p.hand.filter((c) => before.has(c.instanceId) || drawnByEvent.has(c.instanceId));
+      const drawn = p.hand.filter((c) => (before.has(c.instanceId) || drawnByEvent.has(c.instanceId)) && !this.settled.has(c.instanceId));
       drawn.forEach((c, i) => {
         const card = this.document.querySelector<HTMLElement>(`[data-hand-id="${c.instanceId}"] eras-game-card`);
         const target = card ?? this.document.querySelector(`[data-pile="${p.userId}:hand"]`);
@@ -167,7 +194,7 @@ export class CardFlightsComponent {
         for (const c of p[zone] as CardSlot[]) {
           const was = this.pileOf.get(c.instanceId);
           const now = `${p.userId}:${zone}`;
-          if (!was || was === now || was.endsWith(':hand')) continue;
+          if (!was || was === now || was.endsWith(':hand') || this.settled.has(c.instanceId)) continue;
           if (zone === 'hand' && was.endsWith(':deck')) continue;
           const from = this.pileSeen(was);
           const to = this.destination(state, c.instanceId);

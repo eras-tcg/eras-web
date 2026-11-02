@@ -24,6 +24,8 @@ const BACKGROUND_KEY = 'eras-hub-background';
   templateUrl: './hub-screen.component.html',
   styleUrl: './hub-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
+  host: { '[attr.title]': 'null' },
 })
 export class HubScreenComponent {
   protected readonly auth = inject(AuthService);

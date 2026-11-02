@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { navDirection, parentScreen, screenDepth } from './screens';
+import { isAdminScreen, navDirection, parentScreen, screenDepth } from './screens';
 
 describe('parentScreen', () => {
   it('has no parent on the home', () => {
@@ -42,5 +42,15 @@ describe('navDirection', () => {
     expect(navDirection('/home', '/play')).toBe('forward');
     expect(navDirection('/simulator', '/play')).toBe('back');
     expect(navDirection('/cards', '/editions')).toBe('same');
+  });
+});
+
+describe('isAdminScreen', () => {
+  it('is administration and its tools, and nothing of the game', () => {
+    expect(isAdminScreen('/admin')).toBe(true);
+    expect(isAdminScreen('/users-manager?page=2')).toBe(true);
+    expect(isAdminScreen('/card-ref')).toBe(true);
+    expect(isAdminScreen('/home')).toBe(false);
+    expect(isAdminScreen('/cards')).toBe(false);
   });
 });

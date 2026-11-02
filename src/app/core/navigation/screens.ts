@@ -11,6 +11,9 @@ const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 
+/** Administration's tools (not /admin itself, which hangs from the home). */
+const ADMIN_SCREENS = /^\/(?:users-manager|roles|permissions|updates-manager|card-ref|games-manager|card-meta)$/;
+
 /**
  * Where each screen sits in the hub's tree (there is no navigation bar: every screen goes back to its parent).
  * First match wins; a path that matches nothing hangs from the home.
@@ -22,7 +25,7 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:public-decks|tierlist)$/, SOCIAL],
   [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
-  [/^\/(?:users-manager|roles|permissions|updates-manager|card-ref|games-manager|card-meta)$/, ADMIN],
+  [ADMIN_SCREENS, ADMIN],
 ];
 
 /** Path of a router URL, without query or fragment. */
@@ -35,6 +38,12 @@ export function parentScreen(url: string): ScreenLink | null {
   const path = pathOf(url);
   for (const [pattern, parent] of PARENTS) if (pattern.test(path)) return parent;
   return HOME;
+}
+
+/** Administration and its tools: a space apart from the game, without the game's quick buttons. */
+export function isAdminScreen(url: string): boolean {
+  const path = pathOf(url);
+  return path === ADMIN.route || ADMIN_SCREENS.test(path);
 }
 
 /** How deep `url` is in the hub's tree: the home is 0, its menu entries 1, and so on. */

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { ScreenLink, parentScreen } from '../navigation/screens';
+import { ScreenLink, isAdminScreen, parentScreen } from '../navigation/screens';
 import { AppToolsComponent } from './app-tools.component';
 
 /**
  * Top row of a screen, in place of a navigation bar: "back" to the screen it hangs from (see screens.ts), the
- * projected heading in the middle and the quick buttons. Every page has it through <eras-page>.
+ * projected heading in the middle and the quick buttons (not in administration, a space apart from the game).
+ * Every page has it through <eras-page>.
  */
 @Component({
   selector: 'eras-screen-bar',
@@ -18,7 +19,9 @@ import { AppToolsComponent } from './app-tools.component';
       </a>
     }
     <div class="middle"><ng-content /></div>
-    <eras-app-tools class="tools" />
+    @if (!admin) {
+      <eras-app-tools class="tools" />
+    }
   `,
   styles: `
     // Top-aligned: a title that wraps to more lines grows downwards and moves nothing else
@@ -75,12 +78,13 @@ export class ScreenBarComponent {
   readonly back = input<ScreenLink>();
 
   // The page's own route (the bar lives inside it): a page is recreated for each screen, so reading it once is enough
-  private readonly routeParent = parentScreen(
+  private readonly path =
     '/' +
-      inject(ActivatedRoute)
-        .snapshot.pathFromRoot.flatMap((r) => r.url.map((s) => s.path))
-        .filter(Boolean)
-        .join('/'),
-  );
+    inject(ActivatedRoute)
+      .snapshot.pathFromRoot.flatMap((r) => r.url.map((s) => s.path))
+      .filter(Boolean)
+      .join('/');
+  private readonly routeParent = parentScreen(this.path);
+  protected readonly admin = isAdminScreen(this.path);
   protected readonly parent = computed(() => this.back() ?? this.routeParent);
 }

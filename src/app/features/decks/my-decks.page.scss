@@ -1,101 +1,4 @@
-// One screen high (the page is `fill`): filters on the left, the deck grid on the right; only the grid scrolls
-.layout {
-  display: grid;
-  flex: 1;
-  grid-template-columns: 17rem minmax(0, 1fr);
-  gap: var(--space-5);
-  min-block-size: 0;
-}
-
-.layout.folded {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-
-/* Filter panel: its bar (sorting + fold) on top, the fields below scroll if they do not fit */
-.filters {
-  display: flex;
-  flex-direction: column;
-  min-block-size: 0;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-}
-
-.filters-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-block-end: var(--border-width) solid var(--color-border);
-}
-
-.fold {
-  margin-inline-start: auto;
-}
-
-.filters-body {
-  flex: 1;
-  min-block-size: 0;
-  padding: var(--space-4) var(--space-3);
-  overflow-y: auto;
-  overscroll-behavior: none;
-}
-
-// Folded: a rail with "show filters" and the sort direction
-.rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-}
-
-.rail button {
-  position: relative;
-}
-
-// Some filter is on while they are folded
-.dot {
-  position: absolute;
-  inset-block-start: 0.2rem;
-  inset-inline-end: 0.2rem;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 50%;
-  background: var(--color-hub-accent);
-}
-
-/* Decks */
-.decks {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-block-size: 0;
-}
-
-.decks-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  min-block-size: 2rem;
-}
-
-.scroll {
-  flex: 1;
-  min-block-size: 0;
-  // Room for the covers' hover lift and shadow
-  padding: var(--space-1) var(--space-1) var(--space-6);
-  overflow-y: auto;
-  overscroll-behavior: none;
-}
-
-.note {
-  margin: 0 0 var(--space-3);
-  color: var(--color-text-muted);
-}
-
-/* "Nuevo mazo": the size of a deck cover, always first */
+// "Nuevo mazo", projected first into the deck browser's grid
 .new-deck {
   display: flex;
   flex-direction: column;
@@ -143,23 +46,7 @@
   text-transform: uppercase;
 }
 
-/* Narrow screens: the filters above the grid (folded, a single row) */
 @media (max-width: 56rem) {
-  .layout,
-  .layout.folded {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: var(--space-3);
-  }
-
-  .filters {
-    max-block-size: 50dvh;
-  }
-
-  .rail {
-    flex-direction: row;
-  }
-
   .new-ring {
     inline-size: 2.75rem;
     block-size: 2.75rem;

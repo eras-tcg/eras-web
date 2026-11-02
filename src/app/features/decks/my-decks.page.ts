@@ -3,44 +3,26 @@ import { Router, RouterLink } from '@angular/router';
 import { CanDirective } from '@core/auth/can.directive';
 import { AuthService } from '@core/auth/auth.service';
 import { CardsStore } from '@data/cards/cards.store';
-import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, hasDeckFilters, summarizeDecks } from '@data/decks/deck-filters';
+import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, summarizeDecks } from '@data/decks/deck-filters';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
-import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { SortControlComponent } from '@ui/forms/sort-control/sort-control.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { DeckFiltersBarComponent } from './deck-filters-bar.component';
+import { DeckBrowserComponent } from './deck-browser.component';
 import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
 
 /**
- * "Mazos": the signed-in user's own decks (private ones included), shown like cards. One screen high like the
- * home: only the deck grid scrolls. The filter panel carries the sorting and folds into a rail. Creating, editing
- * and deleting need manage_decks.
+ * "Mazos": the signed-in user's own decks (private ones included), in the deck browser (one screen high, only the
+ * grid scrolls). "Nuevo mazo" comes first. Creating, editing and deleting need manage_decks.
  */
 @Component({
   selector: 'eras-my-decks-page',
-  imports: [
-    RouterLink,
-    CanDirective,
-    PageComponent,
-    GridComponent,
-    DeckCoverComponent,
-    DeckFiltersBarComponent,
-    SortControlComponent,
-    AlertComponent,
-    EmptyStateComponent,
-    ButtonComponent,
-    IconComponent,
-    SpinnerComponent,
-  ],
+  imports: [RouterLink, CanDirective, PageComponent, DeckBrowserComponent, DeckCoverComponent, AlertComponent, ButtonComponent, IconComponent],
   templateUrl: './my-decks.page.html',
   styleUrl: './my-decks.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,14 +38,9 @@ export class MyDecksPage {
   protected readonly sortKey = signal<DeckSortKey>('name');
   protected readonly direction = signal<'asc' | 'desc'>('asc');
   protected readonly filters = signal<DeckFilters>(EMPTY_DECK_FILTERS);
-  protected readonly emptyFilters = EMPTY_DECK_FILTERS;
-  // Open beside the list on wide screens, folded into a rail on phones
-  protected readonly showFilters = signal(typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches);
-  protected readonly filtersActive = computed(() => hasDeckFilters(this.filters()));
-  protected readonly countLabel = computed(() => {
-    const n = this.decks().length;
-    return `${n} ${n === 1 ? 'mazo' : 'mazos'}${this.filtersActive() ? ' (filtrados)' : ''}`;
-  });
+  protected readonly note = computed(() =>
+    this.store.error() ? null : this.store.myDecks().length === 0 ? 'Aún no tienes mazos guardados.' : this.decks().length === 0 ? 'Ningún mazo coincide con los filtros.' : null,
+  );
   protected readonly deleting = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
 

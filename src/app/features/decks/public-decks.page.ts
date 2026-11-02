@@ -1,101 +1,48 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CardsStore } from '@data/cards/cards.store';
-import { DeckFilters, EMPTY_DECK_FILTERS, deckAuthors, deckEditions, filterDecks, hasDeckFilters, summarizeDecks } from '@data/decks/deck-filters';
+import { DeckFilters, EMPTY_DECK_FILTERS, deckAuthors, deckEditions, filterDecks, summarizeDecks } from '@data/decks/deck-filters';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
-import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { SortControlComponent } from '@ui/forms/sort-control/sort-control.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
-import { StackComponent } from '@ui/layout/stack/stack.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { SplitComponent } from '@ui/layout/split/split.component';
-import { DeckFiltersBarComponent } from './deck-filters-bar.component';
+import { DeckBrowserComponent } from './deck-browser.component';
 import { PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
 
-/** Community decks shown like cards, with filters by name, author, colors and edition. */
+/** Community decks, in the deck browser like "Mazos" (one screen high, only the grid scrolls), with their authors. */
 @Component({
   selector: 'eras-public-decks-page',
-  imports: [
-    PageComponent,
-    StackComponent,
-    GridComponent,
-    DeckCoverComponent,
-    DeckFiltersBarComponent,
-    SortControlComponent,
-    AlertComponent,
-    EmptyStateComponent,
-    SpinnerComponent,
-    SplitComponent,
-    ButtonComponent,
-    IconComponent,
-  ],
+  imports: [PageComponent, DeckBrowserComponent, DeckCoverComponent, AlertComponent],
   template: `
-    <eras-page title="Mazos públicos" width="wide">
-      <ng-container ngProjectAs="[page-actions]">
-        <eras-sort-control
-          [options]="sortOptions"
-          [key]="sortKey()"
-          [direction]="direction()"
-          (keyChange)="sortKey.set($any($event))"
-          (directionChange)="direction.set($event)"
-        />
-        <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
-          <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-        </button>
-      </ng-container>
-
+    <eras-page title="Mazos públicos" width="wide" fill>
       @if (store.error(); as error) {
         <eras-alert tone="danger">{{ error }}</eras-alert>
       }
 
-      <eras-split aside="17rem" [asideHidden]="!showFilters()">
-        <div split-aside>
-          <eras-deck-filters-bar
-            panel
-            [filters]="filters()"
-            [authors]="authors()"
-            [editions]="editions()"
-            [shown]="decks().length"
-            [total]="store.publicDecks().length"
-            (filtersChange)="filters.set($event)"
+      <eras-deck-browser
+        [(filters)]="filters"
+        [(sortKey)]="sortKey"
+        [(direction)]="direction"
+        [sortOptions]="sortOptions"
+        [authors]="authors()"
+        [editions]="editions()"
+        [shown]="decks().length"
+        [total]="store.publicDecks().length"
+        [loading]="store.loading() && store.publicDecks().length === 0"
+        [note]="note()"
+      >
+        @for (deck of decks(); track deck.id) {
+          <eras-deck-cover
+            [name]="deck.deckName"
+            [author]="deck.username ?? null"
+            [imageUrl]="deck.deckImage ?? null"
+            [cardCount]="deck.cards.length"
+            (selected)="open(deck)"
           />
-        </div>
-
-        <eras-stack [gap]="4">
-        @if (store.loading() && store.publicDecks().length === 0) {
-          <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
-        } @else {
-          <eras-stack direction="row" [gap]="3" align="center" wrap>
-              <span>{{ countLabel() }}</span>
-              @if (filtersActive()) {
-                <button erasButton variant="ghost" size="sm" type="button" (click)="filters.set(emptyFilters)"><eras-icon name="x" /> Limpiar filtros</button>
-              }
-            </eras-stack>
-        @if (decks().length === 0) {
-          <eras-empty-state [title]="store.publicDecks().length ? 'Ningún mazo coincide con los filtros' : 'Todavía no hay mazos públicos'" />
-        } @else {
-          <eras-grid minColumn="11rem" [gap]="4">
-            @for (deck of decks(); track deck.id) {
-              <eras-deck-cover
-                [name]="deck.deckName"
-                [author]="deck.username ?? null"
-                [imageUrl]="deck.deckImage ?? null"
-                [cardCount]="deck.cards.length"
-                (selected)="open(deck)"
-              />
-            }
-          </eras-grid>
         }
-        }
-        </eras-stack>
-      </eras-split>
+      </eras-deck-browser>
     </eras-page>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -109,14 +56,9 @@ export class PublicDecksPage {
   protected readonly sortKey = signal<DeckSortKey>('name');
   protected readonly direction = signal<'asc' | 'desc'>('asc');
   protected readonly filters = signal<DeckFilters>(EMPTY_DECK_FILTERS);
-  protected readonly emptyFilters = EMPTY_DECK_FILTERS;
-  // Open beside the list on wide screens, folded on phones (as on the cards page)
-  protected readonly showFilters = signal(typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches);
-  protected readonly filtersActive = computed(() => hasDeckFilters(this.filters()));
-  protected readonly countLabel = computed(() => {
-    const n = this.decks().length;
-    return `${n} ${n === 1 ? 'mazo' : 'mazos'}${this.filtersActive() ? ' (filtrados)' : ''}`;
-  });
+  protected readonly note = computed(() =>
+    this.store.error() ? null : this.store.publicDecks().length === 0 ? 'Todavía no hay mazos públicos.' : this.decks().length === 0 ? 'Ningún mazo coincide con los filtros.' : null,
+  );
 
   private readonly summaries = computed(() => summarizeDecks(this.store.publicDecks(), this.cards.cards()));
   protected readonly authors = computed(() => deckAuthors(this.store.publicDecks()));

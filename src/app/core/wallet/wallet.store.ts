@@ -1,45 +1,75 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { apiErrorMessage } from '../http/api-error';
+import { ApiConfig } from '../http/api-config';
 import { AuthService } from '../auth/auth.service';
-import { Wallet, dayOf, openWallet, spend } from './wallet-rules';
 
-const KEY = 'eras-wallet-';
+interface WalletResponse {
+  gems: number;
+  reward?: number;
+}
 
 /**
- * The signed-in user's simulated gems (see wallet-rules.ts), spent in the Editions shop. Kept on this device only, per
- * account: there is no money on the server. Opening it each day adds the daily reward (`reward` says how much,
- * so the shop can tell).
+ * The signed-in account's simulated gems, kept by the server (DriveManager /api/drive/wallet): the same balance on
+ * every device. Reading it gives the daily reward once a day (`reward` says how much, so the shop can tell); a
+ * purchase is charged by the server at its own price.
  */
 @Injectable({ providedIn: 'root' })
 export class WalletStore {
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
-  private readonly wallet = signal<Wallet | null>(null);
 
-  readonly gems = computed(() => this.wallet()?.gems ?? 0);
+  readonly gems = signal(0);
   /** Gems just given as the daily reward (0 when none). */
   readonly reward = signal(0);
+  /** Why the last purchase was refused, in Spanish (null when it went through). */
+  readonly error = signal<string | null>(null);
+
+  /** What was just paid for and not opened yet (see `purchase` and `takeTicket`). */
+  private ticket: string | null = null;
 
   constructor() {
-    // Each account has its own wallet; signing out forgets it
+    // Loaded for whoever signs in; cleared on sign-out
     effect(() => {
       const id = this.auth.user()?.id ?? null;
-      untracked(() => (id ? this.open(id) : this.wallet.set(null)));
+      untracked(() => {
+        this.gems.set(0);
+        this.reward.set(0);
+        if (id) void this.refresh();
+      });
     });
   }
 
-  /** What was just paid for and not opened yet (see `buy` and `takeTicket`). */
-  private ticket: string | null = null;
+  /** Reads the balance again (a shop left open past midnight gets the new reward). */
+  async refresh(): Promise<void> {
+    try {
+      const me = await firstValueFrom(this.http.get<WalletResponse>(this.api.url('/api/drive/wallet/me')));
+      this.gems.set(me.gems);
+      if (me.reward) this.reward.set(me.reward);
+    } catch {
+      // An older server without wallets: no gems
+    }
+  }
 
   /**
-   * Pays `price`; false (and nothing paid) when the gems do not reach. `ticket` names what was bought, so the
-   * opening can check it was paid: reloading it, or reaching its URL directly, does not open it for free.
+   * Buys a "pack" or a "box" of an edition; false (and nothing paid) when the server refuses (`error` says why).
+   * `ticket` names what was bought, so the opening can check it was paid: reloading it, or reaching its URL
+   * directly, does not open it for free.
    */
-  buy(price: number, ticket: string): boolean {
-    const current = this.wallet();
-    const next = current && spend(current, price);
-    if (!next) return false;
-    this.save(next);
-    this.ticket = ticket;
-    return true;
+  async purchase(editionId: string, product: 'pack' | 'box', ticket: string): Promise<boolean> {
+    this.error.set(null);
+    try {
+      const done = await firstValueFrom(this.http.post<WalletResponse>(this.api.url('/api/drive/wallet/me/purchase'), { editionId, product }));
+      this.gems.set(done.gems);
+      this.ticket = ticket;
+      return true;
+    } catch (e) {
+      this.error.set(apiErrorMessage(e, 'No se pudo hacer la compra'));
+      void this.refresh();
+      return false;
+    }
   }
 
   /** True once if `ticket` was just paid for (it is used up). */
@@ -47,41 +77,5 @@ export class WalletStore {
     const paid = this.ticket === ticket;
     if (paid) this.ticket = null;
     return paid;
-  }
-
-  /** Re-reads the day, so a shop left open past midnight still gets the new reward. */
-  refresh(): void {
-    const id = this.auth.user()?.id;
-    if (id) this.open(id);
-  }
-
-  private open(userId: string): void {
-    const { wallet, reward } = openWallet(read(KEY + userId), dayOf(new Date()));
-    this.reward.set(reward);
-    this.save(wallet);
-  }
-
-  private save(wallet: Wallet): void {
-    this.wallet.set(wallet);
-    const id = this.auth.user()?.id;
-    if (id) write(KEY + id, wallet);
-  }
-}
-
-// Storage can be unavailable (private mode): the wallet then lasts until the page closes
-function read(key: string): Wallet | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Wallet) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, wallet: Wallet): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(wallet));
-  } catch {
-    // ignored, see read
   }
 }

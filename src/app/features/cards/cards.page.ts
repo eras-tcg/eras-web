@@ -152,7 +152,7 @@ export class CardsPage {
 
   protected open(card: CatalogCard): void {
     const cards = this.displayed();
-    const data: CardDetailDialogData = { cards, index: cards.indexOf(card) };
+    const data: CardDetailDialogData = { cards, index: cards.indexOf(card), collection: this.showCollection() };
     this.modal.open(CardDetailDialogComponent, { data });
   }
 }

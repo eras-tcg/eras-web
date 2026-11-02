@@ -6,6 +6,8 @@ import { CatalogCard } from '@data/cards/card.model';
 import { nameVariants } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
+import { bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
 import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
 import { FoilKind } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -25,6 +27,8 @@ export interface CardDetailDialogData {
   index: number;
   /** A copy obtained (as in a pack's opening): its foil shines, and it does not switch to other printings. */
   copy?: { foil: FoilKind | null };
+  /** The player's collection is on (catalog): each printing shines in the finest finish they own of it. */
+  collection?: boolean;
 }
 
 /** One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. */
@@ -43,6 +47,7 @@ export class CardDetailDialogComponent {
   private readonly editions = inject(EditionsStore);
   private readonly admin = inject(CardsAdminApi);
   private readonly modal = inject(ModalService);
+  private readonly collection = inject(CollectionStore);
 
   /** Position in the grid. Switching printings changes `card` but not the grid position. */
   protected readonly index = signal(this.data.index);
@@ -58,7 +63,17 @@ export class CardDetailDialogComponent {
   protected readonly variants = computed(() => nameVariants(this.gridCard(), this.store.cards(), this.editions.releaseDates()));
   protected readonly variantIndex = computed(() => this.variants().findIndex((c) => c.id === this.card().id));
 
+  /** The shine shown: the obtained copy's, or with the collection on, the finest finish owned of this printing. */
+  protected readonly foil = computed(() => {
+    if (this.data.copy) return this.data.copy.foil;
+    return this.data.collection ? shineOf(bestFinish(this.collection.collection()?.cards[this.card().id])) : null;
+  });
+
   protected readonly view = computed(() => cardDetailView(this.card(), this.store.ref(), this.store.unprogrammedOf(this.card())));
+
+  constructor() {
+    this.openOwnedPrinting();
+  }
 
   protected readonly busy = signal(false);
   protected readonly actionError = signal<string | null>(null);
@@ -117,6 +132,19 @@ export class CardDetailDialogComponent {
     if (next < 0 || next >= this.data.cards.length) return;
     this.index.set(next);
     this.printing.set(null);
+    this.openOwnedPrinting();
+  }
+
+  /**
+   * With the collection on, a card the player lacks in the grid's printing opens on the printing they own in the
+   * finest finish (the grid counts every printing of a name).
+   */
+  private openOwnedPrinting(): void {
+    const owned = this.collection.collection();
+    if (!this.data.collection || this.data.copy || bestFinish(owned?.cards[this.gridCard().id])) return;
+    const best = bestFinishAmong(owned, this.variants().map((c) => c.id));
+    const target = best && this.variants().find((c) => bestFinish(owned?.cards[c.id]) === best);
+    if (target) this.printing.set(target);
   }
 
   protected switchPrinting(step: -1 | 1): void {

@@ -1,0 +1,101 @@
+<eras-page [title]="title()" width="wide" fill>
+  <ng-container ngProjectAs="[page-actions]">
+    @if (phase() === 'open' && allUp() && product(); as p) {
+      <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
+    }
+    <span class="wallet" role="status" [attr.aria-label]="wallet.gems() + ' gemas'"><eras-icon name="gem" /> {{ wallet.gems() | number: '1.0-0' : 'es' }}</span>
+  </ng-container>
+
+  @if (cards.error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+
+  <div class="stage">
+    @if (!ready()) {
+      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+    } @else if (!editionData() || !product()) {
+      <eras-empty-state title="Este producto no está a la venta" />
+    } @else {
+      @let edition = editionData()!;
+      @switch (phase()) {
+        @case ('unpaid') {
+          <!-- Reached without buying (a reload, a link): it is offered for sale -->
+          <div class="offer">
+            <div class="pack" [class.box]="isBox()" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
+              <span class="pack-label">{{ product()!.name }}</span>
+            </div>
+            <button erasButton type="button" [disabled]="product()!.price > wallet.gems()" (click)="buy()">
+              <eras-icon name="gem" /> Comprar · {{ product()!.price | number: '1.0-0' : 'es' }}
+            </button>
+            @if (product()!.price > wallet.gems()) {
+              <p class="hint">No te alcanzan las gemas.</p>
+            }
+          </div>
+        }
+        @case ('open') {
+          @if (isBox()) {
+            <!-- A box: straight to its cards, rarest first -->
+            <div class="summary">
+              <p class="hint">{{ picked().length }} cartas obtenidas</p>
+              @for (group of groups(); track group.rarity) {
+                <eras-section-header [title]="rarityName(group.rarity) + ' (' + group.count + ')'">
+                  <eras-rarity-badge [rarity]="asRarity(group.rarity)" />
+                </eras-section-header>
+                <eras-grid minColumn="min(9rem, 28vw)" [gap]="3">
+                  @for (opened of group.cards; track opened.card.id; let i = $index) {
+                    <eras-card-thumb
+                      class="arrive"
+                      [class.shine]="shiny(opened.card)"
+                      [style.animation-delay.ms]="i < 24 ? i * 40 : 960"
+                      [name]="opened.card.name ?? ''"
+                      [imageUrl]="imageUrl(opened.card)"
+                      [count]="opened.count"
+                      (selected)="openCard(opened.card)"
+                    />
+                  }
+                </eras-grid>
+              }
+            </div>
+          } @else {
+            <!-- A pack: its cards face down, turned one by one -->
+            <div class="reveal">
+              <div class="table">
+                @for (card of picked(); track $index; let i = $index) {
+                  @let up = faceUp().has(i);
+                  <button
+                    type="button"
+                    class="flip"
+                    [class.up]="up"
+                    [class.shine]="up && shiny(card)"
+                    [style.animation-delay.ms]="i * 60"
+                    [attr.aria-label]="up ? 'Ver ' + (card.name ?? 'carta') : 'Voltear carta ' + (i + 1)"
+                    (click)="up ? openCard(card) : flip(i)"
+                  >
+                    <span class="face back" aria-hidden="true"></span>
+                    <span class="face front" aria-hidden="true">
+                      @if (imageUrl(card); as src) {
+                        <img [src]="src" alt="" />
+                      }
+                    </span>
+                  </button>
+                }
+              </div>
+              @if (!allUp()) {
+                <button erasButton variant="secondary" type="button" (click)="revealAll()"><eras-icon name="eye" /> Revelar todo</button>
+              } @else {
+                <p class="hint">{{ picked().length }} cartas obtenidas · toca una para verla</p>
+              }
+            </div>
+          }
+        }
+        @default {
+          <!-- Sealed (and tearing open): one tap opens it -->
+          <button type="button" class="pack sealed" [class.box]="isBox()" [class.opening]="phase() === 'opening'" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null" (click)="open()">
+            <span class="pack-label">{{ product()!.name }}</span>
+            <span class="pack-hint">Toca para abrir</span>
+          </button>
+        }
+      }
+    }
+  </div>
+</eras-page>

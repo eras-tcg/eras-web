@@ -1,0 +1,304 @@
+// The opening fills the screen left below the top row (the page is `fill`); only the summary of a box scrolls.
+
+.wallet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-hub-accent) 12%, var(--color-surface));
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+eras-icon[name='gem'] {
+  color: var(--color-hub-accent);
+}
+
+.stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 0;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.offer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* The pack (or box): the edition's artwork in a foil frame, card-shaped */
+.pack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  block-size: min(58dvh, 30rem);
+  aspect-ratio: 63 / 88;
+  padding: var(--space-5) var(--space-3);
+  overflow: hidden;
+  border: 3px solid var(--color-hub-accent);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted) center / cover;
+  box-shadow: var(--shadow-lg);
+  color: var(--color-hub-text);
+  font: inherit;
+}
+
+// A box: other packs peeking behind
+.pack.box {
+  box-shadow:
+    0.6rem -0.6rem 0 -0.15rem color-mix(in srgb, var(--color-hub-accent) 70%, var(--color-surface)),
+    1.2rem -1.2rem 0 -0.3rem color-mix(in srgb, var(--color-hub-accent) 45%, var(--color-surface)),
+    var(--shadow-lg);
+}
+
+// Foil: darkened bottom for the label and a light sweeping across
+.pack::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 85%, transparent), transparent 45%);
+  content: '';
+}
+
+.pack::after {
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--color-hub-glow) 45%, transparent) 50%, transparent 60%);
+  content: '';
+  animation: sheen 3.2s var(--easing-standard) infinite;
+}
+
+@keyframes sheen {
+  from {
+    transform: translateX(-60%);
+  }
+
+  60%,
+  to {
+    transform: translateX(60%);
+  }
+}
+
+.pack-label,
+.pack-hint {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  text-shadow: 0 1px 3px var(--color-hub-scrim);
+}
+
+.pack-label {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pack-hint {
+  color: var(--color-hub-muted);
+  font-size: var(--font-size-sm);
+}
+
+.sealed {
+  cursor: pointer;
+  animation: float 2.4s ease-in-out infinite;
+}
+
+.sealed:hover {
+  animation: wobble 0.5s ease-in-out infinite;
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes wobble {
+  25% {
+    transform: rotate(-2deg) scale(1.02);
+  }
+
+  75% {
+    transform: rotate(2deg) scale(1.02);
+  }
+}
+
+// Tearing open: it shakes, swells and bursts into light
+.sealed.opening {
+  pointer-events: none;
+  animation: burst 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes burst {
+  0%,
+  45% {
+    transform: rotate(0);
+  }
+
+  10%,
+  30% {
+    transform: rotate(-4deg) scale(1.04);
+  }
+
+  20%,
+  40% {
+    transform: rotate(4deg) scale(1.04);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+    filter: brightness(2.2);
+  }
+}
+
+/* A pack's cards: dealt face down, they turn over */
+.reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  inline-size: 100%;
+  max-block-size: 100%;
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.table {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.flip {
+  position: relative;
+  inline-size: clamp(5.5rem, 11vw, 9.5rem);
+  aspect-ratio: 63 / 88;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  perspective: 900px;
+  animation: deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translateY(-2.5rem) rotate(-6deg);
+  }
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  backface-visibility: hidden;
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.back {
+  border: 2px solid var(--color-hub-accent);
+  background: var(--color-card-back);
+  box-shadow: var(--shadow-md);
+}
+
+.front {
+  background: var(--color-surface-muted);
+  box-shadow: var(--shadow-md);
+  transform: rotateY(180deg);
+}
+
+.front img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.flip:not(.up):hover .back {
+  transform: translateY(-4px);
+}
+
+.flip.up .back {
+  transform: rotateY(-180deg);
+}
+
+.flip.up .front {
+  transform: rotateY(0);
+}
+
+// The rare ones shine once face up
+.shine .front,
+eras-card-thumb.shine {
+  box-shadow:
+    0 0 0 2px var(--color-hub-accent),
+    0 0 1.5rem color-mix(in srgb, var(--color-hub-glow) 70%, transparent);
+  animation: glow 1.8s ease-in-out infinite;
+}
+
+eras-card-thumb.shine {
+  border-radius: var(--radius-md);
+}
+
+@keyframes glow {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--color-hub-accent),
+      0 0 2.5rem color-mix(in srgb, var(--color-hub-glow) 95%, transparent);
+  }
+}
+
+/* A box: its summary scrolls, the cards arrive one after another */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-self: stretch;
+  min-block-size: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.arrive {
+  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+eras-card-thumb.arrive.shine {
+  animation:
+    deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    glow 1.8s ease-in-out 0.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack::after,
+  .sealed,
+  .sealed:hover,
+  .flip,
+  .arrive,
+  .shine .front,
+  eras-card-thumb.shine {
+    animation: none;
+  }
+
+  .face {
+    transition: none;
+  }
+}

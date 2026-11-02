@@ -1,48 +1,275 @@
-.rows { display: grid; gap: var(--space-4); }
-// An edition: a fixed-height card, its art flush to the left edge and as tall as the card (card-shaped)
-.summary {
-  --summary-height: 12rem;
+// The shop: one screen high (the page is `fill`). Editions on the left, the chosen one's showcase on the right.
+
+.wallet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-hub-accent) 12%, var(--color-surface));
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet eras-icon,
+.buy eras-icon,
+.reward eras-icon {
+  color: var(--color-hub-accent);
+}
+
+.reward {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-hub-accent) 10%, var(--color-surface));
+  font-weight: var(--font-weight-medium);
+}
+
+.reward button {
+  margin-inline-start: auto;
+}
+
+.shop {
   display: grid;
-  grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr) auto;
-  block-size: var(--summary-height);
-  min-inline-size: 0;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
+  flex: 1;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  gap: var(--space-5);
+  min-block-size: 0;
+}
+
+/* Editions */
+.shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+  padding-inline-end: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.shelf-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-inline-start: 4px solid transparent;
   border-radius: var(--radius-md);
   background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
 }
-.cover {
+
+.shelf-item:hover {
+  transform: translateX(2px);
+}
+
+.shelf-item.on {
+  border-color: var(--color-hub-accent);
+  border-inline-start-color: var(--color-hub-accent);
+}
+
+.shelf-art {
+  flex-shrink: 0;
+  inline-size: 2.5rem;
+  aspect-ratio: 63 / 88;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted) center / cover;
+}
+
+.shelf-text {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.shelf-code {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.shelf-name {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Showcase: the artwork as tall as the area, at the card's proportion; the details beside it */
+.showcase {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-5);
+  min-block-size: 0;
+}
+
+.art {
   display: grid;
   place-items: center;
   block-size: 100%;
-  overflow: hidden;
-  background: var(--color-surface-muted);
+  max-inline-size: 26rem;
+  aspect-ratio: 744 / 1039;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted) center / cover;
+  box-shadow: var(--shadow-lg);
   color: var(--color-text-subtle);
-  font-size: var(--font-size-sm);
+  view-transition-name: shop-art;
 }
-.cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-// Title and description (it takes the room left)
-.info { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); min-inline-size: 0; }
-h2 { margin: 0; font-size: var(--font-size-lg); }
-.code { margin-inline-end: var(--space-2); color: var(--color-primary); }
-.count { margin-inline-start: var(--space-2); font-family: var(--font-family-base); font-weight: 400; }
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.code {
+  color: var(--color-hub-accent);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.name {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.links {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .description {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
-.muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-// The buttons in a column at the right, as wide as the widest
-.actions { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
-.actions button { justify-content: center; min-inline-size: 11rem; min-block-size: 2.75rem; font-size: var(--font-size-md); }
-@media (max-width: 40rem) {
-  // Narrow: the buttons go under the text
-  .summary { --summary-height: 10rem; grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr); block-size: auto; min-block-size: var(--summary-height); }
-  .cover { grid-row: span 2; }
-  .actions { flex-direction: row; flex-wrap: wrap; padding-block-start: 0; }
-  .description { -webkit-line-clamp: 2; }
+
+.products {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  align-content: start;
+  gap: var(--space-3);
+  min-block-size: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.product {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+// The box stands out: the best deal of the edition
+.product.box {
+  border-color: var(--color-hub-accent);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--color-hub-accent) 14%, var(--color-surface)), var(--color-surface));
+}
+
+.product-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: 50%;
+  background: var(--color-surface-muted);
+}
+
+.product-icon eras-icon {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.product-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.product-name {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+.contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.buy {
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Narrow screens: the editions as a strip on top, the showcase below without the big artwork */
+@media (max-width: 56rem) {
+  .shop {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .shelf {
+    flex-direction: row;
+    padding: 0 0 var(--space-1);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .shelf-item {
+    max-inline-size: 12rem;
+  }
+
+  .showcase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .art {
+    display: none;
+  }
 }

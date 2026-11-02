@@ -15,10 +15,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { HubMenuComponent, HubMenuItem } from '../home/hub-menu.component';
 import { HubScreenComponent } from '../home/hub-screen.component';
 
-const LOBBY_ACTIONS: HubMenuItem[] = [
-  { id: 'create', label: 'Crear sala', icon: 'plus' },
-  { id: 'solo', label: 'Modo solo', icon: 'user' },
-];
+const LOBBY_ACTIONS: HubMenuItem[] = [{ id: 'create', label: 'Crear sala', icon: 'plus' }];
 
 /**
  * Simulator entrance (Online, in the hub's frame like Jugar): create a room or join an open one (listed, all public) or one by its code. A shared
@@ -40,7 +37,6 @@ export class LobbyPage {
   private readonly rooms = inject(RoomsApi);
   protected readonly game = inject(GameStore);
   private readonly router = inject(Router);
-  /** In the site's edit mode a test room can be made: played alone on both sides. */
 
   protected readonly labels = STATUS_LABELS;
   protected readonly actions = LOBBY_ACTIONS;
@@ -85,17 +81,17 @@ export class LobbyPage {
     return this.isMine(room) || (room.playerCount ?? 0) < 2;
   }
 
-  /** "Crear sala" or "Modo solo" from the menu. */
-  protected pick(item: HubMenuItem): void {
-    void this.create(item.id === 'solo');
+  /** "Crear sala" from the menu (solo mode is in Jugar). */
+  protected pick(): void {
+    void this.create();
   }
 
-  protected async create(editor = false): Promise<void> {
+  protected async create(): Promise<void> {
     if (this.busy()) return;
-    this.busy.set(editor ? 'test' : 'create');
+    this.busy.set('create');
     this.error.set(null);
     try {
-      const { roomId } = await firstValueFrom(this.rooms.create(editor));
+      const { roomId } = await firstValueFrom(this.rooms.create(false));
       await this.enter(roomId);
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo crear la sala'));

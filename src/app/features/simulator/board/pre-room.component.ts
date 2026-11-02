@@ -5,7 +5,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
-import { coverFinish, shineOf } from '@data/collection/collection-rules';
+import { coverFinish, ownedCount, shineOf } from '@data/collection/collection-rules';
 import { CollectionStore } from '@data/collection/collection.store';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
@@ -14,17 +14,19 @@ import { CardSlot, PlayerState } from '@data/simulator/simulator.model';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
-import { StackComponent } from '@ui/layout/stack/stack.component';
+import { AlertComponent } from '@ui/feedback/alert/alert.component';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
 
 /**
- * The room before a game: each player picks a deck and its starter (the deck's first Iniciador by default),
+ * The room before a game, in the hub's line (the top row of every screen, a "versus" of the two seats with their
+ * starters and nameplates, and a big start): each player picks a deck and its starter (the deck's first Iniciador by default),
  * the room's owner (its creator) picks who goes first and may take the other player out, and the game starts
  * when both confirm. After a game "Cambiar mazo" comes back
  * here, in the same room.
@@ -32,17 +34,18 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 @Component({
   selector: 'eras-pre-room',
   imports: [
-    StackComponent,
     GridComponent,
-    SectionHeaderComponent,
-    FormFieldComponent,
+    AlertComponent,
+    ToggleGroupComponent,
     DeckCoverComponent,
     GameCardComponent,
     EmptyStateComponent,
+    AvatarComponent,
     BadgeComponent,
     ButtonComponent,
+    IconButtonComponent,
+    IconComponent,
     SpinnerComponent,
-    CardComponent,
   ],
   templateUrl: './pre-room.component.html',
   styleUrl: './pre-room.component.scss',
@@ -98,15 +101,23 @@ export class PreRoomComponent {
   });
 
   /**
-   * Decks with cards the simulator does not run yet: they cannot be chosen (the server refuses them too), except in a
-   * test room, where those cards are tried by hand.
+   * Decks that cannot be chosen, and why (the server refuses them too): with cards the simulator does not run yet, or
+   * with copies the player lacks in their collection. A test room plays anything (cards are tried there by hand).
    */
   protected readonly unplayable = computed(() => {
     const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
-    const result = new Set<string>();
+    const collection = this.collection.collection();
+    const result = new Map<string, string>();
     if (this.game.editorRoom()) return result;
     for (const deck of this.allDecks()) {
-      if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) result.add(deck.id);
+      if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) {
+        result.set(deck.id, 'Tiene cartas sin programar');
+        continue;
+      }
+      const needed = new Map<string, number>();
+      for (const id of deck.cards) needed.set(id, (needed.get(id) ?? 0) + 1);
+      const lacking = [...needed].reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
+      if (lacking > 0) result.set(deck.id, `Te ${lacking === 1 ? 'falta 1 carta' : 'faltan ' + lacking + ' cartas'} de tu colección`);
     }
     return result;
   });
@@ -126,6 +137,7 @@ export class PreRoomComponent {
     ...this.seats().filter((p): p is PlayerState => !!p).map((p) => ({ id: p.userId, label: !this.game.editorRoom() && p.userId === this.me() ? 'Yo' : p.username })),
     { id: 'random', label: 'Aleatorio' },
   ]);
+  protected readonly firstToggle = computed<ToggleOption[]>(() => this.firstOptions().map((o) => ({ value: o.id, label: o.label })));
   protected readonly firstLabel = computed(() => {
     const choice = this.firstChoice();
     if (choice === 'random') return 'Aleatorio';

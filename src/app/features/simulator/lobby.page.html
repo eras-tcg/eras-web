@@ -1,6 +1,6 @@
 <!-- The same frame as Jugar: the edition's art on the right, the options on the left -->
 <eras-hub-screen title="Online" [back]="{ route: '/play', label: 'Jugar' }">
-  <eras-hub-menu variant="sub" label="Salas" [items]="actions" [busy]="busy()" (picked)="pick($event)" />
+  <eras-hub-menu variant="sub" label="Salas" [items]="actions" [busy]="busy()" (picked)="pick()" />
 
   @if (game.removed(); as why) {
     <eras-alert>{{ why }}.</eras-alert>

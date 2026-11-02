@@ -7,38 +7,84 @@
   overflow-y: auto;
   overscroll-behavior: none;
 }
-.pre-room { display: grid; gap: var(--space-4); max-inline-size: 72rem; margin-inline: auto; padding-block-end: var(--space-4); }
-.room { font-size: var(--font-size-lg); }
+
+.pre-room {
+  display: grid;
+  gap: var(--space-5);
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-5);
+}
+
 .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-.players { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: var(--space-3); }
+.error { color: var(--color-danger); font-size: var(--font-size-sm); }
+
+/* Top row: as every screen's */
+.room-bar { display: flex; align-items: center; gap: var(--space-3); }
+.room-bar [erasIconButton] { margin-inline-start: auto; }
+.back {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.back eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
+.back:hover { border-color: var(--color-hub-accent); color: var(--color-text); transform: translateX(-2px); }
+.heading { min-inline-size: 0; padding-inline-start: var(--space-3); border-inline-start: 4px solid var(--color-hub-accent); }
+.title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Versus: the two seats facing each other, "VS" between them */
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-4); }
+.versus {
+  font-family: var(--font-family-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.05em;
+  color: var(--color-hub-accent);
+  text-shadow: 0 0 1.25rem color-mix(in srgb, var(--color-hub-accent) 55%, transparent);
+}
 .seat {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: start;
+  justify-items: center;
+  gap: var(--space-3);
+  min-block-size: 20rem;
   padding: var(--space-4);
-  border: 2px solid var(--color-border);
   border-radius: var(--radius-lg, var(--radius-md));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 7%, transparent), transparent 60%);
-  transition: border-color var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-hub-accent) 12%, transparent), transparent 70%);
 }
-.seat.ready {
-  border-color: var(--color-success);
-  box-shadow: 0 0 0 1px var(--color-success), 0 0 18px color-mix(in srgb, var(--color-success) 25%, transparent);
-}
-.seat.empty { grid-template-columns: 1fr; place-items: center; min-block-size: 14rem; border-style: dashed; background: none; }
-.starter-slot { --game-card-width: 9rem; inline-size: 9rem; }
+.seat.empty { place-items: center; border: 2px dashed var(--color-border); background: none; }
+.seat.playing .starter-slot eras-game-card { box-shadow: 0 0 0 3px var(--color-hub-accent), 0 10px 24px rgb(0 0 0 / 35%); }
+
+// The starter, large; a confirmed player's glows
+.starter-slot { --game-card-width: 11rem; position: relative; inline-size: 11rem; }
 .starter-slot eras-game-card {
   display: block;
   border-radius: var(--radius-md);
   box-shadow: 0 10px 24px rgb(0 0 0 / 35%);
-  transition: transform var(--duration-fast, 120ms) ease;
+  transition: box-shadow var(--duration-base, 200ms) ease;
 }
-.starter-slot eras-game-card:hover { transform: translateY(-3px) scale(1.03); }
+.seat.ready .starter-slot eras-game-card {
+  box-shadow: 0 0 0 3px var(--color-success), 0 0 1.5rem color-mix(in srgb, var(--color-success) 55%, transparent);
+}
 .starter-empty {
   display: grid;
   place-items: center;
-  inline-size: 9rem;
+  inline-size: 11rem;
   aspect-ratio: 63 / 88;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-md);
@@ -46,35 +92,100 @@
   font-size: var(--font-size-sm);
   text-align: center;
 }
-.info { display: grid; gap: var(--space-3); align-content: start; min-inline-size: 0; }
-.name { font-size: var(--font-size-lg); }
-.line { display: grid; gap: 2px; }
-.line strong { overflow-wrap: anywhere; }
-.label { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-.actions:empty { display: none; }
-.waiting { display: grid; gap: var(--space-2); justify-items: center; text-align: center; max-inline-size: 22rem; }
-.pulse {
-  inline-size: 0.75rem;
-  block-size: 0.75rem;
-  border-radius: 50%;
-  background: var(--color-primary);
-  animation: pulse 1.4s ease-in-out infinite;
+.ready-tag {
+  position: absolute;
+  inset-block-end: -0.6rem;
+  inset-inline: 0;
+  justify-self: center;
+  inline-size: max-content;
+  margin-inline: auto;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-success);
+  color: var(--color-surface);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
+
+// The player's nameplate, as the home's: the icon in a ring of the accent, the name and the deck
+.plate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-inline-size: 100%;
+  padding: var(--space-2) var(--space-6) var(--space-2) var(--space-2);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-accent) 25%, var(--color-surface)), var(--color-surface) 70%);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.ring {
+  display: grid;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background: conic-gradient(from 210deg, var(--color-hub-accent), var(--color-hub-glow), var(--color-hub-accent));
+}
+.ring eras-avatar { --avatar-size: 2.5rem; }
+.plate-text { display: flex; flex-direction: column; min-inline-size: 0; }
+.name { overflow: hidden; font-family: var(--font-family-display); letter-spacing: 0.04em; text-overflow: ellipsis; white-space: nowrap; }
+.deck-name { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-xs); text-overflow: ellipsis; white-space: nowrap; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.actions:empty { display: none; }
+
+.waiting { display: grid; gap: var(--space-2); justify-items: center; max-inline-size: 18rem; text-align: center; }
+.pulse { inline-size: 0.75rem; block-size: 0.75rem; border-radius: 50%; background: var(--color-hub-accent); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse {
   0%, 100% { opacity: 0.35; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.15); }
 }
-@media (max-width: 30rem) {
-  .seat { grid-template-columns: 1fr; justify-items: center; }
-  .info { justify-items: center; text-align: center; }
+
+/* Who goes first and the big start */
+.controls { display: grid; justify-items: center; gap: var(--space-3); }
+.controls eras-toggle-group { inline-size: min(100%, 26rem); }
+.start {
+  min-inline-size: min(100%, 22rem);
+  padding: var(--space-3) var(--space-8);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-hub-accent);
+  box-shadow: 0 0 1.25rem color-mix(in srgb, var(--color-hub-accent) 45%, transparent);
+  color: var(--color-hub-scrim);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease;
 }
-.error { color: var(--color-danger); font-size: var(--font-size-sm); }
-.seat.playing { box-shadow: 0 0 0 2px var(--color-primary); }
+.start:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px); }
+.start:disabled { opacity: 0.45; box-shadow: none; cursor: default; }
+.start.cancel { background: var(--color-surface-muted); box-shadow: none; color: var(--color-text); }
+.hint { text-align: center; }
+
+/* The pickers: starter and deck */
+.picker { display: grid; gap: var(--space-3); }
+.picker-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }
+.picker-title { margin: 0; padding-inline-start: var(--space-2); border-inline-start: 3px solid var(--color-hub-accent); font-family: var(--font-family-display); font-size: var(--font-size-lg); font-weight: var(--font-weight-regular); letter-spacing: 0.05em; text-transform: uppercase; }
+.search {
+  inline-size: min(100%, 16rem);
+  padding: var(--space-1) 0;
+  border: 0;
+  border-block-end: 1px solid var(--color-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+}
+.search:focus { border-block-end-color: var(--color-hub-accent); }
 .starters { --game-card-width: 6rem; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pick { padding: var(--space-1); border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
 .pick:hover { border-color: var(--color-border); }
-.pick.chosen, .deck.chosen { border-color: var(--color-success); }
+.pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.pick.chosen, .deck.chosen { border-color: var(--color-hub-accent); }
 .deck { border: 3px solid transparent; border-radius: var(--radius-md); }
 // A deck with cards the simulator does not run: shown, but it cannot be chosen
 .deck.blocked { position: relative; opacity: 0.55; filter: grayscale(0.6); }
@@ -88,4 +199,9 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+@media (max-width: 40rem) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .versus { justify-self: center; }
+  .seat { min-block-size: 0; }
+}

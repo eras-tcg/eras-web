@@ -1,144 +1,126 @@
 <div class="pre-room">
-  <eras-card>
-    <eras-stack [gap]="3">
-      <eras-stack direction="row" [gap]="3" align="center" justify="space-between" wrap>
-        <eras-stack [gap]="1">
-          @if (game.editorRoom()) {
-            <strong class="room">Modo solo</strong>
-            <span class="muted">Juegas los dos lados: elige el mazo de cada uno.</span>
-          } @else {
-            <strong class="room">Sala {{ game.roomId() }}</strong>
-            <span class="muted">Comparte el código o el enlace para que tu rival entre.</span>
-          }
-        </eras-stack>
-        <eras-stack direction="row" [gap]="2" wrap>
-          @if (!game.editorRoom()) {
-            <button erasButton variant="secondary" size="sm" type="button" (click)="copy()">{{ copied() ? 'Copiado' : 'Copiar enlace' }}</button>
-          }
-          <button erasButton variant="ghost" size="sm" type="button" (click)="leave()">Salir de la sala</button>
-        </eras-stack>
-      </eras-stack>
+  <!-- The same top row as every screen: a round "back" (leaving the room) and the title with its accent bar -->
+  <header class="room-bar">
+    <button type="button" class="back" aria-label="Salir de la sala" title="Salir de la sala" (click)="leave()"><eras-icon name="chevron-left" /></button>
+    <div class="heading">
+      <h1 class="title">{{ game.editorRoom() ? 'Modo solo' : 'Sala ' + game.roomId() }}</h1>
+    </div>
+    @if (!game.editorRoom()) {
+      <button
+        type="button"
+        erasIconButton
+        size="md"
+        [icon]="copied() ? 'check' : 'link'"
+        [title]="copied() ? 'Enlace copiado' : 'Copiar el enlace para que tu rival entre'"
+        aria-label="Copiar el enlace de la sala"
+        (click)="copy()"
+      ></button>
+    }
+  </header>
 
-      <div class="players">
-        @for (p of seats(); track $index) {
-          <div class="seat" [class.ready]="p?.ready" [class.empty]="!p" [class.playing]="game.editorRoom() && p?.userId === mine()?.userId">
-            @if (p) {
-              <!-- The starter is the seat's face: large, beside who plays it -->
-              <div class="starter-slot">
-                @if (starterOf(p); as s) {
-                  <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
-                } @else {
-                  <div class="starter-empty">{{ p.deckId ? 'Sin Iniciador' : 'Sin mazo' }}</div>
-                }
-              </div>
-              <div class="info">
-                <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
-                  <eras-stack direction="row" [gap]="2" align="center" wrap>
-                    <strong class="name">{{ p.username }}{{ p.userId === me() ? ' (tú)' : '' }}</strong>
-                    @if (p.userId === game.state()?.hostId) {
-                      <eras-badge>Dueño</eras-badge>
-                    }
-                  </eras-stack>
-                  @if (!p.connected) {
-                    <eras-badge tone="danger">Desconectado</eras-badge>
-                  } @else if (p.ready) {
-                    <eras-badge tone="success">Listo</eras-badge>
-                  }
-                </eras-stack>
-                <div class="line">
-                  <span class="label">Mazo</span>
-                  <strong>{{ p.deckName ?? (p.deckId ? 'Mazo elegido' : 'Eligiendo mazo…') }}</strong>
-                </div>
-                @if (starterOf(p); as s) {
-                  <div class="line">
-                    <span class="label">Iniciador</span>
-                    <strong>{{ s.cardName }}</strong>
-                  </div>
-                }
-                <div class="actions">
-                  @if (game.editorRoom()) {
-                    @if (p.userId !== mine()?.userId) {
-                      <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">Elegir su mazo</button>
-                    }
-                  } @else if (game.isHost() && p.userId !== me()) {
-                    @if (!p.connected) {
-                      <span class="muted">Puedes esperarlo o sacarlo de la sala.</span>
-                    }
-                    <button erasButton variant="danger" size="sm" type="button" (click)="game.kickPlayer(p.userId)">Sacar de la sala</button>
-                  }
-                </div>
-              </div>
+  @if (game.error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+
+  <!-- Versus: each seat with its starter large and the player's nameplate under it -->
+  <section class="stage" aria-label="Jugadores">
+    @for (p of seats(); track $index; let i = $index) {
+      @if (i === 1) {
+        <span class="versus" aria-hidden="true">VS</span>
+      }
+      <div class="seat" [class.ready]="p?.ready" [class.empty]="!p" [class.playing]="game.editorRoom() && p?.userId === mine()?.userId">
+        @if (p) {
+          <div class="starter-slot">
+            @if (starterOf(p); as s) {
+              <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
             } @else {
-              <div class="waiting">
-                <span class="pulse" aria-hidden="true"></span>
-                <strong>Esperando rival…</strong>
-                @if (canPlayAlone()) {
-                  <span class="muted">O juega tú los dos lados: una partida de prueba con acciones manuales y cartas de prueba.</span>
-                  <button erasButton variant="secondary" size="sm" type="button" [loading]="goingAlone()" (click)="playAlone()">Jugar solo los dos lados</button>
-                  @if (aloneError(); as e) {
-                    <span class="error">{{ e }}</span>
-                  }
-                }
-              </div>
+              <div class="starter-empty">{{ p.deckId ? 'Sin Iniciador' : 'Eligiendo mazo…' }}</div>
+            }
+            @if (p.ready) {
+              <span class="ready-tag">Listo</span>
+            }
+          </div>
+          <div class="plate">
+            <span class="ring"><eras-avatar [url]="p.avatar ?? null" [name]="p.username" /></span>
+            <span class="plate-text">
+              <span class="name">{{ p.username }}{{ p.userId === me() ? ' (tú)' : '' }}</span>
+              <span class="deck-name">{{ p.deckName ?? (p.deckId ? 'Mazo elegido' : 'Sin mazo') }}</span>
+            </span>
+            @if (p.userId === game.state()?.hostId) {
+              <eras-badge>Dueño</eras-badge>
+            }
+            @if (!p.connected) {
+              <eras-badge tone="danger">Desconectado</eras-badge>
+            }
+          </div>
+          <div class="actions">
+            @if (game.editorRoom()) {
+              @if (p.userId !== mine()?.userId) {
+                <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">Elegir su mazo</button>
+              }
+            } @else if (game.isHost() && p.userId !== me()) {
+              <button erasButton variant="danger" size="sm" type="button" (click)="game.kickPlayer(p.userId)">Sacar de la sala</button>
+            }
+          </div>
+        } @else {
+          <div class="waiting">
+            <span class="pulse" aria-hidden="true"></span>
+            <strong>Esperando rival…</strong>
+            <span class="muted">Comparte el enlace de la sala.</span>
+            @if (canPlayAlone()) {
+              <button erasButton variant="secondary" size="sm" type="button" [loading]="goingAlone()" (click)="playAlone()">Jugar solo los dos lados</button>
+              @if (aloneError(); as e) {
+                <span class="error">{{ e }}</span>
+              }
             }
           </div>
         }
       </div>
+    }
+  </section>
 
-      <eras-stack direction="row" [gap]="2" align="center" wrap>
-        <span>¿Quién empieza?</span>
-        @if (game.isHost()) {
-          @for (o of firstOptions(); track o.id) {
-            <button erasButton size="sm" type="button" [variant]="firstChoice() === o.id ? 'primary' : 'secondary'" (click)="game.setFirstPlayer(o.id)">{{ o.label }}</button>
-          }
-        } @else {
-          <strong>{{ firstLabel() }}</strong>
-          <span class="muted">(lo elige el dueño de la sala)</span>
-        }
-      </eras-stack>
-
-      <eras-stack direction="row" [gap]="2" align="center" wrap>
-        <button erasButton type="button" [disabled]="!canReady()" (click)="game.setReady(!mine()?.ready)">
-          {{ mine()?.ready ? 'Cancelar' : 'Comenzar partida' }}
-        </button>
-        <span class="muted">{{ readyHint() }}</span>
-      </eras-stack>
-    </eras-stack>
-  </eras-card>
+  <!-- Who goes first, and starting: the big action of the screen -->
+  <section class="controls">
+    @if (game.isHost()) {
+      <eras-toggle-group label="¿Quién empieza?" [options]="firstToggle()" [selected]="[firstChoice()]" (toggled)="game.setFirstPlayer($event)" />
+    } @else {
+      <span class="first">¿Quién empieza? <strong>{{ firstLabel() }}</strong> <span class="muted">(lo elige el dueño)</span></span>
+    }
+    <button type="button" class="start" [class.cancel]="mine()?.ready" [disabled]="!canReady()" (click)="game.setReady(!mine()?.ready)">
+      {{ mine()?.ready ? 'Cancelar' : 'Comenzar partida' }}
+    </button>
+    <span class="muted hint">{{ readyHint() }}</span>
+  </section>
 
   @if (myStarters().length > 1) {
-    <eras-card>
-      <eras-stack [gap]="2">
-        <eras-section-header [title]="game.editorRoom() ? 'Iniciador de ' + mine()?.username : 'Tu Iniciador'" />
-        <div class="starters" role="group" aria-label="Iniciador">
-          @for (s of myStarters(); track s.cardId) {
-            <button type="button" class="pick" [class.chosen]="mine()?.starterCardId === s.cardId" [attr.aria-pressed]="mine()?.starterCardId === s.cardId" [attr.aria-label]="s.cardName" (click)="game.setStarter(s.cardId)">
-              <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
-            </button>
-          }
-        </div>
-      </eras-stack>
-    </eras-card>
+    <section class="picker">
+      <h2 class="picker-title">{{ game.editorRoom() ? 'Iniciador de ' + mine()?.username : 'Tu Iniciador' }}</h2>
+      <div class="starters" role="group" aria-label="Iniciador">
+        @for (s of myStarters(); track s.cardId) {
+          <button type="button" class="pick" [class.chosen]="mine()?.starterCardId === s.cardId" [attr.aria-pressed]="mine()?.starterCardId === s.cardId" [attr.aria-label]="s.cardName" (click)="game.setStarter(s.cardId)">
+            <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
+          </button>
+        }
+      </div>
+    </section>
   }
 
-  <eras-stack [gap]="3">
-    <eras-stack direction="row" [gap]="3" align="end" justify="space-between" wrap>
-      <eras-section-header [title]="game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo'" />
-      <eras-form-field label="Buscar mazo">
-        <input type="search" placeholder="Nombre del mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
-      </eras-form-field>
-    </eras-stack>
+  <section class="picker">
+    <div class="picker-head">
+      <h2 class="picker-title">{{ game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo' }}</h2>
+      <input class="search" type="search" aria-label="Buscar mazo" placeholder="Buscar mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
+    </div>
     @if (allDecks().length === 0) {
       <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
     } @else {
       <eras-grid minColumn="9.5rem" [gap]="3">
         @for (deck of matches(); track deck.id) {
-          @let blocked = unplayable().has(deck.id);
+          @let blocked = unplayable().get(deck.id);
           <div
             class="deck"
             [class.chosen]="mine()?.deckId === deck.id"
             [class.blocked]="!!blocked"
-            [attr.title]="blocked ? 'No se puede jugar en el simulador: tiene cartas sin programar' : null"
+            [attr.title]="blocked ? 'No puedes jugar este mazo: ' + blocked.toLowerCase() : null"
           >
             <eras-deck-cover
               [name]="deck.deckName"
@@ -150,7 +132,7 @@
               (selected)="chooseDeck(deck.id)"
             />
             @if (blocked) {
-              <span class="blocked-note">Tiene cartas sin programar</span>
+              <span class="blocked-note">{{ blocked }}</span>
             }
           </div>
         } @empty {
@@ -158,5 +140,5 @@
         }
       </eras-grid>
     }
-  </eras-stack>
+  </section>
 </div>

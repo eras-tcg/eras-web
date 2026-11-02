@@ -24,6 +24,8 @@
   background: none;
   color: inherit;
   font: inherit;
+  // Buttons and links alike take the shadow over the artwork (the browser resets it on buttons)
+  text-shadow: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   text-decoration: none;

@@ -1,8 +1,5 @@
 <eras-page [title]="label()" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
-    @if (phase() === 'packs' || phase() === 'opening') {
-      <button erasButton variant="secondary" type="button" (click)="skip()"><eras-icon name="chevron-right" /> Saltar animación</button>
-    }
     @if (phase() === 'done' && product(); as p) {
       <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
     }
@@ -13,6 +10,9 @@
   }
 
   <div class="stage">
+    @if (phase() === 'packs' || phase() === 'opening') {
+      <button erasButton variant="ghost" size="sm" type="button" class="skip" (click)="skip(); $event.stopPropagation()">Saltar <eras-icon name="chevron-right" /></button>
+    }
     @if (!ready()) {
       <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
     } @else if (!editionData() || !product()) {
@@ -42,11 +42,12 @@
           <div class="table" role="button" tabindex="0" [attr.aria-label]="packs().length > 1 ? 'Abrir los ' + packs().length + ' sobres' : 'Abrir el sobre'" (click)="start()" (keydown.enter)="start()" (keydown.space)="start()">
             <div #table class="packs" [style.--pack-width.px]="packWidth()">
               @for (pack of packs(); track $index; let i = $index) {
-                <!-- No name: only the aura tells a special pack; the one that went up a rarity flashes as it lands -->
+                <!-- No name: only the aura tells a special pack; the one going up a rarity shakes, then bursts into its new aura -->
                 <div
                   class="pack dealt"
-                  [class]="'tier-' + tierOf(pack.packType)"
+                  [class]="'tier-' + tierOf(pack.upgradedFrom && !upgradeShown() ? pack.upgradedFrom : pack.packType)"
                   [class.upgraded]="!!pack.upgradedFrom"
+                  [class.lifted]="!!pack.upgradedFrom && upgradeShown()"
                   [style.--art]="art"
                   [style.animation-delay.ms]="i * 45"
                 ></div>

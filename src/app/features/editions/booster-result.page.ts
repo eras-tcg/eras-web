@@ -34,6 +34,8 @@ const SPECIAL_MS = { pack: 1600, box: 1000 };
 /** Pause after the plain cards, before the special ones. */
 const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
+/** How long the pack that goes up a rarity shakes on the table before it does. */
+const UPGRADE_SHAKE_MS = 1400;
 const CARD_RATIO = 63 / 88;
 /** The packs on the table: never bigger than this, and this far apart. */
 const PACK_MAX_PX = 260;
@@ -100,6 +102,8 @@ export class BoosterResultPage {
   protected readonly tearing = signal(false);
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
   protected readonly trembling = signal<ReadonlySet<number>>(new Set());
+  /** packs: whether the pack that goes up a rarity already showed it (until then it wears its old aura). */
+  protected readonly upgradeShown = signal(false);
 
   /** The table's free room, to size the packs so that all of them fit. */
   private readonly table = viewChild<ElementRef<HTMLElement>>('table');
@@ -163,6 +167,7 @@ export class BoosterResultPage {
   /** Opens the packs one after another. */
   protected start(): void {
     if (this.phase() !== 'packs') return;
+    this.upgradeShown.set(true);
     if (this.reduceMotion) return this.skip();
     this.phase.set('opening');
     if (!this.isStructure()) return this.openPackAt(0);
@@ -212,7 +217,10 @@ export class BoosterResultPage {
     this.packIndex.set(0);
     this.faceUp.set(new Set());
     this.trembling.set(new Set());
+    this.upgradeShown.set(false);
     this.phase.set('packs');
+    // Once every pack is dealt, the upgraded one (if any) shakes a moment and goes up
+    if (this.packs().some((p) => p.upgradedFrom)) this.later(() => this.upgradeShown.set(true), this.packs().length * 45 + UPGRADE_SHAKE_MS);
   }
 
   /** A structure deck's cards: its public deck (named like the edition, "ST1"), or one of each card of the edition. */

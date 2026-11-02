@@ -64,7 +64,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                 (click)="canAct() && toggle(c.instanceId)"
               >
                 <eras-game-card
-                  [imageUrl]="c.imageUrl"
+                  [imageUrl]="c.imageUrl" [foil]="c.finish ?? null"
                   [name]="c.cardName"
                   [hidden]="isHidden(c)"
                   [peeked]="isPeeked(c)"

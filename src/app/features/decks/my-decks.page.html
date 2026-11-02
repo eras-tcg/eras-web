@@ -26,6 +26,7 @@
       <eras-deck-cover
         [name]="deck.deckName"
         [imageUrl]="deck.deckImage ?? null"
+        [foil]="coverShine(deck)"
         [cardCount]="deck.cards.length"
         [isPrivate]="!!deck.privateDeck"
         [isPublic]="!deck.privateDeck"

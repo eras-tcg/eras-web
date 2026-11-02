@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { bestFinish, bestFinishAmong, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -59,5 +59,13 @@ describe('collection rules', () => {
       { rarity: 'SR', copies: 1, cost: 30, owned: 0 },
       { rarity: 'C', copies: 2, cost: 60, owned: 40 },
     ]);
+  });
+
+  it('shines a deck cover as the finest copy owned of the card it shows', () => {
+    const catalog = [{ id: 'a', image_url: 'img/a' }, { id: 'b', image_url: 'img/b' }] as CatalogCard[];
+    expect(coverFinish({ cards: ['a', 'b'], deckImage: 'img/b' }, catalog, collection)).toBe('prism');
+    expect(coverFinish({ cards: ['a'], deckImage: 'img/a' }, catalog, collection)).toBe('foil');
+    expect(coverFinish({ cards: ['a'], deckImage: 'img/b' }, catalog, collection)).toBeNull();
+    expect(coverFinish({ cards: ['a'], deckImage: null }, catalog, collection)).toBeNull();
   });
 });

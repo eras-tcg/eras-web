@@ -15,6 +15,10 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       <button type="button" class="open" [attr.aria-label]="name() ? 'Ver ' + name() : 'Espacio vacío'" [disabled]="!name()" (click)="selected.emit()">
         @if (imageUrl()) {
           <img [src]="imageUrl()" alt="" loading="lazy" />
+          @if (foil(); as kind) {
+            <!-- The player's foil copy of the cover card -->
+            <span class="shine" [class.prism]="kind === 'prism'" aria-hidden="true"></span>
+          }
         } @else {
           <span class="placeholder" aria-hidden="true"><eras-icon name="stack" /></span>
         }
@@ -45,6 +49,8 @@ import { IconComponent } from '../../primitives/icon/icon.component';
     </div>
   `,
   styles: `
+    @use 'mixins/foil';
+
     :host {
       display: block;
     }
@@ -139,6 +145,24 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       block-size: 100%;
       object-fit: cover;
       object-position: top;
+    }
+    .shine {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .shine:not(.prism)::after {
+      @include foil.rainbow;
+    }
+    .shine.prism {
+      @include foil.scaled;
+    }
+    .shine.prism::before {
+      @include foil.glitter-dots;
+    }
+    .shine.prism::after {
+      @include foil.glitter-light;
     }
     .placeholder {
       display: grid;
@@ -241,6 +265,8 @@ export class DeckCoverComponent {
   readonly name = input<string | null>(null);
   readonly author = input<string | null>(null);
   readonly imageUrl = input<string | null>(null);
+  /** The player's finest copy of the cover card shines over it. */
+  readonly foil = input<'foil' | 'prism' | null>(null);
   readonly cardCount = input<number | null>(null);
   readonly rank = input(null, { transform: (v: unknown) => (v == null ? null : numberAttribute(v)) });
   readonly isPrivate = input(false, { transform: booleanAttribute });

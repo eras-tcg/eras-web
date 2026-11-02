@@ -25,6 +25,10 @@ function roman(n: number): string {
   template: `
     @if (!hidden() && imageUrl()) {
       <img [src]="imageUrl()" alt="" draggable="false" />
+      @if (foil(); as kind) {
+        <!-- The owner's foil copy: the shine is part of the card, it turns and moves with it -->
+        <span class="shine" [class.prism]="kind === 'prism'" aria-hidden="true"></span>
+      }
     } @else if (!hidden() && name()) {
       <!-- A card without art (a test card): its name -->
       <span class="face">{{ name() }}</span>
@@ -68,6 +72,8 @@ function roman(n: number): string {
     }
   `,
   styles: `
+    @use 'mixins/foil';
+
     :host {
       position: relative;
       display: block;
@@ -97,6 +103,17 @@ function roman(n: number): string {
       text-align: center;
       overflow-wrap: anywhere;
     }
+    .shine {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .shine:not(.prism)::after { @include foil.rainbow; }
+    .shine.prism { @include foil.scaled; }
+    .shine.prism::before { @include foil.glitter-dots; }
+    .shine.prism::after { @include foil.glitter-light; }
     .back {
       border: 1px solid rgb(255 255 255 / 25%);
       // Fixed card-back art colors: the same in both themes, like a physical card
@@ -255,6 +272,8 @@ export class GameCardComponent {
   readonly selectable = input(false, { transform: booleanAttribute });
   /** The table's information about it (cost, type, classes, level); null shows none. */
   readonly info = input<GameCardInfo | null>(null);
+  /** The copy's shine, as its owner has it (shown only face up). */
+  readonly foil = input<'foil' | 'prism' | null>(null);
 
   protected readonly typeLabels = TYPE_LABELS;
   protected romanOf(level: number): string {

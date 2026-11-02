@@ -5,6 +5,9 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
+import { coverFinish, shineOf } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
+import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState } from '@data/simulator/simulator.model';
@@ -52,6 +55,7 @@ export class PreRoomComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly rooms = inject(RoomsApi);
+  private readonly collection = inject(CollectionStore);
 
   /** The owner waiting alone may play both sides (a test room, "solo mode"). */
   protected readonly canPlayAlone = computed(() => this.game.isHost() && !this.game.editorRoom() && !this.rival());
@@ -162,5 +166,10 @@ export class PreRoomComponent {
     await navigator.clipboard?.writeText(`${location.origin}/simulator/${this.game.roomId() ?? ''}`).catch(() => undefined);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
+  }
+
+  /** The player's finest copy of a deck's cover card shines over the cover. */
+  protected coverShine(deck: Deck): 'foil' | 'prism' | null {
+    return shineOf(coverFinish(deck, this.cards.cards(), this.collection.collection()));
   }
 }

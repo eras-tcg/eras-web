@@ -3,6 +3,8 @@ import { Router, RouterLink } from '@angular/router';
 import { CanDirective } from '@core/auth/can.directive';
 import { AuthService } from '@core/auth/auth.service';
 import { CardsStore } from '@data/cards/cards.store';
+import { coverFinish, shineOf } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
 import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, summarizeDecks } from '@data/decks/deck-filters';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
@@ -33,6 +35,7 @@ export class MyDecksPage {
   private readonly auth = inject(AuthService);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
+  private readonly collection = inject(CollectionStore);
 
   protected readonly sortOptions = MY_SORT_OPTIONS;
   protected readonly sortKey = signal<DeckSortKey>('name');
@@ -79,5 +82,10 @@ export class MyDecksPage {
     } finally {
       this.deleting.set(null);
     }
+  }
+
+  /** The player's finest copy of a deck's cover card shines over the cover. */
+  protected coverShine(deck: Deck): 'foil' | 'prism' | null {
+    return shineOf(coverFinish(deck, this.cards.cards(), this.collection.collection()));
   }
 }

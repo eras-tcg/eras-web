@@ -48,7 +48,7 @@ export const CHARGE_MS = 800;
       <button type="button" class="reveal" [class.mine]="s.mine" aria-live="assertive" aria-label="Saltar la animación" (click)="skip()">
         @if (s.kind === 'damage') {
           <div class="side">
-            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [name]="s.attacker?.cardName ?? null" />
+            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
             <span>{{ s.attacker?.cardName ?? (s.byEffect ? 'Efecto' : 'Atacante') }}</span>
             @if (s.byEffect) {
               <small>Por efecto</small>
@@ -60,13 +60,13 @@ export const CHARGE_MS = 800;
             <span>{{ s.byEffect ? 'de daño directo por efecto' : 'de daño directo' }}</span>
           </div>
           <div class="side big flip">
-            <eras-game-card [imageUrl]="s.life?.imageUrl ?? null" [name]="s.life?.cardName ?? null" />
+            <eras-game-card [imageUrl]="s.life?.imageUrl ?? null" [foil]="s.life?.finish ?? null" [name]="s.life?.cardName ?? null" />
             <span>{{ s.defender }} pierde {{ s.life?.cardName ?? 'una vida' }}</span>
             <small>{{ s.to === 'tributeZone' ? 'Va a sus tributos' : s.to === 'hand' ? 'Va a su mano' : '' }}</small>
           </div>
         } @else {
           <div class="side" [class.loses]="s.attackerStrength <= s.blockerStrength">
-            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [name]="s.attacker?.cardName ?? null" />
+            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
             <span>{{ s.attacker?.cardName ?? 'Atacante' }}</span>
             <strong class="strength">{{ s.attackerStrength }}</strong>
             @if (s.attackerStrength <= s.blockerStrength) {
@@ -79,7 +79,7 @@ export const CHARGE_MS = 800;
             <span>Enfrentamiento</span>
           </div>
           <div class="side" [class.loses]="s.blockerStrength <= s.attackerStrength">
-            <eras-game-card [imageUrl]="s.blocker?.imageUrl ?? null" [name]="s.blocker?.cardName ?? null" />
+            <eras-game-card [imageUrl]="s.blocker?.imageUrl ?? null" [foil]="s.blocker?.finish ?? null" [name]="s.blocker?.cardName ?? null" />
             <span>{{ s.blocker?.cardName ?? 'Bloqueador' }}</span>
             <strong class="strength">{{ s.blockerStrength }}</strong>
             @if (s.blockerStrength <= s.attackerStrength) {

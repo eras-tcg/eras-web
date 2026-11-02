@@ -1,6 +1,7 @@
 import { MAX_COPIES } from '../decks/deck-rules';
 import { CatalogCard } from '../cards/card.model';
-import { DeckEntry } from '../decks/deck.model';
+import { cardImageUrl } from '../cards/card-rules';
+import { Deck, DeckEntry } from '../decks/deck.model';
 import { Collection, Finish, OwnedCopies } from './collection.model';
 
 /** Plainest first. */
@@ -98,6 +99,21 @@ export function bestFinishAmong(collection: Collection | null, cardIds: readonly
     if (finish && (!best || FINISHES.indexOf(finish) > FINISHES.indexOf(best))) best = finish;
   }
   return best;
+}
+
+/**
+ * The finest finish the player owns of a deck's cover card (the deck's cards showing its cover image), or null when
+ * they own none.
+ */
+export function coverFinish(
+  deck: Pick<Deck, 'cards' | 'deckImage'>,
+  catalog: readonly CatalogCard[],
+  collection: Collection | null,
+): Finish | null {
+  if (!deck.deckImage || !collection) return null;
+  const ids = new Set(deck.cards);
+  const covers = catalog.filter((c) => ids.has(c.id) && cardImageUrl(c) === deck.deckImage).map((c) => c.id);
+  return bestFinishAmong(collection, covers);
 }
 
 /**

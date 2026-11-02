@@ -5,7 +5,7 @@ import { WalletStore } from '@data/shop/wallet.store';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 
 /** Name of a purchase, as the opening checks it (WalletStore tickets). */
-export const purchaseTicket = (edition: Edition, product: ShopProduct) => `${edition.editionId}|${product.id}`;
+export const purchaseTicket = (edition: Edition, product: ShopProduct) => `${edition.editionId}|${product.kind}`;
 
 /** Buying in the Editions shop: asks for confirmation with the price and what is left, then pays. */
 @Injectable({ providedIn: 'root' })

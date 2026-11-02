@@ -1,0 +1,67 @@
+<eras-page [title]="edition()?.editionName || editionId()" width="wide" fill>
+  <ng-container ngProjectAs="[page-actions]">
+    @if (edition()) {
+      <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm()"><eras-icon name="edit" /> Editar</button>
+    }
+    <eras-wallet-badge />
+  </ng-container>
+
+  @if (!edition()) {
+    @if (store.loading() || store.editions().length === 0) {
+      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+    } @else {
+      <eras-empty-state title="No existe esa edición" />
+    }
+  } @else {
+    @let ed = edition()!;
+    <div class="detail">
+      <div class="side">
+        <span class="code">{{ ed.editionId }}</span>
+        @if (ed.editionDescription) {
+          <p class="description">{{ ed.editionDescription }}</p>
+        }
+
+        <div class="info">
+          <button erasButton variant="secondary" type="button" [disabled]="!pack()" (click)="openOdds()"><eras-icon name="list" /> Probabilidades</button>
+          <button erasButton variant="secondary" type="button" (click)="openCards()"><eras-icon name="cards" /> Cartas incluidas</button>
+        </div>
+
+        @if (pack(); as p) {
+          <div class="offers">
+            <article class="offer">
+              <span class="offer-icon" aria-hidden="true"><eras-icon name="layers" /></span>
+              <div class="offer-text">
+                <h2 class="offer-name">Sobre</h2>
+                <p class="offer-hint">Un tipo de sobre al azar, con la misma probabilidad que dentro de una caja.</p>
+              </div>
+              <button erasButton type="button" class="buy" [disabled]="p.price > wallet.gems()" [attr.aria-label]="'Comprar un sobre por ' + p.price + ' gemas'" (click)="buy(p)">
+                <eras-icon name="gem" /> {{ p.price | number: '1.0-0' : 'es' }}
+              </button>
+            </article>
+
+            @if (box(); as b) {
+              <article class="offer box">
+                <span class="offer-icon" aria-hidden="true"><eras-icon name="box" /></span>
+                <div class="offer-text">
+                  <h2 class="offer-name">Booster box · {{ b.packs }} sobres</h2>
+                  <ul class="contents">
+                    @for (row of contents(); track $index) {
+                      <li><strong>{{ range(row) }}</strong> × {{ row.packType }}</li>
+                    }
+                  </ul>
+                </div>
+                <button erasButton type="button" class="buy" [disabled]="b.price > wallet.gems()" [attr.aria-label]="'Comprar una booster box por ' + b.price + ' gemas'" (click)="buy(b)">
+                  <eras-icon name="gem" /> {{ b.price | number: '1.0-0' : 'es' }}
+                </button>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="note">Esta edición no está a la venta: no tiene sobres configurados.</p>
+        }
+      </div>
+
+      <div class="art" [style.background-image]="ed.editionImage ? 'url(' + ed.editionImage + ')' : null"></div>
+    </div>
+  }
+</eras-page>

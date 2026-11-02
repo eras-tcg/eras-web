@@ -38,6 +38,11 @@ export const routes: Routes = [
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),
       },
       {
+        path: 'editions/:editionId',
+        title: 'Ediciones · ERAS',
+        loadComponent: () => import('@features/editions/edition-shop.page').then((m) => m.EditionShopPage),
+      },
+      {
         path: 'booster-result',
         title: 'Apertura · ERAS',
         loadComponent: () => import('@features/editions/booster-result.page').then((m) => m.BoosterResultPage),

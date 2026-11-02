@@ -13,6 +13,7 @@ describe('parentScreen', () => {
     expect(parentScreen('/ruling')?.route).toBe('/play');
     expect(parentScreen('/tierlist')?.route).toBe('/social');
     expect(parentScreen('/booster-result')?.route).toBe('/editions');
+    expect(parentScreen('/editions/E1.2')?.route).toBe('/editions');
     expect(parentScreen('/deck/42')?.route).toBe('/my-decks');
     expect(parentScreen('/roles')?.route).toBe('/admin');
   });

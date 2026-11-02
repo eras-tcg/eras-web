@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Edition } from '../editions/edition.model';
-import { BOX_PRICE, openingQuery, productFor, DAILY_GEMS, PACK_PRICE, STARTING_GEMS, SUB_EDITION_BOX_PRICE, boxPrice, dayOf, isSubEdition, openWallet, shopProducts, spend } from './shop-rules';
+import { BoxEntry, Edition } from '../editions/edition.model';
+import { BOX_PRICE, boxContents, openingQuery, packOdds, productFor, DAILY_GEMS, PACK_PRICE, STARTING_GEMS, SUB_EDITION_BOX_PRICE, boxPrice, dayOf, isSubEdition, openWallet, shopProducts, spend } from './shop-rules';
 
 const pack = (name: string) => ({ name, cardsPerRarity: { C: 6, UC: 3, R: 1, SR: 0, SEC: 0 } });
 
@@ -34,31 +34,22 @@ describe('spend', () => {
   });
 });
 
+const box = (entries: BoxEntry[], totalPacks = 24): Edition => ({
+  editionId: 'E1',
+  packTypes: [pack('Normal'), pack('SR'), pack('SEC')],
+  boxConfig: { totalPacks, entries },
+});
+
 describe('shopProducts', () => {
   it('sells nothing without pack types', () => {
     expect(shopProducts({ editionId: 'E1' })).toEqual([]);
   });
 
-  it('sells one pack per pack type, with its rarities', () => {
-    const products = shopProducts({ editionId: 'E1', packTypes: [pack('Normal'), pack('Premium')] });
-    expect(products.map((p) => p.name)).toEqual(['Sobre Normal', 'Sobre Premium']);
-    expect(products[0].price).toBe(PACK_PRICE);
-    expect(products[0].contents).toEqual([
-      { rarity: 'C', count: 6 },
-      { rarity: 'UC', count: 3 },
-      { rarity: 'R', count: 1 },
-    ]);
-  });
-
-  it('adds a random pack and the box when a box is configured', () => {
-    const edition: Edition = {
-      editionId: 'E1',
-      packTypes: [pack('Normal')],
-      boxConfig: { totalPacks: 24, entries: [{ packTypeName: 'Normal', mode: 'FIXED', quantity: 24, probOptions: [] }] },
-    };
-    const products = shopProducts(edition);
-    expect(products.map((p) => p.kind)).toEqual(['pack', 'random', 'box']);
-    expect(products[2]).toMatchObject({ name: 'Caja de 24 sobres', packs: 24, price: BOX_PRICE });
+  it('sells one pack (never a chosen type) and, with a box, the booster box', () => {
+    expect(shopProducts({ editionId: 'E1', packTypes: [pack('Normal'), pack('SR')] })).toEqual([{ kind: 'pack', name: 'Sobre', price: PACK_PRICE }]);
+    const products = shopProducts(box([{ packTypeName: 'Normal', mode: 'FIXED', quantity: 24, probOptions: [] }]));
+    expect(products.map((p) => p.kind)).toEqual(['pack', 'box']);
+    expect(products[1]).toMatchObject({ name: 'Booster box', packs: 24, price: BOX_PRICE });
   });
 });
 
@@ -70,25 +61,59 @@ describe('boxPrice', () => {
   });
 });
 
-describe('productFor and openingQuery', () => {
-  const edition: Edition = {
-    editionId: 'E1',
-    packTypes: [pack('Normal'), pack('Premium')],
-    boxConfig: { totalPacks: 24, entries: [{ packTypeName: 'Normal', mode: 'FIXED', quantity: 24, probOptions: [] }] },
-  };
+describe('packOdds', () => {
+  const odds = (edition: Edition) => Object.fromEntries(packOdds(edition).map((o) => [o.packType, o.probability]));
 
-  it('finds the product of each opening', () => {
-    expect(productFor(edition, { mode: 'box' })?.kind).toBe('box');
-    expect(productFor(edition, { mode: 'pack', packType: 'Normal', random: '1' })?.kind).toBe('random');
-    expect(productFor(edition, { mode: 'pack', packType: 'Premium' })?.id).toBe('pack:Premium');
-    expect(productFor(edition, { mode: 'pack', packType: 'Nope' })).toBeNull();
+  it('is the first pack type without a box', () => {
+    expect(odds({ editionId: 'E1', packTypes: [pack('Normal'), pack('SR')] })).toEqual({ Normal: 1, SR: 0 });
   });
 
-  it('builds the query back from each product', () => {
-    for (const product of shopProducts(edition)) {
-      const query = openingQuery(edition, product, () => 'Normal');
-      expect(productFor(edition, query)?.id).toBe(product.id);
-    }
+  it('follows a fixed box', () => {
+    const o = odds(box([
+      { packTypeName: 'SR', mode: 'FIXED', quantity: 6, probOptions: [] },
+      { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+    ]));
+    expect(o['SR']).toBeCloseTo(0.25);
+    expect(o['Normal']).toBeCloseTo(0.75);
+    expect(o['SEC']).toBe(0);
+  });
+
+  it('weighs every roll of a PROB entry', () => {
+    // SEC: 0 packs (50%) or 4 packs (50%) of 24; the rest Normal
+    const o = odds(box([
+      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 0, prob: 0.5 }, { quantity: 4, prob: 0.5 }] },
+      { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+    ]));
+    expect(o['SEC']).toBeCloseTo(0.5 * (4 / 24));
+    expect(o['SEC'] + o['Normal'] + o['SR']).toBeCloseTo(1);
   });
 });
 
+describe('boxContents', () => {
+  it('gives fixed counts, PROB ranges with their chances and the FLEX remainder', () => {
+    const contents = boxContents(box([
+      { packTypeName: 'SR', mode: 'FIXED', quantity: 2, probOptions: [] },
+      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 1, prob: 0.7 }, { quantity: 3, prob: 0.3 }] },
+      { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+    ]));
+    expect(contents).toEqual([
+      { packType: 'SR', min: 2, max: 2 },
+      { packType: 'SEC', min: 1, max: 3, options: [{ quantity: 1, probability: 0.7 }, { quantity: 3, probability: 0.3 }] },
+      { packType: 'Normal', min: 19, max: 21 },
+    ]);
+  });
+});
+
+describe('productFor and openingQuery', () => {
+  const edition = box([{ packTypeName: 'Normal', mode: 'FIXED', quantity: 24, probOptions: [] }]);
+
+  it('finds the product of each opening and builds its query back', () => {
+    expect(productFor(edition, { mode: 'box' })?.kind).toBe('box');
+    expect(productFor(edition, { mode: 'pack', packType: 'SR' })?.kind).toBe('pack');
+    for (const product of shopProducts(edition)) {
+      const query = openingQuery(edition, product, () => 'SR');
+      expect(productFor(edition, query)?.kind).toBe(product.kind);
+    }
+    expect(openingQuery(edition, shopProducts(edition)[0], () => 'SR')).toEqual({ edition: 'E1', mode: 'pack', packType: 'SR' });
+  });
+});

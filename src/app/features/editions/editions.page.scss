@@ -1,22 +1,4 @@
-// The shop: one screen high (the page is `fill`). Editions on the left, the chosen one's showcase on the right.
-
-.wallet {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: var(--border-width) solid var(--color-hub-accent);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-hub-accent) 12%, var(--color-surface));
-  font-weight: var(--font-weight-bold);
-  font-variant-numeric: tabular-nums;
-}
-
-.wallet eras-icon,
-.buy eras-icon,
-.reward eras-icon {
-  color: var(--color-hub-accent);
-}
+// The shop's shelf: one screen high (the page is `fill`), only the grid of editions scrolls
 
 .reward {
   display: flex;
@@ -33,243 +15,100 @@
   margin-inline-start: auto;
 }
 
-.shop {
-  display: grid;
-  flex: 1;
-  grid-template-columns: 16rem minmax(0, 1fr);
-  gap: var(--space-5);
-  min-block-size: 0;
+eras-icon[name='gem'] {
+  color: var(--color-hub-accent);
 }
 
-/* Editions */
-.shelf {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.scroll {
+  flex: 1;
   min-block-size: 0;
-  padding-inline-end: var(--space-1);
+  // Room for the tiles' hover lift
+  padding: var(--space-1) var(--space-1) var(--space-6);
   overflow-y: auto;
   overscroll-behavior: none;
 }
 
-.shelf-item {
+/* An edition: its artwork as a card, the name and prices over a dark foot */
+.tile {
+  position: relative;
   display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-inline-start: 4px solid transparent;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
-}
-
-.shelf-item:hover {
-  transform: translateX(2px);
-}
-
-.shelf-item.on {
-  border-color: var(--color-hub-accent);
-  border-inline-start-color: var(--color-hub-accent);
-}
-
-.shelf-art {
-  flex-shrink: 0;
-  inline-size: 2.5rem;
-  aspect-ratio: 63 / 88;
-  border-radius: var(--radius-sm);
+  align-items: flex-end;
+  aspect-ratio: 744 / 1039;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-muted) center / cover;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-hub-text);
+  text-decoration: none;
+  transition:
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard);
 }
 
-.shelf-text {
+.tile:hover,
+.tile:focus-visible {
+  border-color: var(--color-hub-accent);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.tile::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 92%, transparent) 0%, transparent 55%);
+  content: '';
+}
+
+.tile-info {
+  position: relative;
   display: flex;
   flex-direction: column;
-  min-inline-size: 0;
+  gap: var(--space-1);
+  inline-size: 100%;
+  padding: var(--space-3);
 }
 
-.shelf-code {
-  color: var(--color-text-muted);
+.tile-code {
+  color: var(--color-hub-accent);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
 }
 
-.shelf-name {
-  overflow: hidden;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Showcase: the artwork as tall as the area, at the card's proportion; the details beside it */
-.showcase {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-5);
-  min-block-size: 0;
-}
-
-.art {
-  display: grid;
-  place-items: center;
-  block-size: 100%;
-  max-inline-size: 26rem;
-  aspect-ratio: 744 / 1039;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-muted) center / cover;
-  box-shadow: var(--shadow-lg);
-  color: var(--color-text-subtle);
-  view-transition-name: shop-art;
-}
-
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-block-size: 0;
-}
-
-.heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-3);
-}
-
-.code {
-  color: var(--color-hub-accent);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-}
-
-.name {
-  margin: 0;
-  font-size: clamp(1.4rem, 2.2vw, 2rem);
-  font-weight: var(--font-weight-regular);
-  letter-spacing: 0.04em;
+.tile-name {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-md);
+  line-height: 1.15;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-.links {
+.tile-prices {
   display: flex;
-  flex-basis: 100%;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-1) var(--space-3);
+  margin-block-start: var(--space-1);
 }
 
-.description {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.products {
-  display: grid;
-  flex: 1;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  align-content: start;
-  gap: var(--space-3);
-  min-block-size: 0;
-  padding: var(--space-1);
-  overflow-y: auto;
-  overscroll-behavior: none;
-}
-
-.product {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+.price {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-}
-
-// The box stands out: the best deal of the edition
-.product.box {
-  border-color: var(--color-hub-accent);
-  background: linear-gradient(120deg, color-mix(in srgb, var(--color-hub-accent) 14%, var(--color-surface)), var(--color-surface));
-}
-
-.product-icon {
-  display: grid;
-  place-items: center;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border-radius: 50%;
-  background: var(--color-surface-muted);
-}
-
-.product-icon eras-icon {
-  inline-size: 1.4rem;
-  block-size: 1.4rem;
-}
-
-.product-text {
-  display: flex;
-  flex-direction: column;
   gap: var(--space-1);
-  min-inline-size: 0;
-}
-
-.product-name {
-  margin: 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-}
-
-.contents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
-.buy {
   font-variant-numeric: tabular-nums;
 }
 
-.note {
-  margin: 0;
-  color: var(--color-text-muted);
+.price eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
 }
 
-/* Narrow screens: the editions as a strip on top, the showcase below without the big artwork */
-@media (max-width: 56rem) {
-  .shop {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: var(--space-3);
-  }
-
-  .shelf {
-    flex-direction: row;
-    padding: 0 0 var(--space-1);
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .shelf-item {
-    max-inline-size: 12rem;
-  }
-
-  .showcase {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .art {
-    display: none;
-  }
+.price-what {
+  margin-inline-start: var(--space-1);
+  color: var(--color-hub-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
 }

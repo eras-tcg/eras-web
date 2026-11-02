@@ -1,11 +1,9 @@
 <eras-page title="Ediciones" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
-    <button *erasEdit="'manage_editions'" erasButton variant="secondary" size="sm" type="button" (click)="openForm(null)">
+    <button *erasEdit="'manage_editions'" erasButton variant="secondary" size="sm" type="button" (click)="openForm()">
       <eras-icon name="plus" /> Nueva edición
     </button>
-    <span class="wallet" role="status" [attr.aria-label]="wallet.gems() + ' gemas'">
-      <eras-icon name="gem" /> {{ wallet.gems() | number: '1.0-0' : 'es' }}
-    </span>
+    <eras-wallet-badge />
   </ng-container>
 
   @if (wallet.reward(); as reward) {
@@ -18,83 +16,30 @@
     <eras-alert tone="danger">{{ error }}</eras-alert>
   }
 
-  @if (store.loading() && store.editions().length === 0) {
-    <eras-empty-state title="Cargando ediciones…"><eras-spinner /></eras-empty-state>
-  } @else if (!store.error() && store.editions().length === 0) {
-    <eras-empty-state title="Todavía no hay ediciones" />
-  } @else {
-    <div class="shop">
-      <!-- The editions: a column that scrolls (a strip on phones) -->
-      <nav class="shelf" aria-label="Ediciones">
+  <!-- The only part that scrolls -->
+  <div class="scroll">
+    @if (store.loading() && store.editions().length === 0) {
+      <eras-empty-state title="Cargando ediciones…"><eras-spinner /></eras-empty-state>
+    } @else if (!store.error() && store.editions().length === 0) {
+      <eras-empty-state title="Todavía no hay ediciones" />
+    } @else {
+      <eras-grid minColumn="min(12rem, 40vw)" [gap]="4">
         @for (edition of store.editions(); track edition.editionId) {
-          <button type="button" class="shelf-item" [class.on]="edition.editionId === selected()?.editionId" [attr.aria-current]="edition.editionId === selected()?.editionId" (click)="choose(edition)">
-            <span class="shelf-art" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null"></span>
-            <span class="shelf-text">
-              <span class="shelf-code">{{ edition.editionId }}</span>
-              <span class="shelf-name">{{ edition.editionName || edition.editionId }}</span>
+          <a class="tile" [routerLink]="['/editions', edition.editionId]" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
+            <span class="tile-info">
+              <span class="tile-code">{{ edition.editionId }}</span>
+              <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>
+              <span class="tile-prices">
+                @for (product of products(edition); track product.kind) {
+                  <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : 'sobre' }}</span></span>
+                } @empty {
+                  <span class="price-what">No está a la venta</span>
+                }
+              </span>
             </span>
-          </button>
+          </a>
         }
-      </nav>
-
-      @if (selected(); as edition) {
-        <section class="showcase" [attr.aria-label]="edition.editionName || edition.editionId">
-          <div class="art" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
-            @if (!edition.editionImage) {
-              <span>{{ edition.editionId }}</span>
-            }
-          </div>
-
-          <div class="details">
-            <div class="heading">
-              <span class="code">{{ edition.editionId }}</span>
-              <h2 class="name">{{ edition.editionName || edition.editionId }}</h2>
-              <div class="links">
-                <button erasButton variant="secondary" size="sm" type="button" (click)="openCards(edition)">
-                  <eras-icon name="cards" /> Ver las {{ cardCount(edition) }} cartas
-                </button>
-                <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm(edition)">
-                  <eras-icon name="edit" /> Editar
-                </button>
-              </div>
-            </div>
-            @if (edition.editionDescription) {
-              <p class="description">{{ edition.editionDescription }}</p>
-            }
-
-            <!-- The products: the only part that scrolls when they do not fit -->
-            <div class="products">
-              @for (product of products(); track product.id) {
-                <article class="product" [class.box]="product.kind === 'box'">
-                  <span class="product-icon" aria-hidden="true"><eras-icon [name]="product.kind === 'box' ? 'box' : product.kind === 'random' ? 'sparkles' : 'layers'" /></span>
-                  <div class="product-text">
-                    <h3 class="product-name">{{ product.name }}</h3>
-                    @if (product.contents) {
-                      <div class="contents">
-                        @for (c of product.contents; track c.rarity) {
-                          <eras-rarity-badge [rarity]="c.rarity" [count]="c.count" />
-                        }
-                      </div>
-                    }
-                  </div>
-                  <button
-                    erasButton
-                    type="button"
-                    class="buy"
-                    [disabled]="product.price > wallet.gems()"
-                    [attr.aria-label]="'Comprar ' + product.name + ' por ' + product.price + ' gemas'"
-                    (click)="buy(edition, product)"
-                  >
-                    <eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}
-                  </button>
-                </article>
-              } @empty {
-                <p class="note">Esta edición no está a la venta.</p>
-              }
-            </div>
-          </div>
-        </section>
-      }
-    </div>
-  }
+      </eras-grid>
+    }
+  </div>
 </eras-page>

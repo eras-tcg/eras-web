@@ -20,7 +20,7 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:login|validate)$/, null],
   [/^\/(?:simulator(?:\/[^/]+)?|ruling)$/, PLAY],
   [/^\/(?:public-decks|tierlist)$/, SOCIAL],
-  [/^\/booster-result$/, EDITIONS],
+  [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [/^\/(?:users-manager|roles|permissions|updates-manager|card-ref|games-manager|card-meta)$/, ADMIN],
 ];

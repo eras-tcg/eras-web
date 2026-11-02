@@ -1,9 +1,9 @@
-<eras-page [title]="title()" width="wide" fill>
+<eras-page [title]="label()" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
     @if (phase() === 'open' && allUp() && product(); as p) {
       <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
     }
-    <span class="wallet" role="status" [attr.aria-label]="wallet.gems() + ' gemas'"><eras-icon name="gem" /> {{ wallet.gems() | number: '1.0-0' : 'es' }}</span>
+    <eras-wallet-badge />
   </ng-container>
 
   @if (cards.error(); as message) {
@@ -22,7 +22,7 @@
           <!-- Reached without buying (a reload, a link): it is offered for sale -->
           <div class="offer">
             <div class="pack" [class.box]="isBox()" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
-              <span class="pack-label">{{ product()!.name }}</span>
+              <span class="pack-label">{{ label() }}</span>
             </div>
             <button erasButton type="button" [disabled]="product()!.price > wallet.gems()" (click)="buy()">
               <eras-icon name="gem" /> Comprar · {{ product()!.price | number: '1.0-0' : 'es' }}
@@ -91,7 +91,7 @@
         @default {
           <!-- Sealed (and tearing open): one tap opens it -->
           <button type="button" class="pack sealed" [class.box]="isBox()" [class.opening]="phase() === 'opening'" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null" (click)="open()">
-            <span class="pack-label">{{ product()!.name }}</span>
+            <span class="pack-label">{{ label() }}</span>
             <span class="pack-hint">Toca para abrir</span>
           </button>
         }

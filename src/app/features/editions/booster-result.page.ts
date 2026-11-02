@@ -21,6 +21,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { ShopCheckout, purchaseTicket } from './shop-checkout';
+import { WalletBadgeComponent } from './wallet-badge.component';
 
 type Phase = 'unpaid' | 'sealed' | 'opening' | 'open';
 
@@ -30,7 +31,8 @@ const OPENING_MS = 900;
 const FLIP_STAGGER_MS = 140;
 
 /**
- * Opening of something bought in the Editions shop: /booster-result?edition=E1&mode=pack|box&packType=…[&random=1].
+ * Opening of something bought in the Editions shop: /booster-result?edition=E1&mode=pack|box&packType=… (for a
+ * pack, the type that came out at random).
  * Only a fresh purchase opens (WalletStore ticket); otherwise it offers to buy. The sealed pack opens with a tap; a
  * pack's cards come face down and turn one by one (or all), the rare ones shine; a box goes to its summary.
  */
@@ -48,6 +50,7 @@ const FLIP_STAGGER_MS = 140;
     ButtonComponent,
     IconComponent,
     SpinnerComponent,
+    WalletBadgeComponent,
   ],
   templateUrl: './booster-result.page.html',
   styleUrl: './booster-result.page.scss',
@@ -57,7 +60,6 @@ export class BoosterResultPage {
   readonly edition = input<string>('');
   readonly mode = input<string>('pack');
   readonly packType = input<string>('');
-  readonly random = input<string>();
 
   protected readonly cards = inject(CardsStore);
   protected readonly wallet = inject(WalletStore);
@@ -67,9 +69,9 @@ export class BoosterResultPage {
 
   protected readonly ready = computed(() => this.cards.cards().length > 0 && this.editions.editions().length > 0);
   protected readonly editionData = computed(() => this.editions.editions().find((e) => e.editionId === this.edition()) ?? null);
-  /** What is being opened; "Comprar otro" draws a new pack type for a random pack of a box. */
+  /** What is being opened; "Comprar otro" draws a new pack type for a pack. */
   private readonly request = signal<OpeningRequest | null>(null);
-  private readonly current = computed<OpeningRequest>(() => this.request() ?? { mode: this.mode(), packType: this.packType(), random: this.random() });
+  private readonly current = computed<OpeningRequest>(() => this.request() ?? { mode: this.mode(), packType: this.packType() });
   protected readonly product = computed(() => {
     const edition = this.editionData();
     return edition ? productFor(edition, this.current()) : null;
@@ -83,7 +85,8 @@ export class BoosterResultPage {
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
   protected readonly allUp = computed(() => this.isBox() || this.faceUp().size >= this.picked().length);
 
-  protected readonly title = computed(() => this.product()?.name ?? (this.isBox() ? 'Caja' : 'Sobre'));
+  /** "Booster box", or the pack with the type that came out. */
+  protected readonly label = computed(() => (this.isBox() ? 'Booster box' : `Sobre ${this.current().packType ?? ''}`.trim()));
   protected readonly imageUrl = cardImageUrl;
   protected readonly rarityName = (r: string) => RARITY_NAMES[r] ?? r;
   protected readonly asRarity = (r: string) => r as Rarity;
@@ -115,7 +118,7 @@ export class BoosterResultPage {
     const product = this.product();
     if (!edition || !product || !(await this.checkout.purchase(edition, product))) return;
     this.wallet.takeTicket(purchaseTicket(edition, product));
-    if (product.kind === 'random') this.request.set({ ...this.current(), packType: pickRandomPackFromBox(edition) });
+    if (product.kind === 'pack') this.request.set({ ...this.current(), packType: pickRandomPackFromBox(edition) });
     this.seal();
   }
 

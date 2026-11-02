@@ -1,4 +1,4 @@
-import { RarityCode, Edition, RARITIES } from '../editions/edition.model';
+import { BoxEntry, Edition } from '../editions/edition.model';
 import { canSimulateBox, canSimulatePack } from '../editions/edition-rules';
 
 /**
@@ -45,18 +45,12 @@ export function isSubEdition(editionId: string): boolean {
   return editionId.includes('.');
 }
 
-export type ProductKind = 'pack' | 'random' | 'box';
+export type ProductKind = 'pack' | 'box';
 
 export interface ShopProduct {
-  /** Unique within its edition. */
-  id: string;
   kind: ProductKind;
   name: string;
   price: number;
-  /** pack: its pack type. */
-  packType?: string;
-  /** pack: cards of each rarity, only the rarities it has. */
-  contents?: { rarity: RarityCode; count: number }[];
   /** box: packs inside. */
   packs?: number;
 }
@@ -66,45 +60,116 @@ export function boxPrice(editionId: string): number {
   return isSubEdition(editionId) ? SUB_EDITION_BOX_PRICE : BOX_PRICE;
 }
 
-/** What an edition sells: one product per pack type, and with a box configured a random pack of it and the box. */
+/**
+ * What an edition sells: a pack (its type drawn at random, see packOdds) and, with a box configured, the booster
+ * box. Never a chosen pack type: the point of buying is not knowing which one comes.
+ */
 export function shopProducts(edition: Edition): ShopProduct[] {
   if (!canSimulatePack(edition)) return [];
-  const products: ShopProduct[] = (edition.packTypes ?? []).map((pack) => ({
-    id: `pack:${pack.name}`,
-    kind: 'pack',
-    name: `Sobre ${pack.name}`,
-    price: PACK_PRICE,
-    packType: pack.name,
-    contents: RARITIES.filter((r) => (pack.cardsPerRarity[r] ?? 0) > 0).map((r) => ({ rarity: r, count: pack.cardsPerRarity[r] })),
-  }));
-  if (canSimulateBox(edition)) {
-    const packs = edition.boxConfig?.totalPacks ?? 0;
-    products.push({ id: 'random', kind: 'random', name: 'Sobre al azar de una caja', price: PACK_PRICE });
-    if (packs > 0) products.push({ id: 'box', kind: 'box', name: `Caja de ${packs} sobres`, price: boxPrice(edition.editionId), packs });
-  }
+  const products: ShopProduct[] = [{ kind: 'pack', name: 'Sobre', price: PACK_PRICE }];
+  const packs = edition.boxConfig?.totalPacks ?? 0;
+  if (canSimulateBox(edition) && packs > 0) products.push({ kind: 'box', name: 'Booster box', price: boxPrice(edition.editionId), packs });
   return products;
 }
 
-/** An opening as /booster-result describes it (its query: mode, pack type, random pack of a box). */
+export interface PackOdds {
+  packType: string;
+  /** 0..1 */
+  probability: number;
+}
+
+/** Every way the PROB entries can roll, with its probability and how many packs each one gives. */
+function probOutcomes(entries: readonly BoxEntry[]): { probability: number; quantities: number[] }[] {
+  let outcomes = [{ probability: 1, quantities: [] as number[] }];
+  for (const entry of entries) {
+    const options = entry.probOptions.length ? entry.probOptions : [{ quantity: 0, prob: 1 }];
+    outcomes = outcomes.flatMap((o) =>
+      options.map((option) => ({ probability: o.probability * (Number(option.prob) || 0), quantities: [...o.quantities, Math.trunc(Number(option.quantity)) || 0] })),
+    );
+  }
+  return outcomes.filter((o) => o.probability > 0);
+}
+
+/**
+ * Chance that a pack bought alone is of each type: the same as drawing one pack at random from a whole box
+ * (as pickRandomPackFromBox does), counted exactly over every roll of the PROB entries. Without a box, the
+ * first pack type always.
+ */
+export function packOdds(edition: Edition): PackOdds[] {
+  const types = (edition.packTypes ?? []).map((p) => p.name);
+  const entries = edition.boxConfig?.entries ?? [];
+  const total = edition.boxConfig?.totalPacks ?? 0;
+  if (!types.length) return [];
+  if (!total || !entries.length) return types.map((t, i) => ({ packType: t, probability: i === 0 ? 1 : 0 }));
+
+  const fixed = entries.filter((e) => e.mode === 'FIXED');
+  const prob = entries.filter((e) => e.mode === 'PROB');
+  const flex = entries.find((e) => e.mode === 'FLEX');
+  const odds = new Map(types.map((t) => [t, 0]));
+
+  for (const outcome of probOutcomes(prob)) {
+    const counts = new Map<string, number>();
+    const add = (type: string, n: number) => counts.set(type, (counts.get(type) ?? 0) + n);
+    fixed.forEach((e) => add(e.packTypeName, Math.trunc(Number(e.quantity)) || 0));
+    prob.forEach((e, i) => add(e.packTypeName, outcome.quantities[i]));
+    const placed = [...counts.values()].reduce((a, b) => a + b, 0);
+    if (flex) add(flex.packTypeName, Math.max(0, total - placed));
+    const size = [...counts.values()].reduce((a, b) => a + b, 0);
+    if (!size) continue;
+    for (const [type, n] of counts) odds.set(type, (odds.get(type) ?? 0) + (outcome.probability * n) / size);
+  }
+  return [...odds].map(([packType, probability]) => ({ packType, probability }));
+}
+
+export interface BoxContent {
+  packType: string;
+  /** Packs of this type in a box: always `min` when it is fixed. */
+  min: number;
+  max: number;
+  /** A PROB entry: how many, with what chance. */
+  options?: { quantity: number; probability: number }[];
+}
+
+/** How many packs of each type a booster box brings (a FLEX entry fills what the others leave). */
+export function boxContents(edition: Edition): BoxContent[] {
+  const entries = edition.boxConfig?.entries ?? [];
+  const total = edition.boxConfig?.totalPacks ?? 0;
+  const quantity = (n: unknown) => Math.trunc(Number(n)) || 0;
+  const fixedSum = entries.filter((e) => e.mode === 'FIXED').reduce((sum, e) => sum + quantity(e.quantity), 0);
+  const probRange = entries
+    .filter((e) => e.mode === 'PROB')
+    .map((e) => e.probOptions.map((o) => quantity(o.quantity)))
+    .filter((q) => q.length);
+  const probMin = probRange.reduce((sum, q) => sum + Math.min(...q), 0);
+  const probMax = probRange.reduce((sum, q) => sum + Math.max(...q), 0);
+
+  return entries.map((e): BoxContent => {
+    if (e.mode === 'FIXED') return { packType: e.packTypeName, min: quantity(e.quantity), max: quantity(e.quantity) };
+    if (e.mode === 'PROB') {
+      const q = e.probOptions.map((o) => quantity(o.quantity));
+      return {
+        packType: e.packTypeName,
+        min: q.length ? Math.min(...q) : 0,
+        max: q.length ? Math.max(...q) : 0,
+        options: e.probOptions.map((o) => ({ quantity: quantity(o.quantity), probability: Number(o.prob) || 0 })),
+      };
+    }
+    return { packType: e.packTypeName, min: Math.max(0, total - fixedSum - probMax), max: Math.max(0, total - fixedSum - probMin) };
+  });
+}
+
+/** An opening as /booster-result describes it (its query: mode and, for a pack, the type that came out). */
 export interface OpeningRequest {
   mode: string;
   packType?: string;
-  random?: string;
 }
 
 /** The product an opening belongs to (null when the edition does not sell it). */
 export function productFor(edition: Edition, request: OpeningRequest): ShopProduct | null {
-  const products = shopProducts(edition);
-  if (request.mode === 'box') return products.find((p) => p.kind === 'box') ?? null;
-  if (request.random === '1') return products.find((p) => p.kind === 'random') ?? null;
-  return products.find((p) => p.kind === 'pack' && p.packType === request.packType) ?? null;
+  return shopProducts(edition).find((p) => p.kind === (request.mode === 'box' ? 'box' : 'pack')) ?? null;
 }
 
-/** The query that opens `product` (a random pack of a box draws its pack type with `pickPack`). */
-export function openingQuery(edition: Edition, product: ShopProduct, pickPack: () => string): OpeningRequest & { edition: string } {
-  const base = { edition: edition.editionId };
-  if (product.kind === 'box') return { ...base, mode: 'box' };
-  if (product.kind === 'random') return { ...base, mode: 'pack', packType: pickPack(), random: '1' };
-  return { ...base, mode: 'pack', packType: product.packType ?? '' };
+/** The query that opens `product`: a pack gets its type drawn with `drawPack` (see packOdds). */
+export function openingQuery(edition: Edition, product: ShopProduct, drawPack: () => string): OpeningRequest & { edition: string } {
+  return product.kind === 'box' ? { edition: edition.editionId, mode: 'box' } : { edition: edition.editionId, mode: 'pack', packType: drawPack() };
 }
-

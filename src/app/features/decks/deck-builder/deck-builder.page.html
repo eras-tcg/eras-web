@@ -55,7 +55,7 @@
       ></button>
     </div>
 
-    <!-- The count (a warning icon when the player lacks cards), how the copies show, and saving -->
+    <!-- The count (a warning icon when the player lacks cards), how the copies show, saving and the other options -->
     <div class="deck-bar">
       <strong>{{ draft.total() }} / {{ maxCards }} cartas</strong>
       @if (missing() > 0) {
@@ -83,26 +83,9 @@
         [disabled]="!canSave() || draft.saving() || !draft.dirty() || draft.total() === 0"
         (click)="save()"
       ></button>
+      <button type="button" erasIconButton size="md" icon="menu" title="Opciones: importar, exportar, proxies" aria-label="Opciones del mazo" (click)="openOptions()"></button>
     </div>
 
-    <!-- What else can be done with the deck: the same size each -->
-    <div class="deck-tools">
-      <button
-        erasButton
-        variant="secondary"
-        size="sm"
-        type="button"
-        [disabled]="draft.id() === null && draft.total() === 0 && !draft.dirty()"
-        (click)="newDeck()"
-      >
-        <eras-icon name="plus" /> Nuevo mazo
-      </button>
-      <!-- A button like the others that opens the file picker -->
-      <button erasButton variant="secondary" size="sm" type="button" (click)="listFile.click()">Importar lista</button>
-      <input #listFile type="file" accept=".txt,text/plain" hidden (change)="pickList($event)" />
-      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="exportList()">Exportar lista</button>
-      <button erasButton variant="secondary" size="sm" type="button" [disabled]="draft.total() === 0" (click)="openProxies()">Proxies</button>
-    </div>
 
 
 

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -29,6 +28,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { DeckOption, DeckOptionsData, DeckOptionsDialogComponent } from './deck-options-dialog.component';
 import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-deck-dialog.component';
 import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
@@ -94,7 +94,6 @@ export class DeckBuilderPage {
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
   private readonly modal = inject(ModalService);
-  private readonly router = inject(Router);
 
   protected readonly maxCards = MAX_CARDS;
   protected readonly typeLabels = CARD_TYPE_LABELS;
@@ -326,6 +325,15 @@ export class DeckBuilderPage {
     if (this.renderCount() < this.resultCount()) this.renderCount.update((n) => n + PAGE_SIZE);
   }
 
+  /** The options icon: importing a list, exporting it or printing proxies. */
+  protected async openOptions(): Promise<void> {
+    const data: DeckOptionsData = { empty: this.draft.total() === 0 };
+    const choice = await firstValueFrom(this.modal.open<DeckOption, DeckOptionsData>(DeckOptionsDialogComponent, { data }).closed);
+    if (choice?.action === 'import') await this.importList(choice.file);
+    if (choice?.action === 'export') this.exportList();
+    if (choice?.action === 'proxies') this.openProxies();
+  }
+
   protected openProxies(): void {
     const data: ProxyPrintDialogData = { deckName: this.draft.name(), cardIds: idsFromEntries(this.draft.entries()) };
     this.modal.open(ProxyPrintDialogComponent, { data });
@@ -339,14 +347,6 @@ export class DeckBuilderPage {
     link.download = `${this.draft.name() || 'mazo'}.txt`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }
-
-  /** The file chosen for "Importar lista" (the input is cleared, so the same file can be picked again). */
-  protected pickList(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (file) void this.importList(file);
   }
 
   protected async importList(file: File): Promise<void> {
@@ -398,29 +398,6 @@ export class DeckBuilderPage {
   protected contextRemove(event: MouseEvent, card: CatalogCard): void {
     event.preventDefault();
     this.remove(card);
-  }
-
-  /** Starts a new deck; with unsaved changes it asks first. */
-  protected async newDeck(): Promise<void> {
-    if (this.draft.dirty() && this.draft.total() > 0) {
-      const ok = await this.modal.confirm({
-        title: 'Cambios sin guardar',
-        message: 'Si creas un mazo nuevo se pierden los cambios de este.',
-        confirmLabel: 'Crear sin guardar',
-        danger: true,
-      });
-      if (!ok) return;
-    }
-    this.draft.reset();
-    this.loadedFor = null;
-    this.select(null);
-    this.loadError.set(null);
-    this.saveError.set(null);
-    this.savedNotice.set(false);
-    this.copyNotice.set(false);
-    this.importWarnings.set([]);
-    // Out of the loaded deck's address (the draft is clean now: leaving does not ask again)
-    await this.router.navigate(['/deck-builder']);
   }
 
   // ── Leaving with unsaved changes ──────────────────────────────────────

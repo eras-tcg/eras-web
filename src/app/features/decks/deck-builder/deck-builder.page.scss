@@ -39,7 +39,7 @@
   border-block-end-color: var(--color-hub-accent);
 }
 
-// The count, then the icons on the right; the other actions the same size each, two per row
+// The count, then the icons on the right
 .deck-bar {
   display: flex;
   align-items: center;
@@ -63,16 +63,6 @@
 .lacking-note eras-icon {
   inline-size: 1rem;
   block-size: 1rem;
-}
-
-.deck-tools {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
-.deck-tools > * {
-  inline-size: 100%;
 }
 
 // A card the player does not own (in the search) or not enough copies of (in the deck): in grey

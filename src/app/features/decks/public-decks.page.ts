@@ -9,7 +9,7 @@ import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { DeckBrowserComponent } from './deck-browser.component';
-import { PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
+import { FROM_PUBLIC_DECKS, PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
 
 /** Community decks, in the deck browser like "Mazos" (one screen high, only the grid scrolls), with their authors. */
 @Component({
@@ -74,6 +74,6 @@ export class PublicDecksPage {
   }
 
   protected open(deck: Deck): void {
-    void this.router.navigate(deckViewLink(deck.id));
+    void this.router.navigate(deckViewLink(deck.id), { state: FROM_PUBLIC_DECKS });
   }
 }

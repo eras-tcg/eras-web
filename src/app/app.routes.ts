@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
+import { ADMIN_PERMISSIONS } from '@core/navigation/admin-tools';
 
 /** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
@@ -90,7 +91,7 @@ export const routes: Routes = [
       {
         path: 'admin',
         title: 'Administración · ERAS',
-        canMatch: [authGuard],
+        canMatch: [permissionGuard(...ADMIN_PERMISSIONS)],
         loadComponent: () => import('@features/admin/admin.page').then((m) => m.AdminPage),
       },
       {

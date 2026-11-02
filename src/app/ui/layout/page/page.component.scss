@@ -35,6 +35,8 @@
   line-height: 1.05;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  // A long name takes more lines instead of pushing the buttons around
+  overflow-wrap: anywhere;
   view-transition-name: screen-title;
 }
 

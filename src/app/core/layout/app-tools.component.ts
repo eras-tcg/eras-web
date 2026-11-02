@@ -4,13 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
 import { EditModeService } from '../auth/edit-mode.service';
-import { ADMIN_TOOLS } from '../navigation/admin-tools';
+import { ADMIN_PERMISSIONS } from '../navigation/admin-tools';
 import { ThemeService } from '../theme/theme.service';
 import { WalletStore } from '../wallet/wallet.store';
 
 /**
- * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop), edit mode,
- * administration and sign out. The sections are reached from the home hub; the theme is in the profile's
+ * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop), edit mode and
+ * administration (administrators only), and sign out (`logout`, the home's main menu only). The sections are reached from the home hub; the theme is in the profile's
  * preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
@@ -29,13 +29,15 @@ export class AppToolsComponent {
   private readonly router = inject(Router);
 
   readonly onArt = input(false, { transform: booleanAttribute });
+  /** Show "sign out": only the home's main menu has it. */
+  readonly logout = input(false, { transform: booleanAttribute });
 
-  protected readonly hasAdminTools = computed(() => {
+  protected readonly isAdmin = computed(() => {
     this.auth.user();
-    return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
+    return ADMIN_PERMISSIONS.some((p) => this.auth.can(p));
   });
 
-  protected logout(): void {
+  protected signOut(): void {
     this.auth.logout();
     void this.router.navigateByUrl('/login');
   }

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 import { ScreenBarComponent } from '@core/layout/screen-bar.component';
+import { ScreenLink } from '@core/navigation/screens';
 
 /**
  * Standard screen frame, game-like: one top row ("back" to the parent screen, the title and the page's actions,
@@ -10,7 +11,7 @@ import { ScreenBarComponent } from '@core/layout/screen-bar.component';
   selector: 'eras-page',
   imports: [ScreenBarComponent],
   template: `
-    <eras-screen-bar class="bar">
+    <eras-screen-bar class="bar" [back]="back()">
       <header class="heading">
         <h1 class="title">{{ title() }}</h1>
       </header>
@@ -28,4 +29,6 @@ export class PageComponent {
   readonly width = input<'narrow' | 'default' | 'wide'>('default');
   /** Exactly one screen high (below the header); the content fills the rest instead of scrolling the page. */
   readonly fill = input(false, { transform: booleanAttribute });
+  /** Where "back" leads, when not the screen tree's parent (see screens.ts). */
+  readonly back = input<ScreenLink>();
 }

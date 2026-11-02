@@ -87,8 +87,11 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
-// No overscroll bounce (rubber-band) anywhere: the page and every inner scrolling area stop dead at their ends
-* {
+// No overscroll bounce (rubber-band): the page stops dead at its ends. Not on every element: anything that clips
+// (overflow: hidden, e.g. a deck cover) counts as a scroll container, and would then swallow the wheel instead
+// of passing it on to the list it sits in. Each inner area that scrolls on its own sets it next to its overflow.
+html,
+body {
   overscroll-behavior: none;
 }
 

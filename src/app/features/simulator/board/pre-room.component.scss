@@ -5,6 +5,7 @@
   margin-inline: calc(-1 * var(--space-3));
   padding-inline: var(--space-3);
   overflow-y: auto;
+  overscroll-behavior: none;
 }
 .pre-room { display: grid; gap: var(--space-4); max-inline-size: 72rem; margin-inline: auto; padding-block-end: var(--space-4); }
 .room { font-size: var(--font-size-lg); }

@@ -85,6 +85,7 @@
                 [imageUrl]="deck.deckImage ?? null"
                 [cardCount]="deck.cards.length"
                 [isPrivate]="!!deck.privateDeck"
+                [isPublic]="!deck.privateDeck"
                 (selected)="view(deck)"
               >
                 <ng-container ngProjectAs="[cover-actions]">

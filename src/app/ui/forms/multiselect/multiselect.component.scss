@@ -70,6 +70,7 @@
 .options {
   max-block-size: 14rem;
   overflow: auto;
+  overscroll-behavior: none;
 }
 
 .option {

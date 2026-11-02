@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, numberAttr
 import { IconComponent } from '../../primitives/icon/icon.component';
 
 /**
- * Deck shown like a card (63:88): cover art, name and author over a gradient, optional rank and card count.
+ * Deck shown like a card (63:88): cover art, name and author over a gradient, optional rank, card count and
+ * visibility ("Privado", or a globe when public).
  * Buttons go into [cover-actions] (top-right corner).
  * With `fit`, the cover takes the largest card-shaped size that fits its box (e.g. a grid cell with a set height).
  */
@@ -22,10 +23,12 @@ import { IconComponent } from '../../primitives/icon/icon.component';
           <span class="rank">#{{ rank() }}</span>
         }
         <span class="info">
-          @if (isPrivate() || cardCount() !== null) {
+          @if (isPrivate() || isPublic() || cardCount() !== null) {
             <span class="badges">
               @if (isPrivate()) {
                 <span class="badge">Privado</span>
+              } @else if (isPublic()) {
+                <span class="badge icon-badge" role="img" aria-label="Público" title="Público"><eras-icon name="globe" /></span>
               }
               @if (cardCount() !== null) {
                 <span class="badge">{{ cardCount() }} cartas</span>
@@ -183,6 +186,15 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       font-size: 0.7rem;
       font-weight: var(--font-weight-medium);
     }
+    .icon-badge {
+      display: inline-grid;
+      place-items: center;
+      padding: 0.15rem;
+    }
+    .icon-badge eras-icon {
+      inline-size: 0.95rem;
+      block-size: 0.95rem;
+    }
     .info {
       position: absolute;
       inset-inline: var(--space-3);
@@ -232,6 +244,8 @@ export class DeckCoverComponent {
   readonly cardCount = input<number | null>(null);
   readonly rank = input(null, { transform: (v: unknown) => (v == null ? null : numberAttribute(v)) });
   readonly isPrivate = input(false, { transform: booleanAttribute });
+  /** Shows a globe on a public deck (lists that mix public and private ones). */
+  readonly isPublic = input(false, { transform: booleanAttribute });
   readonly fit = input(false, { transform: booleanAttribute });
   /** auto: fills its grid cell; sm: fixed 7.5rem wide; row: as tall as its container. */
   readonly size = input<'auto' | 'sm' | 'row'>('auto');

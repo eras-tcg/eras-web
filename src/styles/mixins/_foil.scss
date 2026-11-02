@@ -1,5 +1,5 @@
 // The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random:
-// public/images/foil/starlight-grid.svg, a 96px tile of 3px cells), over the whole card, in gold and rainbow.
+// public/images/foil/starlight-grid.svg, a 96px tile of 2px cells, 1px dots), over the whole card, in gold and rainbow.
 // glitter-dots: the dots, faint, everywhere. glitter-light: a band of light sweeping across, lighting up the dots
 // along lines parallel and perpendicular to the grid, which slide as it goes. Include each in a positioned
 // pseudo-element over the card (they bring their own keyframes).
@@ -47,8 +47,8 @@ $grid: url('/images/foil/starlight-grid.svg') 0 0 / 96px 96px;
   mask:
     $grid,
     linear-gradient(115deg, transparent 30%, #000 50%, transparent 70%) 100% 0 / 300% 100% no-repeat,
-    repeating-linear-gradient(#000 0 3px, transparent 3px 12px),
-    repeating-linear-gradient(90deg, #000 0 3px, transparent 3px 12px),
+    repeating-linear-gradient(#000 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 8px),
     linear-gradient(rgb(0 0 0 / 35%) 0 0);
   mask-composite: intersect, intersect, add, add;
   filter: brightness(1.3);

@@ -87,11 +87,15 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
-// Hub screens (home, Jugar, Social) fit the window: no scrolling and no overscroll bounce
+// No overscroll bounce (rubber-band) anywhere: the page and every inner scrolling area stop dead at their ends
+* {
+  overscroll-behavior: none;
+}
+
+// Hub screens (home, Jugar, Social) fit the window: no scrolling at all
 html:has(body.eras-hub),
 body.eras-hub {
   overflow: hidden;
-  overscroll-behavior: none;
 }
 
 // A chain is shown above the choices: they leave it room at the top

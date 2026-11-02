@@ -7,7 +7,7 @@
 
 // Stays in place while the screens change (view transitions)
 .bar {
-  margin-block-end: var(--space-4);
+  margin-block-end: var(--space-5);
   view-transition-name: screen-bar;
 }
 
@@ -21,25 +21,16 @@
   max-inline-size: 90rem;
 }
 
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-block-end: var(--space-5);
-}
-
 .heading {
   min-inline-size: 0;
-  padding-inline-start: var(--space-4);
+  padding-inline-start: var(--space-3);
   border-inline-start: 4px solid var(--color-hub-accent);
 }
 
-// The game's display face, big and in capitals, like the hub's menu
+// The game's display face, in capitals, like the hub's menu
 .title {
   margin: 0;
-  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   font-weight: var(--font-weight-regular);
   line-height: 1.05;
   letter-spacing: 0.05em;
@@ -48,14 +39,16 @@
 }
 
 .subtitle {
-  margin-block-start: var(--space-1);
+  margin: 0;
   color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  margin-inline-start: auto;
 }
 
 .actions:empty {
@@ -79,11 +72,7 @@
 }
 
 :host(.fill) .bar {
-  margin-block-end: var(--space-2);
-}
-
-:host(.fill) .header {
-  margin-block-end: var(--space-3);
+  margin-block-end: var(--space-4);
 }
 
 :host(.fill) .content {

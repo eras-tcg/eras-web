@@ -38,7 +38,7 @@ export class ShellComponent {
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
-    // The hub screens fit the window: the page neither scrolls nor bounces (rubber-band) there
+    // The hub screens fit the window: the page does not scroll there
     const body = inject(DOCUMENT).body;
     effect(() => body.classList.toggle('eras-hub', this.hub()));
 

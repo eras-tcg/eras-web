@@ -23,6 +23,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/home/play.page').then((m) => m.PlayPage),
       },
       {
+        path: 'missions',
+        title: 'Misiones · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/missions.page').then((m) => m.MissionsPage),
+      },
+      {
         path: 'social',
         title: 'Social · ERAS',
         canMatch: [authGuard],

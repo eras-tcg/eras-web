@@ -25,6 +25,7 @@ const MAIN_MENU: HubMenuItem[] = [
   { id: 'editions', label: 'Tienda', icon: 'box', route: '/editions' },
   { id: 'cards', label: 'Cartas', icon: 'cards', route: '/cards' },
   { id: 'social', label: 'Social', icon: 'users', route: '/social' },
+  { id: 'missions', label: 'Misiones', icon: 'target', route: '/missions' },
 ];
 
 /**

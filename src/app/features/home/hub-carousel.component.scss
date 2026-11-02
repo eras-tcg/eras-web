@@ -1,14 +1,13 @@
-// Glass panel over the hub artwork (--color-hub-* tokens)
+// Panel on the flat column of the hub; only the edition slide (over its artwork) uses the --color-hub-* tokens
 :host {
   position: relative;
-  flex: 0 1 15rem;
-  min-block-size: 11rem;
   overflow: hidden;
-  border: var(--border-width) solid var(--color-hub-line);
+  flex-shrink: 0;
+  block-size: 14rem;
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-hub-panel);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
 }
 
 .slide {
@@ -37,7 +36,7 @@
 
 .slide-empty {
   align-items: center;
-  color: var(--color-hub-muted);
+  color: var(--color-text-muted);
 }
 
 .slide-edition {
@@ -45,7 +44,16 @@
   justify-content: flex-end;
   background-position: center;
   background-size: cover;
+  color: var(--color-hub-text);
   cursor: pointer;
+}
+
+.slide-edition .eyebrow {
+  color: var(--color-text-muted);
+}
+
+.slide-edition .slide-text {
+  color: var(--color-hub-muted);
 }
 
 .slide-edition::before {
@@ -75,7 +83,7 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--color-hub-muted);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -109,9 +117,9 @@
   display: grid;
   place-items: center;
   aspect-ratio: 5 / 7;
-  border: var(--border-width) solid var(--color-hub-line);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-hub-panel) center / cover;
+  background: var(--color-surface-muted) center / cover;
   transition:
     transform var(--duration-fast) var(--easing-standard),
     border-color var(--duration-fast) var(--easing-standard);
@@ -131,7 +139,7 @@
 }
 
 .deck-author {
-  color: var(--color-hub-muted);
+  color: var(--color-text-muted);
 }
 
 .nav {
@@ -177,7 +185,7 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--color-hub-line);
+  background: var(--color-border);
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--easing-standard),
@@ -191,7 +199,7 @@
 }
 
 .eyebrow {
-  color: var(--color-hub-accent);
+  color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.1em;

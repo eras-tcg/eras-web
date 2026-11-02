@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
-import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { firstValueFrom } from 'rxjs';
@@ -53,10 +52,9 @@ export class PreRoomComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly rooms = inject(RoomsApi);
-  private readonly editMode = inject(EditModeService);
 
-  /** In the site's edit mode, the owner waiting alone may play both sides (a test room). */
-  protected readonly canPlayAlone = computed(() => this.editMode.active() && this.game.isHost() && !this.game.editorRoom() && !this.rival());
+  /** The owner waiting alone may play both sides (a test room, "solo mode"). */
+  protected readonly canPlayAlone = computed(() => this.game.isHost() && !this.game.editorRoom() && !this.rival());
   protected readonly goingAlone = signal(false);
   protected readonly aloneError = signal<string | null>(null);
 

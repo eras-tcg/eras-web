@@ -1,5 +1,5 @@
 <header class="header" [class.compact]="compact()" [class.hub]="hub()">
-  <!-- The home hub draws its own top row: the header keeps only the banners there -->
+  <!-- The hub screens draw their own top row: the header keeps only the banners there -->
   @if (!hub()) {
     <div class="bar">
       @if (auth.user()) {

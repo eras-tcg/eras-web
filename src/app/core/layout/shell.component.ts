@@ -35,8 +35,8 @@ export class ShellComponent {
 
   /** The simulator board uses the whole screen: the bar gets compact there. */
   protected readonly compact = computed(() => /^\/simulator\/[^/]+\/board/.test(this.url()));
-  /** The home hub has no bar of its own. */
-  protected readonly hub = computed(() => /^\/home(?:[?#]|$)/.test(this.url()));
+  /** The hub screens (home, Jugar, Social) draw their own top row. */
+  protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
     // Publish the header height (it changes with the banners) for full-screen pages:

@@ -1,97 +1,59 @@
-<div class="hub">
-  <div class="art" aria-hidden="true" [style.background-image]="background()?.editionImage ? 'url(' + background()!.editionImage + ')' : null"></div>
+<eras-hub-screen reroll [playerMeta]="playerMeta()">
+  <eras-hub-menu [items]="menu" />
 
-  <header class="top">
-    @if (auth.user(); as user) {
-      <a class="player" routerLink="/profile" aria-label="Mi perfil">
-        <eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" />
-        <span class="player-text">
-          <span class="player-name">{{ user.username }}</span>
-          <span class="player-meta">
-            @if (myDecks() === null) {
-              Jugador de ERAS
-            } @else {
-              {{ myDecks() }} {{ myDecks() === 1 ? 'mazo' : 'mazos' }}
-            }
-          </span>
-        </span>
-      </a>
-    }
-    <eras-app-tools class="tools" />
-  </header>
+  @if (editMode.allows('manage_home')) {
+    <div class="edit-bar">
+      @if (home.editing()) {
+        <span class="sr-only" role="status">Editando la portada</span>
+        <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
+        <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
+      } @else {
+        <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()"><eras-icon name="edit" /> Editar portada</button>
+      }
+    </div>
+  }
+  @if (home.error(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
+  @if (saveError(); as error) {
+    <eras-alert tone="danger">{{ error }}</eras-alert>
+  }
 
-  <section class="panel" aria-label="Novedades">
-    @if (editMode.allows('manage_home')) {
-      <div class="edit-bar">
-        @if (home.editing()) {
-          <span class="sr-only" role="status">Editando la portada</span>
-          <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
-          <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
-        } @else {
-          <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()"><eras-icon name="edit" /> Editar portada</button>
-        }
+  @if (home.editing()) {
+    <div class="editor">
+      <div class="editor-row">
+        <span class="editor-label">Edición destacada</span>
+        <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
+        <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
       </div>
-    }
-    @if (home.error(); as error) {
-      <eras-alert tone="danger">{{ error }}</eras-alert>
-    }
-    @if (saveError(); as error) {
-      <eras-alert tone="danger">{{ error }}</eras-alert>
-    }
-
-    @if (home.editing()) {
-      <div class="editor">
+      @for (deck of home.content().decks; track $index; let i = $index) {
         <div class="editor-row">
-          <span class="editor-label">Edición destacada</span>
-          <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
-          <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
+          <span class="editor-label">Mazo #{{ i + 1 }}</span>
+          <span class="editor-value">{{ deck?.deckName ?? 'Vacío' }}</span>
+          <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
+            <eras-icon name="edit" />
+          </button>
         </div>
-        @for (deck of home.content().decks; track $index; let i = $index) {
-          <div class="editor-row">
-            <span class="editor-label">Mazo #{{ i + 1 }}</span>
-            <span class="editor-value">{{ deck?.deckName ?? 'Vacío' }}</span>
-            <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
-              <eras-icon name="edit" />
-            </button>
-          </div>
-        }
-      </div>
-    } @else {
-      <eras-hub-carousel
-        [slides]="slides()"
-        [loading]="home.loading()"
-        (editionSelected)="openCards($event)"
-        (deckSelected)="openDeck($event)"
-      />
-    }
+      }
+    </div>
+  } @else {
+    <eras-hub-carousel
+      [slides]="slides()"
+      [loading]="home.loading()"
+      (editionSelected)="openCards($event)"
+      (deckSelected)="openDeck($event)"
+    />
+  }
 
-    @if (step(); as next) {
-      <a class="mission" [routerLink]="next.route">
-        <eras-icon class="mission-icon" [name]="next.icon" />
-        <span class="mission-text">
-          <span class="eyebrow">Siguiente paso</span>
-          <span class="mission-title">{{ next.title }}</span>
-          <span class="mission-hint">{{ next.text }}</span>
-        </span>
-        <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
-      </a>
-    }
-  </section>
-
-  <eras-hub-actions class="actions" />
-
-  <div class="corner">
-    @if (background(); as art) {
-      <button type="button" class="credit" (click)="openCards(art.editionId)">
-        <eras-icon name="image" /> {{ art.editionName || art.editionId }}
-      </button>
-    }
-    <a class="play" routerLink="/simulator">
-      <span class="play-icon"><eras-icon name="play" /></span>
-      <span class="play-text">
-        <span class="play-title">Jugar ahora</span>
-        <span class="play-hint">Crea o únete a una sala</span>
+  @if (step(); as next) {
+    <a class="mission" [routerLink]="next.route">
+      <eras-icon class="mission-icon" [name]="next.icon" />
+      <span class="mission-text">
+        <span class="mission-eyebrow">Siguiente paso</span>
+        <span class="mission-title">{{ next.title }}</span>
+        <span class="mission-hint">{{ next.text }}</span>
       </span>
+      <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
     </a>
-  </div>
-</div>
+  }
+</eras-hub-screen>

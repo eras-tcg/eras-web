@@ -2,60 +2,63 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, injec
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
-import { AvatarStore } from '@core/auth/avatar.store';
 import { EditModeService } from '@core/auth/edit-mode.service';
-import { AppToolsComponent } from '@core/layout/app-tools.component';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
-import { Edition } from '@data/editions/edition.model';
 import { EditionsStore } from '@data/editions/editions.store';
 import { HomeStore } from '@data/home/home.store';
-import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dialog/choice-dialog.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { HubActionsComponent } from './hub-actions.component';
 import { HubCarouselComponent } from './hub-carousel.component';
-import { hubSlides, nextStep, pickBackground } from './hub-rules';
+import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
+import { hubSlides, nextStep } from './hub-rules';
+import { HubScreenComponent } from './hub-screen.component';
 import { NEWS } from './news';
 
-const BACKGROUND_KEY = 'eras-hub-background';
+/** The site's main menu, in one screen like a game's. */
+const MAIN_MENU: HubMenuItem[] = [
+  { id: 'play', label: 'Jugar', icon: 'gamepad', route: '/play' },
+  { id: 'decks', label: 'Mazos', icon: 'stack', route: '/my-decks' },
+  { id: 'editions', label: 'Ediciones', icon: 'layers', route: '/editions' },
+  { id: 'cards', label: 'Cartas', icon: 'cards', route: '/cards' },
+  { id: 'social', label: 'Social', icon: 'users', route: '/social' },
+];
 
 /**
- * Home hub, the site's main menu in one screen like a game's: random edition artwork behind, the player, a
- * carousel (featured edition, featured decks, news), a suggested next step and the big action buttons.
- * The featured content stays editable in edit mode (manage_home).
+ * Home hub: the main menu, a carousel (featured edition, featured decks, news) and a suggested next step, over a
+ * random edition artwork. The featured content stays editable in edit mode (manage_home).
  */
 @Component({
   selector: 'eras-home-page',
-  imports: [RouterLink, AppToolsComponent, AvatarComponent, AlertComponent, ButtonComponent, IconComponent, HubActionsComponent, HubCarouselComponent],
+  imports: [RouterLink, AlertComponent, ButtonComponent, IconComponent, HubCarouselComponent, HubMenuComponent, HubScreenComponent],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePage {
   protected readonly home = inject(HomeStore);
-  protected readonly auth = inject(AuthService);
-  protected readonly avatar = inject(AvatarStore);
   protected readonly editMode = inject(EditModeService);
+  private readonly auth = inject(AuthService);
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
 
-  protected readonly background = signal<Edition | null>(null);
+  protected readonly menu = MAIN_MENU;
   protected readonly myDecks = signal<number | null>(null);
+  protected readonly playerMeta = computed(() => {
+    const count = this.myDecks();
+    return count === null ? null : `${count} ${count === 1 ? 'mazo' : 'mazos'}`;
+  });
   protected readonly step = computed(() => nextStep(this.myDecks(), Math.floor(Date.now() / 86_400_000)));
-
   protected readonly slides = computed(() => hubSlides(this.home.content().edition, this.home.content().decks, NEWS));
-
   protected readonly saveError = signal<string | null>(null);
 
   constructor() {
     void this.home.load();
-    void this.loadBackground();
     const user = this.auth.user();
     if (user) void this.loadMyDecks(user.id);
 
@@ -73,13 +76,6 @@ export class HomePage {
 
   protected openDeck(deck: Deck): void {
     void this.router.navigate(['/deck', deck.id]);
-  }
-
-  private async loadBackground(): Promise<void> {
-    await this.editions.load();
-    const chosen = pickBackground(this.editions.editions(), readSession(BACKGROUND_KEY));
-    this.background.set(chosen);
-    if (chosen) writeSession(BACKGROUND_KEY, chosen.editionId);
   }
 
   private async loadMyDecks(userId: string): Promise<void> {
@@ -127,22 +123,5 @@ export class HomePage {
     } catch (e) {
       this.saveError.set(e instanceof Error ? e.message : 'No se pudo guardar la portada');
     }
-  }
-}
-
-// Storage can be unavailable (private mode): the hub then just may repeat a background
-function readSession(key: string): string | null {
-  try {
-    return sessionStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(key: string, value: string): void {
-  try {
-    sessionStorage.setItem(key, value);
-  } catch {
-    // ignored, see readSession
   }
 }

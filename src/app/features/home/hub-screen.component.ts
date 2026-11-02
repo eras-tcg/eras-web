@@ -1,0 +1,90 @@
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '@core/auth/auth.service';
+import { AvatarStore } from '@core/auth/avatar.store';
+import { EditModeService } from '@core/auth/edit-mode.service';
+import { ADMIN_TOOLS } from '@core/navigation/admin-tools';
+import { ThemeService } from '@core/theme/theme.service';
+import { Edition } from '@data/editions/edition.model';
+import { EditionsStore } from '@data/editions/editions.store';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { pickBackground } from './hub-rules';
+
+const BACKGROUND_KEY = 'eras-hub-background';
+
+/**
+ * Frame of the game-like screens (home, Jugar, Social): edition artwork on the right using the whole height, a
+ * flat column in the theme's background color on the left for the menu, and quick buttons (edit mode, theme,
+ * administration, sign out) at the top right. The home shows the player; the other screens a way back.
+ *
+ * <eras-hub-screen reroll playerMeta="3 mazos"> <eras-hub-menu hub-menu … /> …more left-column content… </eras-hub-screen>
+ */
+@Component({
+  selector: 'eras-hub-screen',
+  imports: [RouterLink, AvatarComponent, IconComponent],
+  templateUrl: './hub-screen.component.html',
+  styleUrl: './hub-screen.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class HubScreenComponent {
+  protected readonly auth = inject(AuthService);
+  protected readonly avatar = inject(AvatarStore);
+  protected readonly editMode = inject(EditModeService);
+  protected readonly theme = inject(ThemeService);
+  private readonly editions = inject(EditionsStore);
+  private readonly router = inject(Router);
+
+  /** Screen name; without it the screen is the home (player card instead of "back"). */
+  readonly title = input<string | null>(null);
+  /** Line under the player's name (home). */
+  readonly playerMeta = input<string | null>(null);
+  /** Choose a new artwork (the home); other screens keep the last one. */
+  readonly reroll = input(false, { transform: booleanAttribute });
+
+  protected readonly background = signal<Edition | null>(null);
+  protected readonly hasAdminTools = computed(() => {
+    this.auth.user();
+    return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
+  });
+
+  constructor() {
+    void this.loadBackground();
+  }
+
+  protected openCards(editionId: string): void {
+    void this.router.navigate(['/cards'], { queryParams: { edition: editionId } });
+  }
+
+  protected logout(): void {
+    this.auth.logout();
+    void this.router.navigateByUrl('/login');
+  }
+
+  private async loadBackground(): Promise<void> {
+    await this.editions.load();
+    const all = this.editions.editions();
+    const previous = readSession(BACKGROUND_KEY);
+    const kept = this.reroll() ? null : all.find((e) => e.editionId === previous && e.editionImage);
+    const chosen = kept ?? pickBackground(all, previous);
+    this.background.set(chosen);
+    if (chosen) writeSession(BACKGROUND_KEY, chosen.editionId);
+  }
+}
+
+// Storage can be unavailable (private mode): the hub then just may repeat a background
+function readSession(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(key: string, value: string): void {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    // ignored, see readSession
+  }
+}

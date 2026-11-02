@@ -1,0 +1,187 @@
+// Wide screens: big words with a bar on the left; the first one (the main action) larger
+:host {
+  display: block;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-1) 0 var(--space-1) var(--space-4);
+  border: 0;
+  border-inline-start: 3px solid var(--color-hub-accent);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+}
+
+.item:hover,
+.item:focus-visible {
+  border-inline-start-width: 6px;
+  transform: translateX(0.35rem);
+}
+
+.item:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.ring {
+  display: none;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-family-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.lead .label {
+  font-size: clamp(2.6rem, 5vw, 4.25rem);
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.tag {
+  padding: 0.1rem var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Sub-screens: the options carry a description; same size for all */
+:host(.sub) .list {
+  gap: var(--space-5);
+}
+
+:host(.sub) .lead .label,
+:host(.sub) .label {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+}
+
+/* Narrow screens */
+@media (max-width: 63.99rem) {
+  // main: round buttons in a bar fixed at the bottom
+  :host(.main) {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    // Last in the column, whatever the markup order
+    order: 1;
+    margin: auto calc(-1 * max(var(--layout-gutter), env(safe-area-inset-left))) calc(-1 * max(var(--space-5), env(safe-area-inset-bottom)));
+    padding: var(--space-2) var(--space-2) max(var(--space-2), env(safe-area-inset-bottom));
+    border-block-start: var(--border-width) solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  :host(.main) .list {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: var(--space-1);
+  }
+
+  :host(.main) .item {
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: 0;
+    border: 0;
+    transform: none;
+  }
+
+  :host(.main) .ring {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-surface);
+  }
+
+  :host(.main) .lead .ring {
+    border-color: var(--color-hub-accent);
+  }
+
+  :host(.main) .ring eras-icon {
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+  }
+
+  // The display font is too wide for five labels on a phone
+  :host(.main) .label,
+  :host(.main) .lead .label {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.02em;
+  }
+
+  :host(.main) .item:hover .ring {
+    border-color: var(--color-hub-accent);
+  }
+
+  // sub: cards with icon, name and description
+  :host(.sub) .list {
+    gap: var(--space-3);
+  }
+
+  :host(.sub) .item {
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-border);
+    border-inline-start: 4px solid var(--color-hub-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    transform: none;
+  }
+
+  :host(.sub) .ring {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 50%;
+    background: var(--color-surface-muted);
+  }
+
+  :host(.sub) .lead .label,
+  :host(.sub) .label {
+    font-size: var(--font-size-xl);
+  }
+}

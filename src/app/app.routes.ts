@@ -16,6 +16,18 @@ export const routes: Routes = [
         loadComponent: () => import('@features/home/home.page').then((m) => m.HomePage),
       },
       {
+        path: 'play',
+        title: 'Jugar · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/play.page').then((m) => m.PlayPage),
+      },
+      {
+        path: 'social',
+        title: 'Social · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/social.page').then((m) => m.SocialPage),
+      },
+      {
         path: 'cards',
         title: 'Cartas · ERAS',
         loadComponent: () => import('@features/cards/cards.page').then((m) => m.CardsPage),

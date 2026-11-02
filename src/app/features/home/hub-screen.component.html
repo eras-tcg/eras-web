@@ -1,0 +1,44 @@
+<div class="art" aria-hidden="true" [style.background-image]="background()?.editionImage ? 'url(' + background()!.editionImage + ')' : null"></div>
+
+<header class="top">
+  @if (title(); as name) {
+    <div class="heading">
+      <a class="back" routerLink="/home" aria-label="Volver al inicio"><eras-icon name="chevron-left" /> Inicio</a>
+      <h1 class="title">{{ name }}</h1>
+    </div>
+  } @else if (auth.user(); as user) {
+    <a class="player" routerLink="/profile" aria-label="Mi perfil">
+      <eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" />
+      <span class="player-text">
+        <span class="player-name">{{ user.username }}</span>
+        <span class="player-meta">{{ playerMeta() ?? 'Jugador de ERAS' }}</span>
+      </span>
+    </a>
+  }
+
+  <nav class="quick" aria-label="Opciones">
+    @if (editMode.available()) {
+      <button type="button" class="quick-item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
+        <eras-icon name="edit" /><span class="quick-label">Modo edición</span>
+      </button>
+    }
+    <button type="button" class="quick-item" (click)="theme.toggle()">
+      <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      <span class="quick-label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
+    </button>
+    @if (hasAdminTools()) {
+      <a class="quick-item" routerLink="/admin"><eras-icon name="shield" /><span class="quick-label">Administración</span></a>
+    }
+    <button type="button" class="quick-item" (click)="logout()"><eras-icon name="logout" /><span class="quick-label">Salir</span></button>
+  </nav>
+</header>
+
+<div class="side">
+  <ng-content />
+</div>
+
+@if (background(); as art) {
+  <button type="button" class="credit" (click)="openCards(art.editionId)">
+    <eras-icon name="image" /> {{ art.editionName || art.editionId }}
+  </button>
+}

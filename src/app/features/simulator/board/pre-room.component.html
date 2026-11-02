@@ -4,7 +4,7 @@
       <eras-stack direction="row" [gap]="3" align="center" justify="space-between" wrap>
         <eras-stack [gap]="1">
           @if (game.editorRoom()) {
-            <strong class="room">Partida de prueba</strong>
+            <strong class="room">Modo solo</strong>
             <span class="muted">Juegas los dos lados: elige el mazo de cada uno.</span>
           } @else {
             <strong class="room">Sala {{ game.roomId() }}</strong>

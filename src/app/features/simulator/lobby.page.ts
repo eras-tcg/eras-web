@@ -3,7 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
-import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { GameStore } from '@data/simulator/game.store';
 import { RoomsApi } from '@data/simulator/rooms.api';
@@ -38,7 +37,6 @@ export class LobbyPage {
   protected readonly game = inject(GameStore);
   private readonly router = inject(Router);
   /** In the site's edit mode a test room can be made: played alone on both sides. */
-  protected readonly editMode = inject(EditModeService);
 
   protected readonly labels = STATUS_LABELS;
   /** What is being done: 'create', a room id being joined, or null. */

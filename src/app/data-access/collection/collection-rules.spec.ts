@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { breakPlan, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { breakPlan, craftedSummary, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -27,5 +27,10 @@ describe('collection rules', () => {
     expect(breakPlan({ plain: 1, foil: 2, prism: 1 }, 2)).toEqual({ plain: 1, foil: 1 });
     expect(breakPlan({ prism: 1 }, 3)).toEqual({ prism: 1 });
     expect(fragmentsFrom({ plain: 1, foil: 1 })).toBe(40);
+  });
+
+  it('counts what a craft gave by finish', () => {
+    expect(craftedSummary(['plain', 'foil', 'plain', 'prism'])).toBe('2 normales, 1 foil, 1 prismática');
+    expect(craftedSummary(['plain'])).toBe('1 normal');
   });
 });

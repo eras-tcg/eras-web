@@ -61,3 +61,17 @@ export function breakPlan(copies: OwnedCopies | undefined, count: number): Owned
 export function fragmentsFrom(plan: OwnedCopies): number {
   return FINISHES.reduce((sum, f) => sum + (plan[f] ?? 0) * FRAGMENTS_OF[f], 0);
 }
+
+const FINISH_COUNTED: Record<Finish, [string, string]> = {
+  plain: ['normal', 'normales'],
+  foil: ['foil', 'foil'],
+  prism: ['prismática', 'prismáticas'],
+};
+
+/** What a craft gave, counted by finish: "120 normales, 9 foil, 1 prismática". */
+export function craftedSummary(finishes: readonly Finish[]): string {
+  return FINISHES.map((f) => [f, finishes.filter((x) => x === f).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([f, n]) => `${n} ${FINISH_COUNTED[f][n === 1 ? 0 : 1]}`)
+    .join(', ');
+}

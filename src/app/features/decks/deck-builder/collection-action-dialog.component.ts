@@ -1,7 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CatalogCard } from '@data/cards/card.model';
-import { CRAFT_COST, FINISHES, FINISH_LABELS, breakPlan, fragmentsFrom } from '@data/collection/collection-rules';
+import { CRAFT_COST, FINISHES, FINISH_LABELS, breakPlan, craftedSummary, fragmentsFrom } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -114,6 +114,6 @@ export class CollectionActionDialogComponent {
     }
     const finishes =
       this.data.action === 'craft' ? await this.collection.craft(id, this.amount()) : await this.collection.craftUntil(id, this.target(), this.amount());
-    if (finishes.length) this.result.set(`Fabricaste: ${finishes.map((f) => FINISH_LABELS[f]).join(', ')}`);
+    if (finishes.length) this.result.set(`Fabricaste: ${craftedSummary(finishes)}.`);
   }
 }

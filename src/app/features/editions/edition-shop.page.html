@@ -3,7 +3,6 @@
     @if (edition()) {
       <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm()"><eras-icon name="edit" /> Editar</button>
     }
-    <eras-wallet-badge />
   </ng-container>
 
   @if (!edition()) {

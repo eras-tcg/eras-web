@@ -1,15 +1,20 @@
-@if (editMode.available()) {
-  <button type="button" class="item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
-    <eras-icon name="edit" /><span class="label">Modo edición</span>
-  </button>
-}
-<button type="button" class="item" (click)="theme.toggle()">
-  <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
-  <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
-</button>
 @if (auth.user()) {
+  <a class="item gems" routerLink="/editions" [attr.aria-label]="wallet.gems() + ' gemas, ir a la tienda'">
+    <eras-icon name="gem" /><span class="label">{{ wallet.gems() | number: '1.0-0' : 'es' }}</span>
+  </a>
+  @if (editMode.available()) {
+    <button type="button" class="item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
+      <eras-icon name="edit" /><span class="label">Modo edición</span>
+    </button>
+  }
   @if (hasAdminTools()) {
     <a class="item" routerLink="/admin"><eras-icon name="shield" /><span class="label">Administración</span></a>
   }
   <button type="button" class="item" (click)="logout()"><eras-icon name="logout" /><span class="label">Salir</span></button>
+} @else {
+  <!-- Signed out there is no profile to keep the theme in: it stays here -->
+  <button type="button" class="item" (click)="theme.toggle()">
+    <eras-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+    <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
+  </button>
 }

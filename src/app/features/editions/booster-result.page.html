@@ -6,7 +6,6 @@
     @if (phase() === 'done' && product(); as p) {
       <button erasButton type="button" [disabled]="p.price > wallet.gems()" (click)="buy()"><eras-icon name="gem" /> Comprar otro · {{ p.price | number: '1.0-0' : 'es' }}</button>
     }
-    <eras-wallet-badge />
   </ng-container>
 
   @if (cards.error(); as message) {

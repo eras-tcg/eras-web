@@ -5,7 +5,6 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
-import { EditModeService } from '../auth/edit-mode.service';
 import { VersionService } from '../version/version.service';
 import { AppToolsComponent } from './app-tools.component';
 
@@ -22,7 +21,6 @@ import { AppToolsComponent } from './app-tools.component';
 })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
-  protected readonly editMode = inject(EditModeService);
   private readonly router = inject(Router);
   protected readonly version = inject(VersionService);
 

@@ -5,7 +5,7 @@ import { EditDirective } from '@core/auth/edit.directive';
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { BoxContent, ShopProduct, boxContents, openingQuery, shopProducts } from '@data/shop/shop-rules';
-import { WalletStore } from '@data/shop/wallet.store';
+import { WalletStore } from '@core/wallet/wallet.store';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -16,7 +16,6 @@ import { EditionCardsDialogComponent } from './edition-cards-dialog.component';
 import { EditionFormDialogComponent } from './edition-form/edition-form-dialog.component';
 import { PackOddsDialogComponent } from './pack-odds-dialog.component';
 import { ShopCheckout } from './shop-checkout';
-import { WalletBadgeComponent } from './wallet-badge.component';
 
 /**
  * One edition in the shop (/editions/:editionId): its artwork on the right; on the left its odds and its cards
@@ -25,7 +24,7 @@ import { WalletBadgeComponent } from './wallet-badge.component';
  */
 @Component({
   selector: 'eras-edition-shop-page',
-  imports: [DecimalPipe, EditDirective, PageComponent, WalletBadgeComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [DecimalPipe, EditDirective, PageComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   templateUrl: './edition-shop.page.html',
   styleUrl: './edition-shop.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

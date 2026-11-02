@@ -26,6 +26,14 @@
 
     <eras-card padding="lg">
       <eras-stack [gap]="4">
+        <eras-section-header title="Preferencias" />
+        <!-- Kept on this device (the theme is not part of the account on the server) -->
+        <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
+      </eras-stack>
+    </eras-card>
+
+    <eras-card padding="lg">
+      <eras-stack [gap]="4">
         <eras-section-header title="Información de cuenta" />
         @if (canEditAccount()) {
           @if (accountLoading()) {

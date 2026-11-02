@@ -52,8 +52,17 @@
   filter: drop-shadow(0 1px 2px var(--color-hub-scrim));
 }
 
-.item.on {
+// Edit mode on: only its icon changes color
+.item.on eras-icon {
   color: var(--color-warning);
+}
+
+.gems eras-icon {
+  color: var(--color-hub-accent);
+}
+
+.gems .label {
+  font-variant-numeric: tabular-nums;
 }
 
 // Narrow screens: icons only (the label stays for screen readers)

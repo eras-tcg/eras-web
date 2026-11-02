@@ -3,10 +3,12 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AvatarStore } from '@core/auth/avatar.store';
+import { ThemeService } from '@core/theme/theme.service';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
@@ -24,7 +26,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
+  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,17 @@ export class ProfilePage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
+
+  // ── Preferences ────────────────────────────────────────────────────────
+  protected readonly theme = inject(ThemeService);
+  protected readonly themeOptions: ToggleOption[] = [
+    { value: 'dark', label: 'Oscuro' },
+    { value: 'light', label: 'Claro' },
+  ];
+
+  protected setTheme(value: string): void {
+    if (value !== this.theme.theme()) this.theme.toggle();
+  }
 
   // ── Player icon (navbar and beside the name in the simulator) ──────────
   protected readonly avatar = inject(AvatarStore);

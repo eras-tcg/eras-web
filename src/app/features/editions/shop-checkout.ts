@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Edition } from '@data/editions/edition.model';
 import { ShopProduct } from '@data/shop/shop-rules';
-import { WalletStore } from '@data/shop/wallet.store';
+import { WalletStore } from '@core/wallet/wallet.store';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 
 /** Name of a purchase, as the opening checks it (WalletStore tickets). */

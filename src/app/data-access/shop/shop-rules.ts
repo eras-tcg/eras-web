@@ -1,44 +1,13 @@
 import { BoxEntry, Edition } from '../editions/edition.model';
 import { canSimulateBox, canSimulatePack } from '../editions/edition-rules';
 
-/**
- * The Editions shop runs on simulated gems: there is no money on the platform. Every account starts with a
- * balance on each device and gets a daily reward; packs and boxes cost gems and open with the existing rules.
- */
-export const STARTING_GEMS = 2400;
-export const DAILY_GEMS = 300;
+// Prices in the Editions shop, in simulated gems (the wallet: core/wallet)
+
 /** Any pack, of any edition (a random pack of a box too). */
 export const PACK_PRICE = 100;
 /** A booster box of an edition (E1, E2…) and of a sub-edition (E1.1, E1.2…). */
 export const BOX_PRICE = 2400;
 export const SUB_EDITION_BOX_PRICE = 1200;
-
-export interface Wallet {
-  gems: number;
-  /** Day (YYYY-MM-DD, local time) of the last daily reward. */
-  lastReward: string;
-}
-
-/** Local calendar day of `date`, as YYYY-MM-DD. */
-export function dayOf(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-/**
- * The wallet as of `today`: a new one starts with the starting gems (that day's reward included); an existing
- * one gets the daily reward once per day. `reward` is what was just added (0 when nothing was).
- */
-export function openWallet(saved: Wallet | null, today: string): { wallet: Wallet; reward: number } {
-  if (!saved || !Number.isFinite(saved.gems)) return { wallet: { gems: STARTING_GEMS, lastReward: today }, reward: 0 };
-  if (saved.lastReward === today) return { wallet: saved, reward: 0 };
-  return { wallet: { gems: Math.max(0, saved.gems) + DAILY_GEMS, lastReward: today }, reward: DAILY_GEMS };
-}
-
-/** The wallet after paying `price`, or null when the gems do not reach. */
-export function spend(wallet: Wallet, price: number): Wallet | null {
-  return price <= wallet.gems ? { ...wallet, gems: wallet.gems - price } : null;
-}
 
 /** A sub-edition has a dotted code (E1.1, E1.2…); editions and structures do not (E1, ST1…). */
 export function isSubEdition(editionId: string): boolean {

@@ -1,11 +1,11 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import { AuthService } from '@core/auth/auth.service';
-import { Wallet, dayOf, openWallet, spend } from './shop-rules';
+import { AuthService } from '../auth/auth.service';
+import { Wallet, dayOf, openWallet, spend } from './wallet-rules';
 
 const KEY = 'eras-wallet-';
 
 /**
- * The signed-in user's simulated gems for the Editions shop (see shop-rules.ts). Kept on this device only, per
+ * The signed-in user's simulated gems (see wallet-rules.ts), spent in the Editions shop. Kept on this device only, per
  * account: there is no money on the server. Opening it each day adds the daily reward (`reward` says how much,
  * so the shop can tell).
  */

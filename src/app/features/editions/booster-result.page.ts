@@ -7,7 +7,7 @@ import { OpenedPack, PackTier, RARITY_NAMES, cardsByRarity, groupOpening, openBo
 import { pickRandomPackFromBox } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { OpeningRequest, productFor } from '@data/shop/shop-rules';
-import { WalletStore } from '@data/shop/wallet.store';
+import { WalletStore } from '@core/wallet/wallet.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { Rarity, RarityBadgeComponent } from '@ui/domain/rarity-badge/rarity-badge.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -21,7 +21,6 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { ShopCheckout, purchaseTicket } from './shop-checkout';
-import { WalletBadgeComponent } from './wallet-badge.component';
 
 /** unpaid: offered for sale · packs: the bought packs on the table · opening: one by one · done: the full list. */
 type Phase = 'unpaid' | 'packs' | 'opening' | 'done';
@@ -56,7 +55,6 @@ const BETWEEN_PACKS_MS = 650;
     ButtonComponent,
     IconComponent,
     SpinnerComponent,
-    WalletBadgeComponent,
   ],
   templateUrl: './booster-result.page.html',
   styleUrl: './booster-result.page.scss',

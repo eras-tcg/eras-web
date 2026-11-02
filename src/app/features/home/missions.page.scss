@@ -29,14 +29,17 @@
   text-transform: uppercase;
 }
 
-.set-head span,
-.note {
+.ends {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
 
-.note {
-  margin: 0;
+.ends eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
 }
 
 .list {
@@ -135,11 +138,6 @@ button.reward:not(:disabled) {
 .reward eras-icon {
   inline-size: 1rem;
   block-size: 1rem;
-}
-
-.claim {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .claimed-tag {

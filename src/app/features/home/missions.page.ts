@@ -1,4 +1,4 @@
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MissionsStore, claimable } from '@core/missions/missions.store';
 import { missionText } from '@data/missions/mission-rules';
@@ -8,31 +8,35 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { HubScreenComponent } from './hub-screen.component';
 
 /**
- * "Misiones" screen of the hub: today's missions and this week's, each with its progress, its gems and "Reclamar"
- * once done. Online games count for them (not solo mode).
+ * "Misiones" screen of the hub: today's missions and this week's (with the day they change), each with its progress,
+ * its gems, which light up to be claimed once done. Online games count for them (not solo mode).
  */
 @Component({
   selector: 'eras-missions-page',
-  imports: [HubScreenComponent, AlertComponent, IconComponent, SpinnerComponent, DecimalPipe, NgTemplateOutlet],
+  imports: [HubScreenComponent, AlertComponent, IconComponent, SpinnerComponent, DatePipe, DecimalPipe, NgTemplateOutlet],
   template: `
     <eras-hub-screen title="Misiones">
       @if (missions.board(); as board) {
         @if (missions.error(); as message) {
           <eras-alert tone="danger">{{ message }}</eras-alert>
         }
-        <ng-container [ngTemplateOutlet]="set" [ngTemplateOutletContext]="{ title: 'Diarias', when: 'Se renuevan mañana', list: board.daily, period: 'daily' }" />
-        <ng-container [ngTemplateOutlet]="set" [ngTemplateOutletContext]="{ title: 'Semanales', when: 'Se renuevan el lunes', list: board.weekly, period: 'weekly' }" />
-        <p class="note">Cuentan las partidas online (no el modo solo).</p>
+        <ng-container [ngTemplateOutlet]="set" [ngTemplateOutletContext]="{ title: 'Diarias', ends: null, list: board.daily, period: 'daily' }" />
+        <ng-container [ngTemplateOutlet]="set" [ngTemplateOutletContext]="{ title: 'Semanales', ends: weekEnds(board.nextWeek), list: board.weekly, period: 'weekly' }" />
       } @else {
         <eras-spinner />
       }
     </eras-hub-screen>
 
-    <ng-template #set let-title="title" let-when="when" let-list="list" let-period="period">
+    <ng-template #set let-title="title" let-ends="ends" let-list="list" let-period="period">
       <section class="set">
         <header class="set-head">
           <h2>{{ title }}</h2>
-          <span>{{ when }}</span>
+          <!-- When the weekly ones change -->
+          @if (ends) {
+            <span class="ends" [attr.title]="'Se renuevan el ' + (ends | date: 'EEEE d MMMM' : '' : 'es')">
+              <eras-icon name="clock" /> {{ ends | date: 'EEE d MMM' : '' : 'es' }}
+            </span>
+          }
         </header>
         <ul class="list">
           @for (m of $any(list); track m.id) {
@@ -56,9 +60,6 @@ import { HubScreenComponent } from './hub-screen.component';
                     <eras-spinner />
                   } @else {
                     <eras-icon name="gem" /> {{ m.gems }}
-                    @if (isDone(m)) {
-                      <span class="claim">Reclamar</span>
-                    }
                   }
                 </button>
               }
@@ -78,5 +79,11 @@ export class MissionsPage {
 
   constructor() {
     void this.missions.load();
+  }
+
+  /** The day the weekly missions change (the server's YYYY-MM-DD), as a local date. */
+  protected weekEnds(day: string): Date {
+    const [y, m, d] = day.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }

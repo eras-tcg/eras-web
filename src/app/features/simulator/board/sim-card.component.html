@@ -75,6 +75,9 @@
           <span>{{ a === 'ritual' ? specialLabel() : actionLabels[a] }}</span>
         </button>
       }
+      @if (blocked(); as why) {
+        <p class="blocked" role="note">{{ why }}</p>
+      }
     }
     @if (!hidden() || !opponent()) {
       <button type="button" class="action" aria-label="Ver" (click)="$event.stopPropagation(); game.selectedId.set(null); dialogs.cardInfo(slot(), zone(), opponent())">

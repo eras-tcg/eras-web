@@ -104,6 +104,13 @@ eras-game-card.can-play.can-activate {
 .action.attack { border-color: var(--color-danger); color: var(--color-danger); }
 .action.effect { border-color: var(--color-primary); }
 .action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.blocked {
+  max-inline-size: 16rem;
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
 eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* Dragging one of your creatures to attack: the enemies it can attack light up */

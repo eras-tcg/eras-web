@@ -170,6 +170,8 @@ export interface GameState {
   unplayable?: Record<string, string[]> | null;
   /** What each player can do now, by player and then by card. */
   legalActions?: Record<string, Record<string, ('attack' | 'summon' | 'ritual' | 'play' | 'activate')[]>> | null;
+  /** Why a card of the hand cannot be summoned or played now, by player and then by card. */
+  blockedActions?: Record<string, Record<string, string>> | null;
   /** The enemies each attacker can attack, by player and then by attacker. */
   attackTargets?: Record<string, Record<string, string[]>> | null;
   /** Who won the game that just ended, and why. */

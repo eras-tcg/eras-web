@@ -9,11 +9,14 @@ export interface RulesView {
   attackTargets: Record<string, string[]>;
   /** Slow effects I can activate now. */
   activatable: ActivatableEffect[];
+  /** Why a card of my hand cannot be summoned or played now. */
+  blocked: Record<string, string>;
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
   return {
     legal: (me && state?.legalActions?.[me]) || {},
+    blocked: (me && state?.blockedActions?.[me]) || {},
     attackTargets: (me && state?.attackTargets?.[me]) || {},
     activatable: (me && state?.activatable?.[me]) || [],
   };
@@ -27,6 +30,11 @@ export function inFrontLine(slot: CardSlot): boolean {
 /** Legal actions of one of your cards. */
 export function legalActions(view: RulesView, slot: CardSlot): LegalAction[] {
   return view.legal[slot.instanceId] ?? [];
+}
+
+/** Why one of your cards of the hand cannot be summoned or played now, as the server says; null when it can or nothing stops it. */
+export function blockedReason(view: RulesView, slot: CardSlot): string | null {
+  return view.blocked[slot.instanceId] ?? null;
 }
 
 /** The enemies this creature can attack. */

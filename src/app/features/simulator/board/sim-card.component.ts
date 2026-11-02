@@ -6,7 +6,7 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent, GameCardInfo } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
-import { LegalAction, inFrontLine, legalActions, specialKindLabel, attackableCreatures } from '@data/simulator/legal-actions';
+import { LegalAction, inFrontLine, legalActions, blockedReason, specialKindLabel, attackableCreatures } from '@data/simulator/legal-actions';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDrag } from './board-drag';
@@ -128,6 +128,10 @@ export class SimCardComponent {
   protected readonly lookOnly = inject(SheetState).lowered;
   protected readonly actions = computed<LegalAction[]>(() =>
     this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
+  );
+  /** Why the card cannot be summoned or played now (a Definitive effect on the first turn, no gems…), when it has no actions. */
+  protected readonly blocked = computed(() =>
+    this.opponent() || this.lookOnly() || this.actions().length ? null : blockedReason(this.game.rules(), this.slot()),
   );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));

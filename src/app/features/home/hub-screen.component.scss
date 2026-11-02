@@ -33,10 +33,8 @@
   // Stays in place between the hub screens (view transitions)
   view-transition-name: hub-art;
   aspect-ratio: var(--hub-card-ratio);
-  background:
-    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-card-p) 45%, transparent), transparent 60%),
-    radial-gradient(circle at 70% 85%, color-mix(in srgb, var(--color-card-b) 40%, transparent), transparent 55%),
-    var(--color-hub-scrim);
+  // Until the artwork loads, the same color as the column: no box shows against it
+  background-color: var(--color-bg);
   background-position: center;
   background-size: cover;
 }

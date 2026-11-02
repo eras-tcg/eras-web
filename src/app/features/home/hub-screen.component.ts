@@ -43,15 +43,17 @@ export class HubScreenComponent {
   protected readonly background = signal<Edition | null>(null);
 
   constructor() {
-    void this.loadBackground();
+    // With the editions already cached the artwork is there from the first frame, which is also the one the
+    // screen transition captures; otherwise it appears once they load
+    if (this.editions.editions().length) this.chooseBackground();
+    else void this.editions.load().then(() => this.chooseBackground());
   }
 
   protected openCards(editionId: string): void {
     void this.router.navigate(['/cards'], { queryParams: { edition: editionId } });
   }
 
-  private async loadBackground(): Promise<void> {
-    await this.editions.load();
+  private chooseBackground(): void {
     const all = this.editions.editions();
     const previous = readSession(BACKGROUND_KEY);
     const kept = this.reroll() ? null : all.find((e) => e.editionId === previous && e.editionImage);

@@ -10,14 +10,11 @@ export interface HubMenuItem {
   icon: IconName;
   /** Where it goes; without a route the item emits `picked`. */
   route?: string;
-  description?: string;
-  /** A small tag beside the label (e.g. "Pronto"). */
-  tag?: string;
 }
 
 /**
  * Menu of a hub screen. Wide screens: a list of big words on the left, like a game's main menu. Narrow screens:
- * `main` becomes a bar of round buttons fixed at the bottom; `sub` a list of cards with their descriptions.
+ * `main` becomes a bar of round buttons at the bottom; `sub` a list of cards.
  */
 @Component({
   selector: 'eras-hub-menu',

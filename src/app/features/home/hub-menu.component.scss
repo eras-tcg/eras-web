@@ -47,12 +47,6 @@
   display: none;
 }
 
-.text {
-  display: flex;
-  flex-direction: column;
-  min-inline-size: 0;
-}
-
 .label {
   display: inline-flex;
   align-items: center;
@@ -69,23 +63,7 @@
   font-size: clamp(2rem, min(5vw, 8.5vh), 4.25rem);
 }
 
-.description {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.tag {
-  padding: 0.1rem var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-muted);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* Sub-screens: the options carry a description; same size for all */
+/* Sub-screens: every option the same size */
 :host(.sub) .list {
   gap: var(--space-5);
 }
@@ -158,7 +136,7 @@
     border-color: var(--color-hub-accent);
   }
 
-  // sub: cards with icon, name and description
+  // sub: cards with icon and name
   :host(.sub) .list {
     gap: var(--space-3);
   }

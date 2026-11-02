@@ -3,20 +3,8 @@ import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
 import { HubScreenComponent } from './hub-screen.component';
 
 const SOCIAL_MENU: HubMenuItem[] = [
-  {
-    id: 'public-decks',
-    label: 'Mazos públicos',
-    icon: 'stack',
-    route: '/public-decks',
-    description: 'Los mazos que comparte la comunidad.',
-  },
-  {
-    id: 'tierlist',
-    label: 'Tierlist',
-    icon: 'trophy',
-    route: '/tierlist',
-    description: 'Qué cartas están marcando el formato.',
-  },
+  { id: 'public-decks', label: 'Mazos públicos', icon: 'stack', route: '/public-decks' },
+  { id: 'tierlist', label: 'Tierlist', icon: 'trophy', route: '/tierlist' },
 ];
 
 /** "Social" screen of the hub: what the community shares. */

@@ -9,27 +9,9 @@ import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
 import { HubScreenComponent } from './hub-screen.component';
 
 const PLAY_MENU: HubMenuItem[] = [
-  {
-    id: 'online',
-    label: 'Online',
-    icon: 'gamepad',
-    route: '/simulator',
-    description: 'Crea una sala o únete a una de las salas abiertas.',
-  },
-  {
-    id: 'solo',
-    label: 'Modo solo',
-    icon: 'user',
-    description: 'Juega los dos lados de una partida libre, con acciones manuales y cartas de prueba.',
-  },
-  {
-    id: 'tutorial',
-    label: 'Tutorial',
-    icon: 'book',
-    route: '/ruling',
-    description: 'Aprende las reglas paso a paso.',
-    tag: 'Pronto: partidas guiadas',
-  },
+  { id: 'online', label: 'Online', icon: 'gamepad', route: '/simulator' },
+  { id: 'solo', label: 'Modo solo', icon: 'user' },
+  { id: 'tutorial', label: 'Tutorial', icon: 'book', route: '/ruling' },
 ];
 
 /** "Jugar" screen of the hub: online rooms, solo mode (a test room) or the tutorial. */

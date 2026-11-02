@@ -22,15 +22,5 @@
       <eras-icon [name]="item.icon" />
     }
   </span>
-  <span class="text">
-    <span class="label">
-      {{ item.label }}
-      @if (item.tag) {
-        <span class="tag">{{ item.tag }}</span>
-      }
-    </span>
-    @if (item.description) {
-      <span class="description">{{ item.description }}</span>
-    }
-  </span>
+  <span class="label">{{ item.label }}</span>
 </ng-template>

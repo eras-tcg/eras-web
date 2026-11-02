@@ -4,7 +4,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { firstValueFrom } from 'rxjs';
 import { CollectionApi } from './collection.api';
 import { Collection, Finish } from './collection.model';
-import { extraCopies, ownedCount } from './collection-rules';
+import { FINISHES, breakPlan, extraCopies, ownedCount } from './collection-rules';
 
 /**
  * The signed-in player's cards and fragments, kept by the server: loaded for whoever signs in, and replaced by what
@@ -54,8 +54,18 @@ export class CollectionStore {
     return this.crafting(() => firstValueFrom(this.api.craft(cardId, count)));
   }
 
-  async craftUntil(cardId: string, finish: Finish): Promise<Finish[]> {
-    return this.crafting(() => firstValueFrom(this.api.craftUntil(cardId, finish)));
+  async craftUntil(cardId: string, finish: Finish, maxFragments: number): Promise<Finish[]> {
+    return this.crafting(() => firstValueFrom(this.api.craftUntil(cardId, finish, maxFragments)));
+  }
+
+  /** Breaks `count` copies of a card, the plainest first (see breakPlan). */
+  async breakMany(cardId: string, count: number): Promise<boolean> {
+    const plan = breakPlan(this.collection()?.cards[cardId], count);
+    for (const finish of FINISHES) {
+      const n = plan[finish] ?? 0;
+      if (n > 0 && !(await this.breakCopies(cardId, finish, n))) return false;
+    }
+    return true;
   }
 
   /** Sets the signed-in account's fragments (administrators, to test). */

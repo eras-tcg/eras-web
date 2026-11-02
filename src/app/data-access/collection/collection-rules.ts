@@ -44,3 +44,20 @@ export function extraCopies(collection: Collection | null): number {
     0,
   );
 }
+
+/** Which copies breaking `count` of a card takes: the plainest first (normal, then foil, then prismatic). */
+export function breakPlan(copies: OwnedCopies | undefined, count: number): OwnedCopies {
+  const plan: OwnedCopies = {};
+  let left = count;
+  for (const finish of FINISHES) {
+    const n = Math.min(left, copies?.[finish] ?? 0);
+    if (n > 0) plan[finish] = n;
+    left -= n;
+  }
+  return plan;
+}
+
+/** Fragments a break plan gives. */
+export function fragmentsFrom(plan: OwnedCopies): number {
+  return FINISHES.reduce((sum, f) => sum + (plan[f] ?? 0) * FRAGMENTS_OF[f], 0);
+}

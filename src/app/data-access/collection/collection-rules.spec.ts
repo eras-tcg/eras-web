@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { extraCopies, extrasOf, missingCopies, ownedCount } from './collection-rules';
+import { breakPlan, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -21,5 +21,11 @@ describe('collection rules', () => {
     expect(extrasOf({ foil: 6 })).toEqual({ foil: 2 });
     expect(extrasOf({ plain: 4 })).toEqual({});
     expect(extraCopies(collection)).toBe(2);
+  });
+
+  it('breaks the plainest copies first', () => {
+    expect(breakPlan({ plain: 1, foil: 2, prism: 1 }, 2)).toEqual({ plain: 1, foil: 1 });
+    expect(breakPlan({ prism: 1 }, 3)).toEqual({ prism: 1 });
+    expect(fragmentsFrom({ plain: 1, foil: 1 })).toBe(40);
   });
 });

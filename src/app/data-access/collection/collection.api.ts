@@ -22,8 +22,9 @@ export class CollectionApi {
     return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft'), { cardId, count });
   }
 
-  craftUntil(cardId: string, finish: Finish): Observable<Crafted> {
-    return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft-until'), { cardId, finish });
+  /** Until a copy comes out at least as fine as `finish`, spending at most `maxFragments`. */
+  craftUntil(cardId: string, finish: Finish, maxFragments: number): Observable<Crafted> {
+    return this.http.post<Crafted>(this.api.url('/api/drive/collection/me/craft-until'), { cardId, finish, maxFragments });
   }
 
   /** Administrators (manage_users): sets an account's fragments of some rarities. */

@@ -48,7 +48,7 @@
           <div class="actions">
             @if (game.editorRoom()) {
               @if (p.userId !== mine()?.userId) {
-                <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">Elegir su mazo</button>
+                <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">{{ p.userId === me() ? 'Elegir tu mazo' : 'Elegir su mazo' }}</button>
               }
             } @else if (game.isHost() && p.userId !== me()) {
               <button erasButton variant="danger" size="sm" type="button" (click)="game.kickPlayer(p.userId)">Sacar de la sala</button>

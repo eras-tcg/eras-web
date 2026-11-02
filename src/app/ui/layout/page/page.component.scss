@@ -74,3 +74,11 @@
   gap: var(--space-3);
   min-block-size: 0;
 }
+
+// Phones: a smaller title, so long names fit beside the back button and the quick buttons
+@media (max-width: 40rem) {
+  .title {
+    font-size: 1.25rem;
+    letter-spacing: 0.03em;
+  }
+}

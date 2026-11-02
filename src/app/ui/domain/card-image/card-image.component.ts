@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 
-/** A card at its printed proportions (63×88). Optional small `badge` at the top (it leaves the printed name visible). */
+/**
+ * A card at its printed proportions (63×88). Optional small `badge` at the top (it leaves the printed name visible).
+ * `foil`: a foil copy shines over it (holographic, or starlight for prism); the shine is part of the card, so it
+ * follows it wherever it moves, turns or grows.
+ */
 @Component({
   selector: 'eras-card-image',
   template: `
@@ -13,7 +17,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       <span class="badge" [class.info]="badgeTone() === 'info'">{{ badge() }}</span>
     }
   `,
+  host: { '[class.foil-foil]': "foil() === 'foil'", '[class.foil-prism]': "foil() === 'prism'" },
   styles: `
+    @use 'mixins/foil';
+
     :host {
       position: relative;
       display: grid;
@@ -44,6 +51,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       pointer-events: none;
     }
     .badge.info { background: color-mix(in srgb, var(--color-info) 75%, transparent); }
+    :host(.foil-foil)::after { @include foil.rainbow; }
+    :host(.foil-prism) { @include foil.scaled; }
+    :host(.foil-prism)::before { @include foil.glitter-dots; }
+    :host(.foil-prism)::after { @include foil.glitter-light; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,4 +65,5 @@ export class CardImageComponent {
   /** danger (red: missing data) or info (blue). */
   readonly badgeTone = input<'danger' | 'info'>('danger');
   readonly eager = input(false, { transform: booleanAttribute });
+  readonly foil = input<'foil' | 'prism' | null>(null);
 }

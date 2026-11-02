@@ -37,7 +37,7 @@ export interface CardTextGroup {
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.stacked]': 'stacked()', '[class.foil-foil]': "foil() === 'foil'", '[class.foil-prism]': "foil() === 'prism'" },
+  host: { '[class.stacked]': 'stacked()' },
 })
 export class CardDetailComponent {
   /**

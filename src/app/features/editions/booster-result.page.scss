@@ -1,5 +1,3 @@
-@use 'mixins/foil';
-
 // The opening fills the screen left below the top row (the page is `fill`): the table of packs, then each pack
 // breaking open and its cards turning, then (only at the end) the full list, the one part that scrolls. The pack,
 // its break and the cards have their own components (./opening).
@@ -153,30 +151,9 @@ eras-card-thumb.aura-sec {
     aura-card 1.8s ease-in-out 0.4s infinite;
 }
 
-// A foil copy in the list: its sheen over the card (holographic, or prismatic and stronger)
-eras-card-thumb.foil-foil,
-eras-card-thumb.foil-prism {
-  position: relative;
-  overflow: hidden;
-}
-
-eras-card-thumb.foil-foil::after {
-  @include foil.rainbow;
-}
-
-// Prismatic: a starlight grain of dots, and the light sweeping across it
-eras-card-thumb.foil-prism::before {
-  @include foil.glitter-dots;
-}
-
-eras-card-thumb.foil-prism::after {
-  @include foil.glitter-light;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .arrive,
   eras-card-thumb::after,
-  eras-card-thumb::before,
   eras-card-thumb.aura-sr,
   eras-card-thumb.aura-sec {
     animation: none;

@@ -99,11 +99,12 @@
               @for (opened of obtained(); track opened.card.id + (opened.foil ?? ''); let i = $index) {
                 <eras-card-thumb
                   class="arrive"
-                  [class]="(aura(opened.card) ? 'aura-' + aura(opened.card) : '') + (opened.foil ? ' foil-' + opened.foil : '')"
+                  [class]="aura(opened.card) ? 'aura-' + aura(opened.card) : ''"
                   [style.animation-delay.ms]="i < 24 ? i * 35 : 840"
                   [name]="opened.card.name ?? ''"
                   [imageUrl]="imageUrl(opened.card)"
                   [count]="opened.count"
+                  [foil]="opened.foil"
                   (selected)="openCard(opened.card, opened.foil)"
                 />
               }

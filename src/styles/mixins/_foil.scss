@@ -1,9 +1,12 @@
 // The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random:
 // public/images/foil/starlight-grid.svg, a 96px tile of 2px cells, 1px dots), over the whole card, in gold and rainbow.
-// glitter-dots: the dots, faint, everywhere. glitter-light: a band of light sweeping across, lighting up the dots
-// along lines parallel and perpendicular to the grid, which slide as it goes. Include each in a positioned
-// pseudo-element over the card (they bring their own keyframes).
+// glitter-dots: the dots, faint, everywhere. glitter-light: crosses of dots flashing here and there, and a band of
+// light sweeping across, lighting up the dots along lines parallel and perpendicular to the grid, which slide as it
+// goes. Include each in a positioned pseudo-element over the card (they bring their own keyframes).
 $grid: url('/images/foil/starlight-grid.svg') 0 0 / 96px 96px;
+// Crosses of dots on the grid's rows and columns (every cell, fading from the middle), each flashing now and then
+// at its own pace (an animated SVG, 192px tile)
+$crosses: url('/images/foil/starlight-crosses.svg') 0 0 / 192px 192px;
 
 @mixin -gold-rainbow {
   position: absolute;
@@ -42,15 +45,16 @@ $grid: url('/images/foil/starlight-grid.svg') 0 0 / 96px 96px;
 @mixin glitter-light($delay: 0s) {
   @include -gold-rainbow;
 
-  // The dots where the band is: softly all of them, fully on lines every 4 cells (rows or columns); the band
-  // starts and ends off the card
+  // The crosses as they flash, and the dots where the band is: softly all of them, fully on lines every 4
+  // cells (rows or columns); the band starts and ends off the card
   mask:
+    $crosses,
     $grid,
     linear-gradient(115deg, transparent 30%, #000 50%, transparent 70%) 100% 0 / 300% 100% no-repeat,
     repeating-linear-gradient(#000 0 2px, transparent 2px 8px),
     repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 8px),
     linear-gradient(rgb(0 0 0 / 35%) 0 0);
-  mask-composite: intersect, intersect, add, add;
+  mask-composite: add, intersect, intersect, add, add;
   filter: brightness(1.3);
   animation:
     glitter-sweep 3.2s ease-in-out $delay infinite,
@@ -59,12 +63,12 @@ $grid: url('/images/foil/starlight-grid.svg') 0 0 / 96px 96px;
   // The lines slide a whole number of periods, so they stay on the grid
   @keyframes glitter-sweep {
     0% {
-      mask-position: 0 0, 100% 0, 0 0, 0 0, 0 0;
+      mask-position: 0 0, 0 0, 100% 0, 0 0, 0 0, 0 0;
     }
 
     60%,
     100% {
-      mask-position: 0 0, 0% 0, 0 48px, 48px 0, 0 0;
+      mask-position: 0 0, 0 0, 0% 0, 0 48px, 48px 0, 0 0;
     }
   }
 }

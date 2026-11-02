@@ -63,7 +63,8 @@ eras-icon[name='gem'] {
   inline-size: var(--pack-width, 8rem);
   aspect-ratio: 63 / 88;
   padding: var(--space-3) var(--space-2);
-  border: 2px solid var(--aura, var(--color-hub-accent));
+  // Plain packs (below SR): a neutral edge, no golden glow; a special one takes its aura's color
+  border: 2px solid var(--aura, var(--color-hub-line));
   border-radius: var(--radius-md);
   // The edition's artwork comes as --art (a GOD pack paints its ring behind it)
   background: var(--art, none) center / cover, var(--color-surface-muted);
@@ -130,7 +131,7 @@ eras-icon[name='gem'] {
 
 
 // The aura itself: a soft pulsing halo in the tier's color
-.tier-sr,
+// SR: only its amber edge. SEC: a halo behind, pulsing
 .tier-sec {
   box-shadow:
     0 0 0 1px var(--aura),
@@ -205,34 +206,46 @@ eras-icon[name='gem'] {
   overflow: hidden;
 }
 
-// The pack that goes up a rarity: once dealt it shakes with its old aura, then bursts into light, swells and
-// lands with its new one
+// The pack that goes up a rarity: once dealt it shakes with its old aura, then bursts into light, spins around
+// (a full horizontal turn) as it swells, and lands with its new one
 .pack.upgraded:not(.lifted) {
   animation:
     deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both,
     tremble 0.3s ease-in-out 0.6s infinite;
 }
 
-.pack.lifted {
+// More specific than the auras' own animations (.dealt.tier-*), which would cover the turn
+.packs .pack.dealt.lifted {
   z-index: 2;
-  animation: level-up 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: level-up 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.packs .pack.dealt.lifted.tier-god {
+  animation:
+    level-up 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    spin 2.4s linear infinite,
+    god-halo 2s ease-in-out infinite;
 }
 
 .pack.lifted::before {
   inset: -60%;
   border-radius: 50%;
   background: radial-gradient(circle, var(--color-hub-glow) 0%, color-mix(in srgb, var(--aura, var(--color-hub-glow)) 70%, transparent) 30%, transparent 65%);
-  animation: level-up-light 1.1s ease-out both;
+  animation: level-up-light 1.3s ease-out both;
 }
 
 @keyframes level-up {
-  35% {
-    transform: translateY(-0.75rem) scale(1.25);
+  0% {
+    transform: perspective(800px) rotateY(0);
+  }
+
+  40% {
+    transform: perspective(800px) translateY(-0.75rem) scale(1.25) rotateY(200deg);
     filter: brightness(1.8);
   }
 
   100% {
-    transform: none;
+    transform: perspective(800px) rotateY(360deg);
     filter: none;
   }
 }
@@ -257,7 +270,6 @@ eras-icon[name='gem'] {
   animation: deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.dealt.tier-sr,
 .dealt.tier-sec {
   animation:
     deal 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both,
@@ -511,7 +523,6 @@ eras-card-thumb.aura-sec {
 @media (prefers-reduced-motion: reduce) {
   .pack::after,
   .dealt,
-  .tier-sr,
   .tier-sec,
   .tier-god,
   .flip,

@@ -168,6 +168,10 @@ export interface GameState {
   structurePlayed?: string[] | null;
   /** Utilities in each player's hand that cannot be played now (their "En Juego" cannot be activated), by player id. */
   unplayable?: Record<string, string[]> | null;
+  /** What each player can do now, by player and then by card. */
+  legalActions?: Record<string, Record<string, ('attack' | 'summon' | 'ritual' | 'play' | 'activate')[]>> | null;
+  /** The enemies each attacker can attack, by player and then by attacker. */
+  attackTargets?: Record<string, Record<string, string[]>> | null;
   /** Who won the game that just ended, and why. */
   winnerId?: string | null;
   endReason?: 'lives' | 'surrender' | 'deck' | null;

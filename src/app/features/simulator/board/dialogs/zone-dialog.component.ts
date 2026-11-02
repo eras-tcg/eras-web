@@ -296,7 +296,7 @@ export class ZoneDialogComponent {
 
   /** What the rules let me do with one of my cards here now. */
   protected actionsOf(c: CardSlot) {
-    return this.data.opponent || this.lookOnly() ? [] : legalActions(this.game.rules(), c, this.data.zone);
+    return this.data.opponent || this.lookOnly() ? [] : legalActions(this.game.rules(), c);
   }
 
   protected effectsOf(c: CardSlot) {

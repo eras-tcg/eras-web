@@ -141,7 +141,7 @@ export class PlayerHalfComponent {
   protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
   /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
   protected readonly tributeActions = computed(() => {
-    const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c, 'tributeZone'));
+    const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c));
     return { play: actions.includes('ritual'), activate: actions.includes('activate') };
   });
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
@@ -198,7 +198,7 @@ export class PlayerHalfComponent {
       const attacker = this.game.myState()?.field.find((c) => c.instanceId === card.instanceId);
       if (!attacker) return;
       if (to === 'field') {
-        if (nearby && attackableCreatures(attacker, [nearby]).length) this.game.attack(attacker.instanceId, nearby.instanceId);
+        if (nearby && attackableCreatures(this.game.rules(), attacker, [nearby]).length) this.game.attack(attacker.instanceId, nearby.instanceId);
       } else if (to === 'lifeStack' || to === 'hand') {
         this.game.attack(attacker.instanceId, null);
       }

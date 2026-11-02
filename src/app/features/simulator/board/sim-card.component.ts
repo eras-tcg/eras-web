@@ -96,7 +96,7 @@ export class SimCardComponent {
     const dragging = this.drag.dragging();
     if (!dragging?.attack || !this.opponent() || this.zone() !== 'field') return false;
     const attacker = this.game.myState()?.field.find((c) => c.instanceId === dragging.instanceId);
-    return !!attacker && attackableCreatures(attacker, [this.slot()]).length > 0;
+    return !!attacker && attackableCreatures(this.game.rules(), attacker, [this.slot()]).length > 0;
   });
   /**
    * Its role in the combat as shown: an attacker exhausted to attack (or by the cost of the effect that makes it attack)
@@ -120,7 +120,7 @@ export class SimCardComponent {
   /** A choice is lowered to look at the table: the card can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
   protected readonly actions = computed<LegalAction[]>(() =>
-    this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot(), this.zone()),
+    this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
   );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));
@@ -185,7 +185,7 @@ export class SimCardComponent {
       case 'attack': {
         const opponent = this.game.opponentState();
         // Enemies of the Línea frontal: exhausted ones, or active ones it can face (Enfrentar)
-        const creatures = attackableCreatures(s, opponent?.field ?? []);
+        const creatures = attackableCreatures(this.game.rules(), s, opponent?.field ?? []);
         const target = await this.dialogs.attackTarget({ attacker: s, opponentName: opponent?.username ?? 'Rival', creatures });
         if (target !== undefined) this.game.attack(s.instanceId, target);
         return;

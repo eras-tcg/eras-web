@@ -180,7 +180,8 @@ dd {
 }
 
 :host(.stacked) .image {
-  position: static;
+  // Not sticky here, but still positioned: a foil copy's shine is laid over the image itself
+  position: relative;
   order: 1;
   inline-size: min(100%, 16rem);
   align-self: center;
@@ -222,7 +223,7 @@ dd {
   }
 
   .image {
-    position: static;
+    position: relative;
     grid-row: 1;
     inline-size: min(100%, 16rem);
     justify-self: center;

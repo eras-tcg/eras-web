@@ -22,23 +22,29 @@
     } @else if (!store.error() && store.editions().length === 0) {
       <eras-empty-state title="Todavía no hay ediciones" />
     } @else {
-      <eras-grid minColumn="min(12rem, 40vw)" [gap]="4">
-        @for (edition of store.editions(); track edition.editionId) {
-          <a class="tile" [routerLink]="['/editions', edition.editionId]" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
-            <span class="tile-info">
-              <span class="tile-code">{{ edition.editionId }}</span>
-              <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>
-              <span class="tile-prices">
-                @for (product of products(edition); track product.kind) {
-                  <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : product.kind === 'structure' ? 'structure' : 'sobre' }}</span></span>
-                } @empty {
-                  <span class="price-what">No está a la venta</span>
-                }
-              </span>
-            </span>
-          </a>
-        }
-      </eras-grid>
+      <!-- Packs and boxes first, then the structure decks, each with its title -->
+      @for (shelf of shelves(); track shelf.title) {
+        <section class="shelf">
+          <h2 class="shelf-title">{{ shelf.title }}</h2>
+          <eras-grid minColumn="min(12rem, 40vw)" [gap]="4">
+            @for (edition of shelf.editions; track edition.editionId) {
+              <a class="tile" [routerLink]="['/editions', edition.editionId]" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
+                <span class="tile-info">
+                  <span class="tile-code">{{ edition.editionId }}</span>
+                  <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>
+                  <span class="tile-prices">
+                    @for (product of products(edition); track product.kind) {
+                      <span class="price"><eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}<span class="price-what">{{ product.kind === 'box' ? 'caja' : product.kind === 'structure' ? 'structure' : 'sobre' }}</span></span>
+                    } @empty {
+                      <span class="price-what">No está a la venta</span>
+                    }
+                  </span>
+                </span>
+              </a>
+            }
+          </eras-grid>
+        </section>
+      }
     }
   </div>
 </eras-page>

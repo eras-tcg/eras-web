@@ -9,6 +9,12 @@
       <eras-icon name="gem" /><span class="label">{{ wallet.gems() | number: '1.0-0' : 'es' }}</span>
     </a>
   }
+  <a class="item missions" routerLink="/missions" [attr.aria-label]="missions.waiting() ? 'Misiones: ' + missions.waiting() + ' por reclamar' : 'Misiones'">
+    <eras-icon name="target" /><span class="label">Misiones</span>
+    @if (missions.waiting()) {
+      <span class="badge">{{ missions.waiting() }}</span>
+    }
+  </a>
   @if (editMode.available()) {
     <button type="button" class="item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
       <eras-icon name="edit" /><span class="label">Modo edición</span>

@@ -1,4 +1,5 @@
-import { claimable, missionText } from './mission-rules';
+import { claimable } from '@core/missions/missions.store';
+import { missionText } from './mission-rules';
 
 describe('mission rules', () => {
   it('says what each mission asks', () => {

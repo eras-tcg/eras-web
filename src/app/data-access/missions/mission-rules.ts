@@ -1,4 +1,4 @@
-import { Mission } from './mission.model';
+import { Mission } from '@core/missions/mission.model';
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
@@ -23,9 +23,4 @@ export function missionText(mission: Pick<Mission, 'id' | 'target'>): string {
     default:
       return mission.id;
   }
-}
-
-/** Done and not yet claimed: its gems wait. */
-export function claimable(mission: Mission): boolean {
-  return !mission.claimed && mission.progress >= mission.target;
 }

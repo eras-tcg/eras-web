@@ -91,3 +91,23 @@
   outline: 1px dashed var(--color-warning);
   outline-offset: -2px;
 }
+
+// Missions waiting to be claimed: a count on the corner of their button
+.missions {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: var(--space-2);
+  min-inline-size: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-hub-accent);
+  color: var(--color-hub-scrim);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1rem;
+  text-align: center;
+}

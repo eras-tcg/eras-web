@@ -1,7 +1,7 @@
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { claimable, missionText } from '@data/missions/mission-rules';
-import { MissionsStore } from '@data/missions/missions.store';
+import { MissionsStore, claimable } from '@core/missions/missions.store';
+import { missionText } from '@data/missions/mission-rules';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';

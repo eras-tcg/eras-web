@@ -7,6 +7,7 @@ import { AuthService } from '../auth/auth.service';
 import { EditModeService } from '../auth/edit-mode.service';
 import { ADMIN_PERMISSIONS } from '../navigation/admin-tools';
 import { ThemeService } from '../theme/theme.service';
+import { MissionsStore } from '../missions/missions.store';
 import { WalletStore } from '../wallet/wallet.store';
 
 /**
@@ -27,6 +28,7 @@ export class AppToolsComponent {
   protected readonly editMode = inject(EditModeService);
   protected readonly theme = inject(ThemeService);
   protected readonly wallet = inject(WalletStore);
+  protected readonly missions = inject(MissionsStore);
   private readonly router = inject(Router);
   private readonly modal = inject(ModalService);
 

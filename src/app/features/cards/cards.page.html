@@ -45,14 +45,15 @@
           <eras-grid [minColumn]="view().size + 'px'" [gap]="3">
             @for (card of visible(); track card.id) {
               @let finish = showCollection() ? owned(card) : undefined;
+              @let alt = showCollection() ? ownedAlt(card) : null;
               <eras-card-thumb
                 [class.lacking]="finish === null"
                 [attr.title]="finish === null ? 'No tienes esta carta' : null"
                 [name]="card.name ?? ''"
-                [imageUrl]="imageUrl(card)"
+                [imageUrl]="alt ? altImageUrl(card) : imageUrl(card)"
                 [badge]="badge(card)"
                 [badgeTone]="card.meta ? 'info' : 'danger'"
-                [foil]="shineOf(finish)"
+                [foil]="shineOf(alt ?? finish)"
                 (selected)="open(card)"
               />
             }

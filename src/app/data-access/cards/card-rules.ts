@@ -45,6 +45,12 @@ export function printedName(imageName: string | null, metaName: string | null | 
   return !imageName || plain(imageName) === plain(metaName) ? metaName : imageName;
 }
 
+/** The same card showing its alternative art (CardMeta.altImage), or the card as it is when it has none. */
+export function withAltArt(card: CatalogCard): CatalogCard {
+  const alt = card.meta?.altImage;
+  return alt ? { ...card, image_url: alt, time_stamp: null } : card;
+}
+
 /** Image URL with a cache-buster, so a replaced image is not served from cache. */
 export function cardImageUrl(card: Pick<DriveCard, 'image_url' | 'time_stamp'>): string | null {
   if (!card.image_url) return null;

@@ -4,9 +4,9 @@ import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, collapseByName, fullEditionId } from '@data/cards/card-rules';
+import { cardImageUrl, collapseByName, fullEditionId, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { bestFinish, deckCopyFinishes, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
+import { DeckCopy, altFinish, bestFinish, deckCopies, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
@@ -116,10 +116,18 @@ export class DeckBuilderPage {
   protected best(card: CatalogCard): Finish | null {
     return bestFinish(this.collection.collection()?.cards[card.id]);
   }
-  /** Each of the deck's copies of a card with its finish (the player's finest first; null for one they lack). */
-  protected copyFinishes(entry: DeckEntry): (Finish | null)[] {
-    return deckCopyFinishes(this.collection.collection()?.cards[entry.card.id], entry.count);
+  /** The finish of the player's copies of a card with its alternative art (the deck plays them first), null when none. */
+  protected alt(card: CatalogCard): Finish | null {
+    return card.meta?.altImage ? altFinish(this.collection.collection()?.cards[card.id]) : null;
   }
+  /** Each of the deck's copies of a card: its finish and art (the alternative art first; null for one they lack). */
+  protected copies(entry: DeckEntry): DeckCopy[] {
+    return deckCopies(this.collection.collection()?.cards[entry.card.id], entry.count);
+  }
+  protected altImageUrl(card: CatalogCard): string | null {
+    return cardImageUrl(withAltArt(card));
+  }
+  protected readonly altArt = withAltArt;
   protected readonly shineOf = shineOf;
   /** The deck's copies of a card together (one card, ×N) or each by itself, smaller (remembered on the device). */
   protected readonly groupCopies = persistedFlag('eras-deck-builder-group-copies', true);

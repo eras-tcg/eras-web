@@ -15,10 +15,35 @@ export const CRAFT_COST = 30;
 /** Fragments a broken copy gives, of its card's rarity. */
 export const FRAGMENTS_OF: Record<Finish, number> = { plain: 10, foil: 30, prism: 90 };
 
-/** Copies of a card in a collection, every finish together. */
+/** The keys of the copies with a card's alternative art, plainest first (they are never broken or crafted). */
+const ALT_KEYS = FINISHES.map((f) => `alt-${f}` as const);
+
+/** Copies of a card in a collection, every finish together, with the alternative art too (it is the same card). */
 export function ownedCount(collection: Collection | null, cardId: string): number {
   const copies = collection?.cards[cardId];
-  return copies ? FINISHES.reduce((sum, f) => sum + (copies[f] ?? 0), 0) : 0;
+  return copies ? [...FINISHES, ...ALT_KEYS].reduce((sum, k) => sum + (copies[k] ?? 0), 0) : 0;
+}
+
+/** The finest finish among a card's copies with its alternative art, or null when the player has none. */
+export function altFinish(copies: OwnedCopies | undefined): Finish | null {
+  for (let i = FINISHES.length - 1; i >= 0; i--) if ((copies?.[ALT_KEYS[i]] ?? 0) > 0) return FINISHES[i];
+  return null;
+}
+
+/** A copy of a deck: its finish (null when the player lacks it) and whether it has the alternative art. */
+export interface DeckCopy {
+  finish: Finish | null;
+  alt: boolean;
+}
+
+/** Each of a deck's `count` copies of a card, the alternative art first, then the finest finishes; null when lacking. */
+export function deckCopies(copies: OwnedCopies | undefined, count: number): DeckCopy[] {
+  const out: DeckCopy[] = [];
+  for (let i = FINISHES.length - 1; i >= 0; i--) {
+    for (let k = 0; k < (copies?.[ALT_KEYS[i]] ?? 0) && out.length < count; k++) out.push({ finish: FINISHES[i], alt: true });
+  }
+  for (const finish of deckCopyFinishes(copies, count - out.length)) out.push({ finish, alt: false });
+  return out;
 }
 
 /** Copies a deck needs that the collection lacks, in all (each printing counts by itself). */

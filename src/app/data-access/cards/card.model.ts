@@ -59,6 +59,11 @@ export interface CardMeta {
   requirement?: string | null;
   rarity?: string | null;
   colors?: string[] | null;
+  /**
+   * URL of the card's alternative art, a very rare version of it a pack may give (in any finish). Only a picture of
+   * the same card: it has no image record of its own, so no list or search shows it as another card.
+   */
+  altImage?: string | null;
 }
 
 /** Reference data, GET /api/cards/ref */

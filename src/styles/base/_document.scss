@@ -45,6 +45,16 @@ a {
   -webkit-user-drag: element;
 }
 
+// While a change is on its way the buttons ignore clicks (core/http/busy.ts): they say so, and the one pressed waits
+.is-busy :is(button, [role='button'], a[erasButton]):not([data-while-busy]) {
+  cursor: progress;
+}
+
+[data-pending] {
+  opacity: 0.6;
+  transition: opacity var(--duration-fast) var(--easing-standard);
+}
+
 // Scrollbars: thin and rounded, in the page's colors (WebKit / Chromium; Firefox gets the thin standard one)
 ::-webkit-scrollbar {
   width: 10px;

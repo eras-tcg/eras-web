@@ -1,9 +1,10 @@
 import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import localeEs from '@angular/common/locales/es';
-import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
+import { BusyState, busyInterceptor } from '@core/http/busy';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { serverInterceptor } from '@core/server/server.interceptor';
 import { routes } from './app.routes';
@@ -16,7 +17,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     // Screens change with an animation (browsers without view transitions just swap them)
     provideRouter(routes, withComponentInputBinding(), withViewTransitions({ skipInitialTransition: true, onViewTransitionCreated: onScreenTransition })),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor, busyInterceptor])),
+    // The buttons hold while a change is on its way: listening from the first click on
+    provideAppInitializer(() => void inject(BusyState)),
     { provide: LOCALE_ID, useValue: 'es' },
   ],
 };

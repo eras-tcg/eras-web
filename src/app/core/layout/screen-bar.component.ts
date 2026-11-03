@@ -24,9 +24,9 @@ import { AppToolsComponent } from './app-tools.component';
     }
   `,
   styles: `
-    // Top-aligned: a title that wraps to more lines grows downwards and moves nothing else
+    // Top-aligned, as the hub screens' top row: "back" and the quick buttons start at the same line on every
+    // screen, and a title that wraps to more lines grows downwards and moves nothing else
     :host {
-      --screen-bar-height: 3.25rem;
       display: flex;
       align-items: flex-start;
       gap: var(--space-3);
@@ -37,7 +37,6 @@ import { AppToolsComponent } from './app-tools.component';
       place-items: center;
       inline-size: 2.5rem;
       block-size: 2.5rem;
-      margin-block-start: calc((var(--screen-bar-height) - 2.5rem) / 2);
       border: var(--border-width) solid var(--color-border);
       border-radius: 50%;
       background: var(--color-surface);
@@ -60,15 +59,14 @@ import { AppToolsComponent } from './app-tools.component';
       display: flex;
       flex: 1;
       flex-wrap: wrap;
-      align-items: center;
-      min-block-size: var(--screen-bar-height);
+      // Taller page actions never push the title down: it keeps to the line of "back"
+      align-items: flex-start;
+      min-block-size: 2.5rem;
       gap: var(--space-3) var(--space-4);
       min-inline-size: 0;
     }
     .tools {
       flex-shrink: 0;
-      min-block-size: var(--screen-bar-height);
-      align-items: center;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

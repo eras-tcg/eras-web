@@ -1,8 +1,18 @@
+// The bar spans the whole width at the hub screens' own top padding (hub-screen), so "back", the title and the
+// quick buttons sit in the same place on every screen; only the content keeps the page's width, centered
 :host {
+  --page-top: max(var(--space-5), env(safe-area-inset-top));
+
   display: block;
   inline-size: 100%;
-  margin-inline: auto;
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--layout-gutter) var(--space-8);
+  padding: var(--page-top) max(var(--layout-gutter), env(safe-area-inset-right)) var(--space-8)
+    max(var(--layout-gutter), env(safe-area-inset-left));
+}
+
+@media (max-width: 63.99rem) {
+  :host {
+    --page-top: max(var(--space-4), env(safe-area-inset-top));
+  }
 }
 
 // Stays in place while the screens change (view transitions)
@@ -11,25 +21,30 @@
   view-transition-name: screen-bar;
 }
 
-:host(.width-narrow) {
+:host(.width-narrow) .content {
   max-inline-size: 36rem;
 }
-:host(.width-default) {
+:host(.width-default) .content {
   max-inline-size: var(--layout-max-width);
 }
-:host(.width-wide) {
+:host(.width-wide) .content {
   max-inline-size: 90rem;
 }
 
 .heading {
+  display: flex;
+  align-items: center;
+  // The height of "back": a one-line title sits centered beside it
+  min-block-size: 2.5rem;
   min-inline-size: 0;
-  padding-inline-start: var(--space-3);
-  border-inline-start: 4px solid var(--color-hub-accent);
 }
 
 // The game's display face, in capitals, like the hub's menu
 .title {
   margin: 0;
+  // The accent bar on the title itself, as on the hub screens: the same size, and it travels with the title
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--color-hub-accent);
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   font-weight: var(--font-weight-regular);
   line-height: 1.05;
@@ -55,6 +70,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  inline-size: 100%;
+  margin-inline: auto;
 }
 
 // fill: the page is exactly the height left below the app header (--app-header-height, set by the shell);
@@ -64,7 +81,7 @@
   flex-direction: column;
   inline-size: 100%;
   block-size: calc(100dvh - var(--app-header-height, 0px));
-  padding-block: max(var(--space-3), env(safe-area-inset-top)) var(--space-4);
+  padding-block: var(--page-top) var(--space-4);
 }
 
 :host(.fill) .bar {

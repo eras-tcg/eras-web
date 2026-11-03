@@ -3,7 +3,8 @@
   display: block;
   block-size: calc(100dvh - var(--app-header-height, 0px));
   // No padding at the top and bottom: the hands go past the edges of the table (only their upper half shows)
-  padding: 0 var(--space-3);
+  // Phones in landscape: clear of the notch (env() is 0 everywhere else)
+  padding: 0 max(var(--space-3), env(safe-area-inset-right)) 0 max(var(--space-3), env(safe-area-inset-left));
   // clip, not hidden: the hands go past the edges and focusing one of their cards must not scroll the table
   overflow: clip;
   position: relative;
@@ -16,7 +17,7 @@
 
 // In a game: room on the right for the collapsed options sidebar (expanded, it lies over the table)
 :host(.in-game) {
-  padding-inline-end: calc(var(--sidebar-closed) + var(--space-2));
+  padding-inline-end: calc(var(--sidebar-closed) + var(--space-2) + env(safe-area-inset-right));
 }
 
 // Full screen: the extra room goes to the field cards
@@ -37,7 +38,8 @@
 .sidebar {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0;
+  // Phones in landscape: clear of the notch
+  inset-inline-end: env(safe-area-inset-right);
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -338,18 +340,6 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-lg);
   font-size: var(--font-size-sm);
-}
-
-// Phones: the table cannot fit one screen; it scrolls inside the page frame
-@media (max-width: 47.99rem) {
-  :host {
-    block-size: auto;
-    overflow: visible;
-  }
-
-  .plane {
-    grid-template-rows: auto auto auto;
-  }
 }
 
 // Pop-up when the turn or the phase changes

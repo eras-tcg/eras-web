@@ -20,7 +20,7 @@
   >
     <!-- Sideways, like a physical pile: the first life (nearest the gem marker) lies on top of the next one; the
          edge of each covered card shows its right side, where its strength is printed -->
-    <div class="life-stack" [style.--lives]="p.lifeStack.length" [attr.draggable]="opponent() || !game.editorMode() ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
+    <div class="life-stack" [style.--lives]="p.lifeStack.length" [attr.draggable]="opponent() || !game.editorMode() || touchOnly ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
       @for (life of p.lifeStack; track life.instanceId; let i = $index) {
         <div class="life" [style.z-index]="p.lifeStack.length - i">
           <eras-game-card [imageUrl]="life.imageUrl" [foil]="life.finish ?? null" [name]="life.cardName" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
@@ -73,8 +73,8 @@
       }
     </div>
   }
-  @if (p.field.length === 0 && opponent()) {
-    <span class="hint">Campo del rival</span>
+  @if (p.field.length === 0 && (opponent() || touchOnly)) {
+    <span class="hint">{{ opponent() ? 'Campo del rival' : 'Toca una carta de tu mano para jugarla' }}</span>
   }
   @if (nearby() && !opponent()) {
     <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>
@@ -142,7 +142,7 @@
     [dropActive]="over() === 'deck'"
     [targeted]="isTargeted('deck')"
     [selectable]="targeting()"
-    [cdkContextMenuTriggerFor]="opponent() ? null : deckMenu"
+    [cdkContextMenuTriggerFor]="opponent() || !game.editorMode() ? null : deckMenu"
     (dragover)="dragOver($event, 'deck')"
     (dragleave)="dragLeave()"
     (drop)="drop($event, 'deck')"
@@ -156,7 +156,11 @@
   </eras-game-zone>
   <ng-template #deckMenu>
     <eras-menu>
-      <!-- Right click; drawing is a double click on the deck. Looking at it (and sending its cards anywhere) is here -->
+      <!-- Right click (a long press on a touch screen); drawing is also a double click on the deck. Looking at it
+           (and sending its cards anywhere) is here -->
+      @if (game.editorMode()) {
+        <button erasMenuItem [disabled]="!p.deck.length || lookOnly()" (triggered)="game.drawCard()">Robar</button>
+      }
       <button erasMenuItem [disabled]="!p.deck.length || !game.editorMode()" (triggered)="dialogs.zone('deck', false)">Ver el mazo</button>
       <hr />
       <button erasMenuItem (triggered)="confirmThen('¿Barajar el mazo?', game.shuffleDeck.bind(game))">Barajar</button>

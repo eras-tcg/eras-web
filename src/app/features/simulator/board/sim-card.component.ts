@@ -14,10 +14,17 @@ import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
+import { BoardAnimations } from './board-animations';
+import { isTouchOnly } from './board-touch';
+import { DOCUMENT } from '@angular/common';
+
+/** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
+const TAP_MS = 300;
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
  * click shows details (field) or flips it, right click opens the manual actions, own cards can be dragged.
+ * On a touch screen: a tap shows the actions, a long press opens the manual ones, and nothing is dragged.
  */
 @Component({
   selector: 'eras-sim-card',
@@ -72,8 +79,8 @@ export class SimCardComponent {
     const s = this.slot();
     if (!this.game.showInfo() || this.zone() !== 'field' || this.hidden()) return null;
     const type = s.cardType === 'creature' || s.cardType === 'utility' || s.cardType === 'structure' ? s.cardType : null;
-    const level = s.level == null ? null : s.level + (s.continuousLevel ?? 0);
-    return { cost: s.cost ?? null, type, classes: s.classes ?? [], level };
+    // The server's level is already the one now (printed plus continuous levels)
+    return { cost: s.cost ?? null, type, classes: s.classes ?? [], level: s.level ?? null };
   });
   private readonly shownAnyway = computed(() => this.game.seeAll() || knownToOwner(this.slot(), this.zone(), this.opponent()));
   private readonly effectsHelper = inject(BoardEffects);
@@ -86,7 +93,11 @@ export class SimCardComponent {
   protected readonly chainLinks = computed(() => chainLinksOf(this.game.state()?.chain, [this.slot()]));
   /** What this card can do now by the rules (the right-click menu keeps the manual actions). */
   /** Cards of the hand can be dropped to play them by the rules; anything else is moved only in editor mode. */
-  protected readonly canDrag = computed(() => !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()));
+  /** A touch screen: a long press is the menu (on iPhone it would start a drag instead); taps play and attack. */
+  private readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
+  protected readonly canDrag = computed(
+    () => !this.touchOnly && !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()),
+  );
   /** One of your creatures that can attack now: dragged onto a target, it attacks. */
   protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
   /** An enemy creature that the creature being dragged to attack can attack: it lights up as a target. */
@@ -94,10 +105,19 @@ export class SimCardComponent {
     const dragging = this.drag.dragging();
     if (!dragging?.attack || !this.opponent() || this.zone() !== 'field') return false;
     const attacker = this.game.myState()?.field.find((c) => c.instanceId === dragging.instanceId);
-    return !!attacker && attackableCreatures(attacker, [this.slot()]).length > 0;
+    return !!attacker && attackableCreatures(this.game.rules(), attacker, [this.slot()]).length > 0;
   });
+  /**
+   * Its role in the combat as shown: an attacker exhausted to attack (or by the cost of the effect that makes it attack)
+   * turns sideways first, then it is marked as attacking.
+   */
+  protected readonly combatShown = signal<'attacker' | 'blocker' | 'target' | null>(null);
+  private readonly animations = inject(BoardAnimations, { optional: true });
+  private wasTapped: boolean | null = null;
+  private tapEndsAt = 0;
+  private roleTimer: ReturnType<typeof setTimeout> | null = null;
   /** Its role in the combat in progress, if any. */
-  protected readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
+  private readonly combatRole = computed<'attacker' | 'blocker' | 'target' | null>(() => {
     const c = this.game.state()?.combat;
     const id = this.slot().instanceId;
     if (!c || this.zone() !== 'field') return null;
@@ -109,7 +129,7 @@ export class SimCardComponent {
   /** A choice is lowered to look at the table: the card can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
   protected readonly actions = computed<LegalAction[]>(() =>
-    this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot(), this.zone()),
+    this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
   );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));
@@ -129,6 +149,25 @@ export class SimCardComponent {
     effect(() => {
       if (!this.selected()) this.effectsOpen.set(false);
     });
+    effect((onCleanup) => {
+      const tapped = this.slot().tapped && this.zone() === 'field';
+      const role = this.combatRole();
+      const animate = !!this.animations && !this.animations.off();
+      // Exhausted just now: what comes with it (its attack, the effect it paid for) waits until it has turned
+      if (animate && this.wasTapped === false && tapped) {
+        this.tapEndsAt = Date.now() + TAP_MS;
+        this.animations!.hold(TAP_MS);
+      }
+      this.wasTapped = tapped;
+      if (this.roleTimer) clearTimeout(this.roleTimer);
+      const wait = this.tapEndsAt - Date.now();
+      if (role && animate && wait > 0) {
+        this.roleTimer = setTimeout(() => this.combatShown.set(role), wait);
+      } else {
+        this.combatShown.set(role);
+      }
+      onCleanup(() => this.roleTimer && clearTimeout(this.roleTimer));
+    });
   }
 
   protected onClick(event?: Event): void {
@@ -144,7 +183,8 @@ export class SimCardComponent {
   protected onDoubleClick(): void {
     this.game.selectedId.set(null);
     if (this.zone() === 'field') this.dialogs.cardInfo(this.slot(), this.zone(), this.opponent());
-    else if (!this.opponent()) this.game.flipCard(this.slot().instanceId, this.zone());
+    // Flipping by hand: a test room or a site editor only (the server refuses it to anyone else online)
+    else if (!this.opponent() && this.game.editorMode()) this.game.flipCard(this.slot().instanceId, this.zone());
   }
 
   protected async run(action: LegalAction, event: Event): Promise<void> {
@@ -155,7 +195,7 @@ export class SimCardComponent {
       case 'attack': {
         const opponent = this.game.opponentState();
         // Enemies of the Línea frontal: exhausted ones, or active ones it can face (Enfrentar)
-        const creatures = attackableCreatures(s, opponent?.field ?? []);
+        const creatures = attackableCreatures(this.game.rules(), s, opponent?.field ?? []);
         const target = await this.dialogs.attackTarget({ attacker: s, opponentName: opponent?.username ?? 'Rival', creatures });
         if (target !== undefined) this.game.attack(s.instanceId, target);
         return;

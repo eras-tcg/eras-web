@@ -31,6 +31,7 @@ import { PreRoomComponent } from './pre-room.component';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { persistedNumber } from '@core/storage/persisted-number';
 import { SidebarItemComponent } from './sidebar-item.component';
+import { touchContextMenu } from './board-touch';
 
 /** How long the left button must be held anywhere to look through the panels. */
 const LONG_PRESS_MS = 350;
@@ -46,14 +47,15 @@ const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: '
   imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, ChainLinkRevealComponent, BoardFxComponent, MatchBannerComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent, SidebarItemComponent],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
   templateUrl: './board.page.html',
-  styleUrl: './board.page.scss',
+  // The phone layouts (upright: turn it; landscape: compact) apart, within the size budget of a stylesheet
+  styleUrls: ['./board.page.scss', './board.page.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // A click elsewhere or Esc hides the selected card's actions (cards stop their own clicks)
   host: {
     '(document:keydown.escape)': 'game.pendingTargetSource.set(null); game.selectedId.set(null)',
     '(click)': 'game.selectedId.set(null)',
     '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
-    '[class.fullscreen]': 'fullscreen()',
+    '[class.fullscreen]': 'fullView()',
     '[class.in-game]': 'inGame()',
   },
 })
@@ -111,6 +113,16 @@ export class BoardPage {
   protected readonly noticesOff = persistedFlag('eras-sim-notices-off');
   /** Browser full screen: the field cards get the extra room. */
   protected readonly fullscreen = signal(false);
+  /** Opened from the home screen (installed): no browser bars already, so it counts as full screen. */
+  protected readonly installed =
+    !!this.document.defaultView?.matchMedia?.('(display-mode: fullscreen), (display-mode: standalone)').matches ||
+    (this.document.defaultView?.navigator as { standalone?: boolean } | undefined)?.standalone === true;
+  /** iPhone's Safari has no full screen for pages: there the button explains how to install it instead. */
+  protected readonly canFullscreen = this.document.fullscreenEnabled;
+  protected readonly fullView = computed(() => this.fullscreen() || this.installed);
+  /** A phone in landscape (the compact table of the styles): the site's navigation bar hides by itself. */
+  private readonly shortQuery = this.document.defaultView?.matchMedia?.('(orientation: landscape) and (max-height: 30rem)');
+  protected readonly shortScreen = signal(!!this.shortQuery?.matches);
   /** Test room: the other side, to look at the table from it. */
   protected readonly otherSide = computed(() => this.game.sides().find((p) => p.userId !== this.game.myState()?.userId) ?? null);
   private leaving = false;
@@ -181,6 +193,9 @@ export class BoardPage {
       this.document.body.classList.toggle('eras-acting-me', !!acting && acting === me);
       this.document.body.classList.toggle('eras-acting-rival', !!acting && acting !== me);
     });
+    // In a game: a phone held upright hides the choices too (they are in the top layer), behind "Gira el teléfono"
+    effect(() => this.document.body.classList.toggle('eras-in-game', this.inGame()));
+    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-in-game'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
@@ -189,6 +204,17 @@ export class BoardPage {
     // While something plays, the next updates wait: each one is seen after the animation before it
     effect(() => this.game.holdUpdates.set(!this.animations.idle()));
     inject(DestroyRef).onDestroy(() => this.game.holdUpdates.set(false));
+    // Phones: the table stays in landscape while full screen or installed (only Android allows it; elsewhere it
+    // is refused and nothing changes). Back to free rotation outside the table.
+    const orientation = this.document.defaultView?.screen?.orientation as (ScreenOrientation & { lock?: (o: string) => Promise<void> }) | undefined;
+    effect(() => {
+      if (this.fullView()) orientation?.lock?.('landscape').catch(() => undefined);
+      else orientation?.unlock?.();
+    });
+    inject(DestroyRef).onDestroy(() => orientation?.unlock?.());
+    const onShort = (e: MediaQueryListEvent) => this.shortScreen.set(e.matches);
+    this.shortQuery?.addEventListener?.('change', onShort);
+    inject(DestroyRef).onDestroy(() => this.shortQuery?.removeEventListener?.('change', onShort));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 
@@ -310,6 +336,11 @@ export class BoardPage {
       win?.removeEventListener('dragend', dragged, true);
       win?.removeEventListener('drop', dragged);
     });
+    // Touch screens: a long press on a card or pile opens its menu (with a panel to look through, it looks instead)
+    if (win) {
+      const stopTouchMenu = touchContextMenu(win, () => !this.canSeeThrough() && !this.lookOnly());
+      inject(DestroyRef).onDestroy(stopTouchMenu);
+    }
     // Nothing left to look through: back to normal
     effect(() => {
       if (!this.canSeeThrough()) untracked(() => this.seeThrough.set(false));
@@ -330,6 +361,16 @@ export class BoardPage {
   }
 
   protected async toggleFullscreen(): Promise<void> {
+    if (!this.canFullscreen) {
+      await this.modal.confirm({
+        title: 'Pantalla completa',
+        message:
+          'Este navegador no permite pantalla completa en una página. Para jugar sin las barras del navegador, toca ' +
+          'Compartir → "Agregar a pantalla de inicio" y abre ERAS desde ese ícono.',
+        confirmLabel: 'Entendido',
+      });
+      return;
+    }
     try {
       if (this.document.fullscreenElement) await this.document.exitFullscreen();
       else await this.document.documentElement.requestFullscreen();

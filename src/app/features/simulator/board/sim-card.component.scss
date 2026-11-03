@@ -17,6 +17,11 @@
 }
 :host { position: relative; display: inline-block; }
 eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
+/* Exhausting a card of the field is seen: it turns sideways in TAP_MS (sim-card.component.ts) before its attack is marked */
+:host eras-game-card { transition-duration: 300ms; }
+@media (prefers-reduced-motion: reduce) {
+  :host eras-game-card { transition-duration: 0ms; }
+}
 :host(.tapped-field) {
   /* An exhausted card is turned sideways: it takes the card's height in width, so it does not overlap its neighbors */
   display: inline-flex;

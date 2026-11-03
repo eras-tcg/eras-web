@@ -23,7 +23,7 @@ function wsUrl(): string {
 }
 
 /**
- * Live game room over STOMP (/topic/room/{id} in, /app/room/{id}/action out).
+ * Live game room over STOMP (/user/queue/room/{id} in: this player's own view; /app/room/{id}/action out).
  * Every broadcast carries the full state; this store keeps it plus the transient effects
  * (revealed cards, targeting glow, recent log lines). Same protocol as the legacy app.
  */
@@ -184,7 +184,7 @@ export class GameStore {
         onConnect: () => {
           clearTimeout(timeout);
           this.connected.set(true);
-          this.client?.subscribe(`/topic/room/${roomId}`, (msg) => this.onMessage(msg.body));
+          this.client?.subscribe(`/user/queue/room/${roomId}`, (msg) => this.onMessage(msg.body));
           // The socket dropped and came back by itself: be in the room again and get its current state
           if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
           reconnecting = true;

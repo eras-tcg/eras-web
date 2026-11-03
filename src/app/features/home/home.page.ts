@@ -1,8 +1,10 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
+import { ProgressionStore } from '@core/missions/progression.store';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { HomeStore } from '@data/home/home.store';
@@ -13,9 +15,11 @@ import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dia
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubCarouselComponent } from './hub-carousel.component';
 import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
-import { hubSlides, nextStep } from './hub-rules';
+import { NextStep, hubSlides, nextStep, welcomeNextStep } from './hub-rules';
 import { HubScreenComponent } from './hub-screen.component';
+import { MissionGuideFlow } from './mission-guide-flow';
 import { NEWS } from './news';
+import { WelcomeFlow } from './welcome-flow';
 
 /** The site's main menu, in one screen like a game's. */
 const MAIN_MENU: HubMenuItem[] = [
@@ -32,7 +36,7 @@ const MAIN_MENU: HubMenuItem[] = [
  */
 @Component({
   selector: 'eras-home-page',
-  imports: [RouterLink, AlertComponent, ButtonComponent, IconComponent, HubCarouselComponent, HubMenuComponent, HubScreenComponent],
+  imports: [NgTemplateOutlet, RouterLink, AlertComponent, ButtonComponent, IconComponent, HubCarouselComponent, HubMenuComponent, HubScreenComponent],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,18 +47,33 @@ export class HomePage {
   private readonly auth = inject(AuthService);
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
+  private readonly progression = inject(ProgressionStore);
+  private readonly welcome = inject(WelcomeFlow);
+  private readonly guide = inject(MissionGuideFlow);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
 
   protected readonly menu = MAIN_MENU;
   protected readonly myDecks = signal<number | null>(null);
-  protected readonly step = computed(() => nextStep(this.myDecks(), Math.floor(Date.now() / 86_400_000)));
+  /** The "Bienvenida" step to do now while the chain is not complete; afterwards, a suggestion. */
+  protected readonly step = computed(
+    () => welcomeNextStep(this.progression.board()?.welcome ?? null) ?? nextStep(this.myDecks(), Math.floor(Date.now() / 86_400_000)),
+  );
+  /** "Progreso" missions still pending (the welcome chain, or a step or milestone to claim): the next step glows. */
+  protected readonly progressPending = computed(
+    () => welcomeNextStep(this.progression.board()?.welcome ?? null) !== null || this.progression.waiting() > 0,
+  );
   protected readonly slides = computed(() =>
     hubSlides(this.home.content().edition, NEWS, this.editions.editions()),
   );
   protected readonly saveError = signal<string | null>(null);
 
   constructor() {
+    // A new player is greeted (the first "Bienvenida" step), once per visit
+    effect(() => {
+      const board = this.progression.board();
+      untracked(() => this.welcome.greetIfNew(board));
+    });
     void this.home.load();
     void this.editions.load(); // artwork of the news
     const user = this.auth.user();
@@ -103,5 +122,11 @@ export class HomePage {
     } catch (e) {
       this.saveError.set(e instanceof Error ? e.message : 'No se pudo guardar la portada');
     }
+  }
+
+  /** A "Bienvenida" step told as a dialog (the greeting, the structure deck picker) opens it instead of the route. */
+  protected openStep(step: NextStep): void {
+    if (step.guide) void this.guide.open(step.guide, step.route);
+    else void (step.flow === 'welcome' ? this.welcome.start() : this.welcome.pickStructure());
   }
 }

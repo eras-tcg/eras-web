@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Edition } from '@data/editions/edition.model';
-import { hubSlides, nextStep, pickBackground } from './hub-rules';
+import { hubSlides, nextStep, pickBackground, welcomeNextStep } from './hub-rules';
 import { NewsItem } from './news';
 
 const edition = (editionId: string, editionImage: string | null = `${editionId}.webp`): Edition => ({ editionId, editionImage });
@@ -58,5 +58,24 @@ describe('nextStep', () => {
     expect(routes[0]).toBe(routes[4]);
     expect(new Set(routes.slice(0, 4)).size).toBe(4);
     expect(nextStep(2, -1)).not.toBeNull();
+  });
+});
+
+describe('welcomeNextStep', () => {
+  const step = (id: string, progress: number, claimed = false) => ({ id, progress, target: 1, gems: 100, claimed, locked: false });
+
+  it('goes where the current step is done, or to the missions once it can be claimed', () => {
+    expect(welcomeNextStep([step('welcome', 1, true), step('deck', 0)])).toEqual(expect.objectContaining({ route: '/deck-builder', action: 'Ir' }));
+    expect(welcomeNextStep([step('welcome', 1, true), step('deck', 1)])).toEqual(expect.objectContaining({ route: '/missions', action: 'Reclamar' }));
+  });
+
+  it('opens the greeting and the structure deck picker as dialogs', () => {
+    expect(welcomeNextStep([step('welcome', 1)])?.flow).toBe('welcome');
+    expect(welcomeNextStep([step('welcome', 1, true), { ...step('structure', 0), gems: 0 }])?.flow).toBe('structure');
+  });
+
+  it('suggests nothing once the chain is complete or while unknown', () => {
+    expect(welcomeNextStep([step('welcome', 1, true)])).toBeNull();
+    expect(welcomeNextStep(null)).toBeNull();
   });
 });

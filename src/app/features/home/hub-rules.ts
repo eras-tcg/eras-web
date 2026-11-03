@@ -1,5 +1,8 @@
 import type { IconName } from '@ui/primitives/icon/icon.component';
+import { WelcomeStep } from '@core/missions/progression.model';
+import { stepClaimable } from '@core/missions/progression.store';
 import { Edition } from '@data/editions/edition.model';
+import { currentStep, stepText } from '@data/missions/progression-rules';
 import { NewsItem } from './news';
 
 /**
@@ -32,6 +35,10 @@ export interface NextStep {
   action: string;
   route: string;
   icon: IconName;
+  /** Opened as a dialog instead of following the route: the greeting or the structure deck picker. */
+  flow?: 'welcome' | 'structure';
+  /** A "Bienvenida" step whose section opens with its guide (MissionGuideFlow). */
+  guide?: string;
 }
 
 const FIRST_DECK: NextStep = {
@@ -82,4 +89,19 @@ export function nextStep(myDecks: number | null, day: number): NextStep | null {
   if (myDecks === null) return null;
   if (myDecks === 0) return FIRST_DECK;
   return SUGGESTIONS[((day % SUGGESTIONS.length) + SUGGESTIONS.length) % SUGGESTIONS.length];
+}
+
+/**
+ * The step of the "Bienvenida" missions to do now, while the chain is not complete (null once it is, or while
+ * unknown): to the missions to claim it when it is done, else to where it is done.
+ */
+export function welcomeNextStep(steps: readonly WelcomeStep[] | null): NextStep | null {
+  const step = steps ? currentStep(steps) : null;
+  if (!step) return null;
+  const text = stepText(step.id);
+  const claim = stepClaimable(step);
+  const next: NextStep = { title: text.title, text: text.hint, action: claim ? 'Reclamar' : 'Ir', route: claim ? '/missions' : text.route, icon: 'target' };
+  if (step.id === 'welcome') return { ...next, action: 'Abrir', flow: 'welcome' };
+  if (step.id === 'structure' && step.gems === 0) return { ...next, action: 'Elegir', flow: 'structure' };
+  return claim ? next : { ...next, guide: step.id };
 }

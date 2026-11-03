@@ -1,184 +1,245 @@
-<eras-page title="Cómo jugar" width="wide">
-  <eras-tabs label="Secciones de la guía" [tabs]="sections" [selected]="section()" (selectedChange)="section.set($any($event))" />
-
-  @switch (section()) {
-    @case ('basics') {
-      <eras-prose>
-        <h2>ERAS en un minuto</h2>
-        <p>ERAS es un juego de cartas para dos jugadores. Cada uno arma un mazo con criaturas, utilidades y estructuras, y se turnan para jugarlas.</p>
-        <p><strong>Para ganar</strong>, deja a tu rival sin vidas: los ataques que no bloquea se las van quitando. También gana quien deja al otro sin cartas para robar.</p>
-        <p>Lo esencial de cada turno:</p>
-        <ol>
-          <li>Recibes <strong>gemas</strong> (más cada turno) y <strong>robas</strong> una carta.</li>
-          <li>Usas tus gemas para <strong>jugar cartas</strong>: invocar criaturas, usar utilidades, poner estructuras.</li>
-          <li>Atacas con tus criaturas de la <strong>línea frontal</strong> para quitarle vidas al rival.</li>
-          <li>Terminas el turno y le toca a tu rival.</li>
-        </ol>
-        <p>Las otras secciones explican cada parte con un poco más de detalle. Si prefieres aprender jugando, entra al <strong>Simulador</strong>: te muestra lo que puedes hacer en cada momento y aplica las reglas por ti.</p>
-        <img src="/images/ruling/card-iniciales.png" width="922" height="588" alt="Ejemplo de cartas al comienzo de una partida" loading="lazy" />
-      </eras-prose>
-    }
-
-    @case ('setup') {
-      <eras-prose>
-        <h2>Tu mazo</h2>
-        <ul>
-          <li>Tiene <strong>50 cartas</strong>, con un máximo de <strong>4 copias</strong> de cada una.</li>
-          <li>Incluye al menos un <strong>Iniciador</strong>: la criatura con la que empiezas. Su color o clase marca qué cartas puedes usar (las blancas sirven en cualquier mazo).</li>
-          <li>Puedes armarlo en el <strong>Constructor</strong> o empezar con una de las estructuras iniciales (ST).</li>
-        </ul>
-        <h2>Empezar una partida</h2>
-        <ol>
-          <li>Se decide al azar quién empieza.</li>
-          <li>Cada jugador aparta su Iniciador, baraja y <strong>roba 5 cartas</strong>.</li>
-          <li>Si no te gusta tu mano, puedes cambiar las cartas que quieras una vez (<strong>mulligan</strong>).</li>
-          <li>Agregas el Iniciador a tu mano: empiezas con <strong>6 cartas</strong>.</li>
-          <li>Pones las 6 cartas de arriba de tu mazo bocabajo: son tus <strong>vidas</strong>.</li>
-        </ol>
-      </eras-prose>
-    }
-
-    @case ('board') {
-      <eras-grid minColumn="22rem" [gap]="5">
-        <eras-playmat [zones]="zones" />
-        <eras-prose>
-          <h2>La mesa</h2>
-          <p>Cada jugador tiene su lado de la mesa con estas zonas:</p>
-          <ol>
-            <li><strong>Vidas:</strong> 6 cartas bocabajo. Si se acaban, pierdes.</li>
-            <li><strong>Línea frontal:</strong> donde tus criaturas atacan y bloquean. También es donde el rival puede alcanzarlas.</li>
-            <li><strong>Retaguardia:</strong> un lugar seguro: aquí las criaturas no atacan ni bloquean, y no pueden ser atacadas. Aquí se juegan también las estructuras.</li>
-            <li><strong>Mazo:</strong> de donde robas.</li>
-            <li><strong>Tributos:</strong> las cartas que entregas como pago.</li>
-            <li><strong>Descarte:</strong> las utilidades ya usadas y las criaturas destruidas.</li>
-            <li><strong>Gemas:</strong> tu contador de gemas.</li>
-          </ol>
-        </eras-prose>
-      </eras-grid>
-    }
-    @case ('turn') {
-      <eras-prose>
-        <h2>Tu turno</h2>
-        <h3>1. Inicio</h3>
-        <p>Tu contador de gemas sube 1 (hasta 5), recibes esas gemas, <strong>robas 1 carta</strong> y tus cartas agotadas vuelven a estar activas. Puedes pasar criaturas de la retaguardia a la línea frontal.</p>
-        <h3>2. Fase principal</h3>
-        <p>Haz lo que quieras, en el orden que quieras, mientras puedas pagarlo:</p>
-        <ul>
-          <li><strong>Invocar criaturas</strong> pagando su coste.</li>
-          <li><strong>Jugar utilidades</strong>: hacen su efecto y van al descarte.</li>
-          <li><strong>Jugar una estructura</strong> por turno: se queda en la mesa dándote su efecto.</li>
-          <li><strong>Atacar</strong> con tus criaturas de la línea frontal, de una en una.</li>
-        </ul>
-        <h3>3. Final</h3>
-        <p>Pierdes las gemas que no usaste, puedes volver a subir criaturas a la línea frontal y le pasas el turno a tu rival.</p>
-      </eras-prose>
-    }
-
-    @case ('resources') {
-      <eras-grid minColumn="22rem" [gap]="5">
-        <eras-prose>
-          <h2>Las gemas</h2>
-          <p>Las <strong>gemas</strong> pagan casi todo: jugar cartas, invocar criaturas y algunos efectos. El número de la esquina de cada carta es lo que cuesta.</p>
-          <h3>Cada turno tienes más</h3>
-          <p>Tu contador empieza en 0 y sube <strong>1 por turno</strong> hasta llegar a <strong>5</strong>. Al empezar tu turno recibes tantas gemas como marque. Las que no gastes se pierden al terminar el turno.</p>
-          <h3>Puedes pedir prestado</h3>
-          <p>Puedes gastar hasta <code>tus gemas + las del rival</code>. Si gastas más de las tuyas quedas en negativo: <strong>ese turno no puedes atacar</strong> y la diferencia se la regalas a tu rival en su próximo turno.</p>
-          <p><em>Ejemplo:</em> tienes 3 gemas y tu rival 3. Juegas una carta de 5: quedas en −2, no atacas y tu rival empieza su turno con 2 gemas extra.</p>
-          <p>Prueba el simulador de al lado para verlo turno a turno.</p>
-        </eras-prose>
-
-        <eras-card>
-          <eras-stack [gap]="4">
-            <strong>Simulador de recursos</strong>
-            <span>A partir de tu turno 3 (primer turno del rival).</span>
-            <eras-grid minColumn="8rem" [gap]="2">
-              <eras-card padding="sm"><eras-stack [gap]="1"><span>Tus gemas</span><strong>{{ gems().playerGems }}</strong><span>Contador {{ gems().playerCounter }}</span></eras-stack></eras-card>
-              <eras-card padding="sm"><eras-stack [gap]="1"><span>Gemas del rival</span><strong>{{ gems().rivalGems }}</strong><span>Contador {{ gems().rivalCounter }}</span></eras-stack></eras-card>
-            </eras-grid>
-            <eras-gem-track [slots]="track()" />
-            <eras-stack direction="row" [gap]="2" align="end" wrap>
-              <eras-form-field [label]="'Gemas a gastar (máx. ' + limit() + ')'">
-                <input type="number" min="0" [max]="limit()" [value]="amount()" (input)="amount.set($any($event.target).valueAsNumber || 0)" />
-              </eras-form-field>
-              <button erasButton type="button" [disabled]="amount() <= 0" (click)="doSpend()">Gastar gemas</button>
-            </eras-stack>
-            @if (spendError(); as message) {
-              <eras-alert tone="danger">{{ message }}</eras-alert>
-            }
-            <span>Gastado este turno: <strong>{{ gems().spent }}</strong> · te quedan <strong>{{ left() }}</strong></span>
-            @if (cannotAttack()) {
-              <eras-alert tone="danger">Gastaste más de lo que tienes: este turno no puedes atacar.</eras-alert>
-            }
-            @if (turnMessage(); as message) {
-              <eras-alert>{{ message }}</eras-alert>
-            }
-            <eras-stack direction="row" [gap]="2">
-              <button erasButton variant="secondary" type="button" (click)="doNextTurn()">Simular turno</button>
-              <button erasButton variant="ghost" type="button" (click)="reset()">Reiniciar</button>
-            </eras-stack>
-          </eras-stack>
-        </eras-card>
-      </eras-grid>
-    }
-
-    @case ('combat') {
-      <eras-prose>
-        <h2>Atacar</h2>
-        <p>Una criatura activa de tu <strong>línea frontal</strong> puede atacar. Al atacar se <strong>agota</strong> (se gira) y no puede volver a atacar ese turno.</p>
-        <h3>Si tu rival bloquea</h3>
-        <p>Tu rival puede interponer una de sus criaturas activas de la línea frontal. Las dos <strong>comparan fuerza</strong>: la más débil es destruida (si empatan, las dos).</p>
-        <h3>Si no bloquea</h3>
-        <p>Tu rival da vuelta su vida de arriba:</p>
-        <ul>
-          <li><strong>Una criatura más débil o igual</strong> que tu atacante: la pierde (va a sus tributos).</li>
-          <li><strong>Una criatura más fuerte:</strong> se salva; se la lleva a la mano o la deja al fondo de sus vidas como refuerzo.</li>
-          <li><strong>Una utilidad o estructura:</strong> la juega gratis o se la lleva a la mano.</li>
-        </ul>
-        <p>También puedes atacar a una criatura enemiga que esté <strong>agotada</strong>: se enfrentan como si hubiera bloqueado.</p>
-      </eras-prose>
-    }
-
-    @case ('cards') {
-      <eras-prose>
-        <h2>Cartas y efectos</h2>
-        <h3>Tres tipos de carta</h3>
-        <ul>
-          <li><strong>Criaturas:</strong> atacan, bloquean y tienen <strong>fuerza</strong> y <strong>nivel</strong>.</li>
-          <li><strong>Utilidades:</strong> un efecto de una vez, y al descarte.</li>
-          <li><strong>Estructuras:</strong> se quedan en la mesa con un efecto que dura.</li>
-        </ul>
-        <h3>Invocaciones especiales</h3>
-        <p>Algunas criaturas poderosas no se invocan solo con gemas: piden algo más, como usar otras criaturas tuyas. La carta te dice cómo (Ritual, Evolución, Ascenso o Materialización). Cada vez que invocas así, <strong>robas 1 carta</strong>.</p>
-        <h3>Leer un efecto</h3>
-        <ul>
-          <li>El texto empieza diciendo <strong>cuándo</strong> funciona (por ejemplo «En Invocación» o «Al Atacar»).</li>
-          <li>Si dice <strong>«puedes»</strong>, eliges si usarlo; si no, ocurre siempre.</li>
-          <li>Lo que va antes del <strong>«;»</strong> es lo que pagas; lo que va después es lo que pasa.</li>
-        </ul>
-        <h3>Cuando pasan varias cosas a la vez</h3>
-        <p>Si varios efectos ocurren juntos se apilan en una <strong>cadena</strong> y se resuelven del último al primero. No te preocupes por el orden exacto: el simulador lo arma por ti y te pregunta cuando tienes que elegir.</p>
-        <p>Para las reglas completas y los casos difíciles, consulta el reglamento oficial.</p>
-      </eras-prose>
-    }
-
-    @case ('keywords') {
-      <eras-prose>
-        <h2>Habilidades</h2>
-        <p>Algunas cartas tienen una <strong>habilidad</strong>: una palabra que resume un efecto que se repite en muchas cartas. No necesitas aprenderlas todas: consulta esta lista cuando aparezca una. El número cambia según la carta (por ejemplo, Letalidad 2).</p>
-        @if (keywords().length) {
-          <dl class="keywords">
-            @for (k of keywords(); track k.name) {
-              <dt>{{ k.name }}</dt>
-              <dd>{{ k.text }}</dd>
-            }
-          </dl>
-        } @else if (cardsLoading()) {
-          <p>Cargando habilidades…</p>
-        } @else {
-          <p>No se pudo cargar la lista de habilidades.</p>
+<eras-page title="Cómo jugar" width="wide" fill>
+  <div class="guide">
+    <nav class="toc" aria-label="Capítulos de la guía">
+      <ol>
+        @for (c of chapters; track c.id; let i = $index) {
+          <li>
+            <button type="button" [class.on]="c.id === chapter().id" [attr.aria-current]="c.id === chapter().id ? 'step' : null" (click)="open(c.id)">
+              <span class="num">{{ i + 1 }}</span>
+              <span class="toc-title">{{ c.title }}</span>
+            </button>
+          </li>
         }
-      </eras-prose>
-    }
+      </ol>
+      <a class="practice-link" routerLink="/play"><eras-icon name="gamepad" /> Practicar en el simulador</a>
+    </nav>
 
-  }
+    <article class="chapter" #body>
+      <header class="chapter-head">
+        <span class="badge"><eras-icon [name]="chapter().icon" /></span>
+        <div>
+          <p class="kicker">Capítulo {{ index() + 1 }} de {{ chapters.length }}</p>
+          <h2>{{ chapter().title }}</h2>
+          <p class="lead">{{ chapter().lead }}</p>
+        </div>
+      </header>
+
+      @switch (chapter().id) {
+        @case ('objetivo') {
+          <p>ERAS es un juego de cartas para dos jugadores. Cada uno juega con su propio mazo, por turnos.</p>
+          <div class="cards2">
+            <div class="info"><eras-icon name="heart" /><strong>Sin vidas</strong><span>Ganas si las vidas de tu rival llegan a 0.</span></div>
+            <div class="info"><eras-icon name="draw" /><strong>Sin cartas</strong><span>Ganas si tu rival no puede robar al inicio de su turno porque su mazo está vacío.</span></div>
+          </div>
+          <h3>Un turno en pocas palabras</h3>
+          <ol class="steps">
+            <li><strong>Inicio.</strong> Tu Marcador sube 1 (hasta 5), ganas esas gemas, robas 1 carta y tus cartas agotadas se reactivan.</li>
+            <li><strong>Fase principal.</strong> Juegas cartas, invocas criaturas, activas efectos y atacas con tus criaturas de la Línea frontal, en el orden que quieras.</li>
+            <li><strong>Final.</strong> Pierdes las gemas que no gastaste, puedes avanzar criaturas a la Línea frontal y el turno pasa a tu rival.</li>
+          </ol>
+          <p class="callout tip"><eras-icon name="gamepad" /><span>¿Prefieres aprender jugando? En el <strong>simulador</strong> el juego aplica las reglas por ti y te muestra qué puedes hacer en cada momento.</span></p>
+        }
+
+        @case ('mazo') {
+          <div class="tiles">
+            <div class="tile"><strong>50</strong><span>cartas exactas</span></div>
+            <div class="tile"><strong>4</strong><span>copias como máximo de cada carta</span></div>
+            <div class="tile"><strong>1+</strong><span>carta con la palabra clave <em>Iniciador</em></span></div>
+          </div>
+          <p>Puedes armar tu mazo en el <a routerLink="/deck-builder">constructor</a> o empezar con un <strong>structure deck</strong> (ST1 a ST4): mazos listos para jugar, cada uno con su estilo.</p>
+          <h3>Preparar la partida</h3>
+          <ol class="steps">
+            <li>Se decide <strong>al azar</strong> quién empieza.</li>
+            <li>Cada jugador separa su <strong>Iniciador</strong> y lo deja a la vista.</li>
+            <li>Baraja el resto del mazo y <strong>roba 5 cartas</strong>.</li>
+            <li><strong>Mulligan:</strong> puede enviar al fondo del mazo las cartas que quiera de esa mano y robar la misma cantidad. Luego baraja el mazo.</li>
+            <li>Añade el Iniciador a la mano: empieza con <strong>6 cartas</strong>.</li>
+            <li>Pone las <strong>6 cartas de arriba</strong> del mazo bocabajo: son sus <strong>vidas</strong>.</li>
+            <li>Deja su <strong>Marcador de gemas en 0</strong>.</li>
+          </ol>
+          <p class="callout key"><eras-icon name="sparkles" /><span><strong>Ventaja del iniciador:</strong> quien juega segundo, una sola vez en la partida, puede invocar su Iniciador pagando 1 gema menos.</span></p>
+        }
+
+        @case ('mesa') {
+          <div class="split">
+            <eras-table-diagram [active]="zone()" (picked)="zone.set($event)" />
+            <div class="zone-list">
+              @for (z of tableZones; track z.zone) {
+                <button type="button" class="zone-item" [class.on]="zone() === z.zone" (click)="zone.set(z.zone)">
+                  <span class="num">{{ z.number }}</span>
+                  <span><strong>{{ z.name }}</strong>
+                    @if (zone() === z.zone) {
+                      <span class="zone-text">{{ zoneText[z.zone] }}</span>
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+          <p class="callout key"><eras-icon name="info" /><span>La <strong>Retaguardia</strong> y la <strong>Línea frontal</strong> forman tu <strong>campo</strong>. Las cartas que estén ahí son tuyas mientras sigan en juego: tus criaturas son <em>aliados</em> y las del rival, <em>enemigos</em>.</span></p>
+        }
+
+        @case ('turno') {
+          <div class="phases">
+            <section class="phase">
+              <h3><span class="num">1</span> Inicio</h3>
+              <ol>
+                <li>Si tu Marcador está por debajo de 5, sube 1.</li>
+                <li>Ganas tantas gemas como marque tu Marcador y <strong>robas 1 carta</strong>.</li>
+                <li>Todas tus cartas agotadas se <strong>reactivan</strong>.</li>
+                <li>Puedes mover a la Línea frontal las criaturas de tu Retaguardia que quieras, todas a la vez.</li>
+                <li>Se activan los efectos de «inicio del turno».</li>
+              </ol>
+            </section>
+            <section class="phase">
+              <h3><span class="num">2</span> Principal</h3>
+              <ul>
+                <li>Jugar utilidades y estructuras pagando su coste.</li>
+                <li>Invocar criaturas (normal o especial).</li>
+                <li>Declarar ataques con tus criaturas de la Línea frontal, uno a la vez.</li>
+                <li>Activar efectos de «Turno Aliado».</li>
+              </ul>
+              <p class="small">Todo en el orden y la cantidad que quieras, mientras puedas pagarlo.</p>
+            </section>
+            <section class="phase">
+              <h3><span class="num">3</span> Final</h3>
+              <ol>
+                <li>Declaras el final del turno.</li>
+                <li>Las gemas que te sobren se pierden. Si quedaste <strong>en deuda</strong>, la deuda se mantiene y la aprovecha tu rival.</li>
+                <li>Puedes volver a mover criaturas de la Retaguardia a la Línea frontal.</li>
+                <li>Se activan los efectos de «final del turno».</li>
+              </ol>
+            </section>
+          </div>
+          <p class="callout key"><eras-icon name="alert" /><span>Una criatura invocada de forma normal entra en la <strong>Retaguardia</strong>, donde no puede atacar. Para atacar con ella, muévela a la Línea frontal al final de tu turno o al inicio del siguiente. Las invocaciones especiales pueden llevarla a la Línea frontal de inmediato.</span></p>
+          <p class="small">Ninguna fase se puede saltar, aunque no hagas nada en ella.</p>
+        }
+
+        @case ('gemas') {
+          <p>Las <strong>gemas</strong> pagan casi todo: jugar cartas, invocar criaturas y algunos efectos. El <strong>coste</strong> de una carta es el número del hexágono azul de su esquina superior izquierda.</p>
+          <div class="cards2">
+            <div class="info"><eras-icon name="target" /><strong>Marcador (0 a 5)</strong><span>Cuántas gemas generas por turno. Empieza en 0 y sube 1 al inicio de cada turno tuyo, hasta 5.</span></div>
+            <div class="info"><eras-icon name="swap" /><strong>Contador (10 · 0 · 10)</strong><span>Una recta compartida que marca las gemas de cada uno. Lo que un jugador gana, el otro lo pierde.</span></div>
+          </div>
+          <h3>Pagar más de lo que tienes</h3>
+          <ul class="checks">
+            <li>En tu turno puedes pagar aunque te pases de tus gemas, siempre que tu rival no quede con <strong>más gemas que su Marcador</strong>. Si su Marcador está en 3, puedes bajar hasta −3.</li>
+            <li>Mientras estés en <strong>negativo</strong> no puedes declarar ataques (salvo con <em>Furia</em>).</li>
+            <li>Al final del turno las gemas que te sobren se pierden, pero una <strong>deuda no se borra</strong>: tu rival empieza su turno con sus gemas más lo que le debes.</li>
+          </ul>
+          <p class="example"><strong>Ejemplo:</strong> tienes 3 gemas y el Marcador de tu rival está en 3. Juegas una carta de coste 5: quedas en −2 y no puedes atacar este turno. Tu rival sube su Marcador a 4 y empieza con 6 gemas (4 + 2).</p>
+          <eras-gem-practice />
+        }
+
+        @case ('invocar') {
+          <p>Las criaturas se <strong>invocan</strong>; las utilidades y las estructuras se <strong>juegan</strong>. Hay tres formas de invocar:</p>
+          <div class="cards3">
+            <div class="info"><strong>Normal</strong><span>Pagas su coste y la criatura entra en tu Retaguardia.</span></div>
+            <div class="info"><strong>Por efecto</strong><span>Un efecto te permite invocarla. Entra en tu Retaguardia y <strong>robas 1 carta</strong>.</span></div>
+            <div class="info"><strong>Especial</strong><span>Pagas su <em>coste especial</em> y cumples su <em>requerimiento</em>. <strong>Robas 1 carta</strong> y puedes llevarla a la Línea frontal en ese mismo momento.</span></div>
+          </div>
+          <h3>Las invocaciones especiales</h3>
+          <p>Casi siempre parten de una criatura tuya en el campo, el <strong>invocador</strong>. La nueva criatura ocupa su lugar y hereda su estado: si estaba activa o agotada, si estaba atacando o bloqueando y los cambios de fuerza que tuviera. Las cartas que uses deben compartir tipo o color con la criatura invocada, salvo que la carta diga otra cosa.</p>
+          <div class="cards2">
+            <div class="info"><strong>Ritual</strong><span>El invocador y las demás criaturas que uses se <strong>sacrifican</strong>: se destruyen y van a Tributos.</span></div>
+            <div class="info"><strong>Ascenso</strong><span>El invocador se <strong>tributa</strong>: va a Tributos, pero no cuenta como destruido.</span></div>
+            <div class="info"><strong>Materialización</strong><span>El invocador y las demás cartas que uses quedan bajo la nueva criatura como <strong>Materiales</strong>.</span></div>
+            <div class="info"><strong>Evolución</strong><span>El invocador queda bajo la nueva criatura como <strong>Recurso</strong> y le da sus efectos heredables.</span></div>
+          </div>
+          <p class="callout tip"><eras-icon name="info" /><span>Si una invocación especial no tiene invocador, la criatura entra <strong>activa en la Retaguardia</strong>.</span></p>
+        }
+
+        @case ('combate') {
+          <ol class="flow">
+            <li>
+              <strong>1. Ataque</strong>
+              <span>Una criatura de tu <strong>Línea frontal</strong> se <strong>agota</strong> para atacar al rival o a una criatura enemiga agotada. Necesitas tener 0 gemas o más (salvo con <em>Furia</em>) y no puede haber otro combate en curso. Primero se resuelven los efectos <em>Al Atacar</em>.</span>
+            </li>
+            <li>
+              <strong>2. Bloqueo</strong>
+              <span>El rival puede declarar <strong>un</strong> bloqueador: una criatura activa de su Línea frontal, que se agota al bloquear. Si atacaste a una criatura y nadie más bloquea, esa criatura pasa a ser la bloqueadora.</span>
+            </li>
+            <li class="fork">
+              <div>
+                <strong>3a. Hay bloqueador: enfrentamiento</strong>
+                <span>Se comparan las fuerzas: la menor se destruye. Si empatan, se destruyen las dos.</span>
+              </div>
+              <div>
+                <strong>3b. No hay bloqueador: daño directo</strong>
+                <span>El atacante inflige daño igual a su fuerza a la vida de arriba del rival, que se revela. Mira abajo qué pasa con ella.</span>
+              </div>
+            </li>
+            <li>
+              <strong>4. Final del combate</strong>
+              <span>Se activan los efectos <em>Al Final del Ataque</em>. Recién entonces otra criatura puede atacar.</span>
+            </li>
+          </ol>
+          <h3>Qué pasa con la vida revelada</h3>
+          <table class="outcomes">
+            <thead><tr><th>La vida es…</th><th>Resultado</th></tr></thead>
+            <tbody>
+              <tr><td>Utilidad o estructura</td><td>El rival puede jugarla sin pagar su coste o añadirla a su mano.</td></tr>
+              <tr><td>Criatura con fuerza <strong>menor o igual</strong> al daño</td><td>Va a sus Tributos.</td></tr>
+              <tr><td>Criatura con fuerza <strong>mayor</strong> al daño</td><td>Va a su mano, o puede <strong>reforzar</strong>: queda boca arriba al fondo de sus vidas.</td></tr>
+            </tbody>
+          </table>
+          <p class="small">En todos los casos esa vida se pierde, salvo que se refuerce.</p>
+        }
+
+        @case ('efectos') {
+          <div class="cards3">
+            <div class="info"><eras-icon name="creature" /><strong>Criaturas</strong><span>Se invocan. Tienen fuerza y nivel, atacan y bloquean.</span></div>
+            <div class="info"><eras-icon name="utility" /><strong>Utilidades</strong><span>Se juegan, resuelven su efecto y van al Descarte.</span></div>
+            <div class="info"><eras-icon name="structure" /><strong>Estructuras</strong><span>Se juegan en la Retaguardia y se quedan dando su efecto.</span></div>
+          </div>
+          <h3>Las partes de una carta</h3>
+          <dl class="parts">
+            <dt>Coste</dt><dd>Hexágono azul, arriba a la izquierda: las gemas para jugarla o invocarla.</dd>
+            <dt>Fuerza</dt><dd>Arriba a la derecha (criaturas): se compara en combate y es el daño que inflige.</dd>
+            <dt>Categoría y tipo</dt><dd>Criatura, Utilidad o Estructura; el tipo va entre corchetes, como [dragón].</dd>
+            <dt>Coste especial y requerimiento</dt><dd>Sobre la imagen, abajo: lo que pide su invocación especial.</dd>
+            <dt>Efectos</dt><dd>El recuadro de texto. Los <strong>efectos heredables</strong>, bajo el nombre, solo funcionan cuando la carta es Recurso de otra.</dd>
+            <dt>Nivel y nombre</dt><dd>En la barra inferior; el nivel va en números romanos.</dd>
+          </dl>
+          <h3>Cómo se lee un efecto</h3>
+          <p class="anatomy">
+            <span class="seg moment">⟨Momento⟩</span><span class="seg zone">⟨Zona⟩</span><span class="seg cond">Condición</span><b>:</b><span class="seg cost">Coste</span><b>;</b><span class="seg eff">Efecto</span>
+          </p>
+          <ul class="checks">
+            <li><strong>Momento:</strong> cuándo funciona, como <em>En Invocación</em>, <em>Al Atacar</em> o <em>Turno Aliado</em>.</li>
+            <li><strong>Condición</strong> (antes de «:»): lo que tiene que cumplirse.</li>
+            <li><strong>Coste</strong> (entre «:» y «;»): se paga completo al activarlo y no se devuelve.</li>
+            <li><strong>Efecto</strong> (después de «;»): lo que pasa. Si dice «puedes», eliges si usarlo; una vez activado, ya no se puede retirar.</li>
+          </ul>
+          <h3>Destruir, sacrificar y tributar</h3>
+          <table class="outcomes">
+            <thead><tr><th>Palabra</th><th>Va a</th><th>¿Cuenta como destruida?</th></tr></thead>
+            <tbody>
+              <tr><td>Destruir</td><td>Descarte</td><td>Sí</td></tr>
+              <tr><td>Sacrificar</td><td>Tributos</td><td>Sí</td></tr>
+              <tr><td>Tributar</td><td>Tributos</td><td>No</td></tr>
+            </tbody>
+          </table>
+          <h3>Cuando pasan varias cosas a la vez</h3>
+          <p>Los efectos se encadenan en una <strong>cadena</strong> que se resuelve del último al primero. El simulador la arma por ti y te pregunta cuando tienes que elegir. Para los casos difíciles, consulta el reglamento oficial.</p>
+        }
+
+        @case ('habilidades') {
+          <p>Algunas cartas tienen <strong>habilidades</strong>: palabras clave que resumen un efecto que se repite en muchas cartas. El número cambia según la carta (por ejemplo, Letalidad 2).</p>
+          <eras-keyword-list />
+        }
+      }
+
+      <footer class="pager">
+        @if (previous(); as p) {
+          <button type="button" class="pager-btn" (click)="open(p.id)"><eras-icon name="chevron-left" /><span><small>Anterior</small>{{ p.title }}</span></button>
+        } @else {
+          <span></span>
+        }
+        @if (next(); as n) {
+          <button type="button" class="pager-btn next" (click)="open(n.id)"><span><small>Siguiente</small>{{ n.title }}</span><eras-icon name="chevron-right" /></button>
+        }
+      </footer>
+    </article>
+  </div>
 </eras-page>

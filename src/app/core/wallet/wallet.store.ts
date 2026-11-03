@@ -107,6 +107,12 @@ export class WalletStore {
     }
   }
 
+  /** A structure deck given as a reward (already in the collection): owned now, and its opening ready under `ticket`. */
+  receiveStructure(editionId: string, packs: PurchasedPack[], ticket: string): void {
+    this.structures.update((owned) => new Set(owned).add(editionId));
+    this.ticket = { name: ticket, packs };
+  }
+
   /** What came out of `ticket` if it was just paid for, once (it is used up); null otherwise. */
   takeTicket(ticket: string): PurchasedPack[] | null {
     if (this.ticket?.name !== ticket) return null;

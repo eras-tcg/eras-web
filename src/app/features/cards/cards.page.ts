@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
+import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
@@ -102,6 +103,8 @@ export class CardsPage {
   });
 
   constructor() {
+    // Exploring the catalog is a step of the "Bienvenida" missions
+    inject(ProgressionStore).visit('cartas');
     void this.store.load();
     void this.editions.load();
 

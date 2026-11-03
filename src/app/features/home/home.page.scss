@@ -51,12 +51,43 @@
   border-radius: var(--radius-lg);
   background: linear-gradient(110deg, color-mix(in srgb, var(--color-card-p) 22%, var(--color-surface)), var(--color-surface));
   color: inherit;
+  font: inherit;
+  text-align: start;
   text-decoration: none;
+  cursor: pointer;
   transition: border-color var(--duration-fast) var(--easing-standard);
 }
 
 .mission:hover {
   border-color: var(--color-card-p);
+}
+
+// "Progreso" missions still pending: a yellow halo that breathes (inset too, as the column clips what is outside)
+.mission.pending {
+  border-color: var(--color-hub-accent);
+  animation: mission-halo 2.4s ease-in-out infinite;
+}
+
+@keyframes mission-halo {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0.35rem color-mix(in srgb, var(--color-hub-accent) 45%, transparent),
+      inset 0 0 0.6rem color-mix(in srgb, var(--color-hub-accent) 18%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0.9rem color-mix(in srgb, var(--color-hub-accent) 75%, transparent),
+      inset 0 0 1.1rem color-mix(in srgb, var(--color-hub-accent) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission.pending {
+    animation: none;
+    box-shadow: 0 0 0.6rem color-mix(in srgb, var(--color-hub-accent) 60%, transparent);
+  }
 }
 
 .mission-icon {

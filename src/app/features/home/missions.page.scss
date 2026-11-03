@@ -70,6 +70,25 @@
   opacity: 0.6;
 }
 
+// "Repetir" stays clear on a faded claimed row
+.mission.claimed:has(.repeat) {
+  opacity: 1;
+}
+
+.mission.claimed:has(.repeat) .text,
+.mission.claimed:has(.repeat) .claimed-tag {
+  opacity: 0.6;
+}
+
+button.reward.repeat,
+.claimed-tag.compact {
+  min-inline-size: 0;
+}
+
+.claimed-tag.compact {
+  padding-inline: 0;
+}
+
 .text {
   display: grid;
   flex: 1;
@@ -144,4 +163,60 @@ button.reward:not(:disabled) {
   border-color: transparent;
   background: none;
   color: var(--color-success);
+}
+
+// Progreso: what a step or milestone asks, under its name
+.hint {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.tiers {
+  margin-inline-start: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+}
+
+// A welcome step still behind the ones before it
+.mission.locked {
+  opacity: 0.45;
+}
+
+.locked-tag {
+  border-color: transparent;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+// A step not done yet: a way to where it is done
+button.reward.go {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  box-shadow: none;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.badge eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
 }

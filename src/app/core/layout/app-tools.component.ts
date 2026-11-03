@@ -8,6 +8,7 @@ import { EditModeService } from '../auth/edit-mode.service';
 import { ADMIN_PERMISSIONS } from '../navigation/admin-tools';
 import { ThemeService } from '../theme/theme.service';
 import { MissionsStore } from '../missions/missions.store';
+import { ProgressionStore } from '../missions/progression.store';
 import { WalletStore } from '../wallet/wallet.store';
 
 /**
@@ -35,7 +36,8 @@ export class AppToolsComponent {
   protected readonly editMode = inject(EditModeService);
   protected readonly theme = inject(ThemeService);
   protected readonly wallet = inject(WalletStore);
-  protected readonly missions = inject(MissionsStore);
+  private readonly missions = inject(MissionsStore);
+  private readonly progression = inject(ProgressionStore);
   private readonly router = inject(Router);
   private readonly modal = inject(ModalService);
   private readonly document = inject(DOCUMENT);
@@ -46,6 +48,9 @@ export class AppToolsComponent {
 
   /** Also follows Esc and the board's own full screen button. */
   protected readonly fullscreen = signal(!!this.document.fullscreenElement);
+
+  /** Missions (daily, weekly and progression) whose reward waits to be claimed. */
+  protected readonly waiting = computed(() => this.missions.waiting() + this.progression.waiting());
 
   protected readonly isAdmin = computed(() => {
     this.auth.user();

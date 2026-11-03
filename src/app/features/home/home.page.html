@@ -36,14 +36,24 @@
   }
 
   @if (step(); as next) {
-    <a class="mission" [routerLink]="next.route">
-      <eras-icon class="mission-icon" [name]="next.icon" />
-      <span class="mission-text">
-        <span class="mission-eyebrow">Siguiente paso</span>
-        <span class="mission-title">{{ next.title }}</span>
-        <span class="mission-hint">{{ next.text }}</span>
-      </span>
-      <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
-    </a>
+    @if (next.flow || next.guide) {
+      <button type="button" class="mission" [class.pending]="progressPending()" (click)="openStep(next)">
+        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
+      </button>
+    } @else {
+      <a class="mission" [class.pending]="progressPending()" [routerLink]="next.route">
+        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
+      </a>
+    }
   }
 </eras-hub-screen>
+
+<ng-template #stepContent let-next>
+  <eras-icon class="mission-icon" [name]="next.icon" />
+  <span class="mission-text">
+    <span class="mission-eyebrow">Siguiente paso</span>
+    <span class="mission-title">{{ next.title }}</span>
+    <span class="mission-hint">{{ next.text }}</span>
+  </span>
+  <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
+</ng-template>

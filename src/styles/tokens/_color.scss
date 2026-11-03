@@ -52,6 +52,9 @@
   --color-hub-accent: var(--color-sim-gold);
   --color-hub-glow: var(--color-sim-glow);
 
-  /** The back of a card: the game's card back art (a `background` value), its blue while it loads */
-  --color-card-back: #0b6fa0 url('/images/card-back.png') center / cover no-repeat;
+  /**
+   * The back of a card: the game's card back art (a `background` value). It covers the card's border too, and the
+   * color under it is the art's own black edge, so no other color shows around it.
+   */
+  --color-card-back: #000 url('/images/card-back.png') center / cover no-repeat border-box;
 }

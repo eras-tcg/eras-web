@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { PackTier } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -25,6 +26,7 @@ const CARDS = 12;
   template: `
     <eras-page title="Prueba · Rotura de sobre" width="wide" fill>
       <ng-container ngProjectAs="[page-actions]">
+        <eras-toggle-group label="Sobre" [options]="tiers" [selected]="[tier()]" (toggled)="setTier($any($event))" />
         <eras-toggle-group label="Ritmo" [options]="speeds" [selected]="[speed()]" (toggled)="setSpeed($any($event))" />
         <eras-toggle-group label="Arte" [options]="arts()" [selected]="[artId()]" (toggled)="setArt($event)" />
         <button erasButton type="button" (click)="play()"><eras-icon name="refresh" /> Repetir</button>
@@ -32,7 +34,7 @@ const CARDS = 12;
       <div class="stage">
         @if (breaking() || falling()) {
           <div class="break-layer">
-            <eras-pack-break [art]="art()" [duration]="duration()" />
+            <eras-pack-break [art]="art()" [duration]="duration()" [tier]="tier()" />
           </div>
         }
         @if (dealt()) {
@@ -89,6 +91,13 @@ export class PackBreakPreviewPage {
     { value: 'box', label: 'Caja' },
   ];
   protected readonly speed = signal<'pack' | 'box'>('pack');
+  protected readonly tiers: ToggleOption[] = [
+    { value: 'none', label: 'Común' },
+    { value: 'sr', label: 'SR' },
+    { value: 'sec', label: 'SEC' },
+    { value: 'god', label: 'GOD' },
+  ];
+  protected readonly tier = signal<PackTier>('sec');
   protected readonly duration = computed(() => BREAK_MS[this.speed()]);
 
   private readonly withArt = computed(() => this.editions.editions().filter((e) => e.editionImage).slice(0, 4));
@@ -109,6 +118,11 @@ export class PackBreakPreviewPage {
     if (this.auth.user()) void this.editions.load().then(() => this.play());
     else this.play();
     inject(DestroyRef).onDestroy(() => this.stop());
+  }
+
+  protected setTier(value: PackTier): void {
+    this.tier.set(value);
+    this.play();
   }
 
   protected setSpeed(value: 'pack' | 'box'): void {

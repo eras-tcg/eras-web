@@ -428,6 +428,53 @@
   inline-size: 540%;
   block-size: 420%;
   pointer-events: none;
+  // Changes nothing: its start, at --boom, tells the component to shatter (on the same clock as the blows)
+  animation: boom-mark 1ms linear var(--boom) both;
+}
+
+@keyframes boom-mark {
+  to {
+    opacity: 1;
+  }
+}
+
+/* How much it shows, by the pack's type (BREAK_DETAIL holds the rest: cracks and pieces) */
+
+// A plain pack: no rays, no shock wave, no jolt of the whole break; a softer light
+:host(.tier-none) {
+  animation: none;
+}
+
+:host(.tier-none) .rays,
+:host(.tier-none) .wave {
+  display: none;
+}
+
+// (a filter, so it multiplies their animated opacity)
+:host(.tier-none) .glow,
+:host(.tier-none) .flash {
+  filter: opacity(0.55);
+}
+
+:host(.tier-none) .leak path {
+  stroke-width: 1.1;
+}
+
+// An SR pack: everything, the light a step softer
+:host(.tier-sr) .rays {
+  filter: brightness(0.75);
+}
+
+// A GOD pack: wider light and a second, bigger wave
+:host(.tier-god) .rays,
+:host(.tier-god) .glow {
+  inset: -90%;
+}
+
+.wave.second {
+  animation-delay: calc(var(--boom) + 140ms);
+  animation-duration: 1000ms;
+  border-color: var(--color-hub-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

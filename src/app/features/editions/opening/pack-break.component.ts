@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, viewChild } from '@angular/core';
+import { PackTier } from '@data/editions/booster-rules';
+import { BREAK_DETAIL } from './pack-break-detail';
 import { IMPACT, PACK_W, PACK_H, Point, crackStages, shatter } from './pack-break-geometry';
 
 /** The moment it shatters, as a fraction of the break: three blows before it, then a freeze (the same as `--boom` in CSS). */
 export const BOOM_AT = 0.72;
-const SHARD_COUNT = 20;
-const DEBRIS_COUNT = 56;
-const SPARK_COUNT = 28;
 
 interface Shard {
   /** Its outline around its own middle, in px. */
@@ -49,8 +48,10 @@ function urlOf(css: string | null): string | null {
  * A pack breaking open, in `duration` ms. Three blows, each a jolt and a new stage of cracks (drawn anew for every
  * pack) with light leaking through them; then it swells, glowing from inside, freezes an instant and shatters: a
  * flash, a shock wave and a jolt of the whole break, irregular shards with a foil edge that tumble and fall, flecks
- * of foil that glint as they drift down, and streaks of light. Its color says nothing of the pack's type. The blows
- * and the light are CSS; the burst is drawn on a canvas.
+ * of foil that glint as they drift down, and streaks of light. The same timing for every pack, but how much it shows
+ * goes with its type (`tier`, BREAK_DETAIL): a plain pack breaks simply (a few straight cracks, no rays, no wave, few
+ * pieces), a GOD one beyond the SEC one (more of everything, a second wave). The blows and the light are CSS; the
+ * burst is drawn on a canvas.
  */
 @Component({
   selector: 'eras-pack-break',
@@ -60,17 +61,21 @@ function urlOf(css: string | null): string | null {
   host: {
     '[style.--art]': 'art()',
     '[style.--break]': 'duration() + "ms"',
+    '[class]': '"tier-" + tier()',
     'aria-hidden': 'true',
-    // The shatter starts with the CSS jolt of the break (its delay is --boom), so the canvas never runs ahead of it
+    // The shatter starts with the canvas' marker animation (its delay is --boom), so it never runs ahead of the blows
     '(animationstart)': 'onAnimationStart($event)',
   },
 })
 export class PackBreakComponent {
   readonly art = input<string | null>(null);
   readonly duration = input(3200);
+  /** The pack's type: how much the break shows. */
+  readonly tier = input<PackTier>('none');
 
+  private readonly detail = computed(() => BREAK_DETAIL[this.tier()]);
   /** The cracks of each blow, in pack units. */
-  protected readonly cracks = crackStages(Math.random);
+  protected readonly cracks = computed(() => crackStages(Math.random, this.detail().cracks, this.detail().branches));
   protected readonly viewBox = `0 0 ${PACK_W} ${PACK_H}`;
   /** Where the blows land, in % of the pack (for the light and the wave). */
   protected readonly impact = { x: (IMPACT.x / PACK_W) * 100, y: (IMPACT.y / PACK_H) * 100 };
@@ -91,7 +96,7 @@ export class PackBreakComponent {
   }
 
   protected onAnimationStart(event: AnimationEvent): void {
-    if (event.target !== this.host.nativeElement || !event.animationName.endsWith('impact') || this.bursting) return;
+    if (event.target !== this.canvas().nativeElement || !event.animationName.endsWith('boom-mark') || this.bursting) return;
     this.bursting = true;
     this.burst(this.image);
   }
@@ -120,7 +125,8 @@ export class PackBreakComponent {
     const glow = style.getPropertyValue('--color-hub-glow').trim() || '#fff1c2';
     const light = style.getPropertyValue('--color-hub-text').trim() || '#ffffff';
 
-    const shards: Shard[] = shatter(Math.random, SHARD_COUNT).map((s) => {
+    const detail = this.detail();
+    const shards: Shard[] = shatter(Math.random, detail.shards).map((s) => {
       const home = { x: s.center.x * unit, y: s.center.y * unit };
       const x = ox + home.x;
       const y = oy + home.y;
@@ -140,13 +146,13 @@ export class PackBreakComponent {
         life: 1,
       };
     });
-    const debris = Array.from({ length: DEBRIS_COUNT }, (): Particle => {
+    const debris = Array.from({ length: detail.debris }, (): Particle => {
       const a = Math.random() * Math.PI * 2;
       const speed = (0.4 + Math.random() * 2.2) * packW;
       return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed - packW * 0.6, rot: Math.random() * 6, vrot: (Math.random() - 0.5) * 16, size: 1.5 + Math.random() * 3.5, age: 0, ttl: 1.1 + Math.random() * 0.9, kind: 'debris' };
     });
-    const sparks = Array.from({ length: SPARK_COUNT }, (_, i): Particle => {
-      const a = (i / SPARK_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+    const sparks = Array.from({ length: detail.sparks }, (_, i): Particle => {
+      const a = (i / detail.sparks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
       const speed = (2.5 + Math.random() * 3) * packW;
       return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, rot: 0, vrot: 0, size: 1 + Math.random() * 1.8, age: 0, ttl: 0.45 + Math.random() * 0.35, kind: 'spark' };
     });

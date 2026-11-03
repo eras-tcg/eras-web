@@ -75,7 +75,7 @@
               <!-- The pack breaks in the middle; its pieces keep falling over the cards that fly out of it -->
               @if (tearing() || falling()) {
                 <div class="break-layer">
-                  <eras-pack-break [art]="art" [duration]="breakMs()" />
+                  <eras-pack-break [art]="art" [duration]="breakMs()" [tier]="tierOf(pack.packType)" />
                 </div>
               }
               @if (!tearing()) {

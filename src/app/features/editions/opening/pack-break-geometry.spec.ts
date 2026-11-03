@@ -28,4 +28,10 @@ describe('pack break geometry', () => {
     expect(lines[1]).toBeGreaterThan(lines[0]);
     expect(lines[2]).toBeGreaterThan(lines[0]);
   });
+
+  it('draws simpler cracks for a plain pack: fewer, never branching', () => {
+    const plain = crackStages(seeded(3), 4, false);
+    expect(plain.map((stage) => stage.length)).toEqual([4, 4, 4]);
+    expect(crackStages(seeded(3), 7, true)[2].length).toBeGreaterThan(7);
+  });
 });

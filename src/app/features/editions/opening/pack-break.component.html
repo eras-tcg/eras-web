@@ -8,7 +8,7 @@
   <!-- The light from inside, growing with each blow, and along the edges once it swells -->
   <span class="inner" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
   <svg class="cracks" [attr.viewBox]="viewBox" preserveAspectRatio="none">
-    @for (stage of cracks; track $index; let s = $index) {
+    @for (stage of cracks(); track $index; let s = $index) {
       <!-- Wide and blurred first (the light through the crack), then the crack itself -->
       <g [class]="'leak stage-' + s">
         @for (d of stage; track $index) {
@@ -27,4 +27,8 @@
 <!-- The shatter: a flash and a shock wave from the impact (the shards, flecks and sparks are on the canvas) -->
 <span class="flash" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
 <span class="wave" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
+@if (tier() === 'god') {
+  <!-- A GOD pack: a second wave right after the first -->
+  <span class="wave second" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
+}
 <canvas #burst class="burst"></canvas>

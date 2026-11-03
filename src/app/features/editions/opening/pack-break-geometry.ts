@@ -77,10 +77,9 @@ const STAGE_ENDS = [0.22, 0.55, 1];
  * The cracks of a pack in three stages, as SVG path data in pack units: the first blow opens a few short cracks from
  * the impact, the second takes them further and branches them, the third runs them to the edges with more branches.
  * Each stage only holds its new lines (they continue the earlier ones), one path each, so they draw themselves
- * together on its blow.
+ * together on its blow. `mains` cracks start at the impact; without `branches` they never split (a plain pack).
  */
-export function crackStages(random: Random): string[][] {
-  const mains = 5 + Math.floor(random() * 3);
+export function crackStages(random: Random, mains = 6, branches = true): string[][] {
   const stages: string[][] = [[], [], []];
   for (let m = 0; m < mains; m++) {
     const angle = (m / mains) * Math.PI * 2 + (random() - 0.5) * 0.7;
@@ -90,9 +89,9 @@ export function crackStages(random: Random): string[][] {
       const part = slice(main, start, end);
       stages[stage].push(path(part));
       // From the second blow on, branches split off the new part
-      if (stage > 0) {
-        const branches = stage === 1 ? 1 : 1 + Math.floor(random() * 2);
-        for (let b = 0; b < branches; b++) {
+      if (stage > 0 && branches) {
+        const count = stage === 1 ? 1 : 1 + Math.floor(random() * 2);
+        for (let b = 0; b < count; b++) {
           const from = part[Math.floor(random() * (part.length - 1))];
           const side = random() < 0.5 ? -1 : 1;
           stages[stage].push(path(jagged(from, angle + side * (0.45 + random() * 0.5), 8 + random() * 14, random, true)));

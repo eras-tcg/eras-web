@@ -66,11 +66,15 @@ export interface CardMeta {
   altArts?: AltArt[] | null;
 }
 
-/** One alternative art of a card: its picture and its own odds per pulled copy (null: the shop's, ShopOdds.alt). */
+/**
+ * One alternative art of a card: its picture, its name as a custom rarity (null: "Alternativo N") and its own odds
+ * per pulled copy (null: the shop's, ShopOdds.alt).
+ */
 export interface AltArt {
   id: string;
   url: string;
   odds?: number | null;
+  name?: string | null;
 }
 
 /** Reference data, GET /api/cards/ref */

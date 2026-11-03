@@ -1,5 +1,5 @@
 import { AltArt, CatalogCard } from '../cards/card.model';
-import { altArtsOf } from '../cards/card-rules';
+import { altArtName, altArtsOf } from '../cards/card-rules';
 import { BoxEntry, Edition } from '../editions/edition.model';
 import { canSimulateBox, canSimulatePack } from '../editions/edition-rules';
 
@@ -159,20 +159,22 @@ export function openingQuery(edition: Edition, product: ShopProduct): OpeningReq
   return { edition: edition.editionId, mode: product.kind };
 }
 
-/** An alternative art a pack of an edition can give: the card, which of its arts it is (1, 2…) and its odds per copy. */
+/** An alternative art a pack of an edition can give: the card, the art and its name, and its odds per copy. */
 export interface AltArtOdds {
   card: CatalogCard;
   art: AltArt;
-  number: number;
+  name: string;
   odds: number;
 }
 
 /**
  * The alternative arts the edition's packs can give (`cards`: the edition's cards), each with its chance per pulled
- * copy of its card: its own odds, or the shop's (`shopAlt`).
+ * copy of its card (its own odds, or the shop's, `shopAlt`), the likeliest first.
  */
 export function altArtOdds(cards: readonly CatalogCard[], shopAlt: number): AltArtOdds[] {
-  return cards.flatMap((card) => altArtsOf(card).map((art, i) => ({ card, art, number: i + 1, odds: art.odds ?? shopAlt })));
+  return cards
+    .flatMap((card) => altArtsOf(card).map((art, i) => ({ card, art, name: altArtName(art, i), odds: art.odds ?? shopAlt })))
+    .sort((a, b) => b.odds - a.odds);
 }
 
 /** 0..1 as the number typed in a percent field (0.0001 → 0.01). */

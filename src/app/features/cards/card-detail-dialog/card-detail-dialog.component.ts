@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
-import { altArtsOf, nameVariants, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
 import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
@@ -91,7 +91,7 @@ export class CardDetailDialogComponent {
     const arts = this.arts();
     return [
       { value: '', label: 'Arte original', text: 'Original' },
-      ...arts.map((a, i) => ({ value: a.id, label: `Arte alternativo ${i + 1}`, text: arts.length > 1 ? `Alternativo ${i + 1}` : 'Alternativo' })),
+      ...arts.map((a, i) => ({ value: a.id, label: `Arte ${altArtName(a, i)}`, text: a.name?.trim() || (arts.length > 1 ? `Alternativo ${i + 1}` : 'Alternativo') })),
     ];
   });
 
@@ -143,6 +143,7 @@ export class CardDetailDialogComponent {
   // These stay in the dialog: the card shown takes the metadata the server answers, and the catalog reloads behind.
 
   protected readonly toPercent = toPercent;
+  protected readonly altArtName = altArtName;
 
   /** A new alternative art from a chosen file (CardMeta.altArts), with the shop's odds until changed. */
   protected async addAlt(event: Event): Promise<void> {
@@ -160,26 +161,26 @@ export class CardDetailDialogComponent {
     await this.changeArts(() => firstValueFrom(this.admin.replaceAltArt(metaId, art.id, file)), 'No se pudo cambiar el arte alternativo');
   }
 
-  /** One art's own odds, typed as a percent; empty: the shop's. */
-  protected async setAltOdds(art: AltArt, typed: string): Promise<void> {
+  /** Saves one art's name (empty: "Alternativo N") and its own odds typed as a percent (empty: the shop's). */
+  protected async saveAlt(art: AltArt, name: string, typedOdds: string): Promise<void> {
     const metaId = this.card().meta?.id;
     if (!metaId) return;
-    const odds = typed.trim() === '' ? null : fromPercent(typed);
-    if (odds === null && typed.trim() !== '') {
+    const odds = typedOdds.trim() === '' ? null : fromPercent(typedOdds);
+    if (odds === null && typedOdds.trim() !== '') {
       this.actionError.set('La probabilidad debe ser un número de 0 a 100 %');
       return;
     }
-    if (odds === (art.odds ?? null)) return;
-    await this.changeArts(() => firstValueFrom(this.admin.setAltArtOdds(metaId, art.id, odds)), 'No se pudo guardar la probabilidad');
+    const change = { name: name.trim() || null, odds };
+    await this.changeArts(() => firstValueFrom(this.admin.updateAltArt(metaId, art.id, change)), 'No se pudo guardar el arte alternativo');
   }
 
-  protected async removeAlt(art: AltArt, number: number): Promise<void> {
+  protected async removeAlt(art: AltArt, index: number): Promise<void> {
     const card = this.card();
     const metaId = card.meta?.id;
     if (!metaId) return;
     const ok = await this.modal.confirm({
       title: 'Quitar arte alternativo',
-      message: `"${card.name}" ya no saldrá con el arte alternativo ${number}. Las copias que ya lo tienen se verán con el arte normal.`,
+      message: `"${card.name}" ya no saldrá con el arte «${altArtName(art, index)}». Las copias que ya lo tienen se verán con el arte normal.`,
       confirmLabel: 'Quitar',
       danger: true,
     });

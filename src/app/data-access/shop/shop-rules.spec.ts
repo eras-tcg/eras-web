@@ -111,9 +111,10 @@ describe('alternative arts in the odds table', () => {
   it('lists every alternative art of the edition with its own odds or the shop odds', () => {
     const titan = { id: 't', name: 'Titan', meta: { id: 'm', altArts: [{ id: 'a', url: 'u1' }, { id: 'b', url: 'u2', odds: 0.01 }] } } as CatalogCard;
     const plain = { id: 'p', name: 'Plain', meta: { id: 'n' } } as CatalogCard;
-    expect(altArtOdds([titan, plain], 0.0001).map((r) => [r.card.id, r.art.id, r.number, r.odds])).toEqual([
-      ['t', 'a', 1, 0.0001],
-      ['t', 'b', 2, 0.01],
+    const named = { ...titan, meta: { id: 'm', altArts: [{ id: 'a', url: 'u1' }, { id: 'b', url: 'u2', odds: 0.01, name: 'Secreta' }] } } as CatalogCard;
+    expect(altArtOdds([named, plain], 0.0001).map((r) => [r.card.id, r.art.id, r.name, r.odds])).toEqual([
+      ['t', 'b', 'Secreta', 0.01],
+      ['t', 'a', 'Alternativo 1', 0.0001],
     ]);
   });
 

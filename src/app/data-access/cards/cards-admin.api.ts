@@ -42,9 +42,9 @@ export class CardsAdminApi {
     });
   }
 
-  /** One art's own odds per pulled copy; null: it takes the shop's. */
-  setAltArtOdds(metaId: string, artId: string, odds: number | null): Observable<CardMeta> {
-    return this.http.patch<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`), { odds });
+  /** One art's name (null: "Alternativo N") and its own odds per pulled copy (null: the shop's), at once. */
+  updateAltArt(metaId: string, artId: string, change: { name: string | null; odds: number | null }): Observable<CardMeta> {
+    return this.http.patch<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`), change);
   }
 
   /** The card loses that alternative art (copies already pulled with it show the usual one). */

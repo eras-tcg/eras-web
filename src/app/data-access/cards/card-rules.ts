@@ -50,6 +50,11 @@ export function altArtsOf(card: CatalogCard): AltArt[] {
   return card.meta?.altArts ?? [];
 }
 
+/** What an alternative art is called: its own name, or "Alternativo N" by its place among the card's (`index` from 0). */
+export function altArtName(art: AltArt, index: number): string {
+  return art.name?.trim() || `Alternativo ${index + 1}`;
+}
+
 /** The same card showing one of its alternative arts, or the card as it is when it has no such art. */
 export function withAltArt(card: CatalogCard, artId: string | null): CatalogCard {
   const art = artId === null ? undefined : altArtsOf(card).find((a) => a.id === artId);

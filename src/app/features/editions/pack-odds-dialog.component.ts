@@ -130,7 +130,7 @@ const ODDS_FIELDS: { key: keyof ShopOdds; label: string }[] = [
                       <th scope="row">
                         <span class="alt-card"><img [src]="row.art.url" alt="" loading="lazy" /> {{ row.card.name }}</span>
                       </th>
-                      <td>Alternativo {{ row.number }}</td>
+                      <td>{{ row.name }}</td>
                       <td class="num strong">{{ percent(row.odds) }}</td>
                     </tr>
                   }

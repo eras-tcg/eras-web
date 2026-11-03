@@ -1,7 +1,9 @@
-<eras-page [title]="username() || 'Mi perfil'" subtitle="Tu cuenta">
-  <eras-grid minColumn="20rem" [gap]="5">
-    <eras-card padding="lg">
-      <eras-stack [gap]="4">
+<eras-page [title]="username() || 'Mi perfil'">
+  <!-- Three columns that fit one screen: the icon and preferences, the account, the password -->
+  <div class="profile">
+    <div class="column">
+    <eras-card padding="md">
+      <eras-stack [gap]="3">
         <eras-section-header title="Tu ícono de jugador" />
         <!-- How the rival sees you on the table -->
         <div class="plate-preview" aria-label="Vista previa en el tablero">
@@ -24,15 +26,24 @@
       </eras-stack>
     </eras-card>
 
-    <eras-card padding="lg">
-      <eras-stack [gap]="4">
+    <eras-card padding="md">
+      <eras-stack [gap]="3">
+        <eras-section-header title="Preferencias" />
+        <!-- Kept on this device (the theme is not part of the account on the server) -->
+        <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
+      </eras-stack>
+    </eras-card>
+    </div>
+
+    <eras-card padding="md">
+      <eras-stack [gap]="3">
         <eras-section-header title="Información de cuenta" />
         @if (canEditAccount()) {
           @if (accountLoading()) {
             <eras-spinner />
           } @else {
             <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
-              <eras-stack [gap]="4">
+              <eras-stack [gap]="3">
                 @if (accountFeedback(); as f) {
                   <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
                 }
@@ -62,9 +73,9 @@
       </eras-stack>
     </eras-card>
 
-    <eras-card padding="lg">
+    <eras-card padding="md">
       <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-        <eras-stack [gap]="4">
+        <eras-stack [gap]="3">
           <eras-section-header title="Cambiar contraseña" />
           @if (passwordFeedback(); as f) {
             <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
@@ -84,5 +95,5 @@
         </eras-stack>
       </form>
     </eras-card>
-  </eras-grid>
+  </div>
 </eras-page>

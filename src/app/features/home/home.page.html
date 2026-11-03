@@ -1,68 +1,59 @@
-<eras-home-layout featureTitle="Edición destacada" mainTitle="Mazos destacados" sideTitle="Noticias">
-  <eras-stack home-toolbar direction="row" [gap]="2" align="center" justify="end" wrap>
-    @if (home.editing()) {
-      <span class="sr-only" role="status">Editando la portada</span>
-      <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
-      <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
-    } @else {
-      <button *erasEdit="'manage_home'" erasButton variant="secondary" size="sm" type="button" (click)="startEdit()">
-        <eras-icon name="edit" /> Editar portada
-      </button>
-    }
-  </eras-stack>
+<eras-hub-screen reroll>
+  <eras-hub-menu [items]="menu" />
 
+  @if (editMode.allows('manage_home')) {
+    <div class="edit-bar">
+      @if (home.editing()) {
+        <span class="sr-only" role="status">Editando la portada</span>
+        <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
+        <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
+      } @else {
+        <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()"><eras-icon name="edit" /> Editar portada</button>
+      }
+    </div>
+  }
   @if (home.error(); as error) {
-    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
+    <eras-alert tone="danger">{{ error }}</eras-alert>
   }
   @if (saveError(); as error) {
-    <eras-alert home-toolbar tone="danger">{{ error }}</eras-alert>
+    <eras-alert tone="danger">{{ error }}</eras-alert>
   }
 
-  <div home-feature>
-    @if (home.loading()) {
-      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
-    } @else if (home.content().edition; as edition) {
-      <eras-featured-edition
-        fill
-        [code]="edition.editionId"
-        [name]="edition.editionName ?? null"
-        [description]="edition.editionDescription ?? null"
-        [imageUrl]="edition.editionImage ?? null"
-        (selected)="openCards(edition.editionId)"
-      >
-        @if (home.editing()) {
-          <button featured-actions erasButton size="sm" type="button" (click)="pickEdition()">
-            <eras-icon name="edit" /> Cambiar
-          </button>
-        }
-      </eras-featured-edition>
-    } @else if (home.editing()) {
-      <button erasButton variant="secondary" type="button" (click)="pickEdition()">
-        <eras-icon name="plus" /> Elegir edición destacada
+  @if (home.editing()) {
+    <div class="editor">
+      <div class="editor-row">
+        <span class="editor-label">Edición destacada</span>
+        <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
+        <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
+      </div>
+    </div>
+  } @else {
+    <eras-hub-carousel
+      [slides]="slides()"
+      [loading]="home.loading()"
+      (editionSelected)="openCards($event)"
+    />
+  }
+
+  @if (step(); as next) {
+    @if (next.flow || next.guide) {
+      <button type="button" class="mission" [class.pending]="progressPending()" (click)="openStep(next)">
+        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
       </button>
+    } @else {
+      <a class="mission" [class.pending]="progressPending()" [routerLink]="next.route">
+        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
+      </a>
     }
-  </div>
-
-  @for (deck of home.loading() ? [] : home.content().decks; track $index; let i = $index) {
-    <eras-deck-cover
-      [style.visibility]="deck || home.editing() ? null : 'hidden'"
-      home-main
-      fit
-      [rank]="i + 1"
-      [name]="deck?.deckName ?? null"
-      [author]="deck?.username ?? null"
-      [imageUrl]="deck?.deckImage ?? null"
-      (selected)="openDeck(deck)"
-    >
-      @if (home.editing()) {
-        <button cover-actions erasButton size="sm" type="button" [attr.aria-label]="'Cambiar mazo #' + (i + 1)" (click)="pickDeck(i)">
-          <eras-icon name="edit" />
-        </button>
-      }
-    </eras-deck-cover>
   }
+</eras-hub-screen>
 
-  @for (item of news; track item.title) {
-    <eras-news-card home-side [date]="item.date" [dateLabel]="item.dateLabel" [title]="item.title" [excerpt]="item.excerpt" />
-  }
-</eras-home-layout>
+<ng-template #stepContent let-next>
+  <eras-icon class="mission-icon" [name]="next.icon" />
+  <span class="mission-text">
+    <span class="mission-eyebrow">Siguiente paso</span>
+    <span class="mission-title">{{ next.title }}</span>
+    <span class="mission-hint">{{ next.text }}</span>
+  </span>
+  <span class="mission-action">{{ next.action }} <eras-icon name="chevron-right" /></span>
+</ng-template>

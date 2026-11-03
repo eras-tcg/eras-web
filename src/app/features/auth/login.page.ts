@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PASSWORD_MIN_LENGTH } from '@core/auth/password-rules';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -27,7 +28,7 @@ export class LoginPage {
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     username: ['', Validators.required],
-    password: ['', Validators.required],
+    password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
   });
 
   protected async submit(): Promise<void> {

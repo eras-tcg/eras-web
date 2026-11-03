@@ -13,3 +13,6 @@ export const MY_SORT_OPTIONS: SortOption[] = [
 
 export const deckViewLink = (id: string) => ['/deck', id];
 export const deckBuilderQuery = (id: string, copy = false) => (copy ? { id, copy: 'true' } : { id });
+
+/** Navigation state of a deck opened from the public list, so its "back" returns there. */
+export const FROM_PUBLIC_DECKS = { from: 'public-decks' };

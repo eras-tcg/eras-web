@@ -1,0 +1,222 @@
+// The hub's frame fills the screen; the missions fit the left column
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.set {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.set-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.set-head h2 {
+  margin: 0;
+  padding-inline-start: var(--space-2);
+  border-inline-start: 3px solid var(--color-hub-accent);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ends {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.ends eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// A mission: what it asks with its progress, and its gems (the button to claim them once done)
+.mission {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.mission.done:not(.claimed) {
+  border-color: var(--color-hub-accent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-accent) 16%, var(--color-surface)), var(--color-surface) 70%);
+}
+
+.mission.claimed {
+  opacity: 0.6;
+}
+
+// "Repetir" stays clear on a faded claimed row
+.mission.claimed:has(.repeat) {
+  opacity: 1;
+}
+
+.mission.claimed:has(.repeat) .text,
+.mission.claimed:has(.repeat) .claimed-tag {
+  opacity: 0.6;
+}
+
+button.reward.repeat,
+.claimed-tag.compact {
+  min-inline-size: 0;
+}
+
+.claimed-tag.compact {
+  padding-inline: 0;
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  min-inline-size: 0;
+}
+
+.what {
+  grid-column: 1 / -1;
+  font-weight: var(--font-weight-medium);
+}
+
+.bar {
+  block-size: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+}
+
+.fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--color-hub-accent);
+  transition: inline-size var(--duration-base, 200ms) ease;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.reward {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 5.5rem;
+  justify-content: center;
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+button.reward:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+button.reward:not(:disabled) {
+  border-color: var(--color-hub-accent);
+  background: var(--color-hub-accent);
+  color: var(--color-hub-scrim);
+  cursor: pointer;
+  box-shadow: 0 0 0.75rem color-mix(in srgb, var(--color-hub-accent) 40%, transparent);
+}
+
+.reward eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.claimed-tag {
+  border-color: transparent;
+  background: none;
+  color: var(--color-success);
+}
+
+// Progreso: what a step or milestone asks, under its name
+.hint {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.tiers {
+  margin-inline-start: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+}
+
+// A welcome step still behind the ones before it
+.mission.locked {
+  opacity: 0.45;
+}
+
+.locked-tag {
+  border-color: transparent;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+// A step not done yet: a way to where it is done
+button.reward.go {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  box-shadow: none;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.badge eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

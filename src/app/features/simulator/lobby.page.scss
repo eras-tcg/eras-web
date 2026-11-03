@@ -1,0 +1,144 @@
+// The hub's frame fills the screen; the rooms' list is the one part that scrolls
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+// Joining by code: the code on a bare line (as a deck's name), the button beside it
+.join {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.code {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-block-end: 1px solid var(--color-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  letter-spacing: 0.04em;
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.code:focus {
+  border-block-end-color: var(--color-hub-accent);
+}
+
+.rooms {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+.rooms-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rooms-head h2 {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+  margin: 0;
+  // Room on the right for a row's nudge on hover: it never scrolls sideways
+  padding: 0 0.5rem 0 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+}
+
+// A room: a row with the accent bar, as the hub's options
+.room {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-inline-start: 3px solid var(--color-hub-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+}
+
+.room:hover:not(:disabled) {
+  border-color: var(--color-hub-accent);
+  transform: translateX(0.25rem);
+}
+
+.room:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.room.mine {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-accent) 18%, var(--color-surface)), var(--color-surface) 70%);
+}
+
+.room-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.room-name {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.room-meta {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.room:hover:not(:disabled) .room-action {
+  color: var(--color-hub-accent);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

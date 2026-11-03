@@ -68,10 +68,10 @@
         <button
           type="button"
           class="pick"
-          [class.static]="prompt.kind === 'CONFIRM'"
+          [class.static]="prompt.kind === 'CONFIRM' || orderOnly"
           [class.chosen]="chosen().has(c.instanceId)"
           [class.locked]="!selectable(c)"
-          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM'"
+          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM' || orderOnly"
           [attr.aria-pressed]="chosen().has(c.instanceId)"
           [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : ', supera la suma de niveles') : ', no cumple el efecto')"
           (click)="toggle(c.instanceId)"
@@ -80,11 +80,13 @@
             <!-- A Material or Recurso: the card it belongs to, with it small at the corner -->
             <eras-card-with-source [imageUrl]="host.imageUrl" [name]="host.cardName" [sourceName]="c.cardName ?? '?'" [sourceImage]="c.imageUrl" [sourceLabel]="(c.cardName ?? '?') + ' · ' + zoneOf(c)" />
           } @else {
-            <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
+            <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
           <span class="tag">
             @if (chosen().has(c.instanceId)) {
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
+            } @else if (orderOnly) {
+              {{ $index + 1 }}º
             } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
               No cumple
             } @else if (levelSum !== null && !selectable(c)) {
@@ -111,7 +113,10 @@
   </div>
   <ng-container sheet-footer>
     <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
-      @if (prompt.kind === 'CONFIRM') {
+      @if (orderOnly) {
+        <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="sendLooked(false)"><eras-icon name="chevron-down" /> Al fondo</button>
+        <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="sendLooked(true)"><eras-icon name="chevron-up" /> Al tope</button>
+      } @else if (prompt.kind === 'CONFIRM') {
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
       } @else {

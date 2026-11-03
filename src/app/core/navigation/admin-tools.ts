@@ -15,6 +15,12 @@ export interface AdminTool {
 
 export const ADMIN_GROUPS: AdminGroup[] = ['Cuentas y acceso', 'Cartas', 'Partidas'];
 
+/**
+ * Holding any of these makes a user an administrator (the Administración button and page). Not manage_decks:
+ * every player has it, to save their own decks.
+ */
+export const ADMIN_PERMISSIONS: Permission[] = ['manage_users', 'manage_roles', 'manage_permissions', 'read_permissions', 'manage_cards'];
+
 /** Administration tools, grouped as on the /admin page. */
 export const ADMIN_TOOLS: AdminTool[] = [
   { label: 'Usuarios', description: 'Cuentas, roles asignados y contraseñas', route: '/users-manager', icon: 'user', group: 'Cuentas y acceso', permissions: ['manage_users'] },

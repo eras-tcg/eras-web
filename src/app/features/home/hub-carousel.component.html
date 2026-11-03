@@ -1,0 +1,49 @@
+@if (loading()) {
+  <div class="slide slide-empty"><eras-spinner /></div>
+} @else if (slide(); as current) {
+  @switch (current.kind) {
+    @case ('edition') {
+      <button
+        type="button"
+        class="slide slide-edition"
+        [style.background-image]="current.edition.editionImage ? 'url(' + current.edition.editionImage + ')' : null"
+        (click)="editionSelected.emit(current.edition.editionId)"
+      >
+        <span class="slide-body">
+          <span class="eyebrow">Edición destacada</span>
+          <span class="slide-title">{{ current.edition.editionName || current.edition.editionId }}</span>
+          @if (current.edition.editionDescription) {
+            <span class="slide-text">{{ current.edition.editionDescription }}</span>
+          }
+        </span>
+      </button>
+    }
+    @case ('news') {
+      <article class="slide slide-news" [class.has-art]="current.image" [style.background-image]="current.image ? 'url(' + current.image + ')' : null">
+        <span class="slide-body">
+          <span class="eyebrow">Noticias · <time [attr.datetime]="current.news.date">{{ current.news.dateLabel }}</time></span>
+          <h2 class="slide-title">{{ current.news.title }}</h2>
+          <p class="slide-text">{{ current.news.excerpt }}</p>
+        </span>
+      </article>
+    }
+  }
+  @if (slides().length > 1) {
+    <button type="button" class="nav prev" aria-label="Anterior" (click)="move(-1)"><eras-icon name="chevron-left" /></button>
+    <button type="button" class="nav next" aria-label="Siguiente" (click)="move(1)"><eras-icon name="chevron-right" /></button>
+    <div class="dots">
+      @for (s of slides(); track $index; let i = $index) {
+        <button
+          type="button"
+          class="dot"
+          [class.on]="i === index() % slides().length"
+          [attr.aria-label]="'Ir a la diapositiva ' + (i + 1)"
+          [attr.aria-current]="i === index() % slides().length"
+          (click)="index.set(i)"
+        ></button>
+      }
+    </div>
+  }
+} @else {
+  <div class="slide slide-empty">Sin novedades por ahora.</div>
+}

@@ -5,9 +5,9 @@ describe('registrationError', () => {
   it('translates the field errors of UsersService', () => {
     const e = new HttpErrorResponse({
       status: 400,
-      error: { password: 'Password must contain at least one special character (!@#$)', email: 'Email should be valid' },
+      error: { password: 'Password must be at least 8 characters', email: 'Email should be valid' },
     });
-    expect(registrationError(e)).toBe('La contraseña necesita un carácter especial (!@#$). El correo no es válido');
+    expect(registrationError(e)).toBe('La contraseña debe tener al menos 8 caracteres. El correo no es válido');
   });
 
   it('translates its single error, also when it comes as text', () => {

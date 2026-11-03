@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
 import { EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from './card-filters';
-import { cardImageUrl, collapseByName, mergeCards, nameVariants, renderEffect, renderKeywordEffect } from './card-rules';
+import { cardImageUrl, collapseByName, matchesFileName, mergeCards, nameVariants, renderEffect, renderKeywordEffect } from './card-rules';
 
 const drive = (over: Partial<DriveCard> = {}): DriveCard => ({
   id: 'd1',
@@ -18,6 +18,26 @@ const card = (over: Partial<CatalogCard> = {}, meta: Partial<CardMeta> | null = 
   ...drive(over),
   meta: meta === null ? null : { id: 'm', ...meta },
   ...('meta' in over ? { meta: over.meta ?? null } : {}),
+});
+
+describe('matchesFileName', () => {
+  it('keeps a record whose file name says the same place', () => {
+    expect(matchesFileName(drive({ file_name: 'ST1-B01-Eisten.jpg' }))).toBe(true);
+    expect(matchesFileName(drive({ edition: 'E1', sub_edition: '3', number: 10, file_name: 'E1_3-B10-Velkerop-1.jpg' }))).toBe(true);
+  });
+
+  it('drops a leftover whose file name says another edition, sub-edition, color or number', () => {
+    // An E1.3 image recorded as E1 (it once sat in the MAIN folder)
+    expect(matchesFileName(drive({ edition: 'E1', sub_edition: null, number: 10, file_name: 'E1_3-B10-ES-707.jpg' }))).toBe(false);
+    expect(matchesFileName(drive({ edition: 'E1', sub_edition: '2', number: 6, color_identity: 'R', file_name: 'E1_3-R06-Caballero.jpg' }))).toBe(false);
+    expect(matchesFileName(drive({ file_name: 'ST1-R01-Eisten.jpg' }))).toBe(false);
+    expect(matchesFileName(drive({ file_name: 'ST1-B02-Eisten.jpg' }))).toBe(false);
+  });
+
+  it('keeps a record without a readable file name', () => {
+    expect(matchesFileName(drive())).toBe(true);
+    expect(matchesFileName(drive({ file_name: 'portada.png' }))).toBe(true);
+  });
 });
 
 describe('mergeCards', () => {

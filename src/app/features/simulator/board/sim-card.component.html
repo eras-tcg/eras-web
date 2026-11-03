@@ -1,5 +1,7 @@
 <eras-game-card
   [imageUrl]="slot().imageUrl"
+  [foil]="slot().finish ?? null"
+  [upsideDown]="upsideDown()"
   [name]="slot().cardName"
   [hidden]="hidden()"
   [peeked]="peeked()"
@@ -25,8 +27,8 @@
   [class.prompt-chosen]="game.promptChosen().has(slot().instanceId)"
   [class.new-card]="zone() === 'hand' && game.newInHand().has(slot().instanceId)"
   [class.attack-target]="attackable()"
-  [class.combat-attacker]="combatRole() === 'attacker'"
-  [class.combat-defender]="combatRole() === 'blocker' || combatRole() === 'target'"
+  [class.combat-attacker]="combatShown() === 'attacker'"
+  [class.combat-defender]="combatShown() === 'blocker' || combatShown() === 'target'"
   cdkOverlayOrigin
   #origin="cdkOverlayOrigin"
   (click)="onClick($event)"
@@ -37,16 +39,16 @@
 />
 
 @if (chainLinks().length) {
-  <eras-chain-marks [links]="chainLinks()" [me]="game.myState()?.userId" />
+  <eras-chain-marks [links]="chainLinks()" [me]="game.myState()?.userId" [upsideDown]="upsideDown()" />
 }
 
 @if (game.pendingTargetSource() === slot().instanceId) {
   <!-- Choosing its target: cancel it from the card itself -->
-  <button type="button" class="cancel-target" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
+  <button type="button" class="cancel-target" [class.turned]="upsideDown()" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
 }
 
-@if (combatRole(); as role) {
-  <span class="combat-badge" [class.attacker]="role === 'attacker'">
+@if (combatShown(); as role) {
+  <span class="combat-badge" [class.attacker]="role === 'attacker'" [class.turned]="upsideDown()">
     <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
     {{ role === 'attacker' ? 'Ataca' : role === 'blocker' ? 'Bloquea' : 'Atacada' }}
   </span>
@@ -93,13 +95,16 @@
     @if (!opponent() && hasEffects()) {
       <button erasMenuItem (triggered)="dialogs.effects(slot(), zone())"><eras-icon name="sparkles" /> Efectos…</button>
     }
+    <!-- The manual actions: in a test room, or for the site's editors (the server refuses them to anyone else online) -->
     @if (zone() === 'field') {
       @if (game.editorMode() && slot().cardType === 'creature') {
         <!-- Manual: between the two lines of the field -->
         <button erasMenuItem (triggered)="toLine()">{{ isFront() ? 'Mover a la retaguardia' : 'Mover a la línea frontal' }}</button>
       }
-      <button erasMenuItem (triggered)="game.tapCard(slot().instanceId, zone(), targetPlayer())">{{ slot().tapped ? 'Enderezar' : 'Agotar' }}</button>
-      @if (slot().strength !== null) {
+      @if (game.editorMode()) {
+        <button erasMenuItem (triggered)="game.tapCard(slot().instanceId, zone(), targetPlayer())">{{ slot().tapped ? 'Enderezar' : 'Agotar' }}</button>
+      }
+      @if (game.editorMode() && slot().strength !== null) {
         <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, -1, targetPlayer())">Reducir fuerza</button>
         <button erasMenuItem (triggered)="game.modifyStrength(slot().instanceId, 1, targetPlayer())">Incrementar fuerza</button>
         @if (slot().strengthModifier) {
@@ -107,21 +112,25 @@
         }
       }
       <button erasMenuItem (triggered)="game.pendingTargetSource.set(slot().instanceId)">Hacer objetivo</button>
-      <button erasMenuItem class="danger" (triggered)="game.destroyCard(slot().instanceId, targetPlayer())">Destruir</button>
+      @if (game.editorMode()) {
+        <button erasMenuItem class="danger" (triggered)="game.destroyCard(slot().instanceId, targetPlayer())">Destruir</button>
+      }
       @if (!opponent()) {
         <button erasMenuItem class="danger" (triggered)="game.sacrificeCard(slot().instanceId)">Sacrificar</button>
       }
-      @if (slot().materials.length) {
+      @if (game.editorMode() && slot().materials.length) {
         <button erasMenuItem (triggered)="dialogs.detach(slot(), 'materials', opponent())">Separar materiales</button>
       }
-      @if (slot().resources.length) {
+      @if (game.editorMode() && slot().resources.length) {
         <button erasMenuItem (triggered)="dialogs.detach(slot(), 'resources', opponent())">Separar recursos</button>
       }
     }
-    @if (!opponent() && zone() !== 'field') {
+    @if (game.editorMode() && !opponent() && zone() !== 'field') {
       <button erasMenuItem (triggered)="game.flipCard(slot().instanceId, zone())">{{ slot().faceDown ? 'Poner boca arriba' : 'Poner boca abajo' }}</button>
     }
-    <hr />
-    <button erasMenuItem class="danger" (triggered)="remove()">Eliminar del juego</button>
+    @if (game.editorMode()) {
+      <hr />
+      <button erasMenuItem class="danger" (triggered)="remove()">Eliminar del juego</button>
+    }
   </eras-menu>
 </ng-template>

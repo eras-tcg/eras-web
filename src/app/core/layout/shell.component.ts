@@ -1,54 +1,46 @@
-import { CdkMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
-import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { AuthService } from '../auth/auth.service';
-import { AvatarStore } from '../auth/avatar.store';
-import { EditModeService } from '../auth/edit-mode.service';
-import { ADMIN_TOOLS } from '../navigation/admin-tools';
-import { MAIN_NAV } from '../navigation/nav-items';
-import { ThemeService } from '../theme/theme.service';
-
 import { VersionService } from '../version/version.service';
+import { AppToolsComponent } from './app-tools.component';
+
+/**
+ * App frame. There is no navigation bar: the home hub is the menu and every screen draws its own top strip
+ * ("back" and the quick buttons, see <eras-screen-bar>). The header only carries the banners.
+ */
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CdkMenuTrigger, MenuComponent, MenuItemDirective, ButtonComponent, IconComponent, AvatarComponent],
+  imports: [RouterOutlet, IconComponent, AppToolsComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
-  protected readonly editMode = inject(EditModeService);
-  protected readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
   protected readonly version = inject(VersionService);
 
-  protected readonly nav = MAIN_NAV;
-  protected readonly menuOpen = signal(false);
-  protected readonly hasAdminTools = computed(() => {
-    this.auth.user();
-    return ADMIN_TOOLS.some((t) => t.permissions.some((p) => this.auth.can(p)));
-  });
-  protected readonly avatar = inject(AvatarStore);
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: '' },
+  );
 
-  private readonly navigated = this.router.events.pipe(filter((e) => e instanceof NavigationEnd));
-
-  /** The simulator board uses the whole screen: the navbar gets compact there. */
-  protected readonly compact = toSignal(this.navigated.pipe(map(() => /^\/simulator\/[^/]+\/board/.test(this.router.url))), {
-    initialValue: false,
-  });
+  /** The hub screens (home, Jugar, Social): they fit the window exactly. */
+  protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
-    // Close the mobile menu after any navigation
-    this.navigated.subscribe(() => this.menuOpen.set(false));
+    // The hub screens fit the window: the page does not scroll there
+    const body = inject(DOCUMENT).body;
+    effect(() => body.classList.toggle('eras-hub', this.hub()));
 
-    // Publish the header height (it changes with the edit-mode banner) for full-screen pages:
+    // Publish the header height (it changes with the banners) for full-screen pages:
     // they size themselves with calc(100dvh - var(--app-header-height)).
     const host = inject<ElementRef<HTMLElement>>(ElementRef);
     const destroyRef = inject(DestroyRef);
@@ -56,20 +48,12 @@ export class ShellComponent {
       this.version.start();
       const header = host.nativeElement.querySelector('header');
       if (!header) return;
-      const observer = new ResizeObserver(() =>
-        document.documentElement.style.setProperty('--app-header-height', header.getBoundingClientRect().height + 'px'),
-      );
+      // Published right away too: a header that never shows (no banner) is never reported by the observer
+      const publish = () => document.documentElement.style.setProperty('--app-header-height', header.getBoundingClientRect().height + 'px');
+      publish();
+      const observer = new ResizeObserver(publish);
       observer.observe(header);
       destroyRef.onDestroy(() => observer.disconnect());
     });
-  }
-
-  protected go(url: string): void {
-    void this.router.navigateByUrl(url);
-  }
-
-  protected logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/login');
   }
 }

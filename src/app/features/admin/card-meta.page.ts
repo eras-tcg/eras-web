@@ -26,7 +26,7 @@ type View = 'orphans' | 'all';
   selector: 'eras-card-meta-page',
   imports: [PageComponent, TabsComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
-    <eras-page title="Metadatos de cartas" subtitle="Cada metadato se une a su imagen por edición, número, sub-edición y color" width="wide">
+    <eras-page title="Metadatos de cartas" width="wide">
       <button page-actions erasButton variant="secondary" type="button" [disabled]="store.loading()" (click)="store.load(true)">Recargar</button>
 
       @if (fb.feedback(); as f) {

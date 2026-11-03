@@ -1,0 +1,17 @@
+{
+  "name": "ERAS TCG",
+  "short_name": "ERAS",
+  "description": "Cartas, mazos y simulador de ERAS TCG.",
+  "lang": "es",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#2A5274",
+  "theme_color": "#2A5274",
+  "icons": [
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

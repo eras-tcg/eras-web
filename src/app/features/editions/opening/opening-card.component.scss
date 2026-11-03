@@ -1,0 +1,265 @@
+@use 'mixins/foil';
+
+// A card dealt face down; it turns over (the two faces turn around the vertical axis)
+:host {
+  position: relative;
+  display: block;
+  inline-size: clamp(5rem, 9vw, 8.5rem);
+  aspect-ratio: 63 / 88;
+  perspective: 900px;
+  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+:host(.aura-sr) {
+  --aura: var(--color-rarity-sr);
+}
+
+:host(.aura-sec) {
+  --aura: var(--color-rarity-sec);
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translateY(-2.5rem) rotate(-6deg);
+  }
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  backface-visibility: hidden;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.back {
+  border: 2px solid var(--color-hub-accent);
+  background: var(--color-card-back);
+  box-shadow: var(--shadow-md);
+}
+
+.front {
+  background: var(--color-surface-muted);
+  box-shadow: var(--shadow-md);
+  transform: rotateY(180deg);
+}
+
+.front img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+:host(.up) .back {
+  transform: rotateY(-180deg);
+}
+
+:host(.up) .front {
+  transform: rotateY(0);
+}
+
+// Face down, an SR or SEC card already glows in its rarity's color; the plain ones do not
+:host(.aura-sr:not(.up)) .back,
+:host(.aura-sec:not(.up)) .back {
+  border-color: var(--aura);
+  box-shadow:
+    0 0 0 2px var(--aura),
+    0 0 1.5rem color-mix(in srgb, var(--aura) 80%, transparent);
+  animation: aura-card 1.6s ease-in-out infinite;
+}
+
+// Passed over while the plain cards turn: it only trembles
+:host(.shake) {
+  z-index: 1;
+  animation: tremble 0.32s ease-in-out infinite;
+}
+
+@keyframes tremble {
+  25% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+
+  75% {
+    transform: translateX(3px) rotate(2deg);
+  }
+}
+
+// Turned at last: it rises, grows, bursts in its color and settles, glowing
+:host(.big) {
+  z-index: 2;
+  animation: reveal-big 1.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:host(.big) .face {
+  transition-duration: 0.9s;
+}
+
+:host(.big) .front {
+  box-shadow:
+    0 0 0 2px var(--aura),
+    0 0 1.75rem color-mix(in srgb, var(--aura) 85%, transparent);
+  animation: aura-card 1.6s ease-in-out 1.3s infinite;
+}
+
+:host(.big)::after {
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--aura) 90%, transparent) 0%, transparent 65%);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  animation: burst-light 1.3s ease-out;
+}
+
+@keyframes reveal-big {
+  35% {
+    transform: translateY(-1.5rem) scale(1.45);
+  }
+
+  65% {
+    transform: translateY(-0.5rem) scale(1.3);
+  }
+}
+
+@keyframes burst-light {
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes aura-card {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--aura),
+      0 0 2.75rem var(--aura);
+  }
+}
+
+/* Foils: in the second pass the card turns all the way around and comes back shining, throwing sparkles */
+:host(.foiled) {
+  z-index: 3;
+  transform-style: preserve-3d;
+  animation: foil-turn 1.1s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+@keyframes foil-turn {
+  0% {
+    transform: perspective(900px) rotateY(0);
+  }
+
+  50% {
+    transform: perspective(900px) translateY(-0.75rem) scale(1.18) rotateY(180deg);
+  }
+
+  100% {
+    transform: perspective(900px) rotateY(360deg);
+  }
+}
+
+// The foil layer: a rainbow sheen sliding across (foil), or a starlight grain (prism)
+.foil {
+  position: absolute;
+  inset: 0;
+  // Overlay keeps the card's own light and dark (a dodge over the whole card washes it out white)
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: foil-in 0.4s ease-out 0.5s both;
+}
+
+// The foil every card has (its own blend), as it shows up
+:host(.foil-foil) .foil {
+  mix-blend-mode: normal;
+}
+
+:host(.foil-foil) .foil::before {
+  @include foil.rainbow;
+}
+
+:host(.foil-prism) .foil {
+  @include foil.scaled;
+
+  mix-blend-mode: normal;
+}
+
+// Prismatic: a starlight grain of dots, and the light sweeping across it
+:host(.foil-prism) .foil::before {
+  @include foil.glitter-dots;
+}
+
+:host(.foil-prism) .foil::after {
+  @include foil.glitter-light(0.9s);
+}
+
+:host(.foiled.foil-prism) .front {
+  box-shadow:
+    0 0 0 2px var(--color-hub-glow),
+    0 0 1.5rem color-mix(in srgb, var(--color-rarity-sec) 70%, transparent);
+}
+
+@keyframes foil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// Sparkles: little stars thrown out as the foil shows, slowing down; a prismatic card throws more light
+.sparkle {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: var(--size);
+  block-size: var(--size);
+  background: var(--color-hub-text);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 4px var(--color-hub-glow));
+  opacity: 0;
+  pointer-events: none;
+  animation: sparkle 1s cubic-bezier(0.05, 0.9, 0.1, 1) 0.5s both;
+}
+
+:host(.foil-prism) .sparkle:nth-child(odd) {
+  background: var(--color-rarity-sec);
+}
+
+:host(.foil-prism) .sparkle:nth-child(3n) {
+  background: var(--color-rarity-uc);
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(0.4);
+  }
+
+  1% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--dist)) scale(1) rotate(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  :host::after,
+  .face,
+  .foil,
+  .foil::before,
+  .foil::after,
+  .sparkle {
+    animation: none !important;
+    transition: none;
+  }
+}

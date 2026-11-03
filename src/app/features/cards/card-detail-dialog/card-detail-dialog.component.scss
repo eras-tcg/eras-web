@@ -10,6 +10,7 @@
   position: relative;
   max-block-size: calc(100dvh - 2 * var(--space-5));
   overflow: auto;
+  overscroll-behavior: none;
   padding: var(--space-7) var(--space-5) var(--space-5);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);

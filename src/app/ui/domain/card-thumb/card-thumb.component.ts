@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { CardImageComponent } from '../card-image/card-image.component';
 
-/** Clickable card in a grid; `count` shows "×N" in the corner, `dimmed` greys it out. */
+/** Clickable card in a grid; `count` shows "×N" in the corner, `dimmed` greys it out, `foil` makes it shine. */
 @Component({
   selector: 'eras-card-thumb',
   imports: [CardImageComponent],
   template: `
     <button type="button" [attr.aria-label]="label()" [class.dimmed]="dimmed()" [class.active]="active()" (click)="selected.emit()">
-      <eras-card-image [src]="imageUrl()" [alt]="name()" [badge]="badge()" [badgeTone]="badgeTone()" />
+      <eras-card-image [src]="imageUrl()" [alt]="name()" [badge]="badge()" [badgeTone]="badgeTone()" [foil]="foil()" />
       @if (count() > 1 || (showSingleCount() && count() === 1)) {
         <span class="count">×{{ count() }}</span>
       }
@@ -53,6 +53,7 @@ export class CardThumbComponent {
   readonly showSingleCount = input(false, { transform: booleanAttribute });
   readonly dimmed = input(false, { transform: booleanAttribute });
   readonly active = input(false, { transform: booleanAttribute });
+  readonly foil = input<'foil' | 'prism' | null>(null);
   readonly selected = output<void>();
 
   protected label(): string {

@@ -18,7 +18,7 @@ const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure:
       <ol class="cards" aria-label="Cartas de tu mazo">
         @for (c of cards(); track c.instanceId) {
           <li>
-            <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [attr.aria-label]="c.cardName" />
+            <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [attr.aria-label]="c.cardName" />
             <eras-card-peek [card]="c" [mine]="true" />
           </li>
         }

@@ -87,14 +87,40 @@ body.eras-acting-rival {
   background-attachment: fixed;
 }
 
-// The simulator can hide the site's navigation bar to give the table the whole height
-body.eras-hide-header eras-shell header.header {
-  display: none;
+// No overscroll bounce (rubber-band): the page stops dead at its ends. Not on every element: anything that clips
+// (overflow: hidden, e.g. a deck cover) counts as a scroll container, and would then swallow the wheel instead
+// of passing it on to the list it sits in. Each inner area that scrolls on its own sets it next to its overflow.
+html,
+body {
+  overscroll-behavior: none;
+}
+
+// Hub screens (home, Jugar, Social) fit the window: no scrolling at all
+html:has(body.eras-hub),
+body.eras-hub {
+  overflow: hidden;
+}
+
+// A phone held upright in a game: the table asks to turn it, and its choices and dialogs wait hidden (they are in
+// the top layer, over any z-index) until it is turned
+@media (orientation: portrait) and (max-width: 47.99rem) {
+  body.eras-in-game .cdk-overlay-container,
+  body.eras-in-game .cdk-overlay-popover {
+    display: none !important;
+  }
 }
 
 // A chain is shown above the choices: they leave it room at the top
 body.eras-chain-open {
   --sheet-max-block-size: 58vh;
+}
+
+// Phones in landscape: no height to share; the choice goes over the chain (its title names the link)
+@media (orientation: landscape) and (max-height: 30rem) {
+  body,
+  body.eras-chain-open {
+    --sheet-max-block-size: 90vh;
+  }
 }
 
 /* Visually hidden, still read by screen readers */

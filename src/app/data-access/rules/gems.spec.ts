@@ -1,37 +1,45 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_GEMS, excess, gemTrack, nextTurn, remaining, spend, spendLimit } from './gems';
+import { PRACTICE_START, canAttack, counterTrack, endTurn, gemsOf, pay, payLimit } from './gems';
 
 describe('gems', () => {
-  it('limits spending to your gems plus the rival gems', () => {
-    expect(spendLimit(INITIAL_GEMS)).toBe(6);
-    const { state } = spend(spend(INITIAL_GEMS, 2).state, 3);
-    expect(state.spent).toBe(5);
-    expect(remaining(state)).toBe(-2);
-    expect(excess(state)).toBe(2);
-    expect(spend(state, 2).error).toContain('1 gemas');
-    expect(spend(state, 0).state).toBe(state);
+  it('lets you pay down to minus the rival Marcador, and the rival has what you lose', () => {
+    expect(payLimit(PRACTICE_START)).toBe(6);
+    const { game } = pay(PRACTICE_START, 5);
+    expect(gemsOf(game, 'you')).toBe(-2);
+    expect(gemsOf(game, 'rival')).toBe(2);
+    expect(pay(game, 2).error).toContain('1 gema más');
+    expect(pay(game, 0).game).toBe(game);
   });
 
-  it('gives the excess to the rival and grows both counters up to 5', () => {
-    const spent = spend(INITIAL_GEMS, 5).state;
-    const { state, message } = nextTurn(spent);
-    expect(message).toContain('2 gemas');
-    expect(state).toEqual({ playerGems: 4, rivalGems: 3 + 2 + 4, playerCounter: 4, rivalCounter: 4, spent: 0 });
-    let s = state;
-    for (let i = 0; i < 5; i++) s = nextTurn(s).state;
-    expect([s.playerCounter, s.rivalCounter]).toEqual([5, 5]);
+  it('forbids attacking while you are in debt', () => {
+    expect(canAttack(PRACTICE_START)).toBe(true);
+    expect(canAttack(pay(PRACTICE_START, 3).game)).toBe(true);
+    expect(canAttack(pay(PRACTICE_START, 4).game)).toBe(false);
   });
 
-  it('paints the track: available, spent from the outside in, and excess on the right', () => {
-    const track = gemTrack(spend(INITIAL_GEMS, 4).state);
+  it('loses unspent gems at the end of the turn, but a debt goes to the rival', () => {
+    const plain = endTurn(PRACTICE_START);
+    expect(plain.game).toEqual({ counter: -4, markers: { you: 3, rival: 4 }, turn: 'rival' });
+    expect(plain.message).toContain('arranca con 4 gemas');
+
+    const debt = endTurn(pay(PRACTICE_START, 5).game);
+    expect(gemsOf(debt.game, 'rival')).toBe(6);
+    expect(debt.message).toContain('4 + 2');
+  });
+
+  it('raises each Marcador up to 5', () => {
+    let g = PRACTICE_START;
+    for (let i = 0; i < 8; i++) g = endTurn(g).game;
+    expect(g.markers).toEqual({ you: 5, rival: 5 });
+    expect(gemsOf(g, g.turn)).toBe(5);
+  });
+
+  it('draws the Contador from your 10 to the rival 10, with the token and the paying limit', () => {
+    const track = counterTrack(pay(PRACTICE_START, 1).game);
     expect(track).toHaveLength(21);
-    const states = (side: string) => track.filter((t) => t.side === side && t.state !== 'empty').map((t) => `${t.value}:${t.state}`);
-    expect(states('player')).toEqual(['3:spent', '2:spent', '1:spent']);
-    expect(states('rival')).toEqual(['1:excess']);
-    expect(gemTrack(spend(INITIAL_GEMS, 1).state).filter((t) => t.side === 'player' && t.state !== 'empty').map((t) => t.state)).toEqual([
-      'spent',
-      'available',
-      'available',
-    ]);
+    expect(track.filter((s) => s.state === 'you').map((s) => s.value)).toEqual([2, 1]);
+    expect(track.find((s) => s.current)?.value).toBe(2);
+    const limit = track.find((s) => s.limit);
+    expect([limit?.side, limit?.value]).toEqual(['rival', 3]);
   });
 });

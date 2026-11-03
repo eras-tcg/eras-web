@@ -156,3 +156,8 @@ eras-sheet.with-panel {
   inline-size: 1rem;
   block-size: 1rem;
 }
+
+// A disabled button swallows the mouse: the card can still be dragged to order it
+.pick:disabled {
+  pointer-events: none;
+}

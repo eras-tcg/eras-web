@@ -136,8 +136,14 @@ dd {
   inset-block-start: 0;
 }
 
-.top:empty {
+.top:empty,
+.under:empty {
   display: none;
+}
+
+// Under the image, in its column
+.under {
+  grid-column: 2;
 }
 
 /* Stacked: the controls centered over the image, a little apart from the printing badges */
@@ -168,8 +174,14 @@ dd {
   font-size: var(--font-size-xs);
 }
 
+:host(.stacked) .under {
+  order: 1;
+  align-self: stretch;
+}
+
 :host(.stacked) .image {
-  position: static;
+  // Not sticky here, but still positioned: a foil copy's shine is laid over the image itself
+  position: relative;
   order: 1;
   inline-size: min(100%, 16rem);
   align-self: center;
@@ -211,7 +223,7 @@ dd {
   }
 
   .image {
-    position: static;
+    position: relative;
     grid-row: 1;
     inline-size: min(100%, 16rem);
     justify-self: center;

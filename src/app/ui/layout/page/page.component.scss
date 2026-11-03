@@ -1,41 +1,66 @@
+// The bar spans the whole width at the hub screens' own top padding (hub-screen), so "back", the title and the
+// quick buttons sit in the same place on every screen; only the content keeps the page's width, centered
 :host {
+  --page-top: max(var(--space-5), env(safe-area-inset-top));
+
   display: block;
-  margin-inline: auto;
-  padding: var(--space-6) var(--layout-gutter) var(--space-8);
+  inline-size: 100%;
+  padding: var(--page-top) max(var(--layout-gutter), env(safe-area-inset-right)) var(--space-8)
+    max(var(--layout-gutter), env(safe-area-inset-left));
 }
 
-:host(.width-narrow) {
+@media (max-width: 63.99rem) {
+  :host {
+    --page-top: max(var(--space-4), env(safe-area-inset-top));
+  }
+}
+
+// Stays in place while the screens change (view transitions)
+.bar {
+  margin-block-end: var(--space-5);
+  view-transition-name: screen-bar;
+}
+
+:host(.width-narrow) .content {
   max-inline-size: 36rem;
 }
-:host(.width-default) {
+:host(.width-default) .content {
   max-inline-size: var(--layout-max-width);
 }
-:host(.width-wide) {
-  max-inline-size: 90rem;
+// Wide: nearly the whole window, with only a narrow margin on big screens
+:host(.width-wide) .content {
+  max-inline-size: 112rem;
 }
 
-.header {
+.heading {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-block-end: var(--space-5);
+  align-items: center;
+  // The height of "back": a one-line title sits centered beside it
+  min-block-size: 2.5rem;
+  min-inline-size: 0;
 }
 
+// The game's display face, in capitals, like the hub's menu
 .title {
-  font-size: var(--font-size-2xl);
-}
-
-.subtitle {
-  margin-block-start: var(--space-1);
-  color: var(--color-text-muted);
+  margin: 0;
+  // The accent bar on the title itself, as on the hub screens: the same size, and it travels with the title
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--color-hub-accent);
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  // A long name takes more lines instead of pushing the buttons around
+  overflow-wrap: anywhere;
+  view-transition-name: screen-title;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  margin-inline-start: auto;
 }
 
 .actions:empty {
@@ -46,6 +71,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  inline-size: 100%;
+  margin-inline: auto;
 }
 
 // fill: the page is exactly the height left below the app header (--app-header-height, set by the shell);
@@ -54,16 +81,24 @@
   display: flex;
   flex-direction: column;
   inline-size: 100%;
-  block-size: calc(100dvh - var(--app-header-height, 3.5rem));
-  padding-block: var(--space-4);
+  block-size: calc(100dvh - var(--app-header-height, 0px));
+  padding-block: var(--page-top) var(--space-4);
 }
 
-:host(.fill) .header {
-  margin-block-end: var(--space-3);
+:host(.fill) .bar {
+  margin-block-end: var(--space-4);
 }
 
 :host(.fill) .content {
   flex: 1;
   gap: var(--space-3);
   min-block-size: 0;
+}
+
+// Phones: a smaller title, so long names fit beside the back button and the quick buttons
+@media (max-width: 40rem) {
+  .title {
+    font-size: 1.25rem;
+    letter-spacing: 0.03em;
+  }
 }

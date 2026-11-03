@@ -64,7 +64,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
                 (click)="canAct() && toggle(c.instanceId)"
               >
                 <eras-game-card
-                  [imageUrl]="c.imageUrl"
+                  [imageUrl]="c.imageUrl" [foil]="c.finish ?? null"
                   [name]="c.cardName"
                   [hidden]="isHidden(c)"
                   [peeked]="isPeeked(c)"
@@ -164,7 +164,8 @@ export class ZoneDialogComponent {
   protected readonly title = computed(() => `${ZONE_LABELS[this.data.zone]}${this.data.opponent ? ' del rival' : ''}`);
   protected readonly destinations = computed(() => DESTINATIONS.filter((d) => d.zone !== this.data.zone));
   /** My zone, or in a test room either side's (the other side's actions are done as that side). */
-  protected readonly editable = computed(() => !this.data.opponent || this.game.editorRoom());
+  /** Moving cards by hand: in a test room, or for the site's editors (the server refuses it to anyone else online). */
+  protected readonly editable = computed(() => this.game.editorMode() && (!this.data.opponent || this.game.editorRoom()));
   /** The order of the deck, lives and hand is changed only in a test room. */
   protected readonly canReorder = computed(
     () => this.editable() && (this.data.zone === 'discardPile' || this.data.zone === 'tributeZone' || (this.game.editorRoom() && this.data.zone !== 'field')),
@@ -237,7 +238,7 @@ export class ZoneDialogComponent {
       groups: [
         { label: 'Zona', options: this.editable() ? this.zones() : [] },
         { label: 'Orden en ' + ZONE_LABELS[this.data.zone].toLowerCase(), options: order },
-        { label: 'Carta', options: [...other, { id: 'remove', label: 'Eliminar del juego', danger: true }] },
+        { label: 'Carta', options: this.editable() ? [...other, { id: 'remove', label: 'Eliminar del juego', danger: true }] : other },
       ],
     });
     if (!id) return;
@@ -296,7 +297,7 @@ export class ZoneDialogComponent {
 
   /** What the rules let me do with one of my cards here now. */
   protected actionsOf(c: CardSlot) {
-    return this.data.opponent || this.lookOnly() ? [] : legalActions(this.game.rules(), c, this.data.zone);
+    return this.data.opponent || this.lookOnly() ? [] : legalActions(this.game.rules(), c);
   }
 
   protected effectsOf(c: CardSlot) {

@@ -24,7 +24,7 @@ import { CardPeekComponent } from './card-peek.component';
                 @for (c of starters(); track c.instanceId) {
                   <div class="slot">
                     <button type="button" class="pick" [attr.aria-label]="'Elegir ' + c.cardName" (click)="game.selectStarter(c.instanceId)">
-                      <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
+                      <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
                     </button>
                     <eras-card-peek [card]="c" [mine]="true" />
                   </div>
@@ -48,7 +48,7 @@ import { CardPeekComponent } from './card-peek.component';
                 @for (c of topFive(); track c.instanceId) {
                   <div class="slot">
                     <button type="button" class="pick" [class.chosen]="toBottom().has(c.instanceId)" [attr.aria-pressed]="toBottom().has(c.instanceId)" [attr.aria-label]="c.cardName" (click)="toggle(c.instanceId)">
-                      <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" />
+                      <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
                       <span class="tag">{{ toBottom().has(c.instanceId) ? 'Al fondo' : '' }}</span>
                     </button>
                     <eras-card-peek [card]="c" [mine]="true" />

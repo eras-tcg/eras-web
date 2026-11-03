@@ -23,7 +23,6 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { feedbackState } from '../admin-feedback';
 import { GameEditData, GameEditDialogComponent } from './game-edit-dialog.component';
 import { GameFormComponent } from './game-form.component';
-import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 type StatsSort = 'deckName' | 'played' | 'won' | 'ratio';
 
@@ -32,7 +31,6 @@ type StatsSort = 'deckName' | 'played' | 'won' | 'ratio';
   selector: 'eras-games-page',
   imports: [
     DatePipe,
-    PluralPipe,
     PercentPipe,
     PageComponent,
     GridComponent,

@@ -1,0 +1,163 @@
+// The opening fills the screen left below the top row (the page is `fill`): the table of packs, then each pack
+// breaking open and its cards turning, then (only at the end) the full list, the one part that scrolls. The pack,
+// its break and the cards have their own components (./opening).
+
+eras-icon[name='gem'] {
+  color: var(--color-hub-accent);
+}
+
+.stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 0;
+  // The auras, lifts and bursts stay inside: they never make the page scroll
+  overflow: clip;
+}
+
+// "Saltar": a quiet button in its own row at the foot, on the right (the stage leaves it that room)
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.offer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+// The summary's special cards glow in their rarity's color
+.aura-sr {
+  --aura: var(--color-rarity-sr);
+}
+
+.aura-sec {
+  --aura: var(--color-rarity-sec);
+}
+
+/* 1. The table: every pack bought, dealt in, sized (--pack-width, from the component) so all of them fit */
+.table {
+  display: flex;
+  flex: 1;
+  // A click anywhere opens the packs
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--space-4);
+  min-block-size: 0;
+}
+
+.packs {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  // The same gap the component uses to size the packs
+  gap: 12px;
+  inline-size: 100%;
+  min-block-size: 0;
+  // Room for the auras inside the measured box (the component sizes the packs from the box without it)
+  padding: 1.75rem;
+  overflow: hidden;
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translateY(-2.5rem) rotate(-6deg);
+  }
+}
+
+/* 2. Opening: the pack breaks open, then its cards turn one by one */
+.opening {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  inline-size: 100%;
+  min-block-size: 0;
+}
+
+// The whole screen is the button to go on; each card, to see it
+.opening.waiting {
+  cursor: pointer;
+}
+
+.opening.waiting eras-opening-card {
+  cursor: zoom-in;
+}
+
+.progress {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  max-inline-size: 70rem;
+}
+
+@keyframes aura-card {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--aura),
+      0 0 2.75rem var(--aura);
+  }
+}
+
+/* 3. The full list: it scrolls, the cards arrive one after another */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-self: stretch;
+  min-block-size: 0;
+  padding: var(--space-1);
+  // Only downwards: the cards arrive tilted, and the ones on the edge would scroll it sideways for a moment
+  overflow: hidden auto;
+  overscroll-behavior: none;
+}
+
+.arrive {
+  border-radius: var(--radius-md);
+  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+eras-card-thumb.aura-sr,
+eras-card-thumb.aura-sec {
+  box-shadow:
+    0 0 0 2px var(--aura),
+    0 0 1.5rem color-mix(in srgb, var(--aura) 70%, transparent);
+  animation:
+    deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    aura-card 1.8s ease-in-out 0.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrive,
+  eras-card-thumb::after,
+  eras-card-thumb.aura-sr,
+  eras-card-thumb.aura-sec {
+    animation: none;
+  }
+
+}

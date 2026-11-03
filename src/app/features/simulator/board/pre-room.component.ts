@@ -1,28 +1,30 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
-import { EditModeService } from '@core/auth/edit-mode.service';
-import { apiErrorMessage } from '@core/http/api-error';
-import { RoomsApi } from '@data/simulator/rooms.api';
-import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
+import { coverFinish, ownedCount, shineOf } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
+import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState } from '@data/simulator/simulator.model';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
-import { StackComponent } from '@ui/layout/stack/stack.component';
+import { AlertComponent } from '@ui/feedback/alert/alert.component';
+import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
 
 /**
- * The room before a game: each player picks a deck and its starter (the deck's first Iniciador by default),
+ * The room before a game, in the hub's line (the top row of every screen, a "versus" of the two seats with their
+ * starters and nameplates, and a big start): each player picks a deck and its starter (the deck's first Iniciador by default),
  * the room's owner (its creator) picks who goes first and may take the other player out, and the game starts
  * when both confirm. After a game "Cambiar mazo" comes back
  * here, in the same room.
@@ -30,17 +32,19 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 @Component({
   selector: 'eras-pre-room',
   imports: [
-    StackComponent,
+    NgTemplateOutlet,
     GridComponent,
-    SectionHeaderComponent,
-    FormFieldComponent,
+    AlertComponent,
+    ToggleGroupComponent,
     DeckCoverComponent,
     GameCardComponent,
     EmptyStateComponent,
+    AvatarComponent,
     BadgeComponent,
     ButtonComponent,
+    IconButtonComponent,
+    IconComponent,
     SpinnerComponent,
-    CardComponent,
   ],
   templateUrl: './pre-room.component.html',
   styleUrl: './pre-room.component.scss',
@@ -52,28 +56,7 @@ export class PreRoomComponent {
   private readonly cards = inject(CardsStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly rooms = inject(RoomsApi);
-  private readonly editMode = inject(EditModeService);
-
-  /** In the site's edit mode, the owner waiting alone may play both sides (a test room). */
-  protected readonly canPlayAlone = computed(() => this.editMode.active() && this.game.isHost() && !this.game.editorRoom() && !this.rival());
-  protected readonly goingAlone = signal(false);
-  protected readonly aloneError = signal<string | null>(null);
-
-  protected async playAlone(): Promise<void> {
-    const room = this.game.roomId();
-    if (!room || this.goingAlone()) return;
-    this.goingAlone.set(true);
-    this.aloneError.set(null);
-    try {
-      // The room's broadcast brings the other side
-      await firstValueFrom(this.rooms.playAlone(room));
-    } catch (e) {
-      this.aloneError.set(apiErrorMessage(e, 'No se pudo pasar a partida de prueba'));
-    } finally {
-      this.goingAlone.set(false);
-    }
-  }
+  private readonly collection = inject(CollectionStore);
 
   protected readonly me = computed(() => this.auth.user()?.id ?? '');
   protected readonly search = signal('');
@@ -81,8 +64,15 @@ export class PreRoomComponent {
 
   protected readonly mine = computed(() => this.game.myState());
   private readonly rival = computed(() => this.game.opponentState());
-  /** Me first, then the rival (or an empty seat). */
-  protected readonly seats = computed<(PlayerState | null)[]>(() => [this.mine() ?? null, this.rival() ?? null]);
+  /**
+   * Me first, then the rival (or an empty seat). In solo mode the order stays put (the owner first): choosing the
+   * other side's deck only moves the highlight, the seats do not swap.
+   */
+  protected readonly seats = computed<(PlayerState | null)[]>(() => {
+    const seats = [this.mine() ?? null, this.rival() ?? null];
+    const host = this.game.state()?.hostId;
+    return this.game.editorRoom() && seats[1]?.userId === host ? [seats[1], seats[0]] : seats;
+  });
 
   protected readonly allDecks = computed(() => {
     const mine = this.decks.myDecks();
@@ -96,15 +86,23 @@ export class PreRoomComponent {
   });
 
   /**
-   * Decks with cards the simulator does not run yet: they cannot be chosen (the server refuses them too), except in a
-   * test room, where those cards are tried by hand.
+   * Decks that cannot be chosen, and why (the server refuses them too): with cards the simulator does not run yet, or
+   * with copies the player lacks in their collection. A test room plays anything (cards are tried there by hand).
    */
   protected readonly unplayable = computed(() => {
     const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
-    const result = new Set<string>();
+    const collection = this.collection.collection();
+    const result = new Map<string, string>();
     if (this.game.editorRoom()) return result;
     for (const deck of this.allDecks()) {
-      if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) result.add(deck.id);
+      if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) {
+        result.set(deck.id, 'Tiene cartas sin programar');
+        continue;
+      }
+      const needed = new Map<string, number>();
+      for (const id of deck.cards) needed.set(id, (needed.get(id) ?? 0) + 1);
+      const lacking = [...needed].reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
+      if (lacking > 0) result.set(deck.id, `Te ${lacking === 1 ? 'falta 1 carta' : 'faltan ' + lacking + ' cartas'} de tu colección`);
     }
     return result;
   });
@@ -124,6 +122,7 @@ export class PreRoomComponent {
     ...this.seats().filter((p): p is PlayerState => !!p).map((p) => ({ id: p.userId, label: !this.game.editorRoom() && p.userId === this.me() ? 'Yo' : p.username })),
     { id: 'random', label: 'Aleatorio' },
   ]);
+  protected readonly firstToggle = computed<ToggleOption[]>(() => this.firstOptions().map((o) => ({ value: o.id, label: o.label })));
   protected readonly firstLabel = computed(() => {
     const choice = this.firstChoice();
     if (choice === 'random') return 'Aleatorio';
@@ -150,19 +149,25 @@ export class PreRoomComponent {
     if (id) void this.decks.loadMine(id);
   }
 
-  /** The starter chosen by a player, from their deck. */
+  /** The starter chosen by a player, from their deck list (of the rival's, the server sends only that card). */
   protected starterOf(p: PlayerState): CardSlot | null {
-    return p.starterCardId ? (p.deck.find((c) => c.cardId === p.starterCardId) ?? null) : null;
+    return p.starterCardId ? (p.originalDeck.find((c) => c.cardId === p.starterCardId) ?? null) : null;
   }
 
   /** Frees my seat (the board's exit guard sends it); the room passes on if I own it. */
+  /** Back: solo mode to "Jugar" (where it started), an online room to the rooms. */
   protected leave(): void {
-    void this.router.navigateByUrl('/simulator');
+    void this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator');
   }
 
   protected async copy(): Promise<void> {
     await navigator.clipboard?.writeText(`${location.origin}/simulator/${this.game.roomId() ?? ''}`).catch(() => undefined);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
+  }
+
+  /** The player's finest copy of a deck's cover card shines over the cover. */
+  protected coverShine(deck: Deck): 'foil' | 'prism' | null {
+    return shineOf(coverFinish(deck, this.cards.cards(), this.collection.collection()));
   }
 }

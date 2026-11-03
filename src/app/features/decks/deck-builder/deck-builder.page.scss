@@ -1,3 +1,76 @@
+// The page is one screen high (fill): the three panes take what is left below the title
+.bench {
+  flex: 1;
+  block-size: auto;
+  min-block-size: 0;
+}
+
+// Narrow screens: the panes stack and the page scrolls
+@media (max-width: 48rem) {
+  .builder.builder {
+    block-size: auto;
+  }
+}
+
+// The deck's header: its name on a bare line, with the public/private switch beside it
+.deck-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deck-name {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-block-end: 1px solid var(--color-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.deck-name:focus {
+  border-block-end-color: var(--color-hub-accent);
+}
+
+// The count, then the icons on the right
+.deck-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deck-bar strong {
+  margin-inline-end: auto;
+}
+
+.lacking-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: help;
+}
+
+.lacking-note eras-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+// A card the player does not own (in the search) or not enough copies of (in the deck): in grey
+.lacking eras-card-thumb {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 // A card of the deck with its buttons in the corners: − bottom left, + bottom right, cover top left (they show on
 // hover or focus; always on touch). The count stays top right.
 .entry {
@@ -88,6 +161,7 @@
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+  overscroll-behavior: none;
 }
 
 .metrics-drawer {

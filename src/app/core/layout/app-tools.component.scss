@@ -1,0 +1,121 @@
+:host {
+  display: flex;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  // The same buttons on every screen: they stay put while the screens change (view transitions)
+  view-transition-name: app-tools;
+}
+
+// Over the hub's artwork: the --color-hub-* tokens, the same in every theme
+:host(.on-art) {
+  color: var(--color-hub-text);
+  text-shadow: 0 1px 3px var(--color-hub-scrim);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 4.5rem;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  // Buttons and links alike take the shadow over the artwork (the browser resets it on buttons)
+  text-shadow: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard);
+}
+
+.item:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+:host(.on-art) .item:hover {
+  background: color-mix(in srgb, var(--color-hub-scrim) 40%, transparent);
+  color: var(--color-hub-text);
+}
+
+.item eras-icon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+:host(.on-art) .item eras-icon {
+  filter: drop-shadow(0 1px 2px var(--color-hub-scrim));
+}
+
+// Edit mode on: only its icon changes color
+.item.on eras-icon {
+  color: var(--color-warning);
+}
+
+// Sign out stands apart: red, also over the hub's artwork
+.item.sign-out,
+:host(.on-art) .item.sign-out:hover {
+  color: var(--color-danger);
+}
+
+.gems eras-icon {
+  color: var(--color-hub-accent);
+}
+
+.gems .label {
+  font-variant-numeric: tabular-nums;
+}
+
+// Narrow screens: icons only (the label stays for screen readers)
+@media (max-width: 63.99rem) {
+  :host {
+    gap: 0;
+  }
+
+  .item {
+    min-inline-size: 0;
+    padding: var(--space-2);
+  }
+
+  .label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+// Edit mode: the gems can be set, so they look like it
+.item.editable {
+  outline: 1px dashed var(--color-warning);
+  outline-offset: -2px;
+}
+
+// Missions waiting to be claimed: a count on the corner of their button
+.missions {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: var(--space-2);
+  min-inline-size: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-hub-accent);
+  color: var(--color-hub-scrim);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1rem;
+  text-align: center;
+}

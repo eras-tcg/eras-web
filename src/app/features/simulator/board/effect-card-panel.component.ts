@@ -58,6 +58,7 @@ import { effectLines, matchingLine } from './card-effect-lines';
       max-block-size: 100%;
       padding: var(--space-3);
       overflow-y: auto;
+      overscroll-behavior: none;
       border-radius: var(--radius-lg);
       background: color-mix(in srgb, var(--color-surface) 94%, transparent);
       box-shadow: var(--shadow-lg);

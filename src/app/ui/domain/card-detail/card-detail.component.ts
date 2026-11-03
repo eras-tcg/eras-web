@@ -29,7 +29,8 @@ export interface CardTextGroup {
 /**
  * Full view of one card: name, printing badges (with previous/next printing arrows),
  * facts, effect text and the image. Admin actions go into [detail-actions]; controls for the card (as the deck
- * builder's copies bar) into [detail-top], right under the printing badges.
+ * builder's copies bar) into [detail-top], right under the printing badges, and [detail-under-image] right under
+ * the image.
  */
 @Component({
   selector: 'eras-card-detail',
@@ -51,6 +52,8 @@ export class CardDetailComponent {
   readonly color = input<string | null>(null);
   readonly colorLabel = input<string | null>(null);
   readonly imageUrl = input<string | null>(null);
+  /** A foil copy shines over its image: holographic (foil) or starlight (prism). */
+  readonly foil = input<'foil' | 'prism' | null>(null);
   readonly facts = input<CardFact[]>([]);
   readonly textGroups = input<CardTextGroup[]>([]);
   readonly notice = input<string | null>(null);

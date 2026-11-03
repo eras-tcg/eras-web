@@ -1,0 +1,94 @@
+// Screen changes (router view transitions, see core/navigation/view-transitions.ts).
+// html[data-nav]: "forward" into a deeper screen slides in from the right, "back" from the left, "same" fades.
+// The named parts (hub artwork, screen bar, quick buttons, title) morph from one screen to the next instead.
+
+@keyframes eras-screen-out {
+  to {
+    opacity: 0;
+    transform: translateX(var(--eras-nav-out, 0)) scale(var(--eras-nav-scale, 1));
+  }
+}
+
+@keyframes eras-screen-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--eras-nav-in, 0)) scale(var(--eras-nav-scale, 1));
+  }
+}
+
+// In viewport units so a part that travels on its own layer (see below) moves exactly as far as the page
+html[data-nav='forward'] {
+  --eras-nav-out: -4vw;
+  --eras-nav-in: 6vw;
+}
+
+html[data-nav='back'] {
+  --eras-nav-out: 4vw;
+  --eras-nav-in: -6vw;
+}
+
+html[data-nav='same'] {
+  --eras-nav-scale: 0.985;
+}
+
+::view-transition-old(root) {
+  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+// A named part only one of the screens has (the hub artwork coming from Cartas, the screen bar going to the
+// home) has nothing to morph into: it leaves or enters with the page, or the page would slide under it
+::view-transition-old(hub-art):only-child,
+::view-transition-old(screen-bar):only-child {
+  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(hub-art):only-child,
+::view-transition-new(screen-bar):only-child {
+  animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+::view-transition-group(hub-art),
+::view-transition-group(screen-bar),
+::view-transition-group(app-tools),
+::view-transition-group(screen-title) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+// The quick buttons only change size between screens: no cross-fade, the new ones stretch from the old box
+::view-transition-old(app-tools) {
+  display: none;
+}
+
+::view-transition-new(app-tools) {
+  block-size: 100%;
+  animation: none;
+}
+
+// A title that changes: the old one leaves upwards, the new one rises in
+::view-transition-old(screen-title) {
+  animation: eras-screen-out 160ms ease-in both;
+}
+
+::view-transition-new(screen-title) {
+  animation: eras-title-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+}
+
+@keyframes eras-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

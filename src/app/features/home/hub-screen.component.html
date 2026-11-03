@@ -1,0 +1,32 @@
+<div class="art" aria-hidden="true" [style.background-image]="background()?.editionImage ? 'url(' + background()!.editionImage + ')' : null"></div>
+
+<header class="top">
+  @if (title(); as name) {
+    <!-- The same as every other screen: a round "back" and the title with its accent bar -->
+    <div class="heading">
+      <a class="back" [routerLink]="back().route" [attr.aria-label]="'Volver a ' + back().label"><eras-icon name="chevron-left" /></a>
+      <h1 class="title">{{ name }}</h1>
+    </div>
+  } @else if (auth.user(); as user) {
+    <!-- The player's nameplate: the icon in a ring, the name, and the way to the profile -->
+    <a class="player" routerLink="/profile" aria-label="Mi perfil">
+      <span class="player-ring"><eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" /></span>
+      <span class="player-text">
+        <span class="player-name">{{ user.username }}</span>
+        <span class="player-link">Ver perfil <eras-icon name="chevron-right" /></span>
+      </span>
+    </a>
+  }
+
+  <eras-app-tools class="quick" onArt hub />
+</header>
+
+<div class="side">
+  <ng-content />
+</div>
+
+@if (background(); as art) {
+  <button type="button" class="credit" (click)="openCards(art.editionId)">
+    <eras-icon name="image" /> {{ art.editionName || art.editionId }}
+  </button>
+}

@@ -9,12 +9,12 @@ export class RoomsApi {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
 
-  /** A room; {@code editor}: a test room, played alone on both sides (edit mode only). */
+  /** A room; {@code editor}: a test room, played alone on both sides. */
   create(editor = false): Observable<{ roomId: string }> {
     return this.http.post<{ roomId: string }>(this.api.url('/api/simulator/rooms'), null, editor ? { params: { editor: 'true' } } : {});
   }
 
-  /** The owner, waiting alone, plays both sides: the room becomes a test room (edit mode only). */
+  /** The owner, waiting alone, plays both sides: the room becomes a test room. */
   playAlone(roomId: string): Observable<{ roomId: string }> {
     return this.http.post<{ roomId: string }>(this.api.url(`/api/simulator/rooms/${encodeURIComponent(roomId)}/solo`), null);
   }

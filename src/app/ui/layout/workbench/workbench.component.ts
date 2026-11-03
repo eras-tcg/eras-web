@@ -24,6 +24,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       min-inline-size: 0;
       min-block-size: 0;
       overflow: auto;
+      overscroll-behavior: none;
       padding: var(--space-4);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);

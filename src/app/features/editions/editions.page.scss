@@ -1,48 +1,134 @@
-.rows { display: grid; gap: var(--space-4); }
-// An edition: a fixed-height card, its art flush to the left edge and as tall as the card (card-shaped)
-.summary {
-  --summary-height: 12rem;
-  display: grid;
-  grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr) auto;
-  block-size: var(--summary-height);
-  min-inline-size: 0;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
+// The shop's shelf: one screen high (the page is `fill`), only the grid of editions scrolls
+
+.reward {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-hub-accent);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-hub-accent) 10%, var(--color-surface));
+  font-weight: var(--font-weight-medium);
 }
-.cover {
+
+.reward button {
+  margin-inline-start: auto;
+}
+
+eras-icon[name='gem'] {
+  color: var(--color-hub-accent);
+}
+
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  flex: 1;
+  min-block-size: 0;
+  // Room for the tiles' hover lift
+  padding: var(--space-1) var(--space-1) var(--space-6);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+/* An edition: its artwork as a card, the name and prices over a dark foot */
+.tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 744 / 1039;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted) center / cover;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-hub-text);
+  text-decoration: none;
+  transition:
+    transform var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  border-color: var(--color-hub-accent);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.tile::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 92%, transparent) 0%, transparent 55%);
+  content: '';
+}
+
+.tile-info {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  inline-size: 100%;
+  padding: var(--space-3);
+}
+
+.tile-code {
+  color: var(--color-hub-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.tile-name {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-md);
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tile-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-block-start: var(--space-1);
+}
+
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.price eras-icon {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+}
+
+.price-what {
+  margin-inline-start: var(--space-1);
+  color: var(--color-hub-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+}
+
+// A shelf: its title with the accent bar, then its tiles
+.shelf {
   display: grid;
-  place-items: center;
-  block-size: 100%;
-  overflow: hidden;
-  background: var(--color-surface-muted);
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-sm);
+  gap: var(--space-3);
 }
-.cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-// Title and description (it takes the room left)
-.info { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); min-inline-size: 0; }
-h2 { margin: 0; font-size: var(--font-size-lg); }
-.code { margin-inline-end: var(--space-2); color: var(--color-primary); }
-.count { margin-inline-start: var(--space-2); font-family: var(--font-family-base); font-weight: 400; }
-.description {
-  display: -webkit-box;
+
+.shelf-title {
   margin: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-.muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-// The buttons in a column at the right, as wide as the widest
-.actions { display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
-.actions button { justify-content: center; min-inline-size: 11rem; min-block-size: 2.75rem; font-size: var(--font-size-md); }
-@media (max-width: 40rem) {
-  // Narrow: the buttons go under the text
-  .summary { --summary-height: 10rem; grid-template-columns: calc(var(--summary-height) * 63 / 88) minmax(0, 1fr); block-size: auto; min-block-size: var(--summary-height); }
-  .cover { grid-row: span 2; }
-  .actions { flex-direction: row; flex-wrap: wrap; padding-block-start: 0; }
-  .description { -webkit-line-clamp: 2; }
+  padding-inline-start: var(--space-2);
+  border-inline-start: 3px solid var(--color-hub-accent);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }

@@ -20,6 +20,9 @@
           [foil]="detailShine()"
           [textGroups]="v.groups"
           [notice]="v.notice"
+          zoomable
+          zoomLabel="Ver el detalle de la carta"
+          (imageOpened)="openDetail(card)"
         >
           <eras-stack ngProjectAs="[detail-top]" direction="row" [gap]="2" align="center" justify="center">
             <button erasButton variant="secondary" size="sm" type="button" aria-label="Quitar una copia" [disabled]="draft.countOf(card.id) === 0" (click)="remove(card)">−1</button>

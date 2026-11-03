@@ -14,6 +14,7 @@ import { FoilKind } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { fromPercent, toPercent } from '@data/shop/shop-rules';
 import { ShopOddsStore } from '@data/shop/shop-odds.store';
+import { CardArtViewerComponent, CardArtViewerData } from '@ui/domain/card-art-viewer/card-art-viewer.component';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -111,6 +112,12 @@ export class CardDetailDialogComponent {
     this.openOwnedPrinting();
     // An alternative art without odds of its own shows the shop's
     void this.shopOdds.load();
+  }
+
+  /** The card as shown (its version: finish and art) over the whole screen. */
+  protected openArt(): void {
+    const data: CardArtViewerData = { src: this.view().imageUrl, alt: this.view().name, foil: this.foil() };
+    this.modal.open(CardArtViewerComponent, { data, maxWidth: '100vw', maxHeight: '100dvh' });
   }
 
   protected readonly busy = signal(false);

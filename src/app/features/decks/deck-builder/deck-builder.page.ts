@@ -34,6 +34,7 @@ import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-de
 import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardDetailDialogComponent, CardDetailDialogData } from '@features/cards/card-detail-dialog/card-detail-dialog.component';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
 import { cardDetailView } from '../../cards/card-detail-view';
 import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
@@ -261,6 +262,12 @@ export class DeckBuilderPage {
   // ── Deck actions ──────────────────────────────────────────────────────
 
   /** Shows a card on the left, as the copy picked (`finish`) or, without one, its finest owned. */
+  /** The card's detail dialog, as in the catalog (with the player's collection when signed in). */
+  protected openDetail(card: CatalogCard): void {
+    const data: CardDetailDialogData = { cards: [card], index: 0, collection: this.signedIn() };
+    this.modal.open(CardDetailDialogComponent, { data });
+  }
+
   protected select(card: CatalogCard | null, finish?: Finish | null): void {
     this.selected.set(card);
     this.selectedFinish.set(finish);

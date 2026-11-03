@@ -28,6 +28,9 @@
     [hasNextPrinting]="variantIndex() < variants().length - 1"
     (previousPrinting)="switchPrinting(-1)"
     (nextPrinting)="switchPrinting(1)"
+    zoomable
+    zoomLabel="Ver el arte en pantalla completa"
+    (imageOpened)="openArt()"
   >
     <ng-container ngProjectAs="[detail-actions]">
       <ng-container *erasEdit="'manage_cards'">

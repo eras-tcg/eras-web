@@ -58,6 +58,15 @@ describe('packOdds', () => {
     expect(o['SEC']).toBe(0);
   });
 
+  it('lists the likeliest pack type first', () => {
+    const order = packOdds(box([
+      { packTypeName: 'SR', mode: 'FIXED', quantity: 6, probOptions: [] },
+      { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+    ])).map((o) => o.packType);
+    expect(order[0]).toBe('Normal');
+    expect(order[1]).toBe('SR');
+  });
+
   it('weighs every roll of a PROB entry', () => {
     // SEC: 0 packs (50%) or 4 packs (50%) of 24; the rest Normal
     const o = odds(box([
@@ -70,16 +79,16 @@ describe('packOdds', () => {
 });
 
 describe('boxContents', () => {
-  it('gives fixed counts, PROB ranges with their chances and the FLEX remainder', () => {
+  it('gives fixed counts, PROB ranges with their chances and the FLEX remainder, the most packs first', () => {
     const contents = boxContents(box([
       { packTypeName: 'SR', mode: 'FIXED', quantity: 2, probOptions: [] },
-      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 1, prob: 0.7 }, { quantity: 3, prob: 0.3 }] },
+      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 3, prob: 0.3 }, { quantity: 1, prob: 0.7 }] },
       { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
     ]));
     expect(contents).toEqual([
+      { packType: 'Normal', min: 19, max: 21 },
       { packType: 'SR', min: 2, max: 2 },
       { packType: 'SEC', min: 1, max: 3, options: [{ quantity: 1, probability: 0.7 }, { quantity: 3, probability: 0.3 }] },
-      { packType: 'Normal', min: 19, max: 21 },
     ]);
   });
 });

@@ -73,7 +73,7 @@ function probOutcomes(entries: readonly BoxEntry[]): { probability: number; quan
 /**
  * Chance that a pack bought alone is of each type: the same as drawing one pack at random from a whole box
  * (as pickRandomPackFromBox does), counted exactly over every roll of the PROB entries. Without a box, the
- * first pack type always.
+ * first pack type always. The likeliest type first.
  */
 export function packOdds(edition: Edition): PackOdds[] {
   const types = (edition.packTypes ?? []).map((p) => p.name);
@@ -98,7 +98,7 @@ export function packOdds(edition: Edition): PackOdds[] {
     if (!size) continue;
     for (const [type, n] of counts) odds.set(type, (odds.get(type) ?? 0) + (outcome.probability * n) / size);
   }
-  return [...odds].map(([packType, probability]) => ({ packType, probability }));
+  return [...odds].map(([packType, probability]) => ({ packType, probability })).sort((a, b) => b.probability - a.probability);
 }
 
 export interface BoxContent {
@@ -110,7 +110,10 @@ export interface BoxContent {
   options?: { quantity: number; probability: number }[];
 }
 
-/** How many packs of each type a booster box brings (a FLEX entry fills what the others leave). */
+/**
+ * How many packs of each type a booster box brings (a FLEX entry fills what the others leave): the most packs first,
+ * and a PROB entry's options from fewest to most.
+ */
 export function boxContents(edition: Edition): BoxContent[] {
   const entries = edition.boxConfig?.entries ?? [];
   const total = edition.boxConfig?.totalPacks ?? 0;
@@ -123,7 +126,7 @@ export function boxContents(edition: Edition): BoxContent[] {
   const probMin = probRange.reduce((sum, q) => sum + Math.min(...q), 0);
   const probMax = probRange.reduce((sum, q) => sum + Math.max(...q), 0);
 
-  return entries.map((e): BoxContent => {
+  const rows = entries.map((e): BoxContent => {
     if (e.mode === 'FIXED') return { packType: e.packTypeName, min: quantity(e.quantity), max: quantity(e.quantity) };
     if (e.mode === 'PROB') {
       const q = e.probOptions.map((o) => quantity(o.quantity));
@@ -131,11 +134,12 @@ export function boxContents(edition: Edition): BoxContent[] {
         packType: e.packTypeName,
         min: q.length ? Math.min(...q) : 0,
         max: q.length ? Math.max(...q) : 0,
-        options: e.probOptions.map((o) => ({ quantity: quantity(o.quantity), probability: Number(o.prob) || 0 })),
+        options: e.probOptions.map((o) => ({ quantity: quantity(o.quantity), probability: Number(o.prob) || 0 })).sort((a, b) => a.quantity - b.quantity),
       };
     }
     return { packType: e.packTypeName, min: Math.max(0, total - fixedSum - probMax), max: Math.max(0, total - fixedSum - probMin) };
   });
+  return rows.sort((a, b) => b.max + b.min - (a.max + a.min));
 }
 
 /** An opening as /booster-result describes it (its query: mode pack | box | structure and, for a pack, the type that came out). */

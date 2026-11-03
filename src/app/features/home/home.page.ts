@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { ProgressionStore } from '@core/missions/progression.store';
+import { VersionTagComponent } from '@core/version/version-tag.component';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { HomeStore } from '@data/home/home.store';
@@ -36,7 +37,7 @@ const MAIN_MENU: HubMenuItem[] = [
  */
 @Component({
   selector: 'eras-home-page',
-  imports: [NgTemplateOutlet, RouterLink, AlertComponent, ButtonComponent, IconComponent, HubCarouselComponent, HubMenuComponent, HubScreenComponent],
+  imports: [NgTemplateOutlet, RouterLink, AlertComponent, ButtonComponent, IconComponent, HubCarouselComponent, HubMenuComponent, HubScreenComponent, VersionTagComponent],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

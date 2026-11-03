@@ -42,7 +42,11 @@
   <eras-stack [gap]="4" class="deck-scroll">
     <!-- The deck's name (just a line under it) and whether it is public -->
     <div class="deck-head">
-      <input class="deck-name" aria-label="Nombre del mazo" placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
+      <input class="deck-name" aria-label="Nombre del mazo" placeholder="Nombre del mazo" [attr.maxlength]="nameMax" [value]="draft.name()" (input)="onNameInput($event)" />
+      <!-- Near the limit: how many characters are left -->
+      @if (draft.name().length >= nameMax - 5) {
+        <span class="name-count" aria-live="polite">{{ draft.name().length }}/{{ nameMax }}</span>
+      }
       <button
         type="button"
         erasIconButton

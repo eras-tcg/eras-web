@@ -1,4 +1,4 @@
-// The hub's frame fills the screen; the missions fit the left column
+// The missions fill what holds them (the hub's left column, a dialog's body)
 :host {
   display: flex;
   flex: 1;

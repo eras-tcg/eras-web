@@ -3,6 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { PASSWORD_MIN_LENGTH } from '@core/auth/password-rules';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { VersionTagComponent } from '@core/version/version-tag.component';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
@@ -12,7 +13,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 
 @Component({
   selector: 'eras-login-page',
-  imports: [ReactiveFormsModule, RouterLink, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent, VersionTagComponent],
   templateUrl: './login.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

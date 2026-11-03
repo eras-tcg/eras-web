@@ -1,4 +1,5 @@
-<eras-page [title]="label()" width="wide" fill>
+<!-- While packs are on the table or opening, only the opening and "Saltar": the rest of the interface hides -->
+<eras-page [title]="label()" width="wide" fill [immersive]="phase() === 'packs' || phase() === 'opening'">
   <ng-container ngProjectAs="[page-actions]">
     @if (phase() === 'done' && product(); as p) {
       <!-- A structure deck is bought once: no "Comprar otro" -->

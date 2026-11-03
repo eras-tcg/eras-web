@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '../cards/card.model';
 import { Deck, DeckEntry } from './deck.model';
 import {
+  DECK_NAME_MAX,
   MAX_CARDS,
   addCard,
   canAdd,
   cardsPerPage,
+  clampDeckName,
   copiesOfName,
+  copyDeckName,
   deckMetrics,
   entriesFromIds,
   exportDeckText,
@@ -152,5 +155,19 @@ describe('sortDecks', () => {
     const list = [d('1', 'zeta', null), d('2', 'Álamo', '2026-02-01'), d('3', 'beta', '2026-01-01')];
     expect(sortDecks(list, 'name', 'asc').map((x) => x.id)).toEqual(['2', '3', '1']);
     expect(sortDecks(list, 'createdAt', 'desc').map((x) => x.id)).toEqual(['2', '3', '1']);
+  });
+});
+
+describe('deck name', () => {
+  it('cuts a name longer than the limit', () => {
+    expect(clampDeckName('a'.repeat(DECK_NAME_MAX + 5))).toHaveLength(DECK_NAME_MAX);
+    expect(clampDeckName('Dragones')).toBe('Dragones');
+  });
+
+  it('names a copy within the limit, keeping the mark', () => {
+    expect(copyDeckName('Dragones')).toBe('Dragones (copia)');
+    const long = copyDeckName('Un nombre de mazo bastante largo');
+    expect(long).toHaveLength(DECK_NAME_MAX);
+    expect(long.endsWith(' (copia)')).toBe(true);
   });
 });

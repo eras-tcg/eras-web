@@ -147,3 +147,8 @@
     display: none;
   }
 }
+
+// The version sits at the very foot of the column, below everything else
+.version {
+  margin-block-start: auto;
+}

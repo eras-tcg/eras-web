@@ -1,14 +1,14 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { ACTIVITY_ACTIONS, actionLabel, actionsOf, dayRange, dayValue, describeActivity } from '@data/activity/activity-rules';
+import { ACTIVITY_GROUPS, actionLabel, dayRange, dayValue, describeActivity } from '@data/activity/activity-rules';
 import { ActivityApi } from '@data/activity/activity.api';
-import { ActivityEntry } from '@data/activity/activity.model';
+import { ActivityAction, ActivityEntry } from '@data/activity/activity.model';
 import { TableComponent } from '@ui/data/table/table.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { MultiselectComponent } from '@ui/forms/multiselect/multiselect.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -18,6 +18,13 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 import { feedbackState } from './admin-feedback';
 
 const PAGE_SIZE = 50;
+
+/** Quick periods: today and the days before it. */
+const PERIODS: (ToggleOption & { days: number })[] = [
+  { value: '0', label: 'Hoy', days: 0 },
+  { value: '6', label: '7 días', days: 6 },
+  { value: '29', label: '30 días', days: 29 },
+];
 
 /** What the players do on the site (manage_users): logins, purchases, decks and games, filtered by action, player and dates. */
 @Component({
@@ -29,7 +36,7 @@ const PAGE_SIZE = 50;
     StackComponent,
     CardComponent,
     FormFieldComponent,
-    MultiselectComponent,
+    ToggleGroupComponent,
     TableComponent,
     AlertComponent,
     EmptyStateComponent,
@@ -48,25 +55,35 @@ const PAGE_SIZE = 50;
 
       <eras-card>
         <form (submit)="$event.preventDefault(); search()">
-          <eras-stack [gap]="3">
-            <eras-grid minColumn="12rem" [gap]="2">
-              <eras-multiselect label="Acciones" [options]="actionOptions" [value]="actions()" (valueChange)="actions.set($event)" />
-              <eras-form-field label="Usuario" hint="Parte del nombre">
-                <input type="search" [value]="user()" (input)="user.set($any($event.target).value)" />
+          <eras-stack [gap]="4">
+            <eras-grid minColumn="11rem" [gap]="3">
+              <eras-form-field label="Usuario">
+                <input type="search" placeholder="Parte del nombre" [value]="user()" (input)="user.set($any($event.target).value)" />
               </eras-form-field>
               <eras-form-field label="Desde">
-                <input type="date" [value]="from()" (input)="from.set($any($event.target).value)" />
+                <input type="date" [value]="from()" (change)="from.set($any($event.target).value); search()" />
               </eras-form-field>
               <eras-form-field label="Hasta">
-                <input type="date" [value]="to()" (input)="to.set($any($event.target).value)" />
+                <input type="date" [value]="to()" (change)="to.set($any($event.target).value); search()" />
               </eras-form-field>
+              <eras-toggle-group label="Periodo" [options]="periods" [selected]="period()" (toggled)="choosePeriod($event)" />
             </eras-grid>
-            <div class="row">
+
+            <div class="actions-filter">
+              <div class="actions-head">
+                <span class="title">Acciones</span>
+                <span class="hint">{{ actions().length === 0 ? 'Todas' : actions().length === 1 ? '1 elegida' : actions().length + ' elegidas' }}</span>
+              </div>
+              <div class="action-groups">
+                @for (group of groups; track group.name) {
+                  <eras-toggle-group [label]="group.name" [options]="group.options" [selected]="actions()" (toggled)="toggleAction($any($event))" />
+                }
+              </div>
+            </div>
+
+            <div class="buttons">
+              <button erasButton variant="ghost" type="button" (click)="clear()">Limpiar filtros</button>
               <button erasButton type="submit" [loading]="loading()" [disabled]="loading()">Filtrar</button>
-              <button erasButton variant="ghost" type="button" (click)="lastDays(0)">Hoy</button>
-              <button erasButton variant="ghost" type="button" (click)="lastDays(6)">7 días</button>
-              <button erasButton variant="ghost" type="button" (click)="lastDays(29)">30 días</button>
-              <button erasButton variant="ghost" type="button" (click)="clear()">Limpiar</button>
             </div>
           </eras-stack>
         </form>
@@ -102,7 +119,7 @@ const PAGE_SIZE = 50;
           </table>
         </eras-table>
         @if (items().length < total()) {
-          <div class="row">
+          <div class="more">
             <button erasButton variant="secondary" type="button" [loading]="loading()" [disabled]="loading()" (click)="more()">Cargar más</button>
           </div>
         }
@@ -110,13 +127,44 @@ const PAGE_SIZE = 50;
     </eras-page>
   `,
   styles: `
-    .row {
+    .actions-filter {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-block-start: var(--space-4);
+      border-block-start: var(--border-width) solid var(--color-border);
+    }
+    .actions-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
       gap: var(--space-2);
     }
+    .action-groups {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3) var(--space-4);
+    }
+    .action-groups > * {
+      flex: 1 1 auto;
+    }
+    .title {
+      font-weight: var(--font-weight-bold);
+    }
+    .hint,
     .muted {
       color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: var(--space-2);
+    }
+    .more {
+      display: flex;
+      justify-content: center;
     }
     .nowrap {
       white-space: nowrap;
@@ -137,9 +185,10 @@ export class ActivityLogPage {
   private readonly api = inject(ActivityApi);
 
   protected readonly fb = feedbackState();
-  protected readonly actionOptions = ACTIVITY_ACTIONS.map((a) => a.label);
+  protected readonly groups = ACTIVITY_GROUPS;
+  protected readonly periods: ToggleOption[] = PERIODS;
 
-  protected readonly actions = signal<string[]>([]);
+  protected readonly actions = signal<ActivityAction[]>([]);
   protected readonly user = signal('');
   protected readonly from = signal('');
   protected readonly to = signal('');
@@ -149,6 +198,13 @@ export class ActivityLogPage {
   protected readonly loading = signal(false);
   private page = 0;
 
+  /** The quick period the dates match, if any. */
+  protected readonly period = computed(() => {
+    const today = dayValue(new Date());
+    const match = PERIODS.find((p) => this.to() === today && this.from() === dayValue(daysAgo(p.days)));
+    return match ? [match.value] : [];
+  });
+
   protected readonly summary = computed(() =>
     this.total() === 1 ? '1 evento' : `${this.items().length} de ${this.total()} eventos`,
   );
@@ -157,15 +213,18 @@ export class ActivityLogPage {
   protected readonly describe = describeActivity;
 
   constructor() {
-    this.lastDays(6);
+    this.choosePeriod('6');
   }
 
-  /** The last `days` days and today. */
-  protected lastDays(days: number): void {
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-    this.from.set(dayValue(start));
+  protected choosePeriod(value: string): void {
+    const days = PERIODS.find((p) => p.value === value)?.days ?? 6;
+    this.from.set(dayValue(daysAgo(days)));
     this.to.set(dayValue(new Date()));
+    void this.search();
+  }
+
+  protected toggleAction(action: ActivityAction): void {
+    this.actions.update((list) => (list.includes(action) ? list.filter((a) => a !== action) : [...list, action]));
     void this.search();
   }
 
@@ -198,7 +257,7 @@ export class ActivityLogPage {
     try {
       const range = dayRange(this.from(), this.to());
       const result = await firstValueFrom(
-        this.api.search({ actions: actionsOf(this.actions()), user: this.user(), ...range, page: this.page, size: PAGE_SIZE }),
+        this.api.search({ actions: this.actions(), user: this.user(), ...range, page: this.page, size: PAGE_SIZE }),
       );
       this.items.set(append ? [...this.items(), ...result.items] : result.items);
       this.total.set(result.total);
@@ -208,4 +267,10 @@ export class ActivityLogPage {
       this.loading.set(false);
     }
   }
+}
+
+function daysAgo(days: number): Date {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
 }

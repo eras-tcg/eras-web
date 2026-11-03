@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVITY_ACTIONS, actionLabel, actionsOf, dayRange, dayValue, describeActivity } from './activity-rules';
+import { ACTIVITY_ACTIONS, ACTIVITY_GROUPS, actionLabel, dayRange, dayValue, describeActivity } from './activity-rules';
 import { ActivityEntry } from './activity.model';
 
 const entry = (action: ActivityEntry['action'], detail: ActivityEntry['detail'] = {}): ActivityEntry => ({
@@ -11,16 +11,15 @@ const entry = (action: ActivityEntry['action'], detail: ActivityEntry['detail'] 
   at: '2026-11-03T12:00:00Z',
 });
 
-describe('actionLabel / actionsOf', () => {
-  it('names every action and maps the names back', () => {
-    const labels = ACTIVITY_ACTIONS.map((a) => a.label);
-    expect(actionsOf(labels)).toEqual(ACTIVITY_ACTIONS.map((a) => a.action));
+describe('actionLabel / ACTIVITY_GROUPS', () => {
+  it('names every action and shows an unknown one as is', () => {
     expect(actionLabel('DECK_DELETE')).toBe('Mazo borrado');
+    expect(actionLabel('NEW_THING')).toBe('NEW_THING');
   });
 
-  it('shows an unknown action as is and ignores unknown names', () => {
-    expect(actionLabel('NEW_THING')).toBe('NEW_THING');
-    expect(actionsOf(['Otra cosa'])).toEqual([]);
+  it('puts every action in one group, in order', () => {
+    expect(ACTIVITY_GROUPS.map((g) => g.name)).toEqual(['Ingresos', 'Tienda', 'Mazos', 'Partidas online', 'Modo solo']);
+    expect(ACTIVITY_GROUPS.flatMap((g) => g.options.map((o) => o.value))).toEqual(ACTIVITY_ACTIONS.map((a) => a.action));
   });
 });
 

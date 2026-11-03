@@ -1,32 +1,34 @@
 import { ActivityAction, ActivityEntry } from './activity.model';
 
-/** Every action, in the order the filter lists them, with its name. */
-export const ACTIVITY_ACTIONS: readonly { action: ActivityAction; label: string }[] = [
-  { action: 'LOGIN', label: 'Inicio de sesión' },
-  { action: 'VISIT', label: 'Ingreso del día' },
-  { action: 'SHOP_PURCHASE', label: 'Compra en la tienda' },
-  { action: 'DECK_CREATE', label: 'Mazo creado' },
-  { action: 'DECK_UPDATE', label: 'Mazo editado' },
-  { action: 'DECK_DELETE', label: 'Mazo borrado' },
-  { action: 'ONLINE_GAME_START', label: 'Partida online iniciada' },
-  { action: 'ONLINE_GAME_END', label: 'Partida online terminada' },
-  { action: 'SOLO_GAME_START', label: 'Modo solo iniciado' },
-  { action: 'SOLO_GAME_END', label: 'Modo solo terminado' },
+/** Every action with its name, the group the filter shows it in and its short name there. */
+export const ACTIVITY_ACTIONS: readonly { action: ActivityAction; label: string; group: string; short: string }[] = [
+  { action: 'LOGIN', label: 'Inicio de sesión', group: 'Ingresos', short: 'Sesión' },
+  { action: 'VISIT', label: 'Ingreso del día', group: 'Ingresos', short: 'Del día' },
+  { action: 'SHOP_PURCHASE', label: 'Compra en la tienda', group: 'Tienda', short: 'Compras' },
+  { action: 'DECK_CREATE', label: 'Mazo creado', group: 'Mazos', short: 'Creado' },
+  { action: 'DECK_UPDATE', label: 'Mazo editado', group: 'Mazos', short: 'Editado' },
+  { action: 'DECK_DELETE', label: 'Mazo borrado', group: 'Mazos', short: 'Borrado' },
+  { action: 'ONLINE_GAME_START', label: 'Partida online iniciada', group: 'Partidas online', short: 'Iniciada' },
+  { action: 'ONLINE_GAME_END', label: 'Partida online terminada', group: 'Partidas online', short: 'Terminada' },
+  { action: 'SOLO_GAME_START', label: 'Modo solo iniciado', group: 'Modo solo', short: 'Iniciado' },
+  { action: 'SOLO_GAME_END', label: 'Modo solo terminado', group: 'Modo solo', short: 'Terminado' },
 ];
 
+/** The actions by group, in order, as the filter's toggle groups. */
+export const ACTIVITY_GROUPS: readonly { name: string; options: { value: ActivityAction; label: string; text: string }[] }[] = [
+  ...new Set(ACTIVITY_ACTIONS.map((a) => a.group)),
+].map((name) => ({
+  name,
+  options: ACTIVITY_ACTIONS.filter((a) => a.group === name).map((a) => ({ value: a.action, label: a.label, text: a.short })),
+}));
+
 const LABELS = new Map(ACTIVITY_ACTIONS.map((a) => [a.action, a.label]));
-const BY_LABEL = new Map(ACTIVITY_ACTIONS.map((a) => [a.label, a.action]));
 
 const PRODUCTS: Record<string, string> = { pack: 'Sobre', box: 'Booster box', structure: 'Structure deck' };
 const RESULTS: Record<string, string> = { won: 'ganó', lost: 'perdió', draw: 'empate' };
 
 export function actionLabel(action: string): string {
   return LABELS.get(action as ActivityAction) ?? action;
-}
-
-/** The actions behind the names chosen in the filter. */
-export function actionsOf(labels: readonly string[]): ActivityAction[] {
-  return labels.map((l) => BY_LABEL.get(l)).filter((a): a is ActivityAction => !!a);
 }
 
 /** What an event did, in a line (empty when its action says it all). */

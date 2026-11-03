@@ -2,18 +2,23 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
-import { CatalogCard } from '@data/cards/card.model';
-import { nameVariants, withAltArt } from '@data/cards/card-rules';
+import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
+import { altArtName, altArtsOf, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
-import { altFinish, bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
 import { FoilKind } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
+import { fromPercent, toPercent } from '@data/shop/shop-rules';
+import { ShopOddsStore } from '@data/shop/shop-odds.store';
+import { CardArtViewerComponent, CardArtViewerData } from '@ui/domain/card-art-viewer/card-art-viewer.component';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
@@ -31,10 +36,14 @@ export interface CardDetailDialogData {
   collection?: boolean;
 }
 
-/** One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. */
+/**
+ * One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. In the
+ * plain catalog (no collection, no obtained copy) the buttons under the card show its versions: each finish and each
+ * alternative art.
+ */
 @Component({
   selector: 'eras-card-detail-dialog',
-  imports: [CardDetailComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective],
+  imports: [CardDetailComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent],
   templateUrl: './card-detail-dialog.component.html',
   styleUrl: './card-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +57,7 @@ export class CardDetailDialogComponent {
   private readonly admin = inject(CardsAdminApi);
   private readonly modal = inject(ModalService);
   private readonly collection = inject(CollectionStore);
+  protected readonly shopOdds = inject(ShopOddsStore);
 
   /** Position in the grid. Switching printings changes `card` but not the grid position. */
   protected readonly index = signal(this.data.index);
@@ -63,24 +73,51 @@ export class CardDetailDialogComponent {
   protected readonly variants = computed(() => nameVariants(this.gridCard(), this.store.cards(), this.editions.releaseDates()));
   protected readonly variantIndex = computed(() => this.variants().findIndex((c) => c.id === this.card().id));
 
-  /** With the collection on, the finish of the player's copies of this printing with its alternative art, if any. */
+  /** The printing's alternative arts (none for most cards). */
+  protected readonly arts = computed(() => altArtsOf(this.card()));
+
+  /** With the collection on, the player's finest copy of this printing with an alternative art, if any. */
   private readonly altOwned = computed(() =>
-    this.data.collection && !this.data.copy && this.card().meta?.altImage ? altFinish(this.collection.collection()?.cards[this.card().id]) : null,
+    this.data.collection && !this.data.copy ? bestAlt(this.collection.collection()?.cards[this.card().id], this.arts().map((a) => a.id)) : null,
   );
 
-  /** The shine shown: the obtained copy's, or with the collection on, the finest finish owned of this printing. */
-  protected readonly foil = computed(() => {
-    if (this.data.copy) return this.data.copy.foil;
-    return this.data.collection ? shineOf(this.altOwned() ?? bestFinish(this.collection.collection()?.cards[this.card().id])) : null;
+  /** The plain catalog: the buttons under the card show its finishes and alternative arts. */
+  protected readonly showVersions = !this.data.copy && !this.data.collection;
+  /** The version picked under the card (plain catalog only): a finish and an art (null: the usual one). */
+  protected readonly pickedFinish = signal<Finish>('plain');
+  protected readonly pickedArt = signal<string | null>(null);
+
+  protected readonly finishOptions: ToggleOption[] = FINISHES.map((f) => ({ value: f, label: FINISH_LABELS[f] }));
+  protected readonly artOptions = computed<ToggleOption[]>(() => {
+    const arts = this.arts();
+    return [
+      { value: '', label: 'Arte original', text: 'Original' },
+      ...arts.map((a, i) => ({ value: a.id, label: `Arte ${altArtName(a, i)}`, text: a.name?.trim() || (arts.length > 1 ? `Alternativo ${i + 1}` : 'Alternativo') })),
+    ];
   });
 
-  /** The card as shown: with its alternative art when the player has it (the collection on); its text is the same. */
-  private readonly shown = computed(() => (this.altOwned() ? withAltArt(this.card()) : this.card()));
+  /** The shine shown: the obtained copy's; with the collection on, the finest owned; else the finish picked. */
+  protected readonly foil = computed(() => {
+    if (this.data.copy) return this.data.copy.foil;
+    if (this.data.collection) return shineOf(this.altOwned()?.finish ?? bestFinish(this.collection.collection()?.cards[this.card().id]));
+    return shineOf(this.pickedFinish());
+  });
+
+  /** The card as shown: with the alternative art the player has (collection) or picked (catalog); its text is the same. */
+  private readonly shown = computed(() => withAltArt(this.card(), this.data.collection ? (this.altOwned()?.art ?? null) : this.pickedArt()));
 
   protected readonly view = computed(() => cardDetailView(this.shown(), this.store.ref(), this.store.unprogrammedOf(this.card())));
 
   constructor() {
     this.openOwnedPrinting();
+    // An alternative art without odds of its own shows the shop's
+    void this.shopOdds.load();
+  }
+
+  /** The card as shown (its version: finish and art) over the whole screen. */
+  protected openArt(): void {
+    const data: CardArtViewerData = { src: this.view().imageUrl, alt: this.view().name, foil: this.foil() };
+    this.modal.open(CardArtViewerComponent, { data, maxWidth: '100vw', maxHeight: '100dvh' });
   }
 
   protected readonly busy = signal(false);
@@ -109,28 +146,79 @@ export class CardDetailDialogComponent {
     await this.run(() => firstValueFrom(this.admin.renameImage(card.id, name)), 'No se pudo renombrar');
   }
 
-  /** The card's alternative art from a chosen file (it replaces the earlier one): see CardMeta.altImage. */
-  protected async uploadAlt(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+  // ── Alternative arts (manage_cards) ──────────────────────────────────
+  // These stay in the dialog: the card shown takes the metadata the server answers, and the catalog reloads behind.
+
+  protected readonly toPercent = toPercent;
+  protected readonly altArtName = altArtName;
+
+  /** A new alternative art from a chosen file (CardMeta.altArts), with the shop's odds until changed. */
+  protected async addAlt(event: Event): Promise<void> {
+    const file = this.pickedFile(event);
     const metaId = this.card().meta?.id;
     if (!file || !metaId) return;
-    await this.run(() => firstValueFrom(this.admin.setAltImage(metaId, file)), 'No se pudo guardar el arte alternativo');
+    await this.changeArts(() => firstValueFrom(this.admin.addAltArt(metaId, file, null)), 'No se pudo guardar el arte alternativo');
   }
 
-  protected async removeAlt(): Promise<void> {
+  /** A new image for one art (its odds and the copies already pulled with it stay). */
+  protected async replaceAlt(art: AltArt, event: Event): Promise<void> {
+    const file = this.pickedFile(event);
+    const metaId = this.card().meta?.id;
+    if (!file || !metaId) return;
+    await this.changeArts(() => firstValueFrom(this.admin.replaceAltArt(metaId, art.id, file)), 'No se pudo cambiar el arte alternativo');
+  }
+
+  /** Saves one art's name (empty: "Alternativo N") and its own odds typed as a percent (empty: the shop's). */
+  protected async saveAlt(art: AltArt, name: string, typedOdds: string): Promise<void> {
+    const metaId = this.card().meta?.id;
+    if (!metaId) return;
+    const odds = typedOdds.trim() === '' ? null : fromPercent(typedOdds);
+    if (odds === null && typedOdds.trim() !== '') {
+      this.actionError.set('La probabilidad debe ser un número de 0 a 100 %');
+      return;
+    }
+    const change = { name: name.trim() || null, odds };
+    await this.changeArts(() => firstValueFrom(this.admin.updateAltArt(metaId, art.id, change)), 'No se pudo guardar el arte alternativo');
+  }
+
+  protected async removeAlt(art: AltArt, index: number): Promise<void> {
     const card = this.card();
     const metaId = card.meta?.id;
     if (!metaId) return;
     const ok = await this.modal.confirm({
       title: 'Quitar arte alternativo',
-      message: `"${card.name}" ya no saldrá con arte alternativo. Las copias que ya lo tienen se verán con el arte normal.`,
+      message: `"${card.name}" ya no saldrá con el arte «${altArtName(art, index)}». Las copias que ya lo tienen se verán con el arte normal.`,
       confirmLabel: 'Quitar',
       danger: true,
     });
     if (!ok) return;
-    await this.run(() => firstValueFrom(this.admin.removeAltImage(metaId)), 'No se pudo quitar el arte alternativo');
+    if (this.pickedArt() === art.id) this.pickedArt.set(null);
+    await this.changeArts(() => firstValueFrom(this.admin.removeAltArt(metaId, art.id)), 'No se pudo quitar el arte alternativo');
+  }
+
+  private pickedFile(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    return file;
+  }
+
+  private async changeArts(task: () => Promise<CardMeta>, fallback: string): Promise<void> {
+    this.busy.set(true);
+    this.actionError.set(null);
+    try {
+      const meta = await task();
+      this.printing.set({ ...this.card(), meta });
+      void this.store.load(true);
+    } catch (e) {
+      this.actionError.set(apiErrorMessage(e, fallback));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  protected pickArt(value: string): void {
+    this.pickedArt.set(value === '' ? null : value);
   }
 
   protected async remove(what: 'meta' | 'image' | 'both'): Promise<void> {
@@ -164,6 +252,7 @@ export class CardDetailDialogComponent {
     if (next < 0 || next >= this.data.cards.length) return;
     this.index.set(next);
     this.printing.set(null);
+    this.resetVersion();
     this.openOwnedPrinting();
   }
 
@@ -181,7 +270,15 @@ export class CardDetailDialogComponent {
 
   protected switchPrinting(step: -1 | 1): void {
     const target = this.variants()[this.variantIndex() + step];
-    if (target) this.printing.set(target);
+    if (!target) return;
+    this.printing.set(target);
+    this.resetVersion();
+  }
+
+  /** Another card or printing opens in its usual version. */
+  private resetVersion(): void {
+    this.pickedFinish.set('plain');
+    this.pickedArt.set(null);
   }
 
   protected onKey(event: KeyboardEvent): void {

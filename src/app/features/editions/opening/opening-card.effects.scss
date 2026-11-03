@@ -1,0 +1,358 @@
+// The showier reveals of an opening's card, apart from its base styles (opening-card.component.scss) to keep each
+// stylesheet small: a prismatic card's turn and light, and a copy turning into its alternative art.
+
+/* Prismatic: far beyond a foil card */
+:host(.foiled.foil-prism) {
+  animation: prism-turn 1.8s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+// Higher, bigger, two whole turns, and a flash of every color as it comes back
+@keyframes prism-turn {
+  0% {
+    transform: perspective(900px) rotateY(0);
+    filter: none;
+  }
+
+  45% {
+    transform: perspective(900px) translateY(-1.5rem) scale(1.32) rotateY(540deg);
+    filter: brightness(1.35) saturate(1.4);
+  }
+
+  70% {
+    transform: perspective(900px) translateY(-0.5rem) scale(1.12) rotateY(700deg);
+    filter: brightness(1.15) hue-rotate(60deg);
+  }
+
+  100% {
+    transform: perspective(900px) rotateY(720deg);
+    filter: none;
+  }
+}
+
+// Behind it: rays of every color, spinning out and gone
+.prism-rays {
+  position: absolute;
+  inset: -70%;
+  z-index: -1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    hsl(0deg 95% 65% / 80%) 0deg 6deg,
+    transparent 6deg 15deg,
+    hsl(60deg 95% 65% / 80%) 15deg 21deg,
+    transparent 21deg 30deg,
+    hsl(140deg 90% 60% / 80%) 30deg 36deg,
+    transparent 36deg 45deg,
+    hsl(200deg 95% 65% / 80%) 45deg 51deg,
+    transparent 51deg 60deg,
+    hsl(270deg 90% 70% / 80%) 60deg 66deg,
+    transparent 66deg 75deg,
+    hsl(320deg 95% 70% / 80%) 75deg 81deg,
+    transparent 81deg 90deg
+  );
+  mask: radial-gradient(circle, #000 12%, transparent 62%);
+  pointer-events: none;
+  animation: prism-rays 1.8s ease-out both;
+}
+
+@keyframes prism-rays {
+  0% {
+    opacity: 0;
+    transform: rotate(0) scale(0.4);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(160deg) scale(1.25);
+  }
+}
+
+// A ring of every color spreading out as it lands
+.prism-ring {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: -1;
+  inline-size: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, hsl(0deg 95% 65%), hsl(60deg 95% 65%), hsl(140deg 90% 60%), hsl(200deg 95% 65%), hsl(270deg 90% 70%), hsl(320deg 95% 70%), hsl(0deg 95% 65%));
+  mask: radial-gradient(circle, transparent 62%, #000 65%, #000 70%, transparent 73%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.3);
+  animation: prism-ring 1s cubic-bezier(0.1, 0.7, 0.2, 1) 0.8s both;
+}
+
+@keyframes prism-ring {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3);
+  }
+}
+
+// A band of the spectrum sweeping across its face, once
+.spectrum {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+      100deg,
+      transparent 30%,
+      hsl(0deg 95% 65% / 70%) 38%,
+      hsl(60deg 95% 65% / 70%) 43%,
+      hsl(140deg 90% 60% / 70%) 48%,
+      hsl(200deg 95% 65% / 70%) 53%,
+      hsl(270deg 90% 70% / 70%) 58%,
+      transparent 66%
+    )
+    0 0 / 300% 100% no-repeat;
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  animation: spectrum 1s ease-in-out 0.75s both;
+}
+
+@keyframes spectrum {
+  0% {
+    opacity: 0;
+    background-position: 100% 0;
+  }
+
+  15%,
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    background-position: 0 0;
+  }
+}
+
+// Once shown, its foil keeps shifting through the spectrum, and its edge glows in every color, turning
+:host(.foil-prism) .foil {
+  animation:
+    foil-in 0.4s ease-out 0.5s both,
+    prism-shift 6s linear 1.8s infinite;
+}
+
+@keyframes prism-shift {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+:host(.foiled.foil-prism) .front {
+  animation: prism-edge 3s linear 1.8s infinite;
+}
+
+@keyframes prism-edge {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px hsl(320deg 95% 70%),
+      0 0 1.5rem hsl(320deg 95% 60% / 70%);
+  }
+
+  33% {
+    box-shadow:
+      0 0 0 2px hsl(60deg 95% 65%),
+      0 0 1.5rem hsl(60deg 95% 60% / 70%);
+  }
+
+  66% {
+    box-shadow:
+      0 0 0 2px hsl(200deg 95% 65%),
+      0 0 1.5rem hsl(200deg 95% 60% / 70%);
+  }
+}
+
+/* An alternative art: the card turns into it */
+:host(.alt-on) {
+  z-index: 4;
+  animation: alt-rise 2.2s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+// It rises and grows while it changes, then settles back
+@keyframes alt-rise {
+  0% {
+    transform: none;
+  }
+
+  25%,
+  65% {
+    transform: translateY(-1.25rem) scale(1.3);
+    filter: drop-shadow(0 0 1.5rem var(--color-hub-glow));
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+// The new art: hidden over the usual one, then opening from its middle
+.alt-art {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  clip-path: circle(0% at 50% 45%);
+}
+
+:host(.alt-on) .alt-art {
+  animation: alt-open 0.7s cubic-bezier(0.5, 0, 0.2, 1) 0.6s both;
+}
+
+@keyframes alt-open {
+  0% {
+    clip-path: circle(0% at 50% 45%);
+    filter: brightness(2.2);
+  }
+
+  100% {
+    clip-path: circle(150% at 50% 45%);
+    filter: none;
+  }
+}
+
+// A golden flash over the face as it changes
+.alt-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: radial-gradient(circle at 50% 45%, var(--color-hub-text) 0%, var(--color-hub-glow) 25%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  animation: alt-flash 1s ease-out 0.45s both;
+}
+
+@keyframes alt-flash {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+// Its name, on a ribbon at the foot of the card that stays
+.alt-tag {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 8%;
+  z-index: 4;
+  padding: 0.2em 0.4em;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-hub-scrim) 85%, transparent) 15% 85%, transparent);
+  color: var(--color-hub-glow);
+  font-family: var(--font-family-display);
+  font-size: clamp(0.55rem, 1vw, 0.8rem);
+  letter-spacing: 0.15em;
+  text-align: center;
+  text-shadow: 0 0 0.5rem var(--color-hub-accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: alt-tag 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 1.1s both;
+}
+
+@keyframes alt-tag {
+  from {
+    opacity: 0;
+    letter-spacing: 0.6em;
+    transform: scaleX(0.6);
+  }
+}
+
+// A golden ring spreading out from it
+.alt-ring {
+  position: absolute;
+  inset-block-start: 45%;
+  inset-inline-start: 50%;
+  z-index: -1;
+  inline-size: 100%;
+  aspect-ratio: 1;
+  border: 3px solid var(--color-hub-glow);
+  border-radius: 50%;
+  box-shadow:
+    0 0 1rem var(--color-hub-glow),
+    inset 0 0 1rem var(--color-hub-accent);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: alt-ring 1.1s cubic-bezier(0.1, 0.7, 0.2, 1) 0.6s both;
+}
+
+@keyframes alt-ring {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    border-width: 1px;
+    transform: translate(-50%, -50%) scale(3.2);
+  }
+}
+
+// Golden sparkles thrown out as it changes
+.alt-spark {
+  position: absolute;
+  inset-block-start: 45%;
+  inset-inline-start: 50%;
+  inline-size: var(--size);
+  block-size: var(--size);
+  background: var(--color-hub-glow);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 5px var(--color-hub-accent));
+  opacity: 0;
+  pointer-events: none;
+  animation: sparkle 1.3s cubic-bezier(0.05, 0.9, 0.1, 1) 0.65s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.foiled.foil-prism),
+  :host(.alt-on),
+  .prism-rays,
+  .prism-ring,
+  .spectrum,
+  .foil,
+  .front,
+  .alt-art,
+  .alt-flash,
+  .alt-tag,
+  .alt-ring,
+  .alt-spark {
+    animation: none !important;
+  }
+
+  // Turned into its alternative art at once
+  :host(.alt-on) .alt-art {
+    clip-path: none;
+  }
+}

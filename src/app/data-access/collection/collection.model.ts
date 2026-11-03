@@ -1,8 +1,11 @@
 /** The finish of a copy: plain, foil (holographic) or prism (prismatic, starlight). */
 export type Finish = 'plain' | 'foil' | 'prism';
 
-/** How a copy is kept: its finish, or "alt-" + finish when it has the card's alternative art. */
-export type CopyKey = Finish | `alt-${Finish}`;
+/**
+ * How a copy is kept: its finish, or "alt-" + art id + "-" + finish when it has one of the card's alternative arts
+ * ("alt-" + finish for the card's single art of before, the art "0").
+ */
+export type CopyKey = Finish | `alt-${string}`;
 
 /** Copies of one card, by finish and art (a key not there means none). */
 export type OwnedCopies = Partial<Record<CopyKey, number>>;

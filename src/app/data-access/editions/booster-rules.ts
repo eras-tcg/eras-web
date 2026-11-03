@@ -59,6 +59,17 @@ export interface OpenedPack {
   foils?: (FoilKind | null)[];
   /** It went up a rarity (see upgradeOnePack): the type it was. */
   upgradedFrom?: string;
+  /**
+   * The copies that came out with an alternative art, in the same order (null for the others): the card with its
+   * usual art (shown first) and the art's name; `cards` holds them with the alternative art.
+   */
+  alts?: (OpenedAlt | null)[];
+}
+
+/** A copy that came out with an alternative art: the card as usual, and what the art is called. */
+export interface OpenedAlt {
+  base: CatalogCard;
+  name: string;
 }
 
 /** A whole box, pack by pack: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */

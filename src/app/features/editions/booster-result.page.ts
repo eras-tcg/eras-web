@@ -1,9 +1,9 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, cardImageUrl, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { FoilKind, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
+import { FoilKind, OpenedAlt, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { OpeningRequest, productFor } from '@data/shop/shop-rules';
 import { PurchasedPack, WalletStore } from '@core/wallet/wallet.store';
@@ -18,6 +18,8 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { dealFromCenter } from './opening/deal-from-center';
+import { BOOM_AT } from './opening/pack-break.component';
 import { fitItemWidth } from './fit-grid';
 import { OpeningCardComponent } from './opening/opening-card.component';
 import { OpeningPackComponent } from './opening/opening-pack.component';
@@ -29,8 +31,14 @@ type Phase = 'unpaid' | 'packs' | 'opening' | 'done';
 
 /** The rarities that shine (their aura) when they turn face up. */
 const SHINY = new Set(['SR', 'SEC']);
-/** A pack breaking open (it charges, cracks and shatters): one pack, and each of a box's (quicker). */
-const BREAK_MS = { pack: 2600, box: 1500 };
+/** A pack breaking open (three blows, it swells and shatters: PackBreakComponent): one pack, and each of a box's (quicker). */
+const BREAK_MS = { pack: 3200, box: 1800 };
+/** The cards fly out this long after it shatters, while its pieces still fall; the pieces are gone this long after. */
+const CARDS_AFTER_BOOM_MS = 250;
+const PIECES_MS = 1500;
+/** Each card flies out of the pack this long after the one before, and lands in about this long. */
+const DEAL_STAGGER_MS = { pack: 45, box: 22 };
+const DEAL_MS = 550;
 /** Time between two plain cards turning, and between two special ones (slower), in a pack and in a box. */
 const PLAIN_MS = { pack: 300, box: 110 };
 const SPECIAL_MS = { pack: 1600, box: 1000 };
@@ -39,6 +47,10 @@ const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
 /** The foils' pass: how long each foil card takes to turn around and show its foil, in a pack and in a box. */
 const FOIL_MS = { pack: 1500, box: 1000 };
+/** A card turning into its alternative art, before the next one does (or the foils' pass starts). */
+const ALT_MS = { pack: 2400, box: 1600 };
+/** A prismatic card's turn is longer and showier: the next one waits more. */
+const PRISM_MS = { pack: 2100, box: 1400 };
 /** How long the pack that goes up a rarity shakes on the table before it does. */
 const UPGRADE_SHAKE_MS = 1400;
 const CARD_RATIO = 63 / 88;
@@ -110,8 +122,15 @@ export class BoosterResultPage {
   /** opening: the pack being opened, whether it is still breaking open, its cards face up and the ones trembling. */
   protected readonly packIndex = signal(0);
   protected readonly tearing = signal(false);
+  /** The pack's pieces still falling over the cards that flew out of it. */
+  protected readonly falling = signal(false);
+  /** The cards are laid out but wait unseen until they are sent flying from the middle (dealFromCenter). */
+  protected readonly placing = signal(false);
+  private readonly cardsBox = viewChild<ElementRef<HTMLElement>>('cardsBox');
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
   protected readonly trembling = signal<ReadonlySet<number>>(new Set());
+  /** The cards of the pack that already turned into their alternative art. */
+  protected readonly altShown = signal<ReadonlySet<number>>(new Set());
   /** The cards of the pack whose foil already showed (the second pass). */
   protected readonly foiled = signal<ReadonlySet<number>>(new Set());
   /** opening: the pack is all shown and stays still until a click moves on. */
@@ -193,7 +212,7 @@ export class BoosterResultPage {
     if (!this.isStructure()) return this.openPackAt(0);
     // A structure deck: it tears open and its whole list shows
     this.tearing.set(true);
-    this.later(() => this.skip(), BREAK_MS.pack);
+    this.later(() => this.skip(), this.cardsAt());
   }
 
   /** A click once a pack is all shown: the next one (or, after the last, the full list). */
@@ -208,6 +227,7 @@ export class BoosterResultPage {
     this.stopTimers();
     this.waiting.set(false);
     this.tearing.set(false);
+    this.falling.set(false);
     this.phase.set('done');
   }
 
@@ -235,8 +255,14 @@ export class BoosterResultPage {
       const cards = shuffle(p.cards.filter((c) => byId.has(c.id)));
       return {
         packType: p.packType,
-        // A copy that came out with the card's alternative art shows it (the same card, another picture)
-        cards: cards.map((c) => (c.alt ? withAltArt(byId.get(c.id)!) : byId.get(c.id)!)),
+        // A copy that came out with one of the card's alternative arts shows it (the same card, another picture)
+        cards: cards.map((c) => withAltArt(byId.get(c.id)!, c.art ?? null)),
+        alts: cards.map((c) => {
+          const base = byId.get(c.id)!;
+          const arts = altArtsOf(base);
+          const i = arts.findIndex((a) => a.id === c.art);
+          return i >= 0 ? { base, name: altArtName(arts[i], i) } : null;
+        }),
         foils: cards.map((c) => (c.finish === 'plain' ? null : c.finish)),
         ...(p.upgradedFrom ? { upgradedFrom: p.upgradedFrom } : {}),
       };
@@ -247,6 +273,7 @@ export class BoosterResultPage {
     this.packIndex.set(0);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
+    this.altShown.set(new Set());
     this.trembling.set(new Set());
     this.upgradeShown.set(false);
     this.phase.set('packs');
@@ -260,17 +287,38 @@ export class BoosterResultPage {
     return this.isBox() ? BREAK_MS.box : BREAK_MS.pack;
   }
 
+  /** When the cards fly out: a moment after the pack shatters. */
+  private cardsAt(): number {
+    return this.breakMs() * BOOM_AT + CARDS_AFTER_BOOM_MS;
+  }
+
+  /** The cards just laid out fly from the middle, where the pack broke; answers when the last one lands. */
+  private dealCards(count: number): number {
+    const stagger = this.isBox() ? DEAL_STAGGER_MS.box : DEAL_STAGGER_MS.pack;
+    this.placing.set(true);
+    requestAnimationFrame(() => {
+      const box = this.cardsBox()?.nativeElement;
+      if (box) dealFromCenter(box, box.parentElement ?? box, stagger);
+      this.placing.set(false);
+    });
+    return count * stagger + DEAL_MS;
+  }
+
   private openPackAt(index: number): void {
     if (index >= this.packs().length) return this.phase.set('done');
     this.packIndex.set(index);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
+    this.altShown.set(new Set());
     this.trembling.set(new Set());
     this.tearing.set(true);
     this.later(() => {
       this.tearing.set(false);
-      this.passCard(0);
-    }, this.breakMs());
+      this.falling.set(true);
+      const landed = this.dealCards(this.openingPack()?.cards.length ?? 0);
+      this.later(() => this.passCard(0), landed);
+    }, this.cardsAt());
+    this.later(() => this.falling.set(false), this.cardsAt() + PIECES_MS);
   }
 
   /** Goes through the cards in order: a plain one turns, a special one only trembles (it turns at the end). */
@@ -288,7 +336,7 @@ export class BoosterResultPage {
     const pack = this.openingPack();
     if (!pack) return;
     const order = revealOrder(pack.cards, this.special).special;
-    if (n >= order.length) return this.later(() => this.foilPass(0), order.length ? BETWEEN_PACKS_MS : 0);
+    if (n >= order.length) return this.later(() => this.altPass(0), order.length ? BETWEEN_PACKS_MS : 0);
     const index = order[n];
     this.trembling.update((set) => {
       const next = new Set(set);
@@ -299,6 +347,21 @@ export class BoosterResultPage {
     this.later(() => this.turnSpecial(n + 1), this.isBox() ? SPECIAL_MS.box : SPECIAL_MS.pack);
   }
 
+  /** The cards that came out with an alternative art, one by one, turn into it; then the foils' pass. */
+  private altPass(n: number): void {
+    const pack = this.openingPack();
+    if (!pack) return;
+    const order = (pack.alts ?? []).map((alt, i) => (alt ? i : -1)).filter((i) => i >= 0);
+    if (n >= order.length) return this.foilPass(0);
+    this.altShown.update((set) => new Set(set).add(order[n]));
+    this.later(() => this.altPass(n + 1), this.isBox() ? ALT_MS.box : ALT_MS.pack);
+  }
+
+  /** The card a copy of the pack being opened shows before it turns into its alternative art (null: no such art). */
+  protected altOf(index: number): OpenedAlt | null {
+    return this.openingPack()?.alts?.[index] ?? null;
+  }
+
   /** The second pass: the foil cards, one by one, turn around and come back with their foil; then it waits for a click. */
   private foilPass(n: number): void {
     const pack = this.openingPack();
@@ -306,7 +369,8 @@ export class BoosterResultPage {
     const order = (pack.foils ?? []).map((foil, i) => (foil ? i : -1)).filter((i) => i >= 0);
     if (n >= order.length) return this.waiting.set(true);
     this.foiled.update((set) => new Set(set).add(order[n]));
-    this.later(() => this.foilPass(n + 1), this.isBox() ? FOIL_MS.box : FOIL_MS.pack);
+    const times = pack.foils?.[order[n]] === 'prism' ? PRISM_MS : FOIL_MS;
+    this.later(() => this.foilPass(n + 1), this.isBox() ? times.box : times.pack);
   }
 
   /** The foil of a card of the pack being opened. */

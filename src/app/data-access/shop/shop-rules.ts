@@ -1,3 +1,5 @@
+import { AltArt, CatalogCard } from '../cards/card.model';
+import { altArtName, altArtsOf } from '../cards/card-rules';
 import { BoxEntry, Edition } from '../editions/edition.model';
 import { canSimulateBox, canSimulatePack } from '../editions/edition-rules';
 
@@ -71,7 +73,7 @@ function probOutcomes(entries: readonly BoxEntry[]): { probability: number; quan
 /**
  * Chance that a pack bought alone is of each type: the same as drawing one pack at random from a whole box
  * (as pickRandomPackFromBox does), counted exactly over every roll of the PROB entries. Without a box, the
- * first pack type always.
+ * first pack type always. The likeliest type first.
  */
 export function packOdds(edition: Edition): PackOdds[] {
   const types = (edition.packTypes ?? []).map((p) => p.name);
@@ -96,7 +98,7 @@ export function packOdds(edition: Edition): PackOdds[] {
     if (!size) continue;
     for (const [type, n] of counts) odds.set(type, (odds.get(type) ?? 0) + (outcome.probability * n) / size);
   }
-  return [...odds].map(([packType, probability]) => ({ packType, probability }));
+  return [...odds].map(([packType, probability]) => ({ packType, probability })).sort((a, b) => b.probability - a.probability);
 }
 
 export interface BoxContent {
@@ -108,7 +110,10 @@ export interface BoxContent {
   options?: { quantity: number; probability: number }[];
 }
 
-/** How many packs of each type a booster box brings (a FLEX entry fills what the others leave). */
+/**
+ * How many packs of each type a booster box brings (a FLEX entry fills what the others leave): the most packs first,
+ * and a PROB entry's options from fewest to most.
+ */
 export function boxContents(edition: Edition): BoxContent[] {
   const entries = edition.boxConfig?.entries ?? [];
   const total = edition.boxConfig?.totalPacks ?? 0;
@@ -121,7 +126,7 @@ export function boxContents(edition: Edition): BoxContent[] {
   const probMin = probRange.reduce((sum, q) => sum + Math.min(...q), 0);
   const probMax = probRange.reduce((sum, q) => sum + Math.max(...q), 0);
 
-  return entries.map((e): BoxContent => {
+  const rows = entries.map((e): BoxContent => {
     if (e.mode === 'FIXED') return { packType: e.packTypeName, min: quantity(e.quantity), max: quantity(e.quantity) };
     if (e.mode === 'PROB') {
       const q = e.probOptions.map((o) => quantity(o.quantity));
@@ -129,11 +134,12 @@ export function boxContents(edition: Edition): BoxContent[] {
         packType: e.packTypeName,
         min: q.length ? Math.min(...q) : 0,
         max: q.length ? Math.max(...q) : 0,
-        options: e.probOptions.map((o) => ({ quantity: quantity(o.quantity), probability: Number(o.prob) || 0 })),
+        options: e.probOptions.map((o) => ({ quantity: quantity(o.quantity), probability: Number(o.prob) || 0 })).sort((a, b) => a.quantity - b.quantity),
       };
     }
     return { packType: e.packTypeName, min: Math.max(0, total - fixedSum - probMax), max: Math.max(0, total - fixedSum - probMin) };
   });
+  return rows.sort((a, b) => b.max + b.min - (a.max + a.min));
 }
 
 /** An opening as /booster-result describes it (its query: mode pack | box | structure and, for a pack, the type that came out). */
@@ -151,4 +157,34 @@ export function productFor(edition: Edition, request: OpeningRequest): ShopProdu
 /** The query that opens `product` (a pack's type is drawn by the server, and the opening learns it then). */
 export function openingQuery(edition: Edition, product: ShopProduct): OpeningRequest & { edition: string } {
   return { edition: edition.editionId, mode: product.kind };
+}
+
+/** An alternative art a pack of an edition can give: the card, the art and its name, and its odds per copy. */
+export interface AltArtOdds {
+  card: CatalogCard;
+  art: AltArt;
+  name: string;
+  odds: number;
+}
+
+/**
+ * The alternative arts the edition's packs can give (`cards`: the edition's cards), each with its chance per pulled
+ * copy of its card (its own odds, or the shop's, `shopAlt`), the likeliest first.
+ */
+export function altArtOdds(cards: readonly CatalogCard[], shopAlt: number): AltArtOdds[] {
+  return cards
+    .flatMap((card) => altArtsOf(card).map((art, i) => ({ card, art, name: altArtName(art, i), odds: art.odds ?? shopAlt })))
+    .sort((a, b) => b.odds - a.odds);
+}
+
+/** 0..1 as the number typed in a percent field (0.0001 → 0.01). */
+export function toPercent(p: number): number {
+  return Math.round(p * 100 * 1e6) / 1e6;
+}
+
+/** A percent field's number as 0..1, null when empty or not a number from 0 to 100. */
+export function fromPercent(typed: string): number | null {
+  const value = Number(typed.replace(',', '.'));
+  if (typed.trim() === '' || !Number.isFinite(value) || value < 0 || value > 100) return null;
+  return Math.round((value / 100) * 1e10) / 1e10;
 }

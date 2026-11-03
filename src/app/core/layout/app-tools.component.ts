@@ -1,4 +1,4 @@
-import { DOCUMENT, DecimalPipe } from '@angular/common';
+import { DOCUMENT, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -7,20 +7,21 @@ import { AuthService } from '../auth/auth.service';
 import { EditModeService } from '../auth/edit-mode.service';
 import { ADMIN_PERMISSIONS } from '../navigation/admin-tools';
 import { ThemeService } from '../theme/theme.service';
+import { MISSIONS_DIALOG } from '../missions/missions-dialog';
 import { MissionsStore } from '../missions/missions.store';
 import { ProgressionStore } from '../missions/progression.store';
 import { WalletStore } from '../wallet/wallet.store';
 
 /**
  * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop) and edit mode
- * (administrators only); on the hub screens (`hub`: home, play, social…) also administration (administrators only) and sign out, so the
+ * (administrators only), the missions (their screen on the hub menus, a dialog anywhere else); on the hub screens (`hub`: home, play, social…) also administration (administrators only) and sign out, so the
  * buttons do not change between them;
  * full screen on every screen (with or without a session), only ever followed by sign out.
  * The sections are reached from the home hub; the theme is in the profile's preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
  */
 @Component({
   selector: 'eras-app-tools',
-  imports: [DecimalPipe, RouterLink, IconComponent],
+  imports: [DecimalPipe, NgTemplateOutlet, RouterLink, IconComponent],
   templateUrl: './app-tools.component.html',
   styleUrl: './app-tools.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +42,7 @@ export class AppToolsComponent {
   private readonly router = inject(Router);
   private readonly modal = inject(ModalService);
   private readonly document = inject(DOCUMENT);
+  private readonly missionsDialog = inject(MISSIONS_DIALOG, { optional: true });
 
   readonly onArt = input(false, { transform: booleanAttribute });
   /** The hub screens: the only ones with administration and sign out. */
@@ -51,6 +53,8 @@ export class AppToolsComponent {
 
   /** Missions (daily, weekly and progression) whose reward waits to be claimed. */
   protected readonly waiting = computed(() => this.missions.waiting() + this.progression.waiting());
+
+  protected readonly missionsLabel = computed(() => (this.waiting() ? `Misiones: ${this.waiting()} por reclamar` : 'Misiones'));
 
   protected readonly isAdmin = computed(() => {
     this.auth.user();
@@ -63,6 +67,12 @@ export class AppToolsComponent {
     const gems = Math.floor(Number(typed));
     if (typed === undefined || !Number.isFinite(gems) || gems < 0) return;
     await this.wallet.setGems(gems);
+  }
+
+  /** Off the hub menus the missions open over the screen, which stays where it was (their screen without the dialog). */
+  protected async openMissions(): Promise<void> {
+    if (this.missionsDialog) this.modal.open(await this.missionsDialog());
+    else void this.router.navigateByUrl('/missions');
   }
 
   protected async toggleFullscreen(): Promise<void> {

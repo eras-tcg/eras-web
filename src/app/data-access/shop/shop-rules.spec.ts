@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { CatalogCard } from '../cards/card.model';
 import { BoxEntry, Edition } from '../editions/edition.model';
-import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, boxContents, boxPrice, isSubEdition, openingQuery, packOdds, productFor, shopProducts } from './shop-rules';
+import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, altArtOdds, boxContents, boxPrice, fromPercent, isSubEdition, openingQuery, packOdds, productFor, shopProducts, toPercent } from './shop-rules';
 
 const pack = (name: string) => ({ name, cardsPerRarity: { C: 6, UC: 3, R: 1, SR: 0, SEC: 0 } });
 
@@ -57,6 +58,15 @@ describe('packOdds', () => {
     expect(o['SEC']).toBe(0);
   });
 
+  it('lists the likeliest pack type first', () => {
+    const order = packOdds(box([
+      { packTypeName: 'SR', mode: 'FIXED', quantity: 6, probOptions: [] },
+      { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
+    ])).map((o) => o.packType);
+    expect(order[0]).toBe('Normal');
+    expect(order[1]).toBe('SR');
+  });
+
   it('weighs every roll of a PROB entry', () => {
     // SEC: 0 packs (50%) or 4 packs (50%) of 24; the rest Normal
     const o = odds(box([
@@ -69,16 +79,16 @@ describe('packOdds', () => {
 });
 
 describe('boxContents', () => {
-  it('gives fixed counts, PROB ranges with their chances and the FLEX remainder', () => {
+  it('gives fixed counts, PROB ranges with their chances and the FLEX remainder, the most packs first', () => {
     const contents = boxContents(box([
       { packTypeName: 'SR', mode: 'FIXED', quantity: 2, probOptions: [] },
-      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 1, prob: 0.7 }, { quantity: 3, prob: 0.3 }] },
+      { packTypeName: 'SEC', mode: 'PROB', quantity: 0, probOptions: [{ quantity: 3, prob: 0.3 }, { quantity: 1, prob: 0.7 }] },
       { packTypeName: 'Normal', mode: 'FLEX', quantity: 0, probOptions: [] },
     ]));
     expect(contents).toEqual([
+      { packType: 'Normal', min: 19, max: 21 },
       { packType: 'SR', min: 2, max: 2 },
       { packType: 'SEC', min: 1, max: 3, options: [{ quantity: 1, probability: 0.7 }, { quantity: 3, probability: 0.3 }] },
-      { packType: 'Normal', min: 19, max: 21 },
     ]);
   });
 });
@@ -94,5 +104,27 @@ describe('productFor and openingQuery', () => {
       expect(productFor(edition, query)?.kind).toBe(product.kind);
     }
     expect(openingQuery(edition, shopProducts(edition)[0])).toEqual({ edition: 'E1', mode: 'pack' });
+  });
+});
+
+describe('alternative arts in the odds table', () => {
+  it('lists every alternative art of the edition with its own odds or the shop odds', () => {
+    const titan = { id: 't', name: 'Titan', meta: { id: 'm', altArts: [{ id: 'a', url: 'u1' }, { id: 'b', url: 'u2', odds: 0.01 }] } } as CatalogCard;
+    const plain = { id: 'p', name: 'Plain', meta: { id: 'n' } } as CatalogCard;
+    const named = { ...titan, meta: { id: 'm', altArts: [{ id: 'a', url: 'u1' }, { id: 'b', url: 'u2', odds: 0.01, name: 'Secreta' }] } } as CatalogCard;
+    expect(altArtOdds([named, plain], 0.0001).map((r) => [r.card.id, r.art.id, r.name, r.odds])).toEqual([
+      ['t', 'b', 'Secreta', 0.01],
+      ['t', 'a', 'Alternativo 1', 0.0001],
+    ]);
+  });
+
+  it('turns odds into the percent typed and back', () => {
+    expect(toPercent(0.0001)).toBe(0.01);
+    expect(toPercent(0.05)).toBe(5);
+    expect(fromPercent('0,01')).toBe(0.0001);
+    expect(fromPercent('5')).toBe(0.05);
+    expect(fromPercent('')).toBeNull();
+    expect(fromPercent('120')).toBeNull();
+    expect(fromPercent('abc')).toBeNull();
   });
 });

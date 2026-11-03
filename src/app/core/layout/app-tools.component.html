@@ -9,12 +9,20 @@
       <eras-icon name="gem" /><span class="label">{{ wallet.gems() | number: '1.0-0' : 'es' }}</span>
     </a>
   }
-  <a class="item missions" routerLink="/missions" [attr.aria-label]="waiting() ? 'Misiones: ' + waiting() + ' por reclamar' : 'Misiones'">
+  <!-- On the hub menus, the "Misiones" screen (same frame); anywhere else, a dialog over the screen -->
+  @if (hub()) {
+    <a class="item missions" routerLink="/missions" [attr.aria-label]="missionsLabel()"><ng-container [ngTemplateOutlet]="missionsButton" /></a>
+  } @else {
+    <button type="button" class="item missions" aria-haspopup="dialog" [attr.aria-label]="missionsLabel()" (click)="openMissions()">
+      <ng-container [ngTemplateOutlet]="missionsButton" />
+    </button>
+  }
+  <ng-template #missionsButton>
     <eras-icon name="target" /><span class="label">Misiones</span>
     @if (waiting()) {
       <span class="badge">{{ waiting() }}</span>
     }
-  </a>
+  </ng-template>
   @if (editMode.available()) {
     <button type="button" class="item" role="switch" [class.on]="editMode.active()" [attr.aria-checked]="editMode.active()" (click)="editMode.toggle()">
       <eras-icon name="edit" /><span class="label">Modo edición</span>

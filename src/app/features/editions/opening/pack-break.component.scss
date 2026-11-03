@@ -1,14 +1,45 @@
-// A pack breaking open in --break (ms, from the component): it charges until 55% of it, cracking from 30%, and
-// shatters at 55%; the shards and sparks are shot out and slow down exponentially. The light is the hub's glow and accent, the same for every pack (it does not tell its type).
+// A pack breaking open in --break (ms, from the component). Its timeline, as fractions of it:
+//   0–8%     it appears
+//   18%, 34%, 50%   three blows: a jolt, a new stage of cracks drawing itself, the light inside one step stronger
+//   50–66%   it swells, glowing from inside and along its edges, trembling
+//   66–72%   it freezes, brightest
+//   72%      it shatters (BOOM_AT): flash, shock wave, a jolt of the whole break; the canvas draws the pieces
+// The light (--light, --edge) is the pack's color: the hub's gold for a plain pack, amber for SR, pink for SEC, every
+// color for GOD (as their auras on the table).
 :host {
-  --boom: calc(var(--break) * 0.55);
-  --after: calc(var(--break) * 0.45);
+  --boom: calc(var(--break) * 0.72);
   --light: var(--color-hub-glow);
+  --edge: var(--color-hub-accent);
 
   position: relative;
   display: block;
   inline-size: min(42dvh * 63 / 88, 21rem);
   aspect-ratio: 63 / 88;
+  animation: impact 320ms linear var(--boom) both;
+}
+
+// The whole break jolts as it shatters
+@keyframes impact {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  15% {
+    transform: translate(-7px, 4px);
+  }
+
+  35% {
+    transform: translate(6px, -5px);
+  }
+
+  55% {
+    transform: translate(-4px, 3px);
+  }
+
+  75% {
+    transform: translate(2px, -2px);
+  }
 }
 
 /* Behind */
@@ -21,154 +52,304 @@
 }
 
 .rays {
-  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--light) 55%, transparent) 0deg 6deg, transparent 6deg 22deg);
-  mask: radial-gradient(circle, var(--color-hub-scrim) 15%, transparent 62%);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--light) 55%, transparent) 0deg 5deg, transparent 5deg 18deg);
+  mask: radial-gradient(circle, var(--color-hub-scrim) 12%, transparent 62%);
   opacity: 0;
-  animation: rays var(--break) ease-in both;
+  animation: rays var(--break) linear both;
 }
 
+// One step brighter and wider with each blow, spinning faster as it swells, gone after the shatter
 @keyframes rays {
-  50% {
-    opacity: 0.9;
-    transform: rotate(80deg) scale(1);
+  0%,
+  17% {
+    opacity: 0;
+    transform: rotate(0) scale(0.6);
   }
 
-  70%,
+  19% {
+    opacity: 0.25;
+    transform: rotate(8deg) scale(0.7);
+  }
+
+  35% {
+    opacity: 0.45;
+    transform: rotate(20deg) scale(0.8);
+  }
+
+  51% {
+    opacity: 0.7;
+    transform: rotate(36deg) scale(0.9);
+  }
+
+  71% {
+    opacity: 1;
+    transform: rotate(110deg) scale(1.05);
+  }
+
+  85%,
   100% {
     opacity: 0;
-    transform: rotate(120deg) scale(1.4);
+    transform: rotate(150deg) scale(1.5);
   }
 }
 
 .glow {
   z-index: -1;
-  background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--color-hub-accent) 60%, transparent) 25%, transparent 55%);
+  background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--edge) 60%, transparent) 25%, transparent 55%);
   opacity: 0;
   animation: glow var(--break) ease-in both;
 }
 
 @keyframes glow {
-  0% {
+  0%,
+  17% {
     opacity: 0;
     transform: scale(0.4);
   }
 
-  55% {
+  19% {
+    opacity: 0.35;
+    transform: scale(0.55);
+  }
+
+  35% {
+    opacity: 0.55;
+    transform: scale(0.7);
+  }
+
+  51% {
+    opacity: 0.75;
+    transform: scale(0.85);
+  }
+
+  72% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.05);
   }
 
   100% {
     opacity: 0;
-    transform: scale(1.6);
+    transform: scale(1.8);
   }
 }
 
-/* The pack: it appears, shakes harder and harder and brightens, until it shatters */
+/* The pack */
 .body {
   position: absolute;
   inset: 0;
-  animation: charge var(--boom) linear both;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  animation: blows var(--break) linear both;
 }
 
-@keyframes charge {
+.art {
+  position: absolute;
+  inset: 0;
+  background: var(--art, none) center / cover, var(--color-surface-muted);
+}
+
+// Each blow a sharp jolt that settles; then the swell, the freeze, and it is gone (the canvas takes over)
+@keyframes blows {
   0% {
     opacity: 0;
     transform: scale(0.85);
   }
 
-  12% {
+  8%,
+  17.9% {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
+    filter: none;
   }
 
-  30% {
-    transform: translate(-2px, 1px) rotate(-1deg);
-  }
-
-  40% {
-    transform: translate(3px, -2px) rotate(1.5deg);
-    filter: brightness(1.08);
-  }
-
-  50% {
-    transform: translate(-4px, 2px) rotate(-2.5deg) scale(1.03);
-    filter: brightness(1.15);
-  }
-
-  60% {
-    transform: translate(5px, -3px) rotate(3deg) scale(1.04);
-  }
-
-  70% {
-    transform: translate(-6px, 3px) rotate(-3.5deg) scale(1.05);
-    filter: brightness(1.25);
-  }
-
-  80% {
-    transform: translate(7px, -2px) rotate(4deg) scale(1.06);
-  }
-
-  90% {
-    transform: translate(-7px, 4px) rotate(-4deg) scale(1.07);
+  18% {
+    transform: translate(-5px, 3px) rotate(-2deg) scale(0.98);
     filter: brightness(1.35);
   }
 
-  100% {
-    transform: scale(1.08);
+  21% {
+    transform: translate(2px, -1px) rotate(0.6deg);
+    filter: brightness(1.05);
+  }
+
+  24%,
+  33.9% {
+    transform: none;
+    filter: brightness(1.05);
+  }
+
+  34% {
+    transform: translate(6px, -4px) rotate(2.6deg) scale(0.97);
     filter: brightness(1.5);
   }
-}
 
-// Each shard is the whole pack's artwork, clipped; at the break it flies away, turning and fading
-.shard {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  background: var(--art, none) center / cover, var(--color-surface-muted);
-  // Shot out, then slowing down exponentially (an "ease-out expo" curve)
-  animation: fly var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
-}
+  37% {
+    transform: translate(-2px, 2px) rotate(-0.8deg);
+    filter: brightness(1.12);
+  }
 
-@keyframes fly {
-  0% {
+  40%,
+  49.9% {
     transform: none;
+    filter: brightness(1.12);
+  }
+
+  50% {
+    transform: translate(-8px, 5px) rotate(-3.4deg) scale(0.96);
+    filter: brightness(1.7);
+  }
+
+  53% {
+    transform: translate(3px, -2px) rotate(1deg) scale(1.01);
+    filter: brightness(1.2);
+  }
+
+  // The swell: bigger and brighter, trembling harder
+  56% {
+    transform: translate(-1px, 1px) scale(1.02);
+  }
+
+  59% {
+    transform: translate(2px, -1px) scale(1.035);
     filter: brightness(1.3);
   }
 
+  62% {
+    transform: translate(-2px, 2px) scale(1.05);
+  }
+
+  66% {
+    transform: translate(3px, -2px) scale(1.07);
+    filter: brightness(1.5);
+  }
+
+  // The freeze: not a pixel moves
+  66.5%,
+  71.9% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: brightness(1.8) saturate(1.2);
+  }
+
+  72%,
   100% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.7);
-    filter: brightness(1);
+    transform: scale(1.08);
   }
 }
 
-// The cracks draw themselves from the middle, glowing
+// The light from inside: from the impact, one step stronger with each blow; along the edges once it swells
+.inner {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ix) var(--iy), var(--light) 0%, color-mix(in srgb, var(--edge) 70%, transparent) 18%, transparent 55%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: inner var(--break) linear both;
+}
+
+@keyframes inner {
+  0%,
+  17.9% {
+    opacity: 0;
+    box-shadow: none;
+  }
+
+  18% {
+    opacity: 0.55;
+  }
+
+  24%,
+  33.9% {
+    opacity: 0.2;
+  }
+
+  34% {
+    opacity: 0.75;
+  }
+
+  40%,
+  49.9% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.95;
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+
+  66%,
+  72% {
+    opacity: 1;
+    box-shadow:
+      inset 0 0 1.5rem color-mix(in srgb, var(--light) 80%, transparent),
+      inset 0 0 0 2px var(--light);
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The cracks: each stage draws itself on its blow; under it, its light, wide and blurred */
 .cracks {
   position: absolute;
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
   overflow: visible;
-  filter: drop-shadow(0 0 3px var(--light)) drop-shadow(0 0 8px var(--color-hub-accent));
-  animation: cracks-out 1ms linear var(--boom) both;
 }
 
 .cracks path {
   fill: none;
-  stroke: var(--light);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   stroke-linecap: round;
-  stroke-width: 1.6;
-  vector-effect: non-scaling-stroke;
-  animation: draw calc(var(--break) * 0.25) ease-out calc(var(--break) * 0.3) both;
+  stroke-linejoin: round;
+  // Widths in the pack's units (63 across): a non-scaling stroke would break the dashes that draw the cracks
+  animation: draw calc(var(--break) * 0.05) cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.cracks path.thin {
-  stroke-width: 1;
-  animation-delay: calc(var(--break) * 0.42);
-  animation-duration: calc(var(--break) * 0.13);
+.line path {
+  stroke: var(--color-hub-text);
+  stroke-width: 0.4;
+}
+
+.leak path {
+  stroke: var(--light);
+  stroke-width: 1.7;
+  filter: blur(3px);
+  opacity: 0.85;
+}
+
+.stage-0 path {
+  animation-delay: calc(var(--break) * 0.18);
+}
+
+.stage-1 path {
+  animation-delay: calc(var(--break) * 0.34);
+}
+
+.stage-2 path {
+  animation-delay: calc(var(--break) * 0.5);
+}
+
+// The light through the cracks swells with the pack
+.leak {
+  animation: leak var(--break) linear both;
+}
+
+@keyframes leak {
+  0%,
+  50% {
+    opacity: 0.7;
+  }
+
+  66%,
+  72% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px var(--edge));
+  }
 }
 
 @keyframes draw {
@@ -177,21 +358,15 @@
   }
 }
 
-@keyframes cracks-out {
-  to {
-    opacity: 0;
-  }
-}
-
-/* The break */
+/* The shatter */
 .flash {
   position: absolute;
-  inset: -120%;
+  inset: -140%;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--color-hub-text) 0%, color-mix(in srgb, var(--light) 80%, transparent) 20%, transparent 55%);
+  background: radial-gradient(circle, var(--color-hub-text) 0%, color-mix(in srgb, var(--light) 85%, transparent) 16%, transparent 52%);
   opacity: 0;
   pointer-events: none;
-  animation: flash calc(var(--after) * 0.7) ease-out var(--boom) both;
+  animation: flash 520ms ease-out var(--boom) both;
 }
 
 @keyframes flash {
@@ -200,61 +375,169 @@
     transform: scale(0.3);
   }
 
-  15% {
+  12% {
     opacity: 1;
+    transform: scale(0.8);
   }
 
   100% {
     opacity: 0;
-    transform: scale(1.2);
+    transform: scale(1.3);
   }
 }
 
-
-.spark {
+// A ring of light thrown out from the impact
+.wave {
   position: absolute;
-  inset-block-start: 45%;
-  inset-inline-start: 50%;
-  inline-size: var(--size);
-  block-size: var(--size);
+  inset-block-start: var(--iy);
+  inset-inline-start: var(--ix);
+  inline-size: 60%;
+  aspect-ratio: 1;
+  border: 3px solid var(--light);
   border-radius: 50%;
-  background: var(--color-hub-text);
   box-shadow:
-    0 0 6px var(--light),
-    0 0 12px var(--color-hub-accent);
+    0 0 1rem var(--light),
+    inset 0 0 1rem var(--edge);
   opacity: 0;
   pointer-events: none;
-  animation: spark var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
+  transform: translate(-50%, -50%) scale(0.1);
+  animation: wave 760ms cubic-bezier(0.1, 0.7, 0.2, 1) var(--boom) both;
 }
 
-// Hidden until the break (its fill shows the first keyframe while it waits): no dot in the middle meanwhile
-@keyframes spark {
+@keyframes wave {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0);
+    transform: translate(-50%, -50%) scale(0.1);
   }
 
-  1% {
+  8% {
     opacity: 1;
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--dist)) scale(0.3);
+    border-width: 1px;
+    transform: translate(-50%, -50%) scale(6);
   }
+}
+
+// The shards, flecks and sparks fly far beyond the pack
+.burst {
+  position: absolute;
+  // A canvas sizes itself by its own pixels unless told: as wide and tall as the room around the pack
+  inset-block-start: -160%;
+  inset-inline-start: -220%;
+  inline-size: 540%;
+  block-size: 420%;
+  pointer-events: none;
+  // Changes nothing: its start, at --boom, tells the component to shatter (on the same clock as the blows)
+  animation: boom-mark 1ms linear var(--boom) both;
+}
+
+@keyframes boom-mark {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The pack's colors */
+:host(.tier-sr) {
+  --light: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-hub-text));
+  --edge: var(--color-rarity-sr);
+}
+
+:host(.tier-sec) {
+  --light: color-mix(in srgb, var(--color-rarity-sec) 55%, var(--color-hub-text));
+  --edge: var(--color-rarity-sec);
+}
+
+// GOD: the rays in every color, as its ring on the table
+:host(.tier-god) {
+  --light: var(--color-hub-glow);
+  --edge: var(--color-rarity-sec);
+}
+
+:host(.tier-god) .rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--color-rarity-sec) 70%, transparent) 0deg 5deg,
+    transparent 5deg 12deg,
+    color-mix(in srgb, var(--color-rarity-sr) 70%, transparent) 12deg 17deg,
+    transparent 17deg 24deg,
+    color-mix(in srgb, var(--color-rarity-r) 70%, transparent) 24deg 29deg,
+    transparent 29deg 36deg,
+    color-mix(in srgb, var(--color-rarity-uc) 70%, transparent) 36deg 41deg,
+    transparent 41deg 48deg
+  );
+}
+
+:host(.tier-god) .glow {
+  background: radial-gradient(
+    circle,
+    var(--color-hub-text) 0%,
+    color-mix(in srgb, var(--color-rarity-sec) 70%, transparent) 18%,
+    color-mix(in srgb, var(--color-rarity-sr) 45%, transparent) 32%,
+    transparent 55%
+  );
+}
+
+/* How much it shows, by the pack's type (BREAK_DETAIL holds the rest: cracks and pieces) */
+
+// A plain pack: no rays, no shock wave, no jolt of the whole break; a softer light
+:host(.tier-none) {
+  animation: none;
+}
+
+:host(.tier-none) .rays,
+:host(.tier-none) .wave {
+  display: none;
+}
+
+// (a filter, so it multiplies their animated opacity)
+:host(.tier-none) .glow,
+:host(.tier-none) .flash {
+  filter: opacity(0.55);
+}
+
+:host(.tier-none) .leak path {
+  stroke-width: 1.1;
+}
+
+// An SR pack: everything, the light a step softer
+:host(.tier-sr) .rays {
+  filter: brightness(0.75);
+}
+
+// A GOD pack: wider light and a second, bigger wave
+:host(.tier-god) .rays,
+:host(.tier-god) .glow {
+  inset: -90%;
+}
+
+.wave.second {
+  animation-delay: calc(var(--boom) + 140ms);
+  animation-duration: 1000ms;
+  border-color: var(--edge);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :host,
+  .rays,
+  .glow,
+  .body,
+  .inner,
+  .cracks path,
+  .leak,
+  .flash,
+  .wave {
+    animation: none;
+  }
+
   .rays,
   .glow,
   .flash,
-  .spark {
+  .wave,
+  .burst {
     display: none;
-  }
-
-  .body,
-  .shard,
-  .cracks path {
-    animation: none;
   }
 }

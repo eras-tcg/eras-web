@@ -7,7 +7,8 @@
   inline-size: clamp(5rem, 9vw, 8.5rem);
   aspect-ratio: 63 / 88;
   perspective: 900px;
-  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  // Out of the broken pack (deal-from-center.ts sets where from); without it, from just above
+  animation: deal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) var(--deal-delay, 0ms) both;
 }
 
 :host(.aura-sr) {
@@ -21,7 +22,11 @@
 @keyframes deal {
   from {
     opacity: 0;
-    transform: translateY(-2.5rem) rotate(-6deg);
+    transform: translate(var(--from-x, 0), var(--from-y, -2.5rem)) rotate(var(--from-rot, -6deg)) scale(var(--from-scale, 1));
+  }
+
+  30% {
+    opacity: 1;
   }
 }
 
@@ -227,12 +232,12 @@
   animation: sparkle 1s cubic-bezier(0.05, 0.9, 0.1, 1) 0.5s both;
 }
 
-:host(.foil-prism) .sparkle:nth-child(odd) {
-  background: var(--color-rarity-sec);
-}
-
-:host(.foil-prism) .sparkle:nth-child(3n) {
-  background: var(--color-rarity-uc);
+// A prismatic card's sparkles: every color of the spectrum, around it
+:host(.foil-prism) .sparkle {
+  background: hsl(calc(var(--hue) * 1deg) 95% 70%);
+  filter: drop-shadow(0 0 5px hsl(calc(var(--hue) * 1deg) 95% 60%));
+  animation-duration: 1.4s;
+  animation-delay: 0.7s;
 }
 
 @keyframes sparkle {

@@ -136,6 +136,21 @@ dd {
   inset-block-start: 0;
 }
 
+// A click opens it bigger: it says so
+.image.zoomable {
+  cursor: zoom-in;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.image.zoomable:hover {
+  transform: scale(1.015);
+}
+
+.image.zoomable:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 .top:empty,
 .under:empty {
   display: none;

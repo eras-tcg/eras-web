@@ -1,4 +1,4 @@
-import { CARD_COLORS, CARD_RARITIES, CardEffect, CardMeta, CardRefData, CatalogCard, DriveCard, KeywordEffect } from './card.model';
+import { AltArt, CARD_COLORS, CARD_RARITIES, CardEffect, CardMeta, CardRefData, CatalogCard, DriveCard, KeywordEffect } from './card.model';
 
 const metaKey = (edition: string | null | undefined, number: number | null | undefined, sub: string | null | undefined, color: string | null | undefined) =>
   `${edition ?? ''}|${number ?? ''}|${sub ?? ''}|${color ?? ''}`;
@@ -45,10 +45,20 @@ export function printedName(imageName: string | null, metaName: string | null | 
   return !imageName || plain(imageName) === plain(metaName) ? metaName : imageName;
 }
 
-/** The same card showing its alternative art (CardMeta.altImage), or the card as it is when it has none. */
-export function withAltArt(card: CatalogCard): CatalogCard {
-  const alt = card.meta?.altImage;
-  return alt ? { ...card, image_url: alt, time_stamp: null } : card;
+/** The card's alternative arts (CardMeta.altArts), none for most cards. */
+export function altArtsOf(card: CatalogCard): AltArt[] {
+  return card.meta?.altArts ?? [];
+}
+
+/** What an alternative art is called: its own name, or "Alternativo N" by its place among the card's (`index` from 0). */
+export function altArtName(art: AltArt, index: number): string {
+  return art.name?.trim() || `Alternativo ${index + 1}`;
+}
+
+/** The same card showing one of its alternative arts, or the card as it is when it has no such art. */
+export function withAltArt(card: CatalogCard, artId: string | null): CatalogCard {
+  const art = artId === null ? undefined : altArtsOf(card).find((a) => a.id === artId);
+  return art ? { ...card, image_url: art.url, time_stamp: null } : card;
 }
 
 /** Image URL with a cache-buster, so a replaced image is not served from cache. */

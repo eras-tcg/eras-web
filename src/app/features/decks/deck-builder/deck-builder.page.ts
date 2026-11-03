@@ -9,7 +9,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { AltCopy, DeckCopy, bestAlt, bestFinish, deckCopies, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
-import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
+import { DECK_NAME_MAX, MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -97,6 +97,7 @@ export class DeckBuilderPage {
   private readonly modal = inject(ModalService);
 
   protected readonly maxCards = MAX_CARDS;
+  protected readonly nameMax = DECK_NAME_MAX;
   protected readonly typeLabels = CARD_TYPE_LABELS;
   protected readonly imageUrl = cardImageUrl;
 

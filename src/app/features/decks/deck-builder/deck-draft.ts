@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
-import { addCard, canAdd, copiesOfName, entriesFromIds, groupByType, idsFromEntries, removeCard, resolveCover, totalCards } from '@data/decks/deck-rules';
+import { addCard, canAdd, clampDeckName, copiesOfName, copyDeckName, entriesFromIds, groupByType, idsFromEntries, removeCard, resolveCover, totalCards } from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 
@@ -52,7 +52,7 @@ export class DeckDraft {
   load(deck: Deck, cards: readonly CatalogCard[], copy: boolean): void {
     const { entries, missing } = entriesFromIds(deck.cards ?? [], cards);
     const snapshot: Snapshot = {
-      name: deck.deckName || 'Mazo',
+      name: clampDeckName(deck.deckName || 'Mazo'),
       entries,
       cover: resolveCover(entries, deck.deckImage ?? null),
       isPrivate: deck.privateDeck ?? false,
@@ -61,7 +61,7 @@ export class DeckDraft {
     if (copy) {
       this.id.set(null);
       this.saved.set(null);
-      this.state.set({ ...snapshot, name: `${snapshot.name} (copia)` });
+      this.state.set({ ...snapshot, name: copyDeckName(deck.deckName || 'Mazo') });
     } else {
       this.id.set(deck.id);
       this.saved.set(snapshot);
@@ -78,7 +78,7 @@ export class DeckDraft {
   }
 
   rename(name: string): void {
-    this.state.update((s) => ({ ...s, name }));
+    this.state.update((s) => ({ ...s, name: clampDeckName(name) }));
   }
 
   togglePrivate(): void {
@@ -107,7 +107,7 @@ export class DeckDraft {
 
   /** Replaces the whole list (import). */
   replace(entries: DeckEntry[], name: string | null): void {
-    this.state.update((s) => ({ ...s, name: name ?? s.name }));
+    this.state.update((s) => ({ ...s, name: name === null ? s.name : clampDeckName(name) }));
     this.setEntries(entries);
   }
 

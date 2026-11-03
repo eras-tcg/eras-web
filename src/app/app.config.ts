@@ -5,6 +5,7 @@ import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBro
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
 import { BusyState, busyInterceptor } from '@core/http/busy';
+import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { serverInterceptor } from '@core/server/server.interceptor';
 import { routes } from './app.routes';
@@ -21,5 +22,7 @@ export const appConfig: ApplicationConfig = {
     // The buttons hold while a change is on its way: listening from the first click on
     provideAppInitializer(() => void inject(BusyState)),
     { provide: LOCALE_ID, useValue: 'es' },
+    // The quick button «Misiones» off the hub menus opens them as a dialog
+    { provide: MISSIONS_DIALOG, useValue: () => import('@features/home/missions-dialog.component').then((m) => m.MissionsDialogComponent) },
   ],
 };

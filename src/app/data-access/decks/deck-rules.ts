@@ -5,6 +5,19 @@ import { Deck, DeckEntry, Orientation, PaperSize } from './deck.model';
 /** Copies allowed per card name, counting every printing of that name. */
 export const MAX_COPIES = 4;
 export const MAX_CARDS = 100;
+/** Longest deck name: fits a deck tile and the waiting room on one line. */
+export const DECK_NAME_MAX = 30;
+
+/** A deck name cut to DECK_NAME_MAX (names saved before the limit, imports). */
+export function clampDeckName(name: string): string {
+  return name.slice(0, DECK_NAME_MAX);
+}
+
+/** The name of a copy: "(copia)" after the original, cutting the original so the mark always fits. */
+export function copyDeckName(name: string): string {
+  const mark = ' (copia)';
+  return `${name.slice(0, DECK_NAME_MAX - mark.length).trimEnd()}${mark}`;
+}
 
 export const CARD_TYPE_ORDER = ['creature', 'structure', 'utility'] as const;
 const typeRank = (type: string | null | undefined) => {

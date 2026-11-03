@@ -235,8 +235,8 @@ export class BoosterResultPage {
       const cards = shuffle(p.cards.filter((c) => byId.has(c.id)));
       return {
         packType: p.packType,
-        // A copy that came out with the card's alternative art shows it (the same card, another picture)
-        cards: cards.map((c) => (c.alt ? withAltArt(byId.get(c.id)!) : byId.get(c.id)!)),
+        // A copy that came out with one of the card's alternative arts shows it (the same card, another picture)
+        cards: cards.map((c) => withAltArt(byId.get(c.id)!, c.art ?? null)),
         foils: cards.map((c) => (c.finish === 'plain' ? null : c.finish)),
         ...(p.upgradedFrom ? { upgradedFrom: p.upgradedFrom } : {}),
       };

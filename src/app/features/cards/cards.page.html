@@ -50,10 +50,10 @@
                 [class.lacking]="finish === null"
                 [attr.title]="finish === null ? 'No tienes esta carta' : null"
                 [name]="card.name ?? ''"
-                [imageUrl]="alt ? altImageUrl(card) : imageUrl(card)"
+                [imageUrl]="alt ? altImageUrl(card, alt) : imageUrl(card)"
                 [badge]="badge(card)"
                 [badgeTone]="card.meta ? 'info' : 'danger'"
-                [foil]="shineOf(alt ?? finish)"
+                [foil]="shineOf(alt?.finish ?? finish)"
                 (selected)="open(card)"
               />
             }

@@ -15,34 +15,73 @@ export const CRAFT_COST = 30;
 /** Fragments a broken copy gives, of its card's rarity. */
 export const FRAGMENTS_OF: Record<Finish, number> = { plain: 10, foil: 30, prism: 90 };
 
-/** The keys of the copies with a card's alternative art, plainest first (they are never broken or crafted). */
-const ALT_KEYS = FINISHES.map((f) => `alt-${f}` as const);
+/** The art the single alternative art of before goes by (its copies are kept as "alt-" + finish). */
+export const LEGACY_ART_ID = '0';
 
-/** Copies of a card in a collection, every finish together, with the alternative art too (it is the same card). */
+/** The alternative art of a kept copy ("alt-x1-foil" → "x1", "alt-foil" → the art of before), null for none. */
+export function copyArt(key: string): string | null {
+  if (!key.startsWith('alt-')) return null;
+  const rest = key.slice(4);
+  const dash = rest.lastIndexOf('-');
+  return dash < 0 ? LEGACY_ART_ID : rest.slice(0, dash);
+}
+
+/** The finish of a kept copy ("alt-x1-foil" or "alt-foil" → "foil"). */
+export function copyFinish(key: string): Finish {
+  return (key.startsWith('alt-') ? key.slice(key.lastIndexOf('-') + 1) : key) as Finish;
+}
+
+/** Copies of a card in a collection, every finish and art together (an alternative art is the same card). */
 export function ownedCount(collection: Collection | null, cardId: string): number {
   const copies = collection?.cards[cardId];
-  return copies ? [...FINISHES, ...ALT_KEYS].reduce((sum, k) => sum + (copies[k] ?? 0), 0) : 0;
+  return copies ? Object.values(copies).reduce<number>((sum, n) => sum + (n ?? 0), 0) : 0;
 }
 
-/** The finest finish among a card's copies with its alternative art, or null when the player has none. */
-export function altFinish(copies: OwnedCopies | undefined): Finish | null {
-  for (let i = FINISHES.length - 1; i >= 0; i--) if ((copies?.[ALT_KEYS[i]] ?? 0) > 0) return FINISHES[i];
-  return null;
+/** A copy with one of the card's alternative arts: the art and its finish. */
+export interface AltCopy {
+  art: string;
+  finish: Finish;
 }
 
-/** A copy of a deck: its finish (null when the player lacks it) and whether it has the alternative art. */
+/**
+ * The player's copies of a card with an alternative art the card still has (`arts`), the finest finish first: an
+ * art removed since leaves its copies with the usual one.
+ */
+export function altCopies(copies: OwnedCopies | undefined, arts: readonly string[]): AltCopy[] {
+  const out: AltCopy[] = [];
+  for (const [key, n] of Object.entries(copies ?? {})) {
+    const art = copyArt(key);
+    if (art === null || !arts.includes(art)) continue;
+    for (let k = 0; k < (n ?? 0); k++) out.push({ art, finish: copyFinish(key) });
+  }
+  return out.sort((a, b) => FINISHES.indexOf(b.finish) - FINISHES.indexOf(a.finish) || a.art.localeCompare(b.art));
+}
+
+/** The finest copy of a card with an alternative art (shown instead of its usual art), null when the player has none. */
+export function bestAlt(copies: OwnedCopies | undefined, arts: readonly string[]): AltCopy | null {
+  return altCopies(copies, arts)[0] ?? null;
+}
+
+/** A copy of a deck: its finish (null when the player lacks it) and its alternative art (null for the usual one). */
 export interface DeckCopy {
   finish: Finish | null;
-  alt: boolean;
+  art: string | null;
 }
 
-/** Each of a deck's `count` copies of a card, the alternative art first, then the finest finishes; null when lacking. */
-export function deckCopies(copies: OwnedCopies | undefined, count: number): DeckCopy[] {
+/**
+ * Each of a deck's `count` copies of a card, as the table plays them: the copies with an alternative art first (the
+ * finest finish first; one whose art was removed shows the usual art), then the finest finishes; null when lacking.
+ */
+export function deckCopies(copies: OwnedCopies | undefined, count: number, arts: readonly string[]): DeckCopy[] {
   const out: DeckCopy[] = [];
-  for (let i = FINISHES.length - 1; i >= 0; i--) {
-    for (let k = 0; k < (copies?.[ALT_KEYS[i]] ?? 0) && out.length < count; k++) out.push({ finish: FINISHES[i], alt: true });
+  const alts = Object.entries(copies ?? {})
+    .filter(([key]) => copyArt(key) !== null)
+    .sort(([a], [b]) => FINISHES.indexOf(copyFinish(b)) - FINISHES.indexOf(copyFinish(a)) || a.localeCompare(b));
+  for (const [key, n] of alts) {
+    const art = copyArt(key)!;
+    for (let k = 0; k < (n ?? 0) && out.length < count; k++) out.push({ finish: copyFinish(key), art: arts.includes(art) ? art : null });
   }
-  for (const finish of deckCopyFinishes(copies, count - out.length)) out.push({ finish, alt: false });
+  for (const finish of deckCopyFinishes(copies, count - out.length)) out.push({ finish, art: null });
   return out;
 }
 

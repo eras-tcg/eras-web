@@ -1,3 +1,5 @@
+import { AltArt, CatalogCard } from '../cards/card.model';
+import { altArtsOf } from '../cards/card-rules';
 import { BoxEntry, Edition } from '../editions/edition.model';
 import { canSimulateBox, canSimulatePack } from '../editions/edition-rules';
 
@@ -151,4 +153,32 @@ export function productFor(edition: Edition, request: OpeningRequest): ShopProdu
 /** The query that opens `product` (a pack's type is drawn by the server, and the opening learns it then). */
 export function openingQuery(edition: Edition, product: ShopProduct): OpeningRequest & { edition: string } {
   return { edition: edition.editionId, mode: product.kind };
+}
+
+/** An alternative art a pack of an edition can give: the card, which of its arts it is (1, 2…) and its odds per copy. */
+export interface AltArtOdds {
+  card: CatalogCard;
+  art: AltArt;
+  number: number;
+  odds: number;
+}
+
+/**
+ * The alternative arts the edition's packs can give (`cards`: the edition's cards), each with its chance per pulled
+ * copy of its card: its own odds, or the shop's (`shopAlt`).
+ */
+export function altArtOdds(cards: readonly CatalogCard[], shopAlt: number): AltArtOdds[] {
+  return cards.flatMap((card) => altArtsOf(card).map((art, i) => ({ card, art, number: i + 1, odds: art.odds ?? shopAlt })));
+}
+
+/** 0..1 as the number typed in a percent field (0.0001 → 0.01). */
+export function toPercent(p: number): number {
+  return Math.round(p * 100 * 1e6) / 1e6;
+}
+
+/** A percent field's number as 0..1, null when empty or not a number from 0 to 100. */
+export function fromPercent(typed: string): number | null {
+  const value = Number(typed.replace(',', '.'));
+  if (typed.trim() === '' || !Number.isFinite(value) || value < 0 || value > 100) return null;
+  return Math.round((value / 100) * 1e10) / 1e10;
 }

@@ -16,8 +16,8 @@ interface WalletResponse {
 export interface PurchasedPack {
   packType: string;
   upgradedFrom: string | null;
-  /** alt: the copy came out with the card's alternative art. */
-  cards: { id: string; finish: 'plain' | 'foil' | 'prism'; alt?: boolean }[];
+  /** art: the alternative art the copy came out with (null for the usual one). */
+  cards: { id: string; finish: 'plain' | 'foil' | 'prism'; art?: string | null }[];
 }
 
 interface PurchaseResponse {

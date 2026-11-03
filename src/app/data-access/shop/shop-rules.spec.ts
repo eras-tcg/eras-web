@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { CatalogCard } from '../cards/card.model';
 import { BoxEntry, Edition } from '../editions/edition.model';
-import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, boxContents, boxPrice, isSubEdition, openingQuery, packOdds, productFor, shopProducts } from './shop-rules';
+import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, altArtOdds, boxContents, boxPrice, fromPercent, isSubEdition, openingQuery, packOdds, productFor, shopProducts, toPercent } from './shop-rules';
 
 const pack = (name: string) => ({ name, cardsPerRarity: { C: 6, UC: 3, R: 1, SR: 0, SEC: 0 } });
 
@@ -94,5 +95,26 @@ describe('productFor and openingQuery', () => {
       expect(productFor(edition, query)?.kind).toBe(product.kind);
     }
     expect(openingQuery(edition, shopProducts(edition)[0])).toEqual({ edition: 'E1', mode: 'pack' });
+  });
+});
+
+describe('alternative arts in the odds table', () => {
+  it('lists every alternative art of the edition with its own odds or the shop odds', () => {
+    const titan = { id: 't', name: 'Titan', meta: { id: 'm', altArts: [{ id: 'a', url: 'u1' }, { id: 'b', url: 'u2', odds: 0.01 }] } } as CatalogCard;
+    const plain = { id: 'p', name: 'Plain', meta: { id: 'n' } } as CatalogCard;
+    expect(altArtOdds([titan, plain], 0.0001).map((r) => [r.card.id, r.art.id, r.number, r.odds])).toEqual([
+      ['t', 'a', 1, 0.0001],
+      ['t', 'b', 2, 0.01],
+    ]);
+  });
+
+  it('turns odds into the percent typed and back', () => {
+    expect(toPercent(0.0001)).toBe(0.01);
+    expect(toPercent(0.05)).toBe(5);
+    expect(fromPercent('0,01')).toBe(0.0001);
+    expect(fromPercent('5')).toBe(0.05);
+    expect(fromPercent('')).toBeNull();
+    expect(fromPercent('120')).toBeNull();
+    expect(fromPercent('abc')).toBeNull();
   });
 });

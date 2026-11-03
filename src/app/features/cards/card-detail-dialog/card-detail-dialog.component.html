@@ -37,20 +37,37 @@
         <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="editMeta()">
           <eras-icon name="edit" /> {{ card().meta ? 'Editar metadatos' : 'Crear metadatos' }}
         </button>
-        @if (card().meta; as meta) {
-          <!-- The alternative art: a very rare version of this card a pack may give (never a card of its own) -->
-          <div class="alt-art">
-            @if (meta.altImage) {
-              <img class="alt-preview" [src]="meta.altImage" alt="Arte alternativo actual" />
+        @if (card().meta) {
+          <!-- The alternative arts: very rare versions of this card a pack may give (never cards of their own) -->
+          <section class="alt-arts" aria-label="Artes alternativos">
+            <h3 class="alt-title">Artes alternativos</h3>
+            @for (art of arts(); track art.id; let i = $index) {
+              <div class="alt-art">
+                <img class="alt-preview" [src]="art.url" [alt]="'Arte alternativo ' + (i + 1)" />
+                <span class="alt-name">Alternativo {{ i + 1 }}</span>
+                <!-- Its own chance per pulled copy, as a percent; empty: the shop's -->
+                <label class="alt-odds">
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    [attr.aria-label]="'Probabilidad del arte alternativo ' + (i + 1) + ' (%)'"
+                    [placeholder]="shopOdds.odds() ? toPercent(shopOdds.odds()!.alt) + ' (tienda)' : 'tienda'"
+                    [value]="art.odds === null || art.odds === undefined ? '' : toPercent(art.odds)"
+                    [disabled]="busy()"
+                    (change)="setAltOdds(art, $any($event.target).value)"
+                  />
+                  %
+                </label>
+                <input #replaceFile type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="replaceAlt(art, $event)" />
+                <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="replaceFile.click()">Cambiar imagen</button>
+                <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="removeAlt(art, i + 1)">Quitar</button>
+              </div>
             }
-            <input #altFile type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAlt($event)" />
+            <input #altFile type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="addAlt($event)" />
             <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="altFile.click()">
-              <eras-icon name="image" /> {{ meta.altImage ? 'Cambiar arte alternativo' : 'Subir arte alternativo' }}
+              <eras-icon name="image" /> Agregar arte alternativo
             </button>
-            @if (meta.altImage) {
-              <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="removeAlt()">Quitar arte alternativo</button>
-            }
-          </div>
+          </section>
         }
         <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="rename()">Renombrar</button>
         @if (card().meta) {
@@ -62,6 +79,16 @@
         }
       </ng-container>
     </ng-container>
+
+    <!-- The plain catalog: every version of the card, its finishes and its alternative arts -->
+    @if (showVersions) {
+      <div ngProjectAs="[detail-under-image]" class="versions">
+        <eras-toggle-group label="Acabado" [options]="finishOptions" [selected]="[pickedFinish()]" (toggled)="pickedFinish.set($any($event))" />
+        @if (arts().length) {
+          <eras-toggle-group label="Arte" [options]="artOptions()" [selected]="[pickedArt() ?? '']" (toggled)="pickArt($event)" />
+        }
+      </div>
+    }
   </eras-card-detail>
 </div>
 

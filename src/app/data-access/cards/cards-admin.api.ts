@@ -27,16 +27,29 @@ export class CardsAdminApi {
     return this.http.patch(this.api.url(`/api/drive/cards/db/${encodeURIComponent(id)}/name`), { name });
   }
 
-  /** Sets (or replaces) a card's alternative art from an image file: answers the metadata after it. */
-  setAltImage(metaId: string, file: File): Observable<CardMeta> {
-    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-image`), file, {
+  /** Adds an alternative art from an image file, with its own odds (null: the shop's): answers the metadata after it. */
+  addAltArt(metaId: string, file: File, odds: number | null): Observable<CardMeta> {
+    const query = odds === null ? '' : `?odds=${odds}`;
+    return this.http.post<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts${query}`), file, {
       headers: { 'Content-Type': file.type || 'application/octet-stream' },
     });
   }
 
-  /** The card has no alternative art any more. */
-  removeAltImage(metaId: string): Observable<CardMeta> {
-    return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-image`));
+  /** A new image for one of the card's alternative arts (its id and odds stay). */
+  replaceAltArt(metaId: string, artId: string, file: File): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`), file, {
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+  }
+
+  /** One art's own odds per pulled copy; null: it takes the shop's. */
+  setAltArtOdds(metaId: string, artId: string, odds: number | null): Observable<CardMeta> {
+    return this.http.patch<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`), { odds });
+  }
+
+  /** The card loses that alternative art (copies already pulled with it show the usual one). */
+  removeAltArt(metaId: string, artId: string): Observable<CardMeta> {
+    return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`));
   }
 
   deleteImage(id: string): Observable<unknown> {

@@ -1,26 +1,44 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { altFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { altCopies, bestAlt, copyArt, copyFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
 
 describe('collection rules', () => {
-  it('counts the copies with the alternative art as the same card, and never breaks them', () => {
-    const titan = { cards: { t: { plain: 2, 'alt-foil': 1 } }, fragments: {} } as Collection;
-    expect(ownedCount(titan, 't')).toBe(3);
-    expect(altFinish(titan.cards['t'])).toBe('foil');
-    expect(altFinish({ plain: 4 })).toBeNull();
-    expect(extrasOf({ plain: 5, 'alt-plain': 2 })).toEqual({ plain: 1 });
+  it('reads the art and the finish of a kept copy (the single art of before is the art "0")', () => {
+    expect(copyArt('alt-x1-foil')).toBe('x1');
+    expect(copyFinish('alt-x1-foil')).toBe('foil');
+    expect(copyArt('alt-prism')).toBe('0');
+    expect(copyFinish('alt-prism')).toBe('prism');
+    expect(copyArt('plain')).toBeNull();
+    expect(copyFinish('plain')).toBe('plain');
+  });
+
+  it('counts the copies with an alternative art as the same card, and never breaks them', () => {
+    const titan = { cards: { t: { plain: 2, 'alt-foil': 1, 'alt-x1-plain': 1 } }, fragments: {} } as Collection;
+    expect(ownedCount(titan, 't')).toBe(4);
+    expect(bestAlt(titan.cards['t'], ['0', 'x1'])).toEqual({ art: '0', finish: 'foil' });
+    // An art the card no longer has is not shown
+    expect(bestAlt(titan.cards['t'], ['x1'])).toEqual({ art: 'x1', finish: 'plain' });
+    expect(bestAlt({ plain: 4 }, ['x1'])).toBeNull();
+    expect(altCopies({ 'alt-x1-plain': 2, 'alt-y2-prism': 1 }, ['x1', 'y2'])).toEqual([
+      { art: 'y2', finish: 'prism' },
+      { art: 'x1', finish: 'plain' },
+      { art: 'x1', finish: 'plain' },
+    ]);
+    expect(extrasOf({ plain: 5, 'alt-plain': 2, 'alt-x1-foil': 1 })).toEqual({ plain: 1 });
     expect(breakPlan({ 'alt-prism': 1, plain: 1 }, 2)).toEqual({ plain: 1 });
   });
 
-  it("plays a deck's alternative art first, then the finest finishes", () => {
-    expect(deckCopies({ plain: 1, prism: 1, 'alt-plain': 1 }, 4)).toEqual([
-      { finish: 'plain', alt: true },
-      { finish: 'prism', alt: false },
-      { finish: 'plain', alt: false },
-      { finish: null, alt: false },
+  it("plays a deck's alternative arts first, the finest finish first, then the finest finishes", () => {
+    expect(deckCopies({ plain: 1, prism: 1, 'alt-x1-plain': 1, 'alt-gone-foil': 1 }, 5, ['x1'])).toEqual([
+      // An art removed since: its copy still plays, with the usual art
+      { finish: 'foil', art: null },
+      { finish: 'plain', art: 'x1' },
+      { finish: 'prism', art: null },
+      { finish: 'plain', art: null },
+      { finish: null, art: null },
     ]);
   });
 

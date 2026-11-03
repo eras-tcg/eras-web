@@ -118,8 +118,7 @@ function roman(n: number): string {
     .shine.prism::before { @include foil.glitter-dots; }
     .shine.prism::after { @include foil.glitter-light; }
     .back {
-      border: 1px solid rgb(255 255 255 / 25%);
-      // Fixed card-back art colors: the same in both themes, like a physical card
+      // The card back art, with its own black edge (no outline of ours): the same in both themes, like a physical card
       background: var(--color-card-back);
     }
     // Past position t of a "to bottom right" gradient lies 2·(1−t)² of the card: fading from 52% to 72% leaves about

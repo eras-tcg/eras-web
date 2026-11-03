@@ -1,27 +1,33 @@
-// The foil: a rainbow of soft bands with no edge, repeating every 240px; the layer, wider than the card, slides one
-// period along x (240px / sin 115deg), so every loop ends where the next one starts. Blended with overlay, it keeps
-// the card's own light and dark. Include it in a pseudo-element over the card.
+// The foil: a soft iridescent sheen and a band of light crossing the card, both in proportion to the card (a small
+// card shows the same foil as a big one). The layer stays the card's size and only its background moves (back and
+// forth, so it never jumps): no huge moving layer the browser would split into tiles, with seams between them.
+// Blended with soft-light, it keeps the card's own art and text readable. Include it in a pseudo-element over the card.
 @mixin rainbow {
   position: absolute;
-  inset: -50% -320px;
+  inset: 0;
   z-index: 1;
-  background: repeating-linear-gradient(
-    115deg,
-    var(--color-card-b) 0,
-    var(--color-rarity-uc) 60px,
-    var(--color-rarity-sr) 120px,
-    var(--color-rarity-sec) 180px,
-    var(--color-card-b) 240px
-  );
+  border-radius: inherit;
+  background:
+    linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 55%) 50%, transparent 62%) 0 0 / 300% 100% no-repeat,
+    linear-gradient(
+        115deg,
+        var(--color-card-b),
+        var(--color-rarity-uc),
+        var(--color-rarity-sr),
+        var(--color-rarity-sec),
+        var(--color-card-p),
+        var(--color-card-b)
+      )
+      0 0 / 250% 250%;
   content: '';
-  mix-blend-mode: overlay;
-  opacity: 0.7;
+  mix-blend-mode: soft-light;
+  opacity: 0.9;
   pointer-events: none;
-  animation: foil-rainbow 4s linear infinite;
+  animation: foil-sheen 5s ease-in-out infinite alternate;
 
-  @keyframes foil-rainbow {
+  @keyframes foil-sheen {
     to {
-      transform: translateX(calc(240px / 0.9063));
+      background-position: 100% 0, 100% 100%;
     }
   }
 }

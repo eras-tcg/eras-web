@@ -17,8 +17,8 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { passwordProblem } from '@core/auth/password-rules';
 import { feedbackState } from './admin-feedback';
-import { PluralPipe } from '@ui/utilities/plural.pipe';
 
 /** UsersService answers a registration with English messages (by field, or one "error"): in Spanish for the form. */
 const REGISTRATION_ERRORS: [RegExp, string][] = [
@@ -26,11 +26,8 @@ const REGISTRATION_ERRORS: [RegExp, string][] = [
   [/email already exists/i, 'Ese correo ya tiene una cuenta'],
   [/email should be valid/i, 'El correo no es válido'],
   [/email is required/i, 'Falta el correo'],
-  [/password must be between (\d+) and (\d+) characters/i, 'La contraseña debe tener entre $1 y $2 caracteres'],
-  [/password must contain at least one uppercase letter/i, 'La contraseña necesita una mayúscula'],
-  [/password must contain at least one lowercase letter/i, 'La contraseña necesita una minúscula'],
-  [/password must contain at least one digit/i, 'La contraseña necesita un número'],
-  [/password must contain at least one special character \((.*)\)/i, 'La contraseña necesita un carácter especial ($1)'],
+  [/password must be at least (\d+) characters/i, 'La contraseña debe tener al menos $1 caracteres'],
+  [/password must be at most (\d+) characters/i, 'La contraseña puede tener hasta $1 caracteres'],
   [/password is required/i, 'Falta la contraseña'],
 ];
 
@@ -56,7 +53,7 @@ export function registrationError(e: unknown): string {
 /** User accounts (manage_users). Changing a user's role also needs manage_roles (to list roles). */
 @Component({
   selector: 'eras-users-page',
-  imports: [PluralPipe, PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PageComponent, CardComponent, GridComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   templateUrl: './users.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -163,7 +160,8 @@ export class UsersPage {
     if (!user) return;
     this.passwordError.set(null);
     this.passwordOk.set(false);
-    if (!this.newPassword()) return this.passwordError.set('Ingresa una contraseña');
+    const problem = passwordProblem(this.newPassword());
+    if (problem) return this.passwordError.set(problem);
     if (this.newPassword() !== this.confirmPassword()) return this.passwordError.set('Las contraseñas no coinciden');
     this.savingPassword.set(true);
     try {
@@ -195,6 +193,8 @@ export class UsersPage {
     const email = this.newEmail().trim();
     this.createError.set(null);
     if (!username || !email || !this.newUserPassword()) return this.createError.set('Completa usuario, correo y contraseña');
+    const problem = passwordProblem(this.newUserPassword());
+    if (problem) return this.createError.set(problem);
     if (this.newUserPassword() !== this.newUserConfirm()) return this.createError.set('Las contraseñas no coinciden');
     this.registering.set(true);
     this.fb.clear();

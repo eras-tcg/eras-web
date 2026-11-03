@@ -68,6 +68,8 @@ export class SimCardComponent {
   /** The card has several effects to activate: the toolbar lists them. */
   protected readonly effectsOpen = signal(false);
 
+  /** The rival's card on the table, turned round: what floats over it goes to its places on the turned card. */
+  protected readonly upsideDown = computed(() => this.opponent() && this.zone() !== 'hand');
   /** Hidden from me (in a test room everything can be shown). */
   protected readonly hidden = computed(() => !this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
   /** Hidden but shown: by "Mostrar cartas ocultas", or my own face-down card in the Tributos or the Descarte. */

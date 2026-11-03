@@ -1,21 +1,22 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { ScreenBarComponent } from '@core/layout/screen-bar.component';
+import { ScreenLink } from '@core/navigation/screens';
 
 /**
- * Standard page frame: title, optional subtitle and actions, then the content.
+ * Standard screen frame, game-like: one top row ("back" to the parent screen, the title and the page's actions,
+ * the quick buttons), then the content.
  * <eras-page title="Ediciones"><button page-actions erasButton>Nueva</button> ... </eras-page>
  */
 @Component({
   selector: 'eras-page',
+  imports: [ScreenBarComponent],
   template: `
-    <header class="header">
-      <div>
+    <eras-screen-bar class="bar" [back]="back()">
+      <header class="heading">
         <h1 class="title">{{ title() }}</h1>
-        @if (subtitle()) {
-          <p class="subtitle">{{ subtitle() }}</p>
-        }
-      </div>
+      </header>
       <div class="actions"><ng-content select="[page-actions]" /></div>
-    </header>
+    </eras-screen-bar>
     <div class="content"><ng-content /></div>
   `,
   styleUrl: './page.component.scss',
@@ -25,8 +26,9 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
 })
 export class PageComponent {
   readonly title = input.required<string>();
-  readonly subtitle = input<string | null>(null);
   readonly width = input<'narrow' | 'default' | 'wide'>('default');
   /** Exactly one screen high (below the header); the content fills the rest instead of scrolling the page. */
   readonly fill = input(false, { transform: booleanAttribute });
+  /** Where "back" leads, when not the screen tree's parent (see screens.ts). */
+  readonly back = input<ScreenLink>();
 }

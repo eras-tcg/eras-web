@@ -1,0 +1,26 @@
+<ul class="list">
+  @for (item of items(); track item.id; let first = $first) {
+    <li>
+      @if (item.route) {
+        <a class="item" [class.lead]="first" [routerLink]="item.route">
+          <ng-container *ngTemplateOutlet="body; context: { $implicit: item }" />
+        </a>
+      } @else {
+        <button type="button" class="item" [class.lead]="first" [disabled]="!!busy()" (click)="picked.emit(item)">
+          <ng-container *ngTemplateOutlet="body; context: { $implicit: item }" />
+        </button>
+      }
+    </li>
+  }
+</ul>
+
+<ng-template #body let-item>
+  <span class="ring" aria-hidden="true">
+    @if (busy() === item.id) {
+      <eras-spinner />
+    } @else {
+      <eras-icon [name]="item.icon" />
+    }
+  </span>
+  <span class="label">{{ item.label }}</span>
+</ng-template>

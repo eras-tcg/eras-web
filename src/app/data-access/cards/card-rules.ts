@@ -3,13 +3,32 @@ import { CARD_COLORS, CARD_RARITIES, CardEffect, CardMeta, CardRefData, CatalogC
 const metaKey = (edition: string | null | undefined, number: number | null | undefined, sub: string | null | undefined, color: string | null | undefined) =>
   `${edition ?? ''}|${number ?? ''}|${sub ?? ''}|${color ?? ''}`;
 
-/** Joins every image with its metadata by edition + number + sub-edition + color. */
+/** The code at the start of an image's file name: "E1_3-B10-…" is edition E1, sub-edition 3, blue, number 10. */
+const FILE_CODE = /^((?:ST|E)\d+)(?:_(\d+))?-([BGPRW])(\d+)-/i;
+
+/**
+ * False for a record whose file name says another place than the record does (edition, sub-edition, color or
+ * number): a leftover of an image that once sat in the wrong Drive folder. A record without a readable file name
+ * is kept.
+ */
+export function matchesFileName(card: DriveCard): boolean {
+  const m = card.file_name ? FILE_CODE.exec(card.file_name) : null;
+  if (!m) return true;
+  return (
+    m[1].toUpperCase() === card.edition.toUpperCase() &&
+    (m[2] ?? '') === (card.sub_edition ?? '') &&
+    m[3].toUpperCase() === (card.color_identity ?? '').toUpperCase() &&
+    Number(m[4]) === card.number
+  );
+}
+
+/** Joins every image with its metadata by edition + number + sub-edition + color. Leftover records are dropped (matchesFileName). */
 export function mergeCards(drive: readonly DriveCard[], meta: readonly CardMeta[]): CatalogCard[] {
   const byKey = new Map<string, CardMeta>();
   for (const m of meta) {
     if (m.edition && m.cardNumber != null) byKey.set(metaKey(m.edition, m.cardNumber, m.subEdition, m.colorIdentity), m);
   }
-  return drive.map((d) => {
+  return drive.filter(matchesFileName).map((d) => {
     const m = byKey.get(metaKey(d.edition, d.number, d.sub_edition, d.color_identity)) ?? null;
     return { ...d, name: printedName(d.name, m?.cardName), meta: m };
   });

@@ -3,133 +3,30 @@ import { Router, RouterLink } from '@angular/router';
 import { CanDirective } from '@core/auth/can.directive';
 import { AuthService } from '@core/auth/auth.service';
 import { CardsStore } from '@data/cards/cards.store';
-import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, hasDeckFilters, summarizeDecks } from '@data/decks/deck-filters';
+import { coverFinish, shineOf } from '@data/collection/collection-rules';
+import { CollectionStore } from '@data/collection/collection.store';
+import { DeckFilters, EMPTY_DECK_FILTERS, deckEditions, filterDecks, summarizeDecks } from '@data/decks/deck-filters';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
-import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { SortControlComponent } from '@ui/forms/sort-control/sort-control.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
-import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { SplitComponent } from '@ui/layout/split/split.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { DeckFiltersBarComponent } from './deck-filters-bar.component';
+import { DeckBrowserComponent } from './deck-browser.component';
 import { MY_SORT_OPTIONS, deckBuilderQuery, deckViewLink } from './deck-links';
 
-/** The signed-in user's decks (private ones included), shown like cards. Editing and deleting need manage_decks. */
+/**
+ * "Mazos": the signed-in user's own decks (private ones included), in the deck browser (one screen high, only the
+ * grid scrolls). "Nuevo mazo" comes first. Creating, editing and deleting need manage_decks.
+ */
 @Component({
   selector: 'eras-my-decks-page',
-  imports: [
-    RouterLink,
-    CanDirective,
-    PageComponent,
-    StackComponent,
-    GridComponent,
-    DeckCoverComponent,
-    DeckFiltersBarComponent,
-    SortControlComponent,
-    AlertComponent,
-    EmptyStateComponent,
-    ButtonComponent,
-    IconComponent,
-    SpinnerComponent,
-    SplitComponent,
-  ],
-  template: `
-    <eras-page title="Mis mazos" subtitle="Tus mazos, públicos y privados" width="wide">
-      <ng-container ngProjectAs="[page-actions]">
-        <eras-sort-control
-          [options]="sortOptions"
-          [key]="sortKey()"
-          [direction]="direction()"
-          (keyChange)="sortKey.set($any($event))"
-          (directionChange)="direction.set($event)"
-        />
-        <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
-          <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-        </button>
-        <a *erasCan="'manage_decks'" erasButton routerLink="/deck-builder"><eras-icon name="plus" /> Nuevo mazo</a>
-      </ng-container>
-
-      @if (store.error(); as error) {
-        <eras-alert tone="danger">{{ error }}</eras-alert>
-      }
-      @if (actionError(); as error) {
-        <eras-alert tone="danger">{{ error }}</eras-alert>
-      }
-
-      <eras-split aside="17rem" [asideHidden]="!showFilters() || store.myDecks().length === 0">
-        <div split-aside>
-          <eras-deck-filters-bar
-            panel
-            showVisibility
-            [filters]="filters()"
-            [editions]="editions()"
-            [shown]="decks().length"
-            [total]="store.myDecks().length"
-            (filtersChange)="filters.set($event)"
-          />
-        </div>
-
-      <eras-stack [gap]="4">
-        @if (store.myDecks().length) {
-          <eras-stack direction="row" [gap]="3" align="center" wrap>
-              <span>{{ countLabel() }}</span>
-              @if (filtersActive()) {
-                <button erasButton variant="ghost" size="sm" type="button" (click)="filters.set(emptyFilters)"><eras-icon name="x" /> Limpiar filtros</button>
-              }
-            </eras-stack>
-        }
-        @if (store.loading() && store.myDecks().length === 0) {
-          <eras-empty-state title="Cargando tus mazos…"><eras-spinner /></eras-empty-state>
-        } @else if (!store.error() && store.myDecks().length === 0) {
-          <eras-empty-state title="No tienes mazos guardados">
-            <a *erasCan="'manage_decks'" erasButton routerLink="/deck-builder">Crear mazo</a>
-          </eras-empty-state>
-        } @else if (decks().length === 0) {
-          <eras-empty-state title="Ningún mazo coincide con los filtros" />
-        } @else {
-          <eras-grid minColumn="11rem" [gap]="4">
-            @for (deck of decks(); track deck.id) {
-              <eras-deck-cover
-                [name]="deck.deckName"
-                [imageUrl]="deck.deckImage ?? null"
-                [cardCount]="deck.cards.length"
-                [isPrivate]="!!deck.privateDeck"
-                (selected)="view(deck)"
-              >
-                <ng-container ngProjectAs="[cover-actions]">
-                  <ng-container *erasCan="'manage_decks'">
-                    <a erasButton variant="secondary" size="sm" routerLink="/deck-builder" [queryParams]="editQuery(deck)" [attr.aria-label]="'Editar ' + deck.deckName">
-                      <eras-icon name="edit" />
-                    </a>
-                    <button
-                      erasButton
-                      variant="secondary"
-                      size="sm"
-                      type="button"
-                      [attr.aria-label]="'Borrar ' + deck.deckName"
-                      [disabled]="deleting() === deck.id"
-                      (click)="remove(deck)"
-                    >
-                      <eras-icon name="x" />
-                    </button>
-                  </ng-container>
-                </ng-container>
-              </eras-deck-cover>
-            }
-          </eras-grid>
-        }
-      </eras-stack>
-      </eras-split>
-    </eras-page>
-  `,
+  imports: [RouterLink, CanDirective, PageComponent, DeckBrowserComponent, DeckCoverComponent, AlertComponent, ButtonComponent, IconComponent],
+  templateUrl: './my-decks.page.html',
+  styleUrl: './my-decks.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyDecksPage {
@@ -138,19 +35,15 @@ export class MyDecksPage {
   private readonly auth = inject(AuthService);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
+  private readonly collection = inject(CollectionStore);
 
   protected readonly sortOptions = MY_SORT_OPTIONS;
   protected readonly sortKey = signal<DeckSortKey>('name');
   protected readonly direction = signal<'asc' | 'desc'>('asc');
   protected readonly filters = signal<DeckFilters>(EMPTY_DECK_FILTERS);
-  protected readonly emptyFilters = EMPTY_DECK_FILTERS;
-  // Open beside the list on wide screens, folded on phones (as on the cards page)
-  protected readonly showFilters = signal(typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches);
-  protected readonly filtersActive = computed(() => hasDeckFilters(this.filters()));
-  protected readonly countLabel = computed(() => {
-    const n = this.decks().length;
-    return `${n} ${n === 1 ? 'mazo' : 'mazos'}${this.filtersActive() ? ' (filtrados)' : ''}`;
-  });
+  protected readonly note = computed(() =>
+    this.store.error() ? null : this.store.myDecks().length === 0 ? 'Aún no tienes mazos guardados.' : this.decks().length === 0 ? 'Ningún mazo coincide con los filtros.' : null,
+  );
   protected readonly deleting = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
 
@@ -189,5 +82,10 @@ export class MyDecksPage {
     } finally {
       this.deleting.set(null);
     }
+  }
+
+  /** The player's finest copy of a deck's cover card shines over the cover. */
+  protected coverShine(deck: Deck): 'foil' | 'prism' | null {
+    return shineOf(coverFinish(deck, this.cards.cards(), this.collection.collection()));
   }
 }

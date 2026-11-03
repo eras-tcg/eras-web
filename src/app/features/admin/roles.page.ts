@@ -24,7 +24,7 @@ type Draft = { mode: 'create' } | { mode: 'edit'; role: RoleRecord };
   selector: 'eras-roles-page',
   imports: [PageComponent, CardComponent, StackComponent, FormFieldComponent, MultiselectComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
-    <eras-page title="Roles" subtitle="Cada usuario tiene un rol; el rol define sus permisos">
+    <eras-page title="Roles">
       <ng-container ngProjectAs="[page-actions]">
         <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
         <button erasButton type="button" (click)="startCreate()"><eras-icon name="plus" /> Nuevo rol</button>

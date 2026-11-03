@@ -1,0 +1,31 @@
+import { ActivatedRouteSnapshot, ViewTransitionInfo } from '@angular/router';
+import { navDirection } from './screens';
+
+/** URL path of a router state, from its root snapshot down the active branch. */
+function pathOf(root: ActivatedRouteSnapshot): string {
+  const segments: string[] = [];
+  for (let route: ActivatedRouteSnapshot | null = root; route; route = route.firstChild) {
+    segments.push(...route.url.map((s) => s.path));
+  }
+  return '/' + segments.filter(Boolean).join('/');
+}
+
+/** How long a transition may wait to start before it is skipped. */
+const STALL_MS = 800;
+
+/**
+ * Screen changes animate with the browser's view transitions: the page tells the CSS which way it goes
+ * (`html[data-nav]`: deeper slides in from the right, back from the left; see styles/base/_transitions.scss).
+ */
+export function onScreenTransition({ transition, from, to }: ViewTransitionInfo): void {
+  const html = document.documentElement;
+  html.dataset['nav'] = navDirection(pathOf(from), pathOf(to));
+  void transition.finished.finally(() => delete html.dataset['nav']).catch(() => undefined);
+  // A page that is not painting (a hidden tab) never starts the transition, and the navigation would wait for it:
+  // without the animation, the screen changes anyway
+  let started = false;
+  void transition.ready.then(() => (started = true)).catch(() => undefined);
+  setTimeout(() => {
+    if (!started) transition.skipTransition();
+  }, STALL_MS);
+}

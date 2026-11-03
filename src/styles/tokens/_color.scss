@@ -43,6 +43,18 @@
   /** Text on those colors */
   --color-sim-on-moment: #1b1d24;
   --color-sim-on-rival: #fff;
-  /** The back of a card */
-  --color-card-back: repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px);
+  // Home hub: light text and dark glass over the edition artwork (same in every theme)
+  --color-hub-text: #f5f6fa;
+  --color-hub-muted: rgb(245 246 250 / 72%);
+  --color-hub-scrim: rgb(8 10 22);
+  --color-hub-panel: rgb(14 17 34 / 72%);
+  --color-hub-line: rgb(255 255 255 / 20%);
+  --color-hub-accent: var(--color-sim-gold);
+  --color-hub-glow: var(--color-sim-glow);
+
+  /**
+   * The back of a card: the game's card back art (a `background` value). It covers the card's border too, and the
+   * color under it is the art's own black edge, so no other color shows around it.
+   */
+  --color-card-back: #000 url('/images/card-back.png') center / cover no-repeat border-box;
 }

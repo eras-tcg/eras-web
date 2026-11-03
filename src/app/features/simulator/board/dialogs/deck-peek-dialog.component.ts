@@ -32,7 +32,7 @@ export interface DeckPeekData {
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li>
               <span class="pos">{{ i + 1 }}</span>
-              <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName ?? null" [attr.aria-label]="c.cardName" />
+              <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" [attr.aria-label]="c.cardName" />
               <eras-card-peek [card]="c" [mine]="true" />
               <eras-stack direction="row" [gap]="1">
                 <button erasButton variant="ghost" size="sm" type="button" aria-label="Mover antes" [disabled]="i === 0" (click)="shift(i, -1)">◀</button>

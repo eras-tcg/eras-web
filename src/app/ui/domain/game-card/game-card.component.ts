@@ -25,6 +25,10 @@ function roman(n: number): string {
   template: `
     @if (!hidden() && imageUrl()) {
       <img [src]="imageUrl()" alt="" draggable="false" />
+      @if (foil(); as kind) {
+        <!-- The owner's foil copy: the shine is part of the card, it turns and moves with it -->
+        <span class="shine" [class.prism]="kind === 'prism'" aria-hidden="true"></span>
+      }
     } @else if (!hidden() && name()) {
       <!-- A card without art (a test card): its name -->
       <span class="face">{{ name() }}</span>
@@ -68,6 +72,8 @@ function roman(n: number): string {
     }
   `,
   styles: `
+    @use 'mixins/foil';
+
     :host {
       position: relative;
       display: block;
@@ -80,6 +86,9 @@ function roman(n: number): string {
     }
     :host(.small) { --game-card-width: 3.25rem; }
     :host(.tapped) { transform: rotate(90deg); }
+    // The rival's card, as across a real table: the card turns round; its badges go to their places on the turned card
+    // (below), their text still upright
+    :host(.upside-down) :is(img, .shine, .face, .back) { transform: rotate(180deg); }
     :host(.targeted) { box-shadow: 0 0 0 3px var(--color-danger), 0 0 14px var(--color-danger); }
     :host(.source) { box-shadow: 0 0 0 3px var(--color-primary); }
     :host(.selectable) { cursor: crosshair; }
@@ -97,9 +106,19 @@ function roman(n: number): string {
       text-align: center;
       overflow-wrap: anywhere;
     }
+    .shine {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .shine:not(.prism)::after { @include foil.rainbow; }
+    .shine.prism { @include foil.scaled; }
+    .shine.prism::before { @include foil.glitter-dots; }
+    .shine.prism::after { @include foil.glitter-light; }
     .back {
-      border: 1px solid rgb(255 255 255 / 25%);
-      // Fixed card-back art colors: the same in both themes, like a physical card
+      // The card back art, with its own black edge (no outline of ours): the same in both themes, like a physical card
       background: var(--color-card-back);
     }
     // Past position t of a "to bottom right" gradient lies 2·(1−t)² of the card: fading from 52% to 72% leaves about
@@ -215,6 +234,13 @@ function roman(n: number): string {
       color: #f5c542;
       font: var(--font-weight-bold) calc(var(--info-font) * 0.85)/1 Georgia, 'Times New Roman', serif;
     }
+    /* The rival's card is turned round: each badge at its place there (the opposite corner or edge), text upright */
+    :host(.upside-down) .strength { inset-block: auto -0.4rem; inset-inline: -0.4rem auto; }
+    :host(.upside-down) .badge { inset-block: -0.35rem auto; }
+    :host(.upside-down) .materials { inset-inline: auto -0.3rem; }
+    :host(.upside-down) .info-cost { inset-block-start: 93.4%; inset-inline-start: 92.5%; }
+    :host(.upside-down) .info-level { inset-block-start: 7%; inset-inline-start: 93.5%; }
+    :host(.upside-down) .info-type { inset-block-start: 100%; transform: translate(-50%, -75%); }
     /* The strength as big as the cost and the level; it only grows to fit the arrow of a change */
     :host(.with-info) .strength {
       display: grid;
@@ -234,6 +260,7 @@ function roman(n: number): string {
     '[class.small]': 'small()',
     '[class.selectable]': 'selectable()',
     '[class.with-info]': 'info() !== null',
+    '[class.upside-down]': 'upsideDown()',
   },
 })
 export class GameCardComponent {
@@ -255,6 +282,10 @@ export class GameCardComponent {
   readonly selectable = input(false, { transform: booleanAttribute });
   /** The table's information about it (cost, type, classes, level); null shows none. */
   readonly info = input<GameCardInfo | null>(null);
+  /** The copy's shine, as its owner has it (shown only face up). */
+  readonly foil = input<'foil' | 'prism' | null>(null);
+  /** The rival's card, turned round as across a real table: its art upside down, its badges at their turned places. */
+  readonly upsideDown = input(false, { transform: booleanAttribute });
 
   protected readonly typeLabels = TYPE_LABELS;
   protected romanOf(level: number): string {

@@ -41,6 +41,34 @@
   align-self: center;
 }
 
+// The players' plates: a little off the table's edge, towards the middle line, and over everything on the table
+eras-player-plate {
+  position: relative;
+  z-index: 10;
+  margin-block-end: var(--space-4);
+  transition: opacity var(--duration-fast) var(--easing-standard);
+}
+
+// The table's information on: the plates fade away so the zones under them can be read
+:host(.info) eras-player-plate {
+  opacity: 0.15;
+}
+
+// The zones' names (and the empty field's hint) show only with the table's information
+.line-label,
+.hint {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--easing-standard);
+}
+
+:host(.info) :is(.line-label, .hint) {
+  opacity: 1;
+}
+
+:host(.opponent) eras-player-plate {
+  margin-block: var(--space-4) 0;
+}
+
 
 // The rival's side is mirrored: their name and gems sit next to the center of the table, like yours
 :host(.opponent) .lives {
@@ -230,6 +258,49 @@
   // Turned like a wheel: the cards slide along with the fan, so the one that stands up comes to the middle
   transform: translateX(calc(var(--hand-turn, 0) * var(--hand-card) * -0.84));
   transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+// "Mesa en perspectiva" (the board's plane leans back by --tilt): your hand turns back up on its bottom edge, so it
+// faces you flat like a hand held in front of the table. Wider screens only, like the leaning
+@media (min-width: 48rem) {
+  // Its zones take the pointer, not the half under them (at the same depth, see the board's plane)
+  :host(.tilted) {
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+
+  :host(.tilted) > * {
+    pointer-events: auto;
+  }
+
+  :host(.tilted:not(.opponent)) .hand {
+    transform-origin: 50% 100%;
+    transform: rotateX(calc(-1 * var(--tilt, 0deg)));
+  }
+
+  // The players' plates never lean: they turn back up on their middle and face you flat
+  :host(.tilted) .lives {
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+
+  :host(.tilted) .lives > * {
+    pointer-events: auto;
+  }
+
+  // Standing on its lower edge (turned on the upper one it would sink under the table). In 3D the depth, not
+  // z-index, decides what is in front: it comes 1rem towards you, ahead of your standing hand
+  :host(.tilted) eras-player-plate {
+    transform-origin: 50% 100%;
+    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateZ(1rem);
+  }
+
+  // The rival's lies at the far edge, which the distance shrinks by 1 + sin / (depth · cos − sin): it grows back.
+  // Coming forward there also lifts it on the screen: it goes down as much again, off the table's edge
+  :host(.tilted.opponent) eras-player-plate {
+    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateY(calc(var(--space-4) * 2.5)) translateZ(1rem)
+      scale(calc(1 + sin(var(--tilt, 0deg)) / (var(--depth, 2.2) * cos(var(--tilt, 0deg)) - sin(var(--tilt, 0deg)))));
+  }
 }
 
 :host(.opponent) .hand-cards {

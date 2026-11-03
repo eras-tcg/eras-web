@@ -1,0 +1,204 @@
+// Panel on the flat column of the hub; only the edition slide (over its artwork) uses the --color-hub-* tokens
+:host {
+  position: relative;
+  overflow: hidden;
+  // Gives way first when the window is short
+  flex: 0 1 14rem;
+  min-block-size: 8.5rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: var(--space-5) var(--space-8, 3rem) var(--space-6);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  animation: slide-in var(--duration-base) var(--easing-standard);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem);
+  }
+}
+
+.slide-empty {
+  align-items: center;
+  color: var(--color-text-muted);
+}
+
+.slide-edition,
+.has-art {
+  position: relative;
+  justify-content: flex-end;
+  background-position: center;
+  background-size: cover;
+  color: var(--color-hub-text);
+}
+
+.slide-edition {
+  cursor: pointer;
+}
+
+.slide-edition .eyebrow,
+.has-art .eyebrow {
+  color: var(--color-text-muted);
+}
+
+.slide-edition .slide-text,
+.has-art .slide-text {
+  color: var(--color-hub-muted);
+}
+
+.slide-edition::before,
+.has-art::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--color-hub-scrim) 5%, transparent 85%);
+  content: '';
+}
+
+.slide-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.slide-title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-tight);
+  letter-spacing: 0.03em;
+}
+
+.slide-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.nav {
+  position: absolute;
+  inset-block-start: 50%;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-hub-scrim) 55%, transparent);
+  color: var(--color-hub-text);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.nav:hover {
+  color: var(--color-hub-accent);
+}
+
+.prev {
+  inset-inline-start: var(--space-2);
+}
+
+.next {
+  inset-inline-end: var(--space-2);
+}
+
+.dots {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-border);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    inline-size var(--duration-fast) var(--easing-standard);
+}
+
+.dot.on {
+  inline-size: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-hub-accent);
+}
+
+.eyebrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 63.99rem) {
+  .slide-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--font-size-xl);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .slide-text {
+    -webkit-line-clamp: 2;
+  }
+
+  .slide {
+    padding-inline: var(--space-8, 2.75rem);
+  }
+}
+
+// Short windows: a tighter slide, so the column fits without scrolling
+@media (max-height: 44rem) {
+  :host {
+    min-block-size: 7rem;
+  }
+
+  .slide {
+    gap: var(--space-1);
+    padding-block: var(--space-3) var(--space-5);
+  }
+
+  .slide-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--font-size-xl);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .slide-text {
+    -webkit-line-clamp: 1;
+  }
+}

@@ -35,7 +35,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   templateUrl: './player-half.component.html',
   styleUrls: ['./player-half.component.scss', './player-half.component.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.opponent]': 'opponent()', '[class.mirrored]': 'mirrored()' },
+  host: { '[class.opponent]': 'opponent()', '[class.mirrored]': 'mirrored()', '[class.tilted]': 'tilted()', '[class.info]': 'game.showInfo()' },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
@@ -44,6 +44,8 @@ export class PlayerHalfComponent {
   readonly mirrored = input(false, { transform: booleanAttribute });
   /** "Mano recta": the hand in a row instead of a fan. */
   readonly straightHand = input(false, { transform: booleanAttribute });
+  /** "Mesa en perspectiva": the table leans back; your hand and both players' plates stand up from it, facing you. */
+  readonly tilted = input(false, { transform: booleanAttribute });
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
   /** A touch screen: no dragging, the hints speak of tapping. */

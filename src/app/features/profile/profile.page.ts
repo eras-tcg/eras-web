@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordProblem } from '@core/auth/password-rules';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AvatarStore } from '@core/auth/avatar.store';
+import { ThemeService } from '@core/theme/theme.service';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -24,7 +26,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, GridComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
+  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,17 @@ export class ProfilePage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
+
+  // ── Preferences ────────────────────────────────────────────────────────
+  protected readonly theme = inject(ThemeService);
+  protected readonly themeOptions: ToggleOption[] = [
+    { value: 'dark', label: 'Oscuro' },
+    { value: 'light', label: 'Claro' },
+  ];
+
+  protected setTheme(value: string): void {
+    if (value !== this.theme.theme()) this.theme.toggle();
+  }
 
   // ── Player icon (navbar and beside the name in the simulator) ──────────
   protected readonly avatar = inject(AvatarStore);
@@ -58,7 +71,7 @@ export class ProfilePage {
   protected readonly passwordForm = this.fb.group(
     {
       oldPassword: ['', Validators.required],
-      newPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
       confirm: ['', Validators.required],
     },
     { validators: matching('newPassword', 'confirm') },
@@ -132,6 +145,7 @@ export class ProfilePage {
     if (control.hasError('required')) {
       return { oldPassword: 'Ingresa tu contraseña actual', newPassword: 'Ingresa la nueva contraseña', confirm: 'Repite la nueva contraseña' }[field];
     }
+    if (field === 'newPassword' && (control.hasError('minlength') || control.hasError('maxlength'))) return passwordProblem(control.value);
     if (field === 'confirm' && this.passwordForm.hasError('mismatch')) return 'Las contraseñas no coinciden';
     return null;
   }

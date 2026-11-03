@@ -1,0 +1,63 @@
+<eras-page [title]="edition()?.editionName || editionId()" width="wide" fill>
+  <ng-container ngProjectAs="[page-actions]">
+    @if (edition()) {
+      <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm()"><eras-icon name="edit" /> Editar</button>
+    }
+  </ng-container>
+
+  @if (!edition()) {
+    @if (store.loading() || store.editions().length === 0) {
+      <eras-empty-state title="Cargando…"><eras-spinner /></eras-empty-state>
+    } @else {
+      <eras-empty-state title="No existe esa edición" />
+    }
+  } @else {
+    @let ed = edition()!;
+    <div class="detail">
+      <div class="side">
+        <span class="code">{{ ed.editionId }}</span>
+        @if (ed.editionDescription) {
+          <p class="description">{{ ed.editionDescription }}</p>
+        }
+
+        <div class="info">
+          @if (!structure()) {
+            <button erasButton variant="secondary" type="button" [disabled]="!pack()" (click)="openOdds()"><eras-icon name="list" /> Probabilidades</button>
+          }
+          <button erasButton variant="secondary" type="button" (click)="openCards()"><eras-icon name="cards" /> Cartas incluidas</button>
+        </div>
+
+        @if (products().length) {
+          <!-- Only the name and the price: what each one brings is in "Probabilidades" -->
+          <div class="offers">
+            @for (product of products(); track product.kind) {
+              <article class="offer" [class.box]="product.kind === 'box'">
+                <span class="offer-icon" aria-hidden="true"><eras-icon [name]="product.kind === 'pack' ? 'layers' : 'box'" /></span>
+                <h2 class="offer-name">{{ product.kind === 'box' ? 'Booster box · ' + product.packs + ' sobres' : product.name }}</h2>
+                <button
+                  erasButton
+                  type="button"
+                  class="buy"
+                  [disabled]="owned(product) || product.price > wallet.gems()"
+                  [attr.aria-label]="owned(product) ? 'Ya tienes este structure deck' : 'Comprar ' + product.name + ' por ' + product.price + ' gemas'"
+                  (click)="buy(product)"
+                >
+                  <!-- A structure deck is bought once -->
+                  @if (owned(product)) {
+                    <eras-icon name="check" /> Ya lo tienes
+                  } @else {
+                    <eras-icon name="gem" /> {{ product.price | number: '1.0-0' : 'es' }}
+                  }
+                </button>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="note">Esta edición no está a la venta: no tiene sobres configurados.</p>
+        }
+      </div>
+
+      <div class="art" [style.background-image]="ed.editionImage ? 'url(' + ed.editionImage + ')' : null"></div>
+    </div>
+  }
+</eras-page>

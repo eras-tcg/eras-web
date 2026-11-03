@@ -1,5 +1,7 @@
 <eras-game-card
   [imageUrl]="slot().imageUrl"
+  [foil]="slot().finish ?? null"
+  [upsideDown]="upsideDown()"
   [name]="slot().cardName"
   [hidden]="hidden()"
   [peeked]="peeked()"
@@ -37,16 +39,16 @@
 />
 
 @if (chainLinks().length) {
-  <eras-chain-marks [links]="chainLinks()" [me]="game.myState()?.userId" />
+  <eras-chain-marks [links]="chainLinks()" [me]="game.myState()?.userId" [upsideDown]="upsideDown()" />
 }
 
 @if (game.pendingTargetSource() === slot().instanceId) {
   <!-- Choosing its target: cancel it from the card itself -->
-  <button type="button" class="cancel-target" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
+  <button type="button" class="cancel-target" [class.turned]="upsideDown()" (click)="$event.stopPropagation(); game.pendingTargetSource.set(null)">Cancelar objetivo</button>
 }
 
 @if (combatShown(); as role) {
-  <span class="combat-badge" [class.attacker]="role === 'attacker'">
+  <span class="combat-badge" [class.attacker]="role === 'attacker'" [class.turned]="upsideDown()">
     <eras-icon [name]="role === 'attacker' ? 'sword' : 'shield'" />
     {{ role === 'attacker' ? 'Ataca' : role === 'blocker' ? 'Bloquea' : 'Atacada' }}
   </span>

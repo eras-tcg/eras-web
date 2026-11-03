@@ -1,0 +1,260 @@
+// A pack breaking open in --break (ms, from the component): it charges until 55% of it, cracking from 30%, and
+// shatters at 55%; the shards and sparks are shot out and slow down exponentially. The light is the hub's glow and accent, the same for every pack (it does not tell its type).
+:host {
+  --boom: calc(var(--break) * 0.55);
+  --after: calc(var(--break) * 0.45);
+  --light: var(--color-hub-glow);
+
+  position: relative;
+  display: block;
+  inline-size: min(42dvh * 63 / 88, 21rem);
+  aspect-ratio: 63 / 88;
+}
+
+/* Behind */
+.rays,
+.glow {
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.rays {
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--light) 55%, transparent) 0deg 6deg, transparent 6deg 22deg);
+  mask: radial-gradient(circle, var(--color-hub-scrim) 15%, transparent 62%);
+  opacity: 0;
+  animation: rays var(--break) ease-in both;
+}
+
+@keyframes rays {
+  50% {
+    opacity: 0.9;
+    transform: rotate(80deg) scale(1);
+  }
+
+  70%,
+  100% {
+    opacity: 0;
+    transform: rotate(120deg) scale(1.4);
+  }
+}
+
+.glow {
+  z-index: -1;
+  background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--color-hub-accent) 60%, transparent) 25%, transparent 55%);
+  opacity: 0;
+  animation: glow var(--break) ease-in both;
+}
+
+@keyframes glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* The pack: it appears, shakes harder and harder and brightens, until it shatters */
+.body {
+  position: absolute;
+  inset: 0;
+  animation: charge var(--boom) linear both;
+}
+
+@keyframes charge {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  30% {
+    transform: translate(-2px, 1px) rotate(-1deg);
+  }
+
+  40% {
+    transform: translate(3px, -2px) rotate(1.5deg);
+    filter: brightness(1.08);
+  }
+
+  50% {
+    transform: translate(-4px, 2px) rotate(-2.5deg) scale(1.03);
+    filter: brightness(1.15);
+  }
+
+  60% {
+    transform: translate(5px, -3px) rotate(3deg) scale(1.04);
+  }
+
+  70% {
+    transform: translate(-6px, 3px) rotate(-3.5deg) scale(1.05);
+    filter: brightness(1.25);
+  }
+
+  80% {
+    transform: translate(7px, -2px) rotate(4deg) scale(1.06);
+  }
+
+  90% {
+    transform: translate(-7px, 4px) rotate(-4deg) scale(1.07);
+    filter: brightness(1.35);
+  }
+
+  100% {
+    transform: scale(1.08);
+    filter: brightness(1.5);
+  }
+}
+
+// Each shard is the whole pack's artwork, clipped; at the break it flies away, turning and fading
+.shard {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: var(--art, none) center / cover, var(--color-surface-muted);
+  // Shot out, then slowing down exponentially (an "ease-out expo" curve)
+  animation: fly var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
+}
+
+@keyframes fly {
+  0% {
+    transform: none;
+    filter: brightness(1.3);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.7);
+    filter: brightness(1);
+  }
+}
+
+// The cracks draw themselves from the middle, glowing
+.cracks {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px var(--light)) drop-shadow(0 0 8px var(--color-hub-accent));
+  animation: cracks-out 1ms linear var(--boom) both;
+}
+
+.cracks path {
+  fill: none;
+  stroke: var(--light);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: round;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  animation: draw calc(var(--break) * 0.25) ease-out calc(var(--break) * 0.3) both;
+}
+
+.cracks path.thin {
+  stroke-width: 1;
+  animation-delay: calc(var(--break) * 0.42);
+  animation-duration: calc(var(--break) * 0.13);
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes cracks-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* The break */
+.flash {
+  position: absolute;
+  inset: -120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-hub-text) 0%, color-mix(in srgb, var(--light) 80%, transparent) 20%, transparent 55%);
+  opacity: 0;
+  pointer-events: none;
+  animation: flash calc(var(--after) * 0.7) ease-out var(--boom) both;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+
+.spark {
+  position: absolute;
+  inset-block-start: 45%;
+  inset-inline-start: 50%;
+  inline-size: var(--size);
+  block-size: var(--size);
+  border-radius: 50%;
+  background: var(--color-hub-text);
+  box-shadow:
+    0 0 6px var(--light),
+    0 0 12px var(--color-hub-accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: spark var(--after) cubic-bezier(0.05, 0.9, 0.1, 1) var(--boom) both;
+}
+
+// Hidden until the break (its fill shows the first keyframe while it waits): no dot in the middle meanwhile
+@keyframes spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0);
+  }
+
+  1% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--dist)) scale(0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rays,
+  .glow,
+  .flash,
+  .spark {
+    display: none;
+  }
+
+  .body,
+  .shard,
+  .cracks path {
+    animation: none;
+  }
+}

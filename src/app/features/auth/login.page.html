@@ -1,4 +1,4 @@
-<eras-auth-layout heading="Iniciar sesión" subtitle="Entra con tu cuenta para ver cartas, mazos y jugar.">
+<eras-auth-layout heading="Iniciar sesión">
   <form [formGroup]="form" (ngSubmit)="submit()">
     <eras-stack [gap]="4">
       @if (auth.expired() && !error()) {
@@ -17,12 +17,11 @@
       <eras-form-field
         label="Contraseña"
         required
-        [error]="form.controls.password.touched && form.controls.password.invalid ? 'Ingresa tu contraseña' : null"
+        [error]="!form.controls.password.touched ? null : form.controls.password.hasError('required') ? 'Ingresa tu contraseña' : form.controls.password.hasError('minlength') ? 'La contraseña tiene al menos 8 caracteres' : null"
       >
         <input type="password" formControlName="password" autocomplete="current-password" />
       </eras-form-field>
       <button erasButton type="submit" [loading]="loading()">Entrar</button>
     </eras-stack>
   </form>
-  <span auth-footer>Las cuentas son privadas: pide la tuya a un administrador.</span>
 </eras-auth-layout>

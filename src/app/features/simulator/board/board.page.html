@@ -52,9 +52,6 @@
   >
     <!-- Preferences: how the table looks and behaves -->
     <span class="group-label">Preferencias</span>
-    <button type="button" erasSidebarItem [icon]="headerHidden() ? 'chevron-down' : 'chevron-up'" (click)="headerHidden.set(!headerHidden())">
-      {{ headerHidden() ? 'Mostrar la barra de navegación' : 'Ocultar la barra de navegación' }}
-    </button>
     @if (!sidebarDynamic()) {
       <button type="button" erasSidebarItem [icon]="sidebarExpanded() ? 'chevron-right' : 'chevron-left'" (click)="toggleSidebar()">
         {{ sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}
@@ -78,6 +75,23 @@
     <button type="button" erasSidebarItem icon="list" [on]="!noticesOff()" (click)="noticesOff.set(!noticesOff())">Avisos de las últimas acciones</button>
     <button type="button" erasSidebarItem icon="sparkles" [on]="!animations.off()" (click)="animations.off.set(!animations.off())">Animaciones</button>
     <button type="button" erasSidebarItem icon="cards" [on]="straightHand()" (click)="straightHand.set(!straightHand())">Mano recta (sin curva)</button>
+    <!-- The table's leaning: a slider from flat. Collapsed, the icon opens the bar to reach it -->
+    @if (sidebarOpen()) {
+      <div erasSidebarItem icon="box" class="tilt-item">
+        Mesa en perspectiva
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          aria-label="Inclinación de la mesa"
+          [value]="tilt()"
+          (input)="tilt.set($any($event.target).valueAsNumber)"
+        />
+      </div>
+    } @else {
+      <button type="button" erasSidebarItem icon="box" [on]="tilted()" (click)="sidebarExpanded.set(true)">Mesa en perspectiva</button>
+    }
     <button type="button" erasSidebarItem icon="layers" [on]="mirrored()" (click)="mirrored.set(!mirrored())">Zonas espejadas</button>
     <!-- Installed on an iPhone it is already full screen and there is nothing to toggle -->
     @if (canFullscreen || !installed) {
@@ -97,13 +111,16 @@
       <button type="button" erasSidebarItem icon="square-plus" (click)="dialogs.dummyCard()">Crear carta</button>
     }
     <hr />
-    @if (inProgress()) {
+    @if (playing()) {
       <button type="button" erasSidebarItem icon="flag" danger (click)="surrender()">Rendirse</button>
     }
-    <button type="button" erasSidebarItem icon="logout" (click)="exit()">Salir</button>
+    @if (game.editorRoom() || !playing()) {
+      <!-- Online, a game in course is only left by surrendering (leaving it loses it) -->
+      <button type="button" erasSidebarItem icon="logout" (click)="exit()">Salir</button>
+    }
     @if (game.editorRoom()) {
       <!-- At the foot: a test room -->
-      <div erasSidebarItem icon="edit" notice>Partida de prueba: juegas los dos lados, con acciones manuales y cartas de prueba</div>
+      <div erasSidebarItem icon="edit" notice>Modo solo: juegas los dos lados, con acciones manuales y cartas de prueba</div>
     }
   </aside>
   }
@@ -119,18 +136,22 @@
     <span>La mesa se juega en horizontal.</span>
   </div>
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
-  <div class="table" [class.in-combat]="!!game.state()?.combat">
-    @if (game.myState(); as me) {
-      @if (game.opponentState(); as opp) {
-        <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" [straightHand]="straightHand()" />
+  <div class="table" [class.in-combat]="!!game.state()?.combat" [class.tilted]="tilted()" [style.--tilt]="tiltAngle()">
+    <!-- The plane of the table: the two halves and the middle strip. "Mesa en perspectiva" leans it back; the alerts
+         and panels below stay flat over it -->
+    <div class="plane">
+      @if (game.myState(); as me) {
+        @if (game.opponentState(); as opp) {
+          <eras-player-half [player]="opp" opponent [mirrored]="mirrored()" [straightHand]="straightHand()" [tilted]="tilted()" />
+        } @else {
+          <div class="empty-side">El rival todavía no entra a la sala.</div>
+        }
+        <ng-container *ngTemplateOutlet="strip; context: { gems: true }" />
+        <eras-player-half [player]="me" [straightHand]="straightHand()" [tilted]="tilted()" />
       } @else {
-        <div class="empty-side">El rival todavía no entra a la sala.</div>
+        <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
       }
-      <ng-container *ngTemplateOutlet="strip; context: { gems: true }" />
-      <eras-player-half [player]="me" [straightHand]="straightHand()" />
-    } @else {
-      <eras-empty-state title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
-    }
+    </div>
 
     <div class="toasts">
       @if (game.error(); as message) {
@@ -158,7 +179,11 @@
       @if (opponentLeft() && !dismissedLeft()) {
         <eras-alert tone="danger">
           <eras-stack direction="row" [gap]="2" align="center" wrap>
-            @if (game.isHost()) {
+            @if (playing() && !game.editorRoom()) {
+              <!-- If they do not come back soon, they left the game: you win it -->
+              <span>{{ game.opponentState()?.username ?? 'Tu rival' }} se desconectó. Si no vuelve en unos segundos, ganas la partida.</span>
+              <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Entendido</button>
+            } @else if (game.isHost()) {
               <span>{{ game.opponentState()?.username ?? 'Tu rival' }} se desconectó. ¿Lo esperas o lo sacas de la sala?</span>
               <button erasButton variant="secondary" size="sm" type="button" (click)="dismissedLeft.set(true)">Esperar</button>
               <button erasButton variant="danger" size="sm" type="button" (click)="kickRival()">Sacar de la sala</button>

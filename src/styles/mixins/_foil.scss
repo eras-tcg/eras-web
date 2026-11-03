@@ -1,0 +1,118 @@
+// The foil: a soft iridescent sheen and a band of light crossing the card, both in proportion to the card (a small
+// card shows the same foil as a big one). The layer stays the card's size and only its background moves (back and
+// forth, so it never jumps): no huge moving layer the browser would split into tiles, with seams between them.
+// Blended with soft-light, it keeps the card's own art and text readable. Include it in a pseudo-element over the card.
+@mixin rainbow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background:
+    linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 55%) 50%, transparent 62%) 0 0 / 300% 100% no-repeat,
+    linear-gradient(
+        115deg,
+        var(--color-card-b),
+        var(--color-rarity-uc),
+        var(--color-rarity-sr),
+        var(--color-rarity-sec),
+        var(--color-card-p),
+        var(--color-card-b)
+      )
+      0 0 / 250% 250%;
+  content: '';
+  mix-blend-mode: soft-light;
+  opacity: 0.9;
+  pointer-events: none;
+  animation: foil-sheen 5s ease-in-out infinite alternate;
+
+  @keyframes foil-sheen {
+    to {
+      background-position: 100% 0, 100% 100%;
+    }
+  }
+}
+
+// The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random:
+// public/images/foil/starlight-grid.svg, a 96px tile of 2px cells, 1px dots), over the whole card, in gold and rainbow.
+// glitter-dots: the dots, faint, everywhere. glitter-light: crosses of dots flashing here and there, and a band of
+// light sweeping across, lighting up the dots along lines parallel and perpendicular to the grid, which slide as it
+// goes. Include each in a positioned pseudo-element over the card (they bring their own keyframes).
+// It scales with the card: every size is in $u, a pixel of a card 160px wide (the card must be a size container:
+// include `scaled` on it), so a bigger card shows the same pattern bigger, not more of it.
+$u: calc(100cqw / 160);
+$grid: url('/images/foil/starlight-grid.svg') 0 0 / calc(96 * #{$u}) calc(96 * #{$u});
+// Crosses of dots on the grid's rows and columns (every cell, fading from the middle), each flashing now and then
+// at its own pace (an animated SVG, a tile twice the grid's)
+$crosses: url('/images/foil/starlight-crosses.svg') 0 0 / calc(192 * #{$u}) calc(192 * #{$u});
+
+// On the card itself: it becomes the container the pattern measures
+@mixin scaled {
+  container-type: inline-size;
+}
+
+@mixin -gold-rainbow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+      115deg,
+      var(--color-rarity-sr),
+      var(--color-rarity-sec),
+      var(--color-rarity-sr),
+      var(--color-rarity-uc),
+      var(--color-card-b),
+      var(--color-card-p),
+      var(--color-rarity-sr)
+    )
+    0 0 / 200% 200%;
+  content: '';
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: saturate(1.4);
+
+  // The colors drift (back and forth, so they never jump)
+  @keyframes glitter-drift {
+    to {
+      background-position: 100% 100%;
+    }
+  }
+}
+
+@mixin glitter-dots {
+  @include -gold-rainbow;
+
+  mask: $grid, linear-gradient(rgb(0 0 0 / 30%) 0 0);
+  mask-composite: intersect;
+  animation: glitter-drift 6s ease-in-out infinite alternate;
+}
+
+@mixin glitter-light($delay: 0s) {
+  @include -gold-rainbow;
+
+  // The crosses as they flash, and the dots where the band is: softly all of them, fully on lines every 4
+  // cells (rows or columns); the band starts and ends off the card
+  mask:
+    $crosses,
+    $grid,
+    linear-gradient(115deg, transparent 40%, #000 50%, transparent 60%) 100% 0 / 300% 100% no-repeat,
+    repeating-linear-gradient(#000 0 calc(2 * #{$u}), transparent calc(2 * #{$u}) calc(8 * #{$u})),
+    repeating-linear-gradient(90deg, #000 0 calc(2 * #{$u}), transparent calc(2 * #{$u}) calc(8 * #{$u})),
+    linear-gradient(rgb(0 0 0 / 35%) 0 0);
+  mask-composite: add, intersect, intersect, add, add;
+  filter: saturate(1.4) brightness(1.3);
+  animation:
+    glitter-sweep 3.2s ease-in-out $delay infinite,
+    glitter-drift 6s ease-in-out infinite alternate;
+
+  // The lines slide a whole number of periods, so they stay on the grid
+  @keyframes glitter-sweep {
+    0% {
+      mask-position: 0 0, 0 0, 100% 0, 0 0, 0 0, 0 0;
+    }
+
+    60%,
+    100% {
+      mask-position: 0 0, 0 0, 0% 0, 0 calc(48 * #{$u}), calc(48 * #{$u}) 0, 0 0;
+    }
+  }
+}

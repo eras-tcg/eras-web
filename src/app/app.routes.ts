@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
+import { ADMIN_PERMISSIONS } from '@core/navigation/admin-tools';
 
 /** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
@@ -16,14 +17,37 @@ export const routes: Routes = [
         loadComponent: () => import('@features/home/home.page').then((m) => m.HomePage),
       },
       {
+        path: 'play',
+        title: 'Jugar · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/play.page').then((m) => m.PlayPage),
+      },
+      {
+        path: 'missions',
+        title: 'Misiones · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/missions.page').then((m) => m.MissionsPage),
+      },
+      {
+        path: 'social',
+        title: 'Social · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/social.page').then((m) => m.SocialPage),
+      },
+      {
         path: 'cards',
         title: 'Cartas · ERAS',
         loadComponent: () => import('@features/cards/cards.page').then((m) => m.CardsPage),
       },
       {
         path: 'editions',
-        title: 'Ediciones · ERAS',
+        title: 'Tienda · ERAS',
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),
+      },
+      {
+        path: 'editions/:editionId',
+        title: 'Tienda · ERAS',
+        loadComponent: () => import('@features/editions/edition-shop.page').then((m) => m.EditionShopPage),
       },
       {
         path: 'booster-result',
@@ -55,7 +79,7 @@ export const routes: Routes = [
       },
       {
         path: 'my-decks',
-        title: 'Mis mazos · ERAS',
+        title: 'Mazos · ERAS',
         canMatch: [authGuard],
         loadComponent: () => import('@features/decks/my-decks.page').then((m) => m.MyDecksPage),
       },
@@ -73,7 +97,7 @@ export const routes: Routes = [
       {
         path: 'admin',
         title: 'Administración · ERAS',
-        canMatch: [authGuard],
+        canMatch: [permissionGuard(...ADMIN_PERMISSIONS)],
         loadComponent: () => import('@features/admin/admin.page').then((m) => m.AdminPage),
       },
       {

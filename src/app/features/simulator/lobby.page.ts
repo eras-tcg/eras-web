@@ -3,30 +3,30 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
-import { EditModeService } from '@core/auth/edit-mode.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { GameStore } from '@data/simulator/game.store';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { RoomInfo, STATUS_LABELS } from '@data/simulator/simulator.model';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
-import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { PageComponent } from '@ui/layout/page/page.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
-import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
+import { HubMenuComponent, HubMenuItem } from '../home/hub-menu.component';
+import { HubScreenComponent } from '../home/hub-screen.component';
+
+const LOBBY_ACTIONS: HubMenuItem[] = [{ id: 'create', label: 'Crear sala', icon: 'plus' }];
 
 /**
- * Simulator entrance: create a room or join an open one (listed, all public) or one by its code. A shared
+ * Simulator entrance (Online, in the hub's frame like Jugar): create a room or join an open one (listed, all public) or one by its code. A shared
  * link (/simulator/:roomId) joins that room directly after checking it exists (if not, it offers to create one). Decks, starters and who goes first are chosen inside the room,
  * in its pre-room, so changing them never leaves the room.
  */
 @Component({
   selector: 'eras-lobby-page',
-  imports: [PageComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, CardComponent],
+  imports: [HubScreenComponent, HubMenuComponent, AlertComponent, ButtonComponent, IconButtonComponent, IconComponent, SpinnerComponent],
   templateUrl: './lobby.page.html',
+  styleUrl: './lobby.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LobbyPage {
@@ -37,10 +37,9 @@ export class LobbyPage {
   private readonly rooms = inject(RoomsApi);
   protected readonly game = inject(GameStore);
   private readonly router = inject(Router);
-  /** In the site's edit mode a test room can be made: played alone on both sides. */
-  protected readonly editMode = inject(EditModeService);
 
   protected readonly labels = STATUS_LABELS;
+  protected readonly actions = LOBBY_ACTIONS;
   /** What is being done: 'create', a room id being joined, or null. */
   protected readonly busy = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -82,12 +81,17 @@ export class LobbyPage {
     return this.isMine(room) || (room.playerCount ?? 0) < 2;
   }
 
-  protected async create(editor = false): Promise<void> {
+  /** "Crear sala" from the menu (solo mode is in Jugar). */
+  protected pick(): void {
+    void this.create();
+  }
+
+  protected async create(): Promise<void> {
     if (this.busy()) return;
-    this.busy.set(editor ? 'test' : 'create');
+    this.busy.set('create');
     this.error.set(null);
     try {
-      const { roomId } = await firstValueFrom(this.rooms.create(editor));
+      const { roomId } = await firstValueFrom(this.rooms.create(false));
       await this.enter(roomId);
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo crear la sala'));

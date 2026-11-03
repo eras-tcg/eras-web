@@ -37,6 +37,8 @@ export interface CardSlot {
   floating?: FloatingEffect[];
   materials: CardSlot[];
   resources: CardSlot[];
+  /** The shine of this copy from its owner's collection; plain (or an older server) has none. */
+  finish?: 'foil' | 'prism' | null;
   /** What of its effects the rules engine does not run yet (played by hand); null when all of it runs. */
   unprogrammed?: string | null;
 }

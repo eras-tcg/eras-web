@@ -32,6 +32,7 @@
           <eras-stack direction="row" [gap]="1" align="center" wrap>
             <span class="marks-label">Marcar:</span>
             <button erasChip [selected]="showUnprogrammed()" title="Cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
+            <button erasChip [selected]="showCollection()" title="Cada carta en el mejor acabado que tienes; en gris las que no tienes" (click)="showCollection.set(!showCollection())">Mostrar colección</button>
             @if (canManage()) {
               <button erasChip [selected]="showNoMeta()" title="Cartas sin metadatos" (click)="showNoMeta.set(!showNoMeta())">Sin metadatos</button>
             }
@@ -43,7 +44,17 @@
         } @else {
           <eras-grid [minColumn]="view().size + 'px'" [gap]="3">
             @for (card of visible(); track card.id) {
-              <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" [badge]="badge(card)" [badgeTone]="card.meta ? 'info' : 'danger'" (selected)="open(card)" />
+              @let finish = showCollection() ? owned(card) : undefined;
+              <eras-card-thumb
+                [class.lacking]="finish === null"
+                [attr.title]="finish === null ? 'No tienes esta carta' : null"
+                [name]="card.name ?? ''"
+                [imageUrl]="imageUrl(card)"
+                [badge]="badge(card)"
+                [badgeTone]="card.meta ? 'info' : 'danger'"
+                [foil]="shineOf(finish)"
+                (selected)="open(card)"
+              />
             }
           </eras-grid>
           @if (visible().length < displayed().length) {

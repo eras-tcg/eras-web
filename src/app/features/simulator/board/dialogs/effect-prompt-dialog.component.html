@@ -80,7 +80,7 @@
             <!-- A Material or Recurso: the card it belongs to, with it small at the corner -->
             <eras-card-with-source [imageUrl]="host.imageUrl" [name]="host.cardName" [sourceName]="c.cardName ?? '?'" [sourceImage]="c.imageUrl" [sourceLabel]="(c.cardName ?? '?') + ' · ' + zoneOf(c)" />
           } @else {
-            <eras-game-card [imageUrl]="c.imageUrl" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
+            <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
           <span class="tag">
             @if (chosen().has(c.instanceId)) {

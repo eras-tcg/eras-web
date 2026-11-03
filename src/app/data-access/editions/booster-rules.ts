@@ -51,19 +51,27 @@ export function rollQuantity(options: readonly ProbOption[], random: Random = Ma
   return Math.trunc(Number(options[options.length - 1]?.quantity)) || 0;
 }
 
-/** A whole box: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */
-export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): CatalogCard[] {
+/** A pack as it comes out of an opening: its type and its cards, in pull order. */
+export interface OpenedPack {
+  packType: string;
+  cards: CatalogCard[];
+  /** The foil of each card, in the same order (none when absent). */
+  foils?: (FoilKind | null)[];
+  /** It went up a rarity (see upgradeOnePack): the type it was. */
+  upgradedFrom?: string;
+}
+
+/** A whole box, pack by pack: FIXED entries, then PROB rolls, then FLEX fills the remaining packs. */
+export function openBoxPacks(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): OpenedPack[] {
   const packs = edition.packTypes ?? [];
   const entries = edition.boxConfig?.entries ?? [];
   const total = edition.boxConfig?.totalPacks ?? 0;
   const packNamed = (name: string) => packs.find((p) => p.name === name);
-  const picked: CatalogCard[] = [];
-  let placed = 0;
+  const opened: OpenedPack[] = [];
 
   const open = (pack: PackType | undefined, times: number) => {
     if (!pack) return;
-    for (let i = 0; i < times; i++) picked.push(...openPack(pack, pool, random));
-    placed += times;
+    for (let i = 0; i < times; i++) opened.push({ packType: pack.name, cards: openPack(pack, pool, random) });
   };
 
   for (const entry of entries.filter((e) => e.mode === 'FIXED')) open(packNamed(entry.packTypeName), entry.quantity || 0);
@@ -71,14 +79,88 @@ export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, rand
     if (entry.probOptions?.length) open(packNamed(entry.packTypeName), rollQuantity(entry.probOptions, random));
   }
   const flex = entries.find((e) => e.mode === 'FLEX');
-  if (flex) open(packNamed(flex.packTypeName), Math.max(0, total - placed));
-  return picked;
+  if (flex) open(packNamed(flex.packTypeName), Math.max(0, total - opened.length));
+  return opened;
 }
+
+/** A whole box, its cards together. */
+export function openBox(edition: Edition, pool: Map<string, CatalogCard[]>, random: Random = Math.random): CatalogCard[] {
+  return openBoxPacks(edition, pool, random).flatMap((p) => p.cards);
+}
+
+/** How special a pack type looks before opening it: none, SR, SEC or GOD (the aura it shows). */
+export type PackTier = 'none' | 'sr' | 'sec' | 'god';
+
+/** GOD: named so, or two secrets or more, or five SR+SEC or more; else SEC or SR by the best rarity it brings. */
+export function packTier(pack: Pick<PackType, 'name' | 'cardsPerRarity'> | undefined): PackTier {
+  if (!pack) return 'none';
+  const sr = pack.cardsPerRarity?.SR ?? 0;
+  const sec = pack.cardsPerRarity?.SEC ?? 0;
+  if (/\bgod\b/i.test(pack.name) || sec >= 2 || sr + sec >= 5) return 'god';
+  if (sec > 0) return 'sec';
+  if (sr > 0) return 'sr';
+  return 'none';
+}
+
+const TIER_RANK: Record<PackTier, number> = { none: 0, sr: 1, sec: 2, god: 3 };
+
+/**
+ * A box's bonus: with chance `chance` (1 for an edition, ½ for a sub-edition), one random pack that can go up a
+ * rarity becomes the next pack type up (R → SR → SEC → GOD, by packTier) and gets that type's cards.
+ */
+export function upgradeOnePack(
+  packs: readonly OpenedPack[],
+  types: readonly PackType[],
+  pool: Map<string, CatalogCard[]>,
+  chance: number,
+  random: Random = Math.random,
+): OpenedPack[] {
+  if (random() >= chance) return [...packs];
+  const rank = (name: string) => TIER_RANK[packTier(types.find((t) => t.name === name))];
+  const nextUp = (name: string) =>
+    [...types].filter((t) => rank(t.name) > rank(name)).sort((a, b) => rank(a.name) - rank(b.name))[0];
+  const candidates = packs.map((p, i) => (nextUp(p.packType) ? i : -1)).filter((i) => i >= 0);
+  if (!candidates.length) return [...packs];
+  const index = candidates[Math.floor(random() * candidates.length)];
+  const target = nextUp(packs[index].packType)!;
+  return packs.map((p, i) => (i === index ? { packType: target.name, cards: openPack(target, pool, random), upgradedFrom: p.packType } : p));
+}
+
+/** A shuffled copy (Fisher–Yates): packs come out of a box in no order, and so do the cards of a pack. */
+export function shuffle<T>(items: readonly T[], random: Random = Math.random): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * How a pack's cards turn: first the plain ones, in their order; the special ones (`special`: SR, SEC) wait and
+ * turn last, one by one, in their order too.
+ */
+export function revealOrder<T>(cards: readonly T[], special: (card: T) => boolean): { plain: number[]; special: number[] } {
+  const plain: number[] = [];
+  const last: number[] = [];
+  cards.forEach((card, i) => (special(card) ? last : plain).push(i));
+  return { plain, special: last };
+}
+
+/**
+ * A card can come out foil: a second pass of the opening turns it around and it comes back shining. Two levels:
+ * "foil" (holographic) and "prism" (prismatic, rarer). The server draws it (its odds are DriveManager's
+ * CollectionRules), the same for every card whatever its rarity.
+ */
+export type FoilKind = 'foil' | 'prism';
+const FOIL_RANK: Record<FoilKind | 'none', number> = { prism: 0, foil: 1, none: 2 };
 
 export interface OpenedCard {
   card: CatalogCard;
   rarity: string;
   count: number;
+  /** The foil copies of a card count apart from its plain ones. */
+  foil: FoilKind | null;
 }
 
 export interface RarityGroup {
@@ -87,16 +169,23 @@ export interface RarityGroup {
   count: number;
 }
 
-/** Counts repeated pulls and groups them rarest first, by card number inside each rarity. */
-export function groupOpening(picked: readonly CatalogCard[]): RarityGroup[] {
+/**
+ * Counts repeated pulls (`foils[i]` is the foil of `picked[i]`, if any) and groups them rarest first; inside each
+ * rarity by card number, the prismatic copy first, then the foil one, then the plain ones.
+ */
+export function groupOpening(picked: readonly CatalogCard[], foils: readonly (FoilKind | null)[] = []): RarityGroup[] {
   const counts = new Map<string, OpenedCard>();
-  for (const card of picked) {
-    const current = counts.get(card.id);
+  picked.forEach((card, i) => {
+    const foil = foils[i] ?? null;
+    const key = `${card.id}|${foil ?? ''}`;
+    const current = counts.get(key);
     if (current) current.count++;
-    else counts.set(card.id, { card, rarity: card.meta?.rarity || 'C', count: 1 });
-  }
+    else counts.set(key, { card, rarity: card.meta?.rarity || 'C', count: 1, foil });
+  });
   return RARITY_DISPLAY_ORDER.map((rarity) => {
-    const cards = [...counts.values()].filter((c) => c.rarity === rarity).sort((a, b) => (a.card.number ?? 0) - (b.card.number ?? 0));
+    const cards = [...counts.values()]
+      .filter((c) => c.rarity === rarity)
+      .sort((a, b) => (a.card.number ?? 0) - (b.card.number ?? 0) || FOIL_RANK[a.foil ?? 'none'] - FOIL_RANK[b.foil ?? 'none']);
     return { rarity, cards, count: cards.reduce((sum, c) => sum + c.count, 0) };
   }).filter((g) => g.cards.length > 0);
 }

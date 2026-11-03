@@ -74,6 +74,7 @@ export interface ChoiceDialogData {
       gap: var(--space-1);
       max-block-size: 50vh;
       overflow: auto;
+      overscroll-behavior: none;
       margin: 0;
       padding: 0;
       list-style: none;

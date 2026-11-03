@@ -20,7 +20,7 @@ import { feedbackState } from './admin-feedback';
   selector: 'eras-updates-page',
   imports: [DatePipe, NgTemplateOutlet, PageComponent, TableComponent, ColorPipComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, SpinnerComponent],
   template: `
-    <eras-page title="Gestionar cambios" subtitle="Imágenes de cartas detectadas en Drive pendientes de aplicar">
+    <eras-page title="Gestionar cambios">
       <ng-container ngProjectAs="[page-actions]">
         <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
         @if (selected().size) {

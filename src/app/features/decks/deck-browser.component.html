@@ -1,0 +1,73 @@
+<!-- Filters, with the sorting and the fold button on their own bar -->
+<aside class="filters" aria-label="Filtros y orden">
+  @if (showFilters()) {
+    <div class="filters-bar">
+      <eras-sort-control
+        [options]="sortOptions()"
+        [key]="sortKey()"
+        [direction]="direction()"
+        (keyChange)="sortKey.set($any($event))"
+        (directionChange)="direction.set($event)"
+      />
+      <button erasButton variant="ghost" size="sm" type="button" class="fold" aria-label="Ocultar filtros" [attr.aria-expanded]="true" (click)="showFilters.set(false)">
+        <eras-icon name="chevron-left" />
+      </button>
+    </div>
+    <div class="filters-body">
+      <eras-deck-filters-bar
+        panel
+        [showVisibility]="showVisibility()"
+        [filters]="filters()"
+        [authors]="authors()"
+        [editions]="editions()"
+        [shown]="shown()"
+        [total]="total()"
+        (filtersChange)="filters.set($event)"
+      />
+    </div>
+  } @else {
+    <div class="rail">
+      <button erasButton variant="ghost" size="sm" type="button" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
+        <eras-icon name="filter" />
+        @if (filtersActive()) {
+          <span class="dot" aria-hidden="true"></span>
+        }
+      </button>
+      <button
+        erasButton
+        variant="ghost"
+        size="sm"
+        type="button"
+        [attr.aria-label]="direction() === 'asc' ? 'Orden ascendente' : 'Orden descendente'"
+        (click)="direction.set(direction() === 'asc' ? 'desc' : 'asc')"
+      >
+        <eras-icon [name]="direction() === 'asc' ? 'sort-asc' : 'sort-desc'" />
+      </button>
+    </div>
+  }
+</aside>
+
+<section class="decks" aria-label="Mazos">
+  <div class="decks-head">
+    <span>{{ countLabel() }}</span>
+    @if (filtersActive()) {
+      <button erasButton variant="ghost" size="sm" type="button" (click)="filters.set(emptyFilters)"><eras-icon name="x" /> Limpiar filtros</button>
+    }
+  </div>
+
+  <!-- The only part that scrolls -->
+  <div class="scroll">
+    @if (loading()) {
+      <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
+    } @else {
+      @if (note(); as text) {
+        <p class="note">{{ text }}</p>
+      }
+      <!-- Two columns on phones (40vw), 11rem covers elsewhere -->
+      <eras-grid minColumn="min(11rem, 40vw)" [gap]="4">
+        <ng-content select="[deck-lead]" />
+        <ng-content />
+      </eras-grid>
+    }
+  </div>
+</section>

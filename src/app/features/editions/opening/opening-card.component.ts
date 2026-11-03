@@ -62,7 +62,7 @@ const PRISM_SPARKLES = 24;
       }
     }
   `,
-  styleUrl: './opening-card.component.scss',
+  styleUrls: ['./opening-card.component.scss', './opening-card.effects.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'classes()',

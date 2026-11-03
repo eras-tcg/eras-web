@@ -109,6 +109,30 @@ export class CardDetailDialogComponent {
     await this.run(() => firstValueFrom(this.admin.renameImage(card.id, name)), 'No se pudo renombrar');
   }
 
+  /** The card's alternative art from a chosen file (it replaces the earlier one): see CardMeta.altImage. */
+  protected async uploadAlt(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const metaId = this.card().meta?.id;
+    if (!file || !metaId) return;
+    await this.run(() => firstValueFrom(this.admin.setAltImage(metaId, file)), 'No se pudo guardar el arte alternativo');
+  }
+
+  protected async removeAlt(): Promise<void> {
+    const card = this.card();
+    const metaId = card.meta?.id;
+    if (!metaId) return;
+    const ok = await this.modal.confirm({
+      title: 'Quitar arte alternativo',
+      message: `"${card.name}" ya no saldrá con arte alternativo. Las copias que ya lo tienen se verán con el arte normal.`,
+      confirmLabel: 'Quitar',
+      danger: true,
+    });
+    if (!ok) return;
+    await this.run(() => firstValueFrom(this.admin.removeAltImage(metaId)), 'No se pudo quitar el arte alternativo');
+  }
+
   protected async remove(what: 'meta' | 'image' | 'both'): Promise<void> {
     const card = this.card();
     const text = { meta: 'los metadatos', image: 'la imagen', both: 'la imagen y los metadatos' }[what];

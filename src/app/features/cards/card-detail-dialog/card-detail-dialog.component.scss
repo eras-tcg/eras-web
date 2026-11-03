@@ -68,3 +68,18 @@
     border-radius: var(--radius-md);
   }
 }
+
+// Administration: the card's alternative art, with a small preview of the current one
+.alt-art {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.alt-preview {
+  inline-size: 3rem;
+  aspect-ratio: 63 / 88;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}

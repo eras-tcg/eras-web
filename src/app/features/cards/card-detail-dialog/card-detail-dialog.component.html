@@ -37,6 +37,21 @@
         <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="editMeta()">
           <eras-icon name="edit" /> {{ card().meta ? 'Editar metadatos' : 'Crear metadatos' }}
         </button>
+        @if (card().meta; as meta) {
+          <!-- The alternative art: a very rare version of this card a pack may give (never a card of its own) -->
+          <div class="alt-art">
+            @if (meta.altImage) {
+              <img class="alt-preview" [src]="meta.altImage" alt="Arte alternativo actual" />
+            }
+            <input #altFile type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAlt($event)" />
+            <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="altFile.click()">
+              <eras-icon name="image" /> {{ meta.altImage ? 'Cambiar arte alternativo' : 'Subir arte alternativo' }}
+            </button>
+            @if (meta.altImage) {
+              <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="removeAlt()">Quitar arte alternativo</button>
+            }
+          </div>
+        }
         <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="rename()">Renombrar</button>
         @if (card().meta) {
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="remove('meta')">Eliminar metadatos</button>

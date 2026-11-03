@@ -3,6 +3,8 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  // Room between the tabs and the list below them
+  gap: var(--space-4);
   min-block-size: 0;
 }
 

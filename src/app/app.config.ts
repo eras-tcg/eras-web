@@ -5,6 +5,7 @@ import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBro
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
 import { BusyState, busyInterceptor } from '@core/http/busy';
+import { loadingInterceptor } from '@core/http/loading';
 import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { serverInterceptor } from '@core/server/server.interceptor';
@@ -18,7 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     // Screens change with an animation (browsers without view transitions just swap them)
     provideRouter(routes, withComponentInputBinding(), withViewTransitions({ skipInitialTransition: true, onViewTransitionCreated: onScreenTransition })),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor, busyInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor, busyInterceptor, loadingInterceptor])),
     // The buttons hold while a change is on its way: listening from the first click on
     provideAppInitializer(() => void inject(BusyState)),
     { provide: LOCALE_ID, useValue: 'es' },

@@ -7,6 +7,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
 import { VersionService } from '../version/version.service';
 import { AppToolsComponent } from './app-tools.component';
+import { LoadingScreenComponent } from './loading-screen.component';
 
 /**
  * App frame. There is no navigation bar: the home hub is the menu and every screen draws its own top strip
@@ -14,7 +15,7 @@ import { AppToolsComponent } from './app-tools.component';
  */
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, IconComponent, AppToolsComponent],
+  imports: [RouterOutlet, IconComponent, AppToolsComponent, LoadingScreenComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

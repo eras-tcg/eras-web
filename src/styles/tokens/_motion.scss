@@ -5,6 +5,8 @@
 
   --z-header: 100;
   --z-overlay: 1000;
+  // The loading screen: over the dialogs too (the CDK overlay sits at 1000)
+  --z-loading: 1100;
 }
 
 @media (prefers-reduced-motion: reduce) {

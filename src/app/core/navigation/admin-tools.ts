@@ -24,6 +24,7 @@ export const ADMIN_PERMISSIONS: Permission[] = ['manage_users', 'manage_roles', 
 /** Administration tools, grouped as on the /admin page. */
 export const ADMIN_TOOLS: AdminTool[] = [
   { label: 'Usuarios', description: 'Cuentas, roles asignados y contraseñas', route: '/users-manager', icon: 'user', group: 'Cuentas y acceso', permissions: ['manage_users'] },
+  { label: 'Registro de actividad', description: 'Ingresos, compras, mazos y partidas de los jugadores', route: '/activity-log', icon: 'clock', group: 'Cuentas y acceso', permissions: ['manage_users'] },
   { label: 'Roles', description: 'Roles y los permisos que otorgan', route: '/roles', icon: 'shield', group: 'Cuentas y acceso', permissions: ['manage_roles'] },
   { label: 'Permisos', description: 'Catálogo de permisos', route: '/permissions', icon: 'key', group: 'Cuentas y acceso', permissions: ['manage_permissions', 'read_permissions'] },
   { label: 'Datos de referencia', description: 'Clases, instancias, tags y efectos keyword', route: '/card-ref', icon: 'list', group: 'Cartas', permissions: ['manage_cards'] },

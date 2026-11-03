@@ -132,7 +132,8 @@ eras-icon[name='gem'] {
   align-self: stretch;
   min-block-size: 0;
   padding: var(--space-1);
-  overflow-y: auto;
+  // Only downwards: the cards arrive tilted, and the ones on the edge would scroll it sideways for a moment
+  overflow: hidden auto;
   overscroll-behavior: none;
 }
 

@@ -176,22 +176,13 @@
   animation: foil-in 0.4s ease-out 0.5s both;
 }
 
-// The rainbow: soft bands with no edge, repeating every 240px; the layer, wider than the card, slides one period
-// along the x axis (240px / sin 115deg), so the end of a loop is exactly its start
+// The foil every card has (its own blend), as it shows up
+:host(.foil-foil) .foil {
+  mix-blend-mode: normal;
+}
+
 :host(.foil-foil) .foil::before {
-  position: absolute;
-  inset: -50% -300px;
-  background: repeating-linear-gradient(
-    115deg,
-    var(--color-card-b) 0,
-    var(--color-rarity-uc) 60px,
-    var(--color-rarity-sr) 120px,
-    var(--color-rarity-sec) 180px,
-    var(--color-card-b) 240px
-  );
-  content: '';
-  opacity: 0.7;
-  animation: foil-slide 4s linear 0.9s infinite;
+  @include foil.rainbow;
 }
 
 :host(.foil-prism) .foil {
@@ -218,12 +209,6 @@
 @keyframes foil-in {
   from {
     opacity: 0;
-  }
-}
-
-@keyframes foil-slide {
-  to {
-    transform: translateX(calc(240px / 0.9063));
   }
 }
 

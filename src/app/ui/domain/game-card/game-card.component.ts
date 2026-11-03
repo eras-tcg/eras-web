@@ -113,7 +113,9 @@ function roman(n: number): string {
       border-radius: inherit;
       pointer-events: none;
     }
-    .shine:not(.prism)::after { @include foil.rainbow; }
+    // The wrapper blends with the card (see foil.rainbow)
+    .shine:not(.prism) { mix-blend-mode: soft-light; }
+    .shine:not(.prism)::after { @include foil.rainbow(normal); }
     .shine.prism { @include foil.scaled; }
     .shine.prism::before { @include foil.glitter-dots; }
     .shine.prism::after { @include foil.glitter-light; }

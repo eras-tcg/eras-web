@@ -176,13 +176,13 @@
   animation: foil-in 0.4s ease-out 0.5s both;
 }
 
-// The foil every card has (its own blend), as it shows up
+// The foil every card has, as it shows up: the layer that fades in is the one that blends (see foil.rainbow)
 :host(.foil-foil) .foil {
-  mix-blend-mode: normal;
+  mix-blend-mode: soft-light;
 }
 
 :host(.foil-foil) .foil::before {
-  @include foil.rainbow;
+  @include foil.rainbow(normal);
 }
 
 :host(.foil-prism) .foil {

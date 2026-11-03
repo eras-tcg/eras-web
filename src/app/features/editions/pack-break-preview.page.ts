@@ -18,7 +18,8 @@ const CARDS = 12;
 
 /**
  * Development only (/dev/pack-break, not in production builds): a pack breaking open and its cards flying out, again
- * and again, with an edition's artwork, to tune the animation without buying anything.
+ * and again, with an edition's artwork, to tune the animation without buying anything. Then the cards turn and the
+ * first two show their foil: a foil one, then a prismatic one.
  */
 @Component({
   selector: 'eras-pack-break-preview-page',
@@ -39,8 +40,9 @@ const CARDS = 12;
         }
         @if (dealt()) {
           <div #cardsBox class="cards" [class.placing]="placing()">
+            <!-- Once landed they turn; the first is foil and the second prismatic, to compare them -->
             @for (i of cards; track i) {
-              <eras-opening-card />
+              <eras-opening-card [src]="cardImage()" [up]="turned()" [foil]="i === 0 ? 'foil' : i === 1 ? 'prism' : null" [revealFoil]="i === 0 ? foilShown() : i === 1 ? prismShown() : false" />
             }
           </div>
         }
@@ -113,6 +115,11 @@ export class PackBreakPreviewPage {
   protected readonly falling = signal(false);
   protected readonly dealt = signal(false);
   protected readonly placing = signal(false);
+  protected readonly turned = signal(false);
+  protected readonly foilShown = signal(false);
+  protected readonly prismShown = signal(false);
+  /** The cards' face: the edition's artwork, or the logo without a session. */
+  protected readonly cardImage = computed(() => this.art()?.match(/url\((.*)\)/)?.[1] ?? 'logo.png');
 
   constructor() {
     if (this.auth.user()) void this.editions.load().then(() => this.play());
@@ -141,6 +148,9 @@ export class PackBreakPreviewPage {
     this.breaking.set(false);
     this.falling.set(false);
     this.dealt.set(false);
+    this.turned.set(false);
+    this.foilShown.set(false);
+    this.prismShown.set(false);
     const cardsAt = this.duration() * BOOM_AT + CARDS_AFTER_BOOM_MS;
     this.later(() => this.breaking.set(true), 30);
     this.later(() => {
@@ -155,6 +165,9 @@ export class PackBreakPreviewPage {
       });
     }, 30 + cardsAt);
     this.later(() => this.falling.set(false), 30 + cardsAt + PIECES_MS);
+    this.later(() => this.turned.set(true), 30 + cardsAt + 1200);
+    this.later(() => this.foilShown.set(true), 30 + cardsAt + 2000);
+    this.later(() => this.prismShown.set(true), 30 + cardsAt + 3500);
   }
 
   private later(run: () => void, ms: number): void {

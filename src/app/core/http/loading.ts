@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 import { BACKGROUND } from './busy';
 
 /** A wait shorter than this shows nothing: the loading screen never flashes. */
-export const SHOW_AFTER_MS = 300;
+export const SHOW_AFTER_MS = 750;
 /** Once shown, it stays at least this long, so it does not blink away. */
 export const SHOW_AT_LEAST_MS = 400;
 

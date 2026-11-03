@@ -4,10 +4,12 @@
 //   50–66%   it swells, glowing from inside and along its edges, trembling
 //   66–72%   it freezes, brightest
 //   72%      it shatters (BOOM_AT): flash, shock wave, a jolt of the whole break; the canvas draws the pieces
-// The light is the hub's glow and accent, the same for every pack (it does not tell its type).
+// The light (--light, --edge) is the pack's color: the hub's gold for a plain pack, amber for SR, pink for SEC, every
+// color for GOD (as their auras on the table).
 :host {
   --boom: calc(var(--break) * 0.72);
   --light: var(--color-hub-glow);
+  --edge: var(--color-hub-accent);
 
   position: relative;
   display: block;
@@ -93,7 +95,7 @@
 
 .glow {
   z-index: -1;
-  background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--color-hub-accent) 60%, transparent) 25%, transparent 55%);
+  background: radial-gradient(circle, var(--light) 0%, color-mix(in srgb, var(--edge) 60%, transparent) 25%, transparent 55%);
   opacity: 0;
   animation: glow var(--break) ease-in both;
 }
@@ -240,7 +242,7 @@
 .inner {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--ix) var(--iy), var(--light) 0%, color-mix(in srgb, var(--color-hub-accent) 70%, transparent) 18%, transparent 55%);
+  background: radial-gradient(circle at var(--ix) var(--iy), var(--light) 0%, color-mix(in srgb, var(--edge) 70%, transparent) 18%, transparent 55%);
   mix-blend-mode: screen;
   opacity: 0;
   animation: inner var(--break) linear both;
@@ -346,7 +348,7 @@
   66%,
   72% {
     opacity: 1;
-    filter: drop-shadow(0 0 6px var(--color-hub-accent));
+    filter: drop-shadow(0 0 6px var(--edge));
   }
 }
 
@@ -395,7 +397,7 @@
   border-radius: 50%;
   box-shadow:
     0 0 1rem var(--light),
-    inset 0 0 1rem var(--color-hub-accent);
+    inset 0 0 1rem var(--edge);
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.1);
@@ -438,6 +440,47 @@
   }
 }
 
+/* The pack's colors */
+:host(.tier-sr) {
+  --light: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-hub-text));
+  --edge: var(--color-rarity-sr);
+}
+
+:host(.tier-sec) {
+  --light: color-mix(in srgb, var(--color-rarity-sec) 55%, var(--color-hub-text));
+  --edge: var(--color-rarity-sec);
+}
+
+// GOD: the rays in every color, as its ring on the table
+:host(.tier-god) {
+  --light: var(--color-hub-glow);
+  --edge: var(--color-rarity-sec);
+}
+
+:host(.tier-god) .rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--color-rarity-sec) 70%, transparent) 0deg 5deg,
+    transparent 5deg 12deg,
+    color-mix(in srgb, var(--color-rarity-sr) 70%, transparent) 12deg 17deg,
+    transparent 17deg 24deg,
+    color-mix(in srgb, var(--color-rarity-r) 70%, transparent) 24deg 29deg,
+    transparent 29deg 36deg,
+    color-mix(in srgb, var(--color-rarity-uc) 70%, transparent) 36deg 41deg,
+    transparent 41deg 48deg
+  );
+}
+
+:host(.tier-god) .glow {
+  background: radial-gradient(
+    circle,
+    var(--color-hub-text) 0%,
+    color-mix(in srgb, var(--color-rarity-sec) 70%, transparent) 18%,
+    color-mix(in srgb, var(--color-rarity-sr) 45%, transparent) 32%,
+    transparent 55%
+  );
+}
+
 /* How much it shows, by the pack's type (BREAK_DETAIL holds the rest: cracks and pieces) */
 
 // A plain pack: no rays, no shock wave, no jolt of the whole break; a softer light
@@ -474,7 +517,7 @@
 .wave.second {
   animation-delay: calc(var(--boom) + 140ms);
   animation-duration: 1000ms;
-  border-color: var(--color-hub-accent);
+  border-color: var(--edge);
 }
 
 @media (prefers-reduced-motion: reduce) {

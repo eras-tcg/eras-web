@@ -22,6 +22,8 @@ interface Shard {
   flip: number;
   vflip: number;
   life: number;
+  /** Its foil edge's color. */
+  color: string;
 }
 
 interface Particle {
@@ -34,8 +36,21 @@ interface Particle {
   size: number;
   age: number;
   ttl: number;
+  color: string;
   /** debris: a fleck of foil that glints as it turns; spark: a streak of light. */
   kind: 'debris' | 'spark';
+}
+
+/** A color as the CSS resolves it on `element` (a variable holding var() or color-mix(), which a canvas cannot read). */
+function colorOf(element: HTMLElement, variable: string): string {
+  element.style.color = `var(${variable})`;
+  const color = getComputedStyle(element).color;
+  element.style.removeProperty('color');
+  // A mixed color comes back as color(srgb r g b [/ a]), 0..1: as rgb(), which every canvas reads
+  const srgb = color.match(/^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/);
+  if (!srgb) return color;
+  const [r, g, b] = srgb.slice(1, 4).map((v) => Math.round(Number(v) * 255));
+  return `rgba(${r}, ${g}, ${b}, ${srgb[4] ?? 1})`;
 }
 
 /** The url inside a CSS `url(...)` value. */
@@ -120,10 +135,13 @@ export class PackBreakComponent {
     const ox = pack.left - box.left;
     const oy = pack.top - box.top;
     const impact = { x: ox + IMPACT.x * unit, y: oy + IMPACT.y * unit };
-    const style = getComputedStyle(this.host.nativeElement);
-    const accent = style.getPropertyValue('--color-hub-accent').trim() || '#e8b84a';
-    const glow = style.getPropertyValue('--color-hub-glow').trim() || '#fff1c2';
-    const light = style.getPropertyValue('--color-hub-text').trim() || '#ffffff';
+    // The pack's colors, as the CSS resolves them (--edge, --light: by its type)
+    const accent = colorOf(canvas, '--edge');
+    const glow = colorOf(canvas, '--light');
+    const light = colorOf(canvas, '--color-hub-text');
+    // A GOD pack's pieces shine in every color
+    const palette = this.tier() === 'god' ? ['--color-rarity-sec', '--color-rarity-sr', '--color-hub-glow', '--color-rarity-r', '--color-rarity-uc'].map((v) => colorOf(canvas, v)) : [accent];
+    const pick = () => palette[Math.floor(Math.random() * palette.length)];
 
     const detail = this.detail();
     const shards: Shard[] = shatter(Math.random, detail.shards).map((s) => {
@@ -144,17 +162,18 @@ export class PackBreakComponent {
         flip: 0,
         vflip: (2 + Math.random() * 5) * (Math.random() < 0.5 ? -1 : 1),
         life: 1,
+        color: pick(),
       };
     });
     const debris = Array.from({ length: detail.debris }, (): Particle => {
       const a = Math.random() * Math.PI * 2;
       const speed = (0.4 + Math.random() * 2.2) * packW;
-      return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed - packW * 0.6, rot: Math.random() * 6, vrot: (Math.random() - 0.5) * 16, size: 1.5 + Math.random() * 3.5, age: 0, ttl: 1.1 + Math.random() * 0.9, kind: 'debris' };
+      return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed - packW * 0.6, rot: Math.random() * 6, vrot: (Math.random() - 0.5) * 16, size: 1.5 + Math.random() * 3.5, age: 0, ttl: 1.1 + Math.random() * 0.9, kind: 'debris', color: pick() };
     });
     const sparks = Array.from({ length: detail.sparks }, (_, i): Particle => {
       const a = (i / detail.sparks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
       const speed = (2.5 + Math.random() * 3) * packW;
-      return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, rot: 0, vrot: 0, size: 1 + Math.random() * 1.8, age: 0, ttl: 0.45 + Math.random() * 0.35, kind: 'spark' };
+      return { x: impact.x, y: impact.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, rot: 0, vrot: 0, size: 1 + Math.random() * 1.8, age: 0, ttl: 0.45 + Math.random() * 0.35, kind: 'spark', color: pick() };
     });
     const particles = [...debris, ...sparks];
 
@@ -210,7 +229,7 @@ export class PackBreakComponent {
         ctx.restore();
         // Its foil edge, brighter when seen edge-on
         ctx.lineWidth = 1.2 + (1 - Math.abs(turn)) * 2.4;
-        ctx.strokeStyle = accent;
+        ctx.strokeStyle = s.color;
         ctx.shadowColor = glow;
         ctx.shadowBlur = 6;
         ctx.stroke();
@@ -231,7 +250,7 @@ export class PackBreakComponent {
           p.y += p.vy * dt;
           ctx.globalAlpha = fade;
           ctx.strokeStyle = light;
-          ctx.shadowColor = accent;
+          ctx.shadowColor = p.color;
           ctx.shadowBlur = 10;
           ctx.lineWidth = p.size;
           ctx.lineCap = 'round';
@@ -251,7 +270,7 @@ export class PackBreakComponent {
           ctx.globalAlpha = fade * (0.45 + glint * 0.55);
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rot);
-          ctx.fillStyle = glint > 0.6 ? light : accent;
+          ctx.fillStyle = glint > 0.6 ? light : p.color;
           ctx.shadowColor = glow;
           ctx.shadowBlur = glint * 12;
           ctx.beginPath();

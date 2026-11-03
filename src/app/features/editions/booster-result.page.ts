@@ -47,6 +47,8 @@ const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
 /** The foils' pass: how long each foil card takes to turn around and show its foil, in a pack and in a box. */
 const FOIL_MS = { pack: 1500, box: 1000 };
+/** A prismatic card's turn is longer and showier: the next one waits more. */
+const PRISM_MS = { pack: 2100, box: 1400 };
 /** How long the pack that goes up a rarity shakes on the table before it does. */
 const UPGRADE_SHAKE_MS = 1400;
 const CARD_RATIO = 63 / 88;
@@ -340,7 +342,8 @@ export class BoosterResultPage {
     const order = (pack.foils ?? []).map((foil, i) => (foil ? i : -1)).filter((i) => i >= 0);
     if (n >= order.length) return this.waiting.set(true);
     this.foiled.update((set) => new Set(set).add(order[n]));
-    this.later(() => this.foilPass(n + 1), this.isBox() ? FOIL_MS.box : FOIL_MS.pack);
+    const times = pack.foils?.[order[n]] === 'prism' ? PRISM_MS : FOIL_MS;
+    this.later(() => this.foilPass(n + 1), this.isBox() ? times.box : times.pack);
   }
 
   /** The foil of a card of the pack being opened. */

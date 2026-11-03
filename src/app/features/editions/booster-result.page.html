@@ -72,10 +72,14 @@
               @if (packs().length > 1) {
                 <p class="progress">Sobre {{ packIndex() + 1 }} de {{ packs().length }}</p>
               }
-              @if (tearing()) {
-                <eras-pack-break [art]="art" [duration]="breakMs()" />
-              } @else {
-                <div class="cards">
+              <!-- The pack breaks in the middle; its pieces keep falling over the cards that fly out of it -->
+              @if (tearing() || falling()) {
+                <div class="break-layer">
+                  <eras-pack-break [art]="art" [duration]="breakMs()" />
+                </div>
+              }
+              @if (!tearing()) {
+                <div #cardsBox class="cards" [class.placing]="placing()">
                   @for (card of pack.cards; track $index; let i = $index) {
                     <eras-opening-card
                       [src]="imageUrl(card)"

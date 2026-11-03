@@ -1,3 +1,4 @@
+import { isDevMode } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
@@ -5,6 +6,16 @@ import { ADMIN_PERMISSIONS } from '@core/navigation/admin-tools';
 
 /** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
+  // Development only, without a session: the pack break, again and again, to tune it (not in production builds)
+  ...(isDevMode()
+    ? [
+        {
+          path: 'dev/pack-break',
+          title: 'Prueba · ERAS',
+          loadComponent: () => import('@features/editions/pack-break-preview.page').then((m) => m.PackBreakPreviewPage),
+        },
+      ]
+    : []),
   {
     path: '',
     component: ShellComponent,

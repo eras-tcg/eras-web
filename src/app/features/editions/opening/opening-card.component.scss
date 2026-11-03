@@ -7,7 +7,8 @@
   inline-size: clamp(5rem, 9vw, 8.5rem);
   aspect-ratio: 63 / 88;
   perspective: 900px;
-  animation: deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  // Out of the broken pack (deal-from-center.ts sets where from); without it, from just above
+  animation: deal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) var(--deal-delay, 0ms) both;
 }
 
 :host(.aura-sr) {
@@ -21,7 +22,11 @@
 @keyframes deal {
   from {
     opacity: 0;
-    transform: translateY(-2.5rem) rotate(-6deg);
+    transform: translate(var(--from-x, 0), var(--from-y, -2.5rem)) rotate(var(--from-rot, -6deg)) scale(var(--from-scale, 1));
+  }
+
+  30% {
+    opacity: 1;
   }
 }
 

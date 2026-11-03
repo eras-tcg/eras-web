@@ -1,20 +1,30 @@
-<!-- Behind: turning rays, growing while it charges -->
+<!-- Behind: turning rays and a glow, one step stronger with each blow -->
 <span class="rays"></span>
+<span class="glow"></span>
 
-<!-- The pack, as its shards (together they are the whole pack): it shakes (its glow with it), cracks, then they fly -->
+<!-- The pack: three blows, each a jolt and a stage of cracks with light leaking through; it swells, freezes, and is gone -->
 <span class="body">
-  <span class="glow"></span>
-  @for (shard of shards; track $index) {
-    <span class="shard" [style.clip-path]="'polygon(' + shard.clip + ')'" [style.--dx]="shard.dx + '%'" [style.--dy]="shard.dy + '%'" [style.--rot]="shard.rot + 'deg'"></span>
-  }
-  <svg class="cracks" viewBox="0 0 100 100" preserveAspectRatio="none">
-    <path pathLength="1" d="M50 45 L40 0 M50 45 L75 0 M50 45 L100 25 M50 45 L100 60 M50 45 L70 100 M50 45 L30 100 M50 45 L0 70 M50 45 L0 30" />
-    <path pathLength="1" class="thin" d="M44 20 L30 14 M62 22 L72 30 M70 52 L82 48 M58 72 L66 80 M40 70 L28 76 M30 42 L18 50" />
+  <span class="art"></span>
+  <!-- The light from inside, growing with each blow, and along the edges once it swells -->
+  <span class="inner" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
+  <svg class="cracks" [attr.viewBox]="viewBox" preserveAspectRatio="none">
+    @for (stage of cracks; track $index; let s = $index) {
+      <!-- Wide and blurred first (the light through the crack), then the crack itself -->
+      <g [class]="'leak stage-' + s">
+        @for (d of stage; track $index) {
+          <path pathLength="1" [attr.d]="d" />
+        }
+      </g>
+      <g [class]="'line stage-' + s">
+        @for (d of stage; track $index) {
+          <path pathLength="1" [attr.d]="d" />
+        }
+      </g>
+    }
   </svg>
 </span>
 
-<!-- The break: a flash and sparks -->
-<span class="flash"></span>
-@for (spark of sparks; track $index) {
-  <span class="spark" [style.--angle]="spark.angle + 'deg'" [style.--dist]="spark.dist + 'px'" [style.--size]="spark.size + 'px'"></span>
-}
+<!-- The shatter: a flash and a shock wave from the impact (the shards, flecks and sparks are on the canvas) -->
+<span class="flash" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
+<span class="wave" [style.--ix]="impact.x + '%'" [style.--iy]="impact.y + '%'"></span>
+<canvas #burst class="burst"></canvas>

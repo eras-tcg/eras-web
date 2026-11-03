@@ -8,6 +8,9 @@ body {
   min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
+  // Like a game: no text selection (the blue highlight) nor dragging what was selected; the fields keep it
+  -webkit-user-select: none;
+  user-select: none;
   transition:
     background-color var(--duration-base) var(--easing-standard),
     color var(--duration-base) var(--easing-standard);
@@ -22,6 +25,34 @@ h3 {
 
 a {
   color: var(--color-link);
+}
+
+input,
+textarea,
+select,
+[contenteditable]:not([contenteditable='false']) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+// Images and links are not dragged out as files or URLs; what the app makes draggable still is
+img,
+a {
+  -webkit-user-drag: none;
+}
+
+[draggable='true'] {
+  -webkit-user-drag: element;
+}
+
+// While a change is on its way the buttons ignore clicks (core/http/busy.ts): they say so, and the one pressed waits
+.is-busy :is(button, [role='button'], a[erasButton]):not([data-while-busy]) {
+  cursor: progress;
+}
+
+[data-pending] {
+  opacity: 0.6;
+  transition: opacity var(--duration-fast) var(--easing-standard);
 }
 
 // Scrollbars: thin and rounded, in the page's colors (WebKit / Chromium; Firefox gets the thin standard one)

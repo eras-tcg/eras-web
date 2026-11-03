@@ -152,8 +152,12 @@ import { IconComponent } from '../../primitives/icon/icon.component';
       overflow: hidden;
       pointer-events: none;
     }
+    // The wrapper blends with the cover (see foil.rainbow)
+    .shine:not(.prism) {
+      mix-blend-mode: soft-light;
+    }
     .shine:not(.prism)::after {
-      @include foil.rainbow;
+      @include foil.rainbow(normal);
     }
     .shine.prism {
       @include foil.scaled;

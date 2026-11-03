@@ -6,6 +6,18 @@
   min-block-size: 0;
 }
 
+// Below the tabs: the sets, scrolling inside the column when they are taller than it
+.scroll {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--space-4);
+  min-block-size: 0;
+  padding-inline-end: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .set {
   display: grid;
   gap: var(--space-2);

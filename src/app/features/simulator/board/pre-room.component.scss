@@ -8,19 +8,24 @@
   overscroll-behavior: none;
 }
 
+// The top row where every screen has it (eras-page, hub-screen: the gutter from the edge, their top padding);
+// the rest keeps its width, centered. The board already pads the sides by --space-3.
 .pre-room {
+  --page-top: max(var(--space-5), env(safe-area-inset-top));
+
   display: grid;
   gap: var(--space-5);
-  max-inline-size: 72rem;
-  margin-inline: auto;
-  padding-block: var(--space-3) var(--space-5);
+  padding: var(--page-top) calc(var(--layout-gutter) - var(--space-3)) var(--space-5);
 }
+.pre-room > * { justify-self: center; inline-size: min(100%, 72rem); }
+.pre-room > .room-bar { inline-size: 100%; }
+@media (max-width: 63.99rem) { .pre-room { --page-top: max(var(--space-4), env(safe-area-inset-top)); } }
 
 .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 .error { color: var(--color-danger); font-size: var(--font-size-sm); }
 
 /* Top row: as every screen's */
-.room-bar { display: flex; align-items: center; gap: var(--space-3); }
+.room-bar { display: flex; align-items: flex-start; gap: var(--space-3); }
 .back {
   display: grid;
   flex-shrink: 0;
@@ -36,9 +41,12 @@
 }
 .back eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
 .back:hover { border-color: var(--color-hub-accent); color: var(--color-text); transform: translateX(-2px); }
-.heading { min-inline-size: 0; padding-inline-start: var(--space-3); border-inline-start: 4px solid var(--color-hub-accent); }
+// A one-line title centered beside "back"; the accent bar on the title itself, as on every screen
+.heading { display: flex; align-items: center; min-block-size: 2.5rem; min-inline-size: 0; }
 .title {
   margin: 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--color-hub-accent);
   font-family: var(--font-family-display);
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   font-weight: var(--font-weight-regular);

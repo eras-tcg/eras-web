@@ -27,8 +27,9 @@
 :host(.width-default) .content {
   max-inline-size: var(--layout-max-width);
 }
+// Wide: nearly the whole window, with only a narrow margin on big screens
 :host(.width-wide) .content {
-  max-inline-size: 90rem;
+  max-inline-size: 112rem;
 }
 
 .heading {

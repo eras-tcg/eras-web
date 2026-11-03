@@ -130,12 +130,12 @@
               <div class="entry" [class.lacking]="lacking(entry) > 0" [attr.title]="lacking(entry) > 0 ? 'Te faltan ' + lacking(entry) + ' de tu colección' : null" (contextmenu)="contextRemove($event, entry.card)">
                 <eras-card-thumb
                   [name]="entry.card.name ?? ''"
-                  [imageUrl]="imageUrl(entry.card)"
+                  [imageUrl]="alt(entry.card) ? altImageUrl(entry.card) : imageUrl(entry.card)"
                   [badge]="badge(entry.card)"
                   badgeTone="info"
                   [count]="entry.count"
                   showSingleCount
-                  [foil]="shineOf(best(entry.card))"
+                  [foil]="shineOf(alt(entry.card) ?? best(entry.card))"
                   [active]="selected()?.id === entry.card.id"
                   (selected)="select(entry.card)"
                 />
@@ -162,14 +162,14 @@
           <!-- Every copy by itself, smaller: each with its finish (the player's finest first), in grey when lacking -->
           <eras-grid minColumn="4.75rem" [gap]="2">
             @for (entry of group.entries; track entry.card.id) {
-              @for (finish of copyFinishes(entry); track $index) {
-                <div class="copy" [class.lacking]="finish === null" [attr.title]="finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
+              @for (copy of copies(entry); track $index) {
+                <div class="copy" [class.lacking]="copy.finish === null" [attr.title]="copy.finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
                   <eras-card-thumb
                     [name]="entry.card.name ?? ''"
-                    [imageUrl]="imageUrl(entry.card)"
-                    [foil]="shineOf(finish)"
+                    [imageUrl]="copy.alt ? altImageUrl(entry.card) : imageUrl(entry.card)"
+                    [foil]="shineOf(copy.finish)"
                     [active]="selected()?.id === entry.card.id"
-                    (selected)="select(entry.card, finish)"
+                    (selected)="select(copy.alt ? altArt(entry.card) : entry.card, copy.finish)"
                   />
                 </div>
               }

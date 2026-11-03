@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl } from '@data/cards/card-rules';
+import { cardImageUrl, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { FoilKind, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -235,7 +235,8 @@ export class BoosterResultPage {
       const cards = shuffle(p.cards.filter((c) => byId.has(c.id)));
       return {
         packType: p.packType,
-        cards: cards.map((c) => byId.get(c.id)!),
+        // A copy that came out with the card's alternative art shows it (the same card, another picture)
+        cards: cards.map((c) => (c.alt ? withAltArt(byId.get(c.id)!) : byId.get(c.id)!)),
         foils: cards.map((c) => (c.finish === 'plain' ? null : c.finish)),
         ...(p.upgradedFrom ? { upgradedFrom: p.upgradedFrom } : {}),
       };

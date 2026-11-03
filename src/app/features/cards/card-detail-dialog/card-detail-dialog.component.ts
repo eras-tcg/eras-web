@@ -3,10 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { CatalogCard } from '@data/cards/card.model';
-import { nameVariants } from '@data/cards/card-rules';
+import { nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
-import { bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { altFinish, bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
 import { CollectionStore } from '@data/collection/collection.store';
 import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
 import { FoilKind } from '@data/editions/booster-rules';
@@ -63,13 +63,21 @@ export class CardDetailDialogComponent {
   protected readonly variants = computed(() => nameVariants(this.gridCard(), this.store.cards(), this.editions.releaseDates()));
   protected readonly variantIndex = computed(() => this.variants().findIndex((c) => c.id === this.card().id));
 
+  /** With the collection on, the finish of the player's copies of this printing with its alternative art, if any. */
+  private readonly altOwned = computed(() =>
+    this.data.collection && !this.data.copy && this.card().meta?.altImage ? altFinish(this.collection.collection()?.cards[this.card().id]) : null,
+  );
+
   /** The shine shown: the obtained copy's, or with the collection on, the finest finish owned of this printing. */
   protected readonly foil = computed(() => {
     if (this.data.copy) return this.data.copy.foil;
-    return this.data.collection ? shineOf(bestFinish(this.collection.collection()?.cards[this.card().id])) : null;
+    return this.data.collection ? shineOf(this.altOwned() ?? bestFinish(this.collection.collection()?.cards[this.card().id])) : null;
   });
 
-  protected readonly view = computed(() => cardDetailView(this.card(), this.store.ref(), this.store.unprogrammedOf(this.card())));
+  /** The card as shown: with its alternative art when the player has it (the collection on); its text is the same. */
+  private readonly shown = computed(() => (this.altOwned() ? withAltArt(this.card()) : this.card()));
+
+  protected readonly view = computed(() => cardDetailView(this.shown(), this.store.ref(), this.store.unprogrammedOf(this.card())));
 
   constructor() {
     this.openOwnedPrinting();

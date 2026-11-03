@@ -5,9 +5,9 @@ import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, collapseByName } from '@data/cards/card-rules';
+import { cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { altFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -141,8 +141,27 @@ export class CardsPage {
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */
   protected owned(card: CatalogCard): Finish | null {
-    const ids = this.view().collapse && card.name ? (this.printings().get(card.name.toLowerCase()) ?? [card.id]) : [card.id];
-    return bestFinishAmong(this.collection.collection(), ids);
+    return bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card);
+  }
+
+  /** The finest finish of the player's copies of a card with its alternative art (shown instead), null when none. */
+  protected ownedAlt(card: CatalogCard): Finish | null {
+    if (!card.meta?.altImage) return null;
+    const cards = this.collection.collection()?.cards;
+    for (const id of this.idsOf(card)) {
+      const finish = altFinish(cards?.[id]);
+      if (finish) return finish;
+    }
+    return null;
+  }
+
+  protected altImageUrl(card: CatalogCard): string | null {
+    return cardImageUrl(withAltArt(card));
+  }
+
+  /** The printings a catalog entry stands for (all of a name when shown once per name). */
+  private idsOf(card: CatalogCard): string[] {
+    return this.view().collapse && card.name ? (this.printings().get(card.name.toLowerCase()) ?? [card.id]) : [card.id];
   }
 
   protected showMore(): void {

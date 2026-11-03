@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
 import { EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from './card-filters';
-import { cardImageUrl, collapseByName, matchesFileName, mergeCards, nameVariants, renderEffect, renderKeywordEffect } from './card-rules';
+import { cardImageUrl, collapseByName, matchesFileName, mergeCards, nameVariants, renderEffect, renderKeywordEffect, withAltArt } from './card-rules';
 
 const drive = (over: Partial<DriveCard> = {}): DriveCard => ({
   id: 'd1',
@@ -56,6 +56,18 @@ describe('mergeCards', () => {
     const [named, unnamed] = mergeCards([drive({ name: 'Roto G0' }), drive({ id: 'd2', number: 9, name: 'Nueva Carta' })], meta);
     expect(named.name).toBe('Roto-G0');
     expect(unnamed.name).toBe('Nueva Carta');
+  });
+
+  it('lists a card with an alternative art once, with its own image (the alternative is no card of its own)', () => {
+    const meta: CardMeta[] = [{ id: 'm1', edition: 'ST1', cardNumber: 1, subEdition: null, colorIdentity: 'B', cardName: 'Titan', altImage: 'https://img/alt' }];
+    const cards = mergeCards([drive({ name: 'Titan' })], meta);
+    expect(cards).toHaveLength(1);
+    expect(cardImageUrl(cards[0])).not.toBe('https://img/alt');
+    expect(cardImageUrl(withAltArt(cards[0]))).toBe('https://img/alt');
+    expect(withAltArt(cards[0]).id).toBe(cards[0].id);
+    // A card without one stays as it is
+    const [plain] = mergeCards([drive({ id: 'd2', number: 9 })], meta);
+    expect(withAltArt(plain)).toBe(plain);
   });
 
   it('keeps the image name when the metadata names another card', () => {

@@ -140,7 +140,7 @@
     [dropActive]="over() === 'deck'"
     [targeted]="isTargeted('deck')"
     [selectable]="targeting()"
-    [cdkContextMenuTriggerFor]="opponent() ? null : deckMenu"
+    [cdkContextMenuTriggerFor]="opponent() || !game.editorMode() ? null : deckMenu"
     (dragover)="dragOver($event, 'deck')"
     (dragleave)="dragLeave()"
     (drop)="drop($event, 'deck')"

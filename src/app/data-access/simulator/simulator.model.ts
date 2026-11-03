@@ -121,7 +121,7 @@ export interface GameLogEntry {
   inheritedFromImage?: string | null;
 }
 
-/** Every broadcast on /topic/room/{id} carries the whole room state. */
+/** Every update carries the room state as this player may see it: the rival's hidden cards come as backs. */
 export interface GameState {
   roomId: string;
   status: RoomStatus;

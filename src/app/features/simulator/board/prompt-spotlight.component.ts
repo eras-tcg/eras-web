@@ -94,16 +94,33 @@ export class PromptSpotlightComponent {
     if (chain) chain.style.visibility = 'hidden';
   }
 
+  /** What the copies were drawn from last time: the same state, cards and places draw nothing new. */
+  private drawnState: unknown = null;
+  private drawnKey = '';
+
   private draw(ids: string[]): void {
-    this.layer.replaceChildren();
     // Inside the last overlay (the choice), right before its pane: above its backdrop, below the choice
     const wrappers = this.overlays.getContainerElement().querySelectorAll(':scope > .cdk-global-overlay-wrapper');
     const pane = wrappers.item(wrappers.length - 1)?.querySelector(':scope > .cdk-overlay-pane');
     if (!ids.length || !pane?.parentElement) {
+      this.layer.replaceChildren();
+      this.drawnKey = '';
       this.showChain(null);
       this.layer.remove();
       return;
     }
+    // A choice changing inside (a card picked) does not redraw the copies: drawn again, their marks would flash in again
+    const state = this.game.state();
+    const chainPanel = this.document.querySelector<HTMLElement>('.chain-panel');
+    const place = (e: Element | null | undefined) => {
+      const r = e?.getBoundingClientRect();
+      return r ? `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}` : '-';
+    };
+    const key = [ids.join(','), ...ids.map((id) => place(this.elementOf(id))), place(chainPanel), place(chainPanel?.parentElement)].join('|');
+    if (state === this.drawnState && key === this.drawnKey && this.layer.nextSibling === pane) return;
+    this.drawnState = state;
+    this.drawnKey = key;
+    this.layer.replaceChildren();
     if (this.layer.nextSibling !== pane) pane.parentElement.insertBefore(this.layer, pane);
     const chain = this.document.querySelector<HTMLElement>('.chain-panel');
     this.showChain(null);
@@ -127,6 +144,10 @@ export class PromptSpotlightComponent {
       copy.style.left = `${rect.left + rect.width / 2 - width / 2}px`;
       copy.style.top = `${rect.top + rect.height / 2 - height / 2}px`;
       this.layer.append(copy);
+    }
+    // A copy is the card as it already is: its entry animations (a chain mark landing) are not played again
+    for (const animation of this.layer.getAnimations?.({ subtree: true }) ?? []) {
+      if (Number.isFinite(animation.effect?.getComputedTiming().iterations ?? Infinity)) animation.finish();
     }
   }
 

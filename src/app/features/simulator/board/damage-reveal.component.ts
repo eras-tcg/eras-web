@@ -33,6 +33,17 @@ interface Clash {
 type Shown = (Hit | Clash) & { id: number };
 
 const SHOW_MS = 2600;
+/** Events whose animation plays before a blow of the same update: a creature entering the field, a card exhausted, an attack declared. */
+const BEFORE_BLOW = new Set(['NORMAL_SUMMON', 'EFFECT_SUMMON', 'SPECIAL_SUMMON', 'TAP', 'ATTACK_DECLARED']);
+
+/**
+ * In this update, something before the event `seq` animates first: the attacker turning as it is exhausted to attack,
+ * the Ascenso during the attack (Príncipe Charles to Caballero Real). The blow waits for it.
+ */
+export function playsBeforeBlow(events: readonly GameEvent[], seq: number): boolean {
+  return events.some((e) => BEFORE_BLOW.has(e.type) && e.seq < seq);
+}
+
 /** How long the attacker's charge lasts (eras-board-fx): the reveal of its blow comes after it. */
 export const CHARGE_MS = 800;
 
@@ -177,19 +188,25 @@ export class DamageRevealComponent {
       this.lastSeq = maxSeq;
       return;
     }
-    const events = timeline.filter((e) => (e.type === 'LIFE_DAMAGE' || e.type === 'CLASH') && e.seq > (this.lastSeq ?? 0));
+    const fresh = timeline.filter((e) => e.seq > (this.lastSeq ?? 0));
+    const events = fresh.filter((e) => e.type === 'LIFE_DAMAGE' || e.type === 'CLASH');
     this.lastSeq = Math.max(this.lastSeq, maxSeq);
     // Animations off: the history and the notices tell it
     if (!events.length || !state || this.animations.off()) return;
     for (const e of events) this.queue.push({ ...(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e)), id: ++this.ids });
-    // The choices wait until all of them have been shown
-    this.release ??= this.animations.begin();
     // An attack's blow is shown once the attacker has charged at its target (blocked: at the blocker)
     const charged = events.some((e) => e.type === 'CLASH' || (e.type === 'LIFE_DAMAGE' && !e.effectId && e.data?.['attackerId']));
-    if (!this.current() && !this.timer) {
-      if (charged) this.timer = setTimeout(() => this.next(), CHARGE_MS);
-      else this.next();
-    }
+    const start = () => {
+      // The choices wait until all of them have been shown
+      this.release ??= this.animations.begin();
+      if (!this.current() && !this.timer) {
+        if (charged) this.timer = setTimeout(() => this.next(), CHARGE_MS);
+        else this.next();
+      }
+    };
+    // What came before the blow (the attacker exhausted, the Ascenso during the attack) plays first, then the combat
+    if (playsBeforeBlow(fresh, events[0].seq)) setTimeout(() => this.animations.whenIdle(start));
+    else start();
   }
 
   private finder(state: GameState): (id: unknown) => CardSlot | null {

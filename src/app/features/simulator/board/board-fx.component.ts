@@ -4,7 +4,7 @@ import { displayStrength } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { GameEvent, GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { CHARGE_MS } from './damage-reveal.component';
+import { CHARGE_MS, playsBeforeBlow } from './damage-reveal.component';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -123,12 +123,21 @@ export class BoardFxComponent {
           return;
         }
         // The attacker charges first, at once: its damage or clash is shown right after
-        const rects = this.rects;
-        for (const e of events) {
-          if (e.type === 'CLASH') this.charge(e.cardInstanceId, (e.data?.['blockerId'] as string | undefined) ?? null, e.playerId, state, rects);
-          else if (e.type === 'LIFE_DAMAGE' && !e.effectId && e.data?.['attackerId']) {
-            this.charge(e.data['attackerId'] as string, null, Object.keys(state.players ?? {}).find((id) => id !== e.data?.['defenderId']) ?? null, state, rects);
+        const charges = (rects: Map<string, Drawn>) => {
+          for (const e of events) {
+            if (e.type === 'CLASH') this.charge(e.cardInstanceId, (e.data?.['blockerId'] as string | undefined) ?? null, e.playerId, state, rects);
+            else if (e.type === 'LIFE_DAMAGE' && !e.effectId && e.data?.['attackerId']) {
+              this.charge(e.data['attackerId'] as string, null, Object.keys(state.players ?? {}).find((id) => id !== e.data?.['defenderId']) ?? null, state, rects);
+            }
           }
+        };
+        const blow = events.find((e) => e.type === 'CLASH' || e.type === 'LIFE_DAMAGE');
+        // What came before the blow plays first (the attacker turning as it is exhausted, Príncipe Charles ascended to
+        // Caballero Real as it attacks): then the creature now on the field charges, from where it stands
+        if (blow && playsBeforeBlow(events, blow.seq)) {
+          setTimeout(() => this.animations.whenIdle(() => charges(this.measure(state))));
+        } else {
+          charges(this.rects);
         }
         // What this update did waits for anything that started with it (a chain link shown, a resolution)
         const strengths = this.strengths;
@@ -175,13 +184,19 @@ export class BoardFxComponent {
     const players = Object.values(state.players ?? {});
     this.strengths = new Map(players.flatMap((p) => p.field.filter((c) => c.cardType === 'creature').map((c) => [c.instanceId, displayStrength(c) ?? 0] as const)));
     this.gems = new Map(players.map((p) => [p.userId, p.resourceCount ?? 0] as const));
-    this.rects = new Map();
-    for (const c of players.flatMap((p) => p.field)) {
+    this.rects = this.measure(state);
+  }
+
+  /** Where each field card is drawn now. */
+  private measure(state: GameState): Map<string, Drawn> {
+    const rects = new Map<string, Drawn>();
+    for (const c of Object.values(state.players ?? {}).flatMap((p) => p.field)) {
       const card = this.document.querySelector<HTMLElement>(`[data-instance-id="${c.instanceId}"] eras-game-card`);
       if (!card) continue;
       const r = card.getBoundingClientRect();
-      this.rects.set(c.instanceId, { x: r.left + r.width / 2, y: r.top + r.height / 2, width: card.offsetWidth, height: card.offsetHeight, tapped: c.tapped, imageUrl: c.imageUrl });
+      rects.set(c.instanceId, { x: r.left + r.width / 2, y: r.top + r.height / 2, width: card.offsetWidth, height: card.offsetHeight, tapped: c.tapped, imageUrl: c.imageUrl });
     }
+    return rects;
   }
 
   /** The center of a card on the table (field or hand) or of a pile, on the screen. */

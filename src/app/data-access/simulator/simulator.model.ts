@@ -25,7 +25,7 @@ export interface CardSlot {
   /** Abilities and strength its continuous effects give it now (they stop when their condition does). */
   continuousKeywords?: string[];
   continuousStrength?: number;
-  /** Levels gained from continuous effects (Xiromorfo). */
+  /** Levels gained from continuous effects (Xiromorfo); already counted in `level`. */
   continuousLevel?: number;
   specialCost?: number | null;
   requirement?: string | null;
@@ -168,6 +168,10 @@ export interface GameState {
   structurePlayed?: string[] | null;
   /** Utilities in each player's hand that cannot be played now (their "En Juego" cannot be activated), by player id. */
   unplayable?: Record<string, string[]> | null;
+  /** What each player can do now, by player and then by card. */
+  legalActions?: Record<string, Record<string, ('attack' | 'summon' | 'ritual' | 'play' | 'activate')[]>> | null;
+  /** The enemies each attacker can attack, by player and then by attacker. */
+  attackTargets?: Record<string, Record<string, string[]>> | null;
   /** Who won the game that just ended, and why. */
   winnerId?: string | null;
   endReason?: 'lives' | 'surrender' | 'deck' | null;
@@ -207,6 +211,9 @@ export interface PendingEffect {
   text: string;
   /** Its chain link: 1 for the first one activated (it resolves last). */
   link: number;
+  /** An inherited effect: the Recurso that gives it, shown small on its card. */
+  inheritedFromName?: string | null;
+  inheritedFromImage?: string | null;
   /** Set while it resolves. */
   resolutionId?: string | null;
 }
@@ -270,6 +277,8 @@ export interface EffectPrompt {
   max: number;
   /** The cards not chosen can be reordered (they go to the deck bottom in that order). */
   reorderRest: boolean;
+  /** Cards that must be among those chosen ("incluida esta carta"). */
+  requiredIds?: string[] | null;
   /** The rest goes back to the deck top instead of its bottom. */
   restToTop?: boolean;
   /** The card the choice is about (the creature summoned by Ritual, the life card…). */
@@ -284,6 +293,13 @@ export interface EffectPrompt {
   effectText?: string | null;
   /** The levels of the cards chosen may add up to this at most. */
   maxLevelSum?: number | null;
+  /** Exactly `max` cards or none ("puedes enviar 5 de tus tributos…"). */
+  exactOrNone?: boolean;
+  /**
+   * "envíalas al tope o al fondo de tu mazo": order the cards and send them in one answer; choosing a card (any valid one)
+   * sends them to the top, none to the bottom, and the order is that of every card.
+   */
+  topOrBottom?: boolean;
 }
 
 /** An effect offered to be chained (a card can trigger several at once: its own and the inherited ones). */

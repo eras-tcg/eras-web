@@ -11,6 +11,9 @@ interface LinkCard {
   name: string;
   link: number;
   mine: boolean;
+  /** An inherited effect: the Recurso that gives it, small at the corner (as in the chaining choice). */
+  sourceName: string | null;
+  sourceImage: string | null;
 }
 
 /** A card placed on the stage: its center (in stage units), its tilt, and how far it comes from. */
@@ -120,6 +123,9 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
             @if (s.leaving; as l) {
               <span class="card leaving" [class.rival]="!l.mine" aria-hidden="true" [style.--x]="l.x" [style.--y]="l.y" [style.--tilt]="l.tilt + 'deg'">
                 <eras-game-card [imageUrl]="l.imageUrl" [name]="l.name" />
+                @if (l.sourceName) {
+                  <span class="source"><eras-game-card [imageUrl]="l.sourceImage" [name]="l.sourceName" /></span>
+                }
                 <span class="number">{{ l.link }}</span>
               </span>
             }
@@ -137,13 +143,16 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
                 [style.--from-tilt]="c.fromTilt + 'deg'"
               >
                 <eras-game-card [imageUrl]="c.imageUrl" [name]="c.name" />
+                @if (c.sourceName) {
+                  <span class="source" [title]="'Heredado de ' + c.sourceName"><eras-game-card [imageUrl]="c.sourceImage" [name]="c.sourceName" /></span>
+                }
                 <span class="number">{{ c.link }}</span>
               </span>
             }
           </span>
           <span class="caption">
             <strong>{{ s.mode === 'resolve' ? 'Se resuelve · ' : '' }}Cadena {{ s.card.link }}</strong>
-            <span>{{ s.card.name }} · {{ s.label }}</span>
+            <span>{{ s.card.name }} · {{ s.label }}{{ s.card.sourceName ? ' · heredado de ' + s.card.sourceName : '' }}</span>
           </span>
         </button>
       }
@@ -196,10 +205,10 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       animation: shift 0.45s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
     }
     .card.rival { --link-cyan: #f472b6; }
-    .card eras-game-card { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
+    .card > eras-game-card { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
     /* The new link lands from above and larger, with a flash, after the others made room */
     .card.new { z-index: 3; filter: none; animation: land 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.25s backwards; }
-    .card.new eras-game-card { box-shadow: 0 0 0 2px var(--link-cyan), 0 0 26px 6px color-mix(in srgb, var(--link-cyan) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
+    .card.new > eras-game-card { box-shadow: 0 0 0 2px var(--link-cyan), 0 0 26px 6px color-mix(in srgb, var(--link-cyan) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
     /* The oldest of four goes up and away */
     .card.leaving { z-index: 1; animation: leave 0.45s ease forwards; }
     /* A chain from one card's center to the next: steel links in diagonal, behind the cards */
@@ -218,6 +227,16 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     }
     /* The new chain runs out from the card before to the new one */
     .chain.new { animation: chain-out 0.4s ease 0.6s backwards; }
+    /* The Recurso of an inherited effect, small at the lower left corner (the number is at the right) */
+    .source {
+      --game-card-width: calc(var(--u) * 4.5);
+      position: absolute;
+      inset-block-end: calc(var(--u) * -0.6);
+      inset-inline-start: calc(var(--u) * -1.2);
+      display: block;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 0 0 2px #08141f, 0 4px 10px rgb(0 0 0 / 55%);
+    }
     .number {
       position: absolute;
       inset-block-end: -0.55em;
@@ -233,9 +252,9 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     .caption strong { color: var(--link-cyan); font: 700 var(--font-size-xl, 1.5rem)/1.1 var(--font-family-display); letter-spacing: 0.04em; }
     .caption span { font-size: var(--font-size-sm); }
     /* Resolving: the cards stay put; the link resolving glows, then breaks away and its chain snaps */
-    .resolve .card, .resolve .card.new, .resolve .card eras-game-card, .resolve .chain, .resolve .number { animation: none; }
+    .resolve .card, .resolve .card.new, .resolve .card > eras-game-card, .resolve .chain, .resolve .number { animation: none; }
     .resolve .card.resolving { z-index: 3; filter: none; animation: resolve-out 1.3s ease 0.55s forwards; }
-    .resolve .card.resolving eras-game-card { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-cyan); animation: glow 0.55s ease-in-out alternate 2; }
+    .resolve .card.resolving > eras-game-card { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-cyan); animation: glow 0.55s ease-in-out alternate 2; }
     .resolve .chain.new { animation: snap 0.45s ease 0.8s forwards; }
     @keyframes resolve-out {
       25% { scale: 1.08; filter: brightness(1.5); }
@@ -274,7 +293,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     @keyframes number-in { from { opacity: 0; transform: scale(2.2); } }
     @keyframes caption-in { from { opacity: 0; transform: translateY(0.75rem); } }
     @media (prefers-reduced-motion: reduce) {
-      .reveal, .card, .card eras-game-card, .chain, .number, .caption, .band { animation: none; }
+      .reveal, .card, .card > eras-game-card, .chain, .number, .caption, .band { animation: none; }
       .card.leaving { display: none; }
     }
   `,
@@ -412,7 +431,8 @@ export class ChainLinkRevealComponent {
   private linkCard(state: GameState, e: PendingEffect, me: string | undefined): LinkCard {
     const slot = this.find(state, e.sourceInstanceId);
     const imageUrl = slot?.imageUrl ?? this.cards.cards().find((c) => c.name === e.sourceName)?.image_url ?? null;
-    return { imageUrl, name: e.sourceName, link: e.link, mine: e.controllerId === me };
+    const sourceImage = e.inheritedFromImage ?? (e.inheritedFromName ? (this.cards.cards().find((c) => c.name === e.inheritedFromName)?.image_url ?? null) : null);
+    return { imageUrl, name: e.sourceName, link: e.link, mine: e.controllerId === me, sourceName: e.inheritedFromName ?? null, sourceImage };
   }
 
   /** A card anywhere on the table, attached ones too. */

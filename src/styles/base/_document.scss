@@ -92,9 +92,26 @@ body.eras-hide-header eras-shell header.header {
   display: none;
 }
 
+// A phone held upright in a game: the table asks to turn it, and its choices and dialogs wait hidden (they are in
+// the top layer, over any z-index) until it is turned
+@media (orientation: portrait) and (max-width: 47.99rem) {
+  body.eras-in-game .cdk-overlay-container,
+  body.eras-in-game .cdk-overlay-popover {
+    display: none !important;
+  }
+}
+
 // A chain is shown above the choices: they leave it room at the top
 body.eras-chain-open {
   --sheet-max-block-size: 58vh;
+}
+
+// Phones in landscape: no height to share; the choice goes over the chain (its title names the link)
+@media (orientation: landscape) and (max-height: 30rem) {
+  body,
+  body.eras-chain-open {
+    --sheet-max-block-size: 90vh;
+  }
 }
 
 /* Visually hidden, still read by screen readers */

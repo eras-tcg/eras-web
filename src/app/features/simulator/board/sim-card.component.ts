@@ -183,7 +183,8 @@ export class SimCardComponent {
   protected onDoubleClick(): void {
     this.game.selectedId.set(null);
     if (this.zone() === 'field') this.dialogs.cardInfo(this.slot(), this.zone(), this.opponent());
-    else if (!this.opponent()) this.game.flipCard(this.slot().instanceId, this.zone());
+    // Flipping by hand: a test room or a site editor only (the server refuses it to anyone else online)
+    else if (!this.opponent() && this.game.editorMode()) this.game.flipCard(this.slot().instanceId, this.zone());
   }
 
   protected async run(action: LegalAction, event: Event): Promise<void> {

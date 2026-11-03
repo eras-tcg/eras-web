@@ -149,9 +149,9 @@ export class PreRoomComponent {
     if (id) void this.decks.loadMine(id);
   }
 
-  /** The starter chosen by a player, from their deck. */
+  /** The starter chosen by a player, from their deck list (of the rival's, the server sends only that card). */
   protected starterOf(p: PlayerState): CardSlot | null {
-    return p.starterCardId ? (p.deck.find((c) => c.cardId === p.starterCardId) ?? null) : null;
+    return p.starterCardId ? (p.originalDeck.find((c) => c.cardId === p.starterCardId) ?? null) : null;
   }
 
   /** Frees my seat (the board's exit guard sends it); the room passes on if I own it. */

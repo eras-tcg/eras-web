@@ -7,6 +7,7 @@ import { BACKGROUND } from '../http/busy';
 import { apiErrorMessage } from '../http/api-error';
 import { PurchasedPack, WalletStore } from '../wallet/wallet.store';
 import { Milestone, ProgressionBoard, WelcomeStep } from './progression.model';
+import { reloadOnProgress } from './reload-on-progress';
 
 /** The welcome step that gives a structure deck: claimed by choosing one. */
 export const STRUCTURE_STEP = 'structure';
@@ -65,6 +66,7 @@ export class ProgressionStore {
         if (id) void this.load();
       });
     });
+    reloadOnProgress(() => this.load(), () => this.board() !== null);
   }
 
   async load(): Promise<void> {

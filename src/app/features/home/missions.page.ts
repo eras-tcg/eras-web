@@ -30,6 +30,8 @@ type MissionsTab = 'periodic' | 'progress';
     <eras-hub-screen title="Misiones">
       <eras-tabs label="Tipos de misiones" [tabs]="tabs()" [selected]="tab()" (selectedChange)="chosen.set($any($event))" />
 
+      <!-- The tabs stay; a long list scrolls inside the column -->
+      <div class="scroll">
       @if (tab() === 'periodic') {
         @if (missions.board(); as board) {
           @if (missions.error(); as message) {
@@ -152,6 +154,7 @@ type MissionsTab = 'periodic' | 'progress';
           <eras-spinner />
         }
       }
+      </div>
     </eras-hub-screen>
 
     <ng-template #set let-title="title" let-ends="ends" let-list="list" let-period="period">

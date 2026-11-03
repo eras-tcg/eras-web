@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { HttpContextToken, HttpInterceptorFn } from '@angular/common/http';
+import { HttpContextToken, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, tap } from 'rxjs';
 
 /** A request the player did not ask for (a visit reported, a ping): it never holds the buttons. */
 export const BACKGROUND = new HttpContextToken<boolean>(() => false);
@@ -27,6 +27,8 @@ export class BusyState {
   private pressed: Element | null = null;
 
   readonly busy = computed(() => this.pending() > 0);
+  /** Changes the player sent that the server accepted: whatever depends on them may reload (missions, wallet…). */
+  readonly changes = signal(0);
 
   constructor() {
     const root = this.document.documentElement;
@@ -46,6 +48,10 @@ export class BusyState {
 
   end(): void {
     this.pending.update((n) => Math.max(0, n - 1));
+  }
+
+  changed(): void {
+    this.changes.update((n) => n + 1);
   }
 
   private click(event: Event): void {
@@ -69,5 +75,10 @@ export const busyInterceptor: HttpInterceptorFn = (req, next) => {
   if (!holdsButtons(req.method, req.context.get(BACKGROUND))) return next(req);
   const state = inject(BusyState);
   state.start();
-  return next(req).pipe(finalize(() => state.end()));
+  return next(req).pipe(
+    tap((event) => {
+      if (event instanceof HttpResponse) state.changed();
+    }),
+    finalize(() => state.end()),
+  );
 };

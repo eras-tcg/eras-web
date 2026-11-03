@@ -6,6 +6,7 @@ import { ApiConfig } from '../http/api-config';
 import { apiErrorMessage } from '../http/api-error';
 import { WalletStore } from '../wallet/wallet.store';
 import { Mission, MissionBoard, MissionPeriod } from './mission.model';
+import { reloadOnProgress } from './reload-on-progress';
 
 /** Done and not yet claimed: its gems wait. */
 export function claimable(mission: Mission): boolean {
@@ -39,6 +40,7 @@ export class MissionsStore {
         if (id) void this.load();
       });
     });
+    reloadOnProgress(() => this.load(), () => this.board() !== null);
   }
 
   async load(): Promise<void> {

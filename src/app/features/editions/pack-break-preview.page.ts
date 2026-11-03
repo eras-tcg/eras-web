@@ -19,7 +19,7 @@ const CARDS = 12;
 /**
  * Development only (/dev/pack-break, not in production builds): a pack breaking open and its cards flying out, again
  * and again, with an edition's artwork, to tune the animation without buying anything. Then the cards turn and the
- * first two show their foil: a foil one, then a prismatic one.
+ * first three show off: one turns into an alternative art, then a prismatic one and a foil one show their foil.
  */
 @Component({
   selector: 'eras-pack-break-preview-page',
@@ -40,9 +40,17 @@ const CARDS = 12;
         }
         @if (dealt()) {
           <div #cardsBox class="cards" [class.placing]="placing()">
-            <!-- Once landed they turn; the first is foil and the second prismatic, to compare them -->
+            <!-- Once landed they turn; the first is foil, the second prismatic and the third turns into an alternative art -->
             @for (i of cards; track i) {
-              <eras-opening-card [src]="cardImage()" [up]="turned()" [foil]="i === 0 ? 'foil' : i === 1 ? 'prism' : null" [revealFoil]="i === 0 ? foilShown() : i === 1 ? prismShown() : false" />
+              <eras-opening-card
+                [src]="cardImage()"
+                [up]="turned()"
+                [foil]="i === 0 ? 'foil' : i === 1 ? 'prism' : null"
+                [revealFoil]="i === 0 ? foilShown() : i === 1 ? prismShown() : false"
+                [altSrc]="i === 2 ? 'favicon.svg' : null"
+                altName="Secreta"
+                [revealAlt]="i === 2 && altShown()"
+              />
             }
           </div>
         }
@@ -118,6 +126,7 @@ export class PackBreakPreviewPage {
   protected readonly turned = signal(false);
   protected readonly foilShown = signal(false);
   protected readonly prismShown = signal(false);
+  protected readonly altShown = signal(false);
   /** The cards' face: the edition's artwork, or the logo without a session. */
   protected readonly cardImage = computed(() => this.art()?.match(/url\((.*)\)/)?.[1] ?? 'logo.png');
 
@@ -151,6 +160,7 @@ export class PackBreakPreviewPage {
     this.turned.set(false);
     this.foilShown.set(false);
     this.prismShown.set(false);
+    this.altShown.set(false);
     const cardsAt = this.duration() * BOOM_AT + CARDS_AFTER_BOOM_MS;
     this.later(() => this.breaking.set(true), 30);
     this.later(() => {
@@ -166,8 +176,9 @@ export class PackBreakPreviewPage {
     }, 30 + cardsAt);
     this.later(() => this.falling.set(false), 30 + cardsAt + PIECES_MS);
     this.later(() => this.turned.set(true), 30 + cardsAt + 1200);
-    this.later(() => this.foilShown.set(true), 30 + cardsAt + 2000);
-    this.later(() => this.prismShown.set(true), 30 + cardsAt + 3500);
+    this.later(() => this.foilShown.set(true), 30 + cardsAt + 4500 + 2100);
+    this.later(() => this.altShown.set(true), 30 + cardsAt + 2000);
+    this.later(() => this.prismShown.set(true), 30 + cardsAt + 4500);
   }
 
   private later(run: () => void, ms: number): void {

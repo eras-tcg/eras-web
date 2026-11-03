@@ -1,9 +1,9 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, cardImageUrl, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { FoilKind, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
+import { FoilKind, OpenedAlt, OpenedPack, PackTier, groupOpening, packTier, revealOrder, shuffle } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { OpeningRequest, productFor } from '@data/shop/shop-rules';
 import { PurchasedPack, WalletStore } from '@core/wallet/wallet.store';
@@ -47,6 +47,8 @@ const BEFORE_SPECIAL_MS = 700;
 const BETWEEN_PACKS_MS = 650;
 /** The foils' pass: how long each foil card takes to turn around and show its foil, in a pack and in a box. */
 const FOIL_MS = { pack: 1500, box: 1000 };
+/** A card turning into its alternative art, before the next one does (or the foils' pass starts). */
+const ALT_MS = { pack: 2400, box: 1600 };
 /** A prismatic card's turn is longer and showier: the next one waits more. */
 const PRISM_MS = { pack: 2100, box: 1400 };
 /** How long the pack that goes up a rarity shakes on the table before it does. */
@@ -127,6 +129,8 @@ export class BoosterResultPage {
   private readonly cardsBox = viewChild<ElementRef<HTMLElement>>('cardsBox');
   protected readonly faceUp = signal<ReadonlySet<number>>(new Set());
   protected readonly trembling = signal<ReadonlySet<number>>(new Set());
+  /** The cards of the pack that already turned into their alternative art. */
+  protected readonly altShown = signal<ReadonlySet<number>>(new Set());
   /** The cards of the pack whose foil already showed (the second pass). */
   protected readonly foiled = signal<ReadonlySet<number>>(new Set());
   /** opening: the pack is all shown and stays still until a click moves on. */
@@ -253,6 +257,12 @@ export class BoosterResultPage {
         packType: p.packType,
         // A copy that came out with one of the card's alternative arts shows it (the same card, another picture)
         cards: cards.map((c) => withAltArt(byId.get(c.id)!, c.art ?? null)),
+        alts: cards.map((c) => {
+          const base = byId.get(c.id)!;
+          const arts = altArtsOf(base);
+          const i = arts.findIndex((a) => a.id === c.art);
+          return i >= 0 ? { base, name: altArtName(arts[i], i) } : null;
+        }),
         foils: cards.map((c) => (c.finish === 'plain' ? null : c.finish)),
         ...(p.upgradedFrom ? { upgradedFrom: p.upgradedFrom } : {}),
       };
@@ -263,6 +273,7 @@ export class BoosterResultPage {
     this.packIndex.set(0);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
+    this.altShown.set(new Set());
     this.trembling.set(new Set());
     this.upgradeShown.set(false);
     this.phase.set('packs');
@@ -298,6 +309,7 @@ export class BoosterResultPage {
     this.packIndex.set(index);
     this.faceUp.set(new Set());
     this.foiled.set(new Set());
+    this.altShown.set(new Set());
     this.trembling.set(new Set());
     this.tearing.set(true);
     this.later(() => {
@@ -324,7 +336,7 @@ export class BoosterResultPage {
     const pack = this.openingPack();
     if (!pack) return;
     const order = revealOrder(pack.cards, this.special).special;
-    if (n >= order.length) return this.later(() => this.foilPass(0), order.length ? BETWEEN_PACKS_MS : 0);
+    if (n >= order.length) return this.later(() => this.altPass(0), order.length ? BETWEEN_PACKS_MS : 0);
     const index = order[n];
     this.trembling.update((set) => {
       const next = new Set(set);
@@ -333,6 +345,21 @@ export class BoosterResultPage {
     });
     this.faceUp.update((set) => new Set(set).add(index));
     this.later(() => this.turnSpecial(n + 1), this.isBox() ? SPECIAL_MS.box : SPECIAL_MS.pack);
+  }
+
+  /** The cards that came out with an alternative art, one by one, turn into it; then the foils' pass. */
+  private altPass(n: number): void {
+    const pack = this.openingPack();
+    if (!pack) return;
+    const order = (pack.alts ?? []).map((alt, i) => (alt ? i : -1)).filter((i) => i >= 0);
+    if (n >= order.length) return this.foilPass(0);
+    this.altShown.update((set) => new Set(set).add(order[n]));
+    this.later(() => this.altPass(n + 1), this.isBox() ? ALT_MS.box : ALT_MS.pack);
+  }
+
+  /** The card a copy of the pack being opened shows before it turns into its alternative art (null: no such art). */
+  protected altOf(index: number): OpenedAlt | null {
+    return this.openingPack()?.alts?.[index] ?? null;
   }
 
   /** The second pass: the foil cards, one by one, turn around and come back with their foil; then it waits for a click. */

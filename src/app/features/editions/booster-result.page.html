@@ -81,8 +81,12 @@
               @if (!tearing()) {
                 <div #cardsBox class="cards" [class.placing]="placing()">
                   @for (card of pack.cards; track $index; let i = $index) {
+                    <!-- A copy with an alternative art shows its usual art first, then turns into it -->
                     <eras-opening-card
-                      [src]="imageUrl(card)"
+                      [src]="imageUrl(altOf(i)?.base ?? card)"
+                      [altSrc]="altOf(i) ? imageUrl(card) : null"
+                      [altName]="altOf(i)?.name ?? null"
+                      [revealAlt]="altShown().has(i)"
                       [alt]="card.name ?? ''"
                       [aura]="aura(card)"
                       [foil]="foilOf(i)"

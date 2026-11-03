@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ApiConfig } from '../http/api-config';
+import { BACKGROUND } from '../http/busy';
 import { apiErrorMessage } from '../http/api-error';
 import { PurchasedPack, WalletStore } from '../wallet/wallet.store';
 import { Milestone, ProgressionBoard, WelcomeStep } from './progression.model';
@@ -92,7 +93,9 @@ export class ProgressionStore {
   visit(page: string): void {
     if (!this.auth.user() || this.visited.has(page)) return;
     this.visited.add(page);
-    this.http.post(this.api.url('/api/drive/progression/me/visit'), { page }).subscribe({
+    // In the background: it never holds the buttons (BusyState)
+    const context = new HttpContext().set(BACKGROUND, true);
+    this.http.post(this.api.url('/api/drive/progression/me/visit'), { page }, { context }).subscribe({
       next: () => void this.load(),
       error: () => this.visited.delete(page),
     });

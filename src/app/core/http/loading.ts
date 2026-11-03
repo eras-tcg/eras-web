@@ -14,15 +14,18 @@ export function hasOwnLoading(url: string): boolean {
   return /^\/simulator(?:[/?#]|$)/.test(url);
 }
 
-/** A request the player waits for: a read of the API that is no background one. */
-export function waitedFor(method: string, url: string, background: boolean): boolean {
-  return !background && method.toUpperCase() === 'GET' && url.includes('/api/');
+/**
+ * A request the loading screen waits for: any to the API (a read, a purchase, a save…), but a background one (a
+ * visit reported, a ping: BACKGROUND), which the player never notices.
+ */
+export function waitedFor(url: string, background: boolean): boolean {
+  return !background && url.includes('/api/');
 }
 
 /**
- * Whether the site is loading what the player asked for: a screen on its way (its code or its route) or a read of
- * the API (loadingInterceptor). The loading screen (<eras-loading-screen>) shows it after SHOW_AFTER_MS, on every
- * screen but the simulator.
+ * Whether the site is waiting: a screen on its way (its code or its route) or a request to the API
+ * (loadingInterceptor). The loading screen (<eras-loading-screen>) shows it once the wait passes SHOW_AFTER_MS (an
+ * instant answer shows nothing), on every screen but the simulator.
  */
 @Injectable({ providedIn: 'root' })
 export class LoadingState {
@@ -75,9 +78,9 @@ export class LoadingState {
   }
 }
 
-/** Counts the reads the player waits for (LoadingState). */
+/** Counts the requests the loading screen waits for (LoadingState). */
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!waitedFor(req.method, req.url, req.context.get(BACKGROUND))) return next(req);
+  if (!waitedFor(req.url, req.context.get(BACKGROUND))) return next(req);
   const state = inject(LoadingState);
   state.start();
   return next(req).pipe(finalize(() => state.end()));

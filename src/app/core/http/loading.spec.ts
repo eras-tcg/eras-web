@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { hasOwnLoading, waitedFor } from './loading';
 
 describe('loading screen', () => {
-  it('waits only for reads of the API the player asked for', () => {
-    expect(waitedFor('GET', '/api/drive/editions', false)).toBe(true);
-    expect(waitedFor('get', 'https://erastcg.com/api/cards', false)).toBe(true);
-    expect(waitedFor('GET', '/api/drive/editions', true)).toBe(false);
-    expect(waitedFor('POST', '/api/drive/wallet/me/purchase', false)).toBe(false);
-    expect(waitedFor('GET', '/assets/news.json', false)).toBe(false);
+  it('waits for every request to the API, reads and changes, but the background ones', () => {
+    expect(waitedFor('/api/drive/editions', false)).toBe(true);
+    expect(waitedFor('https://erastcg.com/api/cards', false)).toBe(true);
+    expect(waitedFor('/api/drive/wallet/me/purchase', false)).toBe(true);
+    expect(waitedFor('/api/drive/progression/me/visit', true)).toBe(false);
+    expect(waitedFor('/assets/news.json', false)).toBe(false);
   });
 
   it('is never on the simulator, which has its own', () => {

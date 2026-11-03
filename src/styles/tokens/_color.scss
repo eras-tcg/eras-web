@@ -52,6 +52,6 @@
   --color-hub-accent: var(--color-sim-gold);
   --color-hub-glow: var(--color-sim-glow);
 
-  /** The back of a card */
-  --color-card-back: repeating-linear-gradient(45deg, #1a237e 0 6px, #283593 6px 12px);
+  /** The back of a card: the game's card back art (a `background` value), its blue while it loads */
+  --color-card-back: #0b6fa0 url('/images/card-back.png') center / cover no-repeat;
 }

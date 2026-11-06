@@ -19,6 +19,8 @@ export class RanksStore {
   private readonly auth = inject(AuthService);
 
   readonly mine = signal<MyRank | null>(null);
+  /** The rank was read (or failed) for this account: before that, no rank means not known yet, not none. */
+  readonly loaded = signal(false);
   /** The last read failed (the rank is unknown, not empty). */
   readonly failed = signal(false);
   private readonly userId = computed(() => this.auth.user()?.id ?? null);
@@ -31,6 +33,7 @@ export class RanksStore {
       const id = this.userId();
       untracked(() => {
         this.mine.set(null);
+        this.loaded.set(false);
         this.loadedAt = 0;
         if (id) void this.load();
       });
@@ -50,7 +53,10 @@ export class RanksStore {
         this.failed.set(true);
         return null;
       })
-      .finally(() => (this.pending = null));
+      .finally(() => {
+        this.pending = null;
+        this.loaded.set(true);
+      });
     return this.pending;
   }
 

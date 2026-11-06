@@ -42,7 +42,7 @@
             </div>
             <div class="playmat-preview" [class.empty]="!playmat.url()" [style.background-image]="playmat.url() ? 'url(' + playmat.url() + ')' : null" aria-label="Vista previa del tapete">
               @if (!playmat.url()) {
-                <span>Sin tapete</span>
+                <span>{{ playmat.loaded() ? 'Sin tapete' : 'Cargando…' }}</span>
               }
             </div>
             <input #mat type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadPlaymat(mat)" />

@@ -20,12 +20,15 @@ export abstract class UserImageStore {
   /** The image's URL, or null for none. */
   readonly url = signal<string | null>(null);
   readonly saving = signal(false);
+  /** Read for this account (before that, no image means not known yet). */
+  readonly loaded = signal(false);
 
   protected constructor(private readonly path: string) {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
       untracked(() => {
         this.url.set(null);
+        this.loaded.set(false);
         if (id) void this.load();
       });
     });
@@ -37,6 +40,8 @@ export abstract class UserImageStore {
       this.url.set(me.url ?? null);
     } catch {
       // An older server without it: none
+    } finally {
+      this.loaded.set(true);
     }
   }
 

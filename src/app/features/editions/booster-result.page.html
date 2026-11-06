@@ -26,10 +26,10 @@
           <!-- Reached without buying (a reload, a link): it is offered for sale -->
           <div class="offer">
             <eras-opening-pack big [box]="isBox()" [art]="art" [label]="label()" />
-            <button erasButton type="button" [disabled]="product()!.price > wallet.gems()" (click)="buy()">
+            <button erasButton type="button" [disabled]="!wallet.loaded() || product()!.price > wallet.gems()" (click)="buy()">
               <eras-icon name="gem" /> Comprar · {{ product()!.price | number: '1.0-0' : 'es' }}
             </button>
-            @if (product()!.price > wallet.gems()) {
+            @if (wallet.loaded() && product()!.price > wallet.gems()) {
               <p class="hint">No te alcanzan las gemas.</p>
             }
           </div>

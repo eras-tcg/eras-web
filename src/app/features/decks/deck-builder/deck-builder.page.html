@@ -125,7 +125,9 @@
     }
 
     <eras-dropzone [active]="dragOver()" (dragover)="dragOverDeck($event)" (dragleave)="dragOver.set(false)" (drop)="drop($event)">
-      @if (draft.total() === 0) {
+      @if (waitingForDeck()) {
+        <eras-empty-state title="Cargando mazo…"><eras-spinner /></eras-empty-state>
+      } @else if (draft.total() === 0) {
         <eras-empty-state title="El mazo está vacío" description="Arrastra cartas aquí o haz clic derecho en una carta de la búsqueda." />
       } @else {
         @for (group of draft.groups(); track group.type) {

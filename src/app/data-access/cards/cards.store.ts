@@ -36,8 +36,20 @@ export class CardsStore {
     this.ref.set(ref);
   }
 
-  async load(force = false): Promise<void> {
-    if (this.loaded && !force) return;
+  /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
+  load(force = false): Promise<void> {
+    if (!force && this.loaded) return Promise.resolve();
+    if (!force && this.pending) return this.pending;
+    const pending = this.fetch().finally(() => {
+      if (this.pending === pending) this.pending = null;
+    });
+    this.pending = pending;
+    return pending;
+  }
+
+  private pending: Promise<void> | null = null;
+
+  private async fetch(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {

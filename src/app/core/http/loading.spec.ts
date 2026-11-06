@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { hasOwnLoading, waitedFor } from './loading';
 
 describe('loading screen', () => {
-  it('waits for every request to the API, reads and changes, but the background ones', () => {
-    expect(waitedFor('/api/drive/editions', false)).toBe(true);
-    expect(waitedFor('https://erastcg.com/api/cards', false)).toBe(true);
-    expect(waitedFor('/api/drive/wallet/me/purchase', false)).toBe(true);
-    expect(waitedFor('/api/drive/progression/me/visit', true)).toBe(false);
-    expect(waitedFor('/assets/news.json', false)).toBe(false);
+  it('waits for the changes sent to the API, not for reads (the page shows its own loading) nor background ones', () => {
+    expect(waitedFor('/api/drive/editions', false, 'GET')).toBe(false);
+    expect(waitedFor('https://erastcg.com/api/cards', false)).toBe(false);
+    expect(waitedFor('/api/drive/wallet/me/purchase', false, 'POST')).toBe(true);
+    expect(waitedFor('/api/drive/decks/1', false, 'put')).toBe(true);
+    expect(waitedFor('/api/drive/progression/me/visit', true, 'POST')).toBe(false);
+    expect(waitedFor('/assets/news.json', false, 'POST')).toBe(false);
   });
 
   it('is never on the simulator, which has its own', () => {

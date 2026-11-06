@@ -220,6 +220,13 @@ export class DeckBuilderPage {
   protected readonly dragOver = signal(false);
 
   private loadedFor: string | null = null;
+  /** The deck (with ?id=) whose cards are in the draft now. */
+  private readonly shownDeck = signal<string | null>(null);
+  /** Editing a saved deck that has not arrived yet (it waits for the catalog, then for the deck): not an empty deck. */
+  protected readonly waitingForDeck = computed(() => {
+    const id = this.id();
+    return !!id && !this.loadError() && this.shownDeck() !== `${id}|${this.copy() === 'true'}`;
+  });
 
   constructor() {
     void this.cards.load();
@@ -257,6 +264,7 @@ export class DeckBuilderPage {
     const notMine = deck.userId !== this.auth.user()?.id;
     this.copyNotice.set(!copy && notMine);
     this.draft.load(deck, catalog, copy || notMine);
+    this.shownDeck.set(`${id}|${copy}`);
   }
 
   // ── Deck actions ──────────────────────────────────────────────────────

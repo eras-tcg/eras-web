@@ -8,7 +8,7 @@ import { CollectionStore } from '@data/collection/collection.store';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, PlayerState } from '@data/simulator/simulator.model';
+import { BotLevel, CardSlot, PlayerState } from '@data/simulator/simulator.model';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -64,8 +64,12 @@ export class PreRoomComponent {
 
   protected readonly mine = computed(() => this.game.myState());
   private readonly rival = computed(() => this.game.opponentState());
+  /** Against the bot: the deck list picks the bot's deck instead of mine. */
+  protected readonly pickingBot = signal(false);
+  /** The deck the list marks as chosen: mine, or the bot's while picking it. */
+  protected readonly pickedDeckId = computed(() => (this.pickingBot() ? this.rival()?.deckId : this.mine()?.deckId) ?? null);
   /**
-   * Me first, then the rival (or an empty seat). In solo mode the order stays put (the owner first): choosing the
+   * Me first, then the rival (or an empty seat). In the Sala de pruebas the order stays put (the owner first): choosing the
    * other side's deck only moves the highlight, the seats do not swap.
    */
   protected readonly seats = computed<(PlayerState | null)[]>(() => {
@@ -93,6 +97,8 @@ export class PreRoomComponent {
     const byId = new Map(this.cards.cards().map((c) => [c.id, c]));
     const collection = this.collection.collection();
     const result = new Map<string, string>();
+    // The bot owns no collection: only the cards the simulator runs count for its deck
+    const forBot = this.pickingBot();
     if (this.game.editorRoom()) return result;
     for (const deck of this.allDecks()) {
       if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) {
@@ -101,6 +107,7 @@ export class PreRoomComponent {
       }
       const needed = new Map<string, number>();
       for (const id of deck.cards) needed.set(id, (needed.get(id) ?? 0) + 1);
+      if (forBot) continue;
       const lacking = [...needed].reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
       if (lacking > 0) result.set(deck.id, `Te ${lacking === 1 ? 'falta 1 carta' : 'faltan ' + lacking + ' cartas'} de tu colección`);
     }
@@ -108,7 +115,9 @@ export class PreRoomComponent {
   });
 
   protected chooseDeck(id: string): void {
-    if (!this.unplayable().has(id)) this.game.setDeck(id);
+    if (this.unplayable().has(id)) return;
+    this.game.setDeck(id, this.pickingBot());
+    this.pickingBot.set(false);
   }
 
   /** The Iniciadores of my deck, one per card. */
@@ -123,6 +132,57 @@ export class PreRoomComponent {
     { id: 'random', label: 'Aleatorio' },
   ]);
   protected readonly firstToggle = computed<ToggleOption[]>(() => this.firstOptions().map((o) => ({ value: o.id, label: o.label })));
+
+  /** Against the bot: its level, or a model to try instead (the server lists both; a model replaces the level). */
+  protected readonly botLevel = computed<BotLevel>(() => this.game.state()?.botLevel ?? 'normal');
+  protected readonly botChoices = computed(() => this.game.state()?.botChoices ?? [
+    { id: 'easy', label: 'Fácil', kind: 'level' },
+    { id: 'normal', label: 'Normal', kind: 'level' },
+    { id: 'hard', label: 'Difícil', kind: 'level' },
+  ]);
+  protected readonly botLevels = computed<ToggleOption[]>(() =>
+    this.botChoices().filter((c) => c.kind !== 'model').map((c) => ({ value: c.id, label: c.label })),
+  );
+  protected readonly botModels = computed(() => this.botChoices().filter((c) => c.kind === 'model'));
+  /** The level the bot plays at, in words (ranked: the server picks it by the owner's strength). */
+  protected readonly botLevelLabel = computed(() => this.botChoices().find((c) => c.id === this.botLevel())?.label ?? this.botLevel());
+  /** The model being tried, or '' when the bot plays a level. */
+  protected readonly botModel = computed(() => (this.botModels().some((m) => m.id === this.botLevel()) ? this.botLevel() : ''));
+  /** Friendly or ranked (the owner chooses before the game). */
+  protected readonly rankedToggle: ToggleOption[] = [
+    { value: 'friendly', label: 'Amistosa' },
+    { value: 'ranked', label: 'Ranked' },
+  ];
+  protected setRanked(kind: string): void {
+    if ((kind === 'ranked') !== this.game.rankedRoom()) {
+      this.game.setRanked(kind === 'ranked');
+      this.pickingBot.set(false);
+    }
+  }
+  /** Sala de pruebas: who plays the test rival's side. */
+  protected readonly rivalToggle: ToggleOption[] = [
+    { value: 'me', label: 'Yo (a mano)' },
+    { value: 'bot', label: 'El bot' },
+  ];
+  protected readonly editorBot = computed(() => !!this.game.state()?.editorBot);
+  /** Sala de pruebas: who plays the owner's own side, and the bot's level or model when it is a bot. */
+  protected readonly selfToggle: ToggleOption[] = [
+    { value: 'me', label: 'Yo' },
+    { value: 'bot', label: 'Un bot' },
+  ];
+  protected readonly selfBot = computed(() => !!this.game.state()?.editorSelfBot);
+  protected readonly selfBotLevel = computed(() => this.game.state()?.selfBotLevel ?? 'normal');
+  protected setSelf(who: string): void {
+    if ((who === 'bot') !== this.selfBot()) this.game.setEditorSelfBot(who === 'bot');
+  }
+  protected setRival(who: string): void {
+    if ((who === 'bot') !== this.editorBot()) this.game.setEditorBot(who === 'bot');
+  }
+  /** A level, or a model to try; '' (no model) goes back to the normal level. */
+  protected setBotLevel(level: string): void {
+    const next = level || 'normal';
+    if (next !== this.botLevel()) this.game.setBotLevel(next);
+  }
   protected readonly firstLabel = computed(() => {
     const choice = this.firstChoice();
     if (choice === 'random') return 'Aleatorio';
@@ -154,10 +214,12 @@ export class PreRoomComponent {
     return p.starterCardId ? (p.originalDeck.find((c) => c.cardId === p.starterCardId) ?? null) : null;
   }
 
-  /** Frees my seat (the board's exit guard sends it); the room passes on if I own it. */
-  /** Back: solo mode to "Jugar" (where it started), an online room to the rooms. */
+  /**
+   * Back: the Sala de pruebas and Modo solo to "Jugar" (where they started), an online room to the rooms (the board's
+   * exit guard frees my seat; the room passes on if I own it).
+   */
   protected leave(): void {
-    void this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator');
+    void this.router.navigateByUrl(this.game.ownRoom() ? '/play' : '/simulator');
   }
 
   protected async copy(): Promise<void> {

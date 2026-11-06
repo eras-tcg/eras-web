@@ -18,7 +18,9 @@
 :host { position: relative; display: inline-block; }
 eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
 /* Exhausting a card of the field is seen: it turns sideways in TAP_MS (sim-card.component.ts) before its attack is marked */
-:host eras-game-card { transition-duration: 300ms; }
+:host eras-game-card { transition-duration: var(--sim-tap-turn, 300ms); }
+/* Exhausted: its place widens first (its neighbors make room), then it turns into it */
+:host(.tapped-field) eras-game-card.tapped { transition-delay: var(--sim-tap-widen, 140ms); }
 @media (prefers-reduced-motion: reduce) {
   :host eras-game-card { transition-duration: 0ms; }
 }
@@ -107,8 +109,8 @@ eras-game-card.can-play.can-activate {
 eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* Dragging one of your creatures to attack: the enemies it can attack light up */
-eras-game-card.attack-target { box-shadow: 0 0 0 3px #ef4444, 0 0 18px 6px rgb(239 68 68 / 70%); animation: attack-target 0.7s ease-in-out infinite alternate; }
-@keyframes attack-target { to { box-shadow: 0 0 0 3px #fca5a5, 0 0 26px 10px rgb(239 68 68 / 85%); } }
+eras-game-card.attack-target { box-shadow: 0 0 0 3px var(--color-sim-rival), 0 0 18px 6px color-mix(in srgb, var(--color-sim-rival) 70%, transparent); animation: attack-target 0.7s ease-in-out infinite alternate; }
+@keyframes attack-target { to { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-sim-rival) 45%, #fff), 0 0 26px 10px color-mix(in srgb, var(--color-sim-rival) 85%, transparent); } }
 
 /* On the rival's card (turned round) they float at the other edge, text upright */
 .cancel-target.turned { inset-block: 0.3rem auto; }

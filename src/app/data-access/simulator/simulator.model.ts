@@ -85,6 +85,8 @@ export interface PlayerState {
   username: string;
   /** Their icon from the profile, "icon:color"; null for the default. */
   avatar?: string | null;
+  /** Their playmat (an image URL from their profile), under their half of the table; null for none. */
+  playmat?: string | null;
   connected: boolean;
   /** Pre-room: the deck's name, the starter chosen (a card id of the deck) and whether they confirmed. */
   deckName?: string | null;
@@ -106,6 +108,16 @@ export interface PlayerState {
 
 export type RoomStatus = 'WAITING' | 'SELECTING_STARTER' | 'MULLIGAN' | 'IN_PROGRESS' | 'POST_GAME' | 'FINISHED';
 export type PostGameChoice = 'new_game' | 'change_deck' | 'exit';
+/** How well the server's bot plays: 'easy', 'normal', 'hard', or the id of a named model to try (the server lists them). */
+export type BotLevel = string;
+
+/** One of the bot's choices the server offers in the pre-room. */
+export interface BotChoice {
+  id: string;
+  label: string;
+  /** A level of the main choice, or a model to try instead. */
+  kind?: 'level' | 'model';
+}
 
 export interface GameLogEntry {
   ts: number;
@@ -131,6 +143,32 @@ export interface GameState {
   hostId: string | null;
   /** A test room: its owner plays both sides alone (the other side is not a real player). */
   editor?: boolean;
+  /** A room against the server's bot: the owner plays one side, the bot the other (its seat id is "bot"). */
+  bot?: boolean;
+  /** A ranked game (online or Modo solo): its result moves the players' rank; who goes first is drawn. */
+  ranked?: boolean;
+  /** A room to watch a kept game again: read only, everything shown, only its viewer in it. */
+  replay?: boolean;
+  /** A room of the ranked queue: for its two players alone, always ranked. */
+  queued?: boolean;
+  /** A test room (Sala de pruebas) whose rival side the server's bot plays: the owner tests it seeing everything. */
+  editorBot?: boolean;
+  /** Sala de pruebas: a bot plays the owner's own side too (the owner watches two bots play), at this level or model. */
+  editorSelfBot?: boolean;
+  selfBotLevel?: BotLevel | null;
+  /** Sala de pruebas: the bots wait (paused by the owner, or after going back in time). */
+  paused?: boolean;
+  /** Sala de pruebas: the step of the time line shown (from 0) and how many there are. */
+  timelineAt?: number | null;
+  timelineSize?: number | null;
+  /** The pause before each move of the room's bots, in ms, chosen by the owner (null: each bot's own). */
+  botDelayMs?: number | null;
+  /** The bot's edge, 0–8 (Modo solo ranked past the hardest bot's strength, or a test room's choice): see botEdgeText. */
+  botEdge?: number;
+  /** How well the bot plays, chosen by the owner in the pre-room (rooms against the bot only). */
+  botLevel?: BotLevel | null;
+  /** The bot's choices: the levels, then the named models to try. */
+  botChoices?: BotChoice[] | null;
   /** Mulligan: who already confirmed their hand. */
   mulliganReady?: string[] | null;
   currentTurnUserId: string | null;
@@ -188,10 +226,69 @@ export interface ActivatableEffect {
 }
 
 /** One rules event of the timeline (the text log is generated from these). */
+/** The kinds of the engine's timeline events the board plays (others may come: any string). */
+export type GameEventType =
+  | 'NORMAL_SUMMON'
+  | 'EFFECT_SUMMON'
+  | 'SPECIAL_SUMMON'
+  | 'EFFECT_TRIGGERED'
+  | 'EFFECT_ACTIVATED'
+  | 'EFFECT_RESOLVED'
+  | 'EFFECT_DECLINED'
+  | 'LOOK_TOP'
+  | 'ADD_TO_HAND'
+  | 'TRIBUTE'
+  | 'DRAW'
+  | 'DESTROY'
+  | 'SACRIFICE'
+  | 'SEND'
+  | 'MOVE'
+  | 'TAP'
+  | 'UNTAP'
+  | 'GAIN'
+  | 'GAIN_GEMS'
+  | 'PLAY'
+  | 'ATTACK_DECLARED'
+  | 'BLOCK'
+  | 'CLASH'
+  | 'LIFE_DAMAGE'
+  | 'ATTACK_ENDED'
+  | 'COMBAT_STEP'
+  | 'TARGET'
+  | 'STRENGTH_REDUCED'
+  | 'TURN_START'
+  | 'TURN_END'
+  | 'GAME_LOST'
+  // Any other kind, keeping the known ones' autocompletion
+  | (string & {});
+
+/** What an event carries besides its card (each kind fills some of these). */
+export interface GameEventData {
+  /** CLASH: the blocker and both strengths. */
+  blockerId?: string;
+  attackerStrength?: number;
+  blockerStrength?: number;
+  /** LIFE_DAMAGE: who hit whom, and how much. */
+  attackerId?: string;
+  defenderId?: string;
+  damage?: number;
+  /** ATTACK_DECLARED: the creature attacked (none: the player), and whether the attacker was exhausted to attack. */
+  targetId?: string;
+  exhausted?: boolean;
+  /** TARGET: the cards chosen. */
+  targetIds?: string[];
+  /** EFFECT_ACTIVATED: its card, label and chain link. */
+  sourceId?: string;
+  sourceName?: string;
+  label?: string;
+  link?: number;
+  [key: string]: unknown;
+}
+
 export interface GameEvent {
   seq: number;
   ts: number;
-  type: string;
+  type: GameEventType;
   playerId: string | null;
   cardInstanceId: string | null;
   cardName: string | null;
@@ -200,7 +297,7 @@ export interface GameEvent {
   /** Effect instance it belongs to, and the resolution where it happened. */
   effectId: string | null;
   resolutionId: string | null;
-  data: Record<string, unknown> | null;
+  data: GameEventData | null;
 }
 
 export interface PendingEffect {
@@ -326,6 +423,8 @@ export interface RoomInfo {
   players?: string[];
   playerCount?: number;
   createdAt?: string;
+  /** A ranked game (else friendly). */
+  ranked?: boolean;
 }
 
 export const STATUS_LABELS: Record<RoomStatus, string> = {

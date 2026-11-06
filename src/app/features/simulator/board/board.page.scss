@@ -110,6 +110,7 @@
   min-block-size: 0;
 }
 
+
 // The plane of the table: rival's half, middle strip, your half
 .plane {
   display: grid;
@@ -154,7 +155,7 @@
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline: 50% auto;
-  z-index: 1001;
+  z-index: var(--z-sim-toast);
   max-block-size: calc(100% - 2 * var(--space-2));
   overflow-y: auto;
   overscroll-behavior: none;
@@ -242,64 +243,6 @@
   }
 }
 
-// The three phases of the turn, centered; the current one is marked
-.phases {
-  display: flex;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.phases button {
-  padding: var(--space-1) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: none;
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
-}
-
-.phases button:disabled {
-  cursor: default;
-}
-
-// The phase you can go to next: a clear call to action
-.phases button.next {
-  border-color: var(--color-primary);
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.phases button.next:not(.current)::after {
-  content: ' ›';
-}
-
-.phases button.next:hover {
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-}
-
-.phases button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.phases button.current {
-  border-color: var(--color-sim-rival);
-  background: color-mix(in srgb, var(--color-sim-rival) 18%, transparent);
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
-  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-sim-rival) 35%, transparent);
-}
-
-.phases button.current.mine {
-  border-color: var(--color-sim-ally);
-  background: color-mix(in srgb, var(--color-sim-ally) 18%, transparent);
-  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-sim-ally) 35%, transparent);
-}
-
 .my-turn {
   color: var(--color-success);
   font-weight: var(--font-weight-bold);
@@ -342,60 +285,6 @@
   font-size: var(--font-size-sm);
 }
 
-// Pop-up when the turn or the phase changes
-.phase-popup {
-  position: fixed;
-  inset-block-start: 40%;
-  inset-inline-start: 50%;
-  z-index: 30;
-  display: grid;
-  justify-items: center;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-6);
-  border: 2px solid var(--color-sim-ally);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  box-shadow: 0 0 32px 6px color-mix(in srgb, var(--color-sim-ally) 45%, transparent);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  animation: phase-popup 1.3s ease forwards;
-}
-
-.phase-popup.rival {
-  border-color: var(--color-sim-rival);
-  box-shadow: 0 0 32px 6px color-mix(in srgb, var(--color-sim-rival) 45%, transparent);
-}
-
-.phase-popup .who {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.phase-popup strong {
-  font-size: var(--font-size-2xl, 1.75rem);
-}
-
-@keyframes phase-popup {
-  0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
-  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-// Combat in progress: the table is framed in red
-.table.in-combat {
-  border-radius: var(--radius-lg);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-sim-rival) 70%, transparent), 0 0 30px 4px color-mix(in srgb, var(--color-sim-rival) 35%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .phase-popup {
-    animation: none;
-  }
-}
-
 // Test room: which side is being played
 .sides {
   display: inline-flex;
@@ -429,7 +318,7 @@
   position: fixed;
   inset-block-end: var(--space-3);
   inset-inline-start: var(--space-3);
-  z-index: 1100;
+  z-index: var(--z-sim-over-sheet);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);

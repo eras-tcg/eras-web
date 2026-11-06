@@ -1,0 +1,46 @@
+// A block of the options sidebar: its items are the sidebar's own (no box of its own)
+:host {
+  display: contents;
+}
+
+.pace-item {
+  cursor: default;
+}
+
+// Small buttons around a value, under the item's name
+.pace {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-block-start: var(--space-1);
+
+  button {
+    min-inline-size: 28px;
+    padding: 2px 6px;
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  b {
+    min-inline-size: 48px;
+    text-align: center;
+  }
+}
+
+// What the bot's edge does, under its buttons
+.edge-text {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: 1.3;
+}

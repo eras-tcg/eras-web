@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { GameStore, LogLine } from '@data/simulator/game.store';
+import { LogLine } from '@data/simulator/game-notices';
+import { GameStore } from '@data/simulator/game.store';
 import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-source.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';

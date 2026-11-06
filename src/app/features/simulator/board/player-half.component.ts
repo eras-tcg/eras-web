@@ -11,6 +11,7 @@ import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.compone
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
 import { BoardDrag } from './board-drag';
+import { BoardPreferences } from './board-preferences';
 import { PlayerPlateComponent } from './player-plate.component';
 import { SimCardComponent } from './sim-card.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
@@ -35,17 +36,25 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   templateUrl: './player-half.component.html',
   styleUrls: ['./player-half.component.scss', './player-half.component.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.opponent]': 'opponent()', '[class.mirrored]': 'mirrored()', '[class.tilted]': 'tilted()', '[class.info]': 'game.showInfo()' },
+  host: {
+    '[class.opponent]': 'opponent()',
+    '[class.mirrored]': 'mirrored()',
+    '[class.tilted]': 'tilted()',
+    '[class.info]': 'game.showInfo()',
+    '[class.has-playmat]': '!!player().playmat',
+    '[style.--playmat]': 'playmatImage()',
+  },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
+  private readonly prefs = inject(BoardPreferences);
   /** "Zonas espejadas": the rival's lives and gem marker swap places with their piles. */
-  readonly mirrored = input(false, { transform: booleanAttribute });
+  protected readonly mirrored = computed(() => this.opponent() && this.prefs.mirrored());
   /** "Mano recta": the hand in a row instead of a fan. */
-  readonly straightHand = input(false, { transform: booleanAttribute });
+  protected readonly straightHand = this.prefs.straightHand;
   /** "Mesa en perspectiva": the table leans back; your hand and both players' plates stand up from it, facing you. */
-  readonly tilted = input(false, { transform: booleanAttribute });
+  protected readonly tilted = this.prefs.tilted;
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
   /** A touch screen: no dragging, the hints speak of tapping. */
@@ -59,7 +68,27 @@ export class PlayerHalfComponent {
 
   protected readonly over = signal<string | null>(null);
   /** One of your creatures is dragged to attack: the rival's lives and hand take it as a direct attack. */
+  /** The player's playmat, for their half's background (none: the table's own texture shows). */
+  protected readonly playmatImage = computed(() => {
+    const url = this.player().playmat;
+    return url ? `url("${url.replace(/"/g, '%22')}")` : null;
+  });
   protected readonly attackDrag = computed(() => this.opponent() && !!this.drag.dragging()?.attack);
+  /**
+   * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16), black as
+   * the back's frame with a faint line between cards, with its shadow on the table.
+   */
+  protected pileEdge(cards: number): string {
+    const depth = Math.min(16, Math.ceil((cards - 1) / 3));
+    const edges = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`);
+    return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');
+  }
+  /** A creature attacks these lives (an attack on the player, not on a creature): marked until the combat ends. */
+  protected readonly livesAttacked = computed(() => {
+    const c = this.game.state()?.combat;
+    if (!c || c.targetId || c.blockerId || c.step === 'END') return false;
+    return c.defenderId === this.player().userId;
+  });
   /** Creature the dragged card would interact with if dropped now. */
   protected readonly nearby = signal<CardSlot | null>(null);
   /** Own creature summoned from hand/piles: ask whether it was by effect (draws a card). */

@@ -16,6 +16,43 @@
   min-block-size: 0;
 }
 
+// The player's playmat under their half (as they lie on the table: the rival's turned to face them), darkened so the
+// cards stand out, its edges fading into the table. Behind the half: flat, its own layer; on the leaning table, a
+// pixel under it in depth (a layer of its own there would flatten the half, and the plates would lie on the table)
+:host {
+  position: relative;
+}
+
+:host(:not(.tilted)) {
+  isolation: isolate;
+}
+
+:host(.has-playmat)::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--space-2));
+  z-index: -1;
+  border-radius: var(--radius-lg);
+  background: var(--playmat) center / cover no-repeat;
+  opacity: 0.55;
+  filter: saturate(0.85) brightness(0.7);
+  mask-image: radial-gradient(ellipse 75% 85% at 50% 50%, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+
+:host(.opponent.has-playmat)::before {
+  transform: rotate(180deg);
+}
+
+:host(.tilted.has-playmat)::before {
+  z-index: auto;
+  transform: translateZ(-2px);
+}
+
+:host(.tilted.opponent.has-playmat)::before {
+  transform: translateZ(-2px) rotate(180deg);
+}
+
 :host(.opponent) {
   grid-template-rows: var(--hand-peek) minmax(0, 1fr);
   grid-template-areas:
@@ -412,6 +449,14 @@ eras-player-plate {
     'deck tributes';
 }
 
+// The rival's zones mirrored: its side is mine turned half round, so its piles are too (the deck towards the
+// middle of the table, by its field)
+:host(.opponent.mirrored) .piles {
+  grid-template-areas:
+    'discard .'
+    'tributes deck';
+}
+
 // Under my deck: the switches of the game (optional effects…)
 .pile-controls {
   grid-area: controls;
@@ -467,6 +512,77 @@ eras-player-plate {
   --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem) * 63 / 88));
 }
 
+// Beside the field, the side columns line up with its lines: the Mazo and the Tributos as tall as the Línea frontal,
+// the Descarte as the Retaguardia, the lives' zone down to the Retaguardia's edge (its lives centered in it); the
+// hand's strip under them holds the player's plate
+@media (min-width: 48.0625rem) {
+  .piles {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) var(--hand-peek);
+    grid-template-areas:
+      'deck tributes'
+      'controls discard'
+      '. .';
+  }
+
+  :host(.opponent) .piles {
+    grid-template-rows: var(--hand-peek) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      '. .'
+      '. discard'
+      'deck tributes';
+  }
+
+  :host(.opponent.mirrored) .piles {
+    grid-template-areas:
+      '. .'
+      'discard .'
+      'tributes deck';
+  }
+
+  .lives {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) var(--hand-peek);
+  }
+
+  .lives eras-player-plate {
+    align-self: end;
+  }
+
+  :host(.opponent) .lives {
+    grid-template-rows: var(--hand-peek) minmax(0, 1fr) auto;
+  }
+
+  :host(.opponent) .lives > eras-resource-pips { grid-row: 3; }
+  :host(.opponent) .lives > .life-zone { grid-row: 2; }
+
+  :host(.opponent) .lives > eras-player-plate {
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+// How much the zones show (the game's preferences): "suave" only their outlines, "nula" only the line between the
+// Línea frontal and the Retaguardia
+:host-context(.zones-soft),
+:host-context(.zones-none) {
+  .field,
+  eras-game-zone,
+  .line.front {
+    background: transparent;
+  }
+}
+
+:host-context(.zones-none) {
+  .field,
+  eras-game-zone:not(.drop-active) {
+    border-color: transparent;
+  }
+
+  .line + .line {
+    border-block-start: 1px solid color-mix(in srgb, var(--color-text) 22%, transparent);
+  }
+}
+
 @media (max-width: 48rem) {
   :host,
   :host(.opponent) {
@@ -493,4 +609,17 @@ eras-game-zone.can-activate {
 }
 
 // A creature dragged to attack: the rival's lives and hand take a direct attack
-.attack-zone { box-shadow: inset 0 0 0 2px #ef4444, 0 0 16px rgb(239 68 68 / 55%); border-radius: var(--radius-md); }
+.attack-zone { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 16px color-mix(in srgb, var(--color-sim-rival) 55%, transparent); border-radius: var(--radius-md); }
+
+// Attacked: a creature attacks these lives (until it is blocked or the combat ends)
+.lives-attacked {
+  border-radius: var(--radius-md);
+  animation: lives-attacked 0.8s ease-in-out infinite alternate;
+}
+@keyframes lives-attacked {
+  from { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 18px 5px color-mix(in srgb, var(--color-sim-rival) 65%, transparent); }
+  to { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 6px 1px color-mix(in srgb, var(--color-sim-rival) 35%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lives-attacked { animation: none; box-shadow: inset 0 0 0 2px var(--color-sim-rival); }
+}

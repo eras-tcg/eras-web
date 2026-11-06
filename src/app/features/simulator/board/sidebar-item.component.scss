@@ -1,5 +1,7 @@
 :host {
   position: relative;
+  // Never squeezed when the bar is full (it scrolls instead): an item with buttons under its name keeps its height
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);

@@ -11,6 +11,10 @@ export class BoardAnimations {
    */
   readonly off = persistedFlag('eras-sim-animations-off');
   readonly idle = computed(() => this.running() === 0);
+  /** Nothing moves: the animations are off, or the device asks for reduced motion. */
+  still(): boolean {
+    return this.off() || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
   private readonly waiting: (() => void)[] = [];
 
   constructor() {

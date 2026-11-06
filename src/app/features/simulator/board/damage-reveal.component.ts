@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { findSlot } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, GameEvent, GameState } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { BoardAnimations } from './board-animations';
+import { BoardChoreography } from './board-choreography';
+import { TIMING } from './timing';
 
 /** Direct damage to a life. */
 interface Hit {
@@ -30,26 +33,12 @@ interface Clash {
 }
 
 /** Each one gets its own id: it is drawn anew, so its animation starts over even right after another one. */
-type Shown = (Hit | Clash) & { id: number };
-
-const SHOW_MS = 2600;
-/** Events whose animation plays before a blow of the same update: a creature entering the field, a card exhausted, an attack declared. */
-const BEFORE_BLOW = new Set(['NORMAL_SUMMON', 'EFFECT_SUMMON', 'SPECIAL_SUMMON', 'TAP', 'ATTACK_DECLARED']);
-
-/**
- * In this update, something before the event `seq` animates first: the attacker turning as it is exhausted to attack,
- * the Ascenso during the attack (Príncipe Charles to Caballero Real). The blow waits for it.
- */
-export function playsBeforeBlow(events: readonly GameEvent[], seq: number): boolean {
-  return events.some((e) => BEFORE_BLOW.has(e.type) && e.seq < seq);
-}
-
-/** How long the attacker's charge lasts (eras-board-fx): the reveal of its blow comes after it. */
-export const CHARGE_MS = 800;
+type Shown = (Hit | Clash) & { id: number; done?: () => void };
 
 /**
  * Combat, shown big: direct damage (the attacker, the damage and the revealed life) and clashes (both
- * creatures, their strength and which one is destroyed). One after another; a click skips the current one.
+ * creatures, their strength and which one is destroyed), when the combat reaches them (a step of
+ * BoardChoreography, before their update is shown). One after another; a click skips the current one.
  */
 @Component({
   selector: 'eras-damage-reveal',
@@ -107,7 +96,7 @@ export const CHARGE_MS = 800;
       position: fixed;
       inset-block-start: 50%;
       inset-inline-start: 50%;
-      z-index: 35;
+      z-index: var(--z-sim-combat-reveal);
       display: flex;
       align-items: center;
       gap: var(--space-6);
@@ -120,7 +109,7 @@ export const CHARGE_MS = 800;
       font: inherit;
       transform: translate(-50%, -50%);
       cursor: pointer;
-      animation: reveal 2.6s ease forwards;
+      animation: reveal var(--sim-combat-reveal, 2.6s) ease forwards;
     }
     .reveal.mine { border-color: var(--color-sim-ally); box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-ally) 45%, transparent); }
     .reveal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
@@ -154,6 +143,7 @@ export const CHARGE_MS = 800;
 export class DamageRevealComponent {
   private readonly game = inject(GameStore);
   private readonly animations = inject(BoardAnimations);
+  private readonly choreography = inject(BoardChoreography);
   protected readonly current = signal<Shown | null>(null);
   protected readonly shown = computed(() => {
     const current = this.current();
@@ -161,15 +151,19 @@ export class DamageRevealComponent {
   });
   private ids = 0;
   private readonly queue: Shown[] = [];
-  private lastSeq: number | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  /** Releases the choices once everything queued has been shown. */
+  /** The choices wait while one is shown. */
   private release: (() => void) | null = null;
 
   constructor() {
-    effect(() => {
-      const state = this.game.state();
-      untracked(() => this.collect(state));
+    // Before an update is shown: its combat is shown big, and the next step waits until it goes
+    this.choreography.register({
+      reveal: (next, e) =>
+        new Promise<void>((done) => {
+          this.queue.push({ ...(e.type === 'CLASH' ? this.clash(next, e) : this.hit(next, e)), id: ++this.ids, done });
+          this.release ??= this.animations.begin();
+          if (!this.current() && !this.timer) this.next();
+        }),
     });
   }
 
@@ -179,50 +173,14 @@ export class DamageRevealComponent {
     this.next();
   }
 
-  /** New combat events (not the ones already there when joining). */
-  private collect(state: GameState | null): void {
-    const timeline = state?.timeline ?? [];
-    const maxSeq = timeline.reduce((m, e) => Math.max(m, e.seq), 0);
-    const playing = state?.status === 'IN_PROGRESS' || state?.status === 'POST_GAME';
-    if (this.lastSeq === null || !playing) {
-      this.lastSeq = maxSeq;
-      return;
-    }
-    const fresh = timeline.filter((e) => e.seq > (this.lastSeq ?? 0));
-    const events = fresh.filter((e) => e.type === 'LIFE_DAMAGE' || e.type === 'CLASH');
-    this.lastSeq = Math.max(this.lastSeq, maxSeq);
-    // Animations off: the history and the notices tell it
-    if (!events.length || !state || this.animations.off()) return;
-    for (const e of events) this.queue.push({ ...(e.type === 'CLASH' ? this.clash(state, e) : this.hit(state, e)), id: ++this.ids });
-    // An attack's blow is shown once the attacker has charged at its target (blocked: at the blocker)
-    const charged = events.some((e) => e.type === 'CLASH' || (e.type === 'LIFE_DAMAGE' && !e.effectId && e.data?.['attackerId']));
-    const start = () => {
-      // The choices wait until all of them have been shown
-      this.release ??= this.animations.begin();
-      if (!this.current() && !this.timer) {
-        if (charged) this.timer = setTimeout(() => this.next(), CHARGE_MS);
-        else this.next();
-      }
-    };
-    // What came before the blow (the attacker exhausted, the Ascenso during the attack) plays first, then the combat
-    if (playsBeforeBlow(fresh, events[0].seq)) setTimeout(() => this.animations.whenIdle(start));
-    else start();
-  }
-
-  private finder(state: GameState): (id: unknown) => CardSlot | null {
-    // The deck too: an effect's card may pay with itself (Flarix goes to the bottom of the deck)
-    const all = Object.values(state.players ?? {}).flatMap((p) => [...p.field, ...p.hand, ...p.tributeZone, ...p.discardPile, ...p.lifeStack, ...p.deck]);
-    return (id) => all.find((c) => c.instanceId === id) ?? null;
-  }
-
+  /** The cards of a combat, wherever they are now (the deck too: Flarix pays with itself to the bottom of it). */
   private hit(state: GameState, e: GameEvent): Hit {
-    const find = this.finder(state);
-    const defenderId = e.data?.['defenderId'] as string | undefined;
+    const defenderId = e.data?.defenderId;
     return {
       kind: 'damage',
-      attacker: find(e.data?.['attackerId']),
-      life: find(e.cardInstanceId),
-      damage: Number(e.data?.['damage'] ?? 0),
+      attacker: findSlot(state, e.data?.attackerId),
+      life: findSlot(state, e.cardInstanceId),
+      damage: Number(e.data?.damage ?? 0),
       defender: (defenderId && state.players?.[defenderId]?.username) || 'El rival',
       to: e.toZone,
       mine: defenderId !== this.game.myState()?.userId,
@@ -231,22 +189,22 @@ export class DamageRevealComponent {
   }
 
   private clash(state: GameState, e: GameEvent): Clash {
-    const find = this.finder(state);
     return {
       kind: 'clash',
-      attacker: find(e.cardInstanceId),
-      blocker: find(e.data?.['blockerId']),
-      attackerStrength: Number(e.data?.['attackerStrength'] ?? 0),
-      blockerStrength: Number(e.data?.['blockerStrength'] ?? 0),
+      attacker: findSlot(state, e.cardInstanceId),
+      blocker: findSlot(state, e.data?.blockerId),
+      attackerStrength: Number(e.data?.attackerStrength ?? 0),
+      blockerStrength: Number(e.data?.blockerStrength ?? 0),
       mine: e.playerId === this.game.myState()?.userId,
     };
   }
 
   private next(): void {
+    this.current()?.done?.();
     const shown = this.queue.shift() ?? null;
     this.current.set(shown);
     if (shown) {
-      this.timer = setTimeout(() => this.next(), SHOW_MS);
+      this.timer = setTimeout(() => this.next(), TIMING.combatReveal);
     } else {
       this.timer = null;
       this.release?.();

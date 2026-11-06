@@ -12,7 +12,8 @@ import { CardPeekComponent } from './card-peek.component';
   selector: 'eras-status-panels',
   imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent, CardPeekComponent],
   template: `
-    @switch (game.status()) {
+    <!-- A side played by a bot (or a replay) has nothing to choose here -->
+    @switch (game.sideByBot() ? null : game.status()) {
       @case ('SELECTING_STARTER') {
         <eras-card>
           <eras-stack [gap]="3">

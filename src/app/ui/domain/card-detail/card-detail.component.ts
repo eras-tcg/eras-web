@@ -64,4 +64,8 @@ export class CardDetailComponent {
 
   readonly previousPrinting = output<void>();
   readonly nextPrinting = output<void>();
+  /** The image can be clicked (imageOpened); `zoomLabel` says what it opens. */
+  readonly zoomable = input(false, { transform: booleanAttribute });
+  readonly zoomLabel = input('Ver la carta');
+  readonly imageOpened = output<void>();
 }

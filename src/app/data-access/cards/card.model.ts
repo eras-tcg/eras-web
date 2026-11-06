@@ -60,10 +60,21 @@ export interface CardMeta {
   rarity?: string | null;
   colors?: string[] | null;
   /**
-   * URL of the card's alternative art, a very rare version of it a pack may give (in any finish). Only a picture of
-   * the same card: it has no image record of its own, so no list or search shows it as another card.
+   * The card's alternative arts, very rare versions of it a pack may give (in any finish). Only pictures of the same
+   * card: they have no image record of their own, so no list or search shows them as other cards.
    */
-  altImage?: string | null;
+  altArts?: AltArt[] | null;
+}
+
+/**
+ * One alternative art of a card: its picture, its name as a custom rarity (null: "Alternativo N") and its own odds
+ * per pulled copy (null: the shop's, ShopOdds.alt).
+ */
+export interface AltArt {
+  id: string;
+  url: string;
+  odds?: number | null;
+  name?: string | null;
 }
 
 /** Reference data, GET /api/cards/ref */

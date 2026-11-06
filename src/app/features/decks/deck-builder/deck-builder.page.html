@@ -20,6 +20,9 @@
           [foil]="detailShine()"
           [textGroups]="v.groups"
           [notice]="v.notice"
+          zoomable
+          zoomLabel="Ver el detalle de la carta"
+          (imageOpened)="openDetail(card)"
         >
           <eras-stack ngProjectAs="[detail-top]" direction="row" [gap]="2" align="center" justify="center">
             <button erasButton variant="secondary" size="sm" type="button" aria-label="Quitar una copia" [disabled]="draft.countOf(card.id) === 0" (click)="remove(card)">−1</button>
@@ -42,7 +45,11 @@
   <eras-stack [gap]="4" class="deck-scroll">
     <!-- The deck's name (just a line under it) and whether it is public -->
     <div class="deck-head">
-      <input class="deck-name" aria-label="Nombre del mazo" placeholder="Nombre del mazo" [value]="draft.name()" (input)="onNameInput($event)" />
+      <input class="deck-name" aria-label="Nombre del mazo" placeholder="Nombre del mazo" [attr.maxlength]="nameMax" [value]="draft.name()" (input)="onNameInput($event)" />
+      <!-- Near the limit: how many characters are left -->
+      @if (draft.name().length >= nameMax - 5) {
+        <span class="name-count" aria-live="polite">{{ draft.name().length }}/{{ nameMax }}</span>
+      }
       <button
         type="button"
         erasIconButton
@@ -130,12 +137,12 @@
               <div class="entry" [class.lacking]="lacking(entry) > 0" [attr.title]="lacking(entry) > 0 ? 'Te faltan ' + lacking(entry) + ' de tu colección' : null" (contextmenu)="contextRemove($event, entry.card)">
                 <eras-card-thumb
                   [name]="entry.card.name ?? ''"
-                  [imageUrl]="alt(entry.card) ? altImageUrl(entry.card) : imageUrl(entry.card)"
+                  [imageUrl]="altImageUrl(entry.card, alt(entry.card)?.art ?? null)"
                   [badge]="badge(entry.card)"
                   badgeTone="info"
                   [count]="entry.count"
                   showSingleCount
-                  [foil]="shineOf(alt(entry.card) ?? best(entry.card))"
+                  [foil]="shineOf(alt(entry.card)?.finish ?? best(entry.card))"
                   [active]="selected()?.id === entry.card.id"
                   (selected)="select(entry.card)"
                 />
@@ -166,10 +173,10 @@
                 <div class="copy" [class.lacking]="copy.finish === null" [attr.title]="copy.finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
                   <eras-card-thumb
                     [name]="entry.card.name ?? ''"
-                    [imageUrl]="copy.alt ? altImageUrl(entry.card) : imageUrl(entry.card)"
+                    [imageUrl]="altImageUrl(entry.card, copy.art)"
                     [foil]="shineOf(copy.finish)"
                     [active]="selected()?.id === entry.card.id"
-                    (selected)="select(copy.alt ? altArt(entry.card) : entry.card, copy.finish)"
+                    (selected)="select(altArt(entry.card, copy.art), copy.finish)"
                   />
                 </div>
               }

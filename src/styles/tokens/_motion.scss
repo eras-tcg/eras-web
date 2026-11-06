@@ -5,6 +5,8 @@
 
   --z-header: 100;
   --z-overlay: 1000;
+  // The loading screen: over the dialogs too (the CDK overlay sits at 1000)
+  --z-loading: 1100;
 
   // The simulator's layers over its table, low to high: a life waiting on its pile; the combat shown big; a choice's
   // card drawn again over its backdrop; notices; a card revealed from a hand; the attacker's charge, signs and

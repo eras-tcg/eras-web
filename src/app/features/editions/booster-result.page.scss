@@ -82,6 +82,7 @@ eras-icon[name='gem'] {
 
 /* 2. Opening: the pack breaks open, then its cards turn one by one */
 .opening {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -114,6 +115,22 @@ eras-icon[name='gem'] {
   justify-content: center;
   gap: var(--space-3);
   max-inline-size: 70rem;
+}
+
+// The pack breaking (and its pieces falling) over the middle of the stage, above the cards flying out
+.break-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+// Laid out, unseen, until they are sent flying from the middle
+.cards.placing eras-opening-card {
+  visibility: hidden;
+  animation: none;
 }
 
 @keyframes aura-card {

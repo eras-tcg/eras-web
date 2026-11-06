@@ -4,12 +4,12 @@ import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, collapseByName, fullEditionId, withAltArt } from '@data/cards/card-rules';
+import { altArtsOf, cardImageUrl, collapseByName, fullEditionId, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { DeckCopy, altFinish, bestFinish, deckCopies, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
+import { AltCopy, DeckCopy, bestAlt, bestFinish, deckCopies, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
-import { MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
+import { DECK_NAME_MAX, MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -34,6 +34,7 @@ import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-de
 import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardDetailDialogComponent, CardDetailDialogData } from '@features/cards/card-detail-dialog/card-detail-dialog.component';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
 import { cardDetailView } from '../../cards/card-detail-view';
 import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
@@ -97,6 +98,7 @@ export class DeckBuilderPage {
   private readonly modal = inject(ModalService);
 
   protected readonly maxCards = MAX_CARDS;
+  protected readonly nameMax = DECK_NAME_MAX;
   protected readonly typeLabels = CARD_TYPE_LABELS;
   protected readonly imageUrl = cardImageUrl;
 
@@ -116,16 +118,17 @@ export class DeckBuilderPage {
   protected best(card: CatalogCard): Finish | null {
     return bestFinish(this.collection.collection()?.cards[card.id]);
   }
-  /** The finish of the player's copies of a card with its alternative art (the deck plays them first), null when none. */
-  protected alt(card: CatalogCard): Finish | null {
-    return card.meta?.altImage ? altFinish(this.collection.collection()?.cards[card.id]) : null;
+  /** The player's finest copy of a card with one of its alternative arts (the deck plays them first), null when none. */
+  protected alt(card: CatalogCard): AltCopy | null {
+    const arts = altArtsOf(card).map((a) => a.id);
+    return arts.length ? bestAlt(this.collection.collection()?.cards[card.id], arts) : null;
   }
-  /** Each of the deck's copies of a card: its finish and art (the alternative art first; null for one they lack). */
+  /** Each of the deck's copies of a card: its finish and art (the alternative arts first; null for one they lack). */
   protected copies(entry: DeckEntry): DeckCopy[] {
-    return deckCopies(this.collection.collection()?.cards[entry.card.id], entry.count);
+    return deckCopies(this.collection.collection()?.cards[entry.card.id], entry.count, altArtsOf(entry.card).map((a) => a.id));
   }
-  protected altImageUrl(card: CatalogCard): string | null {
-    return cardImageUrl(withAltArt(card));
+  protected altImageUrl(card: CatalogCard, art: string | null): string | null {
+    return cardImageUrl(withAltArt(card, art));
   }
   protected readonly altArt = withAltArt;
   protected readonly shineOf = shineOf;
@@ -259,6 +262,12 @@ export class DeckBuilderPage {
   // ── Deck actions ──────────────────────────────────────────────────────
 
   /** Shows a card on the left, as the copy picked (`finish`) or, without one, its finest owned. */
+  /** The card's detail dialog, as in the catalog (with the player's collection when signed in). */
+  protected openDetail(card: CatalogCard): void {
+    const data: CardDetailDialogData = { cards: [card], index: 0, collection: this.signedIn() };
+    this.modal.open(CardDetailDialogComponent, { data });
+  }
+
   protected select(card: CatalogCard | null, finish?: Finish | null): void {
     this.selected.set(card);
     this.selectedFinish.set(finish);

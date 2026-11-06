@@ -1,8 +1,10 @@
-// The hub's frame fills the screen; the missions fit the left column
+// The missions fill what holds them (the hub's left column, a dialog's body)
 :host {
   display: flex;
   flex: 1;
   flex-direction: column;
+  // Room between the tabs and the list below them
+  gap: var(--space-4);
   min-block-size: 0;
 }
 

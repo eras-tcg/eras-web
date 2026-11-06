@@ -5,9 +5,9 @@ import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
-import { cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
+import { altArtsOf, cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { altFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { AltCopy, bestAlt, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -141,22 +141,23 @@ export class CardsPage {
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */
   protected owned(card: CatalogCard): Finish | null {
-    return bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card);
+    return bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card)?.finish ?? null;
   }
 
-  /** The finest finish of the player's copies of a card with its alternative art (shown instead), null when none. */
-  protected ownedAlt(card: CatalogCard): Finish | null {
-    if (!card.meta?.altImage) return null;
+  /** The player's finest copy of a card with one of its alternative arts (shown instead), null when none. */
+  protected ownedAlt(card: CatalogCard): AltCopy | null {
+    const arts = altArtsOf(card).map((a) => a.id);
+    if (!arts.length) return null;
     const cards = this.collection.collection()?.cards;
     for (const id of this.idsOf(card)) {
-      const finish = altFinish(cards?.[id]);
-      if (finish) return finish;
+      const copy = bestAlt(cards?.[id], arts);
+      if (copy) return copy;
     }
     return null;
   }
 
-  protected altImageUrl(card: CatalogCard): string | null {
-    return cardImageUrl(withAltArt(card));
+  protected altImageUrl(card: CatalogCard, art: AltCopy): string | null {
+    return cardImageUrl(withAltArt(card, art.art));
   }
 
   /** The printings a catalog entry stands for (all of a name when shown once per name). */

@@ -1,4 +1,5 @@
-<eras-page [title]="label()" width="wide" fill>
+<!-- While packs are on the table or opening, only the opening and "Saltar": the rest of the interface hides -->
+<eras-page [title]="label()" width="wide" fill [immersive]="phase() === 'packs' || phase() === 'opening'">
   <ng-container ngProjectAs="[page-actions]">
     @if (phase() === 'done' && product(); as p) {
       <!-- A structure deck is bought once: no "Comprar otro" -->
@@ -71,13 +72,21 @@
               @if (packs().length > 1) {
                 <p class="progress">Sobre {{ packIndex() + 1 }} de {{ packs().length }}</p>
               }
-              @if (tearing()) {
-                <eras-pack-break [art]="art" [duration]="breakMs()" />
-              } @else {
-                <div class="cards">
+              <!-- The pack breaks in the middle; its pieces keep falling over the cards that fly out of it -->
+              @if (tearing() || falling()) {
+                <div class="break-layer">
+                  <eras-pack-break [art]="art" [duration]="breakMs()" [tier]="tierOf(pack.packType)" />
+                </div>
+              }
+              @if (!tearing()) {
+                <div #cardsBox class="cards" [class.placing]="placing()">
                   @for (card of pack.cards; track $index; let i = $index) {
+                    <!-- A copy with an alternative art shows its usual art first, then turns into it -->
                     <eras-opening-card
-                      [src]="imageUrl(card)"
+                      [src]="imageUrl(altOf(i)?.base ?? card)"
+                      [altSrc]="altOf(i) ? imageUrl(card) : null"
+                      [altName]="altOf(i)?.name ?? null"
+                      [revealAlt]="altShown().has(i)"
                       [alt]="card.name ?? ''"
                       [aura]="aura(card)"
                       [foil]="foilOf(i)"

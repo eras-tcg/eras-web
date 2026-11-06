@@ -39,6 +39,13 @@
   border-block-end-color: var(--color-hub-accent);
 }
 
+.name-count {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 // The count, then the icons on the right
 .deck-bar {
   display: flex;

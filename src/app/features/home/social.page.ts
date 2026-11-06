@@ -5,6 +5,7 @@ import { HubScreenComponent } from './hub-screen.component';
 const SOCIAL_MENU: HubMenuItem[] = [
   { id: 'public-decks', label: 'Mazos públicos', icon: 'stack', route: '/public-decks' },
   { id: 'tierlist', label: 'Tierlist', icon: 'trophy', route: '/tierlist' },
+  { id: 'ranking', label: 'Clasificación', icon: 'list', route: '/ranking' },
 ];
 
 /** "Social" screen of the hub: what the community shares. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyLocalMove,
+  botEdgeText,
   creatureNear,
   deckWarnings,
   displayStrength,
@@ -124,5 +125,16 @@ describe('shared counter and field geometry', () => {
     expect(creatureNear(field, 53, 49, null)?.instanceId).toBe('a');
     expect(creatureNear(field, 53, 49, 'a')).toBeNull();
     expect(creatureNear(field, 80, 80, null)).toBeNull();
+  });
+});
+
+describe("the bot's edge in words", () => {
+  it('says which Marcador moves in which turn', () => {
+    expect(botEdgeText(0)).toBe('');
+    expect(botEdgeText(1)).toBe('el Marcador del bot sube 1 más en su turno 4.');
+    expect(botEdgeText(4)).toBe('el Marcador del bot sube 1 más en su turno 1.');
+    expect(botEdgeText(5)).toBe('el Marcador del bot sube 1 más en su turno 1 y el tuyo sube 1 menos en tu turno 5.');
+    expect(botEdgeText(8)).toBe('el Marcador del bot sube 1 más en su turno 1 y el tuyo sube 1 menos en tu turno 2.');
+    expect(botEdgeText(12)).toBe(botEdgeText(8));
   });
 });

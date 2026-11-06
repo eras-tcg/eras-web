@@ -3,49 +3,48 @@ import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
-import { applyLocalMove, deckWarnings, targetForViewer } from './game-rules';
+import { applyLocalMove } from './game-rules';
+import { GameNotices } from './game-notices';
 import { rulesView } from './legal-actions';
-import { CardSlot, DummyCard, GameLogEntry, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
-
-export interface RevealedCard {
-  id: number;
-  imageUrl: string;
-  name: string | null;
-}
-
-export interface LogLine extends GameLogEntry {
-  id: string;
-}
+import { BotLevel, CardSlot, DummyCard, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
+import { Prelude, UpdateQueue, isTimeJump } from './update-queue';
 
 /** Same-origin WebSocket: nginx (and the dev proxy) forward /ws to DriveManager. */
 function wsUrl(): string {
   return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
 }
 
+/** The bot's seat in a room against it. */
+const BOT_SEAT = 'bot';
+/** What a replay's viewer sends: entering, leaving and the time line. */
+const REPLAY_ACTIONS = new Set(['JOIN_ROOM', 'LEAVE_ROOM', 'TIME_STEP']);
+
 /**
  * Live game room over STOMP (/user/queue/room/{id} in: this player's own view; /app/room/{id}/action out).
- * Every broadcast carries the full state; this store keeps it plus the transient effects
- * (revealed cards, targeting glow, recent log lines). Same protocol as the legacy app.
+ * Every broadcast carries the full state; this store keeps it, shows the updates in line (UpdateQueue) and keeps
+ * their transient notices (GameNotices: revealed cards, targeting glow, recent log lines). Same protocol as the
+ * legacy app.
  */
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
   private client: Client | null = null;
-  private timers = new Set<ReturnType<typeof setTimeout>>();
 
   readonly roomId = signal<string | null>(null);
   readonly connected = signal(false);
   readonly state = signal<GameState | null>(null);
   readonly error = signal<string | null>(null);
-  readonly deckWarning = signal<string | null>(null);
+  /** The transient notices of the updates shown (forwarded below). */
+  private readonly notices = new GameNotices();
+  readonly deckWarning = this.notices.deckWarning;
   /**
    * Why I am no longer in the room (taken out by its owner, or it closed). The board leaves on it and the lobby
    * shows it; it outlives disconnect() for that.
    */
   readonly removed = signal<string | null>(null);
-  readonly revealed = signal<RevealedCard[]>([]);
-  readonly targetedId = signal<string | null>(null);
-  readonly targetingSourceId = signal<string | null>(null);
+  readonly revealed = this.notices.revealed;
+  readonly targetedId = this.notices.targetedId;
+  readonly targetingSourceId = this.notices.targetingSourceId;
   /** Card chosen with "Hacer objetivo", waiting for its target to be clicked. */
   readonly pendingTargetSource = signal<string | null>(null);
   /** Card clicked on the board: it shows its legal actions. */
@@ -61,6 +60,27 @@ export class GameStore {
    * cards and every hidden card shown.
    */
   readonly editorRoom = computed(() => !!this.state()?.editor);
+  /** A room against the server's bot: played as an online game, but its owner picks the bot's deck and nobody else enters. */
+  readonly botRoom = computed(() => !!this.state()?.bot);
+  /** A ranked game: its result moves the rank; who goes first is drawn, and against the bot its level and deck are not chosen. */
+  readonly rankedRoom = computed(() => !!this.state()?.ranked);
+  /** A room of the ranked queue (Online): for the two players paired, always ranked, nobody else enters. */
+  readonly queuedRoom = computed(() => !!this.state()?.queued);
+  /** The updates in line (see UpdateQueue). */
+  private readonly updates = new UpdateQueue(
+    () => this.state(),
+    (update) => this.apply(update),
+  );
+  /** The table jumped through time: shown as it is, without animating each move in between (see UpdateQueue). */
+  readonly jumped = this.updates.jumped;
+  /** While the board plays an animation, the updates that arrive wait in line (see UpdateQueue). Errors are shown at once. */
+  readonly holdUpdates = this.updates.hold;
+  /** A replay of a kept game: read only, watched move by move (the time line's controls). */
+  readonly replayRoom = computed(() => !!this.state()?.replay);
+  /** The simulator's administrators (simulator_admin) may have a bot play their own side in the Sala de pruebas. */
+  readonly simulatorAdmin = computed(() => !!this.auth.user() && this.auth.can('simulator_admin'));
+  /** Sala de pruebas or Modo solo: the room is its owner's alone, started from "Jugar". */
+  readonly ownRoom = computed(() => this.editorRoom() || this.botRoom());
   private readonly siteEditMode = inject(EditModeService);
   /**
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
@@ -76,8 +96,9 @@ export class GameStore {
    * until turned on.
    */
   private readonly revealChoice = signal<boolean | null>(null);
-  readonly revealHidden = computed(() => this.revealChoice() ?? this.editorRoom());
-  readonly seeAll = computed(() => this.editorMode() && this.revealHidden());
+  readonly revealHidden = computed(() => this.revealChoice() ?? (this.editorRoom() || this.replayRoom()));
+  /** Every hidden card in view: a test room (by choice) or a replay (the game is over). */
+  readonly seeAll = computed(() => this.replayRoom() || (this.editorMode() && this.revealHidden()));
 
   toggleRevealHidden(): void {
     this.revealChoice.set(!this.revealHidden());
@@ -121,16 +142,21 @@ export class GameStore {
   private actAsOnce: string | null = null;
 
   /** Cards that just reached your hand: they blink for a few seconds so they can be spotted. */
-  readonly newInHand = signal<ReadonlySet<string>>(new Set());
-  private handIds: Set<string> | null = null;
+  readonly newInHand = this.notices.newInHand;
   /** Cards chosen so far in the open choice: marked on the board so they can be told apart. */
   readonly promptChosen = signal<ReadonlySet<string>>(new Set());
-  readonly log = signal<LogLine[]>([]);
-  readonly recentLog = signal<LogLine[]>([]);
+  readonly log = this.notices.log;
+  readonly recentLog = this.notices.recentLog;
 
   private readonly userId = computed(() => this.auth.user()?.id ?? null);
   /** The side I play: myself, or in a test room the side chosen. */
-  private readonly me = computed(() => (this.editorRoom() && this.seat()) || this.userId());
+  private readonly me = computed(() => {
+    const s = this.state();
+    if ((this.editorRoom() || this.replayRoom()) && this.seat()) return this.seat();
+    // A replay of a game the viewer did not play: seen from its first seat
+    if (s?.replay && !s.players?.[this.userId() ?? '']) return Object.keys(s.players ?? {})[0] ?? this.userId();
+    return this.userId();
+  });
   /** Test room: both sides (mine first). */
   readonly sides = computed(() => {
     const players = Object.values(this.state()?.players ?? {});
@@ -148,10 +174,28 @@ export class GameStore {
   readonly status = computed(() => this.state()?.status ?? null);
   readonly phase = computed(() => this.state()?.currentPhase ?? 'MAIN');
   readonly isMyTurn = computed(() => !!this.me() && this.state()?.currentTurnUserId === this.me());
-  /** Effect choice waiting for this player (blocking modal). */
+  /**
+   * The side shown is not the player's to decide: a bot plays it (Sala de pruebas: the rival's with "El bot juega el
+   * lado del rival", the owner's with "Un bot juega tu lado") or the room is a replay. Its choices and mulligan are
+   * then the bot's: never a dialog over the board.
+   */
+  readonly sideByBot = computed(() => {
+    const s = this.state();
+    const id = this.me();
+    if (!s || !id) return false;
+    if (s.replay) return true;
+    if (!s.editor) return false;
+    return id === s.hostId ? !!s.editorSelfBot : !!s.editorBot;
+  });
+  /**
+   * The choice just answered: its dialog goes at once, while the table still plays what came before the answer (the
+   * update that clears it may wait for those animations). Forgotten if the server refuses the answer.
+   */
+  private readonly answered = signal<string | null>(null);
+  /** Effect choice waiting for this player (blocking modal); none when a bot answers it (see sideByBot) or once answered. */
   readonly myPrompt = computed(() => {
     const prompt = this.state()?.prompt;
-    return prompt && prompt.playerId === this.me() ? prompt : null;
+    return prompt && prompt.playerId === this.me() && !this.sideByBot() && prompt.id !== this.answered() ? prompt : null;
   });
   /** Effect being resolved, when the rules engine is busy (shown to both players). */
   readonly resolving = computed(() => {
@@ -204,50 +248,34 @@ export class GameStore {
   disconnect(): void {
     void this.client?.deactivate();
     this.client = null;
-    for (const t of this.timers) clearTimeout(t);
-    this.timers.clear();
+    this.notices.clear();
     this.roomId.set(null);
     this.state.set(null);
-    this.incoming.length = 0;
+    this.updates.clear();
     this.seat.set(null);
     this.connected.set(false);
     this.error.set(null);
-    this.deckWarning.set(null);
-    this.revealed.set([]);
-    this.log.set([]);
-    this.recentLog.set([]);
-    this.targetedId.set(null);
     this.pendingTargetSource.set(null);
   }
 
-  /** Cards in your hand that were not there before (only while playing, not on joining or a new game). */
-  private markNewInHand(update: GameState, me: string | null): void {
-    const hand = (me && update.players?.[me]?.hand) || [];
-    const ids = new Set(hand.map((c) => c.instanceId));
-    const previous = this.handIds;
-    this.handIds = ids;
-    if (!previous || update.status !== 'IN_PROGRESS' || update.event === 'JOIN_ROOM' || update.event === 'RECONNECT') return;
-    const added = [...ids].filter((id) => !previous.has(id));
-    if (!added.length) return;
-    this.newInHand.update((s) => new Set([...s, ...added]));
-    this.later(4000, () => this.newInHand.update((s) => new Set([...s].filter((id) => !added.includes(id)))));
+  /** The board's prelude to each update (see UpdateQueue); null when the board goes. */
+  setPrelude(prelude: Prelude | null): void {
+    this.updates.prelude = prelude;
   }
 
-  private later(ms: number, fn: () => void): void {
-    const t = setTimeout(() => {
-      this.timers.delete(t);
-      fn();
-    }, ms);
-    this.timers.add(t);
+  // The queue's parts under their former names, for debugging from the browser (g['incoming'].push(x); g['drain']())
+  private get incoming(): GameState[] {
+    return this.updates.incoming;
   }
-
-  /**
-   * While the board plays an animation, the updates that arrive wait in line and are shown one by one once it ends:
-   * what an effect does is seen after its chain link is shown, not under it. Errors are shown at once.
-   */
-  readonly holdUpdates = signal(false);
-  private readonly incoming: GameState[] = [];
-  private draining = false;
+  private get draining(): boolean {
+    return this.updates.draining;
+  }
+  private get prelude(): Prelude | null {
+    return this.updates.prelude;
+  }
+  private drain(): void {
+    this.updates.drain();
+  }
 
   private onMessage(body: string): void {
     const update = JSON.parse(body) as GameState;
@@ -259,20 +287,6 @@ export class GameStore {
     this.drain();
   }
 
-  /** Shows the next update in line, and the one after it a frame later (once the board has drawn and animated it). */
-  private drain(): void {
-    if (this.draining || this.holdUpdates() || !this.incoming.length) return;
-    this.apply(this.incoming.shift()!);
-    if (!this.incoming.length) return;
-    this.draining = true;
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        this.draining = false;
-        this.drain();
-      }),
-    );
-  }
-
   private apply(update: GameState): void {
     const me = this.userId();
     if (update.error) {
@@ -281,8 +295,11 @@ export class GameStore {
         this.removed.set('La sala se cerró');
         return;
       }
-      // Errors reach the whole room: show only the ones caused by this player
-      if (!update.actorId || update.actorId === me) this.error.set(update.error);
+      // Errors reach the whole room: show only the ones caused by this player (a refused answer: its choice again)
+      if (!update.actorId || update.actorId === me) {
+        this.error.set(update.error);
+        this.answered.set(null);
+      }
       return;
     }
     // Taken out of the room: stop showing it
@@ -292,48 +309,12 @@ export class GameStore {
       return;
     }
     const previous = this.state();
+    // A jump through time (more than one move at once) is shown without animating what lies in between
+    this.jumped.set(isTimeJump(previous?.timelineAt, update));
     this.state.set(update);
     this.error.set(null);
     if (update.editor) this.followSides(update, previous);
-    this.markNewInHand(update, this.me());
-
-    // Warn about the deck I just picked (in the pre-room I join without one)
-    const side = this.me();
-    if (update.event === 'SET_DECK' && side && update.actorId === side) {
-      const warnings = deckWarnings(update.players?.[side]?.originalDeck ?? []);
-      if (warnings.length) {
-        this.deckWarning.set(warnings.join(' · '));
-        this.later(10_000, () => this.deckWarning.set(null));
-      }
-    }
-
-    if (update.event === 'REVEAL_TO_HAND' && update.revealedCardImageUrl) {
-      const card: RevealedCard = { id: Date.now() + Math.random(), imageUrl: update.revealedCardImageUrl, name: update.revealedCardName ?? null };
-      this.revealed.update((list) => [...list, card]);
-      this.later(3000, () => this.revealed.update((list) => list.filter((c) => c.id !== card.id)));
-    }
-
-    if (Array.isArray(update.eventLog)) {
-      const previous = this.log().length;
-      const lines = update.eventLog.map((e, i) => ({ ...e, id: `${e.ts}_${i}` }));
-      this.log.set(lines);
-      // Joining replays the whole history: only flash lines that are new while playing
-      if (update.event !== 'JOIN_ROOM' && update.event !== 'RECONNECT') {
-        for (const line of lines.slice(previous)) {
-          this.recentLog.update((list) => [...list, line]);
-          this.later(6000, () => this.recentLog.update((list) => list.filter((l) => l.id !== line.id)));
-        }
-      }
-    }
-
-    if (update.event === 'TARGET_CARD' && update.targetedInstanceId) {
-      this.targetedId.set(targetForViewer(update.targetedInstanceId, update.actorId === this.me()));
-      this.targetingSourceId.set(update.targetingSourceInstanceId ?? null);
-      this.later(3000, () => {
-        this.targetedId.set(null);
-        this.targetingSourceId.set(null);
-      });
-    }
+    this.notices.take(update, this.me());
   }
 
   /**
@@ -349,6 +330,8 @@ export class GameStore {
       update.prompt?.playerId ??
       (update.status === 'MULLIGAN' ? ids.find((id) => !confirmed.includes(id)) : null) ??
       (update.currentTurnUserId !== previous?.currentTurnUserId || update.status !== previous?.status || previous?.prompt ? update.currentTurnUserId : null);
+    // With the bot playing the rival, the owner stays on their own side: the bot's decisions are not theirs to take
+    if (update.editorBot && next !== update.hostId) return;
     if (next && update.players?.[next]) this.seat.set(next);
   }
 
@@ -375,6 +358,8 @@ export class GameStore {
   private send(type: string, payload: Record<string, unknown> = {}): void {
     const room = this.roomId();
     if (!this.client?.connected || !room) return;
+    // A replay is only watched: nothing of the game is sent
+    if (this.replayRoom() && !REPLAY_ACTIONS.has(type)) return;
     // Test room: the owner plays the other side too
     const actor = this.actor();
     const body = this.editorRoom() && actor && actor !== this.userId() ? { ...payload, actAs: actor } : payload;
@@ -425,6 +410,7 @@ export class GameStore {
   resolvePrompt(promptId: string, chosen: string[], order: string[] = []): void {
     // Test room: answered as the side it is for
     const prompt = this.state()?.prompt;
+    this.answered.set(promptId);
     this.actingAs(this.editorRoom() && prompt?.id === promptId ? prompt.playerId : this.actAsOnce, () =>
       this.send('RESOLVE_PROMPT', { promptId, chosen, order }),
     );
@@ -448,9 +434,48 @@ export class GameStore {
   startGame(firstPlayerId: string): void {
     this.send('START_GAME', { firstPlayerId });
   }
-  /** Pre-room: the deck to play with (its first Iniciador is the starter until another is chosen). */
-  setDeck(deckId: string): void {
-    this.send('SET_DECK', { deckId });
+  /** Pre-room: the deck to play with (its first Iniciador is the starter until another is chosen); `forBot`: the bot's. */
+  setDeck(deckId: string, forBot = false): void {
+    this.send('SET_DECK', forBot ? { deckId, actAs: BOT_SEAT } : { deckId });
+  }
+  /** Sala de pruebas: the bots wait (true) or play again (false). */
+  setPaused(paused: boolean): void {
+    this.send('SET_PAUSED', { paused });
+  }
+  /** Sala de pruebas: through the time line, `by` moves back (negative) or forth, or to the move `to`. */
+  timeStep(step: { by: number } | { to: number }): void {
+    this.send('TIME_STEP', step);
+  }
+  /** Pre-room, owner only: the game is ranked (true) or friendly (false). */
+  setRanked(ranked: boolean): void {
+    this.send('SET_RANKED', { ranked });
+  }
+  /** Sala de pruebas: the bot plays the test rival's side (true) or the owner does by hand (false). */
+  setEditorBot(on: boolean): void {
+    this.send('SET_EDITOR_BOT', { on });
+  }
+  /** Sala de pruebas (simulator administrators): a bot plays the owner's own side too (true) or the owner does by hand (false). */
+  setEditorSelfBot(on: boolean): void {
+    this.send('SET_EDITOR_SELF_BOT', { on });
+  }
+  /** Sala de pruebas: the level or model of the bot that plays the owner's side. */
+  setSelfBotLevel(level: BotLevel): void {
+    this.send('SET_BOT_LEVEL', { level, side: 'self' });
+  }
+  /** The pause before each move of the room's bots, in ms (null: each bot's own pace). */
+  /** Sala de pruebas: the edge of the rival's side (0–8), from its next turn on. */
+  setBotEdge(level: number): void {
+    this.send('SET_BOT_EDGE', { level });
+  }
+
+  setBotDelay(ms: number | null): void {
+    this.send('SET_BOT_DELAY', { ms: ms ?? -1 });
+    // The server takes it at once but sends no update for it (a bot may be thinking): shown now, the next update has it
+    this.state.update((s) => (s ? { ...s, botDelayMs: ms } : s));
+  }
+  /** Pre-room of a room against the bot: how well it plays (the owner chooses). */
+  setBotLevel(level: BotLevel): void {
+    this.send('SET_BOT_LEVEL', { level });
   }
   setStarter(cardId: string): void {
     this.send('SET_STARTER', { cardId });

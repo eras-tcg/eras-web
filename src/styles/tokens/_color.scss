@@ -38,6 +38,9 @@
   --color-sim-rival: var(--color-card-r);
   --color-sim-effect: var(--color-card-p);
   --color-sim-gold: #f5b301;
+  /* The chain and the effects' targets: whose they are (cyan: mine, pink: the rival's) */
+  --color-sim-link-mine: #38bdf8;
+  --color-sim-link-rival: #f472b6;
   --color-sim-glow: #fde68a;
   --color-sim-moment: #f59e0b;
   /** Text on those colors */

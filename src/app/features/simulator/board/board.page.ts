@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { CardsStore } from '@data/cards/cards.store';
-import { sharedIndexForValue, sharedValueForIndex } from '@data/simulator/game-rules';
+import { sharedIndexForValue, sharedValueForIndex, isMatchActive } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ChainListComponent } from './chain-list.component';
 import { SharedBarComponent } from '@ui/domain/game-counters/shared-bar.component';
@@ -22,30 +22,53 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { CardFlightsComponent } from './card-flights.component';
 import { BoardAnimations } from './board-animations';
+import { BoardChoreography } from './board-choreography';
+import { BoardPreferences } from './board-preferences';
+import { BoardScreen } from './board-screen';
+import { seeThroughPress } from './board-see-through';
+import { timingVars } from './timing';
 import { DamageRevealComponent } from './damage-reveal.component';
 import { ChainLinkRevealComponent } from './chain-link-reveal.component';
 import { BoardFxComponent } from './board-fx.component';
 import { MatchBannerComponent } from './match-banner.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
 import { PreRoomComponent } from './pre-room.component';
-import { persistedFlag } from '@core/storage/persisted-flag';
-import { persistedNumber } from '@core/storage/persisted-number';
 import { SidebarItemComponent } from './sidebar-item.component';
 import { touchContextMenu } from './board-touch';
-
-/** How long the left button must be held anywhere to look through the panels. */
-const LONG_PRESS_MS = 350;
-const isPlaying = (status: string | null) => status === 'IN_PROGRESS' || status === 'MULLIGAN' || status === 'SELECTING_STARTER';
-/** "Mesa en perspectiva" at the end of its slider: how far the table leans back, in degrees. */
-const TABLE_TILT_MAX = 24;
-
-const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: 'Fase principal', END: 'Fase final', END_PHASE: 'Fase final' };
+import { PhaseBarComponent } from './phase-bar.component';
+import { PhasePopupComponent } from './phase-popup.component';
+import { ReplayControlsComponent } from './replay-controls.component';
+import { TestRoomControlsComponent } from './test-room-controls.component';
 
 /** Game table: opponent on top (mirrored), you below, turn controls, shared gem bar and live notices. */
 @Component({
   selector: 'eras-board-page',
-  imports: [NgTemplateOutlet, CardFlightsComponent, DamageRevealComponent, ChainLinkRevealComponent, BoardFxComponent, MatchBannerComponent, PromptSpotlightComponent, PreRoomComponent, ChainListComponent, PlayerHalfComponent, StatusPanelsComponent, SharedBarComponent, StackComponent, AlertComponent, EmptyStateComponent, ButtonComponent, SpinnerComponent, IconComponent, SidebarItemComponent],
-  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations],
+  imports: [
+    NgTemplateOutlet,
+    CardFlightsComponent,
+    DamageRevealComponent,
+    ChainLinkRevealComponent,
+    BoardFxComponent,
+    MatchBannerComponent,
+    PromptSpotlightComponent,
+    PreRoomComponent,
+    ChainListComponent,
+    PlayerHalfComponent,
+    StatusPanelsComponent,
+    SharedBarComponent,
+    StackComponent,
+    AlertComponent,
+    EmptyStateComponent,
+    ButtonComponent,
+    SpinnerComponent,
+    IconComponent,
+    SidebarItemComponent,
+    PhaseBarComponent,
+    PhasePopupComponent,
+    ReplayControlsComponent,
+    TestRoomControlsComponent,
+  ],
+  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardPreferences, BoardScreen],
   templateUrl: './board.page.html',
   // The phone layouts (upright: turn it; landscape: compact) apart, within the size budget of a stylesheet
   styleUrls: ['./board.page.scss', './board.page.phone.scss'],
@@ -54,8 +77,7 @@ const PHASE_LABELS: Record<string, string> = { START: 'Inicio de turno', MAIN: '
   host: {
     '(document:keydown.escape)': 'game.pendingTargetSource.set(null); game.selectedId.set(null)',
     '(click)': 'game.selectedId.set(null)',
-    '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
-    '[class.fullscreen]': 'fullView()',
+    '[class.fullscreen]': 'screen.fullView()',
     '[class.in-game]': 'inGame()',
   },
 })
@@ -65,6 +87,12 @@ export class BoardPage {
 
   protected readonly game = inject(GameStore);
   protected readonly animations = inject(BoardAnimations);
+  /** The table's preferences (remembered on the device) and the options sidebar's state. */
+  protected readonly prefs = inject(BoardPreferences);
+  /** Full screen, installed, landscape lock. */
+  protected readonly screen = inject(BoardScreen);
+  /** The animations' timings, as custom properties for the styles. */
+  protected readonly timing = timingVars();
   private readonly drag = inject(BoardDrag);
   private readonly sheet = inject(SheetState);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */
@@ -80,12 +108,12 @@ export class BoardPage {
   private readonly router = inject(Router);
   /** The site's edit mode banner already says it: no badge of its own then. */
   protected readonly editMode = inject(EditModeService);
+  /** A replay's controls (in the sidebar), stopped when leaving it. */
+  private readonly replayControls = viewChild(ReplayControlsComponent);
 
-  protected readonly phaseLabel = computed(() => PHASE_LABELS[this.game.phase()] ?? this.game.phase());
   protected readonly inProgress = computed(() => this.game.status() === 'IN_PROGRESS');
   /** A game in course, from the starters' choice to its end (online, only surrendering leaves it). */
-  protected readonly playing = computed(() => isPlaying(this.game.status()));
-  /** Test room: whose turn it is, by name (both sides are mine). */
+  protected readonly playing = computed(() => isMatchActive(this.game.status()));
   /** Inside a game (after the pre-room): the options sidebar and the hidden navigation bar apply. */
   protected readonly inGame = computed(() => !!this.game.status() && this.game.status() !== 'WAITING');
   protected readonly sharedIndex = computed(() => sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()));
@@ -93,99 +121,12 @@ export class BoardPage {
   /** The owner of the room is the rival (if they stay away, the room passes to me). */
   protected readonly rivalOwns = computed(() => !!this.game.state()?.hostId && this.game.state()?.hostId === this.game.opponentState()?.userId);
   protected readonly dismissedLeft = signal(false);
-  /** "Zonas espejadas": the rival's lives and gems swap with their piles. Remembered on the device. */
-  protected readonly mirrored = persistedFlag('eras-sim-mirrored');
-  /** The options sidebar: expanded (names beside the icons), or dynamic (it expands while the pointer is on it). */
-  protected readonly sidebarExpanded = persistedFlag('eras-sim-sidebar-expanded');
-  protected readonly sidebarDynamic = persistedFlag('eras-sim-sidebar-dynamic');
-  protected readonly sidebarHover = signal(false);
-  protected readonly sidebarOpen = computed(() => (this.sidebarDynamic() ? this.sidebarHover() : this.sidebarExpanded()));
-  /** "Mano recta": the hands in a row instead of a fan. Remembered on the device. */
-  protected readonly straightHand = persistedFlag('eras-sim-straight-hand');
-  /**
-   * "Mesa en perspectiva": how far the table leans back, as seen from your seat (not on phones), from flat (0) to
-   * TABLE_TILT_MAX (1). Only a slider, no number. Remembered on the device.
-   */
-  protected readonly tilt = persistedNumber('eras-sim-tilt', 0, 0, 1);
-  protected readonly tilted = computed(() => this.tilt() > 0);
-  protected readonly tiltAngle = computed(() => `${this.tilt() * TABLE_TILT_MAX}deg`);
-  /** The latest actions shown as notices over the table (top left). Remembered on the device. */
-  protected readonly noticesOff = persistedFlag('eras-sim-notices-off');
-  /** Browser full screen: the field cards get the extra room. */
-  protected readonly fullscreen = signal(false);
-  /** Opened from the home screen (installed): no browser bars already, so it counts as full screen. */
-  protected readonly installed =
-    !!this.document.defaultView?.matchMedia?.('(display-mode: fullscreen), (display-mode: standalone)').matches ||
-    (this.document.defaultView?.navigator as { standalone?: boolean } | undefined)?.standalone === true;
-  /** iPhone's Safari has no full screen for pages: there the button explains how to install it instead. */
-  protected readonly canFullscreen = this.document.fullscreenEnabled;
-  protected readonly fullView = computed(() => this.fullscreen() || this.installed);
-  /** A phone in landscape (the compact table of the styles): the site's navigation bar hides by itself. */
-  private readonly shortQuery = this.document.defaultView?.matchMedia?.('(orientation: landscape) and (max-height: 30rem)');
-  protected readonly shortScreen = signal(!!this.shortQuery?.matches);
-  /** Test room: the other side, to look at the table from it. */
+  /** Sala de pruebas and replays: the other side, to look at the table from it. */
   protected readonly otherSide = computed(() => this.game.sides().find((p) => p.userId !== this.game.myState()?.userId) ?? null);
   private leaving = false;
 
-  /** The phases of the turn in the bar. */
-  protected readonly phases = [
-    { id: 'START', label: 'Inicio' },
-    { id: 'MAIN', label: 'Principal' },
-    { id: 'END_PHASE', label: 'Final' },
-  ];
-  protected readonly currentPhase = computed(() => (this.game.phase() === 'END' ? 'END_PHASE' : this.game.phase()));
-
-  /**
-   * On your turn, with nothing pending, the main phase goes on to the end phase. The end phase is closed: once its
-   * move up and its triggers are done the turn ends by itself (a stuck end phase can still be closed by hand).
-   */
-  protected canGoTo(phase: string): boolean {
-    if (!this.game.isMyTurn() || this.lookOnly() || this.game.state()?.prompt || this.game.state()?.chain?.length || this.game.state()?.combat) return false;
-    return phase === 'END_PHASE' && (this.currentPhase() === 'MAIN' || this.currentPhase() === 'END_PHASE');
-  }
-
-  protected phaseHint(phase: string): string {
-    if (!this.canGoTo(phase)) return '';
-    return this.currentPhase() === 'END_PHASE' ? 'Terminar el turno' : 'Pasar a la fase final: al terminarla, termina tu turno';
-  }
-
-  protected goTo(phase: string): void {
-    if (!this.canGoTo(phase)) return;
-    if (this.currentPhase() === 'END_PHASE') this.game.endTurn();
-    else this.game.enterEndPhase();
-  }
-  /** A short pop-up when the turn or the phase changes. */
-  protected readonly phasePopup = signal<{ who: string; phase: string; mine: boolean } | null>(null);
-  private lastPhase: string | null = null;
-  private lastTurn: string | null = null;
-  private popupTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly popups: { who: string; phase: string; mine: boolean }[] = [];
-
   constructor() {
-    effect(() => {
-      const s = this.game.state();
-      if (s?.status !== 'IN_PROGRESS' || !s.currentTurnUserId) {
-        this.lastPhase = null;
-        return;
-      }
-      const key = s.currentTurnUserId + '|' + s.currentPhase;
-      const first = this.lastPhase === null;
-      if (key === this.lastPhase) return;
-      const newTurn = this.lastTurn !== null && this.lastTurn !== s.currentTurnUserId;
-      this.lastPhase = key;
-      this.lastTurn = s.currentTurnUserId;
-      if (first) return;
-      const mine = s.currentTurnUserId === this.game.myState()?.userId;
-      const name = s.players?.[s.currentTurnUserId]?.username ?? 'Rival';
-      const who = mine ? 'Tu turno' : 'Turno de ' + name;
-      untracked(() => {
-        if (this.animations.off()) return;
-        // A new turn always shows its start, even when it went straight on to the main phase
-        if (newTurn && s.currentPhase !== 'START') this.popups.push({ who, phase: PHASE_LABELS['START'], mine });
-        this.popups.push({ who, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine });
-        if (!this.popupTimer) this.nextPopup();
-      });
-    });
+    const destroyRef = inject(DestroyRef);
     // The page glows from the side of whoever has the priority
     effect(() => {
       const acting = this.game.actingId();
@@ -195,26 +136,18 @@ export class BoardPage {
     });
     // In a game: a phone held upright hides the choices too (they are in the top layer), behind "Gira el teléfono"
     effect(() => this.document.body.classList.toggle('eras-in-game', this.inGame()));
-    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-in-game'));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
     effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
-    inject(DestroyRef).onDestroy(() => this.document.body.classList.remove('eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
+    destroyRef.onDestroy(() => this.document.body.classList.remove('eras-in-game', 'eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
     // While something plays, the next updates wait: each one is seen after the animation before it
     effect(() => this.game.holdUpdates.set(!this.animations.idle()));
-    inject(DestroyRef).onDestroy(() => this.game.holdUpdates.set(false));
-    // Phones: the table stays in landscape while full screen or installed (only Android allows it; elsewhere it
-    // is refused and nothing changes). Back to free rotation outside the table.
-    const orientation = this.document.defaultView?.screen?.orientation as (ScreenOrientation & { lock?: (o: string) => Promise<void> }) | undefined;
-    effect(() => {
-      if (this.fullView()) orientation?.lock?.('landscape').catch(() => undefined);
-      else orientation?.unlock?.();
-    });
-    inject(DestroyRef).onDestroy(() => orientation?.unlock?.());
-    const onShort = (e: MediaQueryListEvent) => this.shortScreen.set(e.matches);
-    this.shortQuery?.addEventListener?.('change', onShort);
-    inject(DestroyRef).onDestroy(() => this.shortQuery?.removeEventListener?.('change', onShort));
+    destroyRef.onDestroy(() => this.game.holdUpdates.set(false));
+    // One animation at a time: what an update does plays on the table as it is, before the update is shown
+    const choreography = inject(BoardChoreography);
+    this.game.setPrelude((now, next) => choreography.prelude(now, next));
+    destroyRef.onDestroy(() => this.game.setPrelude(null));
     // Card details in dialogs come from the catalog
     void this.cards.load();
 
@@ -231,7 +164,7 @@ export class BoardPage {
       if (!this.game.removed()) return;
       untracked(() => {
         this.leaving = true;
-        void this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator', { replaceUrl: true });
+        void this.router.navigateByUrl(this.backTo(), { replaceUrl: true });
       });
     });
 
@@ -260,86 +193,22 @@ export class BoardPage {
         }
       });
     });
-    inject(DestroyRef).onDestroy(() => open?.close());
+    destroyRef.onDestroy(() => open?.close());
 
-    // A long press on the table (left button, not on the panels) also looks through, while it is held; moving cancels it (a drag).
-    // With a choice open (expanded), pressing outside it (its backdrop) looks through at once, while it is held.
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let start: { x: number; y: number } | null = null;
-    // The click that ends looking through the backdrop must not close the choice
-    let swallowClick = false;
-    const cancel = () => {
-      if (timer) clearTimeout(timer);
-      timer = null;
-      start = null;
-    };
-    const down = (e: PointerEvent) => {
-      if (e.button !== 0 || !this.canSeeThrough()) return;
-      const target = e.target as Element | null;
-      if (target?.classList.contains('cdk-overlay-backdrop') && this.sheet.open() > 0 && !this.lookOnly()) {
-        cancel();
-        this.seeThrough.set(true);
-        return;
-      }
-      // Not over the panels themselves (a choice, the chain): a long press there is choosing, not looking
-      if (target?.closest('.cdk-overlay-container, .chain-panel, .eras-prompt-spotlight')) return;
-      cancel();
-      start = { x: e.clientX, y: e.clientY };
-      timer = setTimeout(() => {
-        timer = null;
-        this.seeThrough.set(true);
-      }, LONG_PRESS_MS);
-    };
-    const move = (e: PointerEvent) => {
-      if (timer && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) cancel();
-    };
-    const up = () => {
-      cancel();
-      if (this.seeThrough()) swallowClick = true;
-      this.seeThrough.set(false);
-    };
-    const click = (e: MouseEvent) => {
-      if (!swallowClick) return;
-      swallowClick = false;
-      e.stopPropagation();
-      e.preventDefault();
-    };
-    // A press that did not end in a click (released elsewhere) must not swallow the next one
-    const clearSwallow = () => setTimeout(() => (swallowClick = false));
     const win = this.document.defaultView;
-    win?.addEventListener('pointerdown', down, true);
-    win?.addEventListener('pointermove', move, true);
-    win?.addEventListener('pointerup', up, true);
-    win?.addEventListener('pointerup', clearSwallow);
-    win?.addEventListener('click', click, true);
-    win?.addEventListener('pointercancel', up, true);
-    win?.addEventListener('blur', up);
-    // A drag is not a long press, and after one the browser sends no pointerup: a drag ends whatever was held
-    const dragged = () => {
-      up();
-      this.drag.end();
-    };
-    win?.addEventListener('dragstart', cancel, true);
-    win?.addEventListener('dragend', dragged, true);
-    win?.addEventListener('drop', dragged);
-    inject(DestroyRef).onDestroy(() => {
-      cancel();
-      this.seeThrough.set(false);
-      win?.removeEventListener('pointerdown', down, true);
-      win?.removeEventListener('pointermove', move, true);
-      win?.removeEventListener('pointerup', up, true);
-      win?.removeEventListener('pointerup', clearSwallow);
-      win?.removeEventListener('click', click, true);
-      win?.removeEventListener('pointercancel', up, true);
-      win?.removeEventListener('blur', up);
-      win?.removeEventListener('dragstart', cancel, true);
-      win?.removeEventListener('dragend', dragged, true);
-      win?.removeEventListener('drop', dragged);
-    });
-    // Touch screens: a long press on a card or pile opens its menu (with a panel to look through, it looks instead)
     if (win) {
-      const stopTouchMenu = touchContextMenu(win, () => !this.canSeeThrough() && !this.lookOnly());
-      inject(DestroyRef).onDestroy(stopTouchMenu);
+      // A long press on the table (or on a choice's backdrop) looks through the panels while it is held
+      destroyRef.onDestroy(
+        seeThroughPress(win, {
+          canSeeThrough: this.canSeeThrough,
+          sheetOpen: () => this.sheet.open() > 0,
+          lookOnly: this.lookOnly,
+          seeThrough: this.seeThrough,
+          dragEnded: () => this.drag.end(),
+        }),
+      );
+      // Touch screens: a long press on a card or pile opens its menu (with a panel to look through, it looks instead)
+      destroyRef.onDestroy(touchContextMenu(win, () => !this.canSeeThrough() && !this.lookOnly()));
     }
     // Nothing left to look through: back to normal
     effect(() => {
@@ -352,37 +221,6 @@ export class BoardPage {
     if (e.button !== 0) return;
     e.stopPropagation();
     this.seeThrough.set(true);
-  }
-
-  protected toggleSidebar(): void {
-    this.sidebarExpanded.update((on) => !on);
-    // Collapsing it by hand leaves it collapsed until hovered again
-    if (!this.sidebarExpanded()) this.sidebarHover.set(false);
-  }
-
-  protected async toggleFullscreen(): Promise<void> {
-    if (!this.canFullscreen) {
-      await this.modal.confirm({
-        title: 'Pantalla completa',
-        message:
-          'Este navegador no permite pantalla completa en una página. Para jugar sin las barras del navegador, toca ' +
-          'Compartir → "Agregar a pantalla de inicio" y abre ERAS desde ese ícono.',
-        confirmLabel: 'Entendido',
-      });
-      return;
-    }
-    try {
-      if (this.document.fullscreenElement) await this.document.exitFullscreen();
-      else await this.document.documentElement.requestFullscreen();
-    } catch {
-      // The browser refused it (no user gesture, not allowed): nothing changes
-    }
-  }
-
-  private nextPopup(): void {
-    const popup = this.popups.shift() ?? null;
-    this.phasePopup.set(popup);
-    this.popupTimer = popup ? setTimeout(() => this.nextPopup(), 1300) : null;
   }
 
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */
@@ -416,9 +254,14 @@ export class BoardPage {
     if (await this.modal.confirm({ title: 'Rendirse', message: '¿Seguro que quieres rendirte?', confirmLabel: 'Rendirse', danger: true })) this.game.surrender();
   }
 
-  /** Out of the board: solo mode goes back to "Jugar" (where it started), an online room to the rooms. */
+  /** Out of the board: Modo solo and the Sala de pruebas go back to "Jugar" (where they started), an online room to the rooms. */
   protected async exit(): Promise<void> {
-    await this.router.navigateByUrl(this.game.editorRoom() ? '/play' : '/simulator');
+    await this.router.navigateByUrl(this.backTo());
+  }
+
+  /** Where leaving the board goes: a replay to the profile (its history), Modo solo and the Sala de pruebas to "Jugar". */
+  private backTo(): string {
+    return this.game.replayRoom() ? '/profile' : this.game.ownRoom() ? '/play' : '/simulator';
   }
 
   /** The owner takes the disconnected rival out of the room (the game ends; the pre-room waits for another). */
@@ -429,12 +272,19 @@ export class BoardPage {
 
   /**
    * Route guard. Leaving an online game in course loses it (asked first): the seat is freed and the rival wins.
-   * Leaving solo mode closes its room. Leaving the pre-room or a finished game frees the seat. Leaving always
+   * Leaving Modo solo or the Sala de pruebas closes its room. Leaving the pre-room or a finished game frees the seat. Leaving always
    * disconnects.
    */
   async confirmLeave(): Promise<boolean> {
-    const playing = isPlaying(this.game.status());
-    if (!this.leaving && playing && !this.game.editorRoom() && !this.game.removed()) {
+    // A replay is only watched: leaving closes it
+    if (this.game.replayRoom()) {
+      this.replayControls()?.stop();
+      this.game.leaveRoom();
+      this.game.disconnect();
+      return true;
+    }
+    const playing = isMatchActive(this.game.status());
+    if (!this.leaving && playing && !this.game.ownRoom() && !this.game.removed()) {
       const ok = await this.modal.confirm({
         title: 'Abandonar la partida',
         message: 'Si sales ahora, pierdes la partida y tu rival gana.',
@@ -446,11 +296,14 @@ export class BoardPage {
       this.game.disconnect();
       return true;
     }
-    if (!this.leaving && playing && this.game.editorRoom()) {
-      const ok = await this.modal.confirm({ title: 'Salir del modo solo', message: 'La partida se cierra.', confirmLabel: 'Salir' });
+    if (!this.leaving && playing && this.game.ownRoom()) {
+      const title = this.game.botRoom() ? 'Salir del modo solo' : 'Salir de la sala de pruebas';
+      // A ranked game left before its end is lost (and counts for the rank)
+      const message = this.game.rankedRoom() ? 'Pierdes la partida ranked y cuenta para tu rango.' : 'La partida se cierra.';
+      const ok = await this.modal.confirm({ title, message, confirmLabel: 'Salir', danger: this.game.rankedRoom() });
       if (!ok) return false;
     }
-    if ((!playing || this.game.editorRoom()) && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
+    if ((!playing || this.game.ownRoom()) && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
     // Going back to the lobby of the same room keeps the connection (it reconnects there)
     this.game.disconnect();
     return true;

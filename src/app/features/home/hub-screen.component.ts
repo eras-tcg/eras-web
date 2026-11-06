@@ -5,7 +5,11 @@ import { AvatarStore } from '@core/auth/avatar.store';
 import { AppToolsComponent } from '@core/layout/app-tools.component';
 import { Edition } from '@data/editions/edition.model';
 import { EditionsStore } from '@data/editions/editions.store';
+import { rankTitle } from '@core/ranks/rank-tier';
+import { RanksStore } from '@data/ranks/ranks.store';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
+import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
+import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { pickBackground } from './hub-rules';
 
@@ -20,7 +24,7 @@ const BACKGROUND_KEY = 'eras-hub-background';
  */
 @Component({
   selector: 'eras-hub-screen',
-  imports: [RouterLink, AppToolsComponent, AvatarComponent, IconComponent],
+  imports: [RouterLink, AppToolsComponent, AvatarComponent, IconComponent, RankEmblemComponent, RankProgressComponent],
   templateUrl: './hub-screen.component.html',
   styleUrl: './hub-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +34,9 @@ const BACKGROUND_KEY = 'eras-hub-background';
 export class HubScreenComponent {
   protected readonly auth = inject(AuthService);
   protected readonly avatar = inject(AvatarStore);
+  /** The player's ranked tier, beside their name. */
+  protected readonly ranks = inject(RanksStore);
+  protected readonly titleOf = rankTitle;
   private readonly editions = inject(EditionsStore);
   private readonly router = inject(Router);
 

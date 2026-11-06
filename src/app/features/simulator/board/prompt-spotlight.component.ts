@@ -2,10 +2,16 @@ import { DOCUMENT } from '@angular/common';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, DestroyRef, afterRenderEffect, computed, effect, inject } from '@angular/core';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { pileOf } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
+import { ZoneName } from '@data/simulator/simulator.model';
+import { poseFrames, poseOf, stageOf } from './card-pose';
+import { pile, tableCard } from './board-dom';
+import { tablePlane } from './table-plane';
+import { LAYER } from './timing';
 
-const ZONES: ZoneName[] = ['field', 'hand', 'tributeZone', 'discardPile', 'lifeStack', 'deck'];
+/** The piles a choice's card is looked for in, when it is not on the table. */
+const ZONES: ZoneName[] = ['hand', 'tributeZone', 'discardPile', 'lifeStack', 'deck'];
 
 /**
  * While one of my choices is open, the card whose effect it belongs to is drawn again above the choice's
@@ -82,7 +88,7 @@ export class PromptSpotlightComponent {
   private createLayer(): HTMLElement {
     const layer = this.document.createElement('div');
     layer.className = 'eras-prompt-spotlight';
-    Object.assign(layer.style, { position: 'fixed', inset: '0', zIndex: '1000', pointerEvents: 'none' });
+    Object.assign(layer.style, { position: 'fixed', inset: '0', zIndex: LAYER.spotlight, pointerEvents: 'none' });
     return layer;
   }
 
@@ -140,6 +146,12 @@ export class PromptSpotlightComponent {
       copy.style.setProperty('--game-card-width', getComputedStyle(element).getPropertyValue('--game-card-width'));
       copy.style.width = `${width}px`;
       copy.style.height = `${height}px`;
+      // "Mesa en perspectiva": drawn as the table shows it, with its camera (leaning back, turned, the far side smaller)
+      const plane = tablePlane(this.document);
+      if (plane?.holds(element)) {
+        this.layer.append(this.leaning(element, copy, width, height));
+        continue;
+      }
       // Centered where the card is (its own transform, like exhausted, is kept by its classes)
       copy.style.left = `${rect.left + rect.width / 2 - width / 2}px`;
       copy.style.top = `${rect.top + rect.height / 2 - height / 2}px`;
@@ -149,6 +161,29 @@ export class PromptSpotlightComponent {
     for (const animation of this.layer.getAnimations?.({ subtree: true }) ?? []) {
       if (Number.isFinite(animation.effect?.getComputedTiming().iterations ?? Infinity)) animation.finish();
     }
+  }
+
+  /**
+   * A copy of a card on the leaning table, in its pose seen by the table's camera (as the cards flying between zones).
+   * Its turn (exhausted, a hand's fan) is in the pose, so its own transform is replaced; a rival's card keeps its
+   * faces turned by its class, so the pose does not turn it again.
+   */
+  private leaning(element: HTMLElement, copy: HTMLElement, width: number, height: number): HTMLElement {
+    const stage = stageOf(this.document);
+    const pose = poseOf(element);
+    if (element.classList.contains('upside-down')) pose.turn -= 180;
+    const frame = this.document.createElement('div');
+    Object.assign(frame.style, {
+      position: 'fixed',
+      inset: '0',
+      perspective: `${stage.distance}px`,
+      perspectiveOrigin: `${stage.originX}px ${stage.originY}px`,
+      pointerEvents: 'none',
+    });
+    Object.assign(copy.style, { position: 'absolute', left: '0px', top: '0px', width: `${width}px`, height: `${height}px`, transformOrigin: '50% 50%' });
+    copy.style.transform = String(poseFrames(stage, pose, pose, { fromBack: false, toBack: false })[0]['transform']);
+    frame.append(copy);
+    return frame;
   }
 
   /**
@@ -187,14 +222,9 @@ export class PromptSpotlightComponent {
   /** The card on the field, or the pile it is in. */
   private elementOf(id: string): HTMLElement | null {
     // A card of the field, or of a hand (the card itself, not the whole hand)
-    const card = this.document.querySelector<HTMLElement>(`[data-instance-id="${id}"] eras-game-card, [data-hand-id="${id}"] eras-game-card`);
+    const card = tableCard(this.document, id);
     if (card) return card;
-    for (const p of Object.values(this.game.state()?.players ?? {})) {
-      for (const zone of ZONES) {
-        if (!(p[zone] as CardSlot[]).some((c) => c.instanceId === id)) continue;
-        return this.document.querySelector<HTMLElement>(`[data-pile="${p.userId}:${zone}"]`);
-      }
-    }
-    return null;
+    const where = pileOf(this.game.state(), id, ZONES);
+    return where ? pile(this.document, where.ownerId, where.zone) : null;
   }
 }

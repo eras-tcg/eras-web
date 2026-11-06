@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CardsStore } from '@data/cards/cards.store';
 import { CARD_TYPE_LABELS, CatalogCard, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { GameStore } from '@data/simulator/game.store';
-import { DummyCard, ZoneName } from '@data/simulator/simulator.model';
+import { DummyCard, ZONE_LABELS, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -20,14 +20,14 @@ interface Place {
 }
 
 const PLACES: Place[] = [
-  { id: 'hand', label: 'Mano', zone: 'hand' },
+  { id: 'hand', label: ZONE_LABELS.hand, zone: 'hand' },
   { id: 'front', label: 'Línea frontal', zone: 'field', y: 25 },
   { id: 'back', label: 'Retaguardia', zone: 'field', y: 75 },
   { id: 'deck-top', label: 'Tope del mazo', zone: 'deck', position: 'top' },
   { id: 'deck-bottom', label: 'Fondo del mazo', zone: 'deck', position: 'bottom' },
   { id: 'life', label: 'Tope de las vidas', zone: 'lifeStack', position: 'top', faceDown: true },
-  { id: 'tributes', label: 'Tributos', zone: 'tributeZone' },
-  { id: 'discard', label: 'Descarte', zone: 'discardPile' },
+  { id: 'tributes', label: ZONE_LABELS.tributeZone, zone: 'tributeZone' },
+  { id: 'discard', label: ZONE_LABELS.discardPile, zone: 'discardPile' },
 ];
 
 const COLORS = [

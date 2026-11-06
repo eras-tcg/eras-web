@@ -1,4 +1,4 @@
-import { CardSlot, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
+import { CardSlot, GameState, PlayerState, PostGameChoice, RoomStatus, ZoneName } from './simulator.model';
 
 /** Strength shown on a creature (base + modifier); null for cards without strength. */
 export function displayStrength(slot: CardSlot): number | null {
@@ -134,4 +134,65 @@ export function creatureNear(field: readonly CardSlot[], x: number, y: number, e
         Math.abs((s.y ?? 50) - y) < FIELD_INTERACTION_RANGE,
     ) ?? null
   );
+}
+
+/** The piles of a player, in the order a card is looked for in them. */
+export const PILES: readonly ZoneName[] = ['hand', 'deck', 'lifeStack', 'tributeZone', 'discardPile'];
+
+/**
+ * A card anywhere in the state: on a field, in a hand or a pile; with `attached`, also as a Material or Recurso
+ * under a field card. Null when it is not there.
+ */
+export function findSlot(state: GameState | null | undefined, id: unknown, options: { attached?: boolean } = {}): CardSlot | null {
+  if (!state || typeof id !== 'string') return null;
+  for (const p of Object.values(state.players ?? {})) {
+    for (const c of [...p.field, ...PILES.flatMap((z) => p[z] as CardSlot[])]) {
+      if (c.instanceId === id) return c;
+      if (options.attached) {
+        const under = [...(c.materials ?? []), ...(c.resources ?? [])].find((a) => a.instanceId === id);
+        if (under) return under;
+      }
+    }
+  }
+  return null;
+}
+
+/** The pile a card is in (its owner and zone), when it is in one (not on a field). */
+export function pileOf(state: GameState | null | undefined, id: string, zones: readonly ZoneName[] = PILES): { ownerId: string; zone: ZoneName } | null {
+  for (const p of Object.values(state?.players ?? {})) {
+    for (const zone of zones) {
+      if ((p[zone] as CardSlot[]).some((c) => c.instanceId === id)) return { ownerId: p.userId, zone };
+    }
+  }
+  return null;
+}
+
+/** The last event of the state's timeline (0: none). */
+export function lastSeq(state: GameState | null | undefined): number {
+  return (state?.timeline ?? []).reduce((m, e) => Math.max(m, e.seq), 0);
+}
+
+/** A match is under way: choosing the starters, the mulligan or the game itself (not the pre-room nor its end). */
+export function isMatchActive(status: RoomStatus | null | undefined): boolean {
+  return status === 'SELECTING_STARTER' || status === 'MULLIGAN' || status === 'IN_PROGRESS';
+}
+
+/** The table plays the timeline's events: during the game and on its last update (the blow that ends it). */
+export function playsTimeline(status: RoomStatus | null | undefined): boolean {
+  return status === 'IN_PROGRESS' || status === 'POST_GAME';
+}
+
+/** The bot's edge goes up to this level. */
+export const BOT_EDGE_MAX = 8;
+
+/**
+ * The bot's edge in words: levels 1–4 raise the bot's Marcador 1 more in its turn 4, 3, 2 or 1; levels 5–8 also
+ * hold the rival's back 1 in their turn 5, 4, 3 or 2. Empty for none.
+ */
+export function botEdgeText(level: number | null | undefined): string {
+  const n = Math.max(0, Math.min(BOT_EDGE_MAX, level ?? 0));
+  if (!n) return '';
+  const botTurn = Math.max(1, 5 - n);
+  const bot = `el Marcador del bot sube 1 más en su turno ${botTurn}`;
+  return n < 5 ? `${bot}.` : `${bot} y el tuyo sube 1 menos en tu turno ${10 - n}.`;
 }

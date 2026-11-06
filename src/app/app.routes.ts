@@ -119,6 +119,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/admin/users.page').then((m) => m.UsersPage),
       },
       {
+        path: 'activity-log',
+        title: 'Registro de actividad · ERAS',
+        canMatch: [permissionGuard('manage_users')],
+        loadComponent: () => import('@features/admin/activity-log.page').then((m) => m.ActivityLogPage),
+      },
+      {
         path: 'roles',
         title: 'Roles · ERAS',
         canMatch: [permissionGuard('manage_roles')],
@@ -165,6 +171,12 @@ export const routes: Routes = [
         title: 'Metadatos de cartas · ERAS',
         canMatch: [permissionGuard('manage_cards')],
         loadComponent: () => import('@features/admin/card-meta.page').then((m) => m.CardMetaPage),
+      },
+      {
+        path: 'ranking',
+        title: 'Clasificación · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/simulator/ranking.page').then((m) => m.RankingPage),
       },
       {
         path: 'simulator',

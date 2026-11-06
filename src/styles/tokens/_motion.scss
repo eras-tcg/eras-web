@@ -7,6 +7,23 @@
   --z-overlay: 1000;
   // The loading screen: over the dialogs too (the CDK overlay sits at 1000)
   --z-loading: 1100;
+
+  // The simulator's layers over its table, low to high: a life waiting on its pile; the combat shown big; a choice's
+  // card drawn again over its backdrop; notices; a card revealed from a hand; the attacker's charge, signs and
+  // arrows, "+N" floats; what a pile showed before, cards flying, a card breaking; buttons over a choice
+  --z-sim-parked: 30;
+  --z-sim-raised: 30;
+  --z-sim-combat-reveal: 35;
+  --z-sim-spotlight: var(--z-overlay);
+  --z-sim-toast: calc(var(--z-overlay) + 1);
+  --z-sim-hand-reveal: 1040;
+  --z-sim-charge: 1044;
+  --z-sim-fx: 1045;
+  --z-sim-float: 1046;
+  --z-sim-pile-under: 1049;
+  --z-sim-flight: 1050;
+  --z-sim-shatter: 1051;
+  --z-sim-over-sheet: 1100;
 }
 
 @media (prefers-reduced-motion: reduce) {

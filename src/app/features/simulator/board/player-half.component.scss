@@ -412,6 +412,14 @@ eras-player-plate {
     'deck tributes';
 }
 
+// The rival's zones mirrored: its side is mine turned half round, so its piles are too (the deck towards the
+// middle of the table, by its field)
+:host(.opponent.mirrored) .piles {
+  grid-template-areas:
+    'discard .'
+    'tributes deck';
+}
+
 // Under my deck: the switches of the game (optional effects…)
 .pile-controls {
   grid-area: controls;
@@ -493,4 +501,17 @@ eras-game-zone.can-activate {
 }
 
 // A creature dragged to attack: the rival's lives and hand take a direct attack
-.attack-zone { box-shadow: inset 0 0 0 2px #ef4444, 0 0 16px rgb(239 68 68 / 55%); border-radius: var(--radius-md); }
+.attack-zone { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 16px color-mix(in srgb, var(--color-sim-rival) 55%, transparent); border-radius: var(--radius-md); }
+
+// Attacked: a creature attacks these lives (until it is blocked or the combat ends)
+.lives-attacked {
+  border-radius: var(--radius-md);
+  animation: lives-attacked 0.8s ease-in-out infinite alternate;
+}
+@keyframes lives-attacked {
+  from { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 18px 5px color-mix(in srgb, var(--color-sim-rival) 65%, transparent); }
+  to { box-shadow: inset 0 0 0 2px var(--color-sim-rival), 0 0 6px 1px color-mix(in srgb, var(--color-sim-rival) 35%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lives-attacked { animation: none; box-shadow: inset 0 0 0 2px var(--color-sim-rival); }
+}

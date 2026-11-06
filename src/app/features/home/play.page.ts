@@ -10,17 +10,18 @@ import { HubScreenComponent } from './hub-screen.component';
 
 const PLAY_MENU: HubMenuItem[] = [
   { id: 'online', label: 'Online', icon: 'gamepad', route: '/simulator' },
-  { id: 'solo', label: 'Modo solo', icon: 'user' },
+  { id: 'bot', label: 'Modo solo', icon: 'bot' },
+  { id: 'tests', label: 'Sala de pruebas', icon: 'edit' },
   { id: 'tutorial', label: 'Tutorial', icon: 'book', route: '/ruling' },
 ];
 
-/** "Jugar" screen of the hub: online rooms, solo mode (a test room) or the tutorial. */
+/** "Jugar" screen of the hub: online rooms, Modo solo (against the bot), the Sala de pruebas (a test room) or the tutorial. */
 @Component({
   selector: 'eras-play-page',
   imports: [AlertComponent, HubMenuComponent, HubScreenComponent],
   template: `
     <eras-hub-screen title="Jugar">
-      <eras-hub-menu variant="sub" label="Modos de juego" [items]="menu" [busy]="busy()" (picked)="startSolo()" />
+      <eras-hub-menu variant="sub" label="Modos de juego" [items]="menu" [busy]="busy()" (picked)="start($event.id)" />
       @if (error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }
@@ -45,18 +46,18 @@ export class PlayPage {
   protected readonly busy = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
 
-  /** Solo mode: a test room, where the player controls both sides. */
-  protected async startSolo(): Promise<void> {
-    if (this.busy()) return;
-    this.busy.set('solo');
+  /** Modo solo (a room with the server's bot seated), or the Sala de pruebas (a test room, both sides played by the player). */
+  protected async start(mode: string): Promise<void> {
+    if (this.busy() || (mode !== 'bot' && mode !== 'tests')) return;
+    this.busy.set(mode);
     this.error.set(null);
     try {
-      const { roomId } = await firstValueFrom(this.rooms.create(true));
+      const { roomId } = await firstValueFrom(this.rooms.create(mode === 'tests', mode === 'bot'));
       await this.game.connect(roomId);
       this.game.joinRoom(null);
       await this.router.navigate(['/simulator', roomId, 'board']);
     } catch (e) {
-      this.error.set(apiErrorMessage(e, 'No se pudo abrir la partida en modo solo'));
+      this.error.set(apiErrorMessage(e, mode === 'bot' ? 'No se pudo abrir el modo solo' : 'No se pudo abrir la sala de pruebas'));
       this.game.disconnect();
     } finally {
       this.busy.set(null);

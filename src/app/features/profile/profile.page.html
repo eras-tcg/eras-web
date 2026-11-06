@@ -1,99 +1,132 @@
-<eras-page [title]="username() || 'Mi perfil'">
-  <!-- Three columns that fit one screen: the icon and preferences, the account, the password -->
+<eras-page title="Mi perfil">
+  <!-- Who you are and where you stand: icon, name and rank over your playmat -->
+  <eras-profile-hero [username]="username()" />
+
+  <!-- Your games on the left (what is looked at most); how you look and your account on the right -->
   <div class="profile">
-    <div class="column">
-    <eras-card padding="md">
-      <eras-stack [gap]="3">
-        <eras-section-header title="Tu ícono de jugador" />
-        <!-- How the rival sees you on the table -->
-        <div class="plate-preview" aria-label="Vista previa en el tablero">
-          <eras-avatar [url]="avatar.url()" [name]="username()" />
-          <span class="plate-name">{{ username() }}</span>
-        </div>
-        @if (avatarFeedback(); as f) {
-          <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
-        }
-        <p class="hint">Una imagen JPG, PNG o GIF de hasta 5 MB. Se recorta al centro en un cuadrado.</p>
-        <input #file type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAvatar(file)" />
-        <eras-stack direction="row" [gap]="2" wrap>
-          <button erasButton type="button" [loading]="avatar.saving()" [disabled]="avatar.saving()" (click)="file.click()">
-            <eras-icon name="image" /> {{ avatar.url() ? 'Cambiar imagen' : 'Subir imagen' }}
-          </button>
-          @if (avatar.url()) {
-            <button erasButton variant="secondary" type="button" [disabled]="avatar.saving()" (click)="removeAvatar()">Quitar</button>
-          }
+    <eras-match-history class="history" />
+
+    <div class="side">
+      <eras-card padding="md">
+        <eras-stack [gap]="4">
+          <eras-section-header title="Personalización" />
+
+          <!-- Icon: how the rival sees you on the table -->
+          <section class="setting" aria-labelledby="icon-title">
+            <div class="setting-head">
+              <h3 id="icon-title">Ícono</h3>
+              <span class="hint">JPG, PNG o GIF de hasta 5 MB, recortado en cuadrado.</span>
+            </div>
+            <div class="setting-row">
+              <eras-avatar [url]="avatar.url()" [name]="username()" />
+              <input #file type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAvatar(file)" />
+              <eras-stack direction="row" [gap]="2" wrap>
+                <button erasButton size="sm" type="button" [loading]="avatar.saving()" [disabled]="avatar.saving()" (click)="file.click()">
+                  <eras-icon name="image" /> {{ avatar.url() ? 'Cambiar' : 'Subir' }}
+                </button>
+                @if (avatar.url()) {
+                  <button erasButton size="sm" variant="secondary" type="button" [disabled]="avatar.saving()" (click)="removeAvatar()">Quitar</button>
+                }
+              </eras-stack>
+            </div>
+            @if (avatarFeedback(); as f) {
+              <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+            }
+          </section>
+
+          <!-- Playmat: under your half of the table (your rival sees it too) -->
+          <section class="setting" aria-labelledby="mat-title">
+            <div class="setting-head">
+              <h3 id="mat-title">Tapete</h3>
+              <span class="hint">JPG, PNG o GIF de hasta 8 MB, mejor apaisada.</span>
+            </div>
+            <div class="playmat-preview" [class.empty]="!playmat.url()" [style.background-image]="playmat.url() ? 'url(' + playmat.url() + ')' : null" aria-label="Vista previa del tapete">
+              @if (!playmat.url()) {
+                <span>Sin tapete</span>
+              }
+            </div>
+            <input #mat type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadPlaymat(mat)" />
+            <eras-stack direction="row" [gap]="2" wrap>
+              <button erasButton size="sm" type="button" [loading]="playmat.saving()" [disabled]="playmat.saving()" (click)="mat.click()">
+                <eras-icon name="image" /> {{ playmat.url() ? 'Cambiar' : 'Subir' }}
+              </button>
+              @if (playmat.url()) {
+                <button erasButton size="sm" variant="secondary" type="button" [disabled]="playmat.saving()" (click)="removePlaymat()">Quitar</button>
+              }
+            </eras-stack>
+            @if (playmatFeedback(); as f) {
+              <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+            }
+          </section>
+
+          <!-- Kept on this device (the theme is not part of the account on the server) -->
+          <section class="setting">
+            <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
+          </section>
         </eras-stack>
-      </eras-stack>
-    </eras-card>
+      </eras-card>
 
-    <eras-card padding="md">
-      <eras-stack [gap]="3">
-        <eras-section-header title="Preferencias" />
-        <!-- Kept on this device (the theme is not part of the account on the server) -->
-        <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
-      </eras-stack>
-    </eras-card>
-    </div>
-
-    <eras-card padding="md">
-      <eras-stack [gap]="3">
-        <eras-section-header title="Información de cuenta" />
-        @if (canEditAccount()) {
-          @if (accountLoading()) {
-            <eras-spinner />
+      <eras-card padding="md">
+        <eras-stack [gap]="4">
+          <eras-section-header title="Cuenta" />
+          @if (canEditAccount()) {
+            @if (accountLoading()) {
+              <eras-spinner />
+            } @else {
+              <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
+                <eras-stack [gap]="3">
+                  @if (accountFeedback(); as f) {
+                    <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+                  }
+                  <eras-form-field
+                    label="Usuario"
+                    required
+                    [error]="accountForm.controls.username.touched && accountForm.controls.username.invalid ? 'Ingresa un nombre de usuario' : null"
+                  >
+                    <input formControlName="username" autocomplete="username" />
+                  </eras-form-field>
+                  <eras-form-field
+                    label="Correo"
+                    required
+                    [error]="accountForm.controls.email.touched && accountForm.controls.email.invalid ? 'Ingresa un correo válido' : null"
+                  >
+                    <input type="email" formControlName="email" autocomplete="email" />
+                  </eras-form-field>
+                  <button erasButton type="submit" class="start" [loading]="accountSaving()" [disabled]="accountSaving()">Guardar cuenta</button>
+                </eras-stack>
+              </form>
+            }
           } @else {
-            <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
+            <eras-form-field label="Usuario" hint="Por ahora el usuario y el correo solo los puede cambiar un administrador.">
+              <input [value]="username()" readonly />
+            </eras-form-field>
+          }
+
+          <!-- The password, folded until it is needed -->
+          <details class="password" [open]="!!passwordFeedback()">
+            <summary>Cambiar contraseña</summary>
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
               <eras-stack [gap]="3">
-                @if (accountFeedback(); as f) {
+                @if (passwordFeedback(); as f) {
                   <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
                 }
-                <eras-form-field
-                  label="Usuario"
-                  required
-                  [error]="accountForm.controls.username.touched && accountForm.controls.username.invalid ? 'Ingresa un nombre de usuario' : null"
-                >
-                  <input formControlName="username" autocomplete="username" />
+                <!-- Hidden username helps password managers update the right entry -->
+                <input type="text" autocomplete="username" [value]="username()" hidden aria-hidden="true" />
+                <eras-form-field label="Contraseña actual" required [error]="passwordError('oldPassword')">
+                  <input type="password" formControlName="oldPassword" autocomplete="current-password" />
                 </eras-form-field>
-                <eras-form-field
-                  label="Correo"
-                  required
-                  [error]="accountForm.controls.email.touched && accountForm.controls.email.invalid ? 'Ingresa un correo válido' : null"
-                >
-                  <input type="email" formControlName="email" autocomplete="email" />
+                <eras-form-field label="Nueva contraseña" required [error]="passwordError('newPassword')">
+                  <input type="password" formControlName="newPassword" autocomplete="new-password" (input)="newPasswordServerError.set(null)" />
                 </eras-form-field>
-                <button erasButton type="submit" [loading]="accountSaving()" [disabled]="accountSaving()">Guardar cuenta</button>
+                <eras-form-field label="Repetir nueva contraseña" required [error]="passwordError('confirm')">
+                  <input type="password" formControlName="confirm" autocomplete="new-password" />
+                </eras-form-field>
+                <button erasButton type="submit" class="start" [loading]="passwordSaving()" [disabled]="passwordSaving()">Cambiar contraseña</button>
               </eras-stack>
             </form>
-          }
-        } @else {
-          <eras-form-field label="Usuario" hint="Por ahora el usuario y el correo solo los puede cambiar un administrador.">
-            <input [value]="username()" readonly />
-          </eras-form-field>
-        }
-      </eras-stack>
-    </eras-card>
-
-    <eras-card padding="md">
-      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-        <eras-stack [gap]="3">
-          <eras-section-header title="Cambiar contraseña" />
-          @if (passwordFeedback(); as f) {
-            <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
-          }
-          <!-- Hidden username helps password managers update the right entry -->
-          <input type="text" autocomplete="username" [value]="username()" hidden aria-hidden="true" />
-          <eras-form-field label="Contraseña actual" required [error]="passwordError('oldPassword')">
-            <input type="password" formControlName="oldPassword" autocomplete="current-password" />
-          </eras-form-field>
-          <eras-form-field label="Nueva contraseña" required [error]="passwordError('newPassword')">
-            <input type="password" formControlName="newPassword" autocomplete="new-password" (input)="newPasswordServerError.set(null)" />
-          </eras-form-field>
-          <eras-form-field label="Repetir nueva contraseña" required [error]="passwordError('confirm')">
-            <input type="password" formControlName="confirm" autocomplete="new-password" />
-          </eras-form-field>
-          <button erasButton type="submit" [loading]="passwordSaving()" [disabled]="passwordSaving()">Cambiar contraseña</button>
+          </details>
         </eras-stack>
-      </form>
-    </eras-card>
+      </eras-card>
+    </div>
   </div>
 </eras-page>

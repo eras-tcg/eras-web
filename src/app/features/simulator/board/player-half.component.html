@@ -5,6 +5,7 @@
   <eras-game-zone
     class="life-zone"
     [class.attack-zone]="attackDrag()"
+    [class.lives-attacked]="livesAttacked()"
     label="Vidas"
     [labelShown]="game.showInfo()"
     [attr.data-pile]="p.userId + ':lifeStack'"
@@ -22,7 +23,7 @@
          edge of each covered card shows its right side, where its strength is printed -->
     <div class="life-stack" [style.--lives]="p.lifeStack.length" [attr.draggable]="opponent() || !game.editorMode() || touchOnly ? null : 'true'" (dragstart)="lifeDragStart($event)" (dragend)="drag.end()">
       @for (life of p.lifeStack; track life.instanceId; let i = $index) {
-        <div class="life" [style.z-index]="p.lifeStack.length - i">
+        <div class="life" [attr.data-life-id]="life.instanceId" [style.z-index]="p.lifeStack.length - i">
           <eras-game-card [imageUrl]="life.imageUrl" [foil]="life.finish ?? null" [name]="life.cardName" [hidden]="life.faceDown" [targeted]="game.targetedId() === life.instanceId" />
         </div>
       }
@@ -150,7 +151,8 @@
     (dblclick)="deckDoubleClick()"
   >
     @if (p.deck.length) {
-      <eras-game-card hidden />
+      <!-- As thick as the cards left in it (each pile is); the rival's turned as its other cards -->
+      <eras-game-card hidden [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.deck.length)" />
     }
     <eras-chain-marks ring [links]="pileLinks().deck" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -186,7 +188,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [upsideDown]="opponent()" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.tributeZone.length)" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
     <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -206,7 +208,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [upsideDown]="opponent()" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.discardPile.length)" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
     <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>

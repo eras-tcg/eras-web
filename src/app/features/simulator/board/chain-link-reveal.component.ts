@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
+import { playsTimeline } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, GameState, PendingEffect } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { BoardAnimations } from './board-animations';
+import { TIMING } from './timing';
+import { BoardChoreography } from './board-choreography';
 
 /** A card drawn in the reveal: its art (or name), its link number and whose it is. */
 interface LinkCard {
@@ -63,8 +66,6 @@ interface Resolution {
 
 type Shown = Link | Resolution;
 
-const SHOW_MS = 2100;
-const RESOLUTION_MS = 1500;
 
 /** The stage, in units of --u (the styles use the same numbers): its size, the step down, how far each side is. */
 const STAGE_W = 30;
@@ -161,7 +162,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
   styles: `
     /* A popover: in the browser's top layer, above the chain panel and any choice open */
     .reveal {
-      --link-cyan: #38bdf8;
+      --link-cyan: var(--color-sim-link-mine);
       position: fixed;
       inset: 0;
       inline-size: auto;
@@ -180,9 +181,9 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       color: #f4f4f6;
       font: inherit;
       cursor: pointer;
-      animation: fade 2.1s ease forwards; /* SHOW_MS */
+      animation: fade var(--sim-chain-show, 2.1s) ease forwards;
     }
-    .reveal.rival { --link-cyan: #f472b6; }
+    .reveal.rival { --link-cyan: var(--color-sim-link-rival); }
     .reveal:focus-visible { outline: none; }
     /* The stage, sized in --u so the three cards fit the screen */
     .stage {
@@ -204,7 +205,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       filter: brightness(0.8);
       animation: shift 0.45s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
     }
-    .card.rival { --link-cyan: #f472b6; }
+    .card.rival { --link-cyan: var(--color-sim-link-rival); }
     .card > eras-game-card { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
     /* The new link lands from above and larger, with a flash, after the others made room */
     .card.new { z-index: 3; filter: none; animation: land 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.25s backwards; }
@@ -263,7 +264,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     @keyframes glow { to { box-shadow: 0 0 0 4px #fff, 0 0 60px 22px var(--link-cyan); } }
     @keyframes snap { to { opacity: 0; transform: translateY(-50%) rotate(var(--angle)) scaleX(0.15); } }
     /* Resolución: a band across the screen that sweeps in, holds and goes */
-    .resolution { background: rgb(0 0 0 / 35%); animation-duration: 1.5s; /* RESOLUTION_MS */ }
+    .resolution { background: rgb(0 0 0 / 35%); animation-duration: var(--sim-chain-resolution, 1.5s); }
     .band {
       display: grid;
       justify-items: center;
@@ -324,11 +325,21 @@ export class ChainLinkRevealComponent {
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** Releases the choices once everything queued has been shown. */
   private release: (() => void) | null = null;
+  /** Waiting for everything queued to have been shown. */
+  private waiting: (() => void)[] = [];
 
   constructor() {
     effect(() => {
       const state = this.game.state();
       untracked(() => this.collect(state));
+    });
+    // Before an update is shown: its chain is shown first (collecting it again once it is shown adds nothing), and
+    // what the links do waits until it has gone
+    inject(BoardChoreography).register({
+      chain: (next) => {
+        this.collect(next);
+        return this.current() ? new Promise<void>((done) => this.waiting.push(done)) : Promise.resolve();
+      },
     });
     // Each one shown is raised to the top layer (shown last, it goes above what is there)
     afterRenderEffect(() => {
@@ -347,7 +358,7 @@ export class ChainLinkRevealComponent {
 
   private collect(state: GameState | null): void {
     const chain = state?.chain ?? [];
-    const playing = state?.status === 'IN_PROGRESS';
+    const playing = playsTimeline(state?.status);
     const first = chain.find((e) => e.link === 1)?.id ?? null;
     const resolving = chain.some((e) => e.resolutionId);
     const previous = this.previousChain;
@@ -451,11 +462,12 @@ export class ChainLinkRevealComponent {
     const item = this.queue.shift() ?? null;
     this.current.set(item);
     if (item) {
-      this.timer = setTimeout(() => this.next(), item.kind === 'resolution' ? RESOLUTION_MS : SHOW_MS);
+      this.timer = setTimeout(() => this.next(), item.kind === 'resolution' ? TIMING.chainResolution : TIMING.chainShow);
       return;
     }
     this.timer = null;
     this.release?.();
     this.release = null;
+    this.waiting.splice(0).forEach((done) => done());
   }
 }

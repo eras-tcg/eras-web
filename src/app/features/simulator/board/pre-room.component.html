@@ -3,9 +3,9 @@
   <header class="room-bar">
     <button type="button" class="back" aria-label="Salir de la sala" title="Salir de la sala" (click)="leave()"><eras-icon name="chevron-left" /></button>
     <div class="heading">
-      <h1 class="title">{{ game.editorRoom() ? 'Modo solo' : 'Sala ' + game.roomId() }}</h1>
+      <h1 class="title">{{ game.editorRoom() ? 'Sala de pruebas' : game.botRoom() ? 'Modo solo' : game.queuedRoom() ? 'Ranked' : 'Sala ' + game.roomId() }}</h1>
     </div>
-    @if (!game.editorRoom()) {
+    @if (!game.ownRoom() && !game.queuedRoom()) {
       <ng-container [ngTemplateOutlet]="copyLink" />
     }
   </header>
@@ -20,7 +20,12 @@
       @if (i === 1) {
         <span class="versus" aria-hidden="true">VS</span>
       }
-      <div class="seat" [class.ready]="p?.ready" [class.empty]="!p" [class.playing]="game.editorRoom() && p?.userId === mine()?.userId">
+      <div
+        class="seat"
+        [class.ready]="p?.ready"
+        [class.empty]="!p"
+        [class.playing]="(game.editorRoom() && p?.userId === mine()?.userId) || (game.botRoom() && (p?.userId === me()) !== pickingBot())"
+      >
         @if (p) {
           <div class="starter-slot">
             @if (starterOf(p); as s) {
@@ -50,6 +55,12 @@
               @if (p.userId !== mine()?.userId) {
                 <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">{{ p.userId === me() ? 'Elegir tu mazo' : 'Elegir su mazo' }}</button>
               }
+            } @else if (game.botRoom()) {
+              @if (p.userId !== me() && !game.rankedRoom()) {
+                <button erasButton variant="secondary" size="sm" type="button" [attr.aria-pressed]="pickingBot()" (click)="pickingBot.set(!pickingBot())">
+                  {{ pickingBot() ? 'Elegir tu mazo' : 'Elegir su mazo' }}
+                </button>
+              }
             } @else if (game.isHost() && p.userId !== me()) {
               <button erasButton variant="danger" size="sm" type="button" (click)="game.kickPlayer(p.userId)">Sacar de la sala</button>
             }
@@ -62,9 +73,11 @@
           <div class="plate waiting">
             <span class="plate-text">
               <span class="name">Esperando rival…</span>
-              <span class="deck-name">Comparte el enlace de la sala</span>
+              <span class="deck-name">{{ game.queuedRoom() ? 'Tu rival de la cola está entrando' : 'Comparte el enlace de la sala' }}</span>
             </span>
-            <ng-container [ngTemplateOutlet]="copyLink" />
+            @if (!game.queuedRoom()) {
+              <ng-container [ngTemplateOutlet]="copyLink" />
+            }
           </div>
         }
       </div>
@@ -73,7 +86,54 @@
 
   <!-- Who goes first, and starting: the big action of the screen -->
   <section class="controls">
-    @if (game.isHost()) {
+    @if (!game.editorRoom()) {
+      <!-- Friendly or ranked: the owner chooses before the game; ranked moves the rank (and draws who goes first) -->
+      @if (game.queuedRoom()) {
+        <span class="first">Tipo de partida: <strong>Ranked</strong> <span class="muted">(de la cola, por tu rango)</span></span>
+      } @else if (game.isHost()) {
+        <eras-toggle-group label="Tipo de partida" [options]="rankedToggle" [selected]="[game.rankedRoom() ? 'ranked' : 'friendly']" (toggled)="setRanked($event)" />
+      } @else {
+        <span class="first">Tipo de partida: <strong>{{ game.rankedRoom() ? 'Ranked' : 'Amistosa' }}</strong> <span class="muted">(lo elige el dueño)</span></span>
+      }
+    }
+    @if (game.editorRoom()) {
+      <!-- Sala de pruebas: the bot may play the rival's side, everything still in view (its hand too) -->
+      <eras-toggle-group label="El rival lo juega" [options]="rivalToggle" [selected]="[editorBot() ? 'bot' : 'me']" (toggled)="setRival($event)" />
+      <!-- Your own side may be played by a bot too: you watch the two bots play (with the pace control on the board) -->
+      @if (game.simulatorAdmin() || selfBot()) {
+        <eras-toggle-group label="Tu lado lo juega" [options]="selfToggle" [selected]="[selfBot() ? 'bot' : 'me']" (toggled)="setSelf($event)" />
+      }
+      @if (selfBot()) {
+        <label class="bot-model">
+          <span>Bot de tu lado</span>
+          <select (change)="game.setSelfBotLevel($any($event.target).value)">
+            @for (m of botChoices(); track m.id) {
+              <option [value]="m.id" [selected]="m.id === selfBotLevel()">{{ m.label }}</option>
+            }
+          </select>
+        </label>
+      }
+    }
+    @if (game.botRoom() && game.rankedRoom()) {
+      <span class="first">Nivel del bot: <strong>{{ botLevelLabel() }}</strong> <span class="muted">(según tu fuerza en ranked)</span></span>
+    } @else if (game.botRoom() || editorBot()) {
+      <eras-toggle-group label="Nivel del bot" [options]="botLevels()" [selected]="[botLevel()]" (toggled)="setBotLevel($event)" />
+      @if (botModels().length) {
+        <!-- Instead of a level: a model under test (it replaces the level until a level is chosen again) -->
+        <label class="bot-model">
+          <span>Probar modelo</span>
+          <select (change)="setBotLevel($any($event.target).value)">
+            <option value="" [selected]="!botModel()">Ninguno (usar el nivel)</option>
+            @for (m of botModels(); track m.id) {
+              <option [value]="m.id" [selected]="m.id === botModel()">{{ m.label }}</option>
+            }
+          </select>
+        </label>
+      }
+    }
+    @if (game.rankedRoom()) {
+      <span class="first">¿Quién empieza? <strong>Aleatorio</strong> <span class="muted">(en ranked se sortea)</span></span>
+    } @else if (game.isHost()) {
       <eras-toggle-group label="¿Quién empieza?" [options]="firstToggle()" [selected]="[firstChoice()]" (toggled)="game.setFirstPlayer($event)" />
     } @else {
       <span class="first">¿Quién empieza? <strong>{{ firstLabel() }}</strong> <span class="muted">(lo elige el dueño)</span></span>
@@ -99,7 +159,7 @@
 
   <section class="picker">
     <div class="picker-head">
-      <h2 class="picker-title">{{ game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo' }}</h2>
+      <h2 class="picker-title">{{ pickingBot() ? 'Mazo del bot' : game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo' }}</h2>
       <input class="search" type="search" aria-label="Buscar mazo" placeholder="Buscar mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
     </div>
     @if (allDecks().length === 0) {
@@ -110,7 +170,7 @@
           @let blocked = unplayable().get(deck.id);
           <div
             class="deck"
-            [class.chosen]="mine()?.deckId === deck.id"
+            [class.chosen]="pickedDeckId() === deck.id"
             [class.blocked]="!!blocked"
             [attr.title]="blocked ? 'No puedes jugar este mazo: ' + blocked.toLowerCase() : null"
           >

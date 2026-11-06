@@ -17,9 +17,11 @@ import { ChainMarksComponent, chainLinksOf } from './chain-marks.component';
 import { BoardAnimations } from './board-animations';
 import { isTouchOnly } from './board-touch';
 import { DOCUMENT } from '@angular/common';
+import { TIMING } from './timing';
 
 /** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
-const TAP_MS = 300;
+/** Turning sideways when exhausted: its place widens, then it turns. */
+const TAP_MS = TIMING.tap;
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double

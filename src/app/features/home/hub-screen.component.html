@@ -9,10 +9,17 @@
     </div>
   } @else if (auth.user(); as user) {
     <!-- The player's nameplate: the icon in a ring, the name, and the way to the profile -->
-    <a class="player" routerLink="/profile" aria-label="Mi perfil">
+    <a class="player" routerLink="/profile">
       <span class="player-ring"><eras-avatar class="player-avatar" [url]="avatar.url()" [name]="user.username" /></span>
       <span class="player-text">
         <span class="player-name">{{ user.username }}</span>
+        @if (ranks.mine(); as rank) {
+          <span class="player-rank">
+            <eras-rank-emblem [tier]="rank.tier" [size]="22" />
+            <span class="player-tier">{{ titleOf(rank) }}</span>
+            <eras-rank-progress [standing]="rank" compact />
+          </span>
+        }
         <span class="player-link">Ver perfil <eras-icon name="chevron-right" /></span>
       </span>
     </a>

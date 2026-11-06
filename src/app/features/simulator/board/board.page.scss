@@ -10,9 +10,13 @@
   position: relative;
   --sidebar-closed: 2.75rem;
   --sidebar-open: 17.5rem;
+  // The table's unit: its sizes (side columns, cards in hand, lives, field cards) follow the height, so a taller
+  // table (full screen, a big monitor) makes every zone bigger together. A table 56rem tall (a usual window) keeps
+  // 1rem; never smaller than that (short windows and phones keep their sizes)
+  --bu: max(1rem, calc((100dvh - var(--app-header-height, 0px)) / 56));
   // The table's side columns (lives / piles): the halves and the middle strip share them, so the gem bar is as
-  // wide as the field
-  --side: 15rem;
+  // wide as the field. The width only caps them: on a narrow screen the field keeps its room
+  --side: min(calc(15 * var(--bu)), max(15rem, 20vw));
 }
 
 // In a game: room on the right for the collapsed options sidebar (expanded, it lies over the table)
@@ -20,9 +24,9 @@
   padding-inline-end: calc(var(--sidebar-closed) + var(--space-2) + env(safe-area-inset-right));
 }
 
-// Full screen: the extra room goes to the field cards
+// Full screen: the field cards may grow a little more than the rest (they are what the game is played with)
 :host(.fullscreen) {
-  --field-card-max: 13rem;
+  --field-card-max: calc(13 * var(--bu));
 }
 
 .sidebar-backdrop {
@@ -93,7 +97,8 @@
   // No gap: the overlays after the table are empty boxes, and the hand's peek must reach the very bottom
   gap: 0;
   block-size: 100%;
-  max-inline-size: 110rem;
+  // The width follows the height too: a tall screen gets a wider table
+  max-inline-size: calc(110 * var(--bu));
   margin-inline: auto;
 }
 

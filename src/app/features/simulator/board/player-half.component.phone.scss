@@ -46,8 +46,11 @@
   }
 
   .line {
-    gap: var(--space-1);
     padding: 0.1rem var(--space-1);
+  }
+
+  .line-cards {
+    gap: var(--space-1);
   }
 
   .line-label {

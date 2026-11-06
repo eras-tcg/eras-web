@@ -4,6 +4,7 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordProblem } from '@core
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AvatarStore } from '@core/auth/avatar.store';
+import { PlaymatStore } from '@core/auth/playmat.store';
 import { ThemeService } from '@core/theme/theme.service';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -16,6 +17,8 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
+import { MatchHistoryComponent } from './match-history.component';
+import { ProfileHeroComponent } from './profile-hero.component';
 import { matching } from '../auth/matching.validator';
 
 type Feedback = { tone: 'success' | 'danger'; text: string } | null;
@@ -26,7 +29,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent],
+  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent, MatchHistoryComponent, ProfileHeroComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +54,9 @@ export class ProfilePage {
   // ── Player icon (navbar and beside the name in the simulator) ──────────
   protected readonly avatar = inject(AvatarStore);
   protected readonly avatarFeedback = signal<Feedback>(null);
+  protected readonly playmat = inject(PlaymatStore);
+  protected readonly playmatFeedback = signal<Feedback>(null);
+  private readonly maxPlaymatBytes = 8 * 1024 * 1024;
   /** The largest image accepted (the server scales it to a square). */
   private readonly maxAvatarBytes = 5 * 1024 * 1024;
   protected readonly canEditAccount = computed(() => this.auth.can('manage_users'));
@@ -105,6 +111,33 @@ export class ProfilePage {
       this.avatarFeedback.set({ tone: 'success', text: 'Ícono quitado. Se verá la inicial de tu nombre.' });
     } catch (e) {
       this.avatarFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo quitar el ícono') });
+    }
+  }
+
+  protected async uploadPlaymat(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > this.maxPlaymatBytes) {
+      this.playmatFeedback.set({ tone: 'danger', text: 'La imagen pesa más de 8 MB' });
+      return;
+    }
+    this.playmatFeedback.set(null);
+    try {
+      await this.playmat.upload(file);
+      this.playmatFeedback.set({ tone: 'success', text: 'Tapete guardado. Se verá en tus próximas partidas.' });
+    } catch (e) {
+      this.playmatFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo guardar el tapete') });
+    }
+  }
+
+  protected async removePlaymat(): Promise<void> {
+    this.playmatFeedback.set(null);
+    try {
+      await this.playmat.remove();
+      this.playmatFeedback.set({ tone: 'success', text: 'Tapete quitado. Tu mitad de la mesa usará su textura.' });
+    } catch (e) {
+      this.playmatFeedback.set({ tone: 'danger', text: apiErrorMessage(e, 'No se pudo quitar el tapete') });
     }
   }
 

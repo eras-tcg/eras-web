@@ -24,6 +24,20 @@
   padding-inline-end: calc(var(--sidebar-closed) + var(--space-2) + env(safe-area-inset-right));
 }
 
+// Menú de partida: a round button at the table's top left, over everything on it (the rival's plate moves aside,
+// --menu-clear)
+.game-menu-btn {
+  position: absolute;
+  // In line with the rival's plate beside it
+  inset-block-start: calc(var(--space-4) + 0.2rem);
+  inset-inline-start: max(var(--space-2), env(safe-area-inset-left));
+  z-index: 21;
+}
+
+:host(.in-game) {
+  --menu-clear: 3rem;
+}
+
 // Full screen: the field cards may grow a little more than the rest (they are what the game is played with)
 :host(.fullscreen) {
   --field-card-max: calc(13 * var(--bu));
@@ -271,7 +285,8 @@
 .notices {
   position: fixed;
   inset-inline-start: var(--space-3);
-  inset-block-start: calc(var(--app-header-height, 0px) + var(--space-3));
+  // Under the game menu's button
+  inset-block-start: calc(var(--app-header-height, 0px) + var(--space-3) + var(--menu-clear, 0px));
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-start;

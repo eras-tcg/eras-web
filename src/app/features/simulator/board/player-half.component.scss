@@ -70,6 +70,11 @@ eras-player-plate {
   margin-block: var(--space-4) 0;
 }
 
+// The rival's plate at the table's top left: beside the game menu's round button, not under it
+:host(.opponent:not(.mirrored)) eras-player-plate {
+  margin-inline-start: var(--menu-clear, 0);
+}
+
 
 // The rival's side is mirrored: their name and gems sit next to the center of the table, like yours
 :host(.opponent) .lives {

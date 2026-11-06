@@ -28,6 +28,32 @@
     <!-- Expanded by hand it lies over the table, like a modal: a click outside collapses it -->
     <button type="button" class="sidebar-backdrop" aria-label="Contraer el menú" (click)="prefs.toggleSidebar(); $event.stopPropagation()"></button>
   }
+  <!-- Menú de partida: a round button at the table's top left, with the history, the table's preferences and the
+       way out -->
+  <button
+    type="button"
+    erasIconButton
+    icon="menu"
+    class="game-menu-btn"
+    aria-label="Menú de partida"
+    title="Menú de partida"
+    [cdkMenuTriggerFor]="gameMenu"
+    [cdkMenuPosition]="gameMenuPosition"
+  ></button>
+  <ng-template #gameMenu>
+    <eras-menu aria-label="Menú de partida">
+      <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
+      <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>
+      <hr />
+      @if (canSurrender()) {
+        <!-- Online, Modo solo and ranked: a game in course is left by surrendering -->
+        <button erasMenuItem class="danger" (triggered)="surrender()"><eras-icon name="flag" />Rendirse</button>
+      } @else {
+        <!-- The Sala de pruebas, a replay or a game already over: just leave -->
+        <button erasMenuItem (triggered)="exit()"><eras-icon name="logout" />Salir</button>
+      }
+    </eras-menu>
+  </ng-template>
   <aside
     class="sidebar"
     [class.open]="prefs.sidebarOpen()"
@@ -40,23 +66,6 @@
         {{ prefs.sidebarExpanded() ? 'Contraer el menú' : 'Expandir el menú' }}
       </button>
     }
-    <!-- Menú de partida: the history, the table's preferences and leaving the game -->
-    <button type="button" erasSidebarItem icon="menu" [cdkMenuTriggerFor]="gameMenu" [cdkMenuPosition]="gameMenuPosition">Menú de partida</button>
-    <ng-template #gameMenu>
-      <eras-menu aria-label="Menú de partida">
-        <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
-        <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>
-        <hr />
-        @if (canSurrender()) {
-          <!-- Online, Modo solo and ranked: a game in course is left by surrendering -->
-          <button erasMenuItem class="danger" (triggered)="surrender()"><eras-icon name="flag" />Rendirse</button>
-        } @else {
-          <!-- The Sala de pruebas, a replay or a game already over: just leave -->
-          <button erasMenuItem (triggered)="exit()"><eras-icon name="logout" />Salir</button>
-        }
-      </eras-menu>
-    </ng-template>
-    <hr />
     <!-- The game: what is used while playing -->
     <span class="group-label">Partida</span>
     @if (game.replayRoom()) {

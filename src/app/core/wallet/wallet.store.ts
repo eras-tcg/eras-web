@@ -42,6 +42,8 @@ export class WalletStore {
   readonly reward = signal(0);
   /** The structure decks this account already bought: each can be bought only once. */
   readonly structures = signal<ReadonlySet<string>>(new Set());
+  /** The balance was read for this account (before that, `gems` is 0 only because it is not known yet). */
+  readonly loaded = signal(false);
   /** Why the last purchase was refused, in Spanish (null when it went through). */
   readonly error = signal<string | null>(null);
 
@@ -56,6 +58,7 @@ export class WalletStore {
         this.gems.set(0);
         this.reward.set(0);
         this.structures.set(new Set());
+        this.loaded.set(false);
         if (id) void this.refresh();
       });
     });
@@ -70,6 +73,8 @@ export class WalletStore {
       this.structures.set(new Set(me.structures ?? []));
     } catch {
       // An older server without wallets: no gems
+    } finally {
+      this.loaded.set(true);
     }
   }
 

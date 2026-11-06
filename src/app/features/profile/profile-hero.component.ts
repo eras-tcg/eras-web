@@ -7,6 +7,7 @@ import { RanksStore } from '@data/ranks/ranks.store';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
 import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
+import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 
 /**
  * The top of the profile: who the player is as others see them (their icon and name, over their playmat) and where
@@ -14,7 +15,7 @@ import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.comp
  */
 @Component({
   selector: 'eras-profile-hero',
-  imports: [AvatarComponent, RankEmblemComponent, RankProgressComponent, RouterLink],
+  imports: [AvatarComponent, RankEmblemComponent, RankProgressComponent, RouterLink, SpinnerComponent],
   template: `
     <section class="hero" [class.has-playmat]="!!playmat.url()" [style.--playmat]="playmatImage()" aria-label="Tu perfil">
       <div class="identity">
@@ -35,6 +36,8 @@ import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.comp
             </span>
           </div>
           <a class="board-link" routerLink="/ranking" [queryParams]="{ from: '/profile' }">Ver clasificación</a>
+        } @else if (!ranks.loaded()) {
+          <span class="muted loading"><eras-spinner size="sm" /> Cargando tu rango…</span>
         } @else if (ranks.failed()) {
           <span class="muted">No se pudo cargar tu rango.</span>
         } @else {
@@ -120,6 +123,11 @@ import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.comp
     .muted {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
+    }
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
     }
     @media (max-width: 40rem) {
       .hero {

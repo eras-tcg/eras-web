@@ -2,7 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { BACKGROUND } from './busy';
+import { BACKGROUND, holdsButtons } from './busy';
 
 /** A wait shorter than this shows nothing: the loading screen never flashes. */
 export const SHOW_AFTER_MS = 750;
@@ -15,15 +15,16 @@ export function hasOwnLoading(url: string): boolean {
 }
 
 /**
- * A request the loading screen waits for: any to the API (a read, a purchase, a save…), but a background one (a
- * visit reported, a ping: BACKGROUND), which the player never notices.
+ * A request the loading screen waits for: one to the API that changes something (a purchase, a save…), while the
+ * page cannot be used. A read is not waited for: the page is already there and shows its own loading where its data
+ * goes. Nor a background one (a visit reported, a ping: BACKGROUND), which the player never notices.
  */
-export function waitedFor(url: string, background: boolean): boolean {
-  return !background && url.includes('/api/');
+export function waitedFor(url: string, background: boolean, method = 'GET'): boolean {
+  return url.includes('/api/') && holdsButtons(method, background);
 }
 
 /**
- * Whether the site is waiting: a screen on its way (its code or its route) or a request to the API
+ * Whether the site cannot be used yet: a screen on its way (its code or its route) or a change sent to the API
  * (loadingInterceptor). The loading screen (<eras-loading-screen>) shows it once the wait passes SHOW_AFTER_MS (an
  * instant answer shows nothing), on every screen but the simulator.
  */
@@ -80,7 +81,7 @@ export class LoadingState {
 
 /** Counts the requests the loading screen waits for (LoadingState). */
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!waitedFor(req.url, req.context.get(BACKGROUND))) return next(req);
+  if (!waitedFor(req.url, req.context.get(BACKGROUND), req.method)) return next(req);
   const state = inject(LoadingState);
   state.start();
   return next(req).pipe(finalize(() => state.end()));

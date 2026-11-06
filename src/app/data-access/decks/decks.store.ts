@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
 import { firstValueFrom } from 'rxjs';
 import { Deck, DeckSaveRequest } from './deck.model';
@@ -13,23 +13,41 @@ export class DecksStore {
 
   readonly publicDecks = signal<Deck[]>([]);
   readonly myDecks = signal<Deck[]>([]);
-  readonly loading = signal(false);
+  /** Loads on their way (public and own decks load apart: one ending does not end the other's). */
+  private readonly running = signal(0);
+  readonly loading = computed(() => this.running() > 0);
   readonly error = signal<string | null>(null);
+  /** A load on its way, shared by whoever asks for the same meanwhile (a page opened during the prefetch). */
+  private publicPending: Promise<void> | null = null;
+  private minePending: { userId: string; promise: Promise<void> } | null = null;
 
-  async loadPublic(force = false): Promise<void> {
-    if (this.publicLoaded && !force) return;
-    await this.run(async () => {
+  loadPublic(force = false): Promise<void> {
+    if (this.publicLoaded && !force) return Promise.resolve();
+    if (!force && this.publicPending) return this.publicPending;
+    const pending = this.run(async () => {
       this.publicDecks.set(await firstValueFrom(this.api.listPublic()));
       this.publicLoaded = true;
-    }, 'No se pudieron cargar los mazos públicos');
+    }, 'No se pudieron cargar los mazos públicos').finally(() => {
+      if (this.publicPending === pending) this.publicPending = null;
+    });
+    this.publicPending = pending;
+    return pending;
   }
 
-  async loadMine(userId: string, force = false): Promise<void> {
-    if (this.mineOwner === userId && !force) return;
-    await this.run(async () => {
-      this.myDecks.set(await firstValueFrom(this.api.listByUser(userId)));
+  loadMine(userId: string, force = false): Promise<void> {
+    if (this.mineOwner === userId && !force) return Promise.resolve();
+    if (!force && this.minePending?.userId === userId) return this.minePending.promise;
+    const promise = this.run(async () => {
+      const decks = await firstValueFrom(this.api.listByUser(userId));
+      // Another account signed in meanwhile: its decks are not these
+      if (this.minePending && this.minePending.userId !== userId) return;
+      this.myDecks.set(decks);
       this.mineOwner = userId;
-    }, 'No se pudieron cargar tus mazos');
+    }, 'No se pudieron cargar tus mazos').finally(() => {
+      if (this.minePending?.promise === promise) this.minePending = null;
+    });
+    this.minePending = { userId, promise };
+    return promise;
   }
 
   getDeck(id: string): Promise<Deck> {
@@ -63,14 +81,14 @@ export class DecksStore {
   }
 
   private async run(task: () => Promise<void>, fallback: string): Promise<void> {
-    this.loading.set(true);
+    this.running.update((n) => n + 1);
     this.error.set(null);
     try {
       await task();
     } catch (e) {
       this.error.set(apiErrorMessage(e, fallback));
     } finally {
-      this.loading.set(false);
+      this.running.update((n) => Math.max(0, n - 1));
     }
   }
 }

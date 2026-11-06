@@ -10,6 +10,7 @@ import { DecklistDialogComponent } from './dialogs/decklist-dialog.component';
 import { DummyCardDialogComponent } from './dialogs/dummy-card-dialog.component';
 import { EffectPromptData, EffectPromptDialogComponent } from './dialogs/effect-prompt-dialog.component';
 import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
+import { GamePreferencesDialogComponent } from './dialogs/game-preferences-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
 import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
@@ -77,5 +78,10 @@ export class BoardDialogs {
 
   log(): void {
     this.modal.open(LogDialogComponent, {});
+  }
+
+  /** "Preferencias de partida": under the board's injector, where its preferences live. */
+  preferences(): void {
+    this.modal.open(GamePreferencesDialogComponent, { injector: this.injector });
   }
 }

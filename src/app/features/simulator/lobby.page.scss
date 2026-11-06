@@ -6,6 +6,28 @@
   min-block-size: 0;
 }
 
+// The search for a ranked rival
+.searching {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+}
+
+.searching-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
 // Joining by code: the code on a bare line (as a deck's name), the button beside it
 .join {
   display: flex;

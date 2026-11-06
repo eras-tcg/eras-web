@@ -1,6 +1,18 @@
 <!-- The same frame as Jugar: the edition's art on the right, the options on the left -->
 <eras-hub-screen title="Online" [back]="{ route: '/play', label: 'Jugar' }">
-  <eras-hub-menu variant="sub" label="Salas" [items]="actions" [busy]="busy()" (picked)="pick()" />
+  <eras-hub-menu variant="sub" label="Salas" [items]="actions" [busy]="menuBusy()" (picked)="pick($event.id)" />
+
+  @if (search(); as s) {
+    <!-- Searching a ranked rival: the time waited and how wide the search is by now -->
+    <section class="searching">
+      <eras-spinner />
+      <span class="searching-text">
+        <strong><span aria-live="polite">Buscando rival ranked…</span> <span role="timer">{{ waited() }}</span></strong>
+        <span class="muted">Rivales de fuerza parecida (±{{ s.window }})</span>
+      </span>
+      <button erasButton variant="secondary" size="sm" type="button" (click)="cancelSearch()">Cancelar</button>
+    </section>
+  }
 
   @if (game.removed(); as why) {
     <eras-alert>{{ why }}.</eras-alert>
@@ -32,13 +44,14 @@
       <h2 id="rooms-title">Salas abiertas</h2>
       <button type="button" erasIconButton size="sm" icon="refresh" title="Actualizar" aria-label="Actualizar las salas" (click)="refresh()"></button>
     </header>
-    @if (list(); as rooms) {
+    <eras-toggle-group label="Mostrar" [options]="filterToggle" [selected]="[filter()]" (toggled)="setFilter($event)" />
+    @if (shown(); as rooms) {
       <ul class="list">
         @for (r of rooms; track r.roomId) {
           <li>
             <button type="button" class="room" [class.mine]="isMine(r)" [disabled]="!!busy() || !canJoin(r)" (click)="join(r.roomId!)">
               <span class="room-text">
-                <span class="room-name">Sala {{ r.roomId }}</span>
+                <span class="room-name">Sala {{ r.roomId }} <eras-badge [color]="r.ranked ? 'var(--color-primary)' : null">{{ r.ranked ? 'Ranked' : 'Amistosa' }}</eras-badge></span>
                 <span class="room-meta">{{ playersOf(r) }} · {{ labels[r.status] }}{{ isMine(r) ? ' · estás aquí' : '' }}</span>
               </span>
               <span class="room-action">
@@ -51,7 +64,7 @@
             </button>
           </li>
         } @empty {
-          <li class="empty">No hay salas abiertas: crea una.</li>
+          <li class="empty">{{ filter() === 'all' ? 'No hay salas abiertas: crea una.' : 'No hay salas de este tipo: crea una.' }}</li>
         }
       </ul>
     } @else {

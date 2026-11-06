@@ -124,6 +124,18 @@
   white-space: nowrap;
 }
 
+// The ranked tier under the name: its emblem, its name and the gems of it filled
+.player-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.player-tier {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
 .player-link {
   display: inline-flex;
   align-items: center;

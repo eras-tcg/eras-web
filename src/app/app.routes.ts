@@ -156,6 +156,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/admin/card-meta.page').then((m) => m.CardMetaPage),
       },
       {
+        path: 'ranking',
+        title: 'Clasificación · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/simulator/ranking.page').then((m) => m.RankingPage),
+      },
+      {
         path: 'simulator',
         title: 'Simulador · ERAS',
         canMatch: [authGuard],

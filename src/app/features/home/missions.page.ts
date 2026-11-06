@@ -19,7 +19,7 @@ type MissionsTab = 'periodic' | 'progress';
 /**
  * "Misiones" screen of the hub, in two tabs. "Diarias y semanales": today's missions and this week's (with the day
  * they change), each with its progress and its gems, which light up to be claimed once done; online games count for
- * them (not solo mode). "Progreso": the "Bienvenida" chain, claimed in order (its first two steps go through
+ * them (not Modo solo nor the Sala de pruebas). "Progreso": the "Bienvenida" chain, claimed in order (its first two steps go through
  * WelcomeFlow: the greeting, then the structure deck picker), and the milestones, one tier after another. It opens on
  * "Progreso" unless only daily or weekly missions wait to be claimed.
  */

@@ -34,7 +34,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   selector: 'eras-player-half',
   imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent],
   templateUrl: './player-half.component.html',
-  styleUrls: ['./player-half.component.scss', './player-half.component.phone.scss'],
+  styleUrls: ['./player-half.component.scss', './player-half.component.table.scss', './player-half.component.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.opponent]': 'opponent()',

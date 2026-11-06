@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { CdkMenuTrigger } from '@angular/cdk/menu';
+import { ConnectedPosition } from '@angular/cdk/overlay';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { CardsStore } from '@data/cards/cards.store';
@@ -12,6 +14,8 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardDialogs } from './board-dialogs';
 import { BoardEffects } from './board-effects';
@@ -67,6 +71,10 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     PhasePopupComponent,
     ReplayControlsComponent,
     TestRoomControlsComponent,
+    CdkMenuTrigger,
+    IconButtonComponent,
+    MenuComponent,
+    MenuItemDirective,
   ],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardPreferences, BoardScreen],
   templateUrl: './board.page.html',
@@ -114,6 +122,16 @@ export class BoardPage {
   protected readonly inProgress = computed(() => this.game.status() === 'IN_PROGRESS');
   /** A game in course, from the starters' choice to its end (online, only surrendering leaves it). */
   protected readonly playing = computed(() => isMatchActive(this.game.status()));
+  /**
+   * The game menu ends in Rendirse while a game is in course (online, Modo solo, ranked); the Sala de pruebas, a
+   * replay or a game already over end in Salir.
+   */
+  protected readonly canSurrender = computed(() => this.playing() && !this.game.editorRoom() && !this.game.replayRoom());
+  /** The game menu opens under its round button (top left of the table). */
+  protected readonly gameMenuPosition: ConnectedPosition[] = [
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
+    { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 8 },
+  ];
   /** Inside a game (after the pre-room): the options sidebar and the hidden navigation bar apply. */
   protected readonly inGame = computed(() => !!this.game.status() && this.game.status() !== 'WAITING');
   protected readonly sharedIndex = computed(() => sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()));

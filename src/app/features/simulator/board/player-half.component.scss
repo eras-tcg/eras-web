@@ -1,13 +1,14 @@
 // Board layout of one side: lives | field over hand | piles. The opponent side swaps field and hand; with the
 // mirrored zones its lives and piles swap too, so both side columns are as wide.
 :host {
-  // Card sizes: the hand shows only the upper half of its cards; the lives lie sideways
-  --hand-card: 7.5rem;
+  // Card sizes: the hand shows only the upper half of its cards; the lives lie sideways. They follow the table's
+  // height (--bu, from the board): a taller table (full screen) makes every zone bigger together
+  --hand-card: calc(7.5 * var(--bu, 1rem));
   --hand-peek: calc(var(--hand-card) * 88 / 63 * 0.5);
-  --life-card: 7rem;
+  --life-card: calc(7 * var(--bu, 1rem));
 
   display: grid;
-  grid-template-columns: var(--side, 15rem) minmax(0, 1fr) var(--side, 15rem);
+  grid-template-columns: var(--side, calc(15 * var(--bu, 1rem))) minmax(0, 1fr) var(--side, calc(15 * var(--bu, 1rem)));
   grid-template-rows: minmax(0, 1fr) var(--hand-peek);
   grid-template-areas:
     'lives field piles'
@@ -69,6 +70,11 @@ eras-player-plate {
   margin-block: var(--space-4) 0;
 }
 
+// The rival's plate at the table's top left: beside the game menu's round button, not under it
+:host(.opponent:not(.mirrored)) eras-player-plate {
+  margin-inline-start: var(--menu-clear, 0);
+}
+
 
 // The rival's side is mirrored: their name and gems sit next to the center of the table, like yours
 :host(.opponent) .lives {
@@ -86,7 +92,7 @@ eras-player-plate {
 // As big as the zone allows: the whole pile (the card and a strip of each other life) fits under its label
 .life-stack {
   --life-card: min(
-    7rem,
+    calc(7 * var(--bu, 1rem)),
     calc((100cqw - 0.5rem) * 63 / 88),
     calc((100cqh - 1.75rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
   );
@@ -155,11 +161,42 @@ eras-player-plate {
   position: relative;
   container-type: size;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
   min-block-size: 0;
   padding: 1.1rem var(--space-3) 0.2rem;
+}
+
+// Its cards. A crowded line starts at its left edge (safe center) and slides with the arrows; the field hides what
+// is past its edges
+.line-cards {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+// The arrows of a crowded line: at its ends, over the cards
+.line-arrow {
+  position: absolute;
+  inset-block-start: 50%;
+  z-index: 4;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-md);
+}
+
+.line-arrow.start {
+  inset-inline-start: var(--space-1);
+}
+
+.line-arrow.end {
+  inset-inline-end: var(--space-1);
+}
+
+.line-arrow:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 .line + .line {
@@ -215,7 +252,7 @@ eras-player-plate {
 
 // Field cards as big as their line allows (an exhausted one turns: it needs its height as width too)
 .placed {
-  --game-card-width: min(var(--field-card-max, 9rem), calc((100cqh - 1.4rem) * 63 / 88));
+  --game-card-width: min(var(--field-card-max, calc(9 * var(--bu, 1rem))), calc((100cqh - 1.4rem) * 63 / 88));
 
   flex: none;
 }
@@ -334,7 +371,7 @@ eras-player-plate {
 // The cards' window: as wide as the hand, and much taller, so a card raised over the Retaguardia stays inside it
 // (a mask only paints what is inside its box). It lets the pointer through to what is under it but its cards.
 .hand-window {
-  --hand-reach: 20rem;
+  --hand-reach: calc(20 * var(--bu, 1rem));
 
   position: absolute;
   inset-inline: 0;

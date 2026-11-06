@@ -67,10 +67,41 @@
           }
         }
       </span>
-      @for (s of rows()[line]; track s.instanceId) {
-        <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
-          <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
-        </div>
+      <!-- The line's cards: a crowded line slides sideways with the arrows (or the wheel) -->
+      <div class="line-cards" erasLineScroll #row="erasLineScroll">
+        @for (s of rows()[line]; track s.instanceId) {
+          <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
+            <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+          </div>
+        }
+      </div>
+      <!-- Each arrow shows while there are cards past its end; it keeps still while a card flies or a fight plays, so
+           nothing moves under it -->
+      @if (row.canStart()) {
+        <button
+          type="button"
+          erasIconButton
+          size="md"
+          icon="chevron-left"
+          class="line-arrow start"
+          aria-label="Ver las cartas de la izquierda de la línea"
+          [title]="row.locked() ? 'Espera a que termine la animación' : 'Ver más cartas (también con la rueda del mouse)'"
+          [disabled]="row.locked()"
+          (click)="row.by(-1); $event.stopPropagation()"
+        ></button>
+      }
+      @if (row.canEnd()) {
+        <button
+          type="button"
+          erasIconButton
+          size="md"
+          icon="chevron-right"
+          class="line-arrow end"
+          aria-label="Ver las cartas de la derecha de la línea"
+          [title]="row.locked() ? 'Espera a que termine la animación' : 'Ver más cartas (también con la rueda del mouse)'"
+          [disabled]="row.locked()"
+          (click)="row.by(1); $event.stopPropagation()"
+        ></button>
       }
     </div>
   }
@@ -116,7 +147,7 @@
       class="hand-turn start"
       aria-label="Rotar la mano: ver las cartas de la izquierda"
       title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() <= -handTurnMax()"
+      [disabled]="handTurn() <= -handTurnMax() || animating()"
       (click)="turnHandBy(-1); $event.stopPropagation()"
     ></button>
     <button
@@ -126,7 +157,7 @@
       class="hand-turn end"
       aria-label="Rotar la mano: ver las cartas de la derecha"
       title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() >= handTurnMax()"
+      [disabled]="handTurn() >= handTurnMax() || animating()"
       (click)="turnHandBy(1); $event.stopPropagation()"
     ></button>
   }

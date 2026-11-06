@@ -9,7 +9,9 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { BoardAnimations } from './board-animations';
 import { BoardDialogs } from './board-dialogs';
+import { LineScrollDirective } from './line-scroll';
 import { BoardDrag } from './board-drag';
 import { BoardPreferences } from './board-preferences';
 import { PlayerPlateComponent } from './player-plate.component';
@@ -32,7 +34,7 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
  */
 @Component({
   selector: 'eras-player-half',
-  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent],
+  imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent, LineScrollDirective],
   templateUrl: './player-half.component.html',
   styleUrls: ['./player-half.component.scss', './player-half.component.table.scss', './player-half.component.phone.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,6 +66,7 @@ export class PlayerHalfComponent {
   protected readonly drag = inject(BoardDrag);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly modal = inject(ModalService);
+  private readonly animations = inject(BoardAnimations, { optional: true });
   private readonly fieldEl = viewChild<ElementRef<HTMLElement>>('field');
 
   protected readonly over = signal<string | null>(null);
@@ -126,7 +129,11 @@ export class PlayerHalfComponent {
   }
   protected readonly handTurn = computed(() => Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurnWanted())));
 
+  /** An animation is playing: the hand's arrows (and the lines' ones) keep still, so a flying card lands where aimed. */
+  protected readonly animating = computed(() => !(this.animations?.idle() ?? true));
+
   protected turnHandBy(step: number): void {
+    if (this.animating()) return;
     this.handTurnWanted.set(Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurn() + step)));
   }
 

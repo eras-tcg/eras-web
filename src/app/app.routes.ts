@@ -119,6 +119,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/admin/users.page').then((m) => m.UsersPage),
       },
       {
+        path: 'activity-log',
+        title: 'Registro de actividad · ERAS',
+        canMatch: [permissionGuard('manage_users')],
+        loadComponent: () => import('@features/admin/activity-log.page').then((m) => m.ActivityLogPage),
+      },
+      {
         path: 'roles',
         title: 'Roles · ERAS',
         canMatch: [permissionGuard('manage_roles')],

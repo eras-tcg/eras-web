@@ -73,8 +73,8 @@
   font-size: clamp(1.5rem, min(3.6vw, 6vh), 3rem);
 }
 
-/* Narrow screens */
-@media (max-width: 63.99rem) {
+/* Narrow screens held upright (a phone held sideways keeps the words, see below) */
+@media (max-width: 63.99rem) and (orientation: portrait) {
   // main: round buttons in a bar at the bottom (the screen never scrolls, so it stays there)
   :host(.main) {
     position: relative;
@@ -160,8 +160,33 @@
     background: var(--color-surface-muted);
   }
 
+  // As big as fits a phone's width: the longest option (Clasificación) on one line
   :host(.sub) .lead .label,
   :host(.sub) .label {
-    font-size: var(--font-size-xl);
+    font-size: clamp(1rem, 5vw, var(--font-size-xl));
+  }
+}
+
+/* Short windows (a phone held sideways): smaller words and gaps, so every option fits the height */
+@media (max-height: 30rem) and (orientation: landscape) {
+  .list {
+    gap: var(--space-1);
+  }
+
+  .label {
+    font-size: 1.15rem;
+  }
+
+  .lead .label {
+    font-size: 1.45rem;
+  }
+
+  :host(.sub) .list {
+    gap: var(--space-2);
+  }
+
+  :host(.sub) .lead .label,
+  :host(.sub) .label {
+    font-size: 1.4rem;
   }
 }

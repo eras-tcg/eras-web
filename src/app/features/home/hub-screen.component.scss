@@ -30,7 +30,9 @@
   inset-inline-end: 0;
   z-index: -1;
   block-size: 120%;
-  // Stays in place between the hub screens (view transitions)
+  // Stays in place between the hub screens (view transitions). A named part travels on a layer of its own, over
+  // the page, so what sits on the artwork is named too (.player, .side, .credit): otherwise it would wait under the
+  // artwork until the change ends
   view-transition-name: hub-art;
   aspect-ratio: var(--hub-card-ratio);
   // Until the artwork loads, the same color as the column: no box shows against it
@@ -73,6 +75,7 @@
   color: inherit;
   text-decoration: none;
   box-shadow: var(--shadow-md);
+  view-transition-name: hub-player;
   transition: transform var(--duration-fast) var(--easing-standard), filter var(--duration-fast) var(--easing-standard);
 }
 
@@ -216,6 +219,7 @@
   gap: var(--space-4);
   min-block-size: 0;
   overflow: hidden;
+  view-transition-name: hub-side;
 }
 
 .credit {
@@ -233,6 +237,7 @@
   font: inherit;
   font-size: var(--font-size-xs);
   cursor: pointer;
+  view-transition-name: hub-credit;
 }
 
 .credit:hover {
@@ -244,11 +249,13 @@
   block-size: 0.85rem;
 }
 
-/* Narrow screens: the card on top (as wide as fits), the menu and panels at the bottom over its faded lower part */
-@media (max-width: 63.99rem) {
+/* Narrow screens held upright: the card on top (as wide as fits), the menu and panels at the bottom over its faded
+   lower part. A phone held sideways keeps the two columns (the stack does not fit its height), see below. */
+@media (max-width: 63.99rem) and (orientation: portrait) {
   :host {
     grid-template:
       'top' auto
+      'credit' auto
       'side' minmax(0, 1fr)
       / minmax(0, 1fr);
     padding-block: max(var(--space-4), env(safe-area-inset-top)) 0;
@@ -271,7 +278,14 @@
       linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 20%);
   }
 
+  // The nameplate keeps room for the name; with many quick buttons (an administrator's) they go to a second line
+  .top {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
   .player {
+    min-inline-size: 9rem;
     padding-inline-end: var(--space-6);
   }
 
@@ -294,8 +308,40 @@
     padding-block-end: max(var(--space-4), env(safe-area-inset-bottom));
   }
 
-  // Under the quick buttons, over the artwork
+  // Under the top row, over the artwork, however many lines the quick buttons take
   .credit {
-    inset-block: calc(max(var(--space-4), env(safe-area-inset-top)) + 3.5rem) auto;
+    position: static;
+    grid-area: credit;
+    justify-self: end;
+  }
+}
+
+/* Short windows (a phone held sideways): the two columns, tighter, so the menu fits beside the artwork */
+@media (max-height: 30rem) and (orientation: landscape) {
+  :host {
+    grid-template-columns: minmax(18rem, 48%) 1fr;
+    gap: var(--space-2) var(--space-4);
+    padding-block: max(var(--space-3), env(safe-area-inset-top)) max(var(--space-3), env(safe-area-inset-bottom));
+  }
+
+  .player {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-6) var(--space-2) var(--space-2);
+  }
+
+  .player-avatar {
+    --avatar-size: 2.5rem;
+  }
+
+  .player-name {
+    font-size: var(--font-size-lg);
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .side {
+    gap: var(--space-2);
   }
 }

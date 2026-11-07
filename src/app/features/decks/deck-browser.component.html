@@ -63,8 +63,8 @@
       @if (note(); as text) {
         <p class="note">{{ text }}</p>
       }
-      <!-- Two columns on phones (40vw), 11rem covers elsewhere -->
-      <eras-grid minColumn="min(11rem, 40vw)" [gap]="4">
+      <!-- Two columns on upright phones (40vw), one row in sight on phones held sideways (34dvh), 11rem covers elsewhere -->
+      <eras-grid minColumn="min(11rem, 40vw, 34dvh)" [gap]="4">
         <ng-content select="[deck-lead]" />
         <ng-content />
       </eras-grid>

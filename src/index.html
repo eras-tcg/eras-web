@@ -16,6 +16,11 @@
   <meta name="apple-mobile-web-app-title" content="ERAS">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script>
+    // The site lives on www.erastcg.com only (one origin for the installed app and its offline data). CloudFront
+    // answers erastcg.com with a 301; this covers a page still cached there. Offline it stays put and keeps working.
+    if (location.hostname === 'erastcg.com' && navigator.onLine) {
+      location.replace('https://www.erastcg.com' + location.pathname + location.search + location.hash);
+    }
     // "Instalar ERAS" (core/pwa/install-prompt.ts): the browser may offer the installation before the app has started
     addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__erasInstallPrompt = e; });
     addEventListener('appinstalled', function () { window.__erasInstallPrompt = null; window.__erasInstalled = true; });

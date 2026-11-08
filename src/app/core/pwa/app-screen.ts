@@ -3,9 +3,9 @@ import { DestroyRef, Injectable, inject } from '@angular/core';
 import { ServerAccess } from '../server/server-access';
 import type { AppMode } from './app-mode';
 
-
 /** The taps that may ask for full screen (the browser takes any of them as the player's gesture). */
 const GESTURES = ['click', 'pointerup', 'touchend'] as const;
+
 /** The window's size as the layout uses it (CSS px). */
 export interface LayoutBox {
   width: number;

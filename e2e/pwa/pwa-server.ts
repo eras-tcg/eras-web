@@ -73,6 +73,8 @@ export interface PwaServers {
   imageHits: { cors: number; plain: number };
   /** Every request that reached the backend (the API and /wake), in order: "GET /api/drive/wallet/me". */
   backendHits: string[];
+  /** The bodies of every POST /api/simulator/offline-games (the games played offline, sent to be counted). */
+  offlineUploads: { games: { id: string; seed: string; actions: { body: string; botMoves: number }[]; result: Record<string, unknown> }[] }[];
   /** The backend is asleep (a sleeping backend: the health check fails until /wake, then a moment more). */
   readonly asleep: boolean;
   close(): Promise<void>;
@@ -93,6 +95,7 @@ export async function startPwaServers(options: PwaServerOptions = {}): Promise<P
   const data = catalog(root);
   const hits = { cors: 0, plain: 0 };
   const backendHits: string[] = [];
+  const offlineUploads: PwaServers['offlineUploads'] = [];
   let asleep = options.wakeAfterMs !== undefined;
   let waking: ReturnType<typeof setTimeout> | null = null;
 
@@ -114,6 +117,19 @@ export async function startPwaServers(options: PwaServerOptions = {}): Promise<P
     if (url.pathname === '/api/drive/cards/db') return json(res, data.images);
     if (url.pathname === '/api/cards/search') return json(res, data.meta);
     if (url.pathname === '/api/cards/ref' || url.pathname === '/api/simulator/unprogrammed') return json(res, {});
+    if (url.pathname === '/api/simulator/offline-games' && req.method === 'POST') {
+      // The server plays each game again and counts it (DriveManager's OfflineGames): here every game is accepted
+      const chunks: Buffer[] = [];
+      req.on('data', (c: Buffer) => chunks.push(c));
+      req.on('end', () => {
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as PwaServers['offlineUploads'][number];
+        offlineUploads.push(body);
+        json(res, {
+          results: body.games.map((g) => ({ id: g.id, status: 'accepted', credit: { won: false, turns: g.result['turns'], progress: [], matchId: 'm-e2e' } })),
+        });
+      });
+      return;
+    }
     return json(res, { message: 'not mocked' }, 404);
   };
 
@@ -161,6 +177,7 @@ export async function startPwaServers(options: PwaServerOptions = {}): Promise<P
   return {
     imageHits: hits,
     backendHits,
+    offlineUploads,
     get asleep() {
       return asleep;
     },

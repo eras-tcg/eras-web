@@ -8,6 +8,7 @@
  */
 import { EngineApi, LocalMatch } from '@eras/engine';
 import type { EngineAssets, FromEngine, ToEngine } from './engine-protocol';
+import { GameRecorder } from './offline-record';
 
 const post = (message: FromEngine) => postMessage(message);
 
@@ -16,6 +17,14 @@ let installed: Promise<void> | null = null;
 let match: LocalMatch | null = null;
 let matchId = -1;
 let botTimer: ReturnType<typeof setTimeout> | null = null;
+/** The game's record (every action and the bot's moves after it), posted each time the room reaches its post-game. */
+let recorder: GameRecorder | null = null;
+
+/** After an action or a move of the bot: a game that just ended is posted, recorded, for its rewards once connected. */
+function recordEnd(id: number, game: LocalMatch): void {
+  const finished = recorder?.check(game.status(), () => game.result(), Date.now());
+  if (finished) post({ kind: 'finished', id, game: finished });
+}
 
 /** The cards and the bot's resources, installed once (the engine reads them before its first game). */
 function install(assets: EngineAssets): Promise<void> {
@@ -66,7 +75,9 @@ function pumpBot(): void {
       return;
     }
     if (moves === null || moves === undefined) return;
+    recorder?.botMoved();
     deliver(id, moves);
+    recordEnd(id, game);
     botTimer = setTimeout(next, game.botPauseMs());
   };
   botTimer = setTimeout(next, game.botPauseMs());
@@ -88,11 +99,13 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
     case 'create':
       stopBot();
       match = null;
+      recorder = null;
       try {
         if (!installed) throw new Error('El motor no está cargado');
         await installed;
         match = new LocalMatch(JSON.stringify(data.config));
         matchId = data.id;
+        recorder = new GameRecorder(data.config, Date.now());
         post({ kind: 'created', id: data.id, roomId: match.roomId, userId: match.userId });
       } catch (e) {
         post({ kind: 'error', id: data.id, message: errorText(e) });
@@ -101,6 +114,7 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
     case 'action': {
       if (!match || data.id !== matchId) return;
       let sent: string[];
+      recorder?.action(data.body);
       try {
         sent = match.send(data.body);
       } catch (e) {
@@ -108,6 +122,7 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
         return;
       }
       deliver(data.id, sent);
+      recordEnd(data.id, match);
       if (!sent.length) {
         const why = match.lastError();
         if (why) post({ kind: 'error', id: data.id, message: why });
@@ -119,6 +134,7 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
       if (data.id !== matchId) return;
       stopBot();
       match = null;
+      recorder = null;
       return;
   }
 });

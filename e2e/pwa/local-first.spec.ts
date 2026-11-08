@@ -200,6 +200,76 @@ test('la app instalada abre sin despertar al servidor, juega sin conexión y con
   await context.close();
 });
 
+/** The offline games kept on the device for the player (IndexedDB "eras"/kv, `offline-games:<userId>`). */
+async function pendingGames(page: Page): Promise<number> {
+  return page.evaluate(
+    (key) =>
+      new Promise<number>((resolve, reject) => {
+        const open = indexedDB.open('eras');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains('kv')) return resolve(0);
+          const get = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+          get.onsuccess = () => {
+            db.close();
+            resolve((get.result as { games?: unknown[] } | undefined)?.games?.length ?? 0);
+          };
+          get.onerror = () => reject(get.error);
+        };
+      }),
+    `offline-games:${E2E_USER.id}`,
+  );
+}
+
+test('una partida sin conexión se guarda en el dispositivo y se envía al conectar para que cuente', async ({ browser }) => {
+  const { context, page } = await phone(browser);
+  await signIn(page);
+  await installed(page);
+  await keptFromAnEarlierVisit(page);
+  await page.goto(`${BASE}/home`);
+  const connect = page.getByRole('button', { name: /Conectar con el servidor/ });
+  await expect(connect).toContainText('Sin conectar');
+
+  // A game against the bot without the server, to its end (the player surrenders)
+  await page.getByRole('link', { name: 'Jugar' }).first().click();
+  await page.getByRole('navigation', { name: 'Modos de juego' }).getByRole('button', { name: 'Modo solo sin conexión' }).click();
+  await expect(page).toHaveURL(/\/simulator\/local\/board$/, { timeout: 60_000 });
+  await page.getByRole('button', { name: 'Fácil' }).click();
+  await page.getByRole('button', { name: 'Ver ST1', exact: true }).click();
+  await page.getByRole('button', { name: 'Comenzar partida' }).click();
+  await page.getByRole('button', { name: 'Quedarme con todas' }).click({ timeout: 30_000 });
+  await expect(page.locator('.strip .turn')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Menú de partida' }).click();
+  await page.getByRole('menuitem', { name: 'Rendirse' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Rendirse' }).click();
+  await expect(page.getByText('Te rendiste')).toBeVisible({ timeout: 30_000 });
+  // Kept on the device; nothing sent
+  await expect.poll(() => pendingGames(page), { timeout: 10_000 }).toBe(1);
+  expect(servers!.backendHits).toEqual([]);
+
+  // Connecting sends it to be counted, and the device forgets it once the server answered
+  await page.goto(`${BASE}/home`);
+  await connect.click();
+  await expect(page.getByRole('button', { name: /Conexión con el servidor: Conectado/ })).toBeVisible({ timeout: 30_000 });
+  await expect.poll(() => servers!.offlineUploads.length, { timeout: 20_000 }).toBe(1);
+  const [sent] = servers!.offlineUploads[0].games;
+  expect(servers!.offlineUploads[0].games).toHaveLength(1);
+  expect(sent.id).toMatch(/^[0-9a-f-]{36}$/);
+  expect(sent.seed).toMatch(/^\d+$/);
+  const types = sent.actions.map((a) => (JSON.parse(a.body) as { type: string }).type);
+  expect(types[0]).toBe('JOIN_ROOM');
+  expect(types).toContain('SET_DECK');
+  expect(types[types.length - 1]).toBe('SURRENDER');
+  expect(sent.actions.some((a) => a.botMoves > 0)).toBe(true);
+  expect(sent.result).toMatchObject({ gameNumber: 1, winnerId: 'bot', endReason: 'surrender' });
+  expect(sent.result['digest']).toMatch(/^[0-9a-f]{16}$/);
+  await expect(page.getByText('1 partida sin conexión registrada')).toBeVisible({ timeout: 10_000 });
+  await expect.poll(() => pendingGames(page), { timeout: 10_000 }).toBe(0);
+  await page.screenshot({ path: join(SHOTS, 'local-first-partida-registrada.png') });
+  await context.close();
+});
+
 test('"Conectar" en la app instalada: el estado Conectando… y luego Conectado', async ({ browser }) => {
   // The health check takes a moment (a slow network): "Conectando…" shows on the hub meanwhile
   await servers?.close();

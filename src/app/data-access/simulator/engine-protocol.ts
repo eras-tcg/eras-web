@@ -52,8 +52,44 @@ export type ToEngine =
   /** The game is over for the page: the bot stops. */
   | { kind: 'dispose'; id: number };
 
+/** One action of the player, as the board sent it, and the bot's moves after it before the next action. */
+export interface RecordedStep {
+  body: string;
+  botMoves: number;
+}
+
+/** `LocalMatch.result()`: the game as it ended (the server plays it again and compares). */
+export interface MatchResult {
+  status: string;
+  /** How many times the room reached the post-game (a rematch plays another game in the same room). */
+  gamesEnded: number;
+  winnerId: string | null;
+  endReason: string | null;
+  turns: number;
+  /** The engine's digest of the game, without the clock's times: the same game gives the same digest on the server. */
+  digest: string;
+}
+
+/**
+ * An offline game that reached its end, as the worker recorded it (offline-record.ts): enough for the server to play it
+ * again exactly. `decks`: each deck the actions chose, its card ids one per copy; `actions`: every action since the room
+ * was made (a rematch's game carries the games before it in the room).
+ */
+export interface FinishedGame {
+  seed: string;
+  botLevel: string | null;
+  userId: string;
+  startedAt: number;
+  endedAt: number;
+  decks: Record<string, string[]>;
+  actions: RecordedStep[];
+  result: MatchResult;
+}
+
 /** Worker → page. */
 export type FromEngine =
+  /** A game of the room reached its post-game: its record, for the rewards once connected. */
+  | { kind: 'finished'; id: number; game: FinishedGame }
   | { kind: 'ready'; cards: number; botResources: number }
   | { kind: 'created'; id: number; roomId: string; userId: string }
   /** A message the server would push to /user/queue/room/{id}, byte for byte. */

@@ -1,6 +1,10 @@
 <eras-auth-layout heading="Iniciar sesión">
   <form [formGroup]="form" (ngSubmit)="submit()">
     <eras-stack [gap]="4">
+      @if (!network.online()) {
+        <!-- The installed app opened without the connection: signing in needs it -->
+        <eras-alert>Sin conexión: para iniciar sesión necesitas internet. Inicia sesión una vez con conexión y podrás jugar contra el bot sin conexión.</eras-alert>
+      }
       @if (auth.expired() && !error()) {
         <eras-alert>Tu sesión expiró. Vuelve a iniciar sesión para seguir donde estabas.</eras-alert>
       }

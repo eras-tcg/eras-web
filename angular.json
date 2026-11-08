@@ -24,12 +24,22 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "index": {
+              "input": "src/index.html",
+              "preloadInitial": true
+            },
             "tsConfig": "tsconfig.app.json",
+            "webWorkerTsConfig": "tsconfig.worker.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "{card-bundle,bot-resources,starter-decks}.json",
+                "input": "vendor/eras-engine",
+                "output": "engine"
               }
             ],
             "styles": [
@@ -61,7 +71,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
-              ]
+              ],
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -87,7 +98,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.staging.ts"
                 }
-              ]
+              ],
+              "serviceWorker": "ngsw-config.json"
             },
             "aws": {
               "budgets": [
@@ -108,7 +120,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.aws.ts"
                 }
-              ]
+              ],
+              "serviceWorker": "ngsw-config.json"
             }
           },
           "defaultConfiguration": "production"

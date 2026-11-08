@@ -14,6 +14,8 @@
   --page-top: max(var(--space-5), env(safe-area-inset-top));
 
   display: grid;
+  /* One column no wider than the screen: its rows shrink to it (an upright phone) instead of widening it */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   padding: var(--page-top) calc(var(--layout-gutter) - var(--space-3)) var(--space-5);
 }
@@ -155,7 +157,7 @@
 }
 
 /* Who goes first and the big start */
-.controls { display: grid; justify-items: center; gap: var(--space-3); }
+.controls { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: var(--space-3); }
 .controls eras-toggle-group { inline-size: min(100%, 26rem); }
 .bot-model { display: flex; align-items: center; gap: var(--space-2); inline-size: min(100%, 26rem); font-size: var(--font-size-sm); }
 .bot-model span { color: var(--color-text); font-weight: var(--font-weight-medium); white-space: nowrap; }

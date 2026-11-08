@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
+import { LOCAL_ROOM_ID } from '@data/simulator/engine-protocol';
 import { GameStore } from '@data/simulator/game.store';
 import { QueueApi, QueueStatus } from '@data/simulator/queue.api';
 import { RoomsApi } from '@data/simulator/rooms.api';
@@ -240,6 +241,11 @@ export class LobbyPage {
   protected async join(id: string): Promise<void> {
     const room = id.trim();
     if (!room || this.busy()) return;
+    // The offline game's room lives in this page only: once it is gone (a reload), it is opened again from "Jugar"
+    if (room === LOCAL_ROOM_ID && !this.game.local()) {
+      void this.router.navigateByUrl('/play', { replaceUrl: true });
+      return;
+    }
     if (this.search()) this.cancelSearch();
     this.busy.set(room);
     this.error.set(null);

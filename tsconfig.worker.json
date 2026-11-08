@@ -1,0 +1,12 @@
+/* The Web Workers (the offline game engine, the src files named *.worker.ts): their own globals, no DOM. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/worker",
+    "lib": ["es2022", "webworker"],
+    "types": []
+  },
+  "include": [
+    "src/**/*.worker.ts"
+  ]
+}

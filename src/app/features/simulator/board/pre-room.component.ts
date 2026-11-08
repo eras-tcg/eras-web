@@ -79,6 +79,8 @@ export class PreRoomComponent {
   });
 
   protected readonly allDecks = computed(() => {
+    // Offline: the decks the engine was given (the starter decks, and mine as they were loaded)
+    if (this.game.local()) return this.game.localDecks();
     const mine = this.decks.myDecks();
     const ids = new Set(mine.map((d) => d.id));
     return [...mine, ...this.decks.publicDecks().filter((d) => !ids.has(d.id))];
@@ -100,6 +102,8 @@ export class PreRoomComponent {
     // The bot owns no collection: only the cards the simulator runs count for its deck
     const forBot = this.pickingBot();
     if (this.game.editorRoom()) return result;
+    // Offline there is no collection to check against: any deck the engine was given is played
+    const checkCollection = !this.game.local();
     for (const deck of this.allDecks()) {
       if (deck.cards.some((id) => { const card = byId.get(id); return !!card && !!this.cards.unprogrammedOf(card); })) {
         result.set(deck.id, 'Tiene cartas sin programar');
@@ -107,7 +111,7 @@ export class PreRoomComponent {
       }
       const needed = new Map<string, number>();
       for (const id of deck.cards) needed.set(id, (needed.get(id) ?? 0) + 1);
-      if (forBot) continue;
+      if (forBot || !checkCollection) continue;
       const lacking = [...needed].reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
       if (lacking > 0) result.set(deck.id, `Te ${lacking === 1 ? 'falta 1 carta' : 'faltan ' + lacking + ' cartas'} de tu colección`);
     }
@@ -204,6 +208,8 @@ export class PreRoomComponent {
 
   constructor() {
     void this.cards.load();
+    // Offline the list is the engine's (and the server is not there to ask)
+    if (this.game.local()) return;
     void this.decks.loadPublic();
     const id = this.auth.user()?.id;
     if (id) void this.decks.loadMine(id);

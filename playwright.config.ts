@@ -14,6 +14,8 @@ const port = 4300;
 
 export default defineConfig({
   testDir: './e2e',
+  // The installed app offline needs the production build: playwright.pwa.config.ts (npm run e2e:pwa)
+  testIgnore: ['pwa/**'],
   timeout: 45_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,

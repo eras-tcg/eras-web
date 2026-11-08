@@ -1,11 +1,12 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AuthService } from '../auth/auth.service';
-import { VersionService } from '../version/version.service';
+import { OnlineStatus } from '../server/online-status';
+import { VersionService, inGame, versionBanner } from '../version/version.service';
 import { AppToolsComponent } from './app-tools.component';
 import { LoadingScreenComponent } from './loading-screen.component';
 
@@ -15,7 +16,7 @@ import { LoadingScreenComponent } from './loading-screen.component';
  */
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, IconComponent, AppToolsComponent, LoadingScreenComponent],
+  imports: [RouterOutlet, RouterLink, IconComponent, AppToolsComponent, LoadingScreenComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,7 @@ export class ShellComponent {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly version = inject(VersionService);
+  private readonly network = inject(OnlineStatus);
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -32,6 +34,20 @@ export class ShellComponent {
     ),
     { initialValue: '' },
   );
+
+  /** A new version (never over a game's table) or a broken one (VersionService). */
+  protected readonly versionBanner = computed(() =>
+    versionBanner({ updateAvailable: this.version.updateAvailable(), broken: this.version.broken(), url: this.url() }),
+  );
+
+  /**
+   * No connection: said once at the top, with the way to Modo solo sin conexión; not on "Jugar" (it says it there),
+   * the login (idem) or a game's table.
+   */
+  protected readonly offlineBanner = computed(() => {
+    const url = this.url();
+    return !this.network.online() && !!url && !inGame(url) && !/^\/(?:play|login)(?:[/?#]|$)/.test(url);
+  });
 
   /** The hub screens (home, Jugar, Social): they fit the window exactly. */
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));

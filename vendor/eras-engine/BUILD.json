@@ -1,8 +1,8 @@
 {
-  "commit": "e4f40e43a7e4b1029ecd6e9b37d3fe4ea870c246",
+  "commit": "997a7a6326e94241ea52f3784bf65643e6b04ec8",
   "dirty": false,
-  "subject": "refactor(engine): one copy of the room session's logic, shared by the server and LocalMatch",
-  "copiedAt": "2026-11-08T15:16:48.413Z",
+  "subject": "feat(engine): LocalMatch.result(): an offline game's result and digest, the same on the JVM and in the browser",
+  "copiedAt": "2026-11-08T16:20:44.337Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

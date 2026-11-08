@@ -26,8 +26,39 @@ would push, so the board and `GameStore` are the same as online. The option is a
   cards installed once). `OfflineGame` builds the game: the starter decks (`/engine/starter-decks.json`) and the
   player's own decks, loaded in this visit or kept on the device (`local-decks.ts`, mapped as the server's `DeckLoader`
   does). The room is always `local`; `RoomsApi.createLocal()`/`get('local')` describe it without the server.
-- **Not available offline:** manual (editor) actions, ranked, missions and rewards, the match history, reconnection
-  and sharing the room. A reload ends the game (back to "Jugar"; the decks are still offered).
+- **Not available offline:** manual (editor) actions, ranked, reconnection and sharing the room. A reload ends the game
+  (back to "Jugar"; the decks are still offered). Rewards and the match history come once connected (below).
+
+### Offline games and rewards (2.6)
+
+A game of Modo solo sin conexión that reaches its end counts, once the player connects, exactly as a game against the
+server's bot (casual: never ranked): for the missions and the progression as a game against a player (but the welcome
+step "Tu primera partida", which asks for a game against another player), and only if the server, playing it again
+with the same engine, gets the same game. Every such game counts (no daily cap); the deck it recorded counts if it is
+legal and the player owns its cards, even if the saved deck was edited or deleted since.
+
+- **Recording** (`engine.worker.ts` with `offline-record.ts`, pure): the worker keeps every body the board sends, in
+  order, with the number of moves the bot made after it before the next one (the worker moves the bot between the
+  player's actions: that order is the game), and the moment the room reaches its post-game posts `finished` with the
+  record: the match's seed and bot level, the player's id, when the room was made and when it ended, the decks the
+  actions chose (their card ids, one per copy), the actions, and `LocalMatch.result()` (game number in the room,
+  winner, end, turns, and the engine's digest of the game without the clock's times). A rematch's game carries the
+  room's actions from the start. Only a signed-in player's games are kept; a game left before its end is not.
+- **Kept on the device** (`offline-games.ts`): IndexedDB `eras`/`kv`, key `offline-games:<userId>`, each game with a
+  new UUID and the engine's build (`ENGINE_BUILD`); at most 50 per player (the oldest go first); kept across reloads,
+  offline starts and signing out (they are the player's, sent when they sign in again).
+- **Sent on connecting** (`offline-games-upload.ts`, its own chunk, started by `OfflineLibrarySync`, which DataPrefetch
+  makes when the player connects, after each sync of the library; and when a game ends: before connecting the
+  connection gate refuses it at once, nothing reaches the server): `POST /api/simulator/offline-games`
+  `{"games": [game]}`, one game per request (the server plays each again). Counted, counted before or refused: dropped
+  from the device; left for later by the server (`retry`: busy, or the player's replays of the day spent; never a refusal)
+  or not sent (no connection): kept, and sending stops until the next time. A notice sums it up ("2 partidas sin
+  conexión registradas · 1 victoria · tus misiones avanzaron"), drawn by the chunk itself with the look of the app's
+  notice (importing ConnectionService there would split the first screen's code).
+- **What the server checks and grants:** DriveManager `eras-engine/README.md`, "Offline games and rewards".
+- **Tests:** `offline-record.spec.ts`, `offline-games.spec.ts`, `offline-games-upload.spec.ts`; the installed app's
+  e2e (`e2e/pwa/local-first.spec.ts`) plays a game without the connection, connects, and checks the upload's body
+  and the device's queue emptied.
 
 ### Installable app (PWA) and offline start
 

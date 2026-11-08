@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, Injector, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { AvatarStore } from '@core/auth/avatar.store';
@@ -7,7 +7,8 @@ import { CardsStore } from '../cards/cards.store';
 import { DecksStore } from '../decks/decks.store';
 import { CardMeta, DriveCard } from '../cards/card.model';
 import { Deck } from '../decks/deck.model';
-import { LOCAL_USER_ID, LocalMatchConfig } from './engine-protocol';
+import { ENGINE_BUILD } from './engine-build';
+import { FinishedGame, LOCAL_USER_ID, LocalMatchConfig } from './engine-protocol';
 import { GameStore } from './game.store';
 import { OfflineDecks, StarterDecksFile, offlineDecks } from './local-decks';
 import { LocalEngine } from './local-transport';
@@ -75,6 +76,9 @@ export class OfflineGame {
   private readonly decks = inject(DecksStore);
   private readonly avatar = inject(AvatarStore);
   private readonly playmat = inject(PlaymatStore);
+  private readonly injector = inject(Injector);
+  /** The engine's finished games are being kept (once per visit). */
+  private recording = false;
   /** The engine is loaded in this visit: an offline game starts without the connection. */
   readonly ready = signal(false);
 
@@ -118,6 +122,7 @@ export class OfflineGame {
   /** Opens an offline room for this player (joined, in its pre-room); resolves with its id. */
   async start(): Promise<string> {
     await this.prepare();
+    this.record();
     const { roomId } = await firstValueFrom(this.rooms.createLocal());
     const decks = await this.decksNow();
     const config: LocalMatchConfig = {
@@ -131,6 +136,29 @@ export class OfflineGame {
     await this.game.connectLocal(config, decks.list);
     this.game.joinRoom(null);
     return roomId;
+  }
+
+  /**
+   * Every game that reaches its end is kept on the device for the signed-in player (offline-games.ts), to be counted by
+   * the server when they connect (the same rewards as a game against the server's bot); sent at once when connected.
+   */
+  private record(): void {
+    if (this.recording) return;
+    this.recording = true;
+    this.engine.on((m) => {
+      if (m.kind === 'finished') this.keep(m.game).catch((e: unknown) => console.warn('[partidas sin conexión]', e));
+    });
+  }
+
+  private async keep(game: FinishedGame): Promise<void> {
+    const userId = this.auth.user()?.id;
+    // Only a signed-in player's games, played as them
+    if (!userId || game.userId !== userId) return;
+    const { offlineGameQueue, newGameId } = await import('./offline-games');
+    await offlineGameQueue.add(userId, { ...game, id: newGameId(), engineBuild: ENGINE_BUILD });
+    // Sent now if connected; otherwise the connection gate refuses it at once (nothing reaches the server) and it waits
+    const { OfflineGamesUpload } = await import('./offline-games-upload');
+    void this.injector.get(OfflineGamesUpload).send(userId);
   }
 
   private starters(): Promise<StarterDecksFile> {

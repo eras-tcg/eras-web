@@ -1,18 +1,16 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import { Client } from '@stomp/stompjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
+import { Deck } from '../decks/deck.model';
+import { LOCAL_ROOM_ID, LocalMatchConfig } from './engine-protocol';
+import { GameTransport, TransportEvents } from './game-transport';
+import { GameTransports } from './game-transports';
 import { applyLocalMove } from './game-rules';
 import { GameNotices } from './game-notices';
 import { rulesView } from './legal-actions';
 import { BotLevel, CardSlot, DummyCard, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
 import { Prelude, UpdateQueue, isTimeJump } from './update-queue';
-
-/** Same-origin WebSocket: nginx (and the dev proxy) forward /ws to DriveManager. */
-function wsUrl(): string {
-  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
-}
 
 /** The bot's seat in a room against it. */
 const BOT_SEAT = 'bot';
@@ -20,7 +18,8 @@ const BOT_SEAT = 'bot';
 const REPLAY_ACTIONS = new Set(['JOIN_ROOM', 'LEAVE_ROOM', 'TIME_STEP']);
 
 /**
- * Live game room over STOMP (/user/queue/room/{id} in: this player's own view; /app/room/{id}/action out).
+ * Live game room: over STOMP (/user/queue/room/{id} in: this player's own view; /app/room/{id}/action out), or, in
+ * Modo solo sin conexión, the engine in a Web Worker speaking the same protocol (see GameTransport).
  * Every broadcast carries the full state; this store keeps it, shows the updates in line (UpdateQueue) and keeps
  * their transient notices (GameNotices: revealed cards, targeting glow, recent log lines). Same protocol as the
  * legacy app.
@@ -28,12 +27,21 @@ const REPLAY_ACTIONS = new Set(['JOIN_ROOM', 'LEAVE_ROOM', 'TIME_STEP']);
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly auth = inject(AuthService);
-  private client: Client | null = null;
+  private readonly transports = inject(GameTransports);
+  /** How the room is reached: the server (STOMP) or the engine in this browser. */
+  private transport: GameTransport | null = null;
 
   readonly roomId = signal<string | null>(null);
   readonly connected = signal(false);
   readonly state = signal<GameState | null>(null);
   readonly error = signal<string | null>(null);
+  /**
+   * Modo solo sin conexión: the room is a game against the bot run by the engine in this browser (room "local"). What
+   * only the server has is not there: manual actions, ranked, missions, the match history, reconnections.
+   */
+  readonly local = signal(false);
+  /** Modo solo sin conexión: the decks the game can be played with (the starter decks and the player's own, as loaded). */
+  readonly localDecks = signal<Deck[]>([]);
   /** The transient notices of the updates shown (forwarded below). */
   private readonly notices = new GameNotices();
   readonly deckWarning = this.notices.deckWarning;
@@ -86,7 +94,7 @@ export class GameStore {
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
    * attachments, strength…). On in a test room and while the site's edit mode (the navigation bar's switch) is on.
    */
-  readonly editorMode = computed(() => this.editorRoom() || this.siteEditMode.active());
+  readonly editorMode = computed(() => !this.local() && (this.editorRoom() || this.siteEditMode.active()));
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */
@@ -214,40 +222,52 @@ export class GameStore {
 
   /** Opens the socket for a room (no-op when already connected to it). Resolves once STOMP is connected. */
   connect(roomId: string, timeoutMs = 8000): Promise<void> {
-    if (this.client?.active && this.roomId() === roomId && this.connected()) return Promise.resolve();
+    if (this.transport?.isOpen && this.roomId() === roomId && this.connected()) return Promise.resolve();
+    // The offline game's room is only reached from "Jugar" (connectLocal): a link to it opens nothing
+    if (roomId === LOCAL_ROOM_ID) return Promise.reject(new Error('La partida sin conexión ya terminó'));
+    return this.open(roomId, this.transports.stomp(timeoutMs));
+  }
+
+  /**
+   * Modo solo sin conexión: a game against the bot in this browser, with the given decks (`config.decks`; `decks`, the
+   * same as the pre-room lists them). Resolves once the engine has made the room; then it is played as online.
+   */
+  connectLocal(config: LocalMatchConfig, decks: Deck[]): Promise<void> {
+    const opened = this.open(config.roomId ?? LOCAL_ROOM_ID, this.transports.local(config));
+    this.localDecks.set(decks);
+    return opened;
+  }
+
+  private open(roomId: string, transport: GameTransport): Promise<void> {
     this.disconnect();
+    this.transport = transport;
+    this.local.set(transport.local);
     this.roomId.set(roomId);
     this.removed.set(null);
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('timeout')), timeoutMs);
-      let reconnecting = false;
-      this.client = new Client({
-        brokerURL: wsUrl(),
-        connectHeaders: { Authorization: `Bearer ${this.auth.token() ?? ''}` },
-        reconnectDelay: 3000,
-        onConnect: () => {
-          clearTimeout(timeout);
-          this.connected.set(true);
-          this.client?.subscribe(`/user/queue/room/${roomId}`, (msg) => this.onMessage(msg.body));
-          // The socket dropped and came back by itself: be in the room again and get its current state
-          if (reconnecting) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
-          reconnecting = true;
-          resolve();
-        },
-        onStompError: (frame) => {
-          this.error.set(frame.headers['message'] ?? 'Error de conexión con la sala');
-          this.connected.set(false);
-        },
-        onWebSocketClose: () => this.connected.set(false),
-        onDisconnect: () => this.connected.set(false),
-      });
-      this.client.activate();
-    });
+    // What a transport replaced (or closed) still says is not this room's
+    const current = () => this.transport === transport;
+    const events: TransportEvents = {
+      message: (body) => current() && this.onMessage(body),
+      connected: (again) => {
+        if (!current()) return;
+        this.connected.set(true);
+        // The socket dropped and came back by itself: be in the room again and get its current state
+        if (again) this.send('JOIN_ROOM', { username: this.auth.user()?.username ?? '' });
+      },
+      disconnected: () => current() && this.connected.set(false),
+      failed: (message) => {
+        if (!current()) return;
+        this.error.set(message);
+        this.connected.set(false);
+      },
+    };
+    return transport.open(roomId, events);
   }
 
   disconnect(): void {
-    void this.client?.deactivate();
-    this.client = null;
+    this.transport?.close();
+    this.transport = null;
+    this.local.set(false);
     this.notices.clear();
     this.roomId.set(null);
     this.state.set(null);
@@ -357,13 +377,13 @@ export class GameStore {
 
   private send(type: string, payload: Record<string, unknown> = {}): void {
     const room = this.roomId();
-    if (!this.client?.connected || !room) return;
+    if (!this.transport?.isOpen || !room) return;
     // A replay is only watched: nothing of the game is sent
     if (this.replayRoom() && !REPLAY_ACTIONS.has(type)) return;
     // Test room: the owner plays the other side too
     const actor = this.actor();
     const body = this.editorRoom() && actor && actor !== this.userId() ? { ...payload, actAs: actor } : payload;
-    this.client.publish({ destination: `/app/room/${room}/action`, body: JSON.stringify({ type, payload: body }) });
+    this.transport.publish(room, JSON.stringify({ type, payload: body }));
   }
 
   // ── Actions (same names and payloads as the legacy store) ──────────────

@@ -125,3 +125,41 @@ export function offlineDecks(input: {
   }
   return { specs, list };
 }
+
+/**
+ * The part of the card catalog `offlineDecks` reads for these decks: the drive cards the decks list (by file id) and
+ * those a starter deck's card finds by name and edition, with the metadata of the same name and edition. What is kept
+ * on the device for playing without the connection (offline-library.ts): the same decks come out of it as out of
+ * the whole catalog.
+ */
+export function catalogSubset(input: {
+  starters: StarterDecksFile | null;
+  mine: readonly Pick<Deck, 'cards'>[];
+  images: readonly DriveCard[];
+  meta: readonly CardMeta[];
+}): { images: DriveCard[]; meta: CardMeta[] } {
+  const used = new Set(input.mine.flatMap((d) => d.cards));
+  const starterKeys = new Set<string>();
+  for (const starter of Object.values(input.starters?.decks ?? {})) {
+    for (const m of starter.metadata) if (m.cardName && m.edition) starterKeys.add(metaKey(m.cardName, m.edition));
+  }
+  const images = input.images.filter((d) => {
+    if (used.has(d.id)) return true;
+    const name = value(d.name);
+    const edition = value(d.edition);
+    return !!name && !!edition && starterKeys.has(metaKey(name, edition));
+  });
+  const keys = new Set(images.flatMap((d) => (value(d.name) && value(d.edition) ? [metaKey(d.name as string, d.edition)] : [])));
+  const meta = input.meta.filter((m) => !!m.cardName && !!m.edition && keys.has(metaKey(m.cardName, m.edition)));
+  return { images, meta };
+}
+
+/** Every picture an offline game with these decks can show: each card's and each deck's cover (no repeats). */
+export function offlinePictures(decks: OfflineDecks): string[] {
+  const urls = new Set<string>();
+  for (const spec of Object.values(decks.specs)) {
+    if ('cards' in spec) for (const c of spec.cards) if (c.imageUrl) urls.add(c.imageUrl);
+  }
+  for (const deck of decks.list) if (deck.deckImage) urls.add(deck.deckImage);
+  return [...urls];
+}

@@ -13,6 +13,8 @@ export class DecksStore {
 
   readonly publicDecks = signal<Deck[]>([]);
   readonly myDecks = signal<Deck[]>([]);
+  /** Whose decks `myDecks` holds (null until they are loaded): kept for playing offline (OfflineLibrarySync). */
+  readonly myDecksOwner = signal<string | null>(null);
   /** Loads on their way (public and own decks load apart: one ending does not end the other's). */
   private readonly running = signal(0);
   readonly loading = computed(() => this.running() > 0);
@@ -42,6 +44,7 @@ export class DecksStore {
       // Another account signed in meanwhile: its decks are not these
       if (this.minePending && this.minePending.userId !== userId) return;
       this.myDecks.set(decks);
+      this.myDecksOwner.set(userId);
       this.mineOwner = userId;
     }, 'No se pudieron cargar tus mazos').finally(() => {
       if (this.minePending?.promise === promise) this.minePending = null;

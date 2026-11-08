@@ -5,12 +5,51 @@ import { AvatarStore } from '@core/auth/avatar.store';
 import { PlaymatStore } from '@core/auth/playmat.store';
 import { CardsStore } from '../cards/cards.store';
 import { DecksStore } from '../decks/decks.store';
-import { ENGINE_BUILD } from './engine-build';
+import { CardMeta, DriveCard } from '../cards/card.model';
+import { Deck } from '../decks/deck.model';
 import { LOCAL_USER_ID, LocalMatchConfig } from './engine-protocol';
 import { GameStore } from './game.store';
-import { StarterDecksFile, offlineDecks } from './local-decks';
+import { OfflineDecks, StarterDecksFile, offlineDecks } from './local-decks';
 import { LocalEngine } from './local-transport';
+import { StoredLibrary, offlineLibrary } from './offline-library';
 import { RoomsApi } from './rooms.api';
+import { loadStarterDecks } from './starter-decks';
+
+/** What an offline game's decks are made of: the live data where loaded, what this device kept otherwise. */
+export interface OfflineSources {
+  starters: StarterDecksFile | null;
+  mine: readonly Deck[];
+  images: readonly DriveCard[];
+  meta: readonly CardMeta[];
+  /** The player's decks come from the device (kept the last time they were loaded with the connection). */
+  fromDevice: boolean;
+  savedAt: number | null;
+}
+
+/**
+ * The live decks and catalog when this visit loaded them (the player's decks only if they are theirs); otherwise the
+ * ones kept on the device (a reload, an offline start). A catalog loaded live with the decks kept is fine too: the
+ * kept decks are played with it.
+ */
+export function chooseSources(input: {
+  starters: StarterDecksFile | null;
+  userId: string | null;
+  live: { decks: readonly Deck[]; decksOwner: string | null; images: readonly DriveCard[]; meta: readonly CardMeta[] };
+  stored: StoredLibrary | null;
+}): OfflineSources {
+  const { live, stored, userId } = input;
+  const liveDecks = !!userId && live.decksOwner === userId;
+  const liveCatalog = live.images.length > 0 && live.meta.length > 0;
+  const kept = stored && stored.userId === userId ? stored : null;
+  return {
+    starters: input.starters,
+    mine: liveDecks ? live.decks : (kept?.decks ?? []),
+    images: liveCatalog ? live.images : (kept?.images ?? []),
+    meta: liveCatalog ? live.meta : (kept?.meta ?? []),
+    fromDevice: !liveDecks && !!kept,
+    savedAt: liveDecks ? null : (kept?.savedAt ?? null),
+  };
+}
 
 /** The table's pictures that are not cards' (public/images): the back of every hidden card. */
 const TABLE_PICTURES = ['/images/card-back.png'];
@@ -23,8 +62,8 @@ export function randomSeed(): string {
 
 /**
  * Modo solo sin conexión: a game against the bot played wholly in this browser (the engine in a Web Worker). It offers
- * the starter decks always and the player's own decks when they and the card catalog are loaded; then the room is
- * the same as online (its pre-room picks the deck and the bot's level).
+ * the starter decks always and the player's own decks: loaded in this visit, or kept on the device the last time they
+ * were (offline-library.ts); then the room is the same as online (its pre-room picks the deck and the bot's level).
  */
 @Injectable({ providedIn: 'root' })
 export class OfflineGame {
@@ -36,14 +75,13 @@ export class OfflineGame {
   private readonly decks = inject(DecksStore);
   private readonly avatar = inject(AvatarStore);
   private readonly playmat = inject(PlaymatStore);
-  private startersFile: Promise<StarterDecksFile> | null = null;
   /** The engine is loaded in this visit: an offline game starts without the connection. */
   readonly ready = signal(false);
 
   /**
    * The table's own pictures (the card back), fetched with the engine and kept by this page, so a game whose connection
-   * goes after it starts still draws them. The cards' pictures come from the image host: offline only those the browser
-   * already had are seen (the others show their name).
+   * goes after it starts still draws them (installed, the service worker keeps it too). The cards' pictures come from
+   * the image host: offline, those the service worker kept (seen before, or "Descargar para jugar sin conexión").
    */
   private readonly pictures: HTMLImageElement[] = [];
 
@@ -60,12 +98,28 @@ export class OfflineGame {
     this.ready.set(true);
   }
 
+  /** Where this player's offline decks come from now (chooseSources); the starter decks are fetched if needed. */
+  async sources(): Promise<OfflineSources> {
+    const userId = this.auth.user()?.id ?? null;
+    const [starters, stored] = await Promise.all([this.starters().catch(() => null), userId ? offlineLibrary.load(userId) : null]);
+    return chooseSources({
+      starters,
+      userId,
+      live: { decks: this.decks.myDecks(), decksOwner: this.decks.myDecksOwner(), images: this.cards.imageList(), meta: this.cards.metaList() },
+      stored,
+    });
+  }
+
+  /** The decks an offline game offers now. */
+  async decksNow(): Promise<OfflineDecks> {
+    return offlineDecks(await this.sources());
+  }
+
   /** Opens an offline room for this player (joined, in its pre-room); resolves with its id. */
   async start(): Promise<string> {
     await this.prepare();
-    const starters = await this.starters();
     const { roomId } = await firstValueFrom(this.rooms.createLocal());
-    const decks = offlineDecks({ starters, mine: this.decks.myDecks(), images: this.cards.imageList(), meta: this.cards.metaList() });
+    const decks = await this.decksNow();
     const config: LocalMatchConfig = {
       seed: randomSeed(),
       decks: decks.specs,
@@ -80,15 +134,6 @@ export class OfflineGame {
   }
 
   private starters(): Promise<StarterDecksFile> {
-    this.startersFile ??= fetch(new URL(`engine/starter-decks.json?v=${ENGINE_BUILD}`, document.baseURI).href)
-      .then((r) => {
-        if (!r.ok) throw new Error(`starter-decks.json: ${r.status}`);
-        return r.json() as Promise<StarterDecksFile>;
-      })
-      .catch((e: unknown) => {
-        this.startersFile = null;
-        throw e;
-      });
-    return this.startersFile;
+    return loadStarterDecks();
   }
 }

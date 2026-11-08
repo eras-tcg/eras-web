@@ -30,17 +30,18 @@ export function nextLayoutHeight(previous: LayoutBox | null, sample: LayoutBox, 
 
 /**
  * Whether a tap should ask for full screen: the installed app on a phone or tablet (a touch screen: a desktop's
- * installed window is left as the player sizes it), where the browser allows it, not already full screen (the page's
- * own, or the app's window when it opened as fullscreen from the manifest).
+ * installed window is left as the player sizes it), where the browser allows it, unless the page already is (its
+ * own full screen). An app opened as "fullscreen" from the manifest still asks: some Android phones keep the status
+ * and navigation bars there, and only the page's full screen hides them (they then show over the game, see-through,
+ * on a swipe from the edge, and hide again).
  */
 export function needsFullscreenRequest(state: {
   installed: boolean;
   touch: boolean;
   fullscreenEnabled: boolean;
   elementFullscreen: boolean;
-  displayFullscreen: boolean;
 }): boolean {
-  return state.installed && state.touch && state.fullscreenEnabled && !state.elementFullscreen && !state.displayFullscreen;
+  return state.installed && state.touch && state.fullscreenEnabled && !state.elementFullscreen;
 }
 
 /**
@@ -108,7 +109,6 @@ export class AppScreen {
         touch,
         fullscreenEnabled: this.document.fullscreenEnabled === true,
         elementFullscreen: !!this.document.fullscreenElement,
-        displayFullscreen: win.matchMedia?.('(display-mode: fullscreen)').matches === true,
       });
       if (!ask) return lock();
       root.requestFullscreen?.({ navigationUI: 'hide' }).then(lock, lock);

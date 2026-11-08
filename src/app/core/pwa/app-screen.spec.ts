@@ -18,15 +18,15 @@ describe('the installed app', () => {
   });
 
   it('asks for full screen on a tap only where it is allowed and not full screen yet', () => {
-    const base = { installed: true, touch: true, fullscreenEnabled: true, elementFullscreen: false, displayFullscreen: false };
+    const base = { installed: true, touch: true, fullscreenEnabled: true, elementFullscreen: false };
     expect(needsFullscreenRequest(base)).toBe(true);
     expect(needsFullscreenRequest({ ...base, installed: false })).toBe(false);
     // A desktop's installed window is left as the player sizes it
     expect(needsFullscreenRequest({ ...base, touch: false })).toBe(false);
     expect(needsFullscreenRequest({ ...base, fullscreenEnabled: false })).toBe(false);
     expect(needsFullscreenRequest({ ...base, elementFullscreen: true })).toBe(false);
-    // Opened full screen by the manifest (display fullscreen): already is
-    expect(needsFullscreenRequest({ ...base, displayFullscreen: true })).toBe(false);
+    // Opened as "fullscreen" from the manifest it still asks (some phones keep the bars there): only the page's own
+    // full screen counts as done
   });
 
   it('has no "Pantalla completa" button on a phone or tablet (the browser and a desktop window keep it)', () => {

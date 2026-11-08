@@ -14,7 +14,7 @@
     'side .' minmax(0, 1fr)
     / minmax(22rem, 36%) 1fr;
   gap: var(--space-4) var(--space-6);
-  block-size: calc(100dvh - var(--app-header-height, 0px));
+  block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
   padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--layout-gutter), env(safe-area-inset-right))
     max(var(--space-5), env(safe-area-inset-bottom)) max(var(--layout-gutter), env(safe-area-inset-left));
   overflow: hidden;
@@ -266,7 +266,7 @@
     inset-block-start: 0;
     inset-inline: 0;
     inset-block-end: auto;
-    inline-size: min(100%, calc((100dvh - var(--app-header-height, 0px)) * 744 / 1039));
+    inline-size: min(100%, calc((var(--app-height, 100dvh) - var(--app-header-height, 0px)) * 744 / 1039));
     block-size: auto;
     margin-inline: auto;
   }

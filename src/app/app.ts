@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { RotateOverlayComponent } from '@core/layout/rotate-overlay.component';
+import { AppScreen } from '@core/pwa/app-screen';
 import { ConnectionService } from '@core/server/connection.service';
 import { ServerAccess } from '@core/server/server-access';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
@@ -10,7 +12,7 @@ import { SyncReportService } from '@features/admin/sync-report/sync-report.servi
 
 @Component({
   selector: 'eras-root',
-  imports: [RouterOutlet, WarmupScreenComponent],
+  imports: [RouterOutlet, WarmupScreenComponent, RotateOverlayComponent],
   // The browser with a backend that sleeps (AWS): nothing loads until it is up (unless there is no connection: then
   // what works offline). The installed app is local-first: it always shows the site, and the warm-up only while it
   // connects (over the site, which stays as it was)
@@ -24,6 +26,9 @@ import { SyncReportService } from '@features/admin/sync-report/sync-report.servi
     }
     @if (connection.notice(); as notice) {
       <p class="notice" role="status">{{ notice }}</p>
+    }
+    @if (screen.installed) {
+      <eras-rotate-overlay />
     }`,
   styles: `
     .over {
@@ -53,6 +58,7 @@ export class App {
   protected readonly theme = inject(ThemeService);
   protected readonly warmup = inject(ServerWarmupService);
   protected readonly connection = inject(ConnectionService);
+  protected readonly screen = inject(AppScreen);
   private readonly access = inject(ServerAccess);
   private readonly auth = inject(AuthService);
   private readonly syncReport = inject(SyncReportService);
@@ -60,6 +66,8 @@ export class App {
   constructor() {
     // The browser checks (and wakes) the server now; the installed app only once the player connects
     this.connection.start();
+    // The installed app: landscape, full screen, a layout that does not jump with the system bars
+    this.screen.start();
     // Once the backend is up, and again when an admin signs in: what it found in Drive as it woke up
     effect(() => {
       if (this.access.allowed() && this.warmup.ready() && this.auth.user()) void this.syncReport.check();

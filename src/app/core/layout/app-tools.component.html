@@ -61,11 +61,13 @@
     <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
   </button>
 }
-<!-- On every screen, the last one but for sign out -->
-<button type="button" class="item" role="switch" [attr.aria-checked]="fullscreen()" (click)="toggleFullscreen()">
-  <eras-icon [name]="fullscreen() ? 'minimize' : 'maximize'" />
-  <span class="label">{{ fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa' }}</span>
-</button>
+<!-- On every screen, the last one but for sign out (not in the installed app on a phone or tablet: always full screen) -->
+@if (fullscreenToggle) {
+  <button type="button" class="item" role="switch" [attr.aria-checked]="fullscreen()" (click)="toggleFullscreen()">
+    <eras-icon [name]="fullscreen() ? 'minimize' : 'maximize'" />
+    <span class="label">{{ fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa' }}</span>
+  </button>
+}
 @if (auth.user() && hub()) {
   <button type="button" class="item sign-out" (click)="signOut()"><eras-icon name="logout" /><span class="label">Cerrar sesión</span></button>
 }

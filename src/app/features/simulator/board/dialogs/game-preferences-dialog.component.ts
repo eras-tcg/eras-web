@@ -60,8 +60,8 @@ import { BoardScreen } from '../board-screen';
         </label>
 
         <span class="group">Pantalla</span>
-        <!-- Installed on an iPhone it is already full screen and there is nothing to toggle -->
-        @if (screen.canFullscreen || !screen.installed) {
+        <!-- The installed app on a phone is always full screen (AppScreen); installed on an iPhone it cannot change -->
+        @if (screen.fullscreenToggle && (screen.canFullscreen || !screen.installed)) {
           <button type="button" class="pref" role="switch" [attr.aria-checked]="screen.fullView()" (click)="screen.toggleFullscreen()">
             <eras-icon [name]="screen.fullView() ? 'minimize' : 'maximize'" />
             <span class="text"><strong>Pantalla completa</strong><small>Toda la mesa crece con el alto de la pantalla</small></span>

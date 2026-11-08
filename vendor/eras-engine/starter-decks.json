@@ -1,0 +1,3737 @@
+{"format":"eras-starter-decks/1","decks":{"deck-st1":{"deckName":"ST1","metadata":[
+ {
+  "cardName": "Fhalid",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 7,
+  "regulation": "A",
+  "effects": [],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura niel 1 + material nivel 1 en tributos o campo.",
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69b354e7b45d6126806bbbe9"
+ },
+ {
+  "cardName": "Sahiel",
+  "cardType": "creature",
+  "strength": 9,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 10,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "si tienes 5 o menos vidas",
+      "cost": "puedes tributar 2 materiales de esta carta",
+      "resolution": "coloca la carta del tope de tu mazo al tope de tus vidas bocabajo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "defensivo",
+     "recuperación"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Reactivar"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 2 + material nivel 2 en campo o tributos.",
+  "rarity": "R",
+  "colors": [
+   "B"
+  ],
+  "id": "69b355dfb45d6126806bbbec"
+ },
+ {
+  "cardName": "Falanx",
+  "cardType": "creature",
+  "strength": 12,
+  "cost": 6,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 13,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Tributos",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "esta carta puede considerarse como si estuviera en tu mano para invocaciones especiales."
+     }
+    ],
+    "kind": "continuo",
+    "tags": []
+   },
+   {
+    "instance": "Todos Los Turnos",
+    "effectBlocks": [
+     {
+      "activationCondition": "si esta carta es agotada",
+      "cost": "puedes tributar 2 materiales de esta carta y elegir 1 enemigo activo",
+      "resolution": "reduce en 4 su fuerza hasta el final del próximo turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "aliados que sumen 6 en nivel, incluido el invocar nivel 3 o mayor.",
+  "rarity": "SR",
+  "colors": [
+   "B"
+  ],
+  "id": "69b3788db1f266700290ecc6"
+ },
+ {
+  "cardName": "Bertalum",
+  "cardType": "creature",
+  "strength": 7,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 9,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes tributar 2 materiales de esta carta para elegir 1 enemigo",
+      "resolution": "reduce en 4 su fuerza hasta el final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 2 + material nivel 2 en campo o tributos.",
+  "rarity": "UC",
+  "colors": [
+   "B"
+  ],
+  "id": "69b35596b45d6126806bbbeb"
+ },
+ {
+  "cardName": "Hez",
+  "cardType": "creature",
+  "strength": 10,
+  "cost": 6,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 15,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "effectBlocks": [
+     {
+      "activationCondition": "al inicio del turno",
+      "cost": "puedes tributar 2 materiales de esta carta para elegir todos los enemigos en la línea frontal",
+      "resolution": "reduce en 4 su fuerza hasta el final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Reactivar"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "materialization",
+  "requirement": "criaturan nivel 4 + material nivel 4 en campo o tributos.",
+  "rarity": "R",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37e08b1f266700290ecc8"
+ },
+ {
+  "cardName": "Portal Al Mundo Espiritual",
+  "cardType": "structure",
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 16,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado [ente] es invocado por efecto",
+      "cost": "puedes agotar esta carta",
+      "resolution": "añadele 1 criatura [ente] de menor nivel de tus tributos como material para ganar 1 gema."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "gana gemas",
+     "invocar"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37e76b1f266700290ecc9"
+ },
+ {
+  "cardName": "Jhav",
+  "cardType": "creature",
+  "strength": 2,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 2,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "toma hasta 1 carta Azul de tus tributos."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     },
+     {
+      "activationCondition": "Si tributaste 1 carta [ente]",
+      "cost": "",
+      "resolution": "roba 1 carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda tributos"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69acb9ef5ad1fe1f295f441e"
+ },
+ {
+  "cardName": "Mihel",
+  "cardType": "creature",
+  "strength": 2,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 3,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 2 cartas."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "Todos Los Turnos",
+    "effectBlocks": [
+     {
+      "activationCondition": "si reduces la fuerza de algún enemigo",
+      "cost": "",
+      "resolution": "puedes añadir esta carta como material a un aliado para reducir su fuerza en 2 más."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "R",
+  "colors": [
+   "B"
+  ],
+  "id": "69ad077be263676627212327"
+ },
+ {
+  "cardName": "Galafendrax El Transmutador",
+  "cardType": "creature",
+  "strength": 13,
+  "cost": 8,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 14,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 [ente] nivel 4 de los materiales de esta carta en tu línea frontal. Luego: añádele todos los materiales de esta carta como materiales."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "colocar"
+    ]
+   },
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si reduces a 0 la fuerza de algún enemigo",
+      "cost": "",
+      "resolution": " puedes reactivar esta carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 4 + material nivel 4 en campo o tributos.",
+  "rarity": "UC",
+  "colors": [
+   "B"
+  ],
+  "id": "69bb32626cdb8c5e49c20973"
+ },
+ {
+  "cardName": "Zula",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 6,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "si tienes 4 o menos vidas",
+      "cost": "puedes tributar 1 material de esta carta",
+      "resolution": "coloca hasta 1 material de esta carta al tope de tus vidas bocarriba."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "defensivo",
+     "recuperación"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 1 + material nivel 1 en tributos o campo.",
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69acafc0f0b478a3f5ab2350"
+ },
+ {
+  "cardName": "Falis",
+  "cardType": "creature",
+  "strength": 6,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 11,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Tributos",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si reduces a 0 la fuerza de algún enemigo",
+      "cost": "",
+      "resolution": "puedes invocar esta carta reduciendo su coste en 2."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar",
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 2 + material nivel 2 en campo o tributos.",
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37448b1f266700290ecc4"
+ },
+ {
+  "cardName": "Eisten",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 1,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 4 cartas del tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "toma hasta 1 carta Azúl de tus tributos."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda tributos",
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "B"
+  ],
+  "id": "69acb5165ad1fe1f295f441d"
+ },
+ {
+  "cardName": "Flureteus",
+  "cardType": "creature",
+  "strength": 1,
+  "cost": 1,
+  "level": 1,
+  "starter": true,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 4,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "mira las primeras 5 cartas de tu mazo: de ellas toma hasta 2 cartas Azules o Blancas. Envía el resto al fondo de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "si invocas 1 criatura por efecto",
+      "cost": "",
+      "resolution": "puedes invocar 1 criatura [ente] nivel 2 de tus tributos en tu línea frontal sin pagar su coste."
+     },
+     {
+      "activationCondition": "Si lo haces",
+      "cost": "",
+      "resolution": "añade esta carta como material a un aliado."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto",
+     "invocar"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "B"
+  ],
+  "id": "69b35409b45d6126806bbbe7"
+ },
+ {
+  "cardName": "Flarix",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 5,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes tributar hasta 2 materiales de esta carta",
+      "resolution": "toma 1 carta Azul de tus tributos por cada material tributado."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo",
+     "busqueda tributos"
+    ]
+   },
+   {
+    "instance": "En Tributos",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si reduces a 0 la fuerza de algún enemigo",
+      "cost": "",
+      "resolution": "puedes enviar esta carta al fondo de tu mazo para infringir 9 de daño directo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "inflingir daño",
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 1 + material nivel 1 en tributos o campo.",
+  "rarity": "UC",
+  "colors": [
+   "B"
+  ],
+  "id": "69b354a7b45d6126806bbbe8"
+ },
+ {
+  "cardName": "Mathaus",
+  "cardType": "creature",
+  "strength": 10,
+  "cost": 4,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 12,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Turno Aliado",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes tributar 2 materiales de esta carta",
+      "resolution": "elige 1 enemigo para reducir su fuerza en 3 hasta el final del turno oponente."
+     }
+    ],
+    "kind": "activado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Letalidad {cantidad}",
+    "number": "1"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 3 + material nivel en tributos o campo.",
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37822b1f266700290ecc5"
+ },
+ {
+  "cardName": "Composición Adimensional",
+  "cardType": "utility",
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 17,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa hasta 3 cartas de tu mano."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "roba la misma cantidad y coloca esta carta agotada en tu retaguardia."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes añadir esta carta como material a un aliado para que invoque por Materialización 1 criatura en tu mano o tributos reduciendo el coste especial en 1."
+     }
+    ],
+    "kind": "activado",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37f18b1f266700290ecca"
+ },
+ {
+  "cardName": "Paso Interdimensional",
+  "cardType": "utility",
+  "cost": 1,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 18,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 aliado",
+      "resolution": "invoca 1 criatura [ente] del mismo nivel y distinto nombre de tus tributos en tu línea frontal sin pagar su coste."
+     },
+     {
+      "activationCondition": "Si lo haces",
+      "cost": "",
+      "resolution": "añádele el aliado elegido con todos sus materiales como materiales del aliado invocado."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "B"
+  ],
+  "id": "69b37f8bb1f266700290eccb"
+ },
+ {
+  "cardName": "Arc-xioma",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "ente"
+  ],
+  "edition": "ST1",
+  "colorIdentity": "B",
+  "cardNumber": 8,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes tributar 1 material de esta carta y elegir 1 enemigo",
+      "resolution": "reduce su fuerza en 3 hasta le final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   },
+   {
+    "instance": "En Tributos",
+    "effectBlocks": [
+     {
+      "activationCondition": "si reduces a 2 o menos la fuerza de algún enemigo",
+      "cost": "",
+      "resolution": "puedes enviar esta carta al fondo de tu mazo para reducirla a 0."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "materialization",
+  "requirement": "criatura nivel 1 + material nivel 1 de tributos o campo.",
+  "rarity": "R",
+  "colors": [
+   "B"
+  ],
+  "id": "69b35556b45d6126806bbbea"
+ }
+]},"deck-st2":{"deckName":"ST2","metadata":[
+ {
+  "cardName": "Wyphound",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 2,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 carta de tu mano al tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego:",
+      "cost": "",
+      "resolution": "tributa 2 cartas del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes colocar 1 carta de tus tributos al tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69af4555d60f9452c3dc20f0"
+ },
+ {
+  "cardName": "Dragón Volcánico",
+  "cardType": "creature",
+  "strength": 14,
+  "cost": 8,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 15,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes destruir 1 carta bocarriba en las vidas oponentes."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   },
+   {
+    "instance": "Al Final Del Ataque",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún enemigo fue destruido durante el ataque",
+      "cost": "",
+      "resolution": "puedes enviar 5 de tus tributos [dragón] al fondo de tu mazo para reactivar esta carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 4,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 4.",
+  "rarity": "R",
+  "colors": [
+   "G"
+  ],
+  "id": "69b398f9b1f266700290ecd6"
+ },
+ {
+  "cardName": "Dragón Delta",
+  "cardType": "creature",
+  "strength": 6,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 7,
+  "regulation": "A",
+  "effects": [],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 enemigo de fuerza 5 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 1.",
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb23fa6cdb8c5e49c20972"
+ },
+ {
+  "cardName": "Flambreik",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 8,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "cuando esta carta fuera a invocar por Evolución",
+      "cost": "",
+      "resolution": "puedes enviar 5 de tus tributos [dragón] al fondo de tu mazo para reducir el coste especial en 1."
+     }
+    ],
+    "kind": "reactivo-modificador",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 carta de tu mano al tope de tu mazo."
+     },
+     {
+      "activationCondition": "luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 1.",
+  "rarity": "R",
+  "colors": [
+   "G"
+  ],
+  "id": "69b38369b1f266700290ecd0"
+ },
+ {
+  "cardName": "Volcán De Dragones",
+  "cardType": "structure",
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 16,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "si invocas especialmente 1 [dragón]",
+      "cost": "",
+      "resolution": "puedes agotar esta carta para ganar 1 gema y robar 1 carta."
+     },
+     {
+      "activationCondition": "Si lo haces",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "gana gemas",
+     "robo",
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "G"
+  ],
+  "id": "69af124f790530010e53c403"
+ },
+ {
+  "cardName": "Dragón Carmesí",
+  "cardType": "creature",
+  "strength": 14,
+  "cost": 8,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 14,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes enviar 5 de tus tributos [dragón] al fondo de tu mazo",
+      "resolution": "esta carta gana [[Letalidad {cantidad}:1]] hasta el final del ataque."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   },
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si destruyes algún enemigo",
+      "cost": "",
+      "resolution": "puedes reactivar esta carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes enviar 5 de tus tributos [dragón] al fondo de tu mazo",
+      "resolution": "esta carta gana [[Letalidad {cantidad}:1]] hasta el final del ataque."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 4,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 4.",
+  "rarity": "SR",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb4b5e68d1c61cf0e3dbd9"
+ },
+ {
+  "cardName": "Huevo De Dragón",
+  "cardType": "utility",
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 17,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 4 cartas del tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "toma 1 carta Verde o [dragón] de tus tributos y coloca esta carta en tu retaguardia agotada."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo",
+     "busqueda tributos"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes enviar esta carta activa a tu descarte para invocar 1 [dragón] nivel 1 de tus tributos reduciendo su coste en 1."
+     }
+    ],
+    "kind": "activado",
+    "tags": [
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb4bef68d1c61cf0e3dbda"
+ },
+ {
+  "cardName": "Galveta",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 5,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 carta de tu mano al tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 carta de tu mano al tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 1.",
+  "rarity": "UC",
+  "colors": [
+   "G"
+  ],
+  "id": "69b38279b1f266700290eccd"
+ },
+ {
+  "cardName": "Wyfreik",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 6,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 3 cartas del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "coloca hasta 1 carta de tu mano al tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas del tope de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 1.",
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69b382b2b1f266700290ecce"
+ },
+ {
+  "cardName": "Ddraig",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 10,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 3 cartas del tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "elige 1 enemigo de fuerza 5 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo",
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 enemigo de fuerza 5 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 2.",
+  "rarity": "R",
+  "colors": [
+   "G"
+  ],
+  "id": "69b38407b1f266700290ecd2"
+ },
+ {
+  "cardName": "Fadrake",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 9,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "elige 1 enemigo de fuerza 5 o menos",
+      "cost": "",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "elige 1 enemigo de fuerza 5 o menos",
+      "cost": "",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 2.",
+  "rarity": "UC",
+  "colors": [
+   "G"
+  ],
+  "id": "69b383cbb1f266700290ecd1"
+ },
+ {
+  "cardName": "Saildreik",
+  "cardType": "creature",
+  "strength": 11,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 13,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "esta carta puede invocar por Evolución 1 [dragón] de tus tributos reduciendo su coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Final Del Ataque",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 enemigo de fuerza 8 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 3.",
+  "rarity": "UC",
+  "colors": [
+   "G"
+  ],
+  "id": "69b3988eb1f266700290ecd5"
+ },
+ {
+  "cardName": "Duregón",
+  "cardType": "creature",
+  "strength": 2,
+  "cost": 1,
+  "level": 1,
+  "starter": true,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 4,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 2 catas del tope de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "toma 1 carta Verde o [dragón] de tus tributos."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo",
+     "busqueda tributos"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "cuando esta carta fuera a invocar por Evolución, si tienes 5 o más tributos [dragón]",
+      "cost": "",
+      "resolution": "reduce en 1 el coste especial."
+     }
+    ],
+    "kind": "reactivo-modificador",
+    "tags": []
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 1 carta."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb22b96cdb8c5e49c20970"
+ },
+ {
+  "cardName": "Dírumy",
+  "cardType": "creature",
+  "strength": 2,
+  "cost": 1,
+  "level": 1,
+  "starter": true,
+  "cardClasses": [
+   "dragón",
+   "hada"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 1,
+  "regulation": "A",
+  "effects": [
+   {
+    "effectBlocks": [
+     {
+      "activationCondition": "Si esta carta es tributada desde tu mazo por efecto de 1 carta Verde",
+      "cost": "",
+      "resolution": "roba 1 carta."
+     },
+     {
+      "activationCondition": "Luego:",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "mira las primeras 4 cartas de tu mazo: de ellas toma hasta 1 carta Verde o Blanca. Envía el resto al fondo de tu mazo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes tributar \"Dírumy\" de los recursos de esta carta para robar 1 carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb21216cdb8c5e49c2096f"
+ },
+ {
+  "cardName": "Wyverno De Pantano",
+  "cardType": "creature",
+  "strength": 7,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "dragón",
+   "wyverno"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 11,
+  "regulation": "A",
+  "effects": [
+   {
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si esta carta es tributada desde tu mazo",
+      "cost": "",
+      "resolution": "puedes tributar 1 carta de tu mano para tomar 1 carta Verde de tus tributos."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "elige hasta 2 enemigos de fuerza 3 o menos",
+      "cost": "",
+      "resolution": "destrúyelos."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 2.",
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69b384fdb1f266700290ecd3"
+ },
+ {
+  "cardName": "Dracoventus",
+  "cardType": "creature",
+  "strength": 11,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 12,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes enviar 5 de tus tributos [dragón] al fondo de tu mazo para elegir 1 enemigo de fuerza 9 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [
+   {
+    "keyword": "Reactivar"
+   }
+  ],
+  "specialCost": 2,
+  "specialSummonKind": "evolution",
+  "requirement": "criatura nivel 3.",
+  "rarity": "C",
+  "colors": [
+   "G"
+  ],
+  "id": "69b38550b1f266700290ecd4"
+ },
+ {
+  "cardName": "Llamarada",
+  "cardType": "utility",
+  "cost": 6,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 18,
+  "regulation": "A",
+  "effects": [
+   {
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si esta carta es tributada desde tu mazo por un aliado [dragón]",
+      "cost": "",
+      "resolution": "puedes jugar esta carta reduciendo su coste en el nivel del dicho aliado."
+     }
+    ],
+    "kind": "disparado",
+    "tags": []
+   },
+   {
+    "instance": "En Juego",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 enemigo de fuerza 11 o menos",
+      "resolution": "destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "G"
+  ],
+  "id": "69b399cdb1f266700290ecd8"
+ },
+ {
+  "cardName": "Flamagón",
+  "cardType": "creature",
+  "strength": 2,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "dragón"
+  ],
+  "edition": "ST2",
+  "colorIdentity": "G",
+  "cardNumber": 3,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "esta carta puede invocar por Evolución 1 [dragón] de tu mano reduciendo el coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún enemigo es destruido por tus efectos",
+      "cost": "",
+      "resolution": "puedes tomar 1 carta Verde de tus tributos."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda tributos"
+    ]
+   }
+  ],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "R",
+  "colors": [
+   "G"
+  ],
+  "id": "69bb232a6cdb8c5e49c20971"
+ }
+]},"deck-st3":{"deckName":"ST3","metadata":[
+ {
+  "id": "69b39d39b1f266700290ecdf",
+  "cardName": "Slicker",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 5,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Destrucción",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes enviar esta carta a tu descarte para invocar 1 criatura Violeta de tus tributos reduciendo su coste en 1.",
+      "plainEffect": "En Destruccion: puedes enviar esta carta a tu descarte para invocar 1 criatura Violeta de tus tributos reduciendo su coste en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto"
+    ],
+    "plainEffect": "En Destruccion: puedes enviar esta carta a tu descarte para invocar 1 criatura Violeta de tus tributos reduciendo su coste en 1."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "ritual",
+  "requirement": "Criatura nivel 1.",
+  "rarity": "SR",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b6185c577b3e04954e33e7",
+  "cardName": "Hong",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 10,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si destruyes algún enemigo",
+      "cost": "puedes elegir 1 enemigo nivel 1",
+      "resolution": "destrúyelo.",
+      "plainEffect": "si destruyes algún enemigo: puedes elegir 1 enemigo nivel 1; destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ],
+    "plainEffect": "<Todos Los Turnos> [once per turn] si destruyes algún enemigo: puedes elegir 1 enemigo nivel 1; destrúyelo."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Letalidad {cantidad}",
+    "number": "1"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 2.",
+  "rarity": "R",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b61864577b3e04954e33e8",
+  "cardName": "Alimento De Las Sombras",
+  "cardType": "utility",
+  "strength": null,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 17,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "un aliado invoca por Ritual 1 criatura de tus tributos reduciendo su coste especial en 1.",
+      "plainEffect": "un aliado invoca por Ritual 1 criatura de tus tributos reduciendo su coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial"
+    ],
+    "plainEffect": "<En Juego> un aliado invoca por Ritual 1 criatura de tus tributos reduciendo su coste especial en 1."
+   },
+   {
+    "instance": "En Mano",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado es destruido por el oponente",
+      "cost": "",
+      "resolution": "puedes jugar esta carta sin pagar su coste.",
+      "plainEffect": "si algún aliado es destruido por el oponente: puedes jugar esta carta sin pagar su coste."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "counter"
+    ],
+    "plainEffect": "<En Mano> (1) si algún aliado es destruido por el oponente: puedes jugar esta carta sin pagar su coste."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69ae2297b6195bf6c9126e1f",
+  "cardName": "Berkelus El Cazarrecompensas Del Bajomundo",
+  "cardType": "creature",
+  "strength": 12,
+  "cost": 6,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 15,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "reactiva esta carta.",
+      "plainEffect": "reactiva esta carta."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "puedes enviar 10 criaturas [bestia] de tus tributos al fondo de tu mazo",
+      "resolution": "esta carta declara taque y gana [[Furia {gemas}:1]] hasta el final del turno.",
+      "plainEffect": "Luego: puedes enviar 10 criaturas [bestia] de tus tributos al fondo de tu mazo; esta carta declara taque y gana Furia 1 hasta el final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "defensivo",
+     "ofensivo",
+     "reactivo",
+     "declara ataque"
+    ],
+    "plainEffect": "<En Invocación> reactiva esta carta. Luego: puedes enviar 10 criaturas [bestia] de tus tributos al fondo de tu mazo; esta carta declara taque y gana Furia 1 hasta el final del turno."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 4",
+  "rarity": "UC",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69af735ef38364333abc2ec5",
+  "cardName": "Damon",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 2,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Destrucción",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 3 cartas.",
+      "plainEffect": "roba 3 cartas."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de tu mano.",
+      "plainEffect": "Luego: tributa 2 cartas de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ],
+    "plainEffect": "<En Destrucción> roba 3 cartas. Luego: tributa 2 cartas de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b39ed0b1f266700290ece3",
+  "cardName": "Virdris",
+  "cardType": "creature",
+  "strength": 6,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 6,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Destrucción",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 3 cartas.",
+      "plainEffect": "roba 3 cartas."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de tu mano.",
+      "plainEffect": "Luego: tributa 2 cartas de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ],
+    "plainEffect": "<En Destrucción> roba 3 cartas. Luego: tributa 2 cartas de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 1",
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b61165577b3e04954e33d9",
+  "cardName": "Mawser",
+  "cardType": "creature",
+  "strength": 14,
+  "cost": 7,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 14,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si esta carta destruye algún enemigo",
+      "cost": "elige 1 enemigo nivel 3 o menor",
+      "resolution": "destrúyelo.",
+      "plainEffect": "si esta carta destruye algún enemigo: elige 1 enemigo nivel 3 o menor; destrúyelo."
+     }
+    ],
+    "kind": "activado",
+    "tags": [
+     "remoción"
+    ],
+    "plainEffect": "<Todos Los Turnos> [once per turn] si esta carta destruye algún enemigo: elige 1 enemigo nivel 3 o menor; destrúyelo."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Provocar",
+    "number": null
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "ritual",
+  "requirement": "criaturas que en nivel sumen 6.",
+  "rarity": "R",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69af4202d60f9452c3dc20ee",
+  "cardName": "Carnhaus",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": true,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 1,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "mira las primeras 4 cartas de tu mazo: de ellas toma hasta 1 carta Violeta o Blanca. Envía el resto al fondo de tu mazo.",
+      "plainEffect": "mira las primeras 4 cartas de tu mazo: de ellas toma hasta 1 carta Violeta o Blanca. Envía el resto al fondo de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano.",
+      "plainEffect": "Luego: tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda",
+     "tributo"
+    ],
+    "plainEffect": "<En Invocación> mira las primeras 4 cartas de tu mazo: de ellas toma hasta 1 carta Violeta o Blanca. Envía el resto al fondo de tu mazo. Luego: tributa 1 carta de tu mano."
+   },
+   {
+    "instance": "En Destrucción",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 1 carta.",
+      "plainEffect": "roba 1 carta."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano.",
+      "plainEffect": "Luego: tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ],
+    "plainEffect": "<En Destrucción> roba 1 carta. Luego: tributa 1 carta de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "UC",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b614eb577b3e04954e33df",
+  "cardName": "Caza Nocturna",
+  "cardType": "utility",
+  "strength": null,
+  "cost": 1,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 18,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": null,
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "cuando fueras a jugar esta carta, si tienes menos de 0 gemas",
+      "cost": "",
+      "resolution": "reduce su coste en 1.",
+      "plainEffect": "cuando fueras a jugar esta carta, si tienes menos de 0 gemas: reduce su coste en 1."
+     }
+    ],
+    "kind": "reactivo-modificador",
+    "tags": [
+     "ofensivo"
+    ],
+    "plainEffect": "cuando fueras a jugar esta carta, si tienes menos de 0 gemas: reduce su coste en 1."
+   },
+   {
+    "instance": "En Juego",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "elige 1 aliado para que gane [[Provocar {nivel}:3]] hasta el final del turno y declare ataque.",
+      "plainEffect": "elige 1 aliado para que gane Provocar 3 hasta el final del turno y declare ataque."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ],
+    "plainEffect": "<En Juego> (1) elige 1 aliado para que gane Provocar 3 hasta el final del turno y declare ataque."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "SR",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b6186b577b3e04954e33e9",
+  "cardName": "Rhogler",
+  "cardType": "creature",
+  "strength": 11,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 12,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Final Del Ataque",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes sacrificar esta carta",
+      "resolution": "invoca 1 criatura [bestia] nivel 3 de tus tributos reduciendo su coste en 3.",
+      "plainEffect": "puedes sacrificar esta carta; invoca 1 criatura [bestia] nivel 3 de tus tributos reduciendo su coste en 3."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto"
+    ],
+    "plainEffect": "<Al Final Del Ataque> (1) puedes sacrificar esta carta; invoca 1 criatura [bestia] nivel 3 de tus tributos reduciendo su coste en 3."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 3.",
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b39cc8b1f266700290ecde",
+  "cardName": "Buratán",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 4,
+  "regulation": "A",
+  "effects": [],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Provocar",
+    "number": null
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "R",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b3a242b1f266700290ece8",
+  "cardName": "Zhaglizer",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 9,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "elige 1 enemigo nivel 2 o menor",
+      "resolution": "destrúyelo.",
+      "plainEffect": "elige 1 enemigo nivel 2 o menor; destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ],
+    "plainEffect": "<Al Atacar> elige 1 enemigo nivel 2 o menor; destrúyelo."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 2.",
+  "rarity": "UC",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69af7613b936d08fbc6c4f06",
+  "cardName": "Bajmut Pútrido",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 0,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 3,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano.",
+      "plainEffect": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo"
+    ],
+    "plainEffect": "<En Invocación> tributa 1 carta de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Imbloqueable",
+    "number": null
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "UC",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b3a433b1f266700290ecea",
+  "cardName": "Cazador De Bestias",
+  "cardType": "creature",
+  "strength": 9,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 11,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "robar 3 cartas.",
+      "plainEffect": "En Invocacion: robar 3 cartas."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 2 cartas de tu mano.",
+      "plainEffect": "Luego: tributa 2 cartas de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ],
+    "plainEffect": "En Invocacion: robar 3 cartas. Luego: tributa 2 cartas de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Celeridad",
+    "number": null
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 2.",
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b61021577b3e04954e33d7",
+  "cardName": "Zhauz",
+  "cardType": "creature",
+  "strength": 11,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 13,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes sacrificar 1 aliado para elegir 1 enemigo nivel 3 o menor",
+      "resolution": "destrúyelo.",
+      "plainEffect": "puedes sacrificar 1 aliado para elegir 1 enemigo nivel 3 o menor; destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ],
+    "plainEffect": "<Al Atacar> [once per turn] puedes sacrificar 1 aliado para elegir 1 enemigo nivel 3 o menor; destrúyelo."
+   },
+   {
+    "instance": "Turno Aliado",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "Si algún aliado es destruido",
+      "cost": "",
+      "resolution": "reactiva esta carta.",
+      "plainEffect": "Si algún aliado es destruido: reactiva esta carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ],
+    "plainEffect": "<Turno Aliado> [once per turn] Si algún aliado es destruido: reactiva esta carta."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 3.",
+  "rarity": "SR",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b61293577b3e04954e33dc",
+  "cardName": "Cueva De Bestias",
+  "cardType": "structure",
+  "strength": null,
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 16,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado Violetta es destruido",
+      "cost": "puedes agotar esta carta",
+      "resolution": "gana 1 gema y roba 1 carta.",
+      "plainEffect": "si algún aliado Violetta es destruido: puedes agotar esta carta; gana 1 gema y roba 1 carta."
+     },
+     {
+      "activationCondition": "si lo haces",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano.",
+      "plainEffect": "si lo haces: tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "activado",
+    "tags": [
+     "robo",
+     "tributo",
+     "gana gemas"
+    ],
+    "plainEffect": "<Todos Los Turnos> si algún aliado Violetta es destruido: puedes agotar esta carta; gana 1 gema y roba 1 carta. si lo haces: tributa 1 carta de tu mano."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": null,
+  "specialSummonKind": null,
+  "requirement": null,
+  "rarity": "UC",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b39f1ab1f266700290ece4",
+  "cardName": "Krokler",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 7,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": null,
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "puedes elegir 1 enemigo nivel 1;",
+      "resolution": "destrúyelo.",
+      "plainEffect": "puedes elegir 1 enemigo nivel 1;; destrúyelo."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "remoción"
+    ],
+    "plainEffect": "<En Invocación> puedes elegir 1 enemigo nivel 1;; destrúyelo."
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 1.",
+  "rarity": "C",
+  "colors": [
+   "P"
+  ]
+ },
+ {
+  "id": "69b3a16db1f266700290ece6",
+  "cardName": "Zohx",
+  "cardType": "creature",
+  "strength": 6,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "bestia"
+  ],
+  "edition": "ST3",
+  "subEdition": null,
+  "colorIdentity": "P",
+  "cardNumber": 8,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Final Del Ataque",
+    "effectBlocks": [
+     {
+      "activationCondition": "si tienes 10 o más criaturas [bestia] en tus tributos",
+      "cost": "",
+      "resolution": "esta carta puede invocar por Ritual 1 criatura de tus tributos reduciendo el coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial",
+     "invocar"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "ritual",
+  "requirement": "criatura nivel 1.",
+  "rarity": "R",
+  "colors": [
+   "P"
+  ]
+ }
+]},"deck-st4":{"deckName":"ST4","metadata":[
+ {
+  "cardName": "Peón De Línea Frontal",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "caballero",
+   "armada"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 2,
+  "regulation": "A",
+  "effects": [],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Enfrentar"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69af74e8b936d08fbc6c4f04"
+ },
+ {
+  "cardName": "Caballería Cruzada",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 9,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "reactiva 1 aliado."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 2, mientras tus aliados suman 4 o más en nivel.",
+  "rarity": "UC",
+  "colors": [
+   "R"
+  ],
+  "id": "69b464a8b1f266700290ecf1"
+ },
+ {
+  "cardName": "Rey Franco",
+  "cardType": "creature",
+  "strength": 13,
+  "cost": 7,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 15,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "si esta carta entra en combate",
+      "cost": "",
+      "resolution": "puedes reactivar esta carta."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "al final del turno",
+      "cost": "",
+      "resolution": "1 aliado puede invocar por Ascenso una criatura de tu mano reduciendo el coste especial en 2."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar",
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 4,
+  "specialSummonKind": "promotion",
+  "requirement": "criaturas nivel 4, mientras tus aliados suman 7 o más en nivel.",
+  "rarity": "R",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4d8e8577b3e04954e33d1"
+ },
+ {
+  "cardName": "Espada De Primera Línea",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 4,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "roba 2 cartas."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "robo",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "mientras controles 3 o más aliados Rojos",
+      "cost": "",
+      "resolution": "esta carta gana fuerza 2 y tiene [[Celeridad]]."
+     }
+    ],
+    "kind": "continuo",
+    "tags": [
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "R"
+  ],
+  "id": "69b41390b1f266700290ecef"
+ },
+ {
+  "cardName": "Armadura De Plata",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 8,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "otro aliado puede invocar por Ascenso 1 criatura de tu mano reduciendo el coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 1, mientras tus aliados suman 2 o más en nivel.",
+  "rarity": "R",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4739c577b3e04954e33cd"
+ },
+ {
+  "cardName": "Reino Medieval",
+  "cardType": "structure",
+  "cost": 1,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 16,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Todos Los Turnos",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado Rojo es invocado por efecto",
+      "cost": "",
+      "resolution": "puedes agotar esta carta para ganar 1 gema y tomar 1 carta Roja de tus tributos."
+     },
+     {
+      "activationCondition": "Si lo haces",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda tributos",
+     "gana gemas",
+     "tributo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4d9ff577b3e04954e33d2"
+ },
+ {
+  "cardName": "Caballero Umbrío",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": true,
+  "cardClasses": [
+   "caballero",
+   "mercenario"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 1,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "mira las primeras 4 cartas de tu mazo: de ellas toma hasta 2 cartas Rojas o Blancas. Envía el resto al fondo de tu mazo."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "tributa 1 carta de tu mano."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "busqueda",
+     "tributo"
+    ]
+   },
+   {
+    "instance": "Al Atacar",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar 1 criatura Roja, [caballero] o [mercenario] de tu mano en tu línea frontal pagando su coste."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo",
+     "invocar",
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "UC",
+  "colors": [
+   "R"
+  ],
+  "id": "69af461ad60f9452c3dc20f1"
+ },
+ {
+  "cardName": "Caballero Real",
+  "cardType": "creature",
+  "strength": 13,
+  "cost": 6,
+  "level": 5,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 14,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar 1 criatura Roja nivel 3 de tu mano reduciendo su coste en 2."
+     },
+     {
+      "activationCondition": "Si lo haces",
+      "cost": "",
+      "resolution": "esta carta gana fuerza 3 y [[Perforante]] hasta el final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto",
+     "invocar",
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 4, mientras tus aliados suman 7 o más en nivel.",
+  "rarity": "SR",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4d7f0577b3e04954e33d0"
+ },
+ {
+  "cardName": "Investidura",
+  "cardType": "utility",
+  "cost": 1,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 18,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes tributar 1 carta de tu mano para tomar 1 carta de tus tributos."
+     },
+     {
+      "activationCondition": "Luego",
+      "cost": "",
+      "resolution": "1 aliado puede invocar por Ascenso 1 criatura en tu mano reduciendo su coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "tributo",
+     "invocar especial",
+     "invocar",
+     "busqueda tributos"
+    ]
+   },
+   {
+    "instance": "En Mano",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado es invocado por efecto",
+      "cost": "",
+      "resolution": "puedes jugar esta carta sin pagar su coste."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "counter"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "SR",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4db29577b3e04954e33d4"
+ },
+ {
+  "cardName": "Espada De Plata",
+  "cardType": "creature",
+  "strength": 5,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 6,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Destrucción",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar por Ascenso 1 criatura Roja de tu mano reduciendo el coste especial en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar especial"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 1, mientras tus aliados suman 2 o más en nivel.",
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4652db1f266700290ecf2"
+ },
+ {
+  "cardName": "Caballeros De La Primera Línea",
+  "cardType": "utility",
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 17,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Juego",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar 1 criatura Roja de tu mano reduciendo su coste en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto"
+    ]
+   },
+   {
+    "instance": "En Mano",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado es destruido",
+      "cost": "",
+      "resolution": "puedes jugar esta carta sin pagar su coste."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "counter"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4da84577b3e04954e33d3"
+ },
+ {
+  "cardName": "Espada De Los Leones De Fuego",
+  "cardType": "creature",
+  "strength": 3,
+  "cost": 1,
+  "level": 1,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 3,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Mano",
+    "ussageLimit": "once per turn between copies",
+    "effectBlocks": [
+     {
+      "activationCondition": "si algún aliado es invocado por efecto y controlas algún [caballero] nivel 4 o mayor",
+      "cost": "",
+      "resolution": "puedes invocar esta carta sin pagar su coste."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar",
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69af7664b936d08fbc6c4f07"
+ },
+ {
+  "cardName": "Luke El Filo Rojo",
+  "cardType": "creature",
+  "strength": 9,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "caballero",
+   "retador"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 10,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "por efecto",
+      "cost": "",
+      "resolution": "esa carta gana [[Enfrentar {nivel}:3]] hasta el final del turno."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Celeridad"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69b3a5e4b1f266700290ecec"
+ },
+ {
+  "cardName": "Caballero Férreo",
+  "cardType": "creature",
+  "strength": 4,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "caballero",
+   "armada"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 5,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "reactiva 1 aliado nivel 2 o menor."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "reactivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 1, mientras tus aliados suman 2 o más en nivel.",
+  "rarity": "UC",
+  "colors": [
+   "R"
+  ],
+  "id": "69b41748b1f266700290ecf0"
+ },
+ {
+  "cardName": "Ballesta Montada",
+  "cardType": "creature",
+  "strength": 8,
+  "cost": 3,
+  "level": 3,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 11,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Turno Aliado",
+    "effectBlocks": [
+     {
+      "activationCondition": "al final del turno",
+      "cost": "",
+      "resolution": "esta carta activa puede atacar al oponente sin agotarse."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "ofensivo"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 2, mientras tus aliados suman 3 o más en nivel.",
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69b471f3577b3e04954e33ca"
+ },
+ {
+  "cardName": "Filo Vengativo",
+  "cardType": "creature",
+  "strength": 6,
+  "cost": 2,
+  "level": 2,
+  "starter": false,
+  "cardClasses": [
+   "caballero",
+   "retador"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 7,
+  "regulation": "A",
+  "effects": [],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Celeridad"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 1,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 1",
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69af196cd60f9452c3dc20eb"
+ },
+ {
+  "cardName": "Franchute",
+  "cardType": "creature",
+  "strength": 11,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "caballero",
+   "armada"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 12,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "En Invocación",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar criaturas Rojas que en nivel sumen hasta 2 de tu mano sin pagar sus costes."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar efecto",
+     "invocar"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Perforante"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 3,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 3, mientras tus aliados suman 5 o más en nivel.",
+  "rarity": "C",
+  "colors": [
+   "R"
+  ],
+  "id": "69b476bb577b3e04954e33ce"
+ },
+ {
+  "cardName": "Comandante De Las Espadas Dragón",
+  "cardType": "creature",
+  "strength": 10,
+  "cost": 5,
+  "level": 4,
+  "starter": false,
+  "cardClasses": [
+   "caballero"
+  ],
+  "edition": "ST4",
+  "colorIdentity": "R",
+  "cardNumber": 13,
+  "regulation": "A",
+  "effects": [
+   {
+    "instance": "Al Atacar",
+    "ussageLimit": "once per turn",
+    "effectBlocks": [
+     {
+      "activationCondition": "",
+      "cost": "",
+      "resolution": "puedes invocar 1 criatura Roja nivel 2 o menor de tu mano reduciendo su coste en 1."
+     }
+    ],
+    "kind": "disparado",
+    "tags": [
+     "invocar",
+     "invocar efecto"
+    ]
+   }
+  ],
+  "inheritEffects": [],
+  "keywordEffects": [
+   {
+    "keyword": "Enfrentar {nivel}",
+    "number": "3"
+   }
+  ],
+  "inheritKeywordEffects": [],
+  "specialCost": 2,
+  "specialSummonKind": "promotion",
+  "requirement": "criatura nivel 3, mientras tus aliados suman 5 o más en nivel.",
+  "rarity": "R",
+  "colors": [
+   "R"
+  ],
+  "id": "69b4d72a577b3e04954e33cf"
+ }
+]}}}

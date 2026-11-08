@@ -18,7 +18,8 @@
       "@data/*": ["./src/app/data-access/*"],
       "@ui/*": ["./src/app/ui/*"],
       "@features/*": ["./src/app/features/*"],
-      "@env": ["./src/environments/environment"]
+      "@env": ["./src/environments/environment"],
+      "@eras/engine": ["./vendor/eras-engine"]
     }
   },
   "angularCompilerOptions": {

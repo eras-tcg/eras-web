@@ -1,0 +1,25 @@
+{
+  "name": "@eras/engine",
+  "version": "0.1.0-SNAPSHOT",
+  "main": "eras-engine.mjs",
+  "types": "eras-engine.d.mts",
+  "devDependencies": {
+    "typescript": "6.0.3"
+  },
+  "dependencies": {},
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "bundledDependencies": [],
+  "description": "The ERAS game engine (Kotlin Multiplatform) for the browser: LocalMatch, a game against the bot driven as the server is",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./eras-engine.d.mts",
+      "import": "./eras-engine.mjs"
+    },
+    "./card-bundle.json": "./card-bundle.json",
+    "./bot-resources.json": "./bot-resources.json",
+    "./starter-decks.json": "./starter-decks.json",
+    "./package.json": "./package.json"
+  }
+}

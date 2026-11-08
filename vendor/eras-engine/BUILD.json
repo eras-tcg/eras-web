@@ -1,0 +1,18 @@
+{
+  "commit": "6898185a45a08d4febbaf6f0c5ce46ca44fc1734",
+  "dirty": false,
+  "subject": "fix(engine): the npm distribution and the smoke run order themselves after the Node distribution (phase 3)",
+  "copiedAt": "2026-11-08T04:57:31.793Z",
+  "files": [
+    "bot-resources.json",
+    "card-bundle.json",
+    "eras-engine.d.mts",
+    "eras-engine.mjs",
+    "kotlin-kotlin-stdlib.mjs",
+    "kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
+    "kotlinx-serialization-kotlinx-serialization-core.mjs",
+    "kotlinx-serialization-kotlinx-serialization-json.mjs",
+    "package.json",
+    "starter-decks.json"
+  ]
+}

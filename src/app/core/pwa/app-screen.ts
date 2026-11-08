@@ -3,6 +3,9 @@ import { DestroyRef, Injectable, inject } from '@angular/core';
 import { ServerAccess } from '../server/server-access';
 import type { AppMode } from './app-mode';
 
+
+/** The taps that may ask for full screen (the browser takes any of them as the player's gesture). */
+const GESTURES = ['click', 'pointerup', 'touchend'] as const;
 /** The window's size as the layout uses it (CSS px). */
 export interface LayoutBox {
   width: number;
@@ -127,13 +130,14 @@ export class AppScreen {
     lock();
     win.addEventListener('resize', measure);
     win.addEventListener('orientationchange', settle);
-    this.document.addEventListener('click', onGesture, true);
+    // Any tap counts (a drag on the board ends in pointerup/touchend without a click); all are user gestures
+    for (const type of GESTURES) this.document.addEventListener(type, onGesture, true);
     this.document.addEventListener('fullscreenchange', onFullscreen);
     this.document.addEventListener('visibilitychange', onVisible);
     this.destroyRef.onDestroy(() => {
       win.removeEventListener('resize', measure);
       win.removeEventListener('orientationchange', settle);
-      this.document.removeEventListener('click', onGesture, true);
+      for (const type of GESTURES) this.document.removeEventListener(type, onGesture, true);
       this.document.removeEventListener('fullscreenchange', onFullscreen);
       this.document.removeEventListener('visibilitychange', onVisible);
     });

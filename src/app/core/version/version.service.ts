@@ -1,13 +1,14 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { isNativeApp } from '../pwa/app-mode';
 
 /** Every few minutes, and whenever the tab is shown again, the deployed version is checked. */
 const CHECK_EVERY_MS = 5 * 60_000;
 /** The main bundle's file name carries the build's hash ("main-OJRMUZKX.js"). */
 const MAIN_BUNDLE = /main-[A-Z0-9]+\.js/;
 
-/** Which banner the header shows about the app's version, if any. */
-export type VersionBanner = 'update' | 'broken' | null;
+/** Which banner the header shows about the app's version, if any ('app': the Android app needs a new APK). */
+export type VersionBanner = 'update' | 'broken' | 'app' | null;
 
 /** The game's table (online or offline): a new version waits there, so a game is never interrupted by the banner. */
 export function inGame(url: string): boolean {
@@ -32,9 +33,11 @@ const AUTO_RELOAD_GAP_MS = 60_000;
  * everywhere; a new version waits until the player leaves the table. On a safe screen the app takes it by itself
  * (VersionService.applyWhenSafe), so the banner is only seen where that would lose something.
  */
-export function versionBanner(state: { updateAvailable: boolean; broken: boolean; url: string }): VersionBanner {
+export function versionBanner(state: { updateAvailable: boolean; broken: boolean; url: string; appUpdate?: boolean }): VersionBanner {
   if (state.broken) return 'broken';
-  return state.updateAvailable && !inGame(state.url) ? 'update' : null;
+  if (inGame(state.url)) return null;
+  if (state.updateAvailable) return 'update';
+  return state.appUpdate ? 'app' : null;
 }
 
 /**
@@ -53,10 +56,25 @@ export class VersionService {
   readonly updateAvailable = signal(false);
   /** The service worker cannot serve this version any more (SwUpdate.unrecoverable): only a reload fixes it. */
   readonly broken = signal(false);
+  /** The Android app: a newer APK is needed (its address, on the site); the header offers it. */
+  readonly appUpdate = signal<string | null>(null);
+  /** The Android app: switches to the web part its updater downloaded (NativeApp). */
+  private nativeApply: (() => Promise<void>) | null = null;
+
+  /**
+   * The Android app's updater downloaded a new web part: shown and taken as the PWA's new version (on a safe screen
+   * by itself, or with "Recargar"; never over a game).
+   */
+  nativeUpdateReady(apply: () => Promise<void>): void {
+    this.nativeApply = apply;
+    this.updateAvailable.set(true);
+  }
 
   start(): void {
     if (this.started) return;
     this.started = true;
+    // The Android app: its code is in the APK, updates come from its updater (NativeApp), not from the site's page
+    if (isNativeApp()) return;
     if (this.sw?.isEnabled) {
       const versions = this.sw.versionUpdates.subscribe((e) => e.type === 'VERSION_READY' && this.updateAvailable.set(true));
       const broken = this.sw.unrecoverable.subscribe(() => this.broken.set(true));
@@ -112,6 +130,11 @@ export class VersionService {
 
   /** The banner's "Recargar", or applyWhenSafe: the new version is activated and the page reloaded. */
   async reload(): Promise<void> {
+    if (this.nativeApply && this.updateAvailable()) {
+      // The updater reloads the page with the new web part (or, if it fails, the app stays as it is)
+      await this.nativeApply().catch(() => undefined);
+      return;
+    }
     if (this.controlled() && this.updateAvailable()) await this.sw?.activateUpdate().catch(() => false);
     location.reload();
   }

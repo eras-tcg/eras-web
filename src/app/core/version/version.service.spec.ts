@@ -119,3 +119,49 @@ describe('VersionService with the service worker', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 });
+
+describe('VersionService in the Android app', () => {
+  let reload: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    (window as unknown as { Capacitor?: unknown }).Capacitor = { isNativePlatform: () => true };
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, 'Capacitor');
+  });
+
+  it('does not look at the bundled page for new versions (the updater does)', () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    TestBed.inject(VersionService).start();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("switches to the updater's web part on a safe screen, never over a game", async () => {
+    const version = TestBed.inject(VersionService);
+    version.start();
+    const apply = vi.fn(() => Promise.resolve());
+    version.nativeUpdateReady(apply);
+    expect(version.updateAvailable()).toBe(true);
+    expect(await version.applyWhenSafe('/simulator/local/board')).toBe(false);
+    expect(await version.applyWhenSafe('/deck-builder')).toBe(false);
+    expect(apply).not.toHaveBeenCalled();
+    expect(await version.applyWhenSafe('/play')).toBe(true);
+    expect(apply).toHaveBeenCalledTimes(1);
+    // The updater reloads the page itself
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('a newer APK needed: its banner, not over a game, after a ready web part', () => {
+    expect(versionBanner({ updateAvailable: false, broken: false, url: '/home', appUpdate: true })).toBe('app');
+    expect(versionBanner({ updateAvailable: false, broken: false, url: '/simulator/local/board', appUpdate: true })).toBeNull();
+    expect(versionBanner({ updateAvailable: true, broken: false, url: '/home', appUpdate: true })).toBe('update');
+    expect(versionBanner({ updateAvailable: false, broken: false, url: '/home', appUpdate: false })).toBeNull();
+  });
+});

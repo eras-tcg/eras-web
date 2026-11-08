@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/cor
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { RotateOverlayComponent } from '@core/layout/rotate-overlay.component';
+import { NativeApp } from '@core/native/native-app';
 import { AppScreen } from '@core/pwa/app-screen';
 import { ConnectionService } from '@core/server/connection.service';
 import { ServerAccess } from '@core/server/server-access';
@@ -68,6 +69,8 @@ export class App {
     this.connection.start();
     // The installed app: landscape, full screen, a layout that does not jump with the system bars
     this.screen.start();
+    // The Android app (only there): back button, updates, the card pictures' worker
+    inject(NativeApp).start();
     // Once the backend is up, and again when an admin signs in: what it found in Drive as it woke up
     effect(() => {
       if (this.access.allowed() && this.warmup.ready() && this.auth.user()) void this.syncReport.check();

@@ -67,7 +67,10 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
+      # Its default packages include "tools", which the SDK no longer has (sdkmanager fails): only what the build needs
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-36
       - run: npm ci
       # The app's web part: the site's code with the app's environment (the API at https://www.erastcg.com), no ngsw
       - run: npx ng build --configuration capacitor

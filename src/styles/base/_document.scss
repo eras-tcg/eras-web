@@ -16,10 +16,16 @@ body {
     color var(--duration-base) var(--easing-standard);
 }
 
-// The installed app (html.eras-app, AppScreen): the layout is as tall as --app-height, measured once per orientation
-// and full screen change, so the system bars that show for a moment (a swipe from the edge) or the keyboard do not
-// shrink it; no pull-to-refresh or overscroll glow
+// The installed app (html.eras-app, AppScreen): the layout keeps the largest size seen while the phone is held the
+// same way (--app-width, --app-height), so the system bars that show for a moment (a swipe from the edge: on top, at
+// the bottom or on a side) or the keyboard briefly cover its edge instead of shrinking it and making it jump; no
+// pull-to-refresh or overscroll glow
+html.eras-app {
+  overflow-x: hidden;
+}
+
 html.eras-app body {
+  min-width: var(--app-width, 100vw);
   min-height: var(--app-height, 100dvh);
   overscroll-behavior: none;
 }

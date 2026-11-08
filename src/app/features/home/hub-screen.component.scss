@@ -200,7 +200,7 @@
   border-inline-start: 4px solid var(--color-hub-accent);
   view-transition-name: screen-title;
   font-family: var(--font-family-display);
-  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-size: clamp(1.5rem, calc(2.4 * var(--app-vw, 1vw)), 2.1rem);
   font-weight: var(--font-weight-regular);
   line-height: 1.05;
   letter-spacing: 0.05em;

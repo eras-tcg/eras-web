@@ -86,16 +86,25 @@ async function box(page: Page, selector: string): Promise<{ width: number; heigh
   return { width: Math.round(rect.width), height: Math.round(rect.height) };
 }
 
-/** The window is shorter for a moment (Android's bars over a full screen app) and back: the layout box stays. */
+/**
+ * The window is shorter, or narrower (the navigation buttons on a side, in landscape), for a moment (Android's bars
+ * over a full screen app, also with a full screen change) and back: the layout box stays, and so does the text in it.
+ */
 async function expectSteadyLayout(page: Page, selector: string): Promise<void> {
   const before = await box(page, selector);
+  const font = () => page.locator(selector).first().evaluate((e) => getComputedStyle(e.querySelector('h1, h2, button') ?? e).fontSize);
+  const fontBefore = await font();
   expect(before.height).toBe(PHONE.height);
-  await page.setViewportSize({ width: PHONE.width, height: PHONE.height - 48 });
-  await page.waitForTimeout(300);
-  expect(await box(page, selector)).toEqual(before);
-  await page.setViewportSize(PHONE);
-  await page.waitForTimeout(300);
-  expect(await box(page, selector)).toEqual(before);
+  for (const size of [{ width: PHONE.width, height: PHONE.height - 48 }, { width: PHONE.width - 48, height: PHONE.height }]) {
+    await page.setViewportSize(size);
+    await page.evaluate(() => document.dispatchEvent(new Event('fullscreenchange')));
+    await page.waitForTimeout(300);
+    expect(await box(page, selector)).toEqual(before);
+    expect(await font()).toBe(fontBefore);
+    await page.setViewportSize(PHONE);
+    await page.waitForTimeout(300);
+    expect(await box(page, selector)).toEqual(before);
+  }
 }
 
 async function answerChoices(page: Page): Promise<void> {

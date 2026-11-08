@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { APP_MODE } from '../server/server-access';
 import { detectAppMode, isInstalledApp } from './app-mode';
-import { AppScreen, SETTLE_MS, needsFullscreenRequest, nextLayoutHeight, showFullscreenToggle } from './app-screen';
+import { AppScreen, needsFullscreenRequest, nextLayoutBox, showFullscreenToggle } from './app-screen';
 
 const win = (modes: string[], standalone?: boolean) =>
   ({ matchMedia: (q: string) => ({ matches: modes.some((m) => q.includes(m)) }), navigator: { standalone } }) as unknown as Window;
@@ -37,24 +37,24 @@ describe('the installed app', () => {
   });
 });
 
-describe('nextLayoutHeight', () => {
-  const touch = { settling: false, touch: true };
-  it('on a touch screen a shorter window (bars shown for a moment, the keyboard) keeps the height', () => {
-    const start = nextLayoutHeight(null, { width: 844, height: 390 }, touch);
+describe('nextLayoutBox', () => {
+  const touch = { touch: true };
+  it('on a touch screen the bars shown for a moment (top, bottom or a side) and the keyboard never shrink it', () => {
+    const start = nextLayoutBox(null, { width: 844, height: 390 }, touch);
     expect(start).toEqual({ width: 844, height: 390 });
-    expect(nextLayoutHeight(start, { width: 844, height: 342 }, touch)).toEqual(start);
-    // The bars went away: it grows
-    expect(nextLayoutHeight(start, { width: 844, height: 412 }, touch)).toEqual({ width: 844, height: 412 });
+    expect(nextLayoutBox(start, { width: 844, height: 342 }, touch)).toEqual(start);
+    // The navigation buttons on a side, in landscape: the width stays too
+    expect(nextLayoutBox(start, { width: 796, height: 390 }, touch)).toEqual(start);
+    // The bars went away (full screen): it grows
+    expect(nextLayoutBox(start, { width: 892, height: 412 }, touch)).toEqual({ width: 892, height: 412 });
   });
 
-  it('turning the phone, or entering or leaving full screen, takes the new size', () => {
-    const start = { width: 844, height: 390 };
-    expect(nextLayoutHeight(start, { width: 390, height: 844 }, touch)).toEqual({ width: 390, height: 844 });
-    expect(nextLayoutHeight(start, { width: 844, height: 360 }, { settling: true, touch: true })).toEqual({ width: 844, height: 360 });
+  it('turning the phone takes the new size', () => {
+    expect(nextLayoutBox({ width: 844, height: 390 }, { width: 390, height: 844 }, touch)).toEqual({ width: 390, height: 844 });
   });
 
   it('a desktop window follows its size', () => {
-    expect(nextLayoutHeight({ width: 1200, height: 800 }, { width: 1200, height: 600 }, { settling: false, touch: false })).toEqual({ width: 1200, height: 600 });
+    expect(nextLayoutBox({ width: 1200, height: 800 }, { width: 1200, height: 600 }, { touch: false })).toEqual({ width: 1200, height: 600 });
   });
 });
 
@@ -95,10 +95,14 @@ describe('AppScreen', () => {
       window.innerHeight = 390;
       window.innerWidth = 844;
       screen('app').start();
-      vi.advanceTimersByTime(SETTLE_MS + 1);
       window.innerHeight = 342;
       window.dispatchEvent(new Event('resize'));
       expect(document.documentElement.style.getPropertyValue('--app-height')).toBe('390px');
+      // The navigation buttons on a side: nor the width
+      window.innerHeight = 390;
+      window.innerWidth = 796;
+      document.dispatchEvent(new Event('fullscreenchange'));
+      expect(document.documentElement.style.getPropertyValue('--app-width')).toBe('844px');
       // Turned: the new size
       window.innerHeight = 844;
       window.innerWidth = 390;

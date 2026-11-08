@@ -77,13 +77,14 @@ describe('OfflineGamesUpload', () => {
     for (const id of ['a', 'b', 'c']) await queue.add('u1', game(id));
     const sent = upload.send('u1');
 
-    expect(await answer(() => ({ status: 'accepted', credit: { won: true, turns: 9, progress: [], matchId: 'm1' } }))).toBe('a');
+    const progress = [{ counts: 'GAME_PLAYED', amount: 1 }, { counts: 'GAME_WON', amount: 1 }];
+    expect(await answer(() => ({ status: 'accepted', credit: { won: true, turns: 9, progress, matchId: 'm1' } }))).toBe('a');
     expect(await answer(() => ({ status: 'duplicate' }))).toBe('b');
     expect(await answer(() => ({ status: 'accepted', credit: { won: false, turns: 7, progress: [], matchId: 'm2' } }))).toBe('c');
 
-    expect(await sent).toEqual({ accepted: 2, won: 1, rejected: 0, pending: 0 });
+    expect(await sent).toEqual({ accepted: 2, won: 1, missions: 1, rejected: 0, pending: 0 });
     expect(await queue.list('u1')).toEqual([]);
-    expect(notices).toEqual(['2 partidas sin conexión registradas · 1 victoria']);
+    expect(notices).toEqual(['2 partidas sin conexión registradas · 1 victoria · tus misiones avanzaron']);
   });
 
   it('the body is the recorded game as the server reads it', async () => {
@@ -106,7 +107,7 @@ describe('OfflineGamesUpload', () => {
       ],
     });
     request.flush({ results: [{ id: 'a', status: 'rejected', reason: 'mismatch' }] });
-    expect(await sent).toEqual({ accepted: 0, won: 0, rejected: 1, pending: 0 });
+    expect(await sent).toEqual({ accepted: 0, won: 0, missions: 0, rejected: 1, pending: 0 });
     expect(notices).toEqual(['1 partida sin conexión no se pudo registrar']);
   });
 
@@ -115,7 +116,7 @@ describe('OfflineGamesUpload', () => {
     const sent = upload.send('u1');
     await answer(() => ({ status: 'accepted', credit: { won: false, turns: 9, progress: [], matchId: null } }));
     await answer(() => ({ status: 'retry', reason: 'busy' }));
-    expect(await sent).toEqual({ accepted: 1, won: 0, rejected: 0, pending: 2 });
+    expect(await sent).toEqual({ accepted: 1, won: 0, missions: 0, rejected: 0, pending: 2 });
     expect((await queue.list('u1')).map((g) => g.id)).toEqual(['b', 'c']);
     expect(notices).toEqual(['1 partida sin conexión registrada']);
 
@@ -123,19 +124,19 @@ describe('OfflineGamesUpload', () => {
     notices.length = 0;
     const again = upload.send('u1');
     await answer(() => ({ error: 0 }));
-    expect(await again).toEqual({ accepted: 0, won: 0, rejected: 0, pending: 2 });
+    expect(await again).toEqual({ accepted: 0, won: 0, missions: 0, rejected: 0, pending: 2 });
     expect(notices).toEqual([]);
 
     // A body the server can never take is dropped
     const last = upload.send('u1');
     await answer(() => ({ error: 413 }));
     await answer(() => ({ status: 'accepted', credit: { won: true, turns: 3, progress: [], matchId: null } }));
-    expect(await last).toEqual({ accepted: 1, won: 1, rejected: 1, pending: 0 });
+    expect(await last).toEqual({ accepted: 1, won: 1, missions: 0, rejected: 1, pending: 0 });
     expect(notices).toEqual(['1 partida sin conexión registrada · 1 victoria · 1 no se pudo registrar']);
   });
 
   it('nothing to send says nothing', async () => {
-    expect(await upload.send('u1')).toEqual({ accepted: 0, won: 0, rejected: 0, pending: 0 });
+    expect(await upload.send('u1')).toEqual({ accepted: 0, won: 0, missions: 0, rejected: 0, pending: 0 });
     http.expectNone('/api/simulator/offline-games');
     expect(notices).toEqual([]);
   });
@@ -160,10 +161,13 @@ describe('showNotice', () => {
 
 describe('summaryText', () => {
   it('counts what was registered, the wins and what was refused', () => {
-    expect(summaryText({ accepted: 0, won: 0, rejected: 0, pending: 3 })).toBeNull();
-    expect(summaryText({ accepted: 3, won: 2, rejected: 2, pending: 0 })).toBe(
+    expect(summaryText({ accepted: 0, won: 0, missions: 0, rejected: 0, pending: 3 })).toBeNull();
+    expect(summaryText({ accepted: 3, won: 2, missions: 0, rejected: 2, pending: 0 })).toBe(
       '3 partidas sin conexión registradas · 2 victorias · 2 no se pudieron registrar',
     );
-    expect(summaryText({ accepted: 0, won: 0, rejected: 2, pending: 0 })).toBe('2 partidas sin conexión no se pudieron registrar');
+    expect(summaryText({ accepted: 0, won: 0, missions: 0, rejected: 2, pending: 0 })).toBe('2 partidas sin conexión no se pudieron registrar');
+    expect(summaryText({ accepted: 2, won: 1, missions: 2, rejected: 0, pending: 0 })).toBe(
+      '2 partidas sin conexión registradas · 1 victoria · tus misiones avanzaron',
+    );
   });
 });

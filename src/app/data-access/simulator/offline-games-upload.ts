@@ -49,22 +49,30 @@ export function showNotice(text: string, doc: Document = document): void {
   setTimeout(() => p.remove(), NOTICE_MS);
 }
 
-/** What a round of sending gave: games counted (won among them), refused, and left for later. */
+/**
+ * What a round of sending gave: games counted (won among them; `missions`: those that moved the missions or the
+ * progression, which count a game against the bot as a game against a player), refused, and left for later.
+ */
 export interface UploadSummary {
   accepted: number;
   won: number;
+  missions: number;
   rejected: number;
   pending: number;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** The notice after sending ("2 partidas sin conexión registradas · 1 victoria"), or null when nothing was decided. */
+/**
+ * The notice after sending ("2 partidas sin conexión registradas · 1 victoria · tus misiones avanzaron"), or null when
+ * nothing was decided.
+ */
 export function summaryText(s: UploadSummary): string | null {
   const parts: string[] = [];
   if (s.accepted) {
     parts.push(plural(s.accepted, 'partida sin conexión registrada', 'partidas sin conexión registradas'));
     if (s.won) parts.push(plural(s.won, 'victoria', 'victorias'));
+    if (s.missions) parts.push('tus misiones avanzaron');
   }
   if (s.rejected) {
     parts.push(
@@ -79,8 +87,10 @@ export function summaryText(s: UploadSummary): string | null {
 /**
  * Sends the games played offline against the bot (kept on the device: offline-games.ts) once the player is connected,
  * one per request (the server plays each again before counting it), and drops those the server decided on: counted,
- * counted before, or refused. A game the server leaves for later ("retry"), or a request that fails (the connection
- * gone, the server down), stays for the next time; then it stops. A notice sums up what was counted. Made (lazily)
+ * counted before, or refused. A game the server leaves for later ("retry": busy, or the player's replays of the day
+ * spent; never a refusal), or a request that fails (the connection gone, the server down), stays for the next time;
+ * then it stops. A notice sums up what was counted (an accepted game counts for the missions and the progression as a
+ * game against the server's bot does). Made (lazily)
  * by OfflineLibrarySync once the player is connected (and after each sync of the library), and by OfflineGame when a
  * game ends (before connecting, the connection gate refuses the request at once: nothing reaches the server).
  */
@@ -100,7 +110,7 @@ export class OfflineGamesUpload {
   }
 
   private async run(userId: string): Promise<UploadSummary> {
-    const summary: UploadSummary = { accepted: 0, won: 0, rejected: 0, pending: 0 };
+    const summary: UploadSummary = { accepted: 0, won: 0, missions: 0, rejected: 0, pending: 0 };
     const games = await this.queue.list(userId);
     let i = 0;
     for (; i < games.length; i++) {
@@ -112,6 +122,7 @@ export class OfflineGamesUpload {
       if (verdict.status === 'accepted') {
         summary.accepted++;
         if (verdict.credit?.won) summary.won++;
+        if (verdict.credit?.progress?.length) summary.missions++;
       } else if (verdict.status === 'rejected') {
         summary.rejected++;
       }

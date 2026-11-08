@@ -32,7 +32,10 @@ would push, so the board and `GameStore` are the same as online. The option is a
 ### Offline games and rewards (2.6)
 
 A game of Modo solo sin conexión that reaches its end counts, once the player connects, exactly as a game against the
-server's bot (casual: never ranked), and only if the server, playing it again with the same engine, gets the same game.
+server's bot (casual: never ranked): for the missions and the progression as a game against a player (but the welcome
+step "Tu primera partida", which asks for a game against another player), and only if the server, playing it again
+with the same engine, gets the same game. Every such game counts (no daily cap); the deck it recorded counts if it is
+legal and the player owns its cards, even if the saved deck was edited or deleted since.
 
 - **Recording** (`engine.worker.ts` with `offline-record.ts`, pure): the worker keeps every body the board sends, in
   order, with the number of moves the bot made after it before the next one (the worker moves the bot between the
@@ -48,8 +51,9 @@ server's bot (casual: never ranked), and only if the server, playing it again wi
   makes when the player connects, after each sync of the library; and when a game ends: before connecting the
   connection gate refuses it at once, nothing reaches the server): `POST /api/simulator/offline-games`
   `{"games": [game]}`, one game per request (the server plays each again). Counted, counted before or refused: dropped
-  from the device; left for later by the server (`retry`: busy, today's checks spent) or not sent (no connection): kept,
-  and sending stops until the next time. A notice sums it up ("2 partidas sin conexión registradas · 1 victoria"), drawn by the chunk itself with the look of the app's
+  from the device; left for later by the server (`retry`: busy, or the player's replays of the day spent; never a refusal)
+  or not sent (no connection): kept, and sending stops until the next time. A notice sums it up ("2 partidas sin
+  conexión registradas · 1 victoria · tus misiones avanzaron"), drawn by the chunk itself with the look of the app's
   notice (importing ConnectionService there would split the first screen's code).
 - **What the server checks and grants:** DriveManager `eras-engine/README.md`, "Offline games and rewards".
 - **Tests:** `offline-record.spec.ts`, `offline-games.spec.ts`, `offline-games-upload.spec.ts`; the installed app's

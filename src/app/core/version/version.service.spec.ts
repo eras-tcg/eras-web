@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SwUpdate, VersionEvent } from '@angular/service-worker';
 import { Subject } from 'rxjs';
-import { VersionService, inGame, versionBanner } from './version.service';
+import { VersionService, inGame, safeToUpdate, versionBanner } from './version.service';
 
 describe('versionBanner', () => {
   it('a new version waits until the player leaves the table (online or offline game)', () => {
@@ -20,6 +20,17 @@ describe('versionBanner', () => {
     expect(inGame('/simulator/local/board')).toBe(true);
     expect(inGame('/simulator')).toBe(false);
     expect(inGame('/play')).toBe(false);
+  });
+});
+
+describe('safeToUpdate', () => {
+  it('reloads by itself on the hub screens, never over a game, the deck builder or a pack opening', () => {
+    for (const url of ['/home', '/play', '/social', '/my-decks', '/cards', '/profile?tab=x', '/', '/missions']) {
+      expect(safeToUpdate(url), url).toBe(true);
+    }
+    for (const url of ['/simulator/local/board', '/simulator/abc', '/deck-builder', '/deck/42', '/booster-result', '/admin', '']) {
+      expect(safeToUpdate(url), url).toBe(false);
+    }
   });
 });
 
@@ -47,7 +58,7 @@ describe('VersionService with the service worker', () => {
     Reflect.deleteProperty(navigator, 'serviceWorker');
   });
 
-  it('a downloaded version is announced, never activated by itself', async () => {
+  it('a downloaded version is announced; start alone activates nothing', async () => {
     const version = TestBed.inject(VersionService);
     version.start();
     versionUpdates.next({ type: 'VERSION_DETECTED', version: { hash: 'b' } });
@@ -60,6 +71,35 @@ describe('VersionService with the service worker', () => {
     await version.reload();
     expect(sw.activateUpdate).toHaveBeenCalled();
     expect(reload).toHaveBeenCalled();
+  });
+
+  it('takes a ready version by itself on a safe screen, once, and not over a game', async () => {
+    sessionStorage.clear();
+    const version = TestBed.inject(VersionService);
+    version.start();
+    versionUpdates.next({ type: 'VERSION_READY', currentVersion: { hash: 'a' }, latestVersion: { hash: 'b' } });
+    expect(await version.applyWhenSafe('/simulator/local/board')).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    expect(await version.applyWhenSafe('/play')).toBe(true);
+    expect(sw.activateUpdate).toHaveBeenCalled();
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(await version.applyWhenSafe('/home')).toBe(false); // already applying
+  });
+
+  it('never reloads by itself twice within a minute (a failing version cannot loop)', async () => {
+    sessionStorage.setItem('eras-auto-reload', String(Date.now()));
+    const version = TestBed.inject(VersionService);
+    version.start();
+    unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'lost' });
+    expect(await version.applyWhenSafe('/home')).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    sessionStorage.clear();
+  });
+
+  it('checks right away when it starts', () => {
+    sw.checkForUpdate.mockClear();
+    TestBed.inject(VersionService).start();
+    expect(sw.checkForUpdate).toHaveBeenCalled();
   });
 
   it('asks the service worker (not index.html) when checking', async () => {

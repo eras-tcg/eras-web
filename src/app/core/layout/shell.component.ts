@@ -53,6 +53,12 @@ export class ShellComponent {
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
   constructor() {
+    // A new version is taken by itself on a safe screen (never over a game, the deck builder or a form)
+    effect(() => {
+      const url = this.url();
+      if (this.version.updateAvailable() || this.version.broken()) void this.version.applyWhenSafe(url);
+    });
+
     // The hub screens fit the window: the page does not scroll there
     const body = inject(DOCUMENT).body;
     effect(() => body.classList.toggle('eras-hub', this.hub()));

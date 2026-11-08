@@ -13,19 +13,20 @@ export interface LayoutBox {
 }
 
 /** After turning the phone or entering/leaving full screen, the size the window takes is accepted as it is for this long. */
-export const SETTLE_MS = 800;
 
 /**
- * The installed app's layout height. Android shows its bars for a moment over an app in full screen (a swipe from the
- * edge: the navigation buttons, the status bar) and the keyboard may shrink the window: the layout must not shrink and
- * jump with them. So on a touch screen, while the width stays (the phone was not turned), the height only grows (the
- * bars went away); a shorter window keeps the height it had. Turning it, or a change of full screen (`settling`),
- * takes the new size. Elsewhere (a desktop window) the window's height, as it is.
+ * The installed app's layout size (--app-width, --app-height). On a phone or tablet the system bars that show for a
+ * moment (a swipe from the edge: the status bar on top, the navigation buttons at the bottom or, in landscape, on a
+ * side) and the keyboard shrink the window for an instant, even in full screen, before they turn see-through: the
+ * layout must not reflow and jump with them. So on a touch screen it keeps the largest width and height seen while the
+ * phone is held the same way (the content is briefly covered at the edge instead), and takes the new size only when
+ * the phone is turned (landscape ⇄ portrait). Elsewhere (a desktop window) the window's size, as it is.
  */
-export function nextLayoutHeight(previous: LayoutBox | null, sample: LayoutBox, context: { settling: boolean; touch: boolean }): LayoutBox {
-  if (!previous || context.settling || !context.touch) return sample;
-  if (Math.abs(sample.width - previous.width) > 1) return sample;
-  return sample.height >= previous.height ? sample : previous;
+export function nextLayoutBox(previous: LayoutBox | null, sample: LayoutBox, context: { touch: boolean }): LayoutBox {
+  if (!previous || !context.touch) return sample;
+  const landscape = (b: LayoutBox) => b.width > b.height;
+  if (landscape(sample) !== landscape(previous)) return sample;
+  return { width: Math.max(previous.width, sample.width), height: Math.max(previous.height, sample.height) };
 }
 
 /**
@@ -60,7 +61,7 @@ type LockableOrientation = ScreenOrientation & { lock?: (orientation: string) =>
  *   the background or leaving it (Android's back gesture);
  * - landscape: screen.orientation.lock('landscape') (Android, in full screen or installed; refused elsewhere: then
  *   "Gira el teléfono" covers the app while it is held upright, see RotateOverlayComponent);
- * - the layout height (--app-height): fixed against the bars that show for a moment (nextLayoutHeight).
+ * - the layout size (--app-width, --app-height): fixed against the bars that show for a moment (nextLayoutBox).
  * The manifest already asks for both (display fullscreen, orientation landscape) where the browser follows it.
  */
 @Injectable({ providedIn: 'root' })
@@ -73,7 +74,6 @@ export class AppScreen {
   /** The app's own "Pantalla completa" buttons show (showFullscreenToggle). */
   readonly fullscreenToggle = showFullscreenToggle({ mode: this.installed ? 'app' : 'browser', touch: this.touch });
   private box: LayoutBox | null = null;
-  private settleUntil = 0;
   private locked = false;
   private started = false;
 
@@ -87,11 +87,14 @@ export class AppScreen {
     const touch = this.touch;
 
     const measure = () => {
-      this.box = nextLayoutHeight(this.box, { width: win.innerWidth, height: win.innerHeight }, { settling: Date.now() < this.settleUntil, touch });
+      this.box = nextLayoutBox(this.box, { width: win.innerWidth, height: win.innerHeight }, { touch });
       root.style.setProperty('--app-height', `${this.box.height}px`);
+      root.style.setProperty('--app-width', `${this.box.width}px`);
+      // 1vw / 1vh of that size, for what the hub and the board size by the window (they would move with the bars)
+      root.style.setProperty('--app-vw', `${this.box.width / 100}px`);
+      root.style.setProperty('--app-vh', `${this.box.height / 100}px`);
     };
     const settle = () => {
-      this.settleUntil = Date.now() + SETTLE_MS;
       measure();
     };
     const lock = () => {

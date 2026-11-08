@@ -16,7 +16,7 @@
   --bu: max(1rem, calc((var(--app-height, 100dvh) - var(--app-header-height, 0px)) / 56));
   // The table's side columns (lives / piles): the halves and the middle strip share them, so the gem bar is as
   // wide as the field. The width only caps them: on a narrow screen the field keeps its room
-  --side: min(calc(15 * var(--bu)), max(15rem, 20vw));
+  --side: min(calc(15 * var(--bu)), max(15rem, calc(20 * var(--app-vw, 1vw))));
 }
 
 // In a game: room on the right for the collapsed options sidebar (expanded, it lies over the table)
@@ -291,7 +291,7 @@
   flex-direction: column-reverse;
   align-items: flex-start;
   gap: var(--space-2);
-  max-inline-size: min(22rem, 90vw);
+  max-inline-size: min(22rem, calc(90 * var(--app-vw, 1vw)));
   pointer-events: none;
   z-index: 20;
 }
@@ -367,7 +367,7 @@
 
 // A sheet open at the bottom: the alerts and the chain keep above it
 :host-context(body.eras-sheet-open) .toasts {
-  max-block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
+  max-block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, calc(75 * var(--app-vh, 1vh)))) - var(--space-6));
 }
 
 

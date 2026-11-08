@@ -30,6 +30,7 @@ export declare class LocalMatch {
     playBot(): Array<string>;
     botPauseMs(): number;
     status(): string;
+    result(): string;
 }
 export declare namespace LocalMatch {
     /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */

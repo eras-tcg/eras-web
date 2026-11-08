@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { InstallPrompt, installOffer, isIos, isStandalone } from './install-prompt';
+import { InstallPrompt, installOffer, isAndroid, isIos, isStandalone } from './install-prompt';
 
 function fakePrompt(outcome: 'accepted' | 'dismissed') {
   const event = new Event('beforeinstallprompt', { cancelable: true }) as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
@@ -14,6 +14,12 @@ describe('installOffer', () => {
     expect(installOffer({ installed: false, canPrompt: false, ios: true })).toBe('ios');
     expect(installOffer({ installed: false, canPrompt: false, ios: false })).toBe('none');
     expect(installOffer({ installed: true, canPrompt: true, ios: true })).toBe('none');
+    // Android without the browser's prompt: the menu's "Instalar app", explained
+    expect(installOffer({ installed: false, canPrompt: false, ios: false, android: true })).toBe('android');
+    expect(installOffer({ installed: false, canPrompt: true, ios: false, android: true })).toBe('prompt');
+    expect(installOffer({ installed: true, canPrompt: false, ios: false, android: true })).toBe('none');
+    expect(isAndroid('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')).toBe(true);
+    expect(isAndroid('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36')).toBe(false);
   });
 });
 

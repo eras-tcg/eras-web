@@ -90,9 +90,12 @@ export async function startPwaServers(): Promise<PwaServers> {
     if (url.pathname.startsWith('/api/')) return api(req, res, url);
     let file = normalize(join(root, decodeURIComponent(url.pathname)));
     if (!file.startsWith(root)) return json(res, {}, 403);
-    if (!existsSync(file) || statSync(file).isDirectory()) {
-      if (extname(url.pathname)) return json(res, {}, 404);
+    // CloudFront's SpaRewrite (infra site-stack.ts): a path that does not end in a short extension gets index.html,
+    // even when a file with that name exists (a long extension such as .webmanifest was served the page)
+    if (!/\.[a-z][a-z0-9]{0,4}$/i.test(url.pathname)) {
       file = join(root, 'index.html');
+    } else if (!existsSync(file) || statSync(file).isDirectory()) {
+      return json(res, {}, 404);
     }
     const hashed = /-[A-Za-z0-9_-]{8}\.(js|css)$/.test(file);
     res.writeHead(200, {

@@ -75,6 +75,15 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   // 1. Online, once: the service worker installs, the decks are kept, the pictures are downloaded
   await page.goto(`${BASE}/play`);
   await expect(page.getByRole('button', { name: 'Modo solo sin conexión' })).toBeVisible();
+  // Installable: the page's manifest link gives the web app manifest (not the page) and its icons are pictures
+  const manifest = await page.evaluate(async () => {
+    const href = document.querySelector<HTMLLinkElement>('link[rel=manifest]')!.href;
+    const body = (await (await fetch(href)).json()) as { name: string; icons: { src: string }[] };
+    const icons = await Promise.all(body.icons.map(async (i) => (await fetch(new URL(i.src, href))).headers.get('content-type')));
+    return { name: body.name, icons };
+  });
+  expect(manifest.name).toBe('ERAS');
+  for (const type of manifest.icons) expect(type).toMatch(/^image\//);
   await page.waitForFunction(() => !!navigator.serviceWorker?.controller, null, { timeout: 90_000 });
   await expect.poll(() => storedDecks(page), { timeout: 30_000 }).toEqual(['Mazo e2e']);
 
@@ -85,7 +94,8 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   await expect(panel.getByText(/0 de \d+ guardadas/)).toBeVisible({ timeout: 30_000 });
   await panel.getByRole('button', { name: 'Descargar' }).click();
   await expect(panel.getByText('Listo: las imágenes quedaron guardadas para jugar sin conexión.')).toBeVisible({ timeout: 60_000 });
-  await expect(panel.getByText(/Espacio usado por ERAS/)).toBeVisible();
+  await expect(panel.getByText(/Las imágenes guardadas ocupan unos/)).toBeVisible();
+  await expect(panel.getByText(/reserva varios MB por cada imagen de otro sitio/)).toBeVisible();
   await page.screenshot({ path: join(SHOTS, 'offline-download-panel.png') });
   expect(servers!.imageHits.plain).toBeGreaterThan(0);
   await panel.getByRole('button', { name: 'Cerrar', exact: true }).last().click();

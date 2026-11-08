@@ -1,7 +1,12 @@
 # Build on GitHub, deploy to AWS (S3 + CloudFront) with eras-tcg/infra deploy-site-aws.yml.
-#   PR to main   -> lint + test + build only
-#   push to main -> build (configuration "aws") + deploy staging.erastcg.com + deploy erastcg.com (waits for approval)
+#   PR to main   -> lint + test + build (site and Android app) only
+#   push to main -> build (configuration "aws") + the Android app (configuration "capacitor", APK) + deploy
+#                   staging.erastcg.com + deploy erastcg.com (waits for approval)
 #   Rollback     -> re-run the deploy job of an earlier run (its build artifact is kept 90 days)
+# The Android app ships with the site: /app/ERAS.apk, /app/web-<version>.zip (its live update) and /app/app-update.json.
+# Only with the release signing key (secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+# ANDROID_KEY_PASSWORD; README, "The Android app"): without it the APK is signed with a debug key, kept only as this
+# run's artifact (NOT for distribution) and nothing is published under /app (the site keeps what it had).
 name: CI/CD
 
 on:
@@ -44,13 +49,97 @@ jobs:
       - run: npx ng build --configuration aws
       - uses: actions/upload-artifact@v4
         with:
-          name: site
+          name: site-web
           path: dist/eras-web/browser
+          retention-days: 90
+
+  android:
+    needs: lint-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      # The app's web part: the site's code with the app's environment (the API at https://www.erastcg.com), no ngsw
+      - run: npx ng build --configuration capacitor
+      - run: npx cap sync android
+      - name: Signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/eras-release.jks"
+            echo "file=$RUNNER_TEMP/eras-release.jks" >> "$GITHUB_OUTPUT"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Android::No ANDROID_KEYSTORE_BASE64 secret: the APK is signed with a debug key, NOT for distribution, and nothing is published under /app"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ steps.key.outputs.file }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Published files
+        run: |
+          version=$(node -p "require('./package.json').version")
+          mkdir -p out/app
+          cp android/app/build/outputs/apk/release/app-release.apk out/app/ERAS.apk
+          (cd dist/eras-web-capacitor/browser && zip -qr -X "$GITHUB_WORKSPACE/out/app/web-$version.zip" .)
+          node scripts/app-update.mjs "out/app/web-$version.zip" out/app
+          rm -f "$RUNNER_TEMP/eras-release.jks"
+      - name: APK for testing (debug key, not for distribution)
+        if: steps.key.outputs.signed != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ERAS-debug-signed-NOT-FOR-DISTRIBUTION
+          path: out/app/ERAS.apk
+          retention-days: 14
+      - name: The app, published with the site
+        if: steps.key.outputs.signed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app
+          path: out
+          retention-days: 90
+
+  # The site as deployed: the web build plus, when it was signed, the Android app under /app
+  site:
+    needs: [build, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-web
+          path: site
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: android-app
+          path: site
+      - run: ls -la site/app 2>/dev/null || echo "no Android app in this deploy"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site
           retention-days: 90
 
   deploy-staging:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: site
     uses: eras-tcg/infra/.github/workflows/deploy-site-aws.yml@main
     secrets: inherit
     with:

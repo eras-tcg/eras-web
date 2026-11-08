@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '../http/api-error';
 import { ApiConfig } from '../http/api-config';
 import { AuthService } from '../auth/auth.service';
+import { ServerAccess } from '../server/server-access';
 
 interface WalletResponse {
   gems: number;
@@ -36,6 +37,8 @@ export class WalletStore {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
 
   readonly gems = signal(0);
   /** Gems just given as the daily reward (0 when none). */
@@ -54,12 +57,13 @@ export class WalletStore {
     // Loaded for whoever signs in; cleared on sign-out
     effect(() => {
       const id = this.auth.user()?.id ?? null;
+      const allowed = this.access.allowed();
       untracked(() => {
         this.gems.set(0);
         this.reward.set(0);
         this.structures.set(new Set());
         this.loaded.set(false);
-        if (id) void this.refresh();
+        if (id && allowed) void this.refresh();
       });
     });
   }

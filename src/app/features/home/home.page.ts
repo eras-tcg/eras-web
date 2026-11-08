@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
+import { ServerAccess } from '@core/server/server-access';
 import { ProgressionStore } from '@core/missions/progression.store';
 import { VersionTagComponent } from '@core/version/version-tag.component';
 import { DecksStore } from '@data/decks/decks.store';
@@ -75,10 +76,17 @@ export class HomePage {
       const board = this.progression.board();
       untracked(() => this.welcome.greetIfNew(board));
     });
-    void this.home.load();
-    void this.editions.load(); // artwork of the news
-    const user = this.auth.user();
-    if (user) void this.loadMyDecks(user.id);
+    // The installed app before connecting shows what the device keeps (ServerAccess); connecting reads it for real
+    const access = inject(ServerAccess);
+    effect(() => {
+      access.allowed();
+      untracked(() => {
+        void this.home.load();
+        void this.editions.load(); // artwork of the news
+        const user = this.auth.user();
+        if (user) void this.loadMyDecks(user.id);
+      });
+    });
 
     const unregister = this.editMode.registerDirty(() => this.home.editing());
     inject(DestroyRef).onDestroy(unregister);

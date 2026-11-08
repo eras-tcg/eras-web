@@ -1,5 +1,6 @@
 import { connectionWarning } from './offline-download-dialog.component';
 import { playMenu } from './play.page';
+import { itemNeedsServer } from './hub-menu.component';
 import { ESTIMATED_PICTURE_BYTES, estimateBytes } from '@data/simulator/card-images';
 
 describe('playMenu', () => {
@@ -9,6 +10,12 @@ describe('playMenu', () => {
 
   it('without the connection: Modo solo sin conexión first, the server modes left out, the tutorial kept', () => {
     expect(playMenu({ cutOff: true, offline: true }).map((i) => i.id)).toEqual(['offline', 'tutorial']);
+  });
+
+  it('the installed app not connected yet: Modo solo sin conexión first, the server modes marked (opening one connects)', () => {
+    const menu = playMenu({ cutOff: false, offline: false, local: true });
+    expect(menu.map((i) => i.id)).toEqual(['offline', 'online', 'bot', 'tests', 'tutorial']);
+    expect(menu.filter(itemNeedsServer).map((i) => i.id)).toEqual(['online', 'bot', 'tests']);
   });
 
   it('the server not answering (but a connection): first offline, the rest still tried', () => {

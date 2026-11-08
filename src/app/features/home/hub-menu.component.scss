@@ -190,3 +190,14 @@
     font-size: 1.4rem;
   }
 }
+
+// Needs the server (the installed app before connecting): a small cloud crossed out after the word
+.needs-server {
+  flex-shrink: 0;
+  inline-size: 0.55em;
+  min-inline-size: 0.9rem;
+  block-size: 0.55em;
+  min-block-size: 0.9rem;
+  margin-inline-start: -0.4em;
+  opacity: 0.6;
+}

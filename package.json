@@ -1,6 +1,6 @@
 {
   "name": "eras-web",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -10,7 +10,7 @@
     "lint": "ng lint",
     "e2e": "playwright test",
     "engine:update": "node scripts/engine-update.mjs",
-    "e2e:pwa": "ng build && playwright test -c playwright.pwa.config.ts"
+    "e2e:pwa": "ng build && ng build -c aws --output-path dist/eras-web-aws && playwright test -c playwright.pwa.config.ts"
   },
   "private": true,
   "packageManager": "npm@11.19.1",

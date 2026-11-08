@@ -12,7 +12,9 @@ export const PWA_PORT = 4310;
 export const CORS_IMAGES_PORT = 4311;
 export const PLAIN_IMAGES_PORT = 4312;
 
-const root = join(__dirname, '../../dist/eras-web/browser');
+/** The production build (ng build); the AWS one, whose backend sleeps and is woken by /wake, is built apart (e2e:pwa). */
+export const PRODUCTION_ROOT = join(__dirname, '../../dist/eras-web/browser');
+export const AWS_ROOT = join(__dirname, '../../dist/eras-web-aws/browser');
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -32,7 +34,7 @@ interface Meta {
 }
 
 /** The card catalog: a drive card for each starter deck card (CORS host) and, for the player's deck, a copy of ST2's on the plain host. */
-function catalog() {
+function catalog(root: string) {
   const starters = JSON.parse(readFileSync(join(root, 'engine/starter-decks.json'), 'utf8')) as { decks: Record<string, { metadata: Meta[] }> };
   const metas = new Map<string, Meta>();
   for (const deck of Object.values(starters.decks)) for (const m of deck.metadata) metas.set(m.id, m);
@@ -69,15 +71,45 @@ function json(res: ServerResponse, body: unknown, status = 200): void {
 export interface PwaServers {
   /** Requests each image host received. */
   imageHits: { cors: number; plain: number };
+  /** Every request that reached the backend (the API and /wake), in order: "GET /api/drive/wallet/me". */
+  backendHits: string[];
+  /** The backend is asleep (a sleeping backend: the health check fails until /wake, then a moment more). */
+  readonly asleep: boolean;
   close(): Promise<void>;
 }
 
-export async function startPwaServers(): Promise<PwaServers> {
-  if (!existsSync(join(root, 'ngsw.json'))) throw new Error('Build the app first: npx ng build (production, with the service worker)');
-  const data = catalog();
+export interface PwaServerOptions {
+  /** Which build to serve (PRODUCTION_ROOT by default). */
+  root?: string;
+  /** A backend that sleeps (the AWS build): asleep until /wake, then awake after this many ms. */
+  wakeAfterMs?: number;
+  /** The health check answers after this many ms (a slow network). */
+  healthDelayMs?: number;
+}
+
+export async function startPwaServers(options: PwaServerOptions = {}): Promise<PwaServers> {
+  const root = options.root ?? PRODUCTION_ROOT;
+  if (!existsSync(join(root, 'ngsw.json'))) throw new Error(`Build the app first (${root}): npm run e2e:pwa builds production and aws`);
+  const data = catalog(root);
   const hits = { cors: 0, plain: 0 };
+  const backendHits: string[] = [];
+  let asleep = options.wakeAfterMs !== undefined;
+  let waking: ReturnType<typeof setTimeout> | null = null;
 
   const api = (req: IncomingMessage, res: ServerResponse, url: URL) => {
+    if (url.pathname === '/api/drive/health') {
+      const answer = () => (asleep ? json(res, { message: 'asleep' }, 503) : json(res, { status: 'UP' }));
+      if (options.healthDelayMs) return void setTimeout(answer, options.healthDelayMs);
+      return answer();
+    }
+    if (asleep) return json(res, { message: 'asleep' }, 503);
+    if (url.pathname === '/api/drive/wallet/me') return json(res, { gems: 1234 });
+    if (url.pathname === '/api/drive/missions/me') return json(res, { daily: [], weekly: [] });
+    if (url.pathname === '/api/drive/progression/me') return json(res, { welcome: [], milestones: [] });
+    if (url.pathname === '/api/drive/avatars/me' || url.pathname === '/api/drive/playmats/me') return json(res, { url: null });
+    if (url.pathname === '/api/drive/editions') return json(res, []);
+    if (url.pathname === '/api/drive/front-content/home') return json(res, { edition: null, decks: [] });
+    if (url.pathname === '/api/drive/collection/me') return json(res, { cards: {} });
     if (url.pathname === '/api/drive/decklists') return json(res, url.searchParams.get('userId') === E2E_USER.id ? [data.deck] : []);
     if (url.pathname === '/api/drive/cards/db') return json(res, data.images);
     if (url.pathname === '/api/cards/search') return json(res, data.meta);
@@ -87,6 +119,15 @@ export async function startPwaServers(): Promise<PwaServers> {
 
   const site = createServer((req, res) => {
     const url = new URL(req.url ?? '/', `http://localhost:${PWA_PORT}`);
+    if (url.pathname.startsWith('/api/') || url.pathname === '/wake') backendHits.push(`${req.method} ${url.pathname}`);
+    if (url.pathname === '/wake') {
+      // The wake-up Lambda: the backend answers a moment later
+      if (asleep && !waking) {
+        waking = setTimeout(() => (asleep = false), options.wakeAfterMs);
+        waking.unref();
+      }
+      return json(res, { status: 'waking' }, 202);
+    }
     if (url.pathname.startsWith('/api/')) return api(req, res, url);
     let file = normalize(join(root, decodeURIComponent(url.pathname)));
     if (!file.startsWith(root)) return json(res, {}, 403);
@@ -119,6 +160,10 @@ export async function startPwaServers(): Promise<PwaServers> {
   await Promise.all(servers.map((s, i) => new Promise<void>((resolve) => s.listen(ports[i], 'localhost', resolve))));
   return {
     imageHits: hits,
+    backendHits,
+    get asleep() {
+      return asleep;
+    },
     close: () =>
       Promise.all(
         servers.map(

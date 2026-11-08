@@ -1,7 +1,7 @@
 // Game table: exactly one screen below the banners (--app-header-height comes from the shell), no page scroll
 :host {
   display: block;
-  block-size: calc(100dvh - var(--app-header-height, 0px));
+  block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
   // No padding at the top and bottom: the hands go past the edges of the table (only their upper half shows)
   // Phones in landscape: clear of the notch (env() is 0 everywhere else)
   padding: 0 max(var(--space-3), env(safe-area-inset-right)) 0 max(var(--space-3), env(safe-area-inset-left));
@@ -13,7 +13,7 @@
   // The table's unit: its sizes (side columns, cards in hand, lives, field cards) follow the height, so a taller
   // table (full screen, a big monitor) makes every zone bigger together. A table 56rem tall (a usual window) keeps
   // 1rem; never smaller than that (short windows and phones keep their sizes)
-  --bu: max(1rem, calc((100dvh - var(--app-header-height, 0px)) / 56));
+  --bu: max(1rem, calc((var(--app-height, 100dvh) - var(--app-header-height, 0px)) / 56));
   // The table's side columns (lives / piles): the halves and the middle strip share them, so the gem bar is as
   // wide as the field. The width only caps them: on a narrow screen the field keeps its room
   --side: min(calc(15 * var(--bu)), max(15rem, 20vw));
@@ -367,7 +367,7 @@
 
 // A sheet open at the bottom: the alerts and the chain keep above it
 :host-context(body.eras-sheet-open) .toasts {
-  max-block-size: calc(100dvh - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
+  max-block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px) - var(--sheet-height, var(--sheet-max-block-size, 75vh)) - var(--space-6));
 }
 
 

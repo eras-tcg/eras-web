@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { ServerAccess } from '@core/server/server-access';
 import { apiErrorMessage } from '@core/http/api-error';
 import { firstValueFrom } from 'rxjs';
 import { CollectionApi } from './collection.api';
@@ -14,6 +15,8 @@ import { FINISHES, breakPlan, extraCopies, ownedCount } from './collection-rules
 export class CollectionStore {
   private readonly api = inject(CollectionApi);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
 
   readonly collection = signal<Collection | null>(null);
   readonly busy = signal(false);
@@ -25,9 +28,10 @@ export class CollectionStore {
   constructor() {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
+      const allowed = this.access.allowed();
       untracked(() => {
         this.collection.set(null);
-        if (id) void this.load();
+        if (id && allowed) void this.load();
       });
     });
   }

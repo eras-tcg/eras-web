@@ -16,6 +16,23 @@ body {
     color var(--duration-base) var(--easing-standard);
 }
 
+// The installed app (html.eras-app, AppScreen): the layout is as tall as --app-height, measured once per orientation
+// and full screen change, so the system bars that show for a moment (a swipe from the edge) or the keyboard do not
+// shrink it; no pull-to-refresh or overscroll glow
+html.eras-app body {
+  min-height: var(--app-height, 100dvh);
+  overscroll-behavior: none;
+}
+
+// The installed app held upright: "Gira el teléfono" covers it (RotateOverlayComponent); what lives in the browser's
+// top layer (popovers) or in the dialogs' overlay would show over it, so it hides meanwhile
+@media (orientation: portrait) and (pointer: coarse) {
+  html.eras-app :popover-open,
+  html.eras-app .cdk-overlay-container {
+    visibility: hidden;
+  }
+}
+
 h1,
 h2,
 h3 {

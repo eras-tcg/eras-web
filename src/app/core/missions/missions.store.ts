@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { ServerAccess } from '../server/server-access';
 import { ApiConfig } from '../http/api-config';
 import { apiErrorMessage } from '../http/api-error';
 import { WalletStore } from '../wallet/wallet.store';
@@ -23,6 +24,8 @@ export class MissionsStore {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
   private readonly wallet = inject(WalletStore);
 
   readonly board = signal<MissionBoard | null>(null);
@@ -35,9 +38,10 @@ export class MissionsStore {
   constructor() {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
+      const allowed = this.access.allowed();
       untracked(() => {
         this.board.set(null);
-        if (id) void this.load();
+        if (id && allowed) void this.load();
       });
     });
     reloadOnProgress(() => this.load(), () => this.board() !== null);

@@ -2,6 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { ServerAccess } from '../server/server-access';
 import { ApiConfig } from '../http/api-config';
 import { BACKGROUND } from '../http/busy';
 import { apiErrorMessage } from '../http/api-error';
@@ -39,6 +40,8 @@ export class ProgressionStore {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
   private readonly wallet = inject(WalletStore);
 
   readonly board = signal<ProgressionBoard | null>(null);
@@ -60,10 +63,11 @@ export class ProgressionStore {
   constructor() {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
+      const allowed = this.access.allowed();
       untracked(() => {
         this.board.set(null);
         this.visited.clear();
-        if (id) void this.load();
+        if (id && allowed) void this.load();
       });
     });
     reloadOnProgress(() => this.load(), () => this.board() !== null);
@@ -93,7 +97,7 @@ export class ProgressionStore {
 
   /** Notes a visit to a page that counts ("como-jugar", "cartas"), once per session and only signed in. */
   visit(page: string): void {
-    if (!this.auth.user() || this.visited.has(page)) return;
+    if (!this.auth.user() || !this.access.allowed() || this.visited.has(page)) return;
     this.visited.add(page);
     // In the background: it never holds the buttons (BusyState)
     const context = new HttpContext().set(BACKGROUND, true);

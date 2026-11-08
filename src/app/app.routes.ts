@@ -3,6 +3,7 @@ import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@cor
 import { ShellComponent } from '@core/layout/shell.component';
 import { ADMIN_PERMISSIONS } from '@core/navigation/admin-tools';
 import { offlineLaunchGuard } from '@core/pwa/offline-launch';
+import { connectionGuard } from '@core/server/connection.service';
 
 /** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
@@ -20,7 +21,8 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
-    canActivateChild: [loginRequiredGuard],
+    // The installed app connects to the server before a screen that needs it (local-first, routeNeedsServer)
+    canActivateChild: [loginRequiredGuard, connectionGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       {

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '@core/http/api-error';
 import { InstallPrompt } from '@core/pwa/install-prompt';
+import { ConnectionService } from '@core/server/connection.service';
 import { OnlineStatus, isUnreachable } from '@core/server/online-status';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
 import { GameStore } from '@data/simulator/game.store';
@@ -17,8 +18,8 @@ import { HubScreenComponent } from './hub-screen.component';
 
 const PLAY_MENU: HubMenuItem[] = [
   { id: 'online', label: 'Online', icon: 'gamepad', route: '/simulator' },
-  { id: 'bot', label: 'Modo solo', icon: 'bot' },
-  { id: 'tests', label: 'Sala de pruebas', icon: 'edit' },
+  { id: 'bot', label: 'Modo solo', icon: 'bot', online: true },
+  { id: 'tests', label: 'Sala de pruebas', icon: 'edit', online: true },
   { id: 'tutorial', label: 'Tutorial', icon: 'book', route: '/ruling' },
 ];
 
@@ -30,9 +31,11 @@ const NEEDS_SERVER = new Set(['online', 'bot', 'tests']);
 /**
  * The Jugar menu: with the server, its modes then Modo solo sin conexión; without it (cutOff), Modo solo sin conexión
  * first; with no connection at all the server's modes are left out (the notice under the menu says they come back
- * with the connection) and the tutorial stays.
+ * with the connection) and the tutorial stays. The installed app not connected yet (`local`): Modo solo sin conexión
+ * first, then the server's modes (marked: opening one connects).
  */
-export function playMenu(state: { cutOff: boolean; offline: boolean }): HubMenuItem[] {
+export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boolean }): HubMenuItem[] {
+  if (!state.cutOff && state.local) return [OFFLINE_ITEM, ...PLAY_MENU];
   if (!state.cutOff) return [...PLAY_MENU, OFFLINE_ITEM];
   return [OFFLINE_ITEM, ...PLAY_MENU.filter((item) => !state.offline || !NEEDS_SERVER.has(item.id))];
 }
@@ -100,6 +103,7 @@ export class PlayPage {
   private readonly warmup = inject(ServerWarmupService);
   protected readonly installer = inject(InstallPrompt);
   private readonly modal = inject(ModalService);
+  private readonly connection = inject(ConnectionService);
 
   /** The server could not be reached the last time a game was opened. */
   private readonly unreachable = signal(false);
@@ -107,7 +111,7 @@ export class PlayPage {
   protected readonly cutOff = computed(() => !this.network.online() || this.unreachable() || this.warmup.state() === 'failed');
   protected readonly offlineNow = computed(() => !this.network.online());
   protected readonly menu = computed(() =>
-    playMenu({ cutOff: this.cutOff(), offline: this.offlineNow() }),
+    playMenu({ cutOff: this.cutOff(), offline: this.offlineNow(), local: this.connection.needsConnect() }),
   );
   protected readonly busy = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -126,6 +130,9 @@ export class PlayPage {
         await this.router.navigate(['/simulator', roomId, 'board']);
         return;
       }
+      // The installed app connects first (local-first): the warm-up shows while the server wakes up
+      const connected = await this.connection.connect('/play');
+      if (connected !== 'connected') return;
       const { roomId } = await firstValueFrom(this.rooms.create(mode === 'tests', mode === 'bot'));
       await this.game.connect(roomId);
       this.unreachable.set(false);

@@ -11,6 +11,7 @@ import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
 import { MainScreensPreloading } from '@core/navigation/preloading';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { DataPrefetch } from '@data/prefetch/data-prefetch';
+import { connectionGateInterceptor } from '@core/server/connection-gate.interceptor';
 import { serverInterceptor } from '@core/server/server.interceptor';
 import { routes } from './app.routes';
 
@@ -28,7 +29,8 @@ export const appConfig: ApplicationConfig = {
       withPreloading(MainScreensPreloading),
       withViewTransitions({ skipInitialTransition: true, onViewTransitionCreated: onScreenTransition }),
     ),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverInterceptor, busyInterceptor, loadingInterceptor])),
+    // The installed app asks the server nothing before connecting (local-first): the gate goes first
+    provideHttpClient(withFetch(), withInterceptors([connectionGateInterceptor, authInterceptor, serverInterceptor, busyInterceptor, loadingInterceptor])),
     // The buttons hold while a change is on its way: listening from the first click on
     provideAppInitializer(() => void inject(BusyState)),
     // The data most screens use, read in the background after signing in

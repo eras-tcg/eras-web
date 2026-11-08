@@ -62,7 +62,49 @@ is stable (`registerWhenStable:30000`), or at once when the player opens "Descar
 - **Serving:** `ngsw.json`, `ngsw-worker.js`, `eras-sw.js`, `index.html` and the manifest must be revalidated
   (`no-cache`), hashed bundles immutable, JS/JSON compressed (`nginx.*.conf` do it; the AWS deploy is in eras-tcg/infra).
 - **Tests:** `npm run e2e:pwa` builds and runs `e2e/pwa` against the production build: online once, then offline and
-  reopened, a game with the deck kept on the device, and the install button.
+  reopened, a game with the deck kept on the device, and the install button (and the local-first app, below).
+
+### The installed app: local-first, landscape, full screen (2.5)
+
+"The app" is the site opened from the home screen (`display-mode` standalone or fullscreen, or an iPhone home screen
+app: `core/pwa/app-mode.ts`, decided once at start). The browser's tab keeps the site exactly as before.
+
+- **Local-first, the server on demand** (`core/server/server-access.ts`, `connection.ts`, `connection.service.ts`):
+  opening the app contacts nothing (no `/api`, no `/wake`: the backend that sleeps stays asleep). It needs the player
+  to have signed in once; without a session it connects at start, as the login needs the server.
+  - **Works before connecting:** the hub (with the editions' artwork kept from the last visit), Jugar, Modo solo sin
+    conexión (the engine in a worker, the player's decks kept on the device), the tutorial, the player's decks kept
+    on the device (Mazos: browsing; opening or editing one connects), the profile's preferences.
+  - **Connects first:** Online, Modo solo with the server's bot, the Sala de pruebas, ranked/ranking, missions, the
+    shop and the gems, the card catalog, Social (public decks, tierlist), a deck's page, the deck builder,
+    administration: any screen not listed in `routeNeedsServer` (new screens need the server by default). They show a
+    small crossed-out cloud; tapping one connects (`connectionGuard` on the shell's screens), then opens it.
+  - **"Conectar"** (the quick buttons, top right): *Sin conectar* / *Conectando…* / *Conectado* / *Sin internet*.
+  - **Connecting:** the existing warm-up (health check, `/wake`, waiting) shown over the app with "Seguir sin
+    conexión"; then the stores load (wallet, missions, progression, rank, avatar, collection, the prefetch) and the
+    offline library is synced again; an expired session goes to the login, as usual. Connected once, it stays
+    connected for the visit (a reload too: `sessionStorage`); opening the app again starts unconnected.
+  - **Nothing slips through:** `connectionGateInterceptor` (the first interceptor) answers any `/api` request at once
+    with a "Conéctate…" error (status 0, as offline) without sending it; the stores that load by themselves wait for
+    `ServerAccess.allowed`; the token's expiry never signs out before connecting.
+  - Offline (no network) everything is as in 2.4: Jugar as landing, "Sin conexión", the decks kept on the device.
+- **Landscape and full screen** (`core/pwa/app-screen.ts`): the manifest asks for `display: fullscreen`
+  (`display_override` fullscreen, standalone) and `orientation: landscape`. At runtime, on a phone or tablet (a
+  coarse pointer), the first tap asks for full screen (`requestFullscreen`, needs a gesture) and
+  `screen.orientation.lock('landscape')`; again after coming back from the background or leaving full screen. No
+  "Pantalla completa" buttons there (a desktop's installed window keeps its button and is never forced). Held upright
+  where the lock is refused (iPhone, some browsers): "Gira el teléfono" covers the whole app
+  (`RotateOverlayComponent`).
+- **A layout that does not jump:** the app's height is `--app-height`, measured on start, on turning the phone and on
+  entering/leaving full screen; on a touch screen a shorter window with the same width (Android's bars shown for a
+  moment by a swipe, the keyboard) keeps the height (`nextLayoutHeight`). The hub, the board, full-height pages and
+  the warm-up use `var(--app-height, 100dvh)` (the browser keeps `100dvh`); `viewport-fit=cover` and
+  `env(safe-area-inset-*)` keep content clear of notches.
+- **Tests:** `e2e/pwa/local-first.spec.ts` (in `npm run e2e:pwa`, against the AWS build in `dist/eras-web-aws`, which
+  `e2e:pwa` builds too; `pwa-server.ts` counts every request reaching the backend and plays a backend that sleeps):
+  zero backend requests until the shop or "Conectar" is tapped, then the warm-up and `/wake`; a game against the bot;
+  no full screen button; "Gira el teléfono" upright; the layout box unchanged when the window is 48 px shorter; and the
+  browser's tab as before.
 
 ### Updating the vendored engine
 

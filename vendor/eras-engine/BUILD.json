@@ -1,8 +1,8 @@
 {
-  "commit": "6898185a45a08d4febbaf6f0c5ce46ca44fc1734",
+  "commit": "e4f40e43a7e4b1029ecd6e9b37d3fe4ea870c246",
   "dirty": false,
-  "subject": "fix(engine): the npm distribution and the smoke run order themselves after the Node distribution (phase 3)",
-  "copiedAt": "2026-11-08T04:57:31.793Z",
+  "subject": "refactor(engine): one copy of the room session's logic, shared by the server and LocalMatch",
+  "copiedAt": "2026-11-08T15:16:48.413Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

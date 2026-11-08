@@ -1,17 +1,26 @@
 {
-  "name": "ERAS TCG",
+  "name": "ERAS",
   "short_name": "ERAS",
-  "description": "Cartas, mazos y simulador de ERAS TCG.",
+  "description": "Cartas, mazos y simulador de ERAS TCG. Instalado, se juega contra el bot sin conexión.",
   "lang": "es",
+  "dir": "ltr",
   "id": "/",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
   "background_color": "#2A5274",
   "theme_color": "#2A5274",
+  "categories": ["games", "entertainment"],
   "icons": [
-    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Jugar", "url": "/play", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
   ]
 }

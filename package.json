@@ -9,7 +9,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "playwright test",
-    "engine:update": "node scripts/engine-update.mjs"
+    "engine:update": "node scripts/engine-update.mjs",
+    "e2e:pwa": "ng build && playwright test -c playwright.pwa.config.ts"
   },
   "private": true,
   "packageManager": "npm@11.19.1",
@@ -21,6 +22,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@angular/service-worker": "^22.2.3",
     "@stomp/stompjs": "^7.3.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -35,6 +37,7 @@
     "eslint": "^10.12.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^7.3.0",
+    "fake-indexeddb": "^6.2.7",
     "jsdom": "^30.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",

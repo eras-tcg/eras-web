@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/index.html",
+          "/manifest.webmanifest",
+          "/favicon.svg",
+          "/logo.png",
+          "/icons/**",
+          "/fonts/**",
+          "/images/card-back.png",
+          "/*.css",
+          "/*.js",
+          "!/eras-sw.js"
+        ]
+      }
+    },
+    {
+      "name": "engine",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/engine/*.json"]
+      },
+      "cacheQueryOptions": { "ignoreSearch": true }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/images/**", "/*.png", "/*.svg"]
+      }
+    }
+  ],
+  "navigationUrls": ["/**", "!/**/*.*", "!/**/*__*", "!/**/*__*/**", "!/api/**", "!/ws", "!/ws/**", "!/wake"]
+}

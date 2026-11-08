@@ -1,7 +1,8 @@
 import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import localeEs from '@angular/common/locales/es';
-import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, inject, isDevMode, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { provideRouter, withComponentInputBinding, withPreloading, withViewTransitions } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
 import { BusyState, busyInterceptor } from '@core/http/busy';
@@ -33,6 +34,9 @@ export const appConfig: ApplicationConfig = {
     // The data most screens use, read in the background after signing in
     provideAppInitializer(() => void inject(DataPrefetch)),
     { provide: LOCALE_ID, useValue: 'es' },
+    // Installable and playable offline (ngsw + the card pictures' cache, public/eras-sw.js). Registered once the app
+    // is stable (at most 30 s after starting), so it never competes with the first screen
+    provideServiceWorker('eras-sw.js', { enabled: !isDevMode(), registrationStrategy: 'registerWhenStable:30000' }),
     // The quick button «Misiones» off the hub menus opens them as a dialog
     { provide: MISSIONS_DIALOG, useValue: () => import('@features/home/missions-dialog.component').then((m) => m.MissionsDialogComponent) },
   ],

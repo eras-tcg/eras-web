@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="512x512" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="theme-color" content="#2A5274">
   <!-- Installed on the home screen it opens without the browser bars (iPhone has no full screen for pages) -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -15,6 +15,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ERAS">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script>
+    // "Instalar ERAS" (core/pwa/install-prompt.ts): the browser may offer the installation before the app has started
+    addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__erasInstallPrompt = e; });
+    addEventListener('appinstalled', function () { window.__erasInstallPrompt = null; window.__erasInstalled = true; });
+  </script>
 </head>
 <body>
   <eras-root></eras-root>

@@ -1,9 +1,23 @@
-<!-- No navigation bar: each screen draws its own top strip. The header only carries the new-version banner. -->
+<!-- No navigation bar: each screen draws its own top strip. The header only carries the banners (version, no connection). -->
 <header class="header">
-  @if (version.updateAvailable()) {
-    <div class="update-banner" role="status">
-      <eras-icon name="refresh" /> Hay una versión nueva de ERAS.
-      <button type="button" class="update-reload" (click)="version.reload()">Recargar</button>
+  @switch (versionBanner()) {
+    @case ('broken') {
+      <div class="update-banner" role="alert">
+        <eras-icon name="alert" /> ERAS necesita recargarse para seguir funcionando.
+        <button type="button" class="update-reload" (click)="version.reload()">Recargar</button>
+      </div>
+    }
+    @case ('update') {
+      <div class="update-banner" role="status">
+        <eras-icon name="refresh" /> Nueva versión disponible.
+        <button type="button" class="update-reload" (click)="version.reload()">Recargar</button>
+      </div>
+    }
+  }
+  @if (offlineBanner()) {
+    <div class="offline-banner" role="status">
+      <eras-icon name="wifi-off" /> Sin conexión: lo que necesita el servidor no está disponible.
+      <a class="update-reload" routerLink="/play">Jugar sin conexión</a>
     </div>
   }
 </header>

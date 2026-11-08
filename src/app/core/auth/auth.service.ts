@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Injector, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { DestroyRef, Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfig } from '../http/api-config';
 import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission } from './auth.model';
@@ -21,7 +21,12 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
+  /** An expiry put off while there is no connection or an offline game is under way (see expire()). */
+  private expiryDeferred = false;
+  private watchingDeferred = false;
+  private readonly signOutListeners = new Set<() => void>();
 
   private readonly tokenState = signal<string | null>(readStorage(TOKEN_KEY));
   private readonly userState = signal<AuthUser | null>(parseUser(readStorage(USER_KEY)));
@@ -33,10 +38,15 @@ export class AuthService {
   readonly expired = signal(false);
 
   constructor() {
-    // A session stored from an earlier visit may have expired meanwhile
+    // A session stored from an earlier visit may have expired meanwhile. Opened without the connection (the installed
+    // app), it is kept until the connection is back: offline nothing can be signed in again, and the player's own
+    // decks are offered for playing offline by their account
     if (tokenExpired(this.tokenState())) {
-      this.setSession(null, null);
-      this.expired.set(true);
+      if (isOffline()) this.deferExpiry();
+      else {
+        this.setSession(null, null);
+        this.expired.set(true);
+      }
     }
     this.scheduleExpiry();
     // Timers stop while the computer sleeps: check again when the tab is shown
@@ -51,6 +61,11 @@ export class AuthService {
    */
   expire(): void {
     if (!this.tokenState()) return;
+    // Without the connection there is no signing in again, and an offline game must not be cut: it waits
+    if (isOffline() || this.inOfflineGame()) {
+      this.deferExpiry();
+      return;
+    }
     this.setSession(null, null);
     this.expired.set(true);
     const router = this.injector.get(Router);
@@ -72,8 +87,16 @@ export class AuthService {
     this.expired.set(false);
   }
 
+  /** Signing out on purpose (not an expiry): the session and whatever was kept for it on the device go. */
   logout(): void {
     this.setSession(null, null);
+    this.signOutListeners.forEach((listener) => listener());
+  }
+
+  /** Called on every sign out (logout()), e.g. to delete what is kept on the device for the account. */
+  onSignOut(listener: () => void): () => void {
+    this.signOutListeners.add(listener);
+    return () => this.signOutListeners.delete(listener);
   }
 
   /** Confirms an account with the token from the verification e-mail. */
@@ -108,6 +131,33 @@ export class AuthService {
     );
     if (response.token) this.applyToken(response.token, update.username);
     else this.setSession(this.tokenState(), { ...user, username: update.username });
+  }
+
+  /** The page is in "Modo solo sin conexión" (its board or pre-room). */
+  private inOfflineGame(): boolean {
+    return /^\/simulator\/local(?:[/?#]|$)/.test(this.injector.get(Router).url);
+  }
+
+  /** The expiry happens once the connection is back and no offline game is under way. */
+  private deferExpiry(): void {
+    this.expiryDeferred = true;
+    if (this.watchingDeferred) return;
+    this.watchingDeferred = true;
+    const check = () => {
+      if (!this.expiryDeferred || isOffline() || this.inOfflineGame()) return;
+      this.expiryDeferred = false;
+      this.expire();
+    };
+    window.addEventListener('online', check);
+    // Subscribed after the constructor: the router may be what is creating this service
+    const timer = setTimeout(() => {
+      const sub = this.injector.get(Router).events.subscribe((e) => e instanceof NavigationEnd && check());
+      this.destroyRef.onDestroy(() => sub.unsubscribe());
+    });
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(timer);
+      window.removeEventListener('online', check);
+    });
   }
 
   private applyToken(token: string, username: string): void {
@@ -150,6 +200,10 @@ function tokenExpiry(token: string | null): number | null {
 function tokenExpired(token: string | null): boolean {
   const exp = tokenExpiry(token);
   return exp !== null && exp <= Date.now();
+}
+
+function isOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
 function readStorage(key: string): string | null {

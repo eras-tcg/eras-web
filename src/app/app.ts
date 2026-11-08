@@ -9,8 +9,8 @@ import { SyncReportService } from '@features/admin/sync-report/sync-report.servi
 @Component({
   selector: 'eras-root',
   imports: [RouterOutlet, WarmupScreenComponent],
-  // A backend that sleeps (AWS): nothing loads until it is up
-  template: `@if (warmup.ready()) {
+  // A backend that sleeps (AWS): nothing loads until it is up (unless there is no connection: then what works offline)
+  template: `@if (warmup.usable()) {
       <router-outlet />
     } @else {
       <eras-warmup-screen />

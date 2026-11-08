@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MIN_LENGTH } from '@core/auth/password-rules';
 import { Router, RouterLink } from '@angular/router';
+import { OnlineStatus } from '@core/server/online-status';
 import { AuthService } from '@core/auth/auth.service';
 import { VersionTagComponent } from '@core/version/version-tag.component';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -22,6 +23,7 @@ export class LoginPage {
   readonly returnUrl = input<string>();
 
   protected readonly auth = inject(AuthService);
+  protected readonly network = inject(OnlineStatus);
   private readonly router = inject(Router);
 
   protected readonly loading = signal(false);

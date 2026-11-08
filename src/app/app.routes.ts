@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, loginRequiredGuard, permissionGuard } from '@core/auth/auth.guards';
 import { ShellComponent } from '@core/layout/shell.component';
 import { ADMIN_PERMISSIONS } from '@core/navigation/admin-tools';
+import { offlineLaunchGuard } from '@core/pwa/offline-launch';
 
 /** Each feature is lazy-loaded. The whole site needs a session except login and validate (accounts are created privately). */
 export const routes: Routes = [
@@ -25,6 +26,8 @@ export const routes: Routes = [
       {
         path: 'home',
         title: 'ERAS',
+        // Started without the connection (the installed app): "Jugar", where Modo solo sin conexión is
+        canActivate: [offlineLaunchGuard],
         loadComponent: () => import('@features/home/home.page').then((m) => m.HomePage),
       },
       {

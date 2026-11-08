@@ -17,7 +17,8 @@
           "/images/card-back.png",
           "/*.css",
           "/*.js",
-          "!/eras-sw.js"
+          "!/eras-sw.js",
+          "!/eras-pictures-sw.js"
         ]
       }
     },

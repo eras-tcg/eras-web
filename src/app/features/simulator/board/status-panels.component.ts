@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, output, signal, untracked } from '@angular/core';
+import { siteOrigin } from '@core/http/api-config';
 import { GameStore } from '@data/simulator/game.store';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -122,7 +123,7 @@ export class StatusPanelsComponent {
   protected readonly toBottom = signal(new Set<string>());
   protected readonly mulliganSent = signal(false);
 
-  protected readonly link = computed(() => `${location.origin}/simulator/${this.game.roomId() ?? ''}`);
+  protected readonly link = computed(() => `${siteOrigin()}/simulator/${this.game.roomId() ?? ''}`);
   protected readonly players = computed(() => Object.values(this.game.state()?.players ?? {}));
   protected readonly starters = computed(() => (this.game.myState()?.deck ?? []).filter((c) => c.starter));
   protected readonly starterChosen = computed(() => (this.game.myState()?.field.length ?? 0) > 0);

@@ -1,6 +1,6 @@
 /**
  * The card pictures kept for playing without the connection, in the same cache the service worker fills as cards are
- * seen (public/eras-sw.js: keep the name in sync). The image host is another origin: each picture is asked with CORS
+ * seen (public/eras-pictures-sw.js: keep the name in sync). The image host is another origin: each picture is asked with CORS
  * first (a readable response, its size known) and, if the host does not allow it, as a plain <img> would (an opaque
  * response: <img> shows it, its size is unknown and browsers count it bigger against the quota).
  */

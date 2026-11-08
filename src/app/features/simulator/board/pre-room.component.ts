@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { siteOrigin } from '@core/http/api-config';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
@@ -229,7 +230,7 @@ export class PreRoomComponent {
   }
 
   protected async copy(): Promise<void> {
-    await navigator.clipboard?.writeText(`${location.origin}/simulator/${this.game.roomId() ?? ''}`).catch(() => undefined);
+    await navigator.clipboard?.writeText(`${siteOrigin()}/simulator/${this.game.roomId() ?? ''}`).catch(() => undefined);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
   }

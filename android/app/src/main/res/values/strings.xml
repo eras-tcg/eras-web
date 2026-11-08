@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ERAS</string>
+    <string name="title_activity_main">ERAS</string>
+    <string name="package_name">com.erastcg.eras</string>
+    <string name="custom_url_scheme">com.erastcg.eras</string>
+</resources>

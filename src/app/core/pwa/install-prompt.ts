@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { isNativeApp } from './app-mode';
 import { persistStorage } from './device-storage';
 
 /** Chromium's install offer (not in TypeScript's DOM types). */
@@ -61,7 +62,8 @@ export function isStandalone(win: Window = window): boolean {
 export class InstallPrompt {
   private readonly globals = window as unknown as InstallGlobals;
   private readonly deferred = signal<BeforeInstallPromptEvent | null>(this.globals.__erasInstallPrompt ?? null);
-  readonly installed = signal(isStandalone() || this.globals.__erasInstalled === true);
+  /** Installed already: the PWA's own window, or the Android app (nothing to install there). */
+  readonly installed = signal(isNativeApp() || isStandalone() || this.globals.__erasInstalled === true);
   private readonly ios = isIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints ?? 0);
   private readonly android = isAndroid(navigator.userAgent);
 

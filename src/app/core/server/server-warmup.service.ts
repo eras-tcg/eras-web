@@ -4,7 +4,8 @@ import { environment } from '@env';
 /** Whether the backend can be used: always, or (a backend that sleeps) once it has started. */
 export type ServerState = 'checking' | 'waking' | 'ready' | 'failed' | 'offline';
 
-const HEALTH = '/api/drive/health';
+/** The backend's health check (the Android app: on the public site, by its full address). */
+const HEALTH = `${environment.apiBaseUrl}/api/drive/health`;
 
 /** The address that wakes a backend that sleeps (environment.wakeUrl); a test gives its own. */
 export const WAKE_URL = new InjectionToken<string | undefined>('WAKE_URL', { providedIn: 'root', factory: () => environment.wakeUrl });
@@ -114,10 +115,21 @@ export class ServerWarmupService {
 
   private async wake(): Promise<void> {
     try {
-      await fetch(this.wakeUrl as string, { method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(10_000) });
+      const url = this.wakeUrl as string;
+      // From another origin (the Android app) its answer is not read: a plain POST needs no CORS to reach it
+      await fetch(url, { method: 'POST', cache: 'no-store', mode: wakeMode(url), signal: AbortSignal.timeout(10_000) });
     } catch {
       // It is asked again while waiting
     }
+  }
+}
+
+/** The wake-up's request mode: 'no-cors' when the address is on another origin than the page (its answer is never read). */
+export function wakeMode(url: string, pageOrigin: string = typeof location === 'undefined' ? '' : location.origin): RequestMode {
+  try {
+    return new URL(url, pageOrigin || undefined).origin === pageOrigin ? 'cors' : 'no-cors';
+  } catch {
+    return 'cors';
   }
 }
 

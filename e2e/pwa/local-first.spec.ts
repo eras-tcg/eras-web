@@ -295,11 +295,11 @@ test('"Conectar" en la app instalada: el estado Conectando… y luego Conectado'
   // Stays on the hub, now connected
   await expect(page).toHaveURL(/\/home$/);
   // Connected, the installed app keeps the pictures for offline by itself: no "Descargar" button in Jugar
-  const hitsBefore = servers!.imageHits.cors + servers!.imageHits.plain;
   await expect
     .poll(async () => page.evaluate(async () => (await (await caches.open('eras-card-images-v1')).keys()).length), { timeout: 60_000 })
     .toBeGreaterThan(0);
-  expect(servers!.imageHits.cors + servers!.imageHits.plain).toBeGreaterThan(hitsBefore);
+  // (they may start downloading as soon as the library syncs, so only that the image hosts were reached is checked)
+  expect(servers!.imageHits.cors + servers!.imageHits.plain).toBeGreaterThan(0);
   await page.goto(`${BASE}/play`);
   await expect(page.getByRole('button', { name: 'Modo solo sin conexión' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Descargar para jugar sin conexión' })).toHaveCount(0);

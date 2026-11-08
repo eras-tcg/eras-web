@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '@core/http/api-error';
+import { InstallPrompt } from '@core/pwa/install-prompt';
 import { OnlineStatus, isUnreachable } from '@core/server/online-status';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
 import { GameStore } from '@data/simulator/game.store';
@@ -9,6 +10,8 @@ import { OfflineGame } from '@data/simulator/offline-game';
 import { RoomsApi } from '@data/simulator/rooms.api';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
 import { HubScreenComponent } from './hub-screen.component';
 
@@ -21,20 +24,46 @@ const PLAY_MENU: HubMenuItem[] = [
 
 /** Modo solo sin conexión: against the bot with the engine in this browser. */
 const OFFLINE_ITEM: HubMenuItem = { id: 'offline', label: 'Modo solo sin conexión', icon: 'wifi-off' };
+/** The modes that need the server. */
+const NEEDS_SERVER = new Set(['online', 'bot', 'tests']);
+
+/**
+ * The Jugar menu: with the server, its modes then Modo solo sin conexión; without it (cutOff), Modo solo sin conexión
+ * first; with no connection at all the server's modes are left out (the notice under the menu says they come back
+ * with the connection) and the tutorial stays.
+ */
+export function playMenu(state: { cutOff: boolean; offline: boolean }): HubMenuItem[] {
+  if (!state.cutOff) return [...PLAY_MENU, OFFLINE_ITEM];
+  return [OFFLINE_ITEM, ...PLAY_MENU.filter((item) => !state.offline || !NEEDS_SERVER.has(item.id))];
+}
 
 /**
  * "Jugar" screen of the hub: online rooms, Modo solo (against the bot), the Sala de pruebas (a test room), the tutorial,
- * or Modo solo sin conexión (the bot in the browser: first in the list when the server cannot be reached).
+ * or Modo solo sin conexión (the bot in the browser: first in the list when the server cannot be reached); then the
+ * download for offline and "Instalar ERAS" (when the browser can install it and it is not installed yet).
  */
 @Component({
   selector: 'eras-play-page',
-  imports: [AlertComponent, ButtonComponent, HubMenuComponent, HubScreenComponent],
+  imports: [AlertComponent, ButtonComponent, IconComponent, HubMenuComponent, HubScreenComponent],
   template: `
     <eras-hub-screen title="Jugar">
       <eras-hub-menu variant="sub" label="Modos de juego" [items]="menu()" [busy]="busy()" (picked)="start($event.id)" />
+      <!-- The game on this device: what it keeps for offline, and installing it (until it is installed) -->
+      <div class="extras">
+        <button erasButton variant="secondary" size="sm" type="button" (click)="openDownload()">
+          <eras-icon name="download" /> Descargar para jugar sin conexión
+        </button>
+        @if (installer.offer() !== 'none') {
+          <button erasButton size="sm" type="button" (click)="install()"><eras-icon name="smartphone" /> Instalar ERAS</button>
+        }
+      </div>
       @if (cutOff()) {
         <eras-alert tone="info">
-          Sin conexión con el servidor. Puedes jugar contra el bot sin conexión.
+          @if (offlineNow()) {
+            Sin conexión. Puedes jugar contra el bot sin conexión; Online, Modo solo y la Sala de pruebas vuelven con internet.
+          } @else {
+            Sin conexión con el servidor. Puedes jugar contra el bot sin conexión.
+          }
           <button erasButton size="sm" type="button" [disabled]="!!busy()" (click)="start('offline')">Jugar sin conexión</button>
         </eras-alert>
       }
@@ -50,6 +79,15 @@ const OFFLINE_ITEM: HubMenuItem = { id: 'offline', label: 'Modo solo sin conexi�
       flex-direction: column;
       min-block-size: 0;
     }
+    .extras {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .extras eras-icon {
+      inline-size: 1rem;
+      block-size: 1rem;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,12 +98,17 @@ export class PlayPage {
   private readonly router = inject(Router);
   private readonly network = inject(OnlineStatus);
   private readonly warmup = inject(ServerWarmupService);
+  protected readonly installer = inject(InstallPrompt);
+  private readonly modal = inject(ModalService);
 
   /** The server could not be reached the last time a game was opened. */
   private readonly unreachable = signal(false);
   /** No server to play with: the browser is offline, the server did not answer, or it never woke up. */
   protected readonly cutOff = computed(() => !this.network.online() || this.unreachable() || this.warmup.state() === 'failed');
-  protected readonly menu = computed(() => (this.cutOff() ? [OFFLINE_ITEM, ...PLAY_MENU] : [...PLAY_MENU, OFFLINE_ITEM]));
+  protected readonly offlineNow = computed(() => !this.network.online());
+  protected readonly menu = computed(() =>
+    playMenu({ cutOff: this.cutOff(), offline: this.offlineNow() }),
+  );
   protected readonly busy = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
 
@@ -94,7 +137,7 @@ export class PlayPage {
         this.error.set(
           this.offline.ready()
             ? 'No se pudo abrir el modo solo sin conexión'
-            : 'No se pudo cargar el modo solo sin conexión: la primera vez en cada visita necesita conexión para descargar el juego',
+            : 'No se pudo cargar el modo solo sin conexión: necesita conexión una vez para descargar el juego (o usa «Descargar para jugar sin conexión»)',
         );
         return;
       }
@@ -103,5 +146,21 @@ export class PlayPage {
     } finally {
       this.busy.set(null);
     }
+  }
+
+  /** "Descargar para jugar sin conexión": its own chunk, opened over the menu. */
+  protected async openDownload(): Promise<void> {
+    const { OfflineDownloadDialogComponent } = await import('./offline-download-dialog.component');
+    this.modal.open(OfflineDownloadDialogComponent, { width: '36rem' });
+  }
+
+  /** The browser's prompt; on iPhone and iPad, how to add it to the home screen. */
+  protected async install(): Promise<void> {
+    if (this.installer.offer() === 'ios') {
+      const { InstallIosDialogComponent } = await import('./install-ios-dialog.component');
+      this.modal.open(InstallIosDialogComponent);
+      return;
+    }
+    await this.installer.install();
   }
 }

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '@core/http/api-error';
 import { InstallPrompt } from '@core/pwa/install-prompt';
+import { detectAppMode } from '@core/pwa/app-mode';
 import { ConnectionService } from '@core/server/connection.service';
 import { OnlineStatus, isUnreachable } from '@core/server/online-status';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
@@ -53,9 +54,12 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
       <eras-hub-menu variant="sub" label="Modos de juego" [items]="menu()" [busy]="busy()" (picked)="start($event.id)" />
       <!-- The game on this device: what it keeps for offline, and installing it (until it is installed) -->
       <div class="extras">
-        <button erasButton variant="secondary" size="sm" type="button" (click)="openDownload()">
-          <eras-icon name="download" /> Descargar para jugar sin conexión
-        </button>
+        <!-- The installed app keeps the pictures by itself when it connects (OfflinePicturesAuto) -->
+        @if (!installedApp) {
+          <button erasButton variant="secondary" size="sm" type="button" (click)="openDownload()">
+            <eras-icon name="download" /> Descargar para jugar sin conexión
+          </button>
+        }
         @if (installer.offer() !== 'none') {
           <button erasButton size="sm" type="button" (click)="install()"><eras-icon name="smartphone" /> Instalar ERAS</button>
         }
@@ -102,6 +106,7 @@ export class PlayPage {
   private readonly network = inject(OnlineStatus);
   private readonly warmup = inject(ServerWarmupService);
   protected readonly installer = inject(InstallPrompt);
+  protected readonly installedApp = detectAppMode() === 'app';
   private readonly modal = inject(ModalService);
   private readonly connection = inject(ConnectionService);
 

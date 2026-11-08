@@ -3,7 +3,7 @@
   <header class="room-bar">
     <button type="button" class="back" aria-label="Salir de la sala" title="Salir de la sala" (click)="leave()"><eras-icon name="chevron-left" /></button>
     <div class="heading">
-      <h1 class="title">{{ game.editorRoom() ? 'Sala de pruebas' : game.botRoom() ? 'Modo solo' : game.queuedRoom() ? 'Ranked' : 'Sala ' + game.roomId() }}</h1>
+      <h1 class="title">{{ game.editorRoom() ? 'Sala de pruebas' : game.local() ? 'Modo solo sin conexión' : game.botRoom() ? 'Modo solo' : game.queuedRoom() ? 'Ranked' : 'Sala ' + game.roomId() }}</h1>
     </div>
     @if (!game.ownRoom() && !game.queuedRoom()) {
       <ng-container [ngTemplateOutlet]="copyLink" />
@@ -88,7 +88,10 @@
   <section class="controls">
     @if (!game.editorRoom()) {
       <!-- Friendly or ranked: the owner chooses before the game; ranked moves the rank (and draws who goes first) -->
-      @if (game.queuedRoom()) {
+      @if (game.local()) {
+        <!-- Offline: friendly only (ranked needs the server, which keeps the rank) -->
+        <span class="first">Tipo de partida: <strong>Amistosa</strong> <span class="muted">(sin conexión)</span></span>
+      } @else if (game.queuedRoom()) {
         <span class="first">Tipo de partida: <strong>Ranked</strong> <span class="muted">(de la cola, por tu rango)</span></span>
       } @else if (game.isHost()) {
         <eras-toggle-group label="Tipo de partida" [options]="rankedToggle" [selected]="[game.rankedRoom() ? 'ranked' : 'friendly']" (toggled)="setRanked($event)" />

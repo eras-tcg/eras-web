@@ -85,7 +85,8 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   await expect(panel.getByText(/0 de \d+ guardadas/)).toBeVisible({ timeout: 30_000 });
   await panel.getByRole('button', { name: 'Descargar' }).click();
   await expect(panel.getByText('Listo: las imágenes quedaron guardadas para jugar sin conexión.')).toBeVisible({ timeout: 60_000 });
-  await expect(panel.getByText(/Espacio usado por ERAS/)).toBeVisible();
+  await expect(panel.getByText(/Las imágenes guardadas ocupan unos/)).toBeVisible();
+  await expect(panel.getByText(/reserva varios MB por cada imagen de otro sitio/)).toBeVisible();
   await page.screenshot({ path: join(SHOTS, 'offline-download-panel.png') });
   expect(servers!.imageHits.plain).toBeGreaterThan(0);
   await panel.getByRole('button', { name: 'Cerrar', exact: true }).last().click();

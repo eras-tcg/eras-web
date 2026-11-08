@@ -7,7 +7,7 @@ import { StorageUsage, costlyConnection, formatBytes, persistStorage, storageUsa
 import { OnlineStatus } from '@core/server/online-status';
 import { CardsStore } from '@data/cards/cards.store';
 import { DecksStore } from '@data/decks/decks.store';
-import { PictureProgress, canKeepPictures, estimateBytes, keepPictures, missingPictures } from '@data/simulator/card-images';
+import { PictureProgress, canKeepPictures, estimateBytes, keepPictures, keptPictureSizes, missingPictures } from '@data/simulator/card-images';
 import { offlinePictures } from '@data/simulator/local-decks';
 import { OfflineGame } from '@data/simulator/offline-game';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -119,10 +119,20 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
       }
       @if (finished()) {
         <eras-alert tone="success">Listo: las imágenes quedaron guardadas para jugar sin conexión.</eras-alert>
+      } @else if (complete()) {
+        <eras-alert tone="success">Todo descargado: ya puedes jugar contra el bot sin conexión.</eras-alert>
       }
 
       <p class="storage muted">
-        @if (storage(); as s) {
+        @if (kept() > 0 && keptSizes(); as k) {
+          Las imágenes guardadas ocupan unos {{ size(k.bytes) }}.
+          @if (storage(); as s) {
+            @if (k.opaque) {
+              El navegador cuenta {{ size(s.usage) }} para ERAS porque reserva varios MB por cada imagen de otro sitio,
+              pero en el dispositivo ocupan mucho menos.
+            }
+          }
+        } @else if (storage(); as s) {
           Espacio usado por ERAS en este dispositivo: {{ size(s.usage) }} de {{ size(s.quota) }} disponibles.
         }
         @if (persisted()) {
@@ -135,10 +145,14 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
           <button erasButton variant="secondary" type="button" data-while-busy (click)="cancel()">Cancelar</button>
           <eras-spinner label="Descargando" />
         } @else {
-          <button erasButton variant="ghost" type="button" (click)="close()">Cerrar</button>
-          <button erasButton type="button" [disabled]="!canDownload()" (click)="download()">
-            <eras-icon name="download" /> {{ warning() && missing().length ? 'Descargar de todos modos' : 'Descargar' }}
-          </button>
+          @if (complete()) {
+            <button erasButton type="button" (click)="close()">Listo</button>
+          } @else {
+            <button erasButton variant="ghost" type="button" (click)="close()">Cerrar</button>
+            <button erasButton type="button" [disabled]="!canDownload()" (click)="download()">
+              <eras-icon name="download" /> {{ warning() && missing().length ? 'Descargar de todos modos' : 'Descargar' }}
+            </button>
+          }
         }
       </ng-container>
     </eras-modal>
@@ -180,6 +194,9 @@ export class OfflineDownloadDialogComponent {
   protected readonly persisted = signal(false);
   protected readonly warning = signal(connectionWarning(costlyConnection()));
   protected readonly estimate = computed(() => estimateBytes(this.missing().length, this.progress()));
+  /** Every picture an offline game can show is kept: nothing to download. */
+  protected readonly complete = computed(() => this.canKeep && (this.pictures()?.length ?? 0) > 0 && this.missing().length === 0);
+  protected readonly keptSizes = signal<{ bytes: number; opaque: number } | null>(null);
   protected readonly canDownload = computed(() => this.network.online() && this.canKeep && this.missing().length > 0);
   protected readonly size = formatBytes;
 
@@ -239,6 +256,7 @@ export class OfflineDownloadDialogComponent {
       const urls = offlinePictures(await this.offline.decksNow());
       this.pictures.set(urls);
       this.missing.set(await missingPictures(urls));
+      this.keptSizes.set(await keptPictureSizes(urls));
     } catch {
       this.pictures.set([]);
       this.missing.set([]);

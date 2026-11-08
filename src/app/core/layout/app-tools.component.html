@@ -1,3 +1,20 @@
+@if (connection.installed && auth.user()) {
+  <!-- The installed app (local-first): its connection to the server, and the way to connect -->
+  @let view = connection.view();
+  <button
+    type="button"
+    class="item connect"
+    [class]="'tone-' + view.tone"
+    [attr.aria-label]="view.actionable ? 'Conectar con el servidor (' + view.label + ')' : 'Conexión con el servidor: ' + view.label"
+    [attr.aria-disabled]="!view.actionable"
+    (click)="connect()"
+  >
+    <eras-icon [name]="view.icon" /><span class="label">{{ view.actionable ? 'Conectar' : view.label }}</span>
+    @if (view.actionable) {
+      <span class="state">{{ view.label }}</span>
+    }
+  </button>
+}
 @if (auth.user()) {
   @if (editMode.allows('manage_users')) {
     <!-- Edit mode: the gems can be set (to test the shop) -->
@@ -5,20 +22,26 @@
       <eras-icon name="gem" /><span class="label">{{ wallet.loaded() ? (wallet.gems() | number: '1.0-0' : 'es') : '…' }}</span>
     </button>
   } @else {
-    <a class="item gems" routerLink="/editions" [attr.aria-label]="wallet.gems() + ' gemas, ir a la tienda'">
+    <a class="item gems" [class.needs-server]="connection.needsConnect()" routerLink="/editions" [attr.aria-label]="connection.needsConnect() ? 'Tienda (necesita conexión)' : wallet.gems() + ' gemas, ir a la tienda'">
       <eras-icon name="gem" /><span class="label">{{ wallet.loaded() ? (wallet.gems() | number: '1.0-0' : 'es') : '…' }}</span>
+      @if (connection.needsConnect()) {
+        <eras-icon class="needs-server-badge" name="cloud-off" />
+      }
     </a>
   }
   <!-- On the hub menus, the "Misiones" screen (same frame); anywhere else, a dialog over the screen -->
   @if (hub()) {
-    <a class="item missions" routerLink="/missions" [attr.aria-label]="missionsLabel()"><ng-container [ngTemplateOutlet]="missionsButton" /></a>
+    <a class="item missions" [class.needs-server]="connection.needsConnect()" routerLink="/missions" [attr.aria-label]="missionsLabel()"><ng-container [ngTemplateOutlet]="missionsButton" /></a>
   } @else {
-    <button type="button" class="item missions" aria-haspopup="dialog" [attr.aria-label]="missionsLabel()" (click)="openMissions()">
+    <button type="button" class="item missions" [class.needs-server]="connection.needsConnect()" aria-haspopup="dialog" [attr.aria-label]="missionsLabel()" (click)="openMissions()">
       <ng-container [ngTemplateOutlet]="missionsButton" />
     </button>
   }
   <ng-template #missionsButton>
     <eras-icon name="target" /><span class="label">Misiones</span>
+    @if (connection.needsConnect()) {
+      <eras-icon class="needs-server-badge" name="cloud-off" />
+    }
     @if (waiting()) {
       <span class="badge">{{ waiting() }}</span>
     }

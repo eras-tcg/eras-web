@@ -3,6 +3,7 @@ import { effect, inject, signal, untracked } from '@angular/core';
 import { ApiConfig } from '@core/http/api-config';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ServerAccess } from '../server/server-access';
 
 interface ImageResponse {
   url: string | null;
@@ -16,6 +17,8 @@ export abstract class UserImageStore {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
 
   /** The image's URL, or null for none. */
   readonly url = signal<string | null>(null);
@@ -26,10 +29,11 @@ export abstract class UserImageStore {
   protected constructor(private readonly path: string) {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
+      const allowed = this.access.allowed();
       untracked(() => {
         this.url.set(null);
         this.loaded.set(false);
-        if (id) void this.load();
+        if (id && allowed) void this.load();
       });
     });
   }

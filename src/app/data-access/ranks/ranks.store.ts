@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { ApiConfig } from '@core/http/api-config';
+import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { ChallengerRow, MyRank, RankChange } from './rank.model';
 
@@ -17,6 +18,8 @@ export class RanksStore {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
   private readonly auth = inject(AuthService);
+  /** The installed app asks the server nothing before connecting (ServerAccess). */
+  private readonly access = inject(ServerAccess);
 
   readonly mine = signal<MyRank | null>(null);
   /** The rank was read (or failed) for this account: before that, no rank means not known yet, not none. */
@@ -31,11 +34,12 @@ export class RanksStore {
     // Only a different account loads again (a renamed one keeps its rank)
     effect(() => {
       const id = this.userId();
+      const allowed = this.access.allowed();
       untracked(() => {
         this.mine.set(null);
         this.loaded.set(false);
         this.loadedAt = 0;
-        if (id) void this.load();
+        if (id && allowed) void this.load();
       });
     });
   }

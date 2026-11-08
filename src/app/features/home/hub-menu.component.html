@@ -22,5 +22,10 @@
       <eras-icon [name]="item.icon" />
     }
   </span>
-  <span class="label">{{ item.label }}</span>
+  <span class="label">
+    {{ item.label }}
+    @if (needsConnect(item)) {
+      <eras-icon class="needs-server" name="cloud-off" title="Necesita conexión" /><span class="sr-only">(necesita conexión)</span>
+    }
+  </span>
 </ng-template>

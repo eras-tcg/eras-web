@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
+import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { Deck } from '../decks/deck.model';
 import { Edition } from '../editions/edition.model';
@@ -14,6 +15,7 @@ import { HomeContent } from './home.model';
 @Injectable({ providedIn: 'root' })
 export class HomeStore {
   private readonly api = inject(HomeApi);
+  private readonly access = inject(ServerAccess);
 
   private readonly saved = signal<HomeContent>({ edition: null, decks: normalizeSlots([]) });
   private readonly draft = signal<HomeContent | null>(null);
@@ -28,6 +30,8 @@ export class HomeStore {
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
+    // The installed app before connecting (ServerAccess): the home shows its news without the featured content
+    if (!this.access.allowed()) return Promise.resolve();
     if (!force && this.loaded) return Promise.resolve();
     if (!force && this.pending) return this.pending;
     const pending = this.fetch().finally(() => {

@@ -1,13 +1,19 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
+import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { Deck, DeckSaveRequest } from './deck.model';
 import { DecksApi } from './decks.api';
 
-/** Public decks and the signed-in user's decks, cached until a save or delete invalidates them. */
+/**
+ * Public decks and the signed-in user's decks, cached until a save or delete invalidates them. The installed app before
+ * connecting (ServerAccess) shows the player's decks kept on the device (offline-library.ts) and reads them for real
+ * once connected.
+ */
 @Injectable({ providedIn: 'root' })
 export class DecksStore {
   private readonly api = inject(DecksApi);
+  private readonly access = inject(ServerAccess);
   private publicLoaded = false;
   private mineOwner: string | null = null;
 
@@ -37,6 +43,7 @@ export class DecksStore {
   }
 
   loadMine(userId: string, force = false): Promise<void> {
+    if (!this.access.allowed()) return this.loadKept(userId);
     if (this.mineOwner === userId && !force) return Promise.resolve();
     if (!force && this.minePending?.userId === userId) return this.minePending.promise;
     const promise = this.run(async () => {
@@ -51,6 +58,21 @@ export class DecksStore {
     });
     this.minePending = { userId, promise };
     return promise;
+  }
+
+  /**
+   * Not connected: the decks kept on the device for this player (not marked as loaded nor as theirs, so connecting
+   * reads them and nothing is kept again from these).
+   */
+  private async loadKept(userId: string): Promise<void> {
+    try {
+      // Its own chunk: the first screen's code does not carry what reads the device's library
+      const { offlineLibrary } = await import('../simulator/offline-library');
+      const kept = await offlineLibrary.load(userId);
+      if (kept && this.mineOwner !== userId) this.myDecks.set(kept.decks);
+    } catch {
+      // Nothing kept (or no IndexedDB): no decks until connected
+    }
   }
 
   getDeck(id: string): Promise<Deck> {

@@ -3,6 +3,7 @@ import { DestroyRef, Injectable, Injector, computed, inject, signal } from '@ang
 import { NavigationEnd, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfig } from '../http/api-config';
+import { ServerAccess } from '../server/server-access';
 import { AccountRecord, AccountUpdate, AuthUser, LoginRequest, Permission } from './auth.model';
 import { decodeJwtPayload } from './jwt';
 
@@ -22,6 +23,8 @@ export class AuthService {
   private readonly api = inject(ApiConfig);
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  /** The installed app before connecting (local-first): an expired session is not ended until it connects. */
+  private readonly access = inject(ServerAccess);
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
   /** An expiry put off while there is no connection or an offline game is under way (see expire()). */
   private expiryDeferred = false;
@@ -40,9 +43,10 @@ export class AuthService {
   constructor() {
     // A session stored from an earlier visit may have expired meanwhile. Opened without the connection (the installed
     // app), it is kept until the connection is back: offline nothing can be signed in again, and the player's own
-    // decks are offered for playing offline by their account
+    // decks are offered for playing offline by their account. The installed app not connected yet does the same: it
+    // is checked once the player connects (ConnectionService)
     if (tokenExpired(this.tokenState())) {
-      if (isOffline()) this.deferExpiry();
+      if (isOffline() || !this.access.allowed()) this.deferExpiry();
       else {
         this.setSession(null, null);
         this.expired.set(true);
@@ -61,8 +65,9 @@ export class AuthService {
    */
   expire(): void {
     if (!this.tokenState()) return;
-    // Without the connection there is no signing in again, and an offline game must not be cut: it waits
-    if (isOffline() || this.inOfflineGame()) {
+    // Without the connection there is no signing in again, and an offline game must not be cut: it waits. Nor is it
+    // ended in the installed app before it connects (it has not asked the server anything)
+    if (isOffline() || this.inOfflineGame() || !this.access.allowed()) {
       this.deferExpiry();
       return;
     }
@@ -71,6 +76,11 @@ export class AuthService {
     const router = this.injector.get(Router);
     const returnUrl = router.url && router.url !== '/' && !router.url.startsWith('/login') ? router.url : undefined;
     void router.navigate(['/login'], { queryParams: returnUrl ? { returnUrl } : {} });
+  }
+
+  /** The stored session's token has expired (it may still be kept: offline, or the installed app not connected). */
+  sessionExpired(): boolean {
+    return tokenExpired(this.tokenState());
   }
 
   can(permission: Permission): boolean {
@@ -144,7 +154,7 @@ export class AuthService {
     if (this.watchingDeferred) return;
     this.watchingDeferred = true;
     const check = () => {
-      if (!this.expiryDeferred || isOffline() || this.inOfflineGame()) return;
+      if (!this.expiryDeferred || isOffline() || this.inOfflineGame() || !this.access.allowed()) return;
       this.expiryDeferred = false;
       this.expire();
     };

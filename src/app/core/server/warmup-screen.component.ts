@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { ConnectionService } from './connection.service';
 import { ServerWarmupService } from './server-warmup.service';
 
-/** Shown while a backend that sleeps starts up (environment.wakeUrl): the site cannot load anything until then. */
+/**
+ * Shown while a backend that sleeps starts up (environment.wakeUrl): in the browser the site cannot load anything until
+ * then; in the installed app it covers the site only while it connects, and the player can go on without the server.
+ */
 @Component({
   selector: 'eras-warmup-screen',
   imports: [SpinnerComponent, ButtonComponent],
@@ -15,7 +19,12 @@ import { ServerWarmupService } from './server-warmup.service';
         @case ('failed') {
           <p class="title">El servidor no respondió</p>
           <p class="muted">Se intentó encender durante unos minutos sin éxito. Prueba de nuevo en un momento.</p>
-          <button erasButton type="button" (click)="warmup.retry()">Reintentar</button>
+          <div class="actions">
+            <button erasButton type="button" (click)="retry()">Reintentar</button>
+            @if (connection.installed) {
+              <button erasButton variant="secondary" type="button" (click)="connection.cancel()">Seguir sin conexión</button>
+            }
+          </div>
         }
         @case ('waking') {
           <eras-spinner size="lg" label="Encendiendo el servidor" />
@@ -26,10 +35,16 @@ import { ServerWarmupService } from './server-warmup.service';
               <br />Llevamos {{ warmup.waited() }} s.
             }
           </p>
+          @if (connection.installed) {
+            <button erasButton variant="secondary" type="button" (click)="connection.cancel()">Seguir sin conexión</button>
+          }
         }
         @default {
           <eras-spinner size="lg" label="Conectando" />
           <p class="title">Conectando…</p>
+          @if (connection.installed) {
+            <button erasButton variant="secondary" type="button" (click)="connection.cancel()">Seguir sin conexión</button>
+          }
         }
       }
     </main>
@@ -40,7 +55,7 @@ import { ServerWarmupService } from './server-warmup.service';
       place-content: center;
       justify-items: center;
       gap: var(--space-3, 0.75rem);
-      min-block-size: 100dvh;
+      min-block-size: var(--app-height, 100dvh);
       padding: var(--space-4, 1rem);
       background: var(--color-bg);
       color: var(--color-text);
@@ -50,9 +65,17 @@ import { ServerWarmupService } from './server-warmup.service';
     h1 { margin: 0; letter-spacing: 0.2em; }
     .title { margin: 0; font-weight: 600; }
     .muted { margin: 0; max-inline-size: 28rem; color: var(--color-text-muted); }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2, 0.5rem); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WarmupScreenComponent {
   protected readonly warmup = inject(ServerWarmupService);
+  protected readonly connection = inject(ConnectionService);
+
+  /** The installed app connects again (and goes on where the player was going); the browser just tries again. */
+  protected retry(): void {
+    if (this.connection.installed) void this.connection.retry();
+    else this.warmup.retry();
+  }
 }

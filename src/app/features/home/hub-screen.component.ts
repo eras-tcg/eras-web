@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { AvatarStore } from '@core/auth/avatar.store';
@@ -54,6 +54,10 @@ export class HubScreenComponent {
     // screen transition captures; otherwise it appears once they load
     if (this.editions.editions().length) this.chooseBackground();
     else void this.editions.load().then(() => this.chooseBackground());
+    // The installed app may start without them (nothing kept, not connected): the artwork comes once they arrive
+    effect(() => {
+      if (!this.background() && this.editions.editions().length) untracked(() => this.chooseBackground());
+    });
   }
 
   protected openCards(editionId: string): void {

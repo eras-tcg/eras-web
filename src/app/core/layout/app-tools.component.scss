@@ -119,3 +119,83 @@
   line-height: 1.1rem;
   text-align: center;
 }
+
+// Needs the server (the installed app before connecting): a small cloud crossed out on the corner
+.needs-server {
+  position: relative;
+}
+
+.item .needs-server-badge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: calc(50% + 0.35rem);
+  inline-size: 0.85rem;
+  block-size: 0.85rem;
+  opacity: 0.85;
+}
+
+// "Conectar" (the installed app): a pill with its state, always with its words (also on narrow screens)
+.item.connect {
+  flex-direction: row;
+  align-self: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  // Readable over the artwork and without it (the hub's text colors are light in every theme)
+  background: color-mix(in srgb, var(--color-hub-scrim) 55%, transparent);
+  color: var(--color-hub-text);
+  white-space: nowrap;
+}
+
+.item.connect:hover {
+  background: color-mix(in srgb, var(--color-hub-scrim) 70%, transparent);
+  color: var(--color-hub-text);
+}
+
+.item.connect .label {
+  position: static;
+  inline-size: auto;
+  block-size: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+.item.connect eras-icon {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.item.connect .state {
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-regular, 400);
+  opacity: 0.8;
+}
+
+.item.connect.tone-idle {
+  border-color: var(--color-hub-accent);
+}
+
+.item.connect.tone-busy,
+.item.connect.tone-ok,
+.item.connect.tone-off {
+  cursor: default;
+}
+
+.item.connect.tone-busy eras-icon {
+  animation: connect-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes connect-pulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+.item.connect.tone-ok eras-icon {
+  color: var(--color-success, #3fb950);
+}
+
+.item.connect.tone-off {
+  opacity: 0.85;
+}

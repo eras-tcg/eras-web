@@ -2,6 +2,7 @@ import { Injectable, Injector, effect, inject, untracked } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { PREFETCH_AFTER_MS } from '@core/navigation/preloading';
 import { OnlineStatus } from '@core/server/online-status';
+import { ServerAccess } from '@core/server/server-access';
 import { CardsStore } from '../cards/cards.store';
 import { DecksStore } from '../decks/decks.store';
 import { EditionsStore } from '../editions/editions.store';
@@ -11,13 +12,14 @@ import { HomeStore } from '../home/home.store';
  * The data most screens use, read in the background a moment after someone signs in (the card catalog, the
  * editions, the home's news, their decks): the screens then open with it. Each store shares a read already on its way,
  * so a screen opened meanwhile does not ask again. Without the connection nothing is asked (it would only fail): it is
- * read once the connection is back. Their decks and the cards those need are also kept on the device for playing
+ * read once the connection is back. The installed app reads it once the player connects (ServerAccess). Their decks and the cards those need are also kept on the device for playing
  * offline (OfflineLibrarySync); signing out deletes them.
  */
 @Injectable({ providedIn: 'root' })
 export class DataPrefetch {
   private readonly auth = inject(AuthService);
   private readonly network = inject(OnlineStatus);
+  private readonly access = inject(ServerAccess);
   private readonly cards = inject(CardsStore);
   private readonly editions = inject(EditionsStore);
   private readonly home = inject(HomeStore);
@@ -29,9 +31,11 @@ export class DataPrefetch {
     effect(() => {
       const id = this.auth.user()?.id ?? null;
       const online = this.network.online();
+      // The installed app before connecting asks nothing (local-first); connecting reads it all and syncs the decks
+      const allowed = this.access.allowed();
       untracked(() => {
         clearTimeout(this.timer);
-        if (id && online) this.timer = setTimeout(() => this.fetch(id), PREFETCH_AFTER_MS);
+        if (id && online && allowed) this.timer = setTimeout(() => this.fetch(id), PREFETCH_AFTER_MS);
       });
     });
     this.auth.onSignOut(() => void import('../simulator/offline-library').then((m) => m.offlineLibrary.clear()));

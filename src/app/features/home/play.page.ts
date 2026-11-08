@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '@core/http/api-error';
+import { AndroidApp, offersAndroidApp } from '@core/pwa/android-app';
 import { InstallPrompt } from '@core/pwa/install-prompt';
 import { detectAppMode } from '@core/pwa/app-mode';
 import { ConnectionService } from '@core/server/connection.service';
@@ -60,7 +61,12 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
             <eras-icon name="download" /> Descargar para jugar sin conexión
           </button>
         }
-        @if (installer.offer() !== 'none') {
+        <!-- Android: the app (APK from the site) instead of installing the page (the PWA) -->
+        @if (androidOffer()) {
+          <button erasButton size="sm" type="button" (click)="openAndroidApp()">
+            <eras-icon name="smartphone" /> Descargar la app para Android
+          </button>
+        } @else if (installer.offer() !== 'none') {
           <button erasButton size="sm" type="button" (click)="install()"><eras-icon name="smartphone" /> Instalar ERAS</button>
         }
       </div>
@@ -106,9 +112,18 @@ export class PlayPage {
   private readonly network = inject(OnlineStatus);
   private readonly warmup = inject(ServerWarmupService);
   protected readonly installer = inject(InstallPrompt);
+  private readonly androidApp = inject(AndroidApp);
+  /** "Descargar la app para Android" (an Android phone, outside the app, when the site publishes the APK). */
+  protected readonly androidOffer = computed(() =>
+    offersAndroidApp({ android: this.androidApp.android, native: false, apk: this.androidApp.apk() }),
+  );
   protected readonly installedApp = detectAppMode() === 'app';
   private readonly modal = inject(ModalService);
   private readonly connection = inject(ConnectionService);
+
+  constructor() {
+    this.androidApp.lookUp();
+  }
 
   /** The server could not be reached the last time a game was opened. */
   private readonly unreachable = signal(false);
@@ -164,6 +179,12 @@ export class PlayPage {
   protected async openDownload(): Promise<void> {
     const { OfflineDownloadDialogComponent } = await import('./offline-download-dialog.component');
     this.modal.open(OfflineDownloadDialogComponent, { width: '36rem' });
+  }
+
+  /** The APK and how to install it (unknown sources, Xiaomi's warning). */
+  protected async openAndroidApp(): Promise<void> {
+    const { AndroidAppDialogComponent } = await import('./android-app-dialog.component');
+    this.modal.open(AndroidAppDialogComponent, { data: this.androidApp.apk(), width: '34rem' });
   }
 
   /** The browser's prompt; on iPhone and iPad, or on Android without the prompt, how to install it by hand. */

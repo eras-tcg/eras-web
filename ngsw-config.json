@@ -9,7 +9,7 @@
       "resources": {
         "files": [
           "/index.html",
-          "/manifest.webmanifest",
+          "/manifest.json",
           "/favicon.svg",
           "/logo.png",
           "/icons/**",

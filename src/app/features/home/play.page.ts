@@ -154,13 +154,12 @@ export class PlayPage {
     this.modal.open(OfflineDownloadDialogComponent, { width: '36rem' });
   }
 
-  /** The browser's prompt; on iPhone and iPad, how to add it to the home screen. */
+  /** The browser's prompt; on iPhone and iPad, or on Android without the prompt, how to install it by hand. */
   protected async install(): Promise<void> {
-    if (this.installer.offer() === 'ios') {
-      const { InstallIosDialogComponent } = await import('./install-ios-dialog.component');
-      this.modal.open(InstallIosDialogComponent);
-      return;
-    }
-    await this.installer.install();
+    const offer = this.installer.offer();
+    if (offer === 'prompt' && (await this.installer.install()) !== 'unavailable') return;
+    const platform = offer === 'ios' ? 'ios' : 'android';
+    const { InstallIosDialogComponent } = await import('./install-ios-dialog.component');
+    this.modal.open(InstallIosDialogComponent, { data: platform });
   }
 }

@@ -55,7 +55,7 @@ is stable (`registerWhenStable:30000`), or at once when the player opens "Descar
   login as before. Without any session, the login says it needs internet once.
 - **Install:** "Jugar" → **Instalar ERAS** shows the browser's prompt (`beforeinstallprompt`, caught from the start
   by `index.html`) or, on iPhone/iPad, how to add it (Compartir → Agregar a inicio). Hidden once installed. Manifest:
-  `public/manifest.webmanifest` (icons in `public/icons`, maskable 192/512).
+  `public/manifest.json` (icons in `public/icons`, maskable 192/512).
 - **Updates:** the service worker checks for a new version every 5 minutes and when the tab is shown; when it is ready
   the header says "Nueva versión disponible – Recargar" (never over a game's table, never reloading by itself). If
   the service worker lost part of the running version, it asks to reload.

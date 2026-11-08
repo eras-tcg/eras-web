@@ -18,12 +18,22 @@ interface InstallGlobals {
  * the home screen by hand (iPhone and iPad: Safari has no prompt), or not at all (already installed, or a browser that
  * cannot install it, which then offers nothing).
  */
-export type InstallOffer = 'prompt' | 'ios' | 'none';
+export type InstallOffer = 'prompt' | 'ios' | 'android' | 'none';
 
-export function installOffer(state: { installed: boolean; canPrompt: boolean; ios: boolean }): InstallOffer {
+/**
+ * On Android without the browser's prompt (Chrome may not have offered it yet, or the player dismissed it), the
+ * button still shows and explains the browser menu's "Instalar app".
+ */
+export function installOffer(state: { installed: boolean; canPrompt: boolean; ios: boolean; android?: boolean }): InstallOffer {
   if (state.installed) return 'none';
   if (state.canPrompt) return 'prompt';
-  return state.ios ? 'ios' : 'none';
+  if (state.ios) return 'ios';
+  return state.android ? 'android' : 'none';
+}
+
+/** An Android phone or tablet. */
+export function isAndroid(userAgent: string): boolean {
+  return /Android/i.test(userAgent);
 }
 
 /** iPhone, iPod or iPad (iPadOS says it is a Mac, but a Mac has no touch screen). */
@@ -53,8 +63,11 @@ export class InstallPrompt {
   private readonly deferred = signal<BeforeInstallPromptEvent | null>(this.globals.__erasInstallPrompt ?? null);
   readonly installed = signal(isStandalone() || this.globals.__erasInstalled === true);
   private readonly ios = isIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints ?? 0);
+  private readonly android = isAndroid(navigator.userAgent);
 
-  readonly offer = computed(() => installOffer({ installed: this.installed(), canPrompt: !!this.deferred(), ios: this.ios }));
+  readonly offer = computed(() =>
+    installOffer({ installed: this.installed(), canPrompt: !!this.deferred(), ios: this.ios, android: this.android }),
+  );
 
   constructor() {
     const onPrompt = (e: Event) => {

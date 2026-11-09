@@ -38,6 +38,12 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
       white-space: nowrap;
     }
     .offline { flex: none; color: var(--color-danger); font-size: var(--font-size-xs); }
+    /* Phones in landscape: small, it sat over the deck beside it in the narrow side column */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host { gap: var(--space-1); padding: 2px var(--space-2) 2px 2px; }
+      eras-avatar { --avatar-size: 1.5rem; }
+      .name { font-size: var(--font-size-xs); }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.away]': '!connected()' },

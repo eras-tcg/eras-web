@@ -187,7 +187,7 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       :host-context(.arcane) .step {
         aspect-ratio: 1;
         block-size: auto;
-        max-block-size: 0.5rem;
+        max-block-size: 0.7rem;
         border: 0;
         border-radius: 0;
         /* A dull emerald cut */
@@ -244,9 +244,9 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       .side { gap: 6px; block-size: 1.1rem; }
       .value { inline-size: 3.25rem; block-size: 3.25rem; font-size: 1.35rem; }
       .value::before { inset: 0.5rem; border-width: 2px; }
-      :host-context(.arcane) .side { gap: 6px; block-size: 1.6rem; padding: 0 0.75rem; border-radius: 0.8rem; }
+      :host-context(.arcane) .side { gap: 6px; block-size: 1.9rem; padding: 0 0.75rem; border-radius: 0.8rem; }
       /* Thick bars (thin ones look frail across a wide screen) */
-      :host-context(.arcane) .step { max-block-size: 1.15rem; }
+      :host-context(.arcane) .step { max-block-size: 1.5rem; }
       :host-context(.arcane) .value { inline-size: 3.75rem; block-size: 3.75rem; font-size: 1.35rem; }
     }
   `,

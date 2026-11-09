@@ -42,7 +42,8 @@
 // the Descarte as the Retaguardia, the lives' zone down to the Retaguardia's edge (its lives centered in it); the
 // hand's strip under them holds the player's plate
 @media (min-width: 48.0625rem) {
-  .piles {
+  // (.piles twice: as specific as the half's own rule, which loads after this file)
+  .piles.piles {
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) var(--hand-peek);
     grid-template-areas:
       'deck tributes'
@@ -50,7 +51,7 @@
       '. .';
   }
 
-  :host(.opponent) .piles {
+  :host(.opponent) .piles.piles {
     grid-template-rows: var(--hand-peek) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       '. .'
@@ -58,7 +59,7 @@
       'deck tributes';
   }
 
-  :host(.opponent.mirrored) .piles {
+  :host(.opponent.mirrored) .piles.piles {
     grid-template-areas:
       '. .'
       'discard .'

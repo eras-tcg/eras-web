@@ -114,3 +114,51 @@
       0 0 16px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
   }
 }
+
+// The switches under the deck (optional effects, the table's information): round stones sunk like the zones, edged
+// in gold, each centered in its half of the place
+:host-context(.arcane) {
+  .pile-controls {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    place-items: center;
+    container-type: size;
+  }
+
+  .optional-toggle {
+    flex: none;
+    inline-size: min(100cqw, calc(50cqh - var(--space-1)));
+    block-size: auto;
+    aspect-ratio: 1;
+    min-block-size: 0;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 30%, rgb(255 255 255 / 6%), transparent 60%), linear-gradient(180deg, #1d2129, #111317);
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      inset 0 3px 10px rgb(0 0 0 / 60%),
+      0 0 0 1px rgb(0 0 0 / 40%);
+    color: var(--arcane-gold-light);
+  }
+
+  .optional-toggle:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold),
+      inset 0 3px 10px rgb(0 0 0 / 60%),
+      0 0 12px color-mix(in srgb, var(--arcane-gold) 35%, transparent);
+  }
+
+  .optional-toggle eras-icon {
+    inline-size: 45%;
+    block-size: 45%;
+  }
+
+  .optional-toggle.off {
+    color: var(--arcane-rival);
+    box-shadow: inset 0 0 0 1px var(--arcane-rival), inset 0 3px 10px rgb(0 0 0 / 60%);
+  }
+
+  .optional-toggle.on {
+    box-shadow: inset 0 0 0 2px var(--arcane-gold), inset 0 3px 10px rgb(0 0 0 / 60%), 0 0 12px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+  }
+}

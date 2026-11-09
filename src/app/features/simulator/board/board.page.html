@@ -35,6 +35,7 @@
     erasIconButton
     icon="menu"
     class="game-menu-btn"
+    [class.arcane]="prefs.arcane()"
     aria-label="Menú de partida"
     title="Menú de partida"
     [cdkMenuTriggerFor]="gameMenu"
@@ -113,7 +114,7 @@
     <span>La mesa se juega en horizontal.</span>
   </div>
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
-  <div class="table" [class.zones-soft]="prefs.zoneLook() === 1" [class.zones-none]="prefs.zoneLook() === 2" [class.tilted]="prefs.tilted()" [style.--tilt]="prefs.tiltAngle()">
+  <div class="table" [class.arcane]="prefs.arcane()" [class.zones-soft]="prefs.zoneLook() === 1" [class.zones-none]="prefs.zoneLook() === 2" [class.tilted]="prefs.tilted()" [style.--tilt]="prefs.tiltAngle()">
     <!-- The plane of the table: the two halves and the middle strip. "Mesa en perspectiva" leans it back; the alerts
          and panels below stay flat over it -->
     <div class="plane">

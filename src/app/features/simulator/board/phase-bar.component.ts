@@ -227,6 +227,42 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
     @media (prefers-reduced-motion: reduce) {
       .choices, .choices li { animation: none; }
     }
+
+    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): gold-edged plaques over the stone */
+    :host-context(.arcane) button {
+      border-color: var(--arcane-gold-soft);
+      background: linear-gradient(180deg, #2a2620, #17140f);
+      color: #b9b2a2;
+      font-family: var(--font-family-display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    :host-context(.arcane) button.next { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
+    :host-context(.arcane) button.current,
+    :host-context(.arcane) button.current.mine,
+    :host-context(.arcane) .current-phase,
+    :host-context(.arcane) .current-phase.mine {
+      border-color: var(--arcane-gold);
+      background: linear-gradient(180deg, #2f2a20, #17140f);
+      backdrop-filter: none;
+      color: var(--arcane-gold-light);
+      font-weight: var(--font-weight-regular);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--arcane-gold) 30%, transparent);
+    }
+    :host-context(.arcane) .choices {
+      background: linear-gradient(180deg, #23272f, #14171d);
+      backdrop-filter: none;
+      box-shadow: 0 0 0 1px var(--arcane-gold-soft), var(--shadow-lg);
+    }
+    :host-context(.arcane) .choice { border-color: transparent; background: none; box-shadow: none; }
+    :host-context(.arcane) .choice:not(:disabled) { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
+    :host-context(.arcane) .choice.current,
+    :host-context(.arcane) .choice.current.mine {
+      border-color: transparent;
+      background: color-mix(in srgb, var(--arcane-gold) 18%, transparent);
+      color: var(--arcane-gold-light);
+      box-shadow: none;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

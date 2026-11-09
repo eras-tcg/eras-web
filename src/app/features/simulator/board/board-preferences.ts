@@ -16,6 +16,10 @@ export class BoardPreferences {
   /** How much the table's zones show: 0 all (filled and outlined), 1 only their outlines, 2 only the line between the field's lines. */
   readonly zoneLook = persistedNumber('eras-sim-zones', 0, 0, 2);
   readonly zoneLookNames = ['total', 'suave', 'nula'];
+  /** "Estilo de la mesa": 0 limpio (plain surfaces), 1 arcano (dark stone, engraved zones, gold, cut gems). */
+  readonly tableStyle = persistedNumber('eras-sim-style', 1, 0, 1);
+  readonly tableStyleNames = ['limpio', 'arcano'];
+  readonly arcane = computed(() => this.tableStyle() === 1);
   /** "Mano recta": the hands in a row instead of a fan. */
   readonly straightHand = persistedFlag('eras-sim-straight-hand');
   /** "Altura de la mano": how much higher your hand stands over the table's edge, from low (0) to high (1). */

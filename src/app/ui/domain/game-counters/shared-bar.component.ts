@@ -140,6 +140,79 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       .value.theirs { color: var(--color-danger); }
       .compact { isolation: isolate; }
     }
+
+    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): a channel cut in the stone with faceted gems, the value
+       in a big cut gem ringed in gold; on wide screens, the positions are engraved tiles */
+    :host-context(.arcane) .bar button {
+      border-color: var(--arcane-gold-soft);
+      background: linear-gradient(180deg, #23272f, #15181d);
+      color: #b9b2a2;
+      font-family: var(--font-family-display);
+    }
+    :host-context(.arcane) .bar button.mine { border-block-end-color: var(--arcane-ally); }
+    :host-context(.arcane) .bar button.theirs { border-block-end-color: var(--arcane-rival); }
+    :host-context(.arcane) .bar button.active {
+      border-color: var(--arcane-gold);
+      background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), var(--arcane-ally);
+      box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 12px color-mix(in srgb, var(--arcane-ally) 60%, transparent);
+      color: #fff;
+    }
+    :host-context(.arcane) .bar button.active.theirs {
+      background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), var(--arcane-rival);
+      box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 12px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
+    }
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host-context(.arcane) .side {
+        align-items: center;
+        gap: 2px;
+        block-size: 0.9rem;
+        padding: 0 0.35rem;
+        border-radius: 0.5rem;
+        background: linear-gradient(180deg, var(--arcane-stone-dark), #1a1d23);
+        box-shadow: inset 0 2px 4px rgb(0 0 0 / 80%), 0 1px 0 rgb(255 255 255 / 6%), 0 0 0 1px var(--arcane-gold-soft);
+        mask-image: none;
+      }
+      :host-context(.arcane) .step {
+        aspect-ratio: 1;
+        block-size: auto;
+        max-block-size: 0.5rem;
+        border: 1px solid #3a404b;
+        border-radius: 1px;
+        background: #2a2f38;
+        transform: rotate(45deg);
+      }
+      :host-context(.arcane) .side.mine .step.lit {
+        border-color: #9af0bd;
+        background: linear-gradient(135deg, #b7f7cf, var(--arcane-ally) 50%, #0f6b33);
+        box-shadow: 0 0 6px var(--arcane-ally);
+      }
+      :host-context(.arcane) .side.theirs .step.lit {
+        border-color: #ffb3b3;
+        background: linear-gradient(135deg, #ffd0d0, var(--arcane-rival) 50%, #7a1b1e);
+        box-shadow: 0 0 6px var(--arcane-rival);
+      }
+      :host-context(.arcane) .value {
+        inline-size: 2.4rem;
+        block-size: 2.4rem;
+        color: #fff;
+        font-family: var(--font-family-display);
+        text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+      }
+      :host-context(.arcane) .value::before {
+        inset: 0.4rem;
+        border: 0;
+        background: linear-gradient(135deg, #8a8f99, #3b414c 50%, #1e2229);
+        box-shadow: 0 0 0 2px var(--arcane-gold), 0 3px 8px rgb(0 0 0 / 60%);
+      }
+      :host-context(.arcane) .value.mine::before {
+        background: linear-gradient(135deg, #b7f7cf, var(--arcane-ally) 45%, #0f6b33);
+        box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-ally) 60%, transparent);
+      }
+      :host-context(.arcane) .value.theirs::before {
+        background: linear-gradient(135deg, #ffd0d0, var(--arcane-rival) 45%, #7a1b1e);
+        box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

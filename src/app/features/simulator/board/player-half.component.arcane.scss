@@ -1,0 +1,78 @@
+// "Estilo de la mesa: arcano" (see board.page.arcane.scss): the half's zones are engraved in the stone, with gold
+// corners, and the field's lines are named in gold. "Visibilidad de zonas: nula" still hides the frames
+
+// The field and the side zones (not the hand): sunk into the stone, a gold hairline inside
+:host-context(.arcane:not(.zones-none)) {
+  .field,
+  eras-game-zone:not(.hand) {
+    border: 0;
+    background: linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(0 0 0 / 18%));
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      inset 0 2px 10px rgb(0 0 0 / 55%);
+  }
+
+  // Gold corners: top left and bottom right, as brackets
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    position: absolute;
+    z-index: 1;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    border: 2px solid var(--arcane-gold);
+    pointer-events: none;
+    content: '';
+  }
+
+  .field::before,
+  eras-game-zone:not(.hand)::before {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    border-inline-end: 0;
+    border-block-end: 0;
+    border-start-start-radius: var(--radius-md);
+  }
+
+  .field::after,
+  eras-game-zone:not(.hand)::after {
+    inset-block-end: 0;
+    inset-inline-end: 0;
+    border-inline-start: 0;
+    border-block-start: 0;
+    border-end-end-radius: var(--radius-md);
+  }
+
+  // The line between the Línea frontal and the Retaguardia: a gold hairline
+  .line + .line {
+    border-block-start: 1px solid var(--arcane-gold-soft);
+  }
+
+  // A zone a card can be dropped on, or the field under a finger's card: the gold lights up
+  eras-game-zone.drop-active,
+  .field.drop-active,
+  .field.touch-over {
+    box-shadow:
+      inset 0 0 0 2px var(--arcane-gold),
+      inset 0 2px 10px rgb(0 0 0 / 55%),
+      0 0 16px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+  }
+}
+
+// The names of the lines and zones: the display face in gold
+:host-context(.arcane) {
+  .line-label {
+    color: var(--arcane-gold);
+    font-family: var(--font-family-display);
+    letter-spacing: 0.14em;
+  }
+
+  eras-game-zone {
+    --color-text-muted: var(--arcane-gold);
+  }
+
+  .hand-cards:empty::after {
+    color: var(--arcane-gold-light);
+  }
+}

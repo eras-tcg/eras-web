@@ -52,6 +52,12 @@ import { BoardScreen } from '../board-screen';
           <span class="text"><strong>Zonas espejadas</strong><small>Las vidas y las pilas del rival cambian de lado</small></span>
           <span class="state">{{ prefs.mirrored() ? 'Sí' : 'No' }}</span>
         </button>
+        <!-- Each click: limpio ↔ arcano -->
+        <button type="button" class="pref" (click)="prefs.tableStyle.set((prefs.tableStyle() + 1) % 2)">
+          <eras-icon name="sparkles" />
+          <span class="text"><strong>Estilo de la mesa</strong></span>
+          <span class="state">{{ prefs.tableStyleNames[prefs.tableStyle()] }}</span>
+        </button>
         <!-- Each click: total → suave → nula -->
         <button type="button" class="pref" (click)="prefs.zoneLook.set((prefs.zoneLook() + 1) % 3)">
           <eras-icon name="eye" />

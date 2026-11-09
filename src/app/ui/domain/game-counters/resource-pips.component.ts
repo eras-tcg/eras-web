@@ -52,6 +52,18 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       .pip { inline-size: 0.6rem; block-size: 0.6rem; border-width: 1.5px; border-radius: 2px; }
       button { inline-size: 1rem; block-size: 1rem; font-size: 0.75rem; line-height: 1; }
     }
+    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): empty sockets cut in the stone, gold-edged buttons */
+    :host-context(.arcane) .pip:not(.on) {
+      border-color: var(--arcane-gold-soft);
+      background: var(--arcane-stone-dark);
+      box-shadow: inset 0 1px 2px rgb(0 0 0 / 80%);
+    }
+    :host-context(.arcane) .pip.on { border-color: var(--arcane-gold); }
+    :host-context(.arcane) button {
+      border-color: var(--arcane-gold-soft);
+      background: linear-gradient(180deg, #2a2620, #17140f);
+      color: var(--arcane-gold-light);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

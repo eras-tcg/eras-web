@@ -78,8 +78,9 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
   ],
   providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardPreferences, BoardScreen],
   templateUrl: './board.page.html',
-  // The phone layouts (upright: turn it; landscape: compact) apart, within the size budget of a stylesheet
-  styleUrls: ['./board.page.scss', './board.page.phone.scss'],
+  // The phone layouts (upright: turn it; landscape: compact) and the arcane table's style apart, within the size
+  // budget of a stylesheet
+  styleUrls: ['./board.page.scss', './board.page.phone.scss', './board.page.arcane.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // A click elsewhere or Esc hides the selected card's actions (cards stop their own clicks)
   host: {

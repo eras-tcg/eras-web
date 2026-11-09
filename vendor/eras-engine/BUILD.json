@@ -1,8 +1,8 @@
 {
-  "commit": "6f2d68e8582d21e64dff6909a094227ea1cdf13b",
-  "dirty": true,
-  "subject": "Offline test room: LocalMatch \"editor\" config",
-  "copiedAt": "2026-11-09T16:32:53.012Z",
+  "commit": "9c12ef39486a9ce27d2a056178d3f4f8f0bab6f8",
+  "dirty": false,
+  "subject": "Each chain link's update as it resolves (LINK_RESOLVED)",
+  "copiedAt": "2026-11-09T16:39:26.986Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

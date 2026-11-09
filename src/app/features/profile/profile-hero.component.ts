@@ -149,6 +149,41 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
         align-self: auto;
       }
     }
+    /* Phones in landscape: one compact row (name and rank side by side), so the settings start within the screen */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      .hero {
+        flex-wrap: nowrap;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+      }
+      .identity {
+        gap: var(--space-2);
+      }
+      .identity eras-avatar {
+        --avatar-size: 2.75rem;
+      }
+      .name {
+        font-size: var(--font-size-lg);
+      }
+      .rank {
+        gap: var(--space-2);
+        padding: var(--space-1) var(--space-2);
+      }
+      .rank eras-rank-emblem {
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
+      }
+      .tier {
+        font-size: var(--font-size-md);
+      }
+      .record {
+        gap: var(--space-2);
+        font-size: var(--font-size-xs);
+      }
+      .board-link {
+        font-size: var(--font-size-xs);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

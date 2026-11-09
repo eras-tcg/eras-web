@@ -133,3 +133,40 @@ eras-icon[name='gem'] {
     display: none;
   }
 }
+
+/* Phones in landscape (after the narrow rules, which it overrides): the artwork back on the right at the full
+   height, the information and offers on the left, more compact */
+@media (orientation: landscape) and (max-height: 30rem) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .art {
+    order: 0;
+    block-size: 100%;
+  }
+
+  .side {
+    gap: var(--space-2);
+  }
+
+  .description {
+    font-size: var(--font-size-sm);
+    -webkit-line-clamp: 3;
+  }
+
+  .offers {
+    gap: var(--space-2);
+  }
+
+  .offer {
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .offer-name {
+    font-size: var(--font-size-md);
+  }
+}

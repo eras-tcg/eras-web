@@ -9,18 +9,16 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
 }
 
 /**
- * The chain links a card (or a pile) has activated, as numbered gems (cyan yours, pink the rival's). On a card they
- * sit at its center (several in a row), the card is framed in that color and its highest link's kind sits at its foot: the
- * chain reads on the table (its explicit list opens from the chain's button). On a pile (Tributos, Descarte…) one
- * sits at its center and several make a ring around it.
+ * The chain links a card (or a pile: Tributos, Descarte…) has activated, as numbered gems (cyan yours, pink the
+ * rival's): one at its center, several on the corners of a regular polygon centered on it. A card is also framed in
+ * that color. The chain reads on the table; its explicit list opens from the chain's button.
  */
 @Component({
   selector: 'eras-chain-marks',
   template: `
     @if (!ring() && top(); as t) {
-      <!-- On a card: framed in the color of whoever chained it, and what its highest link is, at its foot -->
+      <!-- On a card: framed in the color of whoever chained it -->
       <span class="frame" [class.rival]="!t.mine" [class.resolving]="resolving()"></span>
-      <span class="tag" [class.rival]="!t.mine" [class.resolving]="t.resolving">{{ t.short }}</span>
     }
     @for (m of marks(); track m.id) {
       <span
@@ -29,6 +27,8 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
         [class.rival]="!m.mine"
         [style.--x]="m.x"
         [style.--y]="m.y"
+        [style.--r]="radius()"
+        [style.--g]="gem()"
         [attr.aria-label]="'Cadena ' + m.link + (m.resolving ? ', resolviendo' : '')"
         [title]="'Cadena ' + m.link + ' · ' + m.label"
       >{{ m.link }}</span>
@@ -62,22 +62,15 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     }
     /* The link resolving now pulses */
     .mark.resolving { animation: mark-in 0.4s ease backwards, pulse 0.9s ease-in-out infinite alternate; }
-    /* On a card: at its center, several side by side */
-    :host(:not(.ring)) .mark {
-      inset-block-start: 50%;
-      inset-inline-start: calc(50% + var(--x) * 1.55rem);
-      inline-size: 1.7rem;
-      block-size: 1.7rem;
-      font-size: 0.95rem;
-      transform: translate(-50%, -50%);
-    }
-    /* On a pile: at the center, or on a ring around it */
-    :host(.ring) .mark {
-      inset-block-start: calc(50% + var(--y) * 32%);
-      inset-inline-start: calc(50% + var(--x) * 32%);
-      inline-size: 1.6rem;
-      block-size: 1.6rem;
-      font-size: 0.95rem;
+    /* On a card or a pile: at its center; several on the corners of a regular polygon around it (2 one above the
+       other, 3 a triangle, 4 a square…), the first at the top, clockwise; the polygon grows with them so they do not
+       touch (--r, in rem) and the gems get smaller from 4 on (--g, in rem), so it stays over the card */
+    .mark {
+      inset-block-start: calc(50% + var(--y) * var(--r) * 1rem);
+      inset-inline-start: calc(50% + var(--x) * var(--r) * 1rem);
+      inline-size: calc(var(--g) * 1rem);
+      block-size: calc(var(--g) * 1rem);
+      font-size: calc(var(--g) * 0.56rem);
       transform: translate(-50%, -50%);
     }
     /* The card in the chain: its outline lit in the chainer's color */
@@ -90,26 +83,6 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
       animation: frame-in 0.35s ease backwards;
     }
     .frame.resolving { animation: frame-in 0.35s ease backwards, frame-pulse 0.9s ease-in-out infinite alternate; }
-    /* Its highest link's kind (En Invocación, Activada…) at the card's foot */
-    .tag {
-      position: absolute;
-      inset-block-end: -0.45rem;
-      inset-inline-start: 50%;
-      max-inline-size: calc(100% + 1rem);
-      overflow: hidden;
-      padding: 0.1rem 0.4rem;
-      border-radius: var(--radius-pill);
-      background: color-mix(in srgb, var(--mark-cyan) 85%, #000);
-      box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
-      color: #fff;
-      font-size: 0.6rem;
-      font-weight: 700;
-      line-height: 1.2;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      transform: translateX(-50%);
-    }
-    :host(.upside-down) .tag { inset-block: -0.45rem auto; }
     @keyframes mark-in { from { opacity: 0; scale: 1.8; } }
     @keyframes frame-in { from { opacity: 0; } }
     @keyframes pulse { to { box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 18px 6px var(--mark-cyan); } }
@@ -123,7 +96,7 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
 })
 export class ChainMarksComponent {
   readonly links = input<readonly PendingEffect[]>([]);
-  /** Laid out on a ring centered on the box (a pile); otherwise down the card's left edge. */
+  /** On a pile (not a card): no frame around it. */
   readonly ring = input(false, { transform: booleanAttribute });
   /** On the rival's card, turned round: the marks go up its other edge. */
   readonly upsideDown = input(false, { transform: booleanAttribute });
@@ -135,23 +108,32 @@ export class ChainMarksComponent {
   /** One of its links is resolving now. */
   protected readonly resolving = computed(() => this.marks().some((m) => m.resolving));
 
+  /** The gems' size (rem): smaller the more there are (4 on), so the polygon stays over the card or pile. */
+  protected readonly gem = computed(() => {
+    const n = this.links().length;
+    return n <= 3 ? 1.7 : n <= 5 ? 1.4 : 1.2;
+  });
+
+  /** The polygon's radius (rem): its side, 2·r·sin(π/n), a gem and a little more, so the gems just do not touch. */
+  protected readonly radius = computed(() => {
+    const n = this.links().length;
+    return n > 1 ? ((this.gem() + 0.2) / 2 / Math.sin(Math.PI / n)).toFixed(3) : 0;
+  });
+
   protected readonly marks = computed(() => {
     const links = this.links();
     const n = links.length;
     return links.map((e, i) => {
-      // One alone sits at the center; several go around, the first at the top, clockwise
+      // One alone at the center; several on a regular polygon, the first at the top, clockwise
       const angle = -Math.PI / 2 + (2 * Math.PI * i) / Math.max(n, 1);
-      const onRing = this.ring() && n > 1;
       return {
         id: e.id,
         link: e.link,
         label: `${e.sourceName} · ${e.label}`,
-        short: e.label,
         resolving: !!e.resolutionId,
         mine: e.controllerId === this.me(),
-        // On a pile: on the ring; on a card: in a row centered on it
-        x: this.ring() ? (onRing ? Math.cos(angle).toFixed(3) : 0) : (i - (n - 1) / 2).toFixed(2),
-        y: this.ring() && onRing ? Math.sin(angle).toFixed(3) : 0,
+        x: n > 1 ? Math.cos(angle).toFixed(3) : 0,
+        y: n > 1 ? Math.sin(angle).toFixed(3) : 0,
       };
     });
   });

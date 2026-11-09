@@ -26,7 +26,7 @@
       @for (shelf of shelves(); track shelf.title) {
         <section class="shelf">
           <h2 class="shelf-title">{{ shelf.title }}</h2>
-          <eras-grid minColumn="min(12rem, 40vw, 36dvh)" [gap]="4">
+          <eras-grid minColumn="var(--tile-column, min(12rem, 40vw, 36dvh))" [gap]="4">
             @for (edition of shelf.editions; track edition.editionId) {
               <a class="tile" [routerLink]="['/editions', edition.editionId]" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
                 <span class="tile-info">

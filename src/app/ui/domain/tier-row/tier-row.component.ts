@@ -33,6 +33,20 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
     }
     .items { display: flex; align-items: stretch; gap: var(--space-2); min-block-size: 0; padding: var(--space-2); overflow-x: auto; }
     .label { font-size: clamp(var(--font-size-lg), 4vh, var(--font-size-2xl)); }
+    /* Phones in landscape: no minimum height, frame or gaps (the board frames them all): the rows share the height
+       and the covers touch the row's top and bottom */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host {
+        grid-template-columns: 2.75rem minmax(0, 1fr);
+        min-block-size: 0;
+        border: 0;
+        border-block-end: var(--border-width) solid var(--color-border);
+        border-radius: 0;
+      }
+      :host(:last-child) { border-block-end: 0; }
+      .label { font-size: var(--font-size-lg); }
+      .items { gap: 2px; padding: 0 2px; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.drop-target]': 'dropTarget()' },

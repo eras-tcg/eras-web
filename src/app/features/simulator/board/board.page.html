@@ -28,8 +28,8 @@
     <!-- Expanded by hand it lies over the table, like a modal: a click outside collapses it -->
     <button type="button" class="sidebar-backdrop" aria-label="Contraer el menú" (click)="prefs.toggleSidebar(); $event.stopPropagation()"></button>
   }
-  <!-- Menú de partida: a round button at the table's top left, with the history, the table's preferences and the
-       way out -->
+  <!-- Menú de partida: a round button at the table's top left, with the history, the deck, the table's preferences and
+       the way out; while it is open the bots wait -->
   <button
     type="button"
     erasIconButton
@@ -39,10 +39,13 @@
     title="Menú de partida"
     [cdkMenuTriggerFor]="gameMenu"
     [cdkMenuPosition]="gameMenuPosition"
+    (cdkMenuOpened)="game.holdBots(true)"
+    (cdkMenuClosed)="game.holdBots(false)"
   ></button>
   <ng-template #gameMenu>
     <eras-menu aria-label="Menú de partida">
       <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
+      <button erasMenuItem (triggered)="dialogs.decklist()"><eras-icon name="cards" />Ver mi mazo</button>
       <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>
       <hr />
       @if (canSurrender()) {
@@ -81,11 +84,10 @@
         Mostrar cartas ocultas (manos, vidas, mazo)
       </button>
     }
-    <button type="button" erasSidebarItem icon="cards" (click)="dialogs.decklist()">Ver mi mazo</button>
     @if (game.editorRoom() || game.replayRoom()) {
       @if (otherSide(); as other) {
         <button type="button" erasSidebarItem icon="user" (click)="game.followActive.set(false); game.playSide(other.userId)">
-          Cambiar perspectiva (ver desde {{ other.username }})
+          Cambiar perspectiva
         </button>
       }
       @if (game.editorRoom()) {
@@ -97,7 +99,7 @@
     }
     @if (game.editorRoom()) {
       <!-- At the foot: a test room -->
-      <div erasSidebarItem icon="edit" notice>Sala de pruebas: juegas los dos lados, con acciones manuales y cartas de prueba</div>
+      <div erasSidebarItem icon="edit" notice>Sala de pruebas</div>
     }
   </aside>
   }
@@ -113,7 +115,7 @@
     <span>La mesa se juega en horizontal.</span>
   </div>
   <!-- The table takes the rest of the screen; alerts and status panels float over it -->
-  <div class="table" [class.zones-soft]="prefs.zoneLook() === 1" [class.zones-none]="prefs.zoneLook() === 2" [class.tilted]="prefs.tilted()" [style.--tilt]="prefs.tiltAngle()">
+  <div class="table" [class.arcane]="prefs.arcane()" [class.zones-soft]="prefs.zoneLook() === 1" [class.zones-none]="prefs.zoneLook() === 2" [class.tilted]="prefs.tilted()" [style.--tilt]="prefs.tiltAngle()">
     <!-- The plane of the table: the two halves and the middle strip. "Mesa en perspectiva" leans it back; the alerts
          and panels below stay flat over it -->
     <div class="plane">
@@ -141,7 +143,22 @@
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
       @if (game.state()?.chain?.length) {
-        <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+        <!-- The chain is read on the table (its marks on the cards); the list, explicit, opens from this button -->
+        <button
+          type="button"
+          class="chain-btn"
+          [class.open]="chainOpen()"
+          [class.see-through]="seeThrough()"
+          [attr.aria-expanded]="chainOpen()"
+          (click)="chainOpen.set(!chainOpen()); $event.stopPropagation()"
+        >
+          <eras-icon name="link" />
+          <span>Cadena {{ game.state()?.chain?.length }}</span>
+          <eras-icon class="caret" name="chevron-down" />
+        </button>
+        @if (chainOpen()) {
+          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+        }
       }
       @if (engineNotice(); as notice) {
         @if (!game.myPrompt()) {
@@ -177,27 +194,6 @@
       <eras-status-panels (leave)="exit()" />
     </div>
   </div>
-  }
-
-  @if (canSeeThrough()) {
-    <!-- Held (or a long press anywhere): the choice and the chain turn transparent to look at the table -->
-    <button
-      type="button"
-      class="see-through-btn"
-      [class.on]="seeThrough()"
-      [attr.aria-pressed]="seeThrough()"
-      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic fuera de la elección, o en cualquier parte de la mesa)"
-      (pointerdown)="holdSeeThrough($event)"
-      (keydown.space)="seeThrough.set(true); $event.preventDefault()"
-      (keyup.space)="seeThrough.set(false)"
-      (keydown.enter)="seeThrough.set(true)"
-      (keyup.enter)="seeThrough.set(false)"
-      (blur)="seeThrough.set(false)"
-      (click)="$event.stopPropagation()"
-    >
-      <eras-icon name="eye" />
-      <span>Ver la mesa</span>
-    </button>
   }
 
   <eras-card-flights />

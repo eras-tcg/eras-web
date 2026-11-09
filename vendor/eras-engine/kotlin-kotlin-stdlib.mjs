@@ -211,7 +211,6 @@ initMetadataForClass(ArithmeticException, 'ArithmeticException', ArithmeticExcep
 initMetadataForClass(NullPointerException, 'NullPointerException', NullPointerException_init_$Create$, RuntimeException);
 initMetadataForClass(Error_0, 'Error', Error_init_$Create$, Error);
 initMetadataForClass(AssertionError, 'AssertionError', AssertionError_init_$Create$, Error_0);
-initMetadataForClass(UninitializedPropertyAccessException, 'UninitializedPropertyAccessException', UninitializedPropertyAccessException_init_$Create$, RuntimeException);
 initMetadataForClass(NumberFormatException, 'NumberFormatException', NumberFormatException_init_$Create$, IllegalArgumentException);
 initMetadataForClass(NoWhenBranchMatchedException, 'NoWhenBranchMatchedException', NoWhenBranchMatchedException_init_$Create$, RuntimeException);
 initMetadataForClass(ClassCastException, 'ClassCastException', ClassCastException_init_$Create$, RuntimeException);
@@ -340,9 +339,6 @@ function CharSequence() {
 function Comparable() {
 }
 function Number_0() {
-}
-function throwUninitializedPropertyAccessException(name) {
-  throw UninitializedPropertyAccessException_init_$Create$_0('lateinit property ' + name + ' has not been initialized');
 }
 function get_indices(_this__u8e3s4) {
   return new IntRange(0, get_lastIndex(_this__u8e3s4));
@@ -5278,29 +5274,6 @@ function AssertionError_init_$Create$_0(message) {
 }
 function AssertionError() {
   captureStack(this, AssertionError);
-}
-function UninitializedPropertyAccessException_init_$Init$($this) {
-  RuntimeException_init_$Init$($this);
-  UninitializedPropertyAccessException.call($this);
-  return $this;
-}
-function UninitializedPropertyAccessException_init_$Create$() {
-  var tmp = UninitializedPropertyAccessException_init_$Init$(objectCreate(protoOf(UninitializedPropertyAccessException)));
-  captureStack(tmp, UninitializedPropertyAccessException_init_$Create$);
-  return tmp;
-}
-function UninitializedPropertyAccessException_init_$Init$_0(message, $this) {
-  RuntimeException_init_$Init$_0(message, $this);
-  UninitializedPropertyAccessException.call($this);
-  return $this;
-}
-function UninitializedPropertyAccessException_init_$Create$_0(message) {
-  var tmp = UninitializedPropertyAccessException_init_$Init$_0(message, objectCreate(protoOf(UninitializedPropertyAccessException)));
-  captureStack(tmp, UninitializedPropertyAccessException_init_$Create$_0);
-  return tmp;
-}
-function UninitializedPropertyAccessException() {
-  captureStack(this, UninitializedPropertyAccessException);
 }
 function Error_init_$Init$($this) {
   extendThrowable($this);
@@ -13361,7 +13334,6 @@ export {
   get_COROUTINE_SUSPENDED as get_COROUTINE_SUSPENDED3ujt3p13qm4iy,
   CoroutineImpl as CoroutineImpl2sn3kjnwmfr10,
   enumEntries as enumEntries20mr21zbe3az4,
-  throwUninitializedPropertyAccessException as throwUninitializedPropertyAccessException14fok093f3k3t,
   get_ONE as get_ONEazvfdh9ju3d4,
   add as add85si75olwt6n,
   bitwiseAnd as bitwiseAnd2g7wmsfd45l12,

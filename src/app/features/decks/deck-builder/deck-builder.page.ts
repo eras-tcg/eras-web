@@ -215,8 +215,13 @@ export class DeckBuilderPage {
     return card ? cardDetailView(card, this.cards.ref(), this.cards.unprogrammedOf(card)) : null;
   });
 
-  /** The metrics at the bottom of the deck, open or compact (remembered on the device). */
-  protected readonly showMetrics = persistedFlag('eras-deck-builder-metrics-open', true);
+  /** A phone in landscape (read once, like the other screens): the deck's column is short, so the metrics start closed. */
+  private readonly phoneLandscape =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
+  /** The metrics at the bottom of the deck, open or compact (remembered on the device, except on phones in landscape). */
+  protected readonly showMetrics = this.phoneLandscape ? signal(false) : persistedFlag('eras-deck-builder-metrics-open', true);
+  /** The search's quick filters unfolded (they fold only on phones in landscape, to leave room for the cards). */
+  protected readonly searchOptionsOpen = signal(false);
   protected readonly dragOver = signal(false);
 
   private loadedFor: string | null = null;

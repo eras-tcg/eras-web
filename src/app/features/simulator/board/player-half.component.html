@@ -126,6 +126,10 @@
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
   (wheel)="turnHand($event)"
+  (pointerdown)="swipeStart($event)"
+  (pointermove)="swipeMove($event)"
+  (pointerup)="swipeEnd()"
+  (pointercancel)="swipeEnd()"
 >
   <!-- A fan: only the upper half of each card shows (the rest is off the table); they overlap just a little -->
   <!-- The cards' window: with the straight hand, what is past its ends fades out -->
@@ -138,29 +142,7 @@
       }
     </div>
   </div>
-  @if (handTurnMax() > 0) {
-    <!-- A big hand turns (or the wheel turns it) so the cards at its ends stand up and can be seen whole -->
-    <button
-      type="button"
-      erasIconButton
-      icon="chevron-left"
-      class="hand-turn start"
-      aria-label="Rotar la mano: ver las cartas de la izquierda"
-      title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() <= -handTurnMax() || animating()"
-      (click)="turnHandBy(-1); $event.stopPropagation()"
-    ></button>
-    <button
-      type="button"
-      erasIconButton
-      icon="chevron-right"
-      class="hand-turn end"
-      aria-label="Rotar la mano: ver las cartas de la derecha"
-      title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() >= handTurnMax() || animating()"
-      (click)="turnHandBy(1); $event.stopPropagation()"
-    ></button>
-  }
+  <!-- A big hand turns by dragging it sideways (finger or mouse) or with the wheel, so the cards at its ends stand up -->
 </eras-game-zone>
 
 <!-- Deck and piles -->
@@ -183,7 +165,7 @@
   >
     @if (p.deck.length) {
       <!-- As thick as the cards left in it (each pile is); the rival's turned as its other cards -->
-      <eras-game-card hidden [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.deck.length)" />
+      <eras-game-card hidden [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.deck.length)" [style.--edge.px]="pileDepth(p.deck.length)" />
     }
     <eras-chain-marks ring [links]="pileLinks().deck" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -219,7 +201,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.tributeZone.length)" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.tributeZone.length)" [style.--edge.px]="pileDepth(p.tributeZone.length)" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
     <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -239,7 +221,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.discardPile.length)" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.discardPile.length)" [style.--edge.px]="pileDepth(p.discardPile.length)" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
     <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>

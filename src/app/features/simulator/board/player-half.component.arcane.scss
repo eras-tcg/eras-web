@@ -1,0 +1,165 @@
+// "Estilo de la mesa: arcano" (see board.page.arcane.scss): the half's zones are engraved in the stone, with gold
+// corners, and the field's lines are named in gold. "Visibilidad de zonas" still applies: "suave" leaves only the gold
+// outlines and corners (no sunk fill), "nula" only the gold line between the Línea frontal and the Retaguardia.
+// (Compound :host-context(.a.b) selectors: a :not() inside :host-context is not kept by the style encapsulation)
+
+// The field and the side zones (not the hand): sunk into the stone, a gold hairline inside
+:host-context(.arcane) {
+  .field,
+  eras-game-zone:not(.hand) {
+    border: 0;
+    background: linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(0 0 0 / 18%));
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      inset 0 2px 10px rgb(0 0 0 / 55%);
+  }
+
+  // Gold corners: top left and bottom right, as brackets
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    position: absolute;
+    z-index: 1;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    border: 2px solid var(--arcane-gold);
+    pointer-events: none;
+    content: '';
+  }
+
+  .field::before,
+  eras-game-zone:not(.hand)::before {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    border-inline-end: 0;
+    border-block-end: 0;
+    border-start-start-radius: var(--radius-md);
+  }
+
+  .field::after,
+  eras-game-zone:not(.hand)::after {
+    inset-block-end: 0;
+    inset-inline-end: 0;
+    border-inline-start: 0;
+    border-block-start: 0;
+    border-end-end-radius: var(--radius-md);
+  }
+
+  // The line between the Línea frontal and the Retaguardia: a gold hairline
+  .line + .line {
+    border-block-start: 1px solid var(--arcane-gold-soft);
+  }
+
+  .line.front {
+    background: transparent;
+  }
+
+  // The names of the lines and zones: the display face in gold
+  .line-label {
+    color: var(--arcane-gold);
+    font-family: var(--font-family-display);
+    letter-spacing: 0.14em;
+  }
+
+  eras-game-zone {
+    --color-text-muted: var(--arcane-gold);
+  }
+
+  .hand-cards:empty::after {
+    color: var(--arcane-gold-light);
+  }
+}
+
+// "Suave": the outlines and corners only, nothing sunk
+:host-context(.arcane.zones-soft) {
+  .field,
+  eras-game-zone:not(.hand) {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--arcane-gold-soft);
+  }
+
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    opacity: 0.6;
+  }
+}
+
+// "Nula": no frames or corners, only the line between the two lines of the field
+:host-context(.arcane.zones-none) {
+  .field,
+  eras-game-zone:not(.hand) {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    display: none;
+  }
+}
+
+// A zone a card can be dropped on, or the field under a finger's card: the gold lights up (in every visibility)
+:host-context(.arcane) {
+  // (The class twice: as specific as the visibility rules above, and later)
+  eras-game-zone.drop-active.drop-active,
+  .field.drop-active.drop-active,
+  .field.touch-over.touch-over {
+    box-shadow:
+      inset 0 0 0 2px var(--arcane-gold),
+      0 0 16px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+  }
+}
+
+// The switches under the deck (optional effects, the table's information): round stones sunk like the zones, edged
+// in gold, each centered in its half of the place
+:host-context(.arcane) {
+  .pile-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    place-items: center;
+    container-type: size;
+  }
+
+  .optional-toggle {
+    flex: none;
+    inline-size: min(100cqw, calc(50cqh - var(--space-1)));
+    block-size: auto;
+    aspect-ratio: 1;
+    min-block-size: 0;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 30%, rgb(255 255 255 / 6%), transparent 60%), linear-gradient(180deg, #1d2129, #111317);
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      inset 0 3px 10px rgb(0 0 0 / 60%),
+      0 0 0 1px rgb(0 0 0 / 40%);
+    color: var(--arcane-gold-light);
+  }
+
+  .optional-toggle:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold),
+      inset 0 3px 10px rgb(0 0 0 / 60%),
+      0 0 12px color-mix(in srgb, var(--arcane-gold) 35%, transparent);
+  }
+
+  .optional-toggle eras-icon {
+    inline-size: 45%;
+    block-size: 45%;
+  }
+
+  .optional-toggle.off {
+    color: var(--arcane-rival);
+    box-shadow: inset 0 0 0 1px var(--arcane-rival), inset 0 3px 10px rgb(0 0 0 / 60%);
+  }
+
+  .optional-toggle.on {
+    box-shadow: inset 0 0 0 2px var(--arcane-gold), inset 0 3px 10px rgb(0 0 0 / 60%), 0 0 12px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+  }
+}

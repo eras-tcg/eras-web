@@ -1,5 +1,6 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
@@ -30,7 +31,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,10 +129,19 @@ export class EffectPromptDialogComponent {
     return null;
   }
 
-  /** The zone every card shown comes from, said once above them (each card says its own when they differ), or null. */
-  protected readonly commonZone = computed(() => {
-    const zones = new Set(this.shown().map((c) => this.zoneOf(c)));
-    return zones.size === 1 ? [...zones][0] : null;
+  /**
+   * The cards shown, boxed by the zone they come from (in the order they are shown), each box named; none when no
+   * card's zone is known (cards looked at, out of any zone): then they go in one plain row.
+   */
+  protected readonly groups = computed(() => {
+    const boxes: { zone: string; cards: CardSlot[] }[] = [];
+    for (const c of this.shown()) {
+      const zone = this.zoneOf(c) ?? 'Otras';
+      const box = boxes.find((b) => b.zone === zone);
+      if (box) box.cards.push(c);
+      else boxes.push({ zone, cards: [c] });
+    }
+    return boxes.length === 1 && boxes[0].zone === 'Otras' ? [] : boxes;
   });
 
   /** The icon of a zone, beside its name. */
@@ -232,14 +242,16 @@ export class EffectPromptDialogComponent {
   protected readonly inChain = computed(() => !!this.prompt.effectId && !!this.game.state()?.chain?.some((e) => e.id === this.prompt.effectId));
 
   /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
+  /** An offered effect chosen: the link it will take ("Cadena 3"), or what choosing it does. */
   protected chosenTag(id: string): string {
-    if (this.prompt.purpose === 'ORDER' || this.prompt.purpose === 'OPTIONAL') {
-      // The real link it will take: after the links already in the chain
-      const base = this.game.state()?.chain?.length ?? 0;
-      const label = this.prompt.effects?.length ? null : this.prompt.cardLabels?.[id];
-      return `Cadena ${base + [...this.chosen()].indexOf(id) + 1}${label ? ' · ' + label : ''}`;
-    }
-    return this.prompt.chosenLabel ?? 'Elegida';
+    const n = this.chainNumber(id);
+    return n ? `Cadena ${n}` : (this.prompt.chosenLabel ?? 'Elegida');
+  }
+
+  /** A card chosen to chain: the link it will take (after the links already in the chain); null for other choices. */
+  protected chainNumber(id: string): number | null {
+    if (this.prompt.purpose !== 'ORDER' && this.prompt.purpose !== 'OPTIONAL') return null;
+    return (this.game.state()?.chain?.length ?? 0) + [...this.chosen()].indexOf(id) + 1;
   }
 
   /** CONFIRM prompts: choosing the card means yes. */

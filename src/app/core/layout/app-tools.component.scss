@@ -92,12 +92,41 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+
+  // The gems keep their count, beside the icon: the player sees what they have on every screen
+  .item.gems {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .item.gems .label {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+  }
 }
 
 // Edit mode: the gems can be set, so they look like it
 .item.editable {
   outline: 1px dashed var(--color-warning);
   outline-offset: -2px;
+}
+
+// Phones in landscape: the thin top row (see eras-page), so smaller icons
+@media (orientation: landscape) and (max-height: 30rem) {
+  .item {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .item eras-icon {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
 }
 
 // Missions waiting to be claimed: a count on the corner of their button
@@ -177,8 +206,8 @@
   border-color: var(--color-hub-accent);
 }
 
+// "Conectado" can be tapped too (to disconnect); connecting and "Sin internet" cannot
 .item.connect.tone-busy,
-.item.connect.tone-ok,
 .item.connect.tone-off {
   cursor: default;
 }

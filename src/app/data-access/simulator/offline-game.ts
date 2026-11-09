@@ -79,6 +79,8 @@ export class OfflineGame {
   private readonly injector = inject(Injector);
   /** The engine's finished games are being kept (once per visit). */
   private recording = false;
+  /** The room open now is a test room: its games are not kept. */
+  private testRoom = false;
   /** The engine is loaded in this visit: an offline game starts without the connection. */
   readonly ready = signal(false);
 
@@ -119,10 +121,14 @@ export class OfflineGame {
     return offlineDecks(await this.sources());
   }
 
-  /** Opens an offline room for this player (joined, in its pre-room); resolves with its id. */
-  async start(): Promise<string> {
+  /**
+   * Opens an offline room for this player (joined, in its pre-room); resolves with its id. `editor`: a test room ("Sala de
+   * pruebas" without the connection), the player on both sides; its games are not kept for rewards.
+   */
+  async start(editor = false): Promise<string> {
     await this.prepare();
     this.record();
+    this.testRoom = editor;
     const { roomId } = await firstValueFrom(this.rooms.createLocal());
     const decks = await this.decksNow();
     const config: LocalMatchConfig = {
@@ -132,6 +138,7 @@ export class OfflineGame {
       userId: this.auth.user()?.id ?? LOCAL_USER_ID,
       avatar: this.avatar.url(),
       playmat: this.playmat.url(),
+      ...(editor ? { editor: true } : {}),
     };
     await this.game.connectLocal(config, decks.list);
     this.game.joinRoom(null);
@@ -152,8 +159,8 @@ export class OfflineGame {
 
   private async keep(game: FinishedGame): Promise<void> {
     const userId = this.auth.user()?.id;
-    // Only a signed-in player's games, played as them
-    if (!userId || game.userId !== userId) return;
+    // Only a signed-in player's games, played as them against the bot (a test room counts for nothing)
+    if (!userId || game.userId !== userId || this.testRoom) return;
     const { offlineGameQueue, newGameId } = await import('./offline-games');
     await offlineGameQueue.add(userId, { ...game, id: newGameId(), engineBuild: ENGINE_BUILD });
     // Sent now if connected; otherwise the connection gate refuses it at once (nothing reaches the server) and it waits

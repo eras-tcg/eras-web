@@ -49,13 +49,18 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   styleUrl: './sheet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // `title` is an input: without this, a static title="…" also stays on the host as the browser's tooltip
-  host: { '[attr.title]': 'null', '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()', '[class.see-through]': 'state.seeThrough()' },
+  host: { '[attr.title]': 'null', '[class]': '"size-" + size()', '[class.collapsed]': 'collapsed()', '[class.see-through]': 'state.seeThrough()', '[class.fit]': 'fit()' },
 })
 export class SheetComponent {
   readonly title = input.required<string>();
   readonly subtitle = input<string | null>(null);
   /** Width: md, lg or xl, as the modal. */
   readonly size = input<'md' | 'lg' | 'xl'>('lg');
+  /**
+   * Its body fits the sheet's height instead of scrolling: what it holds (a row of cards) takes the room left by the
+   * title and the buttons, and sizes itself to it.
+   */
+  readonly fit = input(false, { transform: booleanAttribute });
   /** False for choices that must be answered (open it with disableClose too). */
   readonly closable = input(true, { transform: booleanAttribute });
   readonly closed = output<void>();

@@ -32,17 +32,17 @@
   }
 
   .hand-cards {
-    inset-block-start: calc(var(--hand-reach) - 0.25rem);
+    inset-block-start: calc(var(--hand-reach) - 0.25rem - var(--hand-raise));
   }
 
   :host(.opponent) .hand-cards {
-    inset-block: auto calc(var(--hand-reach) - 0.25rem);
+    inset-block: auto calc(var(--hand-reach) - 0.25rem - var(--hand-raise));
   }
 
   :host(:not(.opponent)) .in-hand:hover,
   :host(:not(.opponent)) .in-hand.raised,
   :host(:not(.opponent)) .in-hand:has(:focus-visible) {
-    transform: translateY(calc((var(--hand-card) * 88 / 63 - var(--hand-peek)) * -1)) rotate(0deg);
+    transform: translateY(calc(max(0px, var(--hand-card) * 88 / 63 - var(--hand-peek) - var(--hand-raise)) * -1)) rotate(0deg);
   }
 
   .line {
@@ -53,9 +53,10 @@
     gap: var(--space-1);
   }
 
+  // Clear of the zone's rounded corner
   .line-label {
-    inset-block-start: 0;
-    inset-inline-start: var(--space-1);
+    inset-block-start: 0.1rem;
+    inset-inline-start: var(--space-3);
     font-size: 0.55rem;
     opacity: 0.7;
   }
@@ -69,12 +70,45 @@
     gap: var(--space-1);
   }
 
+  // The pile's card as big as its zone allows, with the pile's edge under it (at most 6px here, see pileEdge): it
+  // stays inside its zone
   .pile eras-game-card {
-    --game-card-width: min(calc(100cqw - 0.25rem), calc((100cqh - 1rem) * 63 / 88));
+    --game-card-width: min(calc(100cqw - 2px), calc((100cqh - 4px - 6px) * 63 / 88));
+  }
+
+  // The two switches under the deck, one over the other as icons: their words do not fit the narrow column (the
+  // words stay for screen readers, and in the tooltip)
+  .pile-controls {
+    gap: var(--space-1);
   }
 
   .optional-toggle {
-    padding: 0.1rem var(--space-1);
+    flex: 1;
+    padding: 0;
+    min-block-size: 0;
     font-size: 0.6rem;
+
+    eras-icon {
+      inline-size: min(1.4rem, 30cqh);
+      block-size: min(1.4rem, 30cqh);
+    }
+
+    span {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  // The player's plate (small itself, see eras-player-plate) closer to the lives
+  eras-player-plate {
+    margin-block-end: var(--space-1);
+  }
+
+  :host(.opponent) eras-player-plate {
+    margin-block: var(--space-1) 0;
   }
 }

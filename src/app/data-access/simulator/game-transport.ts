@@ -24,6 +24,8 @@ export interface GameTransport {
   readonly isOpen: boolean;
   /** Sends an action's body (`{"type", "payload"}`) to the room; false when it could not be sent. */
   publish(roomId: string, body: string): boolean;
+  /** The bots wait while `held` (only where the game runs in this browser). */
+  holdBots?(held: boolean): void;
   close(): void;
 }
 

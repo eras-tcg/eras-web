@@ -97,6 +97,19 @@ export class ConnectionService {
     if ((await this.connect()) === 'connected' && target) void this.router.navigateByUrl(target);
   }
 
+  /**
+   * Tapping "Conectado" (the installed app): back to playing without the server. What needs it asks to connect again,
+   * and the Jugar menu offers Modo solo sin conexión in place of Modo solo.
+   */
+  disconnect(): void {
+    if (!this.installed || this.stateSignal() !== 'connected') return;
+    this.generation++;
+    this.running = null;
+    this.target = null;
+    this.access.markDisconnected();
+    this.dispatch('disconnect');
+  }
+
   /** "Seguir sin conexión": back to the app without the server (the warm-up may go on behind; nothing waits for it). */
   cancel(): void {
     this.generation++;

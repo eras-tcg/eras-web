@@ -2,9 +2,6 @@
   @if (store.error(); as error) {
     <eras-alert tone="danger">{{ error }}</eras-alert>
   }
-  @if (actionError(); as error) {
-    <eras-alert tone="danger">{{ error }}</eras-alert>
-  }
 
   <eras-deck-browser
     showVisibility
@@ -31,26 +28,7 @@
         [isPrivate]="!!deck.privateDeck"
         [isPublic]="!deck.privateDeck"
         (selected)="view(deck)"
-      >
-        <ng-container ngProjectAs="[cover-actions]">
-          <ng-container *erasCan="'manage_decks'">
-            <a erasButton variant="secondary" size="sm" routerLink="/deck-builder" [queryParams]="editQuery(deck)" [attr.aria-label]="'Editar ' + deck.deckName">
-              <eras-icon name="edit" />
-            </a>
-            <button
-              erasButton
-              variant="secondary"
-              size="sm"
-              type="button"
-              [attr.aria-label]="'Borrar ' + deck.deckName"
-              [disabled]="deleting() === deck.id"
-              (click)="remove(deck)"
-            >
-              <eras-icon name="x" />
-            </button>
-          </ng-container>
-        </ng-container>
-      </eras-deck-cover>
+      />
     }
   </eras-deck-browser>
 </eras-page>

@@ -24,7 +24,9 @@ import { isTouchOnly } from './board-touch';
 import { DOCUMENT } from '@angular/common';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
-const HAND_UPRIGHT_FAN = 2.9;
+const HAND_UPRIGHT_FAN = 3.9;
+/** A sideways swipe on the hand turns it half a card every this many pixels. */
+const SWIPE_STEP_PX = 28;
 
 type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
 
@@ -36,7 +38,12 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
   selector: 'eras-player-half',
   imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent, LineScrollDirective],
   templateUrl: './player-half.component.html',
-  styleUrls: ['./player-half.component.scss', './player-half.component.table.scss', './player-half.component.phone.scss'],
+  styleUrls: [
+    './player-half.component.scss',
+    './player-half.component.table.scss',
+    './player-half.component.phone.scss',
+    './player-half.component.arcane.scss',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.opponent]': 'opponent()',
@@ -45,12 +52,13 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
     '[class.info]': 'game.showInfo()',
     '[class.has-playmat]': '!!player().playmat',
     '[style.--playmat]': 'playmatImage()',
+    '[style.--hand-lift]': 'prefs.handLift()',
   },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
-  private readonly prefs = inject(BoardPreferences);
+  protected readonly prefs = inject(BoardPreferences);
   /** "Zonas espejadas": the rival's lives and gem marker swap places with their piles. */
   protected readonly mirrored = computed(() => this.opponent() && this.prefs.mirrored());
   /** "Mano recta": the hand in a row instead of a fan. */
@@ -77,14 +85,22 @@ export class PlayerHalfComponent {
     return url ? `url("${url.replace(/"/g, '%22')}")` : null;
   });
   protected readonly attackDrag = computed(() => this.opponent() && !!this.drag.dragging()?.attack);
+  /** A phone in landscape (read once): small piles, so a thinner edge (it must stay inside the pile's zone). */
+  private readonly maxPileDepth =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches ? 6 : 16;
+
   /**
-   * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16), black as
-   * the back's frame with a faint line between cards, with its shadow on the table.
+   * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16, 6 on a
+   * phone in landscape), black as the back's frame with a faint line between cards, with its shadow on the table.
    */
   protected pileEdge(cards: number): string {
-    const depth = Math.min(16, Math.ceil((cards - 1) / 3));
+    const depth = this.pileDepth(cards);
     const edges = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`);
     return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');
+  }
+  /** A pile's edge under its top card, in pixels (one every 3 cards, at most 16 — 6 on a phone in landscape). */
+  protected pileDepth(cards: number): number {
+    return Math.max(0, Math.min(this.maxPileDepth, Math.ceil((cards - 1) / 3)));
   }
   /** A creature attacks these lives (an attack on the player, not on a creature): marked until the combat ends. */
   protected readonly livesAttacked = computed(() => {
@@ -126,8 +142,80 @@ export class PlayerHalfComponent {
       if (row) resize.observe(row);
     });
     inject(DestroyRef).onDestroy(() => resize.disconnect());
+    // A swipe that turned the hand is not a tap: the card under the finger is not raised (captured before the card)
+    afterRenderEffect(() => {
+      const row = this.handCards()?.nativeElement;
+      if (!row || row.dataset['swipeGuard']) return;
+      row.dataset['swipeGuard'] = '1';
+      row.addEventListener(
+        'click',
+        (e) => {
+          if (!this.swiped) return;
+          this.swiped = false;
+          e.stopPropagation();
+          e.preventDefault();
+        },
+        true,
+      );
+      // With the mouse a card of the hand is dragged to the table (upwards); dragging it sideways turns the hand
+      // instead, so the card's own drag does not start (captured before the card)
+      row.addEventListener(
+        'dragstart',
+        (e) => {
+          if (this.swipeX === null) return;
+          // Measured from the last pointer move (Chrome gives dragstart the press's own position)
+          const dx = Math.abs(this.swipeLastX - this.swipeStartX);
+          const dy = Math.abs(this.swipeLastY - this.swipeStartY);
+          // Only a move already clearly sideways (a drag that starts before the mouse moved is the card's)
+          if (dx < 4 || dx <= dy) return;
+          e.preventDefault();
+          e.stopPropagation();
+        },
+        true,
+      );
+    });
   }
   protected readonly handTurn = computed(() => Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurnWanted())));
+
+  /** A finger or the mouse on the hand: where it was when the hand last turned (null: no swipe under way). */
+  private swipeX: number | null = null;
+  private swipeY = 0;
+  /** Where the swipe began (a sideways drag of a card turns the hand instead of dragging the card). */
+  private swipeStartX = 0;
+  private swipeStartY = 0;
+  /** The pointer's latest position during the swipe. */
+  private swipeLastX = 0;
+  private swipeLastY = 0;
+  /** The last move turned the hand (its click is swallowed). */
+  private swiped = false;
+
+  /** A finger, a pen or the mouse's main button on the hand: a sideways swipe may turn it. */
+  protected swipeStart(e: PointerEvent): void {
+    if ((e.pointerType === 'mouse' && e.button !== 0) || !this.handTurnMax()) return;
+    this.swipeX = this.swipeStartX = this.swipeLastX = e.clientX;
+    this.swipeY = this.swipeStartY = this.swipeLastY = e.clientY;
+    this.swiped = false;
+  }
+
+  /**
+   * Moving sideways turns the hand half a card every 28px (right: the cards on the left come in); a mostly upward
+   * move is left alone (with the mouse, that drags the card to the table).
+   */
+  protected swipeMove(e: PointerEvent): void {
+    if (this.swipeX === null) return;
+    this.swipeLastX = e.clientX;
+    this.swipeLastY = e.clientY;
+    const dx = e.clientX - this.swipeX;
+    if (Math.abs(dx) < SWIPE_STEP_PX || Math.abs(dx) < Math.abs(e.clientY - this.swipeY)) return;
+    const steps = Math.trunc(dx / SWIPE_STEP_PX);
+    this.turnHandBy(-steps * 0.5);
+    this.swipeX += steps * SWIPE_STEP_PX;
+    this.swiped = true;
+  }
+
+  protected swipeEnd(): void {
+    this.swipeX = null;
+  }
 
   /** An animation is playing: the hand's arrows (and the lines' ones) keep still, so a flying card lands where aimed. */
   protected readonly animating = computed(() => !(this.animations?.idle() ?? true));

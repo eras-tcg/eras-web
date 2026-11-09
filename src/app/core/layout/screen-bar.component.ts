@@ -68,6 +68,27 @@ import { AppToolsComponent } from './app-tools.component';
     .tools {
       flex-shrink: 0;
     }
+    // Phones in landscape: one thin row ("back", title and page actions on a single line, centered)
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host {
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .back {
+        inline-size: 2rem;
+        block-size: 2rem;
+      }
+      .back eras-icon {
+        inline-size: 1rem;
+        block-size: 1rem;
+      }
+      .middle {
+        flex-wrap: nowrap;
+        align-items: center;
+        min-block-size: 2rem;
+        gap: var(--space-2) var(--space-3);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

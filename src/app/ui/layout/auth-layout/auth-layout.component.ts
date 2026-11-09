@@ -81,6 +81,46 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     .footer:empty {
       display: none;
     }
+    /* Phones in landscape (the installed app): two columns, so it fits the short height without scrolling. The logo,
+       the name and the footer (the version) on the left; the form on the right */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host {
+        min-block-size: var(--app-height, 100dvh);
+        padding: var(--space-3) var(--layout-gutter);
+      }
+      .frame {
+        display: grid;
+        grid-template-columns: auto minmax(0, 24rem);
+        grid-template-rows: 1fr auto 1fr;
+        grid-template-areas:
+          'logo panel'
+          'brand panel'
+          'footer panel';
+        align-items: center;
+        gap: 0 var(--space-8);
+        inline-size: min(100%, 44rem);
+      }
+      .logo {
+        grid-area: logo;
+        align-self: end;
+        justify-self: center;
+        inline-size: 3.5rem;
+        block-size: 3.5rem;
+      }
+      .brand {
+        grid-area: brand;
+        margin-block-end: 0;
+        font-size: 2.5rem;
+      }
+      .panel {
+        grid-area: panel;
+        padding: var(--space-4) var(--space-5);
+      }
+      .footer {
+        grid-area: footer;
+        align-self: start;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

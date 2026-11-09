@@ -2,8 +2,10 @@
   <!-- The card the choice is about, beside it: its effects, the one that asks lit up -->
   <eras-effect-card-panel class="side" [class.lowered]="sheet.lowered()" [class.see-through]="sheet.seeThrough()" [slot]="p.slot" [name]="p.name" [image]="p.image" [activeText]="p.text" />
 }
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
-  <div class="body">
+<!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
+     blocking…) say it in their title and buttons -->
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="prompt.purpose || prompt.effects?.length ? null : prompt.instruction">
+  <div class="body" [class.fit]="!prompt.effects?.length && cardsShown()">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
@@ -45,25 +47,17 @@
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
-  @if (commonZone(); as zone) {
-    <p class="from-zone"><eras-icon [name]="zoneIcon(zone)" /> Desde: {{ zone }}</p>
-  }
-  @if (hiddenCount() > 0) {
-    <label class="show-all">
-      <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
-      Mostrar también las que no cumplen ({{ hiddenCount() }})
-    </label>
-  }
+  <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
   <div
     class="cards"
     cdkDropList
-    cdkDropListOrientation="mixed"
+    cdkDropListOrientation="horizontal"
     [cdkDropListDisabled]="!prompt.reorderRest"
     (cdkDropListDropped)="reorder($event)"
     role="group"
     [attr.aria-label]="prompt.title"
   >
-    @for (c of shown(); track c.instanceId) {
+    <ng-template #slotTpl let-c let-i="i">
       <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest">
         <button
           type="button"
@@ -82,31 +76,44 @@
           } @else {
             <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
-          <span class="tag">
-            @if (chosen().has(c.instanceId)) {
-              <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
-            } @else if (orderOnly) {
-              {{ $index + 1 }}º
-            } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
-              No cumple
-            } @else if (levelSum !== null && !selectable(c)) {
-              Supera {{ prompt.maxLevelSum }} niveles
-            } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
-              {{ effectLabel }}
-            }
-          </span>
-          @if (!commonZone()) {
-            @if (zoneOf(c); as zone) {
-              <span class="zone"><eras-icon [name]="zoneIcon(zone)" /> {{ zone }}</span>
-            }
+          <!-- Chosen: the green frame and a mark over the card (its link number when it chains); nothing under it -->
+          @if (chosen().has(c.instanceId)) {
+            <span class="chosen-mark">
+              @if (chainNumber(c.instanceId); as n) {
+                {{ n }}
+              } @else {
+                <eras-icon name="check" />
+              }
+            </span>
+          } @else if (orderOnly) {
+            <span class="chosen-mark order">{{ i + 1 }}</span>
+          }
+          @if (!chosen().has(c.instanceId) && valid.has(c.instanceId) && prompt.cardLabels?.[c.instanceId]; as effectLabel) {
+            <span class="tag">{{ effectLabel }}</span>
           }
         </button>
         @if (!c.faceDown || game.seeAll()) {
           <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>
         }
       </div>
-    } @empty {
-      <p class="hint">No hay cartas que cumplan.</p>
+    </ng-template>
+    @if (prompt.reorderRest || !groups().length) {
+      @for (c of shown(); track c.instanceId; let i = $index) {
+        <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+      } @empty {
+        <p class="hint">No hay cartas que cumplan.</p>
+      }
+    } @else {
+      @for (g of groups(); track g.zone) {
+        <section class="zone-box" [attr.aria-label]="g.zone">
+          <span class="zone-name"><eras-icon [name]="zoneIcon(g.zone)" /> {{ g.zone }}</span>
+          <div class="zone-cards">
+            @for (c of g.cards; track c.instanceId; let i = $index) {
+              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+            }
+          </div>
+        </section>
+      }
     }
   </div>
   }
@@ -120,6 +127,21 @@
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
       } @else {
+        @if (hiddenCount() > 0) {
+          <!-- The cards that do not meet it, shown locked or hidden: a switch, no line of its own -->
+          <button
+            erasIconButton
+            type="button"
+            size="sm"
+            class="show-all"
+            icon="filter"
+            [class.on]="showAll()"
+            [attr.aria-pressed]="showAll()"
+            [attr.aria-label]="(showAll() ? 'Ocultar' : 'Mostrar') + ' las que no cumplen (' + hiddenCount() + ')'"
+            [title]="(showAll() ? 'Ocultar' : 'Mostrar') + ' las que no cumplen (' + hiddenCount() + ')'"
+            (click)="showAll.set(!showAll())"
+          ></button>
+        }
         <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
         <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
       }

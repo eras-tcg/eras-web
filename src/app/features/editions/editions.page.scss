@@ -86,6 +86,9 @@ eras-icon[name='gem'] {
   line-height: 1.15;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  // A word wider than the tile ("COMPROMISO" in the display face) is hyphenated (lang="es") instead of cut off
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .tile-prices {
@@ -114,6 +117,40 @@ eras-icon[name='gem'] {
   color: var(--color-hub-muted);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
+}
+
+// Phones in landscape: a bit wider tiles (the height limit made them narrow), a smaller name in at most three lines
+@media (orientation: landscape) and (max-height: 30rem) {
+  .scroll {
+    --tile-column: 8.5rem;
+  }
+
+  .tile-info {
+    gap: 2px;
+    padding: var(--space-2);
+  }
+
+  .tile-name {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.72rem;
+    letter-spacing: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .tile-prices {
+    gap: 0 var(--space-2);
+  }
+
+  .price {
+    font-size: var(--font-size-xs);
+  }
+
+  .shelf-title {
+    font-size: var(--font-size-md);
+  }
 }
 
 // A shelf: its title with the accent bar, then its tiles

@@ -34,7 +34,14 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
     :host(.drop-active) { border-color: var(--color-primary); border-style: solid; }
     :host(.targeted) { box-shadow: 0 0 0 3px var(--color-danger), 0 0 14px var(--color-danger); }
     :host(.selectable) { cursor: crosshair; }
+    /* The title lies over the zone's top edge instead of keeping a row of its own: what the zone holds (a pile's card,
+       the lives) is centered in the whole zone and as big as it allows */
     .label {
+      position: absolute;
+      inset-block-start: 1px;
+      inset-inline: 0;
+      z-index: 5;
+      pointer-events: none;
       color: var(--color-text-muted);
       /* Smaller on a phone's compact table */
       font-size: var(--zone-label-size, 0.8rem);
@@ -73,6 +80,10 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
     }
     .count eras-icon { inline-size: 0.8em; block-size: 0.8em; }
     .content { display: flex; flex: 1; align-items: center; justify-content: center; min-block-size: 0; }
+    /* Phones in landscape: the zones are small, a thinner padding */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host { gap: 0; padding: 2px; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {

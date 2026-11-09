@@ -1,8 +1,8 @@
 {
-  "commit": "997a7a6326e94241ea52f3784bf65643e6b04ec8",
+  "commit": "3385377d38c5f6957ae5e23a0a9efb461e456a73",
   "dirty": false,
-  "subject": "feat(engine): LocalMatch.result(): an offline game's result and digest, the same on the JVM and in the browser",
-  "copiedAt": "2026-11-08T16:20:44.337Z",
+  "subject": "What a choice did is sent before the next link starts",
+  "copiedAt": "2026-11-09T17:25:35.445Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

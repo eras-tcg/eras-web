@@ -244,3 +244,34 @@ dd {
     justify-self: center;
   }
 }
+
+// Phones in landscape: the text beside the picture; the picture, a little below the dialog's close button, and the
+// controls right under it (the finishes) fit the screen's height together, without scrolling
+@media (orientation: landscape) and (max-height: 30rem) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .info {
+    grid-row: 1 / span 2;
+  }
+
+  .image {
+    position: static;
+    grid-row: 1;
+    inline-size: calc((100dvh - 8.5rem) * 63 / 88);
+    margin-block-start: var(--space-5);
+  }
+
+  .under {
+    grid-row: 2;
+    align-self: start;
+    justify-self: center;
+  }
+
+  .name {
+    font-size: var(--font-size-lg);
+  }
+}

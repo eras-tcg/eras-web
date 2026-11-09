@@ -1,72 +1,19 @@
-<eras-page title="Mi perfil">
-  <!-- Who you are and where you stand: icon, name and rank over your playmat -->
-  <eras-profile-hero [username]="username()" />
+<eras-page title="Mi perfil" fill>
+  <!-- Your games: a view of their own -->
+  <a page-actions erasButton variant="secondary" size="sm" routerLink="/profile/history"><eras-icon name="history" /> Historial de partidas</a>
 
-  <!-- Your games on the left (what is looked at most); how you look and your account on the right -->
-  <div class="profile">
-    <eras-match-history class="history" />
+  <div class="layout">
+    <!-- Who you are and where you stand: icon, name and rank over your banner (the icon and the banner change here) -->
+    <eras-profile-hero [username]="username()" />
 
-    <div class="side">
-      <eras-card padding="md">
-        <eras-stack [gap]="4">
-          <eras-section-header title="Personalización" />
-
-          <!-- Icon: how the rival sees you on the table -->
-          <section class="setting" aria-labelledby="icon-title">
-            <div class="setting-head">
-              <h3 id="icon-title">Ícono</h3>
-              <span class="hint">JPG, PNG o GIF de hasta 5 MB, recortado en cuadrado.</span>
-            </div>
-            <div class="setting-row">
-              <eras-avatar [url]="avatar.url()" [name]="username()" />
-              <input #file type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadAvatar(file)" />
-              <eras-stack direction="row" [gap]="2" wrap>
-                <button erasButton size="sm" type="button" [loading]="avatar.saving()" [disabled]="avatar.saving()" (click)="file.click()">
-                  <eras-icon name="image" /> {{ avatar.url() ? 'Cambiar' : 'Subir' }}
-                </button>
-                @if (avatar.url()) {
-                  <button erasButton size="sm" variant="secondary" type="button" [disabled]="avatar.saving()" (click)="removeAvatar()">Quitar</button>
-                }
-              </eras-stack>
-            </div>
-            @if (avatarFeedback(); as f) {
-              <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
-            }
-          </section>
-
-          <!-- Playmat: under your half of the table (your rival sees it too) -->
-          <section class="setting" aria-labelledby="mat-title">
-            <div class="setting-head">
-              <h3 id="mat-title">Tapete</h3>
-              <span class="hint">JPG, PNG o GIF de hasta 8 MB, mejor apaisada.</span>
-            </div>
-            <div class="playmat-preview" [class.empty]="!playmat.url()" [style.background-image]="playmat.url() ? 'url(' + playmat.url() + ')' : null" aria-label="Vista previa del tapete">
-              @if (!playmat.url()) {
-                <span>{{ playmat.loaded() ? 'Sin tapete' : 'Cargando…' }}</span>
-              }
-            </div>
-            <input #mat type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadPlaymat(mat)" />
-            <eras-stack direction="row" [gap]="2" wrap>
-              <button erasButton size="sm" type="button" [loading]="playmat.saving()" [disabled]="playmat.saving()" (click)="mat.click()">
-                <eras-icon name="image" /> {{ playmat.url() ? 'Cambiar' : 'Subir' }}
-              </button>
-              @if (playmat.url()) {
-                <button erasButton size="sm" variant="secondary" type="button" [disabled]="playmat.saving()" (click)="removePlaymat()">Quitar</button>
-              }
-            </eras-stack>
-            @if (playmatFeedback(); as f) {
-              <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
-            }
-          </section>
-
-          <!-- Kept on this device (the theme is not part of the account on the server) -->
-          <section class="setting">
-            <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
-          </section>
-        </eras-stack>
+    <!-- Your preferences (the site's look and the table's, your playmat; kept with your account) beside your account -->
+    <div class="profile">
+      <eras-card padding="md" class="preferences">
+        <eras-section-header title="Preferencias" />
+        <eras-game-preferences-panel withInterface withPlaymat />
       </eras-card>
 
-      <eras-card padding="md">
+      <eras-card padding="md" class="account">
         <eras-stack [gap]="4">
           <eras-section-header title="Cuenta" />
           @if (canEditAccount()) {

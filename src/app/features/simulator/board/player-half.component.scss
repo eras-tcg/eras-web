@@ -92,9 +92,9 @@ eras-player-plate {
 // As big as the zone allows: the whole pile (the card and a strip of each other life) fits under its label
 .life-stack {
   --life-card: min(
-    calc(7 * var(--bu, 1rem)),
+    calc(9 * var(--bu, 1rem)),
     calc((100cqw - 0.5rem) * 63 / 88),
-    calc((100cqh - 1.75rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
+    calc((100cqh - 0.5rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
   );
 
   display: flex;
@@ -147,9 +147,18 @@ eras-player-plate {
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
-  overflow: hidden;
+  // Only sideways (a crowded line slides past its edges): the values floating over a card (its strength) go over the
+  // field's top and bottom edges instead of being cut
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
+// A card of the hand dragged with a finger over your table (sim-card adds the class)
+.field.touch-over {
+  border-color: var(--color-primary);
+  border-style: solid;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent), 0 0 18px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
 
 .field.drop-active {
   border-color: var(--color-primary);
@@ -175,6 +184,13 @@ eras-player-plate {
   gap: var(--space-2);
   min-inline-size: 0;
   transition: transform var(--duration-fast) var(--easing-standard);
+  // A sideways finger slides the row (LineScrollDirective); up and down stay the page's
+  touch-action: pan-y;
+}
+
+// Dragged sideways: it follows the pointer at once
+.line-cards.dragging {
+  transition: none;
 }
 
 // The arrows of a crowded line: at its ends, over the cards
@@ -210,7 +226,8 @@ eras-player-plate {
 .line-label {
   position: absolute;
   inset-block-start: var(--space-1);
-  inset-inline-start: var(--space-2);
+  // Clear of the field's rounded corner
+  inset-inline-start: var(--space-4);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -282,14 +299,19 @@ eras-player-plate {
   background: none;
   padding: 0;
   overflow: visible;
+  // Every finger move on the hand is the game's: sideways it turns (swipeMove), upwards a card is dragged to the table
+  touch-action: none;
 }
 
 .hand-cards {
+  // "Altura de la mano" (the game's preferences, --hand-lift 0–1): how much higher your hand stands, up to 60% of a card
+  --hand-raise: calc(var(--hand-lift, 0.4) * var(--hand-card) * 0.6);
+
   position: absolute;
   inset-inline: 0;
   // A little up (over the edge of the Retaguardia): more of each card shows. The window reaches --hand-reach above
   // and below the hand, so it is measured from there
-  inset-block-start: calc(var(--hand-reach) - 1.5rem);
+  inset-block-start: calc(var(--hand-reach) - 1.5rem - var(--hand-raise));
   display: flex;
   justify-content: center;
   // Turned like a wheel: the cards slide along with the fan, so the one that stands up comes to the middle
@@ -333,32 +355,34 @@ eras-player-plate {
   }
 
   // The rival's lies at the far edge, which the distance shrinks by 1 + sin / (depth · cos − sin): it grows back.
-  // Coming forward there also lifts it on the screen: it goes down as much again, off the table's edge
+  // Coming forward there also lifts it on the screen: it goes down as much again, off the table's edge. Going down
+  // it would sink its lower edge under the nearer table (the lives would cover it): 2.5rem towards you keeps it whole
   :host(.tilted.opponent) eras-player-plate {
-    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateY(calc(var(--space-4) * 2.5)) translateZ(1rem)
+    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateY(calc(var(--space-4) * 2.5)) translateZ(2.5rem)
       scale(calc(1 + sin(var(--tilt, 0deg)) / (var(--depth, 2.2) * cos(var(--tilt, 0deg)) - sin(var(--tilt, 0deg)))));
   }
 }
 
+// "Altura de la mano" applies to both hands: the rival's comes down into the table as much
 :host(.opponent) .hand-cards {
-  inset-block: auto calc(var(--hand-reach) - 1.5rem);
+  inset-block: auto calc(var(--hand-reach) - 1.5rem - var(--hand-raise));
   align-items: flex-end;
 }
 
-// A slight fan: the cards turn and drop towards the ends, overlapping only a little
+// A slight fan: the cards turn and drop towards the ends, overlapping only a little (gentle: the ends still show)
 .in-hand {
   --game-card-width: var(--hand-card);
 
   flex: none;
   margin-inline: calc(var(--hand-card) * -0.08);
   transform-origin: 50% 100%;
-  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * 0.18rem)) rotate(calc(var(--fan) * 3deg));
+  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * 0.1rem)) rotate(calc(var(--fan) * 2deg));
   transition: transform var(--duration-fast) var(--easing-standard);
 }
 
 :host(.opponent) .in-hand {
   transform-origin: 50% 0;
-  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * -0.18rem)) rotate(calc(var(--fan) * -3deg));
+  transform: translateY(calc(abs(var(--fan)) * abs(var(--fan)) * -0.1rem)) rotate(calc(var(--fan) * -2deg));
 }
 
 // The rival's cards face you upside down: the edge that shows is their top (the art), as across a real table
@@ -402,26 +426,8 @@ eras-player-plate {
 :host(:not(.opponent)) .in-hand.raised,
 :host(:not(.opponent)) .in-hand:has(:focus-visible) {
   z-index: 2;
-  transform: translateY(calc(var(--hand-peek) * -1)) rotate(0deg);
-}
-
-// Turning a big hand: round buttons at its ends, over the cards
-.hand-turn {
-  position: absolute;
-  inset-block-start: calc(var(--hand-peek) / 2 - 2.75rem);
-  z-index: 3;
-}
-
-.hand-turn.start {
-  inset-inline-start: var(--space-1);
-}
-
-.hand-turn.end {
-  inset-inline-end: var(--space-1);
-}
-
-:host(.opponent) .hand-turn {
-  inset-block: auto calc(var(--hand-peek) / 2 - 2.75rem);
+  // The card rises what the hand still hides of it: the higher the hand stands, the less it rises
+  transform: translateY(calc(max(0px, var(--hand-peek) - var(--hand-raise)) * -1)) rotate(0deg);
 }
 
 .hand-cards:empty::after {
@@ -460,20 +466,24 @@ eras-player-plate {
 // Under my deck: the switches of the game (optional effects…)
 .pile-controls {
   grid-area: controls;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
+  // Two halves of its place, however low the Retaguardia is: the buttons never go past it
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
   min-inline-size: 0;
+  min-block-size: 0;
+  container-type: size;
 }
 
+// Big buttons with only their icon, one over the other, filling the place under the deck (their words stay for screen
+// readers, and in the tooltip)
 .optional-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  min-block-size: 0;
+  padding: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -481,10 +491,20 @@ eras-player-plate {
   font-size: var(--font-size-xs);
   cursor: pointer;
 
+  // Big enough not to get lost in the button (and never taller than it)
   eras-icon {
     flex: none;
-    inline-size: 0.875rem;
-    block-size: 0.875rem;
+    inline-size: min(2.25rem, 30cqh);
+    block-size: min(2.25rem, 30cqh);
+  }
+
+  span {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   &.off {
@@ -508,8 +528,12 @@ eras-player-plate {
   container-type: size;
 }
 
+// The pile's card as big as its zone allows with its edge under it (up to 16px; the rival's too: its card's face is
+// turned, not the card), the two together centered in the zone: the card rises half its edge
 .pile eras-game-card {
-  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem) * 63 / 88));
+  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 0.5rem - 16px) * 63 / 88));
+
+  translate: 0 calc(var(--edge, 0px) * -0.5);
 }
 
 @media (max-width: 48rem) {

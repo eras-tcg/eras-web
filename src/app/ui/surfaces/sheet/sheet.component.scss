@@ -25,14 +25,28 @@
   --sheet-width: 64rem;
 }
 
-// Lowered: only the header stays in view, and only it takes clicks
+// Lowered: only its arrow stays at the bottom, the same round button in the same place as when it is raised (the
+// sheet keeps its width and header, unseen); only the arrow takes clicks
 :host(.collapsed) {
-  transform: translateY(calc(100% - 3.5rem));
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  animation: none;
   pointer-events: none;
 }
 
-:host(.collapsed) .header {
+:host(.collapsed) .heading,
+:host(.collapsed) .header > :not(.toggle) {
+  visibility: hidden;
+}
+
+:host(.collapsed) .content {
+  display: none;
+}
+
+:host(.collapsed) .toggle {
   pointer-events: auto;
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes sheet-up {
@@ -53,6 +67,8 @@
   display: inline-grid;
   flex: none;
   place-items: center;
+  // No padding of the browser's: the arrow at its exact center
+  padding: 0;
   inline-size: 2rem;
   block-size: 2rem;
   border: var(--border-width) solid var(--color-border);
@@ -136,6 +152,26 @@
 
 // Phones in landscape (little height): tighter, so the choice itself (its cards) keeps the room
 @media (orientation: landscape) and (max-height: 30rem) {
+  // Narrower and lower, whatever its size: the table stays in sight around it
+  :host,
+  :host(.size-md),
+  :host(.size-xl) {
+    --sheet-width: min(34rem, 64vw);
+
+    max-block-size: var(--sheet-max-block-size, 62vh);
+  }
+
+  // As tall as the title's line: the arrow centered on it
+  .toggle {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+  }
+
+  .toggle eras-icon {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
   .header {
     padding: var(--space-1) var(--space-3);
   }
@@ -157,4 +193,11 @@
   .footer {
     padding: var(--space-1) var(--space-3) var(--space-2);
   }
+}
+
+// Fit: the body takes the room left and never scrolls (what it holds sizes itself to it)
+:host(.fit) .body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: hidden;
 }

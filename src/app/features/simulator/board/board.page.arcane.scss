@@ -1,0 +1,118 @@
+// "Estilo de la mesa: arcano" (the game's preferences): a dark stone table with its edges in shadow, gold engravings
+// and cut gems. The colors are the table's own, the same in both themes. The halves and the counters read the
+// --arcane-* colors (see player-half, shared-bar, phase-bar and resource-pips)
+
+// The arcane colors, on the whole board in a game (the table, the sidebar, the menu button and the space around them):
+// what sits there reads as on stone in both themes; menus and dialogs float outside and keep the theme
+@mixin arcane-colors {
+  --arcane-gold: #c9a24b;
+  --arcane-gold-light: #f2e3bd;
+  --arcane-gold-soft: rgb(201 162 75 / 28%);
+  --arcane-stone: #1a1e25;
+  --arcane-stone-dark: #0c0e12;
+  --arcane-ally: #22c55e;
+  --arcane-rival: #e5484d;
+  --color-surface: #1c1f26;
+  --color-surface-muted: #262a33;
+  --color-border: rgb(201 162 75 / 28%);
+  --color-text: #e8e3d6;
+  --color-text-muted: #b9b2a2;
+  --color-primary: #c9a24b;
+  --color-on-primary: #17140f;
+  color-scheme: dark;
+}
+
+:host(.arcane) {
+  @include arcane-colors;
+
+  // The stone over the whole board, edge to edge (the table on it has no background of its own: no darker bands
+  // around it): faint diagonal grain, lit in the middle, in shadow towards the edges
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgb(0 0 0 / 55%) 100%),
+    repeating-linear-gradient(115deg, rgb(255 255 255 / 2%) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #1d2129, #14171d 50%, #1d2129);
+}
+
+.table.arcane {
+  @include arcane-colors;
+
+  background: none;
+  color: #e8e3d6;
+}
+
+// The middle strip without its frame: the turn and the phase are gold-edged plaques over the stone
+.table.arcane .strip {
+  border: 0;
+  background: none;
+}
+
+.table.arcane .strip .turn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.2rem var(--space-4);
+  border: 0;
+  // The plaque's own shape (below): none of the clean style's rounded pill under it
+  border-radius: 0;
+  background: linear-gradient(180deg, #2a2620, #17140f);
+  backdrop-filter: none;
+  box-shadow: none;
+  color: var(--arcane-gold-light);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  // A plaque with cut corners, edged in gold (the outline is the plaque's own drop shadow)
+  clip-path: polygon(0.6rem 0, calc(100% - 0.6rem) 0, 100% 50%, calc(100% - 0.6rem) 100%, 0.6rem 100%, 0 50%);
+  filter: drop-shadow(0 0 0.5px var(--arcane-gold)) drop-shadow(0 0 0.5px var(--arcane-gold));
+}
+
+// The plaque fills the strip's side with the clean style's letters (the display face is too wide for it), so the turn
+// takes the same room in both styles
+@media all {
+  .table.arcane .strip .turn {
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+    font-family: inherit;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.04em;
+  }
+}
+
+// Phones in landscape: the plaque as low as the strip there
+@media (orientation: landscape) and (max-height: 30rem) {
+  .table.arcane .strip .turn {
+    padding-block: 0.2rem;
+  }
+}
+
+.table.arcane .strip .turn::before {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 1px;
+  background: var(--arcane-rival);
+  box-shadow: 0 0 6px var(--arcane-rival);
+  transform: rotate(45deg);
+  content: '';
+}
+
+.table.arcane .strip .turn.my-turn::before {
+  background: var(--arcane-ally);
+  box-shadow: 0 0 6px var(--arcane-ally);
+}
+
+// Menú de partida (beside the table, not in it): a gold-ringed stone button
+:host(.arcane) .game-menu-btn {
+  border: 1px solid var(--arcane-gold, #c9a24b);
+  background: linear-gradient(180deg, #2a2620, #17140f);
+  box-shadow: 0 0 10px rgb(201 162 75 / 30%);
+  color: #f2e3bd;
+}
+
+// The sidebar: stone, with a gold hairline towards the table
+:host(.arcane) .sidebar {
+  border-inline-start-color: var(--arcane-gold-soft);
+  background: linear-gradient(180deg, #1a1d23, #0f1115);
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 4%);
+}

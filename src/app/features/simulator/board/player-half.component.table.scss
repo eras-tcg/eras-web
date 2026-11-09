@@ -42,7 +42,8 @@
 // the Descarte as the Retaguardia, the lives' zone down to the Retaguardia's edge (its lives centered in it); the
 // hand's strip under them holds the player's plate
 @media (min-width: 48.0625rem) {
-  .piles {
+  // (.piles twice: as specific as the half's own rule, which loads after this file)
+  .piles.piles {
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) var(--hand-peek);
     grid-template-areas:
       'deck tributes'
@@ -50,7 +51,7 @@
       '. .';
   }
 
-  :host(.opponent) .piles {
+  :host(.opponent) .piles.piles {
     grid-template-rows: var(--hand-peek) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       '. .'
@@ -58,23 +59,27 @@
       'deck tributes';
   }
 
-  :host(.opponent.mirrored) .piles {
+  :host(.opponent.mirrored) .piles.piles {
     grid-template-areas:
       '. .'
       'discard .'
       'tributes deck';
   }
 
-  .lives {
+  // One column as wide as the side column (not as its widest child: the gem marker with − and + is wider than a
+  // phone's side column, and pushed the lives and the marker over the field)
+  // (.lives twice, as .piles: the half's own rule loads after this file)
+  .lives.lives {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) var(--hand-peek);
   }
 
-  .lives eras-player-plate {
+  .lives.lives eras-player-plate {
     align-self: end;
   }
 
-  :host(.opponent) .lives {
+  :host(.opponent) .lives.lives {
     grid-template-rows: var(--hand-peek) minmax(0, 1fr) auto;
   }
 

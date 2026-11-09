@@ -221,3 +221,90 @@
   }
 }
 
+// "Opciones" folds the quick filters only on phones in landscape; elsewhere they are always shown
+.search-options {
+  display: grid;
+  gap: var(--space-3);
+}
+
+// Breaking the extra copies belongs to the collection: under its filter, on the right
+.break-extras {
+  justify-self: end;
+}
+
+.options-toggle {
+  display: none;
+}
+
+// Phones in landscape (after the narrow rules, which it overrides): one screen high again, the three panes side by
+// side (see eras-workbench), smaller cards so more fit, and the search's quick filters folded behind "Opciones"
+@media (orientation: landscape) and (max-height: 30rem) {
+  .builder.builder {
+    --search-column: 4rem;
+    --deck-column: 4.75rem;
+    --copy-column: 3.25rem;
+
+    block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
+  }
+
+  .deck-column {
+    block-size: 100%;
+  }
+
+  .deck-scroll {
+    overflow: auto;
+  }
+
+  .metrics-drawer {
+    margin-inline: calc(var(--space-2) * -1);
+    margin-block-end: calc(var(--space-2) * -1);
+  }
+
+  // Open metrics take at most half the column, scrolling inside: the deck's list stays in sight
+  .drawer-body {
+    max-block-size: 40dvh;
+    overflow: auto;
+    padding-inline: var(--space-2);
+  }
+
+  .drawer-handle {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .deck-name {
+    font-size: var(--font-size-md);
+  }
+
+  .deck-bar {
+    gap: var(--space-1);
+  }
+
+  .deck-bar strong {
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .options-toggle {
+    display: inline-flex;
+  }
+
+  .search-options {
+    gap: var(--space-2);
+  }
+
+  .search-options:not(.open) {
+    display: none;
+  }
+
+  // The deck's corner buttons, smaller, so they fit on the smaller cards
+  .entry-actions button {
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+  }
+
+  .entry-actions eras-icon {
+    inline-size: 0.8rem;
+    block-size: 0.8rem;
+  }
+}
+

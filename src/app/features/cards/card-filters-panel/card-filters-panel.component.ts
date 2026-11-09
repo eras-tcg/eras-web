@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, model, output } from '@angular/core';
 import { CardFilters, CardSortKey, NumberRange } from '@data/cards/card-filters';
 import { FilterOptions } from '@data/cards/card-rules';
 import { CARD_TYPE_LABELS, COLOR_LABELS, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
@@ -15,7 +15,11 @@ import { CardView, SORT_OPTIONS } from '../card-view';
 type RangeKey = 'cost' | 'level' | 'strength' | 'specialCost';
 type ListKey = 'classes' | 'keywords' | 'tags' | 'rarities';
 
-/** Sidebar with every card filter plus the grid view options. Stateless: emits the new values. */
+/**
+ * Sidebar with every card filter plus the grid view options and the catalog's marks ("Mostrar colección" first,
+ * "Sin programar" and "Sin metadatos" with the view's preferences at the end). Stateless: emits the new values; the
+ * marks are two-way (`model`), the page remembers them on the device.
+ */
 @Component({
   selector: 'eras-card-filters-panel',
   imports: [StackComponent, FormFieldComponent, MultiselectComponent, RangeSliderComponent, ButtonComponent, IconComponent, ToggleGroupComponent],
@@ -27,6 +31,15 @@ export class CardFiltersPanelComponent {
   readonly options = input.required<FilterOptions>();
   readonly editions = input.required<readonly Edition[]>();
   readonly view = input.required<CardView>();
+  /** "Sin metadatos" is for card editors only. */
+  readonly canManage = input(false, { transform: booleanAttribute });
+
+  /** Each card in the player's finest finish; in grey the ones they lack. */
+  readonly showCollection = model(false);
+  /** Marks the cards the simulator cannot play yet. */
+  readonly showUnprogrammed = model(false);
+  /** Marks the cards without metadata (editors). */
+  readonly showNoMeta = model(false);
 
   readonly filtersChange = output<CardFilters>();
   readonly viewChange = output<CardView>();

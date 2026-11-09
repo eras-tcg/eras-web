@@ -1,98 +1,77 @@
-// The hero on top; under it the games (wide) beside the settings and the account. Narrow screens: one column, the
-// settings before the games
-.profile {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+// The hero on top; under it the preferences (wide) beside the account. All within one screen: the preferences card
+// takes the height left and its sections fit in it; the account scrolls inside its card when the password is open
+.layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: var(--space-4);
-  align-items: start;
-  margin-block-start: var(--space-4);
+  min-block-size: 0;
 }
 
-.history {
-  display: block;
+.profile {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+  gap: var(--space-4);
+  min-block-size: 0;
+}
+
+.preferences,
+.account {
+  min-block-size: 0;
   min-inline-size: 0;
 }
 
-.side {
+.preferences {
+  // The panel fills the card below its title (its list grows from nothing to what is left)
+  --prefs-height: 0px;
+
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+
+  eras-game-preferences-panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+  }
 }
 
+.account {
+  overflow-y: auto;
+}
+
+// Narrow screens: one column, each card at its own height (the preferences' list keeps a fixed one)
 @media (max-width: 56rem) {
+  eras-page.fill {
+    block-size: auto;
+  }
+
+  .layout,
+  .profile {
+    flex: none;
+  }
+
   .profile {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .side {
-    order: -1;
+  .preferences {
+    --prefs-height: min(27rem, calc(100dvh - 14rem));
+
+    eras-game-preferences-panel {
+      display: block;
+    }
   }
-}
 
-// One setting of the card: its name and hint, then what it shows and its buttons
-.setting {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.setting + .setting {
-  padding-block-start: var(--space-4);
-  border-block-start: var(--border-width) solid var(--color-border);
-}
-
-.setting-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-3);
-
-  h3 {
-    margin: 0;
-    font-family: inherit;
-    letter-spacing: normal;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+  .account {
+    overflow: visible;
   }
-}
-
-.setting-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-
-  eras-avatar {
-    --avatar-size: 3rem;
-  }
-}
-
-.hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs, 0.75rem);
 }
 
 .start {
   align-self: flex-start;
-}
-
-// The playmat as it lies under the table's half: wide, darkened a little as on the table
-.playmat-preview {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 12 / 5;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: center / cover no-repeat;
-  box-shadow: inset 0 0 0 999px rgb(0 0 0 / 25%);
-}
-
-.playmat-preview.empty {
-  border-style: dashed;
-  box-shadow: none;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
 }
 
 // The password, folded under the account until it is needed

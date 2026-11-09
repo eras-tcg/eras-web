@@ -1,3 +1,4 @@
+import { PreferenceSync } from '@core/preferences/preference-sync';
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
@@ -63,6 +64,8 @@ export class App {
   private readonly access = inject(ServerAccess);
   private readonly auth = inject(AuthService);
   private readonly syncReport = inject(SyncReportService);
+  /** The player's preferences kept with their account (read on signing in, saved as they change). */
+  private readonly preferences = inject(PreferenceSync);
 
   constructor() {
     // The browser checks (and wakes) the server now; the installed app only once the player connects

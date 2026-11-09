@@ -19,7 +19,6 @@ import { PageComponent } from '@ui/layout/page/page.component';
 import { SplitComponent } from '@ui/layout/split/split.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ChipComponent } from '@ui/primitives/chip/chip.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -43,14 +42,12 @@ const PAGE_SIZE = 40;
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
-    ChipComponent,
     IconComponent,
     SpinnerComponent,
     InViewDirective,
   ],
   templateUrl: './cards.page.html',
   styles: `
-    .marks-label { color: var(--color-text-muted); font-size: var(--font-size-sm); }
     .lacking { filter: grayscale(1); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,8 +65,14 @@ export class CardsPage {
 
   protected readonly filters = signal<CardFilters>(EMPTY_FILTERS);
   private readonly wide = typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches;
+  // Phones in landscape: little height, so smaller cards (six or seven columns, on the size slider's steps) to see
+  // more than one row
+  private readonly phoneLandscape =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
   // Narrow screens start with two columns instead of one huge card
-  protected readonly view = signal<CardView>(this.wide ? DEFAULT_VIEW : { ...DEFAULT_VIEW, size: 150 });
+  protected readonly view = signal<CardView>(
+    this.phoneLandscape ? { ...DEFAULT_VIEW, size: 110 } : this.wide ? DEFAULT_VIEW : { ...DEFAULT_VIEW, size: 150 },
+  );
   protected readonly showFilters = signal(this.wide);
   protected readonly renderCount = signal(PAGE_SIZE);
 

@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { ScreenLink } from '@core/navigation/screens';
 import { apiErrorMessage } from '@core/http/api-error';
@@ -95,6 +95,31 @@ export class DeckViewPage {
   protected readonly typeLabel = (type: string) => TYPE_LABELS[type] ?? type;
   protected readonly editQuery = computed(() => deckBuilderQuery(this.id()));
   protected readonly copyQuery = computed(() => deckBuilderQuery(this.id(), true));
+  private readonly router = inject(Router);
+  protected readonly deleting = signal(false);
+
+  /** "Borrar" (the owner): after confirming, the deck is deleted and the player goes back to their decks. */
+  protected async remove(): Promise<void> {
+    const deck = this.deck();
+    if (!deck) return;
+    const ok = await this.modal.confirm({
+      title: 'Eliminar mazo',
+      message: `¿Eliminar "${deck.deckName}"? No se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (!ok) return;
+    this.deleting.set(true);
+    this.error.set(null);
+    try {
+      await this.decks.delete(deck.id);
+      void this.router.navigateByUrl('/my-decks');
+    } catch (e) {
+      this.error.set(apiErrorMessage(e, 'No se pudo eliminar el mazo'));
+    } finally {
+      this.deleting.set(false);
+    }
+  }
 
   constructor() {
     void this.cards.load();

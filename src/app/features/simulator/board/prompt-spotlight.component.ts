@@ -146,6 +146,9 @@ export class PromptSpotlightComponent {
       copy.style.setProperty('--game-card-width', getComputedStyle(element).getPropertyValue('--game-card-width'));
       copy.style.width = `${width}px`;
       copy.style.height = `${height}px`;
+      // Its chain marks (beside the card, in its sim card) go on the copy too: the chain stays readable on it
+      const marks = element.parentElement?.querySelector(':scope > eras-chain-marks');
+      if (marks) copy.append(marks.cloneNode(true));
       // "Mesa en perspectiva": drawn as the table shows it, with its camera (leaning back, turned, the far side smaller)
       const plane = tablePlane(this.document);
       if (plane?.holds(element)) {

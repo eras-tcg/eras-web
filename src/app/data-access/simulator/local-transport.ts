@@ -73,6 +73,11 @@ export class LocalEngine {
     this.worker?.postMessage({ kind: 'action', id, body });
   }
 
+  /** The bot of game `id` waits (`held`) or goes on. */
+  hold(id: number, held: boolean): void {
+    this.worker?.postMessage({ kind: 'hold', id, held });
+  }
+
   dispose(id: number): void {
     this.worker?.postMessage({ kind: 'dispose', id });
   }
@@ -132,6 +137,11 @@ export class LocalTransport implements GameTransport {
     if (this.game === null) return false;
     this.engine.action(this.game, body);
     return true;
+  }
+
+  /** The bot waits while `held` (the player looks at a menu), then goes on. */
+  holdBots(held: boolean): void {
+    if (this.game !== null) this.engine.hold(this.game, held);
   }
 
   close(): void {

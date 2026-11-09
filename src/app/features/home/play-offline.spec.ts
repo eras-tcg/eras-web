@@ -4,22 +4,22 @@ import { itemNeedsServer } from './hub-menu.component';
 import { ESTIMATED_PICTURE_BYTES, estimateBytes } from '@data/simulator/card-images';
 
 describe('playMenu', () => {
-  it('with the server: its modes, then Modo solo sin conexión', () => {
-    expect(playMenu({ cutOff: false, offline: false }).map((i) => i.id)).toEqual(['online', 'bot', 'tests', 'tutorial', 'offline']);
+  it('with the server: Modo solo and the Sala de pruebas of the server', () => {
+    expect(playMenu({ cutOff: false, offline: false }).map((i) => i.id)).toEqual(['online', 'bot', 'tests', 'tutorial']);
   });
 
-  it('without the connection: Modo solo sin conexión first, the server modes left out, the tutorial kept', () => {
-    expect(playMenu({ cutOff: true, offline: true }).map((i) => i.id)).toEqual(['offline', 'tutorial']);
+  it('without the connection: both solo modes in this browser, Online left out, the tutorial kept', () => {
+    expect(playMenu({ cutOff: true, offline: true }).map((i) => i.id)).toEqual(['offline', 'tests-offline', 'tutorial']);
   });
 
-  it('the installed app not connected yet: Modo solo sin conexión first, the server modes marked (opening one connects)', () => {
+  it('the installed app not connected: both solo modes in this browser, Online marked (opening it connects)', () => {
     const menu = playMenu({ cutOff: false, offline: false, local: true });
-    expect(menu.map((i) => i.id)).toEqual(['offline', 'online', 'bot', 'tests', 'tutorial']);
-    expect(menu.filter(itemNeedsServer).map((i) => i.id)).toEqual(['online', 'bot', 'tests']);
+    expect(menu.map((i) => i.id)).toEqual(['online', 'offline', 'tests-offline', 'tutorial']);
+    expect(menu.filter(itemNeedsServer).map((i) => i.id)).toEqual(['online']);
   });
 
-  it('the server not answering (but a connection): first offline, the rest still tried', () => {
-    expect(playMenu({ cutOff: true, offline: false }).map((i) => i.id)).toEqual(['offline', 'online', 'bot', 'tests', 'tutorial']);
+  it('the server not answering (but a connection): both solo modes in this browser, Online still tried', () => {
+    expect(playMenu({ cutOff: true, offline: false }).map((i) => i.id)).toEqual(['online', 'offline', 'tests-offline', 'tutorial']);
   });
 });
 

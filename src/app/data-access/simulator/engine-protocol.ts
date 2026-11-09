@@ -33,6 +33,8 @@ export interface LocalMatchConfig {
   /** Epoch millis written on every history line; null: the clock's. */
   time?: number | null;
   botClock?: 'ticks' | 'system';
+  /** A test room ("Sala de pruebas" without the connection): the player plays both sides, no bot seated. */
+  editor?: boolean;
 }
 
 /** Where the worker fetches what the engine needs before the first game (absolute URLs). */
@@ -50,7 +52,9 @@ export type ToEngine =
   /** The player's action: the body the board publishes online to /app/room/{id}/action. */
   | { kind: 'action'; id: number; body: string }
   /** The game is over for the page: the bot stops. */
-  | { kind: 'dispose'; id: number };
+  | { kind: 'dispose'; id: number }
+  /** The bot waits (`held`: the player looks at a menu) or goes on. */
+  | { kind: 'hold'; id: number; held: boolean };
 
 /** One action of the player, as the board sent it, and the bot's moves after it before the next action. */
 export interface RecordedStep {

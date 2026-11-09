@@ -1,17 +1,26 @@
 import { DestroyRef, Directive, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { BoardAnimations } from './board-animations';
 
+/** A sideways move past this many pixels slides the row (less is a tap). */
+const DRAG_PX = 6;
+
 /**
- * A row of cards wider than its place (a crowded line of the field): it slides sideways, a card at a time, with the
- * arrows or the wheel. The cards keep their size; what is past the ends is hidden by the field. While an animation
- * plays the row stays where it is (a card flying to it must land where it was aimed).
+ * A row of cards wider than its place (a crowded line of the field): it slides sideways with the arrows, the wheel, or
+ * dragging it with a finger or the mouse (as the hand turns). The cards keep their size; what is past the ends is hidden
+ * by the field. While an animation plays the row stays where it is (a card flying to it must land where it was aimed).
  */
 @Directive({
   selector: '[erasLineScroll]',
   exportAs: 'erasLineScroll',
   host: {
     '[style.transform]': 'transform()',
+    '[class.dragging]': 'dragging()',
     '(wheel)': 'wheel($event)',
+    '(pointerdown)': 'down($event)',
+    '(pointermove)': 'move($event)',
+    '(pointerup)': 'up()',
+    '(pointercancel)': 'up()',
+    '(lostpointercapture)': 'lost($event)',
   },
 })
 export class LineScrollDirective {
@@ -29,6 +38,13 @@ export class LineScrollDirective {
   readonly canStart = computed(() => this.shift() > 1);
   readonly canEnd = computed(() => this.shift() < this.overflow() - 1);
   protected readonly transform = computed(() => (this.shift() ? `translateX(${-this.shift()}px)` : null));
+  /** Being dragged sideways (no slide animation: it follows the pointer). */
+  protected readonly dragging = signal(false);
+
+  /** A press on the row: where it began, the slide then, and the latest position (null: no press). */
+  private press: { id: number; x0: number; y0: number; shift0: number; x: number; y: number } | null = null;
+  /** The last press slid the row: its click is not a tap on a card. */
+  private slid = false;
 
   constructor() {
     const resize = new ResizeObserver(() => this.measure());
@@ -42,9 +58,30 @@ export class LineScrollDirective {
       for (const child of Array.from(this.el.children)) resize.observe(child);
       this.measure();
     });
+    // A slide is not a tap on the card under the pointer (captured before the card)
+    const click = (e: Event) => {
+      if (!this.slid) return;
+      this.slid = false;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    // With the mouse a card of the field is dragged to attack; dragging it sideways slides the row instead (Chrome gives
+    // dragstart the press's own position: measured from the last pointer move)
+    const dragstart = (e: Event) => {
+      const p = this.press;
+      if (!p || !this.scrolls()) return;
+      const dx = Math.abs(p.x - p.x0);
+      if (dx < 4 || dx <= Math.abs(p.y - p.y0)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    this.el.addEventListener('click', click, true);
+    this.el.addEventListener('dragstart', dragstart, true);
     inject(DestroyRef).onDestroy(() => {
       resize.disconnect();
       cards.disconnect();
+      this.el.removeEventListener('click', click, true);
+      this.el.removeEventListener('dragstart', dragstart, true);
     });
   }
 
@@ -60,6 +97,39 @@ export class LineScrollDirective {
     if (!delta) return;
     event.preventDefault();
     this.by(delta > 0 ? 1 : -1);
+  }
+
+  /** A finger, a pen or the mouse's main button on a crowded row: a sideways drag may slide it. */
+  protected down(e: PointerEvent): void {
+    if ((e.pointerType === 'mouse' && e.button !== 0) || !this.scrolls() || this.locked()) return;
+    this.press = { id: e.pointerId, x0: e.clientX, y0: e.clientY, shift0: this.shift(), x: e.clientX, y: e.clientY };
+    this.slid = false;
+  }
+
+  /** Sideways (more than up or down): the row follows the pointer; the cards past an end come in. */
+  protected move(e: PointerEvent): void {
+    const p = this.press;
+    if (!p || e.pointerId !== p.id) return;
+    p.x = e.clientX;
+    p.y = e.clientY;
+    const dx = e.clientX - p.x0;
+    if (!this.dragging()) {
+      if (Math.abs(dx) < DRAG_PX || Math.abs(dx) <= Math.abs(e.clientY - p.y0) || this.locked()) return;
+      this.dragging.set(true);
+      this.el.setPointerCapture(e.pointerId);
+    }
+    this.slid = true;
+    this.wanted.set(Math.max(0, Math.min(this.overflow(), p.shift0 - dx)));
+  }
+
+  /** The row lost the pointer (not a card under it handing it over to the row as it starts sliding). */
+  protected lost(e: PointerEvent): void {
+    if (e.target === this.el) this.up();
+  }
+
+  protected up(): void {
+    this.press = null;
+    this.dragging.set(false);
   }
 
   /** One card and the gap after it. */

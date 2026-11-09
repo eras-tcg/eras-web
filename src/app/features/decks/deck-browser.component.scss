@@ -112,3 +112,52 @@
     flex-direction: row;
   }
 }
+
+/* Phones in landscape (after the narrow rules, which it overrides): the height is what is short, so the filters go
+   back to the side, folded into a thin rail, and the grid gets the whole height */
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  :host(.folded) {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .filters {
+    max-block-size: none;
+  }
+
+  .rail {
+    flex-direction: column;
+    padding: var(--space-1);
+  }
+
+  .filters-bar {
+    padding: var(--space-2);
+  }
+
+  .filters-body {
+    padding: var(--space-2);
+  }
+
+  // Smaller covers: several rows of the list in sight instead of one
+  .decks {
+    --cover-column: 5.5rem;
+
+    gap: var(--space-2);
+  }
+
+  .decks-head {
+    min-block-size: 1.5rem;
+    font-size: var(--font-size-sm);
+  }
+
+  .note {
+    margin-block-end: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+}

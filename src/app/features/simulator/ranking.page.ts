@@ -1,39 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
-import { ChallengerRow, RANK_DIVISIONS, RANK_LABELS, RankTier, rankTitle } from '@data/ranks/rank.model';
+import { ChallengerRow, rankTitle } from '@data/ranks/rank.model';
 import { RanksStore } from '@data/ranks/ranks.store';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
 import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
+import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubScreenComponent } from '../home/hub-screen.component';
 
-/** How each league is played, for the guide (low to high). */
-const GUIDE: { tiers: RankTier[]; text: string }[] = [
-  { tiers: ['IRON', 'BRONZE'], text: 'Cada victoria te sube una división. Las derrotas no te bajan: aquí solo se avanza.' },
-  {
-    tiers: ['SILVER', 'GOLD'],
-    text: 'Cada victoria te sube una división y cada derrota te baja una. Al llegar a la liga tienes 2 escudos: en la división 1 cada derrota gasta uno antes de bajarte de liga.',
-  },
-  {
-    tiers: ['PLATINUM', 'DIAMOND'],
-    text: 'Cada victoria te sube una división y cada derrota te baja una; en la división 1 una derrota te baja de liga. En la última división juegas una serie de ascenso: gana 2 de 3 para subir. Si la pierdes, vuelves a la división 4.',
-  },
-  {
-    tiers: ['CHALLENGER'],
-    text: 'Sin divisiones: ganas o pierdes de 10 a 30 puntos por partida según la fuerza de tu rival (más por vencer a uno fuerte). Bajo 0 puntos vuelves a Diamante 4.',
-  },
-];
-
 /**
- * "Clasificación" (in Social): the player's own rank, the Retador board, the most points first (their place, icon,
- * name and points; the player's own row marked), and a guide to how each league is played. Back goes where it was
- * opened from (`from`, else Social).
+ * "Clasificación" (in Social): the player's own rank and the Retador board, the most points first (their place, icon,
+ * name and points; the player's own row marked). Only the board's list scrolls; the guide to the leagues opens from
+ * the info button beside its title. Back goes where it was opened from (`from`, else Social).
  */
 @Component({
   selector: 'eras-ranking-page',
-  imports: [HubScreenComponent, AvatarComponent, RankEmblemComponent, RankProgressComponent, SpinnerComponent, RouterLink],
+  imports: [HubScreenComponent, AvatarComponent, RankEmblemComponent, RankProgressComponent, SpinnerComponent, RouterLink, ButtonComponent, IconComponent],
   template: `
     <eras-hub-screen title="Clasificación" [back]="back()">
       @if (ranks.mine(); as r) {
@@ -53,6 +39,7 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
       <section class="board" aria-labelledby="board-title">
         <h2 id="board-title" class="board-title">
           <eras-rank-emblem tier="CHALLENGER" [size]="22" /> Retadores
+          <button type="button" erasButton variant="secondary" size="sm" class="guide-button" (click)="openGuide()"><eras-icon name="book" /> Guía de ligas</button>
         </h2>
         @if (rows(); as list) {
           <ol class="list">
@@ -71,26 +58,6 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
           <p class="empty">No se pudo cargar la clasificación.</p>
         } @else {
           <eras-spinner />
-        }
-      </section>
-
-      <!-- How the leagues are played -->
-      <section class="guide" aria-labelledby="guide-title">
-        <h2 id="guide-title" class="board-title">Guía de ligas</h2>
-        <p class="intro">Las partidas ranked (Online o Modo solo) mueven tu rango. Cada liga tiene divisiones: empiezas en Hierro 1 y subes de división con cada victoria; al pasar la última, subes de liga.</p>
-        @for (g of guide; track g.text) {
-          <div class="league">
-            <span class="emblems">
-              @for (t of g.tiers; track t) {
-                <eras-rank-emblem [tier]="t" [size]="32" />
-              }
-            </span>
-            <span class="league-text">
-              <strong>{{ namesOf(g.tiers) }}</strong>
-              <span class="muted">{{ divisionsOf(g.tiers[0]) }}</span>
-              <span>{{ g.text }}</span>
-            </span>
-          </div>
         }
       </section>
     </eras-hub-screen>
@@ -128,11 +95,22 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
     .my-place {
       font-weight: var(--font-weight-bold, 700);
     }
+    /* The board takes what is left of the column; only its list scrolls */
     .board {
       display: flex;
-      flex: none;
+      flex: 1;
       flex-direction: column;
       gap: var(--space-2);
+      min-block-size: 0;
+    }
+    .guide-button {
+      margin-inline-start: auto;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+    .guide-button eras-icon {
+      inline-size: 1rem;
+      block-size: 1rem;
     }
     .board-title {
       display: flex;
@@ -147,10 +125,12 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
+      flex: 1;
+      min-block-size: 0;
       margin: 0;
       padding: 0;
-      max-block-size: 22rem;
       overflow-y: auto;
+      overscroll-behavior: none;
       list-style: none;
     }
     .row {
@@ -193,38 +173,7 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
     .points {
       font-weight: var(--font-weight-bold, 700);
     }
-    .guide {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-    .intro,
-    .league-text span {
-      margin: 0;
-      font-size: var(--font-size-sm);
-    }
-    .league {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-3);
-      padding: var(--space-2) var(--space-3);
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
-    }
-    .emblems {
-      display: flex;
-      flex: none;
-      gap: var(--space-1);
-      inline-size: 4.5rem;
-    }
-    .league-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
     .unit,
-    .muted,
     .empty {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
@@ -242,13 +191,13 @@ export class RankingPage {
   protected readonly back = computed(() =>
     this.from() === '/profile' ? { route: '/profile', label: 'tu perfil' } : { route: '/social', label: 'Social' },
   );
-  protected readonly guide = GUIDE;
   protected readonly titleOf = rankTitle;
-  protected namesOf(tiers: RankTier[]): string {
-    return tiers.map((t) => RANK_LABELS[t]).join(' y ');
-  }
-  protected divisionsOf(tier: RankTier): string {
-    return RANK_DIVISIONS[tier] ? `${RANK_DIVISIONS[tier]} divisiones` : 'Por puntos';
+  private readonly modal = inject(ModalService);
+
+  /** "Guía de ligas", in a dialog (its own chunk). */
+  protected async openGuide(): Promise<void> {
+    const { LeagueGuideDialogComponent } = await import('./league-guide-dialog.component');
+    this.modal.open(LeagueGuideDialogComponent, { width: '36rem' });
   }
   protected readonly rows = signal<ChallengerRow[] | null>(null);
   protected readonly failed = signal(false);

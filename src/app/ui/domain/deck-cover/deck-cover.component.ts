@@ -261,6 +261,14 @@ import { IconComponent } from '../../primitives/icon/icon.component';
     .actions:empty {
       display: none;
     }
+    /* Phones in landscape: the lists show smaller covers (several rows in sight), so smaller words on them */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      .info { inset-inline: var(--space-1); inset-block-end: var(--space-1); }
+      .badges { margin-block-end: 2px; }
+      .badge { padding: 0 var(--space-1); font-size: 0.6rem; }
+      .name { font-size: var(--font-size-xs); }
+      .author { font-size: 0.6rem; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.fit]': 'fit()', '[class.size-sm]': "size() === 'sm'", '[class.size-row]': "size() === 'row'" },

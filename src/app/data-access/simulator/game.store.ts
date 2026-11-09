@@ -92,9 +92,10 @@ export class GameStore {
   private readonly siteEditMode = inject(EditModeService);
   /**
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). On in a test room and while the site's edit mode (the navigation bar's switch) is on.
+   * attachments, strength…). On in a test room (also without the connection: its games count for nothing) and while
+   * the site's edit mode (the navigation bar's switch) is on, never in an offline game against the bot.
    */
-  readonly editorMode = computed(() => !this.local() && (this.editorRoom() || this.siteEditMode.active()));
+  readonly editorMode = computed(() => this.editorRoom() || (!this.local() && this.siteEditMode.active()));
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */
@@ -461,6 +462,27 @@ export class GameStore {
   /** Sala de pruebas: the bots wait (true) or play again (false). */
   setPaused(paused: boolean): void {
     this.send('SET_PAUSED', { paused });
+  }
+  /** The bots were paused by [holdBots] (and are resumed when released). */
+  private pausedByHold = false;
+  /**
+   * The bots wait while `held` (the game's menu open): in this browser the engine holds its bot; online, the Sala de
+   * pruebas pauses its bots (if they were not paused already) and resumes them when released.
+   */
+  holdBots(held: boolean): void {
+    if (this.transport?.local) {
+      this.transport.holdBots?.(held);
+      return;
+    }
+    const s = this.state();
+    if (!s?.editor || !(s.editorBot || s.editorSelfBot)) return;
+    if (held && !s.paused) {
+      this.pausedByHold = true;
+      this.setPaused(true);
+    } else if (!held && this.pausedByHold) {
+      this.pausedByHold = false;
+      this.setPaused(false);
+    }
   }
   /** Sala de pruebas: through the time line, `by` moves back (negative) or forth, or to the move `to`. */
   timeStep(step: { by: number } | { to: number }): void {

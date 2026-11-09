@@ -6,7 +6,8 @@ import { RanksStore } from '@data/ranks/ranks.store';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
 import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
-import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubScreenComponent } from '../home/hub-screen.component';
@@ -18,7 +19,7 @@ import { HubScreenComponent } from '../home/hub-screen.component';
  */
 @Component({
   selector: 'eras-ranking-page',
-  imports: [HubScreenComponent, AvatarComponent, RankEmblemComponent, RankProgressComponent, SpinnerComponent, RouterLink, IconButtonComponent],
+  imports: [HubScreenComponent, AvatarComponent, RankEmblemComponent, RankProgressComponent, SpinnerComponent, RouterLink, ButtonComponent, IconComponent],
   template: `
     <eras-hub-screen title="Clasificación" [back]="back()">
       @if (ranks.mine(); as r) {
@@ -38,7 +39,7 @@ import { HubScreenComponent } from '../home/hub-screen.component';
       <section class="board" aria-labelledby="board-title">
         <h2 id="board-title" class="board-title">
           <eras-rank-emblem tier="CHALLENGER" [size]="22" /> Retadores
-          <button type="button" erasIconButton icon="info" size="sm" class="guide-button" title="Guía de ligas" aria-label="Guía de ligas: cómo se sube de rango" (click)="openGuide()"></button>
+          <button type="button" erasButton variant="secondary" size="sm" class="guide-button" (click)="openGuide()"><eras-icon name="book" /> Guía de ligas</button>
         </h2>
         @if (rows(); as list) {
           <ol class="list">
@@ -104,6 +105,12 @@ import { HubScreenComponent } from '../home/hub-screen.component';
     }
     .guide-button {
       margin-inline-start: auto;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+    .guide-button eras-icon {
+      inline-size: 1rem;
+      block-size: 1rem;
     }
     .board-title {
       display: flex;

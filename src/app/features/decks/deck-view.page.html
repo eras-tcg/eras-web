@@ -3,6 +3,7 @@
   <div class="actions" role="toolbar" aria-label="Acciones del mazo">
     @if (canEdit()) {
       <a erasButton variant="secondary" routerLink="/deck-builder" [queryParams]="editQuery()"><eras-icon name="edit" /> Editar</a>
+      <button erasButton variant="secondary" type="button" [disabled]="deleting()" (click)="remove()"><eras-icon name="trash" /> Borrar</button>
     }
     <button erasButton variant="secondary" type="button" [disabled]="total() === 0" (click)="openProxies()">Proxies</button>
     @if (canCopy()) {

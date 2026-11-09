@@ -143,11 +143,8 @@
       <span class="first">¿Quién empieza? <strong>{{ firstLabel() }}</strong> <span class="muted">(lo elige el dueño)</span></span>
     }
     <button type="button" class="start" [class.cancel]="mine()?.ready" [disabled]="!canReady()" (click)="game.setReady(!mine()?.ready)">
-      {{ mine()?.ready ? 'Cancelar' : 'Comenzar partida' }}
+      {{ startLabel() }}
     </button>
-    @if (readyHint(); as hint) {
-      <span class="muted hint">{{ hint }}</span>
-    }
   </section>
   </div>
 

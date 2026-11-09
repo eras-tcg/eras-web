@@ -187,7 +187,6 @@
 .start:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px); }
 .start:disabled { opacity: 0.45; box-shadow: none; cursor: default; }
 .start.cancel { background: var(--color-surface-muted); box-shadow: none; color: var(--color-text); }
-.hint { text-align: center; }
 
 /* The pickers: starter and deck */
 .picker { display: grid; gap: var(--space-3); }

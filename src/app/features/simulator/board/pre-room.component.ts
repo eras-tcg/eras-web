@@ -197,15 +197,15 @@ export class PreRoomComponent {
   protected readonly canReady = computed(
     () => !!this.mine()?.deckId && !!this.mine()?.starterCardId && !!this.rival() && (!this.game.editorRoom() || !!this.rival()?.deckId),
   );
-  protected readonly readyHint = computed(() => {
-    const me = this.mine();
-    if (!this.rival()) return 'Esperando a que entre tu rival.';
-    if (!me?.deckId) return 'Elige tu mazo.';
-    if (!me.starterCardId) return 'Tu mazo no tiene un Iniciador.';
-    // Test room with both decks: nothing to say, the start button is the next step
-    if (this.game.editorRoom()) return this.rival()?.deckId ? null : `Elige también el mazo de ${this.rival()?.username}.`;
-    if (me.ready) return this.rival()?.ready ? 'Empezando…' : `Esperando que ${this.rival()?.username} confirme.`;
-    return this.rival()?.ready ? `${this.rival()?.username} ya confirmó.` : 'La partida empieza cuando ambos confirman.';
+  /**
+   * The start button says what tapping it does: "Listo" while the other side is not ready yet; "Comenzar partida" for
+   * the owner when it completes both (the rival or the bot ready, or a test room, whose owner confirms both sides);
+   * "Cancelar" once ready. No message under it.
+   */
+  protected readonly startLabel = computed(() => {
+    if (this.mine()?.ready) return 'Cancelar';
+    const completes = this.game.editorRoom() || !!this.rival()?.ready;
+    return completes && this.game.isHost() ? 'Comenzar partida' : 'Listo';
   });
 
   /** A seat that can be tapped to choose its deck: the side not being chosen, in a test room or Modo solo (not ranked). */

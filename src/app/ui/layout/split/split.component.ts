@@ -40,10 +40,9 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       overflow-y: auto;
       overscroll-behavior: none;
     }
-    /* Stacked (narrow screens): the aside on top takes at most half the height, the main column the rest */
+    /* The aside stays on the left at every width (only the scrolling changes with fill) */
     @media (max-width: 56rem) {
-      :host(.fill:not(.aside-hidden)) { grid-template-rows: auto minmax(0, 1fr); }
-      :host(.fill) .aside { max-block-size: 50dvh; }
+      :host(.fill:not(.aside-hidden)) { grid-template-columns: var(--split-aside) minmax(0, 1fr); }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

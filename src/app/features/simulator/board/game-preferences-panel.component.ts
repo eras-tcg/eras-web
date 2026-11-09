@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { PlaymatStore } from '@core/auth/playmat.store';
+import { apiErrorMessage } from '@core/http/api-error';
 import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
+import { frameImage } from '@ui/domain/image-framer/frame-image';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardPreferences } from './board-preferences';
 import { BoardScreen } from './board-screen';
 
@@ -35,6 +39,26 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
           </button>
         }
         @case ('table') {
+          @if (withPlaymat()) {
+            <!-- The playmat under your half of the table (your rival sees it too): set from the profile only -->
+            <div class="pref static playmat">
+              <eras-icon name="image" />
+              <span class="text">
+                <strong>Tapete</strong>
+                @if (playmatMessage(); as m) {
+                  <small [class.error]="m.error">{{ m.text }}</small>
+                }
+              </span>
+              <span class="playmat-preview" [class.empty]="!playmat.url()" [style.background-image]="playmat.url() ? 'url(' + playmat.url() + ')' : null" aria-hidden="true"></span>
+              <input #mat type="file" accept="image/jpeg,image/png,image/gif,image/bmp" hidden (change)="uploadPlaymat(mat)" />
+              <span class="stepper">
+                <button type="button" [disabled]="playmat.saving()" (click)="mat.click()">{{ playmat.url() ? 'Cambiar' : 'Subir' }}</button>
+                @if (playmat.url()) {
+                  <button type="button" [disabled]="playmat.saving()" (click)="removePlaymat()">Quitar</button>
+                }
+              </span>
+            </div>
+          }
           <!-- Each click: limpio ↔ arcano -->
           <button type="button" class="pref" (click)="prefs.tableStyle.set((prefs.tableStyle() + 1) % 2)">
             <eras-icon name="sparkles" />
@@ -183,6 +207,9 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       flex-direction: column;
       gap: var(--space-1);
       block-size: var(--prefs-height, min(27rem, calc(100dvh - 14rem)));
+      /* When the host is a column (the profile), the list takes what is left under the tabs */
+      flex: 1 1 auto;
+      min-block-size: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
     }
@@ -228,6 +255,18 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       cursor: pointer;
     }
     .stepper button:disabled { opacity: 0.5; cursor: default; }
+    /* The playmat as it lies under the table's half: wide, a little darkened */
+    .playmat-preview {
+      flex: none;
+      inline-size: 6rem;
+      aspect-ratio: 12 / 5;
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: center / cover no-repeat;
+      box-shadow: inset 0 0 0 999px rgb(0 0 0 / 20%);
+    }
+    .playmat-preview.empty { border-style: dashed; box-shadow: none; }
+    .text small.error { color: var(--color-danger); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -236,6 +275,43 @@ export class GamePreferencesPanelComponent {
   readonly inGame = input(false, { transform: booleanAttribute });
   /** The site's look first (the profile). */
   readonly withInterface = input(false, { transform: booleanAttribute });
+  /** The playmat in the table's section (the profile: only set there). */
+  readonly withPlaymat = input(false, { transform: booleanAttribute });
+
+  protected readonly playmat = inject(PlaymatStore);
+  private readonly modal = inject(ModalService);
+  /** What the last change of the playmat did, or null. */
+  protected readonly playmatMessage = signal<{ text: string; error: boolean } | null>(null);
+
+  protected async uploadPlaymat(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      this.playmatMessage.set({ text: 'La imagen pesa más de 8 MB', error: true });
+      return;
+    }
+    this.playmatMessage.set(null);
+    // Framed as it lies under the table's half (the server keeps 1920×800)
+    const framed = await frameImage(this.modal, { title: 'Tapete', file, width: 1920, height: 800 });
+    if (!framed) return;
+    try {
+      await this.playmat.upload(framed);
+      this.playmatMessage.set({ text: 'Guardado: se verá en tus próximas partidas', error: false });
+    } catch (e) {
+      this.playmatMessage.set({ text: apiErrorMessage(e, 'No se pudo guardar el tapete'), error: true });
+    }
+  }
+
+  protected async removePlaymat(): Promise<void> {
+    this.playmatMessage.set(null);
+    try {
+      await this.playmat.remove();
+      this.playmatMessage.set({ text: 'Quitado: tu mitad de la mesa usa su textura', error: false });
+    } catch (e) {
+      this.playmatMessage.set({ text: apiErrorMessage(e, 'No se pudo quitar el tapete'), error: true });
+    }
+  }
 
   protected readonly prefs = inject(BoardPreferences);
   protected readonly theme = inject(ThemeService);

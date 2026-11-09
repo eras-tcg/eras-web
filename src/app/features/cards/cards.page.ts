@@ -68,8 +68,14 @@ export class CardsPage {
 
   protected readonly filters = signal<CardFilters>(EMPTY_FILTERS);
   private readonly wide = typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches;
+  // Phones in landscape: little height, so smaller cards (six or seven columns, on the size slider's steps) to see
+  // more than one row
+  private readonly phoneLandscape =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
   // Narrow screens start with two columns instead of one huge card
-  protected readonly view = signal<CardView>(this.wide ? DEFAULT_VIEW : { ...DEFAULT_VIEW, size: 150 });
+  protected readonly view = signal<CardView>(
+    this.phoneLandscape ? { ...DEFAULT_VIEW, size: 110 } : this.wide ? DEFAULT_VIEW : { ...DEFAULT_VIEW, size: 150 },
+  );
   protected readonly showFilters = signal(this.wide);
   protected readonly renderCount = signal(PAGE_SIZE);
 

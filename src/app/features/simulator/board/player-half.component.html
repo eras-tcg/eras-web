@@ -165,7 +165,7 @@
   >
     @if (p.deck.length) {
       <!-- As thick as the cards left in it (each pile is); the rival's turned as its other cards -->
-      <eras-game-card hidden [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.deck.length)" />
+      <eras-game-card hidden [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.deck.length)" [style.--edge.px]="pileDepth(p.deck.length)" />
     }
     <eras-chain-marks ring [links]="pileLinks().deck" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -201,7 +201,7 @@
     (click)="pileClick('tributeZone')"
   >
     @if (topTribute(); as t) {
-      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.tributeZone.length)" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.tributeZone.length)" [style.--edge.px]="pileDepth(p.tributeZone.length)" [imageUrl]="t.imageUrl" [foil]="t.finish ?? null" [name]="t.cardName" [hidden]="t.faceDown && !pileShown(t, 'tributeZone')" [peeked]="t.faceDown && pileShown(t, 'tributeZone')" />
     }
     <eras-chain-marks ring [links]="pileLinks().tributeZone" [me]="game.myState()?.userId" />
   </eras-game-zone>
@@ -221,7 +221,7 @@
     (click)="pileClick('discardPile')"
   >
     @if (topDiscard(); as d) {
-      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.discardPile.length)" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
+      <eras-game-card [upsideDown]="opponent()" [style.box-shadow]="pileEdge(p.discardPile.length)" [style.--edge.px]="pileDepth(p.discardPile.length)" [imageUrl]="d.imageUrl" [foil]="d.finish ?? null" [name]="d.cardName" [hidden]="d.faceDown && !pileShown(d, 'discardPile')" [peeked]="d.faceDown && pileShown(d, 'discardPile')" />
     }
     <eras-chain-marks ring [links]="pileLinks().discardPile" [me]="game.myState()?.userId" />
   </eras-game-zone>

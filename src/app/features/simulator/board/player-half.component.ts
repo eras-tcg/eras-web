@@ -94,9 +94,13 @@ export class PlayerHalfComponent {
    * phone in landscape), black as the back's frame with a faint line between cards, with its shadow on the table.
    */
   protected pileEdge(cards: number): string {
-    const depth = Math.min(this.maxPileDepth, Math.ceil((cards - 1) / 3));
+    const depth = this.pileDepth(cards);
     const edges = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`);
     return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');
+  }
+  /** A pile's edge under its top card, in pixels (one every 3 cards, at most 16 — 6 on a phone in landscape). */
+  protected pileDepth(cards: number): number {
+    return Math.max(0, Math.min(this.maxPileDepth, Math.ceil((cards - 1) / 3)));
   }
   /** A creature attacks these lives (an attack on the player, not on a creature): marked until the combat ends. */
   protected readonly livesAttacked = computed(() => {

@@ -73,7 +73,7 @@
   // The pile's card as big as its zone allows, with the pile's edge under it (at most 6px here, see pileEdge): it
   // stays inside its zone
   .pile eras-game-card {
-    --game-card-width: min(calc(100cqw - 2px), calc((100cqh - 14px) * 63 / 88));
+    --game-card-width: min(calc(100cqw - 2px), calc((100cqh - 4px - 6px) * 63 / 88));
   }
 
   // The two switches under the deck, one over the other as icons: their words do not fit the narrow column (the

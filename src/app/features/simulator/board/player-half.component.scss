@@ -92,9 +92,9 @@ eras-player-plate {
 // As big as the zone allows: the whole pile (the card and a strip of each other life) fits under its label
 .life-stack {
   --life-card: min(
-    calc(7 * var(--bu, 1rem)),
+    calc(9 * var(--bu, 1rem)),
     calc((100cqw - 0.5rem) * 63 / 88),
-    calc((100cqh - 1.75rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
+    calc((100cqh - 0.5rem) / (1 + 0.26 * (max(var(--lives), 1) - 1)))
   );
 
   display: flex;
@@ -528,10 +528,16 @@ eras-player-plate {
   container-type: size;
 }
 
-// The pile's card, centered in its zone under the label, with the room for its edge (up to 16px) below it on both
-// sides of the center: it never goes past the zone's border
+// The pile's card as big as its zone allows with its edge under it (up to 16px), the two together centered in the
+// zone: the card rises half its edge (the rival's, turned round, has it above: it goes down)
 .pile eras-game-card {
-  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem - 32px) * 63 / 88));
+  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 0.5rem - 16px) * 63 / 88));
+
+  translate: 0 calc(var(--edge, 0px) * -0.5);
+}
+
+:host(.opponent) .pile eras-game-card {
+  translate: 0 calc(var(--edge, 0px) * 0.5);
 }
 
 @media (max-width: 48rem) {

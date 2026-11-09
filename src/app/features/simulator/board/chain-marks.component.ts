@@ -82,6 +82,15 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
       box-shadow: 0 0 12px 2px color-mix(in srgb, var(--mark-cyan) 65%, transparent), inset 0 0 10px color-mix(in srgb, var(--mark-cyan) 40%, transparent);
       animation: frame-in 0.35s ease backwards;
     }
+    /* An exhausted card lies sideways in a square box: the frame lies with it (the card's height across, its width up) */
+    :host-context(.tapped-field) .frame {
+      inset: auto;
+      inset-block-start: 50%;
+      inset-inline-start: 50%;
+      inline-size: calc(var(--game-card-width, 4.5rem) * 88 / 63 + 4px);
+      block-size: calc(var(--game-card-width, 4.5rem) + 4px);
+      transform: translate(-50%, -50%);
+    }
     .frame.resolving { animation: frame-in 0.35s ease backwards, frame-pulse 0.9s ease-in-out infinite alternate; }
     @keyframes mark-in { from { opacity: 0; scale: 1.8; } }
     @keyframes frame-in { from { opacity: 0; } }

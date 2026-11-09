@@ -28,7 +28,7 @@ function signedIn(raw = token(Math.floor(Date.now() / 1000) + 3600)): void {
 }
 
 describe('the connection state machine', () => {
-  it('connects from idle or after failing, and stays connected', () => {
+  it('connects from idle or after failing, and stays connected until it disconnects', () => {
     expect(nextConnectionState('idle', 'connect')).toBe('connecting');
     expect(nextConnectionState('connecting', 'ready')).toBe('connected');
     expect(nextConnectionState('connecting', 'failed')).toBe('failed');
@@ -36,9 +36,13 @@ describe('the connection state machine', () => {
     expect(nextConnectionState('connecting', 'cancel')).toBe('idle');
     expect(nextConnectionState('failed', 'cancel')).toBe('idle');
     for (const event of ['connect', 'ready', 'failed', 'cancel'] as const) expect(nextConnectionState('connected', event)).toBe('connected');
+    // Tapping "Conectado": back to playing without the server
+    expect(nextConnectionState('connected', 'disconnect')).toBe('idle');
     // What does not apply changes nothing
     expect(nextConnectionState('idle', 'ready')).toBe('idle');
     expect(nextConnectionState('idle', 'failed')).toBe('idle');
+    expect(nextConnectionState('idle', 'disconnect')).toBe('idle');
+    expect(nextConnectionState('connecting', 'disconnect')).toBe('connecting');
   });
 
   it('"Conectar" shows the state, and "Sin internet" without the network whatever the state', () => {
@@ -52,6 +56,10 @@ describe('the connection state machine', () => {
     expect(connectionView('idle', true).actionable).toBe(true);
     expect(connectionView('connecting', true).actionable).toBe(false);
     expect(connectionView('idle', false).actionable).toBe(false);
+    // Only "Conectado" (with the network) disconnects
+    expect(connectionView('connected', true).disconnectable).toBe(true);
+    expect(connectionView('connected', false).disconnectable).toBe(false);
+    expect(connectionView('idle', true).disconnectable).toBe(false);
   });
 });
 

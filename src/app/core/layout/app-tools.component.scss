@@ -92,6 +92,23 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+
+  // The gems keep their count, beside the icon: the player sees what they have on every screen
+  .item.gems {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .item.gems .label {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+  }
 }
 
 // Edit mode: the gems can be set, so they look like it
@@ -189,8 +206,8 @@
   border-color: var(--color-hub-accent);
 }
 
+// "Conectado" can be tapped too (to disconnect); connecting and "Sin internet" cannot
 .item.connect.tone-busy,
-.item.connect.tone-ok,
 .item.connect.tone-off {
   cursor: default;
 }

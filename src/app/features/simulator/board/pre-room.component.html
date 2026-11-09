@@ -22,11 +22,20 @@
       @if (i === 1) {
         <span class="versus" aria-hidden="true">VS</span>
       }
+      <!-- Test room and Modo solo: the side whose deck is being chosen glows whole; tapping the other seat (its card or its
+           nameplate) switches to it -->
       <div
         class="seat"
         [class.ready]="p?.ready"
         [class.empty]="!p"
         [class.playing]="(game.editorRoom() && p?.userId === mine()?.userId) || (game.botRoom() && (p?.userId === me()) !== pickingBot())"
+        [class.pickable]="p && seatPickable(p)"
+        [attr.role]="p && seatPickable(p) ? 'button' : null"
+        [attr.tabindex]="p && seatPickable(p) ? 0 : null"
+        [attr.aria-label]="p && seatPickable(p) ? 'Elegir el mazo de ' + p.username : null"
+        (click)="p && pickSeat(p)"
+        (keydown.enter)="p && pickSeat(p)"
+        (keydown.space)="p && pickSeat(p); $event.preventDefault()"
       >
         @if (p) {
           <div class="starter-slot">
@@ -53,17 +62,7 @@
             }
           </div>
           <div class="actions">
-            @if (game.editorRoom()) {
-              @if (p.userId !== mine()?.userId) {
-                <button erasButton variant="secondary" size="sm" type="button" (click)="game.playSide(p.userId)">{{ p.userId === me() ? 'Elegir tu mazo' : 'Elegir su mazo' }}</button>
-              }
-            } @else if (game.botRoom()) {
-              @if (p.userId !== me() && !game.rankedRoom()) {
-                <button erasButton variant="secondary" size="sm" type="button" [attr.aria-pressed]="pickingBot()" (click)="pickingBot.set(!pickingBot())">
-                  {{ pickingBot() ? 'Elegir tu mazo' : 'Elegir su mazo' }}
-                </button>
-              }
-            } @else if (game.isHost() && p.userId !== me()) {
+            @if (!game.editorRoom() && !game.botRoom() && game.isHost() && p.userId !== me()) {
               <button erasButton variant="danger" size="sm" type="button" (click)="game.kickPlayer(p.userId)">Sacar de la sala</button>
             }
           </div>
@@ -146,7 +145,9 @@
     <button type="button" class="start" [class.cancel]="mine()?.ready" [disabled]="!canReady()" (click)="game.setReady(!mine()?.ready)">
       {{ mine()?.ready ? 'Cancelar' : 'Comenzar partida' }}
     </button>
-    <span class="muted hint">{{ readyHint() }}</span>
+    @if (readyHint(); as hint) {
+      <span class="muted hint">{{ hint }}</span>
+    }
   </section>
   </div>
 

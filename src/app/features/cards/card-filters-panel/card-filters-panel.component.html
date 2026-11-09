@@ -1,6 +1,11 @@
 @let f = filters();
 @let o = options();
 <eras-stack [gap]="4">
+  <label class="eras-form-field__text" title="Cada carta en el mejor acabado que tienes; en gris las que no tienes">
+    <input type="checkbox" [checked]="showCollection()" (change)="showCollection.set($any($event.target).checked)" />
+    Mostrar colección
+  </label>
+
   <eras-form-field label="Ordenar por">
     <eras-stack direction="row" [gap]="2" align="center">
       <select (change)="setSort($event)">
@@ -21,8 +26,17 @@
     </eras-stack>
   </eras-form-field>
 
-  <eras-form-field label="Nombre" hint="Admite expresiones regulares">
+  <eras-form-field label="Nombre">
     <input type="search" placeholder="Buscar por nombre…" [value]="f.name" (input)="setText('name', $event)" />
+  </eras-form-field>
+
+  <eras-form-field label="Edición">
+    <select (change)="setText('edition', $event)">
+      <option value="">Todas</option>
+      @for (e of editions(); track e.editionId) {
+        <option [value]="e.editionId" [selected]="e.editionId === f.edition">{{ e.editionId }}{{ e.editionName ? ' — ' + e.editionName : '' }}</option>
+      }
+    </select>
   </eras-form-field>
 
   @if (o.types.length) {
@@ -80,15 +94,6 @@
     <input type="search" placeholder="Buscar por requerimiento…" [value]="f.requirement" (input)="setText('requirement', $event)" />
   </eras-form-field>
 
-  <eras-form-field label="Edición">
-    <select (change)="setText('edition', $event)">
-      <option value="">Todas</option>
-      @for (e of editions(); track e.editionId) {
-        <option [value]="e.editionId" [selected]="e.editionId === f.edition">{{ e.editionId }}{{ e.editionName ? ' — ' + e.editionName : '' }}</option>
-      }
-    </select>
-  </eras-form-field>
-
   <eras-form-field label="Número de carta">
     <input type="search" inputmode="numeric" placeholder="Buscar por número…" [value]="f.cardNumber" (input)="setText('cardNumber', $event)" />
   </eras-form-field>
@@ -119,4 +124,16 @@
   <eras-form-field [label]="'Tamaño de cartas (' + view().size + 'px)'">
     <input type="range" min="100" max="500" step="10" [value]="view().size" (input)="setSize($event)" />
   </eras-form-field>
+
+  <!-- Marks on the cards, hidden unless asked for -->
+  <label class="eras-form-field__text" title="Cartas que todavía no se pueden jugar en el simulador">
+    <input type="checkbox" [checked]="showUnprogrammed()" (change)="showUnprogrammed.set($any($event.target).checked)" />
+    Marcar las sin programar
+  </label>
+  @if (canManage()) {
+    <label class="eras-form-field__text" title="Cartas sin metadatos">
+      <input type="checkbox" [checked]="showNoMeta()" (change)="showNoMeta.set($any($event.target).checked)" />
+      Marcar las sin metadatos
+    </label>
+  }
 </eras-stack>

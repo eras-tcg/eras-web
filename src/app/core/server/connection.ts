@@ -4,14 +4,14 @@ import type { IconName } from '@ui/primitives/icon/icon.component';
  * The installed app's connection to the server in this visit (local-first: it starts without it):
  * - idle: not connected (what needs the server asks to connect first);
  * - connecting: waking the server up (the warm-up screen shows) and checking the session;
- * - connected: as the site in the browser, for the rest of the visit;
+ * - connected: as the site in the browser, until the player taps "Conectado" to go back to playing without it;
  * - failed: the server did not wake up (the warm-up screen offers to try again or to go on without it).
  */
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
 
-export type ConnectionEvent = 'connect' | 'ready' | 'failed' | 'cancel';
+export type ConnectionEvent = 'connect' | 'ready' | 'failed' | 'cancel' | 'disconnect';
 
-/** The state after an event (anything that does not apply leaves it as it is; connected stays connected). */
+/** The state after an event (anything that does not apply leaves it as it is; connected leaves only by disconnecting). */
 export function nextConnectionState(state: ConnectionState, event: ConnectionEvent): ConnectionState {
   switch (state) {
     case 'idle':
@@ -25,7 +25,7 @@ export function nextConnectionState(state: ConnectionState, event: ConnectionEve
       if (event === 'cancel') return 'idle';
       return state;
     case 'connected':
-      return state;
+      return event === 'disconnect' ? 'idle' : state;
   }
 }
 
@@ -36,17 +36,19 @@ export interface ConnectionView {
   tone: 'idle' | 'busy' | 'ok' | 'off';
   /** Tapping it connects. */
   actionable: boolean;
+  /** Tapping it disconnects (back to playing without the server). */
+  disconnectable: boolean;
 }
 
 /** Without internet that is what it says, whatever the state; otherwise the state. */
 export function connectionView(state: ConnectionState, online: boolean): ConnectionView {
-  if (!online) return { label: 'Sin internet', icon: 'wifi-off', tone: 'off', actionable: false };
+  if (!online) return { label: 'Sin internet', icon: 'wifi-off', tone: 'off', actionable: false, disconnectable: false };
   switch (state) {
     case 'connecting':
-      return { label: 'Conectando…', icon: 'cloud', tone: 'busy', actionable: false };
+      return { label: 'Conectando…', icon: 'cloud', tone: 'busy', actionable: false, disconnectable: false };
     case 'connected':
-      return { label: 'Conectado', icon: 'cloud', tone: 'ok', actionable: false };
+      return { label: 'Conectado', icon: 'cloud', tone: 'ok', actionable: false, disconnectable: true };
     default:
-      return { label: 'Sin conectar', icon: 'cloud-off', tone: 'idle', actionable: true };
+      return { label: 'Sin conectar', icon: 'cloud-off', tone: 'idle', actionable: true, disconnectable: false };
   }
 }

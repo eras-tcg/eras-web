@@ -5,8 +5,9 @@
     type="button"
     class="item connect"
     [class]="'tone-' + view.tone"
-    [attr.aria-label]="view.actionable ? 'Conectar con el servidor (' + view.label + ')' : 'Conexión con el servidor: ' + view.label"
-    [attr.aria-disabled]="!view.actionable"
+    [attr.aria-label]="view.actionable ? 'Conectar con el servidor (' + view.label + ')' : view.disconnectable ? 'Conectado: toca para jugar sin conexión' : 'Conexión con el servidor: ' + view.label"
+    [attr.aria-disabled]="!view.actionable && !view.disconnectable"
+    [attr.title]="view.disconnectable ? 'Toca para desconectarte y jugar sin conexión' : null"
     (click)="connect()"
   >
     <eras-icon [name]="view.icon" /><span class="label">{{ view.actionable ? 'Conectar' : view.label }}</span>

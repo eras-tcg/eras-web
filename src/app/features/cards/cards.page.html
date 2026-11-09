@@ -1,4 +1,4 @@
-<eras-page title="Cartas" width="wide">
+<eras-page title="Cartas" width="wide" fill>
   <button page-actions erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
     <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
   </button>
@@ -7,13 +7,19 @@
     <eras-alert tone="danger">{{ error }}</eras-alert>
   }
 
-  <eras-split aside="17rem" [asideHidden]="!showFilters()">
+  <!-- One screen high: only the filters and the grid scroll, each by itself -->
+  <eras-split aside="17rem" fill [asideHidden]="!showFilters()">
     <div split-aside>
+      <!-- The marks on the cards are settings of the catalog: in the panel, remembered on the device -->
       <eras-card-filters-panel
         [filters]="filters()"
         [options]="store.options()"
         [editions]="editions.editions()"
         [view]="view()"
+        [canManage]="canManage()"
+        [(showCollection)]="showCollection"
+        [(showUnprogrammed)]="showUnprogrammed"
+        [(showNoMeta)]="showNoMeta"
         (filtersChange)="filters.set($event)"
         (viewChange)="view.set($event)"
       />
@@ -28,15 +34,6 @@
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
           }
-          <!-- Marks on the cards, hidden unless asked for (remembered on the device) -->
-          <eras-stack direction="row" [gap]="1" align="center" wrap>
-            <span class="marks-label">Marcar:</span>
-            <button erasChip [selected]="showUnprogrammed()" title="Cartas que todavía no se pueden jugar en el simulador" (click)="showUnprogrammed.set(!showUnprogrammed())">Sin programar</button>
-            <button erasChip [selected]="showCollection()" title="Cada carta en el mejor acabado que tienes; en gris las que no tienes" (click)="showCollection.set(!showCollection())">Mostrar colección</button>
-            @if (canManage()) {
-              <button erasChip [selected]="showNoMeta()" title="Cartas sin metadatos" (click)="showNoMeta.set(!showNoMeta())">Sin metadatos</button>
-            }
-          </eras-stack>
         </eras-stack>
 
         @if (displayed().length === 0) {

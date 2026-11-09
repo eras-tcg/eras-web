@@ -44,8 +44,14 @@ export class DeckBrowserComponent {
   /** Line above the grid when it has no decks (nothing saved yet, nothing matches…). */
   readonly note = input<string | null>(null);
 
-  // Open beside the list on wide screens, folded into a rail on phones
-  protected readonly showFilters = signal(typeof window === 'undefined' || window.matchMedia('(min-width: 56rem)').matches);
+  /** A phone in landscape (read once): small covers close together, the filters folded so the list gets the width. */
+  private readonly phoneLandscape =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
+  protected readonly coverGap = this.phoneLandscape ? 2 : 4;
+  // Open beside the list on wide screens, folded into a rail on phones (also held sideways)
+  protected readonly showFilters = signal(
+    typeof window === 'undefined' || (!this.phoneLandscape && window.matchMedia('(min-width: 56rem)').matches),
+  );
   protected readonly filtersActive = computed(() => hasDeckFilters(this.filters()));
   protected readonly emptyFilters = EMPTY_DECK_FILTERS;
   protected readonly countLabel = computed(() => {

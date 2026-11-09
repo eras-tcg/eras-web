@@ -64,7 +64,7 @@
         <p class="note">{{ text }}</p>
       }
       <!-- Two columns on upright phones (40vw), one row in sight on phones held sideways (34dvh), 11rem covers elsewhere -->
-      <eras-grid minColumn="min(11rem, 40vw, 34dvh)" [gap]="4">
+      <eras-grid minColumn="var(--cover-column, min(11rem, 40vw, 34dvh))" [gap]="coverGap">
         <ng-content select="[deck-lead]" />
         <ng-content />
       </eras-grid>

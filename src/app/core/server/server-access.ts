@@ -29,6 +29,13 @@ export class ServerAccess {
     this.connectedState.set(true);
     writeSession(CONNECTED_KEY, '1');
   }
+
+  /** The installed app back to playing without the server (the browser is always connected). */
+  markDisconnected(): void {
+    if (this.mode === 'browser') return;
+    this.connectedState.set(false);
+    writeSession(CONNECTED_KEY, '0');
+  }
 }
 
 /**

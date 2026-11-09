@@ -19,7 +19,6 @@ import { PageComponent } from '@ui/layout/page/page.component';
 import { SplitComponent } from '@ui/layout/split/split.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ChipComponent } from '@ui/primitives/chip/chip.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -43,14 +42,12 @@ const PAGE_SIZE = 40;
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
-    ChipComponent,
     IconComponent,
     SpinnerComponent,
     InViewDirective,
   ],
   templateUrl: './cards.page.html',
   styles: `
-    .marks-label { color: var(--color-text-muted); font-size: var(--font-size-sm); }
     .lacking { filter: grayscale(1); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

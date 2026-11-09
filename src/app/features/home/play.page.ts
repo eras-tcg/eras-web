@@ -31,15 +31,16 @@ const OFFLINE_ITEM: HubMenuItem = { id: 'offline', label: 'Modo solo sin conexi�
 const NEEDS_SERVER = new Set(['online', 'bot', 'tests']);
 
 /**
- * The Jugar menu: with the server, its modes then Modo solo sin conexión; without it (cutOff), Modo solo sin conexión
- * first; with no connection at all the server's modes are left out (the notice under the menu says they come back
- * with the connection) and the tutorial stays. The installed app not connected yet (`local`): Modo solo sin conexión
- * first, then the server's modes (marked: opening one connects).
+ * The Jugar menu: one solo mode in its place, Modo solo with the server, Modo solo sin conexión without it (the
+ * installed app not connected, `local`, or the server cut off). With no connection at all the server's other modes are
+ * left out (the notice under the menu says they come back with the connection); the installed app not connected keeps
+ * them, marked (opening one connects). The tutorial always stays.
  */
 export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boolean }): HubMenuItem[] {
-  if (!state.cutOff && state.local) return [OFFLINE_ITEM, ...PLAY_MENU];
-  if (!state.cutOff) return [...PLAY_MENU, OFFLINE_ITEM];
-  return [OFFLINE_ITEM, ...PLAY_MENU.filter((item) => !state.offline || !NEEDS_SERVER.has(item.id))];
+  const withServer = !state.cutOff && !state.local;
+  return PLAY_MENU.map((item) => (item.id === 'bot' && !withServer ? OFFLINE_ITEM : item)).filter(
+    (item) => !(state.cutOff && state.offline && NEEDS_SERVER.has(item.id)),
+  );
 }
 
 /**

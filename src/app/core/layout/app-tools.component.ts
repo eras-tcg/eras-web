@@ -79,9 +79,11 @@ export class AppToolsComponent {
     await this.wallet.setGems(gems);
   }
 
-  /** "Conectar": connects the installed app to the server (nothing to do once connected or without internet). */
+  /** "Conectar": connects the installed app to the server; "Conectado" disconnects it (nothing to do without internet). */
   protected connect(): void {
-    if (this.connection.view().actionable) void this.connection.connect();
+    const view = this.connection.view();
+    if (view.actionable) void this.connection.connect();
+    else if (view.disconnectable) this.connection.disconnect();
   }
 
   /** Off the hub menus the missions open over the screen, which stays where it was (their screen without the dialog). */

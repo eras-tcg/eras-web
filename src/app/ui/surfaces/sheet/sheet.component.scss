@@ -136,6 +136,20 @@
 
 // Phones in landscape (little height): tighter, so the choice itself (its cards) keeps the room
 @media (orientation: landscape) and (max-height: 30rem) {
+  // Narrower and lower, whatever its size: the table stays in sight around it
+  :host,
+  :host(.size-md),
+  :host(.size-xl) {
+    --sheet-width: min(34rem, 64vw);
+
+    max-block-size: var(--sheet-max-block-size, 62vh);
+  }
+
+  .toggle {
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+  }
+
   .header {
     padding: var(--space-1) var(--space-3);
   }

@@ -166,16 +166,16 @@ body.eras-hub {
   }
 }
 
-// A chain is shown above the choices: they leave it room at the top
+// The chain's list open above the choices: they leave it room at the top
 body.eras-chain-open {
   --sheet-max-block-size: 58vh;
 }
 
-// Phones in landscape: no height to share; the choice goes over the chain (its title names the link)
+// Phones in landscape: a low choice, so the table (and the chain's marks on it) stays in sight above it
 @media (orientation: landscape) and (max-height: 30rem) {
   body,
   body.eras-chain-open {
-    --sheet-max-block-size: 90vh;
+    --sheet-max-block-size: 62vh;
   }
 }
 

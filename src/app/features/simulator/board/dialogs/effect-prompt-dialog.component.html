@@ -2,7 +2,8 @@
   <!-- The card the choice is about, beside it: its effects, the one that asks lit up -->
   <eras-effect-card-panel class="side" [class.lowered]="sheet.lowered()" [class.see-through]="sheet.seeThrough()" [slot]="p.slot" [name]="p.name" [image]="p.image" [activeText]="p.text" />
 }
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.instruction">
+<!-- Effects to chain: no subtitle (the effect itself, with its link, says it all) -->
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.effects?.length ? null : prompt.instruction">
   <div class="body">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">

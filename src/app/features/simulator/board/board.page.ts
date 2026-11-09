@@ -110,6 +110,8 @@ export class BoardPage {
   /** Held to look at the table through the choice and the chain (both turn almost transparent). */
   protected readonly seeThrough = this.sheet.seeThrough;
   /** There is something over the table to look through: a sheet from the bottom (a choice…) or a chain. */
+  /** The chain's list, opened from its button over the table. */
+  protected readonly chainOpen = signal(false);
   protected readonly canSeeThrough = computed(() => this.sheet.open() > 0 || !!this.game.state()?.chain?.length);
   private readonly document = inject(DOCUMENT);
   protected readonly dialogs = inject(BoardDialogs);
@@ -159,7 +161,8 @@ export class BoardPage {
     // "Estilo de la mesa: arcano": the whole room (menus, dialogs and sheets too) in stone and gold while a game is on
     effect(() => this.document.body.classList.toggle('eras-arcane', this.inGame() && this.prefs.arcane()));
     // A chain is shown above the choices (they leave it room)
-    effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
+    // The chain's list open (from its button): the choices leave it room at the top
+    effect(() => this.document.body.classList.toggle('eras-chain-open', this.chainOpen()));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
     effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
     destroyRef.onDestroy(() => this.document.body.classList.remove('eras-in-game', 'eras-arcane', 'eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
@@ -236,13 +239,10 @@ export class BoardPage {
     effect(() => {
       if (!this.canSeeThrough()) untracked(() => this.seeThrough.set(false));
     });
-  }
-
-  /** The button: transparent at once while it is held (released anywhere, the window's pointerup ends it). */
-  protected holdSeeThrough(e: PointerEvent): void {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    this.seeThrough.set(true);
+    // The chain's list folds again once the chain is over
+    effect(() => {
+      if (!this.game.state()?.chain?.length) untracked(() => this.chainOpen.set(false));
+    });
   }
 
   /** What the engine is doing: the effect resolving, or the optional effect waiting to be activated. */

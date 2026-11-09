@@ -161,3 +161,34 @@ eras-sheet.with-panel {
 .pick:disabled {
   pointer-events: none;
 }
+
+// Phones in landscape: a small sheet (the table stays in sight): smaller cards and effects
+@media (orientation: landscape) and (max-height: 30rem) {
+  eras-sheet.with-panel {
+    --sheet-width: min(34rem, 64vw);
+  }
+
+  .body {
+    gap: var(--space-2);
+  }
+
+  .cards {
+    min-block-size: 0;
+  }
+
+  .pick {
+    --game-card-width: 4.5rem;
+  }
+
+  .offered-effect {
+    --game-card-width: 3rem;
+
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .offered-text {
+    font-size: var(--font-size-xs);
+    line-height: 1.35;
+  }
+}

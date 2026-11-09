@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 import { CardSlot, PendingEffect } from '@data/simulator/simulator.model';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
 
 /** The chain links whose effect comes from one of these cards, lowest first. */
 export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined, cards: readonly CardSlot[]): PendingEffect[] {
@@ -10,13 +9,19 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
 }
 
 /**
- * The chain links a card (or a pile) has activated, as cyan numbered marks. On a card they line up down its left
- * edge; on a pile (Tributos, Descarte…) one sits at its center and several make a ring around it.
+ * The chain links a card (or a pile) has activated, as numbered gems (cyan yours, pink the rival's). On a card they
+ * line up down its left edge, the card is framed in that color and its highest link's kind sits at its foot: the
+ * chain reads on the table (its explicit list opens from the chain's button). On a pile (Tributos, Descarte…) one
+ * sits at its center and several make a ring around it.
  */
 @Component({
   selector: 'eras-chain-marks',
-  imports: [IconComponent],
   template: `
+    @if (!ring() && top(); as t) {
+      <!-- On a card: framed in the color of whoever chained it, and what its highest link is, at its foot -->
+      <span class="frame" [class.rival]="!t.mine" [class.resolving]="resolving()"></span>
+      <span class="tag" [class.rival]="!t.mine" [class.resolving]="t.resolving">{{ t.short }}</span>
+    }
     @for (m of marks(); track m.id) {
       <span
         class="mark"
@@ -26,9 +31,7 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
         [style.--y]="m.y"
         [attr.aria-label]="'Cadena ' + m.link + (m.resolving ? ', resolviendo' : '')"
         [title]="'Cadena ' + m.link + ' · ' + m.label"
-      >
-        <eras-icon name="link" />{{ m.link }}
-      </span>
+      >{{ m.link }}</span>
     }
   `,
   styles: `
@@ -40,40 +43,74 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
       pointer-events: none;
     }
     :host(:empty) { display: none; }
+    .rival { --mark-cyan: #f472b6; }
+    /* The link's number: a cut gem in the chainer's color, ringed in white */
     .mark {
       position: absolute;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.1em;
-      padding: 0.1em 0.4em 0.1em 0.3em;
-      border: 1.5px solid #ecfeff;
-      border-radius: var(--radius-pill);
-      background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mark-cyan) 70%, #fff), var(--mark-cyan) 60%, #0c4a6e);
-      box-shadow: 0 0 0 1px rgb(0 0 0 / 35%), 0 0 10px 2px color-mix(in srgb, var(--mark-cyan) 70%, transparent);
-      color: #04202e;
+      display: grid;
+      place-items: center;
+      inline-size: 1.35rem;
+      block-size: 1.35rem;
+      border: 2px solid #f0fdff;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mark-cyan) 55%, #fff), var(--mark-cyan) 55%, color-mix(in srgb, var(--mark-cyan) 45%, #000));
+      box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 10px 2px color-mix(in srgb, var(--mark-cyan) 70%, transparent);
+      color: #fff;
       font: 700 0.8rem/1 var(--font-family-display);
-      white-space: nowrap;
+      text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
       animation: mark-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4) backwards;
     }
-    .mark.rival { --mark-cyan: #f472b6; }
-    .mark eras-icon { inline-size: 0.85em; block-size: 0.85em; }
     /* The link resolving now pulses */
     .mark.resolving { animation: mark-in 0.4s ease backwards, pulse 0.9s ease-in-out infinite alternate; }
-    /* On a card: down its left edge, under the printed cost */
-    :host(:not(.ring)) .mark { inset-block-start: calc(26% + var(--y) * 1.45rem); inset-inline-start: -0.35rem; }
-    /* On the rival's card (turned round): up its right edge, from the bottom, where its cost is then */
-    :host(.upside-down:not(.ring)) .mark { inset-block: auto calc(26% + var(--y) * 1.45rem); inset-inline: auto -0.35rem; }
+    /* On a card: down its left edge, from its top corner */
+    :host(:not(.ring)) .mark { inset-block-start: calc(-0.4rem + var(--y) * 1.5rem); inset-inline-start: -0.5rem; }
+    /* On the rival's card (turned round): up its right edge, from the bottom */
+    :host(.upside-down:not(.ring)) .mark { inset-block: auto calc(-0.4rem + var(--y) * 1.5rem); inset-inline: auto -0.5rem; }
     /* On a pile: at the center, or on a ring around it */
     :host(.ring) .mark {
       inset-block-start: calc(50% + var(--y) * 32%);
       inset-inline-start: calc(50% + var(--x) * 32%);
-      font-size: 1rem;
+      inline-size: 1.6rem;
+      block-size: 1.6rem;
+      font-size: 0.95rem;
       transform: translate(-50%, -50%);
     }
+    /* The card in the chain: its outline lit in the chainer's color */
+    .frame {
+      position: absolute;
+      inset: -2px;
+      border: 2px solid var(--mark-cyan);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 0 12px 2px color-mix(in srgb, var(--mark-cyan) 65%, transparent), inset 0 0 10px color-mix(in srgb, var(--mark-cyan) 40%, transparent);
+      animation: frame-in 0.35s ease backwards;
+    }
+    .frame.resolving { animation: frame-in 0.35s ease backwards, frame-pulse 0.9s ease-in-out infinite alternate; }
+    /* Its highest link's kind (En Invocación, Activada…) at the card's foot */
+    .tag {
+      position: absolute;
+      inset-block-end: -0.45rem;
+      inset-inline-start: 50%;
+      max-inline-size: calc(100% + 1rem);
+      overflow: hidden;
+      padding: 0.1rem 0.4rem;
+      border-radius: var(--radius-pill);
+      background: color-mix(in srgb, var(--mark-cyan) 85%, #000);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+    :host(.upside-down) .tag { inset-block: -0.45rem auto; }
     @keyframes mark-in { from { opacity: 0; scale: 1.8; } }
-    @keyframes pulse { to { box-shadow: 0 0 0 1px rgb(0 0 0 / 35%), 0 0 18px 6px var(--mark-cyan); } }
+    @keyframes frame-in { from { opacity: 0; } }
+    @keyframes pulse { to { box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 18px 6px var(--mark-cyan); } }
+    @keyframes frame-pulse { to { box-shadow: 0 0 22px 6px var(--mark-cyan), inset 0 0 14px var(--mark-cyan); } }
     @media (prefers-reduced-motion: reduce) {
-      .mark, .mark.resolving { animation: none; }
+      .mark, .mark.resolving, .frame, .frame.resolving { animation: none; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +125,11 @@ export class ChainMarksComponent {
   /** The player looking: their links are cyan, the rival's pink. */
   readonly me = input<string | null | undefined>(null);
 
+  /** The card's highest link (the next of its own to resolve). */
+  protected readonly top = computed(() => this.marks().at(-1) ?? null);
+  /** One of its links is resolving now. */
+  protected readonly resolving = computed(() => this.marks().some((m) => m.resolving));
+
   protected readonly marks = computed(() => {
     const links = this.links();
     const n = links.length;
@@ -99,6 +141,7 @@ export class ChainMarksComponent {
         id: e.id,
         link: e.link,
         label: `${e.sourceName} · ${e.label}`,
+        short: e.label,
         resolving: !!e.resolutionId,
         mine: e.controllerId === this.me(),
         x: onRing ? Math.cos(angle).toFixed(3) : 0,

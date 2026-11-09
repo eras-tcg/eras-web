@@ -141,7 +141,22 @@
         <eras-alert>Elige el objetivo: una carta o zona (Esc para cancelar).</eras-alert>
       }
       @if (game.state()?.chain?.length) {
-        <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+        <!-- The chain is read on the table (its marks on the cards); the list, explicit, opens from this button -->
+        <button
+          type="button"
+          class="chain-btn"
+          [class.open]="chainOpen()"
+          [class.see-through]="seeThrough()"
+          [attr.aria-expanded]="chainOpen()"
+          (click)="chainOpen.set(!chainOpen()); $event.stopPropagation()"
+        >
+          <eras-icon name="link" />
+          <span>Cadena {{ game.state()?.chain?.length }}</span>
+          <eras-icon class="caret" name="chevron-down" />
+        </button>
+        @if (chainOpen()) {
+          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+        }
       }
       @if (engineNotice(); as notice) {
         @if (!game.myPrompt()) {
@@ -177,27 +192,6 @@
       <eras-status-panels (leave)="exit()" />
     </div>
   </div>
-  }
-
-  @if (canSeeThrough()) {
-    <!-- Held (or a long press anywhere): the choice and the chain turn transparent to look at the table -->
-    <button
-      type="button"
-      class="see-through-btn"
-      [class.on]="seeThrough()"
-      [attr.aria-pressed]="seeThrough()"
-      title="Mantén presionado para ver la mesa a través de los paneles (también manteniendo el clic fuera de la elección, o en cualquier parte de la mesa)"
-      (pointerdown)="holdSeeThrough($event)"
-      (keydown.space)="seeThrough.set(true); $event.preventDefault()"
-      (keyup.space)="seeThrough.set(false)"
-      (keydown.enter)="seeThrough.set(true)"
-      (keyup.enter)="seeThrough.set(false)"
-      (blur)="seeThrough.set(false)"
-      (click)="$event.stopPropagation()"
-    >
-      <eras-icon name="eye" />
-      <span>Ver la mesa</span>
-    </button>
   }
 
   <eras-card-flights />

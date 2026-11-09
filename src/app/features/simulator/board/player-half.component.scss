@@ -344,9 +344,10 @@ eras-player-plate {
   }
 
   // The rival's lies at the far edge, which the distance shrinks by 1 + sin / (depth · cos − sin): it grows back.
-  // Coming forward there also lifts it on the screen: it goes down as much again, off the table's edge
+  // Coming forward there also lifts it on the screen: it goes down as much again, off the table's edge. Going down
+  // it would sink its lower edge under the nearer table (the lives would cover it): 2.5rem towards you keeps it whole
   :host(.tilted.opponent) eras-player-plate {
-    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateY(calc(var(--space-4) * 2.5)) translateZ(1rem)
+    transform: rotateX(calc(-1 * var(--tilt, 0deg))) translateY(calc(var(--space-4) * 2.5)) translateZ(2.5rem)
       scale(calc(1 + sin(var(--tilt, 0deg)) / (var(--depth, 2.2) * cos(var(--tilt, 0deg)) - sin(var(--tilt, 0deg)))));
   }
 }

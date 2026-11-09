@@ -32,7 +32,8 @@ export class BoardPreferences {
   readonly tilted = computed(() => this.tilt() > 0);
   readonly tiltAngle = computed(() => `${this.tilt() * TABLE_TILT_MAX}deg`);
   /** The latest actions shown as notices over the table (top left). */
-  readonly noticesOff = persistedFlag('eras-sim-notices-off');
+  // Hidden by default (a new key: the old one was stored as shown for everyone who had played)
+  readonly noticesOff = persistedFlag('eras-sim-notices-hidden', true);
 
   /** The options sidebar: expanded (names beside the icons), or dynamic (it expands while the pointer is on it). */
   readonly sidebarExpanded = persistedFlag('eras-sim-sidebar-expanded');

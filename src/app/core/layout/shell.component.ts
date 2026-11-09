@@ -37,7 +37,12 @@ export class ShellComponent {
 
   /** A new version (never over a game's table) or a broken one (VersionService). */
   protected readonly versionBanner = computed(() =>
-    versionBanner({ updateAvailable: this.version.updateAvailable(), broken: this.version.broken(), url: this.url() }),
+    versionBanner({
+      updateAvailable: this.version.updateAvailable(),
+      broken: this.version.broken(),
+      url: this.url(),
+      appUpdate: !!this.version.appUpdate(),
+    }),
   );
 
   /**

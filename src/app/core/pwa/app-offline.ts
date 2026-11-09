@@ -1,8 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { isNativeApp } from './app-mode';
 
 /** The service worker's script (public/eras-sw.js: ngsw plus the card pictures' cache). */
 export const SERVICE_WORKER_URL = 'eras-sw.js';
+/** The Android app's service worker: only the card pictures' cache (its code is in the APK). */
+export const PICTURES_WORKER_URL = 'eras-pictures-sw.js';
 
 /** The part of ngsw.json read here: each asset group's files and whether they are downloaded on install. */
 interface NgswManifest {
@@ -30,24 +33,29 @@ export function prefetchedUrls(manifest: NgswManifest): string[] {
 @Injectable({ providedIn: 'root' })
 export class AppOffline {
   private readonly sw = inject(SwUpdate, { optional: true });
+  private readonly native = isNativeApp();
 
   get supported(): boolean {
-    return !!this.sw?.isEnabled && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+    return (this.native || !!this.sw?.isEnabled) && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
   }
 
-  /** Registers the service worker if it is not yet (the same script as provideServiceWorker: no second worker). */
+  /**
+   * Registers the service worker if it is not yet (the same script as provideServiceWorker: no second worker). The
+   * Android app registers only the card pictures' worker.
+   */
   async ensureRegistered(): Promise<void> {
     if (!this.supported) return;
     try {
       const existing = await navigator.serviceWorker.getRegistration();
-      if (!existing) await navigator.serviceWorker.register(SERVICE_WORKER_URL);
+      if (!existing) await navigator.serviceWorker.register(this.native ? PICTURES_WORKER_URL : SERVICE_WORKER_URL);
     } catch {
       // Refused (private window, blocked): the app just will not open offline
     }
   }
 
-  /** How much of what ngsw downloads on installing is already in its caches. */
+  /** How much of what ngsw downloads on installing is already in its caches (the Android app: all of it, in the APK). */
   async readiness(): Promise<AppReadiness> {
+    if (this.native) return { supported: true, cached: 1, total: 1, ready: true };
     if (!this.supported || typeof caches === 'undefined') return { supported: false, cached: 0, total: 0, ready: false };
     let urls: string[];
     try {

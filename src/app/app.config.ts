@@ -9,6 +9,7 @@ import { BusyState, busyInterceptor } from '@core/http/busy';
 import { loadingInterceptor } from '@core/http/loading';
 import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
 import { MainScreensPreloading } from '@core/navigation/preloading';
+import { isNativeApp } from '@core/pwa/app-mode';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { DataPrefetch } from '@data/prefetch/data-prefetch';
 import { connectionGateInterceptor } from '@core/server/connection-gate.interceptor';
@@ -37,8 +38,9 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => void inject(DataPrefetch)),
     { provide: LOCALE_ID, useValue: 'es' },
     // Installable and playable offline (ngsw + the card pictures' cache, public/eras-sw.js). Registered once the app
-    // is stable (at most 30 s after starting), so it never competes with the first screen
-    provideServiceWorker('eras-sw.js', { enabled: !isDevMode(), registrationStrategy: 'registerWhenStable:30000' }),
+    // is stable (at most 30 s after starting), so it never competes with the first screen. Not in the Android app: its
+    // code is in the APK (it keeps only the card pictures' worker, NativeApp)
+    provideServiceWorker('eras-sw.js', { enabled: !isDevMode() && !isNativeApp(), registrationStrategy: 'registerWhenStable:30000' }),
     // The quick button «Misiones» off the hub menus opens them as a dialog
     { provide: MISSIONS_DIALOG, useValue: () => import('@features/home/missions-dialog.component').then((m) => m.MissionsDialogComponent) },
   ],

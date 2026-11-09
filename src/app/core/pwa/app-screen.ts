@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { DestroyRef, Injectable, inject } from '@angular/core';
 import { ServerAccess } from '../server/server-access';
-import type { AppMode } from './app-mode';
+import { isNativeApp, type AppMode } from './app-mode';
 
 /** The taps that may ask for full screen (the browser takes any of them as the player's gesture). */
 const GESTURES = ['click', 'pointerup', 'touchend'] as const;
@@ -69,6 +69,11 @@ export class AppScreen {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   readonly installed = inject(ServerAccess).mode === 'app';
+  /**
+   * The Android app: its activity is always in landscape and full screen (immersive, MainActivity), so the page asks
+   * for neither (the browser's full screen API would only fight it); the layout size is kept the same way.
+   */
+  readonly native = isNativeApp(this.document.defaultView ?? undefined);
   /** A touch screen (a phone or tablet): the coarse pointer. */
   readonly touch = this.document.defaultView?.matchMedia?.('(pointer: coarse)').matches === true;
   /** The app's own "Pantalla completa" buttons show (showFullscreenToggle). */
@@ -97,8 +102,9 @@ export class AppScreen {
     const settle = () => {
       measure();
     };
+    const native = this.native;
     const lock = () => {
-      if (this.locked) return;
+      if (this.locked || native) return;
       const orientation = win.screen?.orientation as LockableOrientation | undefined;
       if (!orientation?.lock) return;
       orientation.lock('landscape').then(
@@ -107,6 +113,7 @@ export class AppScreen {
       );
     };
     const onGesture = () => {
+      if (native) return;
       const ask = needsFullscreenRequest({
         installed: true,
         touch,

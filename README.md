@@ -137,6 +137,66 @@ app: `core/pwa/app-mode.ts`, decided once at start). The browser's tab keeps the
   no full screen button; "Gira el teléfono" upright; the layout box unchanged when the window is 48 px shorter; and the
   browser's tab as before.
 
+### The Android app (2.7)
+
+A native Android app (Capacitor 8) around the same Angular code, downloaded from the site as an APK
+(`/app/ERAS.apk`; not in Google Play). The site and the PWA are unchanged; on an Android phone "Jugar" offers
+**Descargar la app para Android** (with how to allow installing it) instead of "Instalar ERAS" once the site publishes
+an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; other platforms keep "Instalar ERAS").
+
+- **What it is:** `android/` (committed; `npx cap sync android` copies the web build into it), `capacitor.config.ts`
+  (appId `com.erastcg.eras`, the page served at `https://localhost` from the APK). The web part is the build
+  `capacitor` (`ng build -c capacitor` → `dist/eras-web-capacitor/browser`): the AWS build with
+  `environment.capacitor.ts`, whose API, socket and `/wake` are `https://www.erastcg.com/...` by full address (the
+  servers allow the origin `https://localhost`: DriveManager and UsersService `cors.app-origins`; `/wake` is sent
+  `no-cors`, its answer is never read), and without ngsw (the code is in the APK).
+- **The installed app's behaviour** (`AppMode` `'app'`, `core/pwa/app-mode.ts`: `isNativeApp()` reads the bridge
+  Capacitor puts on the page): local-first, offline games, the card pictures kept automatically; the pictures are
+  served by `eras-pictures-sw.js` (the pictures' half of `eras-sw.js`, registered alone there). No "Instalar ERAS",
+  no full screen API or orientation lock from the page, no `index.html` version polling.
+- **Native screen** (`MainActivity.java`): landscape (`sensorLandscape`), immersive full screen (the bars show for a
+  moment over the game on a swipe, see-through, and hide again; re-applied on resume and focus), laid out under the
+  cutout, the WebView never resized by the bars (only the keyboard pushes it up). Capacitor's `SystemBars` insets
+  handling is off. Back button: closes a dialog, goes back a screen, leaves the app from the hub. Icons and splash:
+  `python3 scripts/android-icons.py` (from `public/icons`).
+- **Updates without reinstalling** (`core/native`, `@capgo/capacitor-updater` self-hosted: no Capgo cloud, no
+  statistics): the site publishes `/app/web-<version>.zip` (the capacitor build) and `/app/app-update.json`
+  (`{version, url, sha256, minNativeVersion, apk, apkVersion, apkVersionCode}`, `scripts/app-update.mjs`). The app
+  reads the manifest with native HTTP (a file on the CDN: the backend is never woken) on start and at most hourly;
+  a newer `version` is downloaded (the updater checks the SHA-256) and taken as the PWA's new version: by itself on a
+  safe screen or with "Nueva versión disponible – Recargar", never over a game. The new web part must start
+  (`notifyAppReady`) within 15 s or the updater goes back to the previous one; a version is tried twice at most.
+  `environment.liveUpdates` turns the live updates off (the APK check stays).
+- **When an APK is needed:** native changes (Java, the manifest, `capacitor.config.ts`, plugins, the Capacitor
+  version) only reach players with a new APK. The APK's versionName is `package.json`'s version and its versionCode
+  is derived (2.7.0 → 20700, MAIN·10000 + FEATURES·100 + FIXES), so every deploy builds a newer APK; installed apps
+  ignore it while their versionCode ≥ `android/native-release.json` `minNativeVersion`, and take the web part live.
+  After a native change set `minNativeVersion` to the new version's code: older apps then show "Hay una nueva versión
+  de la app – Descargar" (the APK) and do not take a web part they cannot run.
+- **Releasing:** web-only change → bump the version as usual (`package.json`, `APP_VERSION`) and deploy: the APK and
+  the live update are published with the site. Native change → the same plus `minNativeVersion`.
+- **CI** (`.github/workflows/ci-cd.yml`, job `android`): `ng build -c capacitor`, `npx cap sync android`,
+  `./gradlew assembleRelease` (JDK 21, Android SDK), then the zip and the manifest; the job `site` puts them under
+  `app/` in the site's artifact (eras-tcg/infra `deploy-site.sh` uploads the APK with its content type and
+  invalidates `/app/*`). Signed with the release key from the repository's secrets; without them the APK is signed
+  with a debug key, kept only as the run's artifact `ERAS-debug-signed-NOT-FOR-DISTRIBUTION`, and nothing is
+  published under `/app` (the site keeps the APK it had).
+- **Release key (once, by the owner; never committed):**
+  ```bash
+  keytool -genkeypair -v -keystore eras-release.jks -alias eras -keyalg RSA -keysize 4096 -validity 10000
+  base64 -w0 eras-release.jks > eras-release.jks.b64     # macOS: base64 -i eras-release.jks -o eras-release.jks.b64
+  ```
+  GitHub → eras-tcg/eras-web → Settings → Secrets and variables → Actions → New repository secret:
+  `ANDROID_KEYSTORE_BASE64` (the `.b64` file's content), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`eras`),
+  `ANDROID_KEY_PASSWORD` (the same as the keystore's unless another was given). Keep `eras-release.jks` and its
+  passwords backed up in two safe places: an APK signed with another key cannot update the installed app (players
+  would have to uninstall it, losing what the app keeps on the phone). Delete the `.b64` file afterwards.
+- **Locally:** `npx ng build -c capacitor && npx cap sync android && (cd android && ./gradlew assembleDebug)` (Android
+  SDK with platform 36, JDK 21) → `android/app/build/outputs/apk/debug/app-debug.apk`; `adb install -r` it.
+- **Tests:** `core/native/app-update.spec.ts` (manifest, versions, plan, attempts), `core/pwa/app-mode.spec.ts`,
+  `core/http/api-config.spec.ts` (the app's environment and build), `core/pwa/android-app.spec.ts`, and the Android
+  app's part of `version.service.spec.ts`.
+
 ### Updating the vendored engine
 
 The engine lives in [`vendor/eras-engine`](vendor/eras-engine/README.md) (built from DriveManager/eras-engine; the

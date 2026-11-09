@@ -13,6 +13,13 @@
         <button type="button" class="update-reload" (click)="version.reload()">Recargar</button>
       </div>
     }
+    @case ('app') {
+      <!-- The Android app: a new APK is needed (native changes); the link opens in the phone's browser -->
+      <div class="update-banner" role="status">
+        <eras-icon name="download" /> Hay una nueva versión de la app.
+        <a class="update-reload" [href]="version.appUpdate()" target="_blank" rel="noopener">Descargar</a>
+      </div>
+    }
   }
   @if (offlineBanner()) {
     <div class="offline-banner" role="status">

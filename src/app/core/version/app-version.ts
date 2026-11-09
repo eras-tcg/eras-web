@@ -3,4 +3,4 @@
  * FEATURES with each release that brings something new (back to 0 with a new MAIN), FIXES with each release that
  * only fixes (back to 0 with new features). The same as "version" in package.json (a spec checks it).
  */
-export const APP_VERSION = '2.6.1';
+export const APP_VERSION = '2.7.0';

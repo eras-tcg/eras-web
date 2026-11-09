@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The maskable icon's background (public/icons/maskable-512.png) -->
+    <color name="ic_launcher_background">#141414</color>
+    <!-- Behind the page while it loads, and the splash -->
+    <color name="eras_background">#141414</color>
+</resources>

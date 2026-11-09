@@ -154,9 +154,11 @@ export class PlayerHalfComponent {
         'dragstart',
         (e) => {
           if (this.swipeX === null) return;
-          const dx = Math.abs(e.clientX - this.swipeStartX);
-          const dy = Math.abs(e.clientY - this.swipeStartY);
-          if (dx < dy) return;
+          // Measured from the last pointer move (Chrome gives dragstart the press's own position)
+          const dx = Math.abs(this.swipeLastX - this.swipeStartX);
+          const dy = Math.abs(this.swipeLastY - this.swipeStartY);
+          // Only a move already clearly sideways (a drag that starts before the mouse moved is the card's)
+          if (dx < 4 || dx <= dy) return;
           e.preventDefault();
           e.stopPropagation();
         },
@@ -172,14 +174,17 @@ export class PlayerHalfComponent {
   /** Where the swipe began (a sideways drag of a card turns the hand instead of dragging the card). */
   private swipeStartX = 0;
   private swipeStartY = 0;
+  /** The pointer's latest position during the swipe. */
+  private swipeLastX = 0;
+  private swipeLastY = 0;
   /** The last move turned the hand (its click is swallowed). */
   private swiped = false;
 
   /** A finger, a pen or the mouse's main button on the hand: a sideways swipe may turn it. */
   protected swipeStart(e: PointerEvent): void {
     if ((e.pointerType === 'mouse' && e.button !== 0) || !this.handTurnMax()) return;
-    this.swipeX = this.swipeStartX = e.clientX;
-    this.swipeY = this.swipeStartY = e.clientY;
+    this.swipeX = this.swipeStartX = this.swipeLastX = e.clientX;
+    this.swipeY = this.swipeStartY = this.swipeLastY = e.clientY;
     this.swiped = false;
   }
 
@@ -189,6 +194,8 @@ export class PlayerHalfComponent {
    */
   protected swipeMove(e: PointerEvent): void {
     if (this.swipeX === null) return;
+    this.swipeLastX = e.clientX;
+    this.swipeLastY = e.clientY;
     const dx = e.clientX - this.swipeX;
     if (Math.abs(dx) < SWIPE_STEP_PX || Math.abs(dx) < Math.abs(e.clientY - this.swipeY)) return;
     const steps = Math.trunc(dx / SWIPE_STEP_PX);

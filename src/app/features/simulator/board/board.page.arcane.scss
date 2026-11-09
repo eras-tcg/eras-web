@@ -2,7 +2,9 @@
 // and cut gems. The colors are the table's own, the same in both themes. The halves and the counters read the
 // --arcane-* colors (see player-half, shared-bar, phase-bar and resource-pips)
 
-.table.arcane {
+// The arcane colors, on the whole board in a game (the table, the sidebar, the menu button and the space around them):
+// what sits there reads as on stone in both themes; menus and dialogs float outside and keep the theme
+@mixin arcane-colors {
   --arcane-gold: #c9a24b;
   --arcane-gold-light: #f2e3bd;
   --arcane-gold-soft: rgb(201 162 75 / 28%);
@@ -10,8 +12,6 @@
   --arcane-stone-dark: #0c0e12;
   --arcane-ally: #22c55e;
   --arcane-rival: #e5484d;
-  // What sits on the table (switches, plates, empty zones) reads as on stone in both themes; menus and dialogs float
-  // outside it and keep the theme
   --color-surface: #1c1f26;
   --color-surface-muted: #262a33;
   --color-border: rgb(201 162 75 / 28%);
@@ -20,6 +20,16 @@
   --color-primary: #c9a24b;
   --color-on-primary: #17140f;
   color-scheme: dark;
+}
+
+:host(.arcane) {
+  @include arcane-colors;
+
+  background: radial-gradient(ellipse at 50% 50%, #12151a, #07080a);
+}
+
+.table.arcane {
+  @include arcane-colors;
 
   border-radius: var(--radius-lg);
   background:
@@ -55,6 +65,17 @@
   filter: drop-shadow(0 0 0.5px var(--arcane-gold)) drop-shadow(0 0 0.5px var(--arcane-gold));
 }
 
+// Phones in landscape: the plaque fills the strip's side with the clean style's letters (the display face is too wide
+// for it), so the turn takes the same room in both styles
+@media (orientation: landscape) and (max-height: 30rem) {
+  .table.arcane .strip .turn {
+    padding-inline: var(--space-3);
+    font-family: inherit;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.04em;
+  }
+}
+
 .table.arcane .strip .turn::before {
   inline-size: 0.5rem;
   block-size: 0.5rem;
@@ -71,9 +92,16 @@
 }
 
 // Menú de partida (beside the table, not in it): a gold-ringed stone button
-.game-menu-btn.arcane {
+:host(.arcane) .game-menu-btn {
   border: 1px solid var(--arcane-gold, #c9a24b);
   background: linear-gradient(180deg, #2a2620, #17140f);
   box-shadow: 0 0 10px rgb(201 162 75 / 30%);
   color: #f2e3bd;
+}
+
+// The sidebar: stone, with a gold hairline towards the table
+:host(.arcane) .sidebar {
+  border-inline-start-color: var(--arcane-gold-soft);
+  background: linear-gradient(180deg, #1a1d23, #0f1115);
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 4%);
 }

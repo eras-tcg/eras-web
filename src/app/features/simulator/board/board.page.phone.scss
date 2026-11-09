@@ -40,6 +40,9 @@
 @media (orientation: landscape) and (max-height: 30rem) {
   :host {
     --side: 7.5rem;
+    // The turn and the phase: the same room on both sides, whatever their text and the table's style (the gem
+    // marker between them keeps its size and stays centered)
+    --strip-side: 9.5rem;
   }
 
   .table {
@@ -49,7 +52,7 @@
   // No frame or background: the turn, the gem marker and the phase float over the table's middle line
   .strip,
   .strip.with-gems {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: var(--strip-side) minmax(0, 1fr) var(--strip-side);
     gap: var(--space-3);
     padding: 0;
     border: 0;
@@ -59,6 +62,8 @@
 
   .strip > :first-child,
   .strip > :last-child {
+    justify-self: stretch;
+    min-inline-size: 0;
     padding-inline: 0;
   }
 
@@ -70,7 +75,10 @@
   // Whose turn: a see-through pill with a dot of the side's color
   .strip .turn {
     display: inline-flex;
+    flex: 1;
     align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     gap: var(--space-1);
     padding: 0.15rem var(--space-3) 0.15rem var(--space-2);
     border: 1px solid color-mix(in srgb, var(--color-danger) 55%, transparent);

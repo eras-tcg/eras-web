@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MIN_LENGTH } from '@core/auth/password-rules';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { OnlineStatus } from '@core/server/online-status';
 import { AuthService } from '@core/auth/auth.service';
 import { VersionTagComponent } from '@core/version/version-tag.component';
@@ -14,7 +14,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 
 @Component({
   selector: 'eras-login-page',
-  imports: [ReactiveFormsModule, RouterLink, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent, VersionTagComponent],
+  imports: [ReactiveFormsModule, AuthLayoutComponent, StackComponent, FormFieldComponent, AlertComponent, ButtonComponent, VersionTagComponent],
   templateUrl: './login.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

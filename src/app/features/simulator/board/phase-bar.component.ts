@@ -132,8 +132,11 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       .phases { display: none; }
       .compact { display: flex; justify-content: flex-end; }
       // The same see-through pill as the turn's, tinted with the side whose turn it is
+      // It fills the strip's side (the same room in both styles, whatever the phase)
       .current-phase {
         display: inline-flex;
+        flex: 1;
+        justify-content: center;
         align-items: center;
         gap: var(--space-1);
         padding: 0.15rem var(--space-3);
@@ -253,6 +256,14 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       background: linear-gradient(180deg, #23272f, #14171d);
       backdrop-filter: none;
       box-shadow: 0 0 0 1px var(--arcane-gold-soft), var(--shadow-lg);
+    }
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host-context(.arcane) .current-phase,
+      :host-context(.arcane) .choice {
+        font-family: inherit;
+        font-weight: var(--font-weight-bold);
+        letter-spacing: 0.04em;
+      }
     }
     :host-context(.arcane) .choice { border-color: transparent; background: none; box-shadow: none; }
     :host-context(.arcane) .choice:not(:disabled) { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }

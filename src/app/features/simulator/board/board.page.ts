@@ -88,6 +88,7 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     '(click)': 'game.selectedId.set(null)',
     '[class.fullscreen]': 'screen.fullView()',
     '[class.in-game]': 'inGame()',
+    '[class.arcane]': 'inGame() && prefs.arcane()',
   },
 })
 export class BoardPage {

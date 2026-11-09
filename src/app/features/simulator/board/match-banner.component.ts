@@ -364,6 +364,44 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
     @media (max-width: 40rem) {
       .players { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
     }
+    /* Phones in landscape: everything in one screen's height, buttons always in sight. The players face to face,
+       small; with the rank or missions, the result on the left and the progress and choices on the right */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      .screen {
+        gap: var(--space-3);
+        padding: var(--space-3) max(var(--space-6), env(safe-area-inset-right)) var(--space-3) max(var(--space-6), env(safe-area-inset-left));
+        overflow-y: auto;
+        place-content: safe center;
+      }
+      /* The diagonal of light inside the screen (past its edges it would make it scroll) */
+      .screen::before { inset: 0; }
+      .players { inline-size: min(30rem, 100%); gap: var(--space-4); margin-block-start: var(--space-2); }
+      .player { gap: var(--space-1); }
+      .player eras-avatar { --avatar-size: 3.5rem; }
+      .player.mine eras-avatar { box-shadow: 0 0 0 2px var(--mine), 0 0 18px 4px color-mix(in srgb, var(--mine) 50%, transparent); }
+      .player.rival eras-avatar { box-shadow: 0 0 0 2px var(--rival), 0 0 18px 4px color-mix(in srgb, var(--rival) 50%, transparent); }
+      .name { font-size: 0.95rem; }
+      .vs { font-size: 2.6rem; }
+      .crown { inset-block-start: -1.5rem; inline-size: 1.4rem; block-size: 1.4rem; }
+      .title { font-size: 2.6rem; letter-spacing: 0.1em; }
+      .end .vs { font-size: 1.2rem; }
+      .reason { font-size: var(--font-size-sm); }
+      .choices { gap: var(--space-2); }
+      .choice { padding: var(--space-1) var(--space-4); font-size: var(--font-size-sm); }
+      .missions { inline-size: 100%; gap: var(--space-1); }
+      .mission { padding: var(--space-1) var(--space-2); }
+      .mission-text, .mission-count { font-size: var(--font-size-xs); }
+      .rank { padding: var(--space-1) var(--space-3); }
+      .screen.end:has(.rank, .rank-wait, .missions) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-auto-flow: row dense;
+        align-content: center;
+        column-gap: var(--space-6);
+        row-gap: var(--space-2);
+      }
+      .screen.end:has(.rank, .rank-wait, .missions) :is(.title, .players, .reason) { grid-column: 1; }
+      .screen.end:has(.rank, .rank-wait, .missions) :is(.rank, .rank-wait, .missions, .choices) { grid-column: 2; justify-self: stretch; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .screen, .screen::before, .mine, .rival, .vs, .hint, .title, .reason, .crown, .choices, .winner eras-avatar { animation: none; }
     }

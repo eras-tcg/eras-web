@@ -2,8 +2,9 @@
   <!-- The card the choice is about, beside it: its effects, the one that asks lit up -->
   <eras-effect-card-panel class="side" [class.lowered]="sheet.lowered()" [class.see-through]="sheet.seeThrough()" [slot]="p.slot" [name]="p.name" [image]="p.image" [activeText]="p.text" />
 }
-<!-- Effects to chain: no subtitle (the effect itself, with its link, says it all) -->
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.effects?.length ? null : prompt.instruction">
+<!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
+     blocking…) say it in their title and buttons -->
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.purpose || prompt.effects?.length ? null : prompt.instruction">
   <div class="body">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
@@ -46,14 +47,19 @@
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
-  @if (commonZone(); as zone) {
-    <p class="from-zone"><eras-icon [name]="zoneIcon(zone)" /> Desde: {{ zone }}</p>
-  }
-  @if (hiddenCount() > 0) {
-    <label class="show-all">
-      <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
-      Mostrar también las que no cumplen ({{ hiddenCount() }})
-    </label>
+  @if (commonZone() || hiddenCount() > 0) {
+    <!-- Where they come from and the switch for the rest, on one line -->
+    <div class="meta">
+      @if (commonZone(); as zone) {
+        <p class="from-zone"><eras-icon [name]="zoneIcon(zone)" /> Desde: {{ zone }}</p>
+      }
+      @if (hiddenCount() > 0) {
+        <label class="show-all">
+          <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
+          Mostrar también las que no cumplen ({{ hiddenCount() }})
+        </label>
+      }
+    </div>
   }
   <div
     class="cards"

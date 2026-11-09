@@ -19,6 +19,9 @@ import { isTouchOnly } from './board-touch';
 import { DOCUMENT } from '@angular/common';
 import { TIMING } from './timing';
 
+/** A finger moved this far up on a card of the hand that can be played lifts it off to drag it to the table. */
+const TOUCH_DRAG_PX = 14;
+
 /** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
 /** Turning sideways when exhausted: its place widens, then it turns. */
 const TAP_MS = TIMING.tap;
@@ -97,8 +100,13 @@ export class SimCardComponent {
   /** Cards of the hand can be dropped to play them by the rules; anything else is moved only in editor mode. */
   /** A touch screen: a long press is the menu (on iPhone it would start a drag instead); taps play and attack. */
   private readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
+  // From the hand only the cards that can be played now (the blue glow), unless in editor mode
   protected readonly canDrag = computed(
-    () => !this.touchOnly && !this.opponent() && !this.lookOnly() && (this.zone() === 'hand' || this.game.editorMode() || this.canAttack()),
+    () =>
+      !this.touchOnly &&
+      !this.opponent() &&
+      !this.lookOnly() &&
+      ((this.zone() === 'hand' && this.canPlay()) || this.game.editorMode() || this.canAttack()),
   );
   /** One of your creatures that can attack now: dragged onto a target, it attacks. */
   protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
@@ -174,6 +182,11 @@ export class SimCardComponent {
 
   protected onClick(event?: Event): void {
     event?.stopPropagation();
+    // The tap that ended a drag to the table is not a tap
+    if (this.touchDropped) {
+      this.touchDropped = false;
+      return;
+    }
     if (this.game.pendingTargetSource() !== null) {
       this.game.target(this.slot().instanceId);
       return;
@@ -229,6 +242,100 @@ export class SimCardComponent {
     event.stopPropagation();
     this.game.selectedId.set(null);
     this.game.activateEffect(this.slot().instanceId, scriptId);
+  }
+
+  // ── Touch: a card of the hand that can be played (blue glow) is dragged up to your table to play it ──────────
+
+  /** The finger on the card: where it landed; the copy that follows it once the drag started (null: not yet). */
+  private touchDrag: { id: number; x0: number; y0: number; card: HTMLElement; ghost: HTMLElement | null } | null = null;
+  /** Your table's field under the finger (lit while the card is over it). */
+  private touchOver: HTMLElement | null = null;
+  /** The last drag ended on the table: the click that follows is swallowed. */
+  private touchDropped = false;
+
+  protected touchDown(event: PointerEvent): void {
+    if (event.pointerType === 'mouse' || this.zone() !== 'hand' || this.opponent() || this.lookOnly() || !this.canPlay()) return;
+    this.touchDrag = { id: event.pointerId, x0: event.clientX, y0: event.clientY, card: event.currentTarget as HTMLElement, ghost: null };
+  }
+
+  /** Upwards past TOUCH_DRAG_PX (more up than sideways: sideways the hand turns), the card lifts off and follows. */
+  protected touchMove(event: PointerEvent): void {
+    const d = this.touchDrag;
+    if (!d || event.pointerId !== d.id) return;
+    if (!d.ghost) {
+      const up = d.y0 - event.clientY;
+      if (up < TOUCH_DRAG_PX || up < Math.abs(event.clientX - d.x0)) return;
+      d.card.setPointerCapture(event.pointerId);
+      d.ghost = this.liftCopy(d.card);
+      this.game.selectedId.set(null);
+    }
+    d.ghost.style.left = `${event.clientX}px`;
+    d.ghost.style.top = `${event.clientY}px`;
+    this.light(this.fieldAt(event.clientX, event.clientY)?.field ?? null);
+  }
+
+  /** Let go over your table: the card is summoned or played where it was dropped (as dropping it with the mouse). */
+  protected touchUp(event: PointerEvent): void {
+    const d = this.touchDrag;
+    if (!d || event.pointerId !== d.id) return;
+    const dragged = !!d.ghost;
+    const target = dragged ? this.fieldAt(event.clientX, event.clientY) : null;
+    this.touchCancel();
+    if (!dragged) return;
+    this.touchDropped = true;
+    if (!target) return;
+    const s = this.slot();
+    const actions = this.actions();
+    if (actions.includes('summon')) this.game.normalSummon(s.instanceId, target.x, target.y);
+    else if (actions.includes('play')) this.game.playCard(s.instanceId, target.x, target.y);
+    else if (actions.includes('ritual')) void this.run('ritual', event);
+  }
+
+  protected touchCancel(): void {
+    this.touchDrag?.ghost?.remove();
+    this.touchDrag = null;
+    this.light(null);
+  }
+
+  /** A copy of the card that follows the finger, a little bigger and tilted, over everything. */
+  private liftCopy(card: HTMLElement): HTMLElement {
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true) as HTMLElement;
+    Object.assign(ghost.style, {
+      position: 'fixed',
+      zIndex: '1000',
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      margin: '0',
+      pointerEvents: 'none',
+      transform: 'translate(-50%, -60%) scale(1.15) rotate(-4deg)',
+      filter: 'drop-shadow(0 14px 18px rgb(0 0 0 / 45%))',
+      transition: 'none',
+    });
+    card.ownerDocument.body.appendChild(ghost);
+    return ghost;
+  }
+
+  /**
+   * Your table's field under a point, and where on it (in % as the mouse's drop: over one of its lines, that line's
+   * middle, the front line 25 and the Retaguardia 75), or null off your table.
+   */
+  private fieldAt(x: number, y: number): { field: HTMLElement; x: number; y: number } | null {
+    const under = this.touchDrag?.card.ownerDocument.elementFromPoint(x, y) ?? null;
+    const field = under?.closest('eras-player-half:not(.opponent) .field') as HTMLElement | null;
+    if (!under || !field) return null;
+    const line = under.closest('.line');
+    const box = (line ?? field).getBoundingClientRect();
+    const px = Math.max(0, Math.min(100, ((x - box.left) / box.width) * 100));
+    const py = line ? (line.classList.contains('front') ? 25 : 75) : Math.max(0, Math.min(100, ((y - box.top) / box.height) * 100));
+    return { field, x: px, y: py };
+  }
+
+  private light(field: HTMLElement | null): void {
+    if (field === this.touchOver) return;
+    this.touchOver?.classList.remove('touch-over');
+    field?.classList.add('touch-over');
+    this.touchOver = field;
   }
 
   protected onDragStart(event: DragEvent): void {

@@ -150,6 +150,12 @@ eras-player-plate {
   overflow: hidden;
 }
 
+// A card of the hand dragged with a finger over your table (sim-card adds the class)
+.field.touch-over {
+  border-color: var(--color-primary);
+  border-style: solid;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent), 0 0 18px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
 
 .field.drop-active {
   border-color: var(--color-primary);
@@ -282,8 +288,8 @@ eras-player-plate {
   background: none;
   padding: 0;
   overflow: visible;
-  // A sideways swipe is the hand's (it turns it, see swipeMove), not the page's
-  touch-action: pan-y;
+  // Every finger move on the hand is the game's: sideways it turns (swipeMove), upwards a card is dragged to the table
+  touch-action: none;
 }
 
 .hand-cards {
@@ -345,8 +351,9 @@ eras-player-plate {
   }
 }
 
+// "Altura de la mano" applies to both hands: the rival's comes down into the table as much
 :host(.opponent) .hand-cards {
-  inset-block: auto calc(var(--hand-reach) - 1.5rem);
+  inset-block: auto calc(var(--hand-reach) - 1.5rem - var(--hand-raise));
   align-items: flex-end;
 }
 
@@ -407,7 +414,8 @@ eras-player-plate {
 :host(:not(.opponent)) .in-hand.raised,
 :host(:not(.opponent)) .in-hand:has(:focus-visible) {
   z-index: 2;
-  transform: translateY(calc(var(--hand-peek) * -1)) rotate(0deg);
+  // The card rises what the hand still hides of it: the higher the hand stands, the less it rises
+  transform: translateY(calc(max(0px, var(--hand-peek) - var(--hand-raise)) * -1)) rotate(0deg);
 }
 
 .hand-cards:empty::after {

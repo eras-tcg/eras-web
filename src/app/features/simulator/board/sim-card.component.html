@@ -36,6 +36,10 @@
   (keydown.enter)="onClick($event)"
   (dragstart)="onDragStart($event)"
   (dragend)="drag.end()"
+  (pointerdown)="touchDown($event)"
+  (pointermove)="touchMove($event)"
+  (pointerup)="touchUp($event)"
+  (pointercancel)="touchCancel()"
 />
 
 @if (chainLinks().length) {

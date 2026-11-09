@@ -36,13 +36,13 @@
   }
 
   :host(.opponent) .hand-cards {
-    inset-block: auto calc(var(--hand-reach) - 0.25rem);
+    inset-block: auto calc(var(--hand-reach) - 0.25rem - var(--hand-raise));
   }
 
   :host(:not(.opponent)) .in-hand:hover,
   :host(:not(.opponent)) .in-hand.raised,
   :host(:not(.opponent)) .in-hand:has(:focus-visible) {
-    transform: translateY(calc((var(--hand-card) * 88 / 63 - var(--hand-peek)) * -1)) rotate(0deg);
+    transform: translateY(calc(max(0px, var(--hand-card) * 88 / 63 - var(--hand-peek) - var(--hand-raise)) * -1)) rotate(0deg);
   }
 
   .line {

@@ -1,8 +1,8 @@
 {
-  "commit": "997a7a6326e94241ea52f3784bf65643e6b04ec8",
+  "commit": "6f2d68e8582d21e64dff6909a094227ea1cdf13b",
   "dirty": false,
-  "subject": "feat(engine): LocalMatch.result(): an offline game's result and digest, the same on the JVM and in the browser",
-  "copiedAt": "2026-11-08T16:20:44.337Z",
+  "subject": "Offline test room: LocalMatch \"editor\" config",
+  "copiedAt": "2026-11-09T13:48:11.185Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

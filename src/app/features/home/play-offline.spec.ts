@@ -4,22 +4,22 @@ import { itemNeedsServer } from './hub-menu.component';
 import { ESTIMATED_PICTURE_BYTES, estimateBytes } from '@data/simulator/card-images';
 
 describe('playMenu', () => {
-  it('with the server: Modo solo, no offline mode', () => {
+  it('with the server: Modo solo and the Sala de pruebas of the server', () => {
     expect(playMenu({ cutOff: false, offline: false }).map((i) => i.id)).toEqual(['online', 'bot', 'tests', 'tutorial']);
   });
 
-  it('without the connection: Modo solo sin conexión in its place, the server modes left out, the tutorial kept', () => {
-    expect(playMenu({ cutOff: true, offline: true }).map((i) => i.id)).toEqual(['offline', 'tutorial']);
+  it('without the connection: both solo modes in this browser, Online left out, the tutorial kept', () => {
+    expect(playMenu({ cutOff: true, offline: true }).map((i) => i.id)).toEqual(['offline', 'tests-offline', 'tutorial']);
   });
 
-  it('the installed app not connected: Modo solo sin conexión in place of Modo solo, the server modes marked (opening one connects)', () => {
+  it('the installed app not connected: both solo modes in this browser, Online marked (opening it connects)', () => {
     const menu = playMenu({ cutOff: false, offline: false, local: true });
-    expect(menu.map((i) => i.id)).toEqual(['online', 'offline', 'tests', 'tutorial']);
-    expect(menu.filter(itemNeedsServer).map((i) => i.id)).toEqual(['online', 'tests']);
+    expect(menu.map((i) => i.id)).toEqual(['online', 'offline', 'tests-offline', 'tutorial']);
+    expect(menu.filter(itemNeedsServer).map((i) => i.id)).toEqual(['online']);
   });
 
-  it('the server not answering (but a connection): the offline mode in place of Modo solo, the rest still tried', () => {
-    expect(playMenu({ cutOff: true, offline: false }).map((i) => i.id)).toEqual(['online', 'offline', 'tests', 'tutorial']);
+  it('the server not answering (but a connection): both solo modes in this browser, Online still tried', () => {
+    expect(playMenu({ cutOff: true, offline: false }).map((i) => i.id)).toEqual(['online', 'offline', 'tests-offline', 'tutorial']);
   });
 });
 

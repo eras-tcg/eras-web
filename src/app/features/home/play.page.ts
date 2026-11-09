@@ -27,18 +27,22 @@ const PLAY_MENU: HubMenuItem[] = [
 
 /** Modo solo sin conexión: against the bot with the engine in this browser. */
 const OFFLINE_ITEM: HubMenuItem = { id: 'offline', label: 'Modo solo sin conexión', icon: 'wifi-off' };
+/** Sala de pruebas without the connection: the engine in this browser, the player on both sides. */
+const OFFLINE_TESTS_ITEM: HubMenuItem = { id: 'tests-offline', label: 'Sala de pruebas', icon: 'edit' };
+/** Without the server, these play in this browser instead. */
+const OFFLINE_SWAP: Record<string, HubMenuItem> = { bot: OFFLINE_ITEM, tests: OFFLINE_TESTS_ITEM };
 /** The modes that need the server. */
 const NEEDS_SERVER = new Set(['online', 'bot', 'tests']);
 
 /**
- * The Jugar menu: one solo mode in its place, Modo solo with the server, Modo solo sin conexión without it (the
- * installed app not connected, `local`, or the server cut off). With no connection at all the server's other modes are
- * left out (the notice under the menu says they come back with the connection); the installed app not connected keeps
- * them, marked (opening one connects). The tutorial always stays.
+ * The Jugar menu: Modo solo and the Sala de pruebas with the server; without it (the installed app not connected,
+ * `local`, or the server cut off) the same places play in this browser (Modo solo sin conexión, the Sala de pruebas
+ * offline). With no connection at all Online is left out; the installed app not connected keeps it, marked (opening it
+ * connects). The tutorial always stays.
  */
 export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boolean }): HubMenuItem[] {
   const withServer = !state.cutOff && !state.local;
-  return PLAY_MENU.map((item) => (item.id === 'bot' && !withServer ? OFFLINE_ITEM : item)).filter(
+  return PLAY_MENU.map((item) => (!withServer && OFFLINE_SWAP[item.id]) || item).filter(
     (item) => !(state.cutOff && state.offline && NEEDS_SERVER.has(item.id)),
   );
 }
@@ -154,12 +158,13 @@ export class PlayPage {
    * or Modo solo sin conexión (the engine's room in this browser).
    */
   protected async start(mode: string): Promise<void> {
-    if (this.busy() || (mode !== 'bot' && mode !== 'tests' && mode !== 'offline')) return;
+    if (this.busy() || !['bot', 'tests', 'offline', 'tests-offline'].includes(mode)) return;
+    const local = mode === 'offline' || mode === 'tests-offline';
     this.busy.set(mode);
     this.error.set(null);
     try {
-      if (mode === 'offline') {
-        const roomId = await this.offline.start();
+      if (local) {
+        const roomId = await this.offline.start(mode === 'tests-offline');
         await this.router.navigate(['/simulator', roomId, 'board']);
         return;
       }
@@ -173,11 +178,12 @@ export class PlayPage {
       await this.router.navigate(['/simulator', roomId, 'board']);
     } catch (e) {
       this.game.disconnect();
-      if (mode === 'offline') {
+      if (local) {
+        const what = mode === 'offline' ? 'el modo solo sin conexión' : 'la sala de pruebas sin conexión';
         this.error.set(
           this.offline.ready()
-            ? 'No se pudo abrir el modo solo sin conexión'
-            : 'No se pudo cargar el modo solo sin conexión: necesita conexión una vez para descargar el juego (o usa «Descargar para jugar sin conexión»)',
+            ? `No se pudo abrir ${what}`
+            : `No se pudo cargar ${what}: necesita conexión una vez para descargar el juego (o usa «Descargar para jugar sin conexión»)`,
         );
         return;
       }

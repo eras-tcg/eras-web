@@ -33,6 +33,8 @@ export interface LocalMatchConfig {
   /** Epoch millis written on every history line; null: the clock's. */
   time?: number | null;
   botClock?: 'ticks' | 'system';
+  /** A test room ("Sala de pruebas" without the connection): the player plays both sides, no bot seated. */
+  editor?: boolean;
 }
 
 /** Where the worker fetches what the engine needs before the first game (absolute URLs). */

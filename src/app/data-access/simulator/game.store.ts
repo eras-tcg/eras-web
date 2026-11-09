@@ -92,9 +92,10 @@ export class GameStore {
   private readonly siteEditMode = inject(EditModeService);
   /**
    * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). On in a test room and while the site's edit mode (the navigation bar's switch) is on.
+   * attachments, strength…). On in a test room (also without the connection: its games count for nothing) and while
+   * the site's edit mode (the navigation bar's switch) is on, never in an offline game against the bot.
    */
-  readonly editorMode = computed(() => !this.local() && (this.editorRoom() || this.siteEditMode.active()));
+  readonly editorMode = computed(() => this.editorRoom() || (!this.local() && this.siteEditMode.active()));
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */

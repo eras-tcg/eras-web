@@ -282,6 +282,8 @@ eras-player-plate {
   background: none;
   padding: 0;
   overflow: visible;
+  // A sideways swipe is the hand's (it turns it, see swipeMove), not the page's
+  touch-action: pan-y;
 }
 
 .hand-cards {

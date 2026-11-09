@@ -126,6 +126,10 @@
   (dragleave)="dragLeave()"
   (drop)="drop($event, 'hand')"
   (wheel)="turnHand($event)"
+  (pointerdown)="swipeStart($event)"
+  (pointermove)="swipeMove($event)"
+  (pointerup)="swipeEnd()"
+  (pointercancel)="swipeEnd()"
 >
   <!-- A fan: only the upper half of each card shows (the rest is off the table); they overlap just a little -->
   <!-- The cards' window: with the straight hand, what is past its ends fades out -->

@@ -117,20 +117,25 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       :host { position: relative; }
       .phases { display: none; }
       .compact { display: flex; justify-content: flex-end; }
+      // The same see-through pill as the turn's, tinted with the side whose turn it is
       .current-phase {
         display: inline-flex;
         align-items: center;
         gap: var(--space-1);
-        padding: 0.1rem var(--space-3);
-        border-color: var(--color-sim-rival);
-        background: color-mix(in srgb, var(--color-sim-rival) 18%, transparent);
+        padding: 0.15rem var(--space-3);
+        border: 1px solid color-mix(in srgb, var(--color-sim-rival) 60%, transparent);
+        background: color-mix(in srgb, var(--color-sim-rival) 14%, color-mix(in srgb, var(--color-surface) 70%, transparent));
+        backdrop-filter: blur(6px);
+        box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
         color: var(--color-text);
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-bold);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
       }
       .current-phase.mine {
-        border-color: var(--color-sim-ally);
-        background: color-mix(in srgb, var(--color-sim-ally) 18%, transparent);
+        border-color: color-mix(in srgb, var(--color-sim-ally) 60%, transparent);
+        background: color-mix(in srgb, var(--color-sim-ally) 14%, color-mix(in srgb, var(--color-surface) 70%, transparent));
       }
       .current-phase.can { cursor: pointer; box-shadow: 0 0 10px 1px color-mix(in srgb, var(--color-sim-ally) 35%, transparent); }
       .caret { font-weight: var(--font-weight-regular); }
@@ -144,11 +149,15 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         gap: var(--space-1);
       }
       .choice {
-        padding: 0.1rem var(--space-3);
-        border-color: var(--color-primary);
-        background: var(--color-surface);
+        padding: 0.15rem var(--space-3);
+        border: 1px solid var(--color-sim-ally);
+        background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+        backdrop-filter: blur(6px);
         color: var(--color-text);
         font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-bold);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         white-space: nowrap;
         box-shadow: var(--shadow-md);
         cursor: pointer;

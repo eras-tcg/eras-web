@@ -25,6 +25,8 @@ import { DOCUMENT } from '@angular/common';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
 const HAND_UPRIGHT_FAN = 2.9;
+/** A sideways swipe on the hand turns it half a card every this many pixels. */
+const SWIPE_STEP_PX = 28;
 
 type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
 
@@ -130,8 +132,56 @@ export class PlayerHalfComponent {
       if (row) resize.observe(row);
     });
     inject(DestroyRef).onDestroy(() => resize.disconnect());
+    // A swipe that turned the hand is not a tap: the card under the finger is not raised (captured before the card)
+    afterRenderEffect(() => {
+      const row = this.handCards()?.nativeElement;
+      if (!row || row.dataset['swipeGuard']) return;
+      row.dataset['swipeGuard'] = '1';
+      row.addEventListener(
+        'click',
+        (e) => {
+          if (!this.swiped) return;
+          this.swiped = false;
+          e.stopPropagation();
+          e.preventDefault();
+        },
+        true,
+      );
+    });
   }
   protected readonly handTurn = computed(() => Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurnWanted())));
+
+  /** A finger on the hand: where it was when the hand last turned (null: no swipe under way). */
+  private swipeX: number | null = null;
+  private swipeY = 0;
+  /** The last finger's move turned the hand (its click is swallowed). */
+  private swiped = false;
+
+  /** A finger (touch or pen) lands on the hand: a sideways swipe may turn it, as the arrows do. */
+  protected swipeStart(e: PointerEvent): void {
+    if (e.pointerType === 'mouse' || !this.handTurnMax()) return;
+    this.swipeX = e.clientX;
+    this.swipeY = e.clientY;
+    this.swiped = false;
+  }
+
+  /**
+   * Moving sideways turns the hand half a card every 28px (right: the cards on the left come in, as "‹"); a mostly
+   * upward move is left alone.
+   */
+  protected swipeMove(e: PointerEvent): void {
+    if (this.swipeX === null) return;
+    const dx = e.clientX - this.swipeX;
+    if (Math.abs(dx) < SWIPE_STEP_PX || Math.abs(dx) < Math.abs(e.clientY - this.swipeY)) return;
+    const steps = Math.trunc(dx / SWIPE_STEP_PX);
+    this.turnHandBy(-steps * 0.5);
+    this.swipeX += steps * SWIPE_STEP_PX;
+    this.swiped = true;
+  }
+
+  protected swipeEnd(): void {
+    this.swipeX = null;
+  }
 
   /** An animation is playing: the hand's arrows (and the lines' ones) keep still, so a flying card lands where aimed. */
   protected readonly animating = computed(() => !(this.animations?.idle() ?? true));

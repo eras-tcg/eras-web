@@ -80,37 +80,65 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         align-items: center;
         gap: var(--space-2);
       }
+      // Each side: slanted steps that light up from the middle outwards, fainter towards the edge of the table
       .side {
         display: flex;
-        gap: 2px;
-        block-size: 0.45rem;
+        gap: 3px;
+        block-size: 0.5rem;
       }
-      .side.mine { flex-direction: row-reverse; }
+      .side.mine {
+        flex-direction: row-reverse;
+        mask-image: linear-gradient(to left, #000 60%, rgb(0 0 0 / 45%));
+      }
+      .side.theirs { mask-image: linear-gradient(to right, #000 60%, rgb(0 0 0 / 45%)); }
       .step {
         flex: 1;
         padding: 0;
         border: 0;
         border-radius: 2px;
-        background: color-mix(in srgb, var(--color-text) 14%, transparent);
+        background: color-mix(in srgb, var(--color-text) 16%, transparent);
+        transform: skewX(-24deg);
+        transition: background var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
         cursor: pointer;
       }
-      .side.mine .step.lit { background: var(--color-success); }
-      .side.theirs .step.lit { background: var(--color-danger); }
+      .side.mine .step.lit {
+        background: linear-gradient(90deg, var(--color-success), color-mix(in srgb, var(--color-success) 70%, white));
+        box-shadow: 0 0 6px color-mix(in srgb, var(--color-success) 70%, transparent);
+      }
+      .side.theirs .step.lit {
+        background: linear-gradient(90deg, color-mix(in srgb, var(--color-danger) 70%, white), var(--color-danger));
+        box-shadow: 0 0 6px color-mix(in srgb, var(--color-danger) 70%, transparent);
+      }
+      // The value in a cut gem: its color is the side the gems are on (none in the middle)
       .value {
-        min-inline-size: 1.75rem;
-        padding: 0 var(--space-1);
+        position: relative;
+        display: grid;
+        place-items: center;
+        inline-size: 2rem;
+        block-size: 2rem;
+        padding: 0;
         border: 0;
-        border-radius: var(--radius-sm);
         background: none;
-        color: var(--color-text);
+        color: var(--color-text-muted);
         font-size: var(--font-size-md);
         font-weight: var(--font-weight-bold);
         font-variant-numeric: tabular-nums;
-        line-height: 1.4;
         cursor: pointer;
+      }
+      .value::before {
+        position: absolute;
+        inset: 0.3rem;
+        z-index: -1;
+        border: 1.5px solid currentColor;
+        border-radius: 4px;
+        background: color-mix(in srgb, currentColor 14%, var(--color-surface));
+        box-shadow: 0 0 10px color-mix(in srgb, currentColor 40%, transparent);
+        transform: rotate(45deg);
+        content: '';
       }
       .value.mine { color: var(--color-success); }
       .value.theirs { color: var(--color-danger); }
+      .compact { isolation: isolate; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

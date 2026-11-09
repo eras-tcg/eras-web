@@ -474,12 +474,16 @@ eras-player-plate {
   min-inline-size: 0;
 }
 
+// Big buttons with only their icon, one over the other, filling the place under the deck (their words stay for screen
+// readers, and in the tooltip)
 .optional-toggle {
   display: inline-flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  min-block-size: 2.5rem;
+  padding: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -489,8 +493,17 @@ eras-player-plate {
 
   eras-icon {
     flex: none;
-    inline-size: 0.875rem;
-    block-size: 0.875rem;
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+  }
+
+  span {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   &.off {

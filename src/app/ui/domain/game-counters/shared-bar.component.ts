@@ -222,11 +222,12 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
        a little taller, the gem in the middle bigger */
     @media not all and (orientation: landscape) and (max-height: 30rem) {
       .compact { gap: var(--space-3); }
-      .side { gap: 5px; block-size: 0.8rem; }
+      .side { gap: 6px; block-size: 1.1rem; }
       .value { inline-size: 3.25rem; block-size: 3.25rem; font-size: 1.35rem; }
       .value::before { inset: 0.5rem; border-width: 2px; }
-      :host-context(.arcane) .side { gap: 4px; block-size: 1.4rem; padding: 0 0.6rem; border-radius: 0.75rem; }
-      :host-context(.arcane) .step { max-block-size: 0.8rem; }
+      :host-context(.arcane) .side { gap: 6px; block-size: 1.6rem; padding: 0 0.75rem; border-radius: 0.8rem; }
+      /* Thick bars (thin ones look frail across a wide screen) */
+      :host-context(.arcane) .step { max-block-size: 1.15rem; border-width: 1.5px; border-radius: 2px; }
       :host-context(.arcane) .value { inline-size: 3.75rem; block-size: 3.75rem; font-size: 1.35rem; }
       :host-context(.arcane) .value::before { inset: 0.55rem; }
     }

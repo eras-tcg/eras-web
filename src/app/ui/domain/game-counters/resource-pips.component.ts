@@ -41,21 +41,24 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       display: inline-flex;
       align-items: center;
       gap: calc(var(--pip) * 0.55);
-      padding: 0 calc(var(--pip) * 0.45);
+      /* A turned gem is taller than its box (its diagonal): room above and below so it stays inside the tray */
+      padding: calc(var(--pip) * 0.25) calc(var(--pip) * 0.45);
     }
-    /* An empty socket: a diamond cut into the tray */
+    /* An empty gem: the same cut, dark and dull (four smoky facets, a faint bevel) */
     .pip {
       position: relative;
       inline-size: var(--pip);
       block-size: var(--pip);
       border-radius: 2px;
-      background: color-mix(in srgb, var(--color-text) 10%, transparent);
-      box-shadow: inset 0 1px 2px rgb(0 0 0 / 55%), inset 0 -1px 0 rgb(255 255 255 / 8%);
+      background: conic-gradient(from 0deg at 50% 50%, #6b7280 0 25%, #4b5563 25% 50%, #1f2937 50% 75%, #374151 75% 100%);
+      box-shadow: 0 0 0 1px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(255 255 255 / 10%), 0 1px 2px rgb(0 0 0 / 45%);
+      opacity: 0.7;
       transform: rotate(45deg);
       transition: background var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
     }
     /* A lit gem: four facets (light from the top left), a white edge and a green glow */
     .pip.on {
+      opacity: 1;
       background:
         conic-gradient(from 0deg at 50% 50%, #86efac 0 25%, #22c55e 25% 50%, #15803d 50% 75%, #4ade80 75% 100%);
       box-shadow:
@@ -105,8 +108,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       box-shadow: inset 0 2px 4px rgb(0 0 0 / 70%), 0 1px 0 rgb(255 255 255 / 5%);
     }
     :host-context(.arcane) .pip:not(.on) {
-      background: #12151a;
-      box-shadow: inset 0 1px 2px rgb(0 0 0 / 80%), 0 0 0 1px rgb(201 162 75 / 22%);
+      background: conic-gradient(from 0deg at 50% 50%, #4a4f5a 0 25%, #2f343d 25% 50%, #15181d 50% 75%, #23272f 75% 100%);
+      box-shadow: 0 0 0 1px rgb(201 162 75 / 30%), inset 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 60%);
     }
     :host-context(.arcane) .pip.on {
       box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 8px 2px rgb(34 197 94 / 50%);

@@ -180,20 +180,29 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         max-block-size: 0.5rem;
         border: 1px solid #3a404b;
         border-radius: 1px;
-        background: #2a2f38;
+        /* A dull gem (a long cut): its ridge catches a faint light, the rest smoky */
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 16%) 0 22%, transparent 22%),
+          linear-gradient(180deg, #4a4f5a 0, #2f343d 46%, #15181d 54%, #2a2f38 100%);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
         transform: rotate(-45deg);
       }
       // Mirrored: each side's gems lean towards the middle
       :host-context(.arcane) .side.theirs .step { transform: rotate(45deg); }
+      /* Lit: a cut gem of the side's color — the shine along its ridge, the light facet above, the dark one below */
       :host-context(.arcane) .side.mine .step.lit {
-        border-color: #9af0bd;
-        background: linear-gradient(135deg, #b7f7cf, var(--arcane-ally) 50%, #0f6b33);
-        box-shadow: 0 0 6px var(--arcane-ally);
+        border-color: #c8f9da;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 70%) 0 18%, transparent 18%),
+          linear-gradient(180deg, #b7f7cf 0, var(--arcane-ally) 46%, #0f6b33 54%, #16a34a 100%);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), 0 0 8px var(--arcane-ally);
       }
       :host-context(.arcane) .side.theirs .step.lit {
-        border-color: #ffb3b3;
-        background: linear-gradient(135deg, #ffd0d0, var(--arcane-rival) 50%, #7a1b1e);
-        box-shadow: 0 0 6px var(--arcane-rival);
+        border-color: #ffd6d6;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 70%) 0 18%, transparent 18%),
+          linear-gradient(180deg, #ffd0d0 0, var(--arcane-rival) 46%, #7a1b1e 54%, #c0353a 100%);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), 0 0 8px var(--arcane-rival);
       }
       :host-context(.arcane) .value {
         inline-size: 2.4rem;
@@ -202,18 +211,25 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         font-family: var(--font-family-display);
         text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
       }
+      /* The value in a big cut gem: four facets lit from the top left and a shine, ringed in gold */
       :host-context(.arcane) .value::before {
         inset: 0.4rem;
         border: 0;
-        background: linear-gradient(135deg, #8a8f99, #3b414c 50%, #1e2229);
+        background:
+          linear-gradient(135deg, rgb(255 255 255 / 45%) 0 20%, transparent 20%),
+          conic-gradient(from 0deg at 50% 50%, #9aa0aa 0 25%, #5b616c 25% 50%, #1e2229 50% 75%, #3b414c 75% 100%);
         box-shadow: 0 0 0 2px var(--arcane-gold), 0 3px 8px rgb(0 0 0 / 60%);
       }
       :host-context(.arcane) .value.mine::before {
-        background: linear-gradient(135deg, #b7f7cf, var(--arcane-ally) 45%, #0f6b33);
+        background:
+          linear-gradient(135deg, rgb(255 255 255 / 55%) 0 20%, transparent 20%),
+          conic-gradient(from 0deg at 50% 50%, #86efac 0 25%, var(--arcane-ally) 25% 50%, #0f6b33 50% 75%, #16a34a 75% 100%);
         box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-ally) 60%, transparent);
       }
       :host-context(.arcane) .value.theirs::before {
-        background: linear-gradient(135deg, #ffd0d0, var(--arcane-rival) 45%, #7a1b1e);
+        background:
+          linear-gradient(135deg, rgb(255 255 255 / 55%) 0 20%, transparent 20%),
+          conic-gradient(from 0deg at 50% 50%, #fca5a5 0 25%, var(--arcane-rival) 25% 50%, #7a1b1e 50% 75%, #c0353a 75% 100%);
         box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
       }
     }

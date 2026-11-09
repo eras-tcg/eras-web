@@ -491,10 +491,11 @@ eras-player-plate {
   font-size: var(--font-size-xs);
   cursor: pointer;
 
+  // Big enough not to get lost in the button
   eras-icon {
     flex: none;
-    inline-size: 1.35rem;
-    block-size: 1.35rem;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
   }
 
   span {

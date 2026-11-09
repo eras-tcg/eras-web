@@ -242,14 +242,16 @@ export class EffectPromptDialogComponent {
   protected readonly inChain = computed(() => !!this.prompt.effectId && !!this.game.state()?.chain?.some((e) => e.id === this.prompt.effectId));
 
   /** What a chosen card shows: its chain link when ordering triggers, else what happens to it. */
+  /** An offered effect chosen: the link it will take ("Cadena 3"), or what choosing it does. */
   protected chosenTag(id: string): string {
-    if (this.prompt.purpose === 'ORDER' || this.prompt.purpose === 'OPTIONAL') {
-      // The real link it will take: after the links already in the chain
-      const base = this.game.state()?.chain?.length ?? 0;
-      const label = this.prompt.effects?.length ? null : this.prompt.cardLabels?.[id];
-      return `Cadena ${base + [...this.chosen()].indexOf(id) + 1}${label ? ' · ' + label : ''}`;
-    }
-    return this.prompt.chosenLabel ?? 'Elegida';
+    const n = this.chainNumber(id);
+    return n ? `Cadena ${n}` : (this.prompt.chosenLabel ?? 'Elegida');
+  }
+
+  /** A card chosen to chain: the link it will take (after the links already in the chain); null for other choices. */
+  protected chainNumber(id: string): number | null {
+    if (this.prompt.purpose !== 'ORDER' && this.prompt.purpose !== 'OPTIONAL') return null;
+    return (this.game.state()?.chain?.length ?? 0) + [...this.chosen()].indexOf(id) + 1;
   }
 
   /** CONFIRM prompts: choosing the card means yes. */

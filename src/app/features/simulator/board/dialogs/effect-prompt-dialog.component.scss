@@ -100,7 +100,27 @@
   font-size: var(--font-size-xs);
   text-align: center;
 }
-.pick.chosen .tag { color: var(--color-success); font-weight: var(--font-weight-bold); }
+// Chosen: a mark over the card's middle (a check, or the link it takes); the order of cards looked at, the same
+.pick { position: relative; }
+.chosen-mark {
+  position: absolute;
+  inset-block-start: 45%;
+  inset-inline-start: 50%;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+  color: #fff;
+  font: 700 1rem/1 var(--font-family-display);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.chosen-mark eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
+.chosen-mark.order { background: var(--color-surface-muted); color: var(--color-text); }
 .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
 @keyframes new-card {
@@ -221,6 +241,11 @@ eras-sheet.with-panel {
   .zone-name {
     font-size: 0.6rem;
     writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  // The name reads upwards; its icon stays upright
+  .zone-name eras-icon {
     transform: rotate(180deg);
   }
 

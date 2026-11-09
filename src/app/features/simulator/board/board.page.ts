@@ -239,6 +239,11 @@ export class BoardPage {
     effect(() => {
       if (!this.canSeeThrough()) untracked(() => this.seeThrough.set(false));
     });
+    // A choice raised again (or opened): a card picked while looking at the table lets go (its "Ver" over the choice)
+    effect(() => {
+      this.sheet.open();
+      if (!this.sheet.lowered()) untracked(() => this.game.selectedId.set(null));
+    });
     // The chain's list folds again once the chain is over
     effect(() => {
       if (!this.game.state()?.chain?.length) untracked(() => this.chainOpen.set(false));

@@ -76,19 +76,21 @@
           } @else {
             <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
-          <span class="tag">
-            @if (chosen().has(c.instanceId)) {
-              <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
-            } @else if (orderOnly) {
-              {{ i + 1 }}º
-            } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
-              No cumple
-            } @else if (levelSum !== null && !selectable(c)) {
-              Supera {{ prompt.maxLevelSum }} niveles
-            } @else if (prompt.cardLabels?.[c.instanceId]; as effectLabel) {
-              {{ effectLabel }}
-            }
-          </span>
+          <!-- Chosen: the green frame and a mark over the card (its link number when it chains); nothing under it -->
+          @if (chosen().has(c.instanceId)) {
+            <span class="chosen-mark">
+              @if (chainNumber(c.instanceId); as n) {
+                {{ n }}
+              } @else {
+                <eras-icon name="check" />
+              }
+            </span>
+          } @else if (orderOnly) {
+            <span class="chosen-mark order">{{ i + 1 }}</span>
+          }
+          @if (!chosen().has(c.instanceId) && valid.has(c.instanceId) && prompt.cardLabels?.[c.instanceId]; as effectLabel) {
+            <span class="tag">{{ effectLabel }}</span>
+          }
         </button>
         @if (!c.faceDown || game.seeAll()) {
           <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>

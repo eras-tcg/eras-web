@@ -147,7 +147,10 @@ eras-player-plate {
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
-  overflow: hidden;
+  // Only sideways (a crowded line slides past its edges): the values floating over a card (its strength) go over the
+  // field's top and bottom edges instead of being cut
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 // A card of the hand dragged with a finger over your table (sim-card adds the class)
@@ -216,7 +219,8 @@ eras-player-plate {
 .line-label {
   position: absolute;
   inset-block-start: var(--space-1);
-  inset-inline-start: var(--space-2);
+  // Clear of the field's rounded corner
+  inset-inline-start: var(--space-4);
   display: flex;
   align-items: center;
   gap: var(--space-2);

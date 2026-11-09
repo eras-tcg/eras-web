@@ -1,8 +1,8 @@
 {
-  "commit": "9c12ef39486a9ce27d2a056178d3f4f8f0bab6f8",
+  "commit": "1f351795ed89938c66880418756daffa2d899376",
   "dirty": false,
-  "subject": "Each chain link's update as it resolves (LINK_RESOLVED)",
-  "copiedAt": "2026-11-09T16:39:26.986Z",
+  "subject": "Chain updates step by step (LINK_STEP)",
+  "copiedAt": "2026-11-09T17:09:22.314Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

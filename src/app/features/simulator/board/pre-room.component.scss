@@ -222,3 +222,90 @@
   .versus { justify-self: center; }
   .seat { min-block-size: 0; }
 }
+
+// The two groups have no box of their own: their sections are the room's rows, as before
+.setup,
+.pickers { display: contents; }
+
+/* Phones in landscape: two columns, one screen high. The seats (small) and the options on the left, with "Comenzar
+   partida" always in sight at their foot; the starter and the decks on the right. Each column scrolls by itself. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host { overflow: hidden; }
+
+  .pre-room {
+    --page-top: max(var(--space-2), env(safe-area-inset-top));
+
+    grid-template-columns: minmax(16rem, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
+    block-size: 100%;
+    padding-block-end: var(--space-2);
+  }
+  .pre-room > * { inline-size: 100%; }
+  .room-bar,
+  .pre-room > eras-alert { grid-column: 1 / -1; }
+
+  // The thin top row of every screen on these phones (see eras-page)
+  .room-bar { align-items: center; gap: var(--space-2); }
+  .back { inline-size: 2rem; block-size: 2rem; }
+  .back eras-icon { inline-size: 1rem; block-size: 1rem; }
+  .heading { min-block-size: 2rem; }
+  .title {
+    overflow: hidden;
+    padding-inline-start: var(--space-2);
+    border-inline-start-width: 3px;
+    font-size: 1.1rem;
+    letter-spacing: 0.03em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .setup,
+  .pickers {
+    display: flex;
+    grid-row: 3;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: none;
+  }
+  .pickers { --deck-column: 7rem; padding-inline-end: var(--space-1); }
+
+  // The seats, one above the other, each a row: the starter as a thumbnail, the nameplate and its button beside it
+  .stage { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+  .versus { justify-self: start; margin: 0 0 0 1rem; font-size: 1rem; text-shadow: none; }
+  .seat {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    justify-items: start;
+    gap: var(--space-1) var(--space-2);
+    min-block-size: 0;
+    padding: var(--space-1);
+  }
+  .starter-slot { --game-card-width: 3rem; grid-row: 1 / span 2; inline-size: 3rem; }
+  .starter-empty { inline-size: 3rem; font-size: 0; }
+  .ready-tag { inset-block-end: -0.4rem; padding: 0 var(--space-1); font-size: 0.6rem; }
+  .plate { gap: var(--space-1); padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1); }
+  .ring eras-avatar { --avatar-size: 1.6rem; }
+  .name { font-size: var(--font-size-xs); }
+
+  // The options, full width; the start button sticks to the column's foot while the options scroll
+  .controls { justify-items: stretch; gap: var(--space-2); padding-block-end: var(--space-1); }
+  .controls eras-toggle-group,
+  .bot-model { inline-size: 100%; }
+  .start {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    min-inline-size: 0;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-md);
+  }
+  // Opaque while it waits for a deck: it sits over the options as they scroll
+  .start:disabled { background: var(--color-surface-muted); color: var(--color-text-muted); opacity: 1; }
+
+  .picker-title { font-size: var(--font-size-md); }
+  .picker-head { align-items: center; }
+}

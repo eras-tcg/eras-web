@@ -14,6 +14,8 @@
     <eras-alert tone="danger">{{ message }}</eras-alert>
   }
 
+  <!-- The seats and the options: no box of their own (display: contents), a column on phones in landscape -->
+  <div class="setup">
   <!-- Versus: each seat with its starter large and the player's nameplate under it -->
   <section class="stage" aria-label="Jugadores">
     @for (p of seats(); track $index; let i = $index) {
@@ -146,7 +148,10 @@
     </button>
     <span class="muted hint">{{ readyHint() }}</span>
   </section>
+  </div>
 
+  <!-- The starter and the deck: no box of their own either, the other column on phones in landscape -->
+  <div class="pickers">
   @if (myStarters().length > 1) {
     <section class="picker">
       <h2 class="picker-title">{{ game.editorRoom() ? 'Iniciador de ' + mine()?.username : 'Tu Iniciador' }}</h2>
@@ -168,7 +173,7 @@
     @if (allDecks().length === 0) {
       <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
     } @else {
-      <eras-grid minColumn="9.5rem" [gap]="3">
+      <eras-grid minColumn="var(--deck-column, 9.5rem)" [gap]="3">
         @for (deck of matches(); track deck.id) {
           @let blocked = unplayable().get(deck.id);
           <div
@@ -196,6 +201,7 @@
       </eras-grid>
     }
   </section>
+  </div>
 </div>
 
 <!-- Copying the room's link (beside the room's code and beside the waiting message) -->

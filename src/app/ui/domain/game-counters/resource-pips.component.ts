@@ -45,6 +45,13 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       cursor: pointer;
     }
     button:disabled { opacity: 0.4; cursor: default; }
+    /* Phones in landscape: small enough (with − and +) for the table's narrow side column */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host { gap: 2px; }
+      .pips { gap: 0.3rem; padding: 0.15rem; }
+      .pip { inline-size: 0.6rem; block-size: 0.6rem; border-width: 1.5px; border-radius: 2px; }
+      button { inline-size: 1rem; block-size: 1rem; font-size: 0.75rem; line-height: 1; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

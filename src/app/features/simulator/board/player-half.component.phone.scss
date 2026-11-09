@@ -69,21 +69,22 @@
     gap: var(--space-1);
   }
 
+  // The pile's card as big as its zone allows, with the pile's edge under it (at most 6px here, see pileEdge): it
+  // stays inside its zone
   .pile eras-game-card {
-    --game-card-width: min(calc(100cqw - 0.25rem), calc((100cqh - 1rem) * 63 / 88));
+    --game-card-width: min(calc(100cqw - 2px), calc((100cqh - 8px) * 63 / 88));
   }
 
-  // The two switches under the deck, side by side as icons: their words did not fit the narrow column (the words
-  // stay for screen readers, and in the tooltip)
+  // The two switches under the deck, one over the other as icons: their words do not fit the narrow column (the
+  // words stay for screen readers, and in the tooltip)
   .pile-controls {
-    flex-direction: row;
-    justify-content: center;
     gap: var(--space-1);
   }
 
   .optional-toggle {
     flex: 1;
-    padding: var(--space-1);
+    padding: 0;
+    min-block-size: 0;
     font-size: 0.6rem;
 
     span {

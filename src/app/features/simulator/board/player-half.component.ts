@@ -77,12 +77,16 @@ export class PlayerHalfComponent {
     return url ? `url("${url.replace(/"/g, '%22')}")` : null;
   });
   protected readonly attackDrag = computed(() => this.opponent() && !!this.drag.dragging()?.attack);
+  /** A phone in landscape (read once): small piles, so a thinner edge (it must stay inside the pile's zone). */
+  private readonly maxPileDepth =
+    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches ? 6 : 16;
+
   /**
-   * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16), black as
-   * the back's frame with a faint line between cards, with its shadow on the table.
+   * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16, 6 on a
+   * phone in landscape), black as the back's frame with a faint line between cards, with its shadow on the table.
    */
   protected pileEdge(cards: number): string {
-    const depth = Math.min(16, Math.ceil((cards - 1) / 3));
+    const depth = Math.min(this.maxPileDepth, Math.ceil((cards - 1) / 3));
     const edges = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`);
     return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');
   }

@@ -65,8 +65,11 @@
       'tributes deck';
   }
 
+  // One column as wide as the side column (not as its widest child: the gem marker with − and + is wider than a
+  // phone's side column, and pushed the lives and the marker over the field)
   .lives {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) var(--hand-peek);
   }
 

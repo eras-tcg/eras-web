@@ -73,6 +73,12 @@ import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
     }
     .count eras-icon { inline-size: 0.8em; block-size: 0.8em; }
     .content { display: flex; flex: 1; align-items: center; justify-content: center; min-block-size: 0; }
+    /* Phones in landscape: the zones are small, so the title lies over the top edge instead of keeping a row of its
+       own (the pile's card is centered in the whole zone) */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host { gap: 0; padding: 2px; }
+      .label { position: absolute; inset-block-start: 1px; inset-inline: 0; z-index: 5; pointer-events: none; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {

@@ -5,13 +5,66 @@
   font-size: var(--font-size-lg, 1.125rem);
 }
 .hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+// Always one row: what does not fit is scrolled sideways (never a second row nor a vertical scroll)
 .cards {
   display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: center;
-  gap: var(--space-3) var(--space-2);
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: safe center;
+  gap: var(--space-2);
   min-block-size: 12rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  padding-block-end: var(--space-1);
+}
+
+.cards > .slot {
+  flex: none;
+}
+
+// The cards of one zone, boxed and named
+.zone-box {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+}
+
+.zone-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.zone-name eras-icon {
+  inline-size: 0.85rem;
+  block-size: 0.85rem;
+}
+
+.zone-cards {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.zone-cards > .slot {
+  flex: none;
+}
+
+// "Mostrar también las que no cumplen": lit while they are shown
+.show-all.on {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  color: var(--color-primary);
 }
 .slot { display: flex; }
 .slot.cdk-drag-preview { box-shadow: var(--shadow-lg); }
@@ -87,7 +140,6 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
 .link-tag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-success); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .offered-text { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--font-size-sm); line-height: 1.45; color: var(--color-text-muted); }
 .effect-text { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--color-primary); background: var(--color-surface-muted); border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
-.show-all { display: inline-flex; align-items: center; gap: var(--space-2); justify-self: start; color: var(--color-text-muted); font-size: var(--font-size-sm); cursor: pointer; }
 .zone { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--color-text-muted); font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
 .zone eras-icon { inline-size: 0.85rem; block-size: 0.85rem; }
 
@@ -141,30 +193,6 @@ eras-sheet.with-panel {
   }
 }
 
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-4);
-}
-
-.from-zone {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.from-zone eras-icon {
-  inline-size: 1rem;
-  block-size: 1rem;
-}
-
 // A disabled button swallows the mouse: the card can still be dragged to order it
 .pick:disabled {
   pointer-events: none;
@@ -182,6 +210,22 @@ eras-sheet.with-panel {
 
   .cards {
     min-block-size: 0;
+  }
+
+  // The zone's name stands up at the box's side: no line of its own over the cards
+  .zone-box {
+    flex-direction: row;
+    padding: var(--space-1);
+  }
+
+  .zone-name {
+    font-size: 0.6rem;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .tag:empty {
+    display: none;
   }
 
   .pick {

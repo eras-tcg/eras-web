@@ -3,6 +3,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angul
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
 import { displayStrength, isHidden, knownToOwner, strengthChange } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
+import { CardsStore } from '@data/cards/cards.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { GameCardComponent, GameCardInfo } from '@ui/domain/game-card/game-card.component';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
@@ -75,8 +76,20 @@ export class SimCardComponent {
 
   /** The rival's card on the table, turned round: what floats over it goes to its places on the turned card. */
   protected readonly upsideDown = computed(() => this.opponent() && this.zone() !== 'hand');
-  /** Hidden from me (in a test room everything can be shown). */
-  protected readonly hidden = computed(() => !this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
+  /** Hidden from me (in a test room everything can be shown). A card in the chain is revealed (the rival's hand card too). */
+  protected readonly hidden = computed(() => !this.shownAnyway() && !this.chainLinks().length && isHidden(this.slot(), this.zone(), this.opponent()));
+  private readonly cards = inject(CardsStore);
+  /**
+   * Its face: as the server sends it; a hidden card in the chain (the rival's hand card) that comes without it shows
+   * the activating card's art from the catalogue.
+   */
+  protected readonly faceUrl = computed(() => {
+    const url = this.slot().imageUrl;
+    if (url || !this.chainLinks().length) return url ?? null;
+    const name = this.chainLinks()[0].sourceName;
+    return this.cards.cards().find((c) => c.name === name)?.image_url ?? null;
+  });
+  protected readonly faceName = computed(() => this.slot().cardName || (this.chainLinks()[0]?.sourceName ?? null));
   /** Hidden but shown: by "Mostrar cartas ocultas", or my own face-down card in the Tributos or the Descarte. */
   protected readonly peeked = computed(() => this.shownAnyway() && isHidden(this.slot(), this.zone(), this.opponent()));
   /** With the table's information on: cost, type, classes and level of a card of the field that is face up. */
@@ -151,7 +164,7 @@ export class SimCardComponent {
   }
   protected readonly label = computed(() => {
     const s = this.slot();
-    const name = this.hidden() ? 'Carta boca abajo' : s.cardName || 'Carta';
+    const name = this.hidden() ? 'Carta boca abajo' : this.faceName() || 'Carta';
     return `${name}${s.tapped ? ', agotada' : ''}${this.opponent() ? ', del rival' : ''}`;
   });
 

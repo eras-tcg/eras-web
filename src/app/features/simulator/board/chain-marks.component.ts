@@ -10,7 +10,7 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
 
 /**
  * The chain links a card (or a pile) has activated, as numbered gems (cyan yours, pink the rival's). On a card they
- * line up down its left edge, the card is framed in that color and its highest link's kind sits at its foot: the
+ * sit at its center (several in a row), the card is framed in that color and its highest link's kind sits at its foot: the
  * chain reads on the table (its explicit list opens from the chain's button). On a pile (Tributos, Descarte…) one
  * sits at its center and several make a ring around it.
  */
@@ -62,10 +62,15 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     }
     /* The link resolving now pulses */
     .mark.resolving { animation: mark-in 0.4s ease backwards, pulse 0.9s ease-in-out infinite alternate; }
-    /* On a card: down its left edge, from its top corner */
-    :host(:not(.ring)) .mark { inset-block-start: calc(-0.4rem + var(--y) * 1.5rem); inset-inline-start: -0.5rem; }
-    /* On the rival's card (turned round): up its right edge, from the bottom */
-    :host(.upside-down:not(.ring)) .mark { inset-block: auto calc(-0.4rem + var(--y) * 1.5rem); inset-inline: auto -0.5rem; }
+    /* On a card: at its center, several side by side */
+    :host(:not(.ring)) .mark {
+      inset-block-start: 50%;
+      inset-inline-start: calc(50% + var(--x) * 1.55rem);
+      inline-size: 1.7rem;
+      block-size: 1.7rem;
+      font-size: 0.95rem;
+      transform: translate(-50%, -50%);
+    }
     /* On a pile: at the center, or on a ring around it */
     :host(.ring) .mark {
       inset-block-start: calc(50% + var(--y) * 32%);
@@ -144,8 +149,9 @@ export class ChainMarksComponent {
         short: e.label,
         resolving: !!e.resolutionId,
         mine: e.controllerId === this.me(),
-        x: onRing ? Math.cos(angle).toFixed(3) : 0,
-        y: this.ring() ? (onRing ? Math.sin(angle).toFixed(3) : 0) : i,
+        // On a pile: on the ring; on a card: in a row centered on it
+        x: this.ring() ? (onRing ? Math.cos(angle).toFixed(3) : 0) : (i - (n - 1) / 2).toFixed(2),
+        y: this.ring() && onRing ? Math.sin(angle).toFixed(3) : 0,
       };
     });
   });

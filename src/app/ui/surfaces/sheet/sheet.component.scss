@@ -25,14 +25,33 @@
   --sheet-width: 64rem;
 }
 
-// Lowered: only the header stays in view, and only it takes clicks
+// Lowered: only a small tab with the arrow stays at the bottom (no title, no width), and only it takes clicks
 :host(.collapsed) {
-  transform: translateY(calc(100% - 3.5rem));
+  inline-size: auto;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  animation: none;
   pointer-events: none;
 }
 
+:host(.collapsed) .heading,
+:host(.collapsed) .content {
+  display: none;
+}
+
 :host(.collapsed) .header {
+  padding: 0;
   pointer-events: auto;
+}
+
+:host(.collapsed) .toggle {
+  inline-size: 3.5rem;
+  block-size: 1.75rem;
+  border-block-end: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes sheet-up {
@@ -145,9 +164,15 @@
     max-block-size: var(--sheet-max-block-size, 62vh);
   }
 
+  // As tall as the title's line: the arrow centered on it
   .toggle {
-    inline-size: 1.6rem;
-    block-size: 1.6rem;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+  }
+
+  .toggle eras-icon {
+    inline-size: 1rem;
+    block-size: 1rem;
   }
 
   .header {

@@ -1,8 +1,8 @@
 <eras-game-card
-  [imageUrl]="slot().imageUrl"
+  [imageUrl]="faceUrl()"
   [foil]="slot().finish ?? null"
   [upsideDown]="upsideDown()"
-  [name]="slot().cardName"
+  [name]="faceName()"
   [hidden]="hidden()"
   [peeked]="peeked()"
   [tapped]="slot().tapped"

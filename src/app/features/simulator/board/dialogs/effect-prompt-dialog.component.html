@@ -47,30 +47,17 @@
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
-  @if (commonZone() || hiddenCount() > 0) {
-    <!-- Where they come from and the switch for the rest, on one line -->
-    <div class="meta">
-      @if (commonZone(); as zone) {
-        <p class="from-zone"><eras-icon [name]="zoneIcon(zone)" /> Desde: {{ zone }}</p>
-      }
-      @if (hiddenCount() > 0) {
-        <label class="show-all">
-          <input type="checkbox" [checked]="showAll()" (change)="showAll.set(!showAll())" />
-          Mostrar también las que no cumplen ({{ hiddenCount() }})
-        </label>
-      }
-    </div>
-  }
+  <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
   <div
     class="cards"
     cdkDropList
-    cdkDropListOrientation="mixed"
+    cdkDropListOrientation="horizontal"
     [cdkDropListDisabled]="!prompt.reorderRest"
     (cdkDropListDropped)="reorder($event)"
     role="group"
     [attr.aria-label]="prompt.title"
   >
-    @for (c of shown(); track c.instanceId) {
+    <ng-template #slotTpl let-c let-i="i">
       <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest">
         <button
           type="button"
@@ -93,7 +80,7 @@
             @if (chosen().has(c.instanceId)) {
               <eras-icon name="check" /> {{ chosenTag(c.instanceId) }}
             } @else if (orderOnly) {
-              {{ $index + 1 }}º
+              {{ i + 1 }}º
             } @else if (!valid.has(c.instanceId) && prompt.kind !== 'CONFIRM') {
               No cumple
             } @else if (levelSum !== null && !selectable(c)) {
@@ -102,18 +89,29 @@
               {{ effectLabel }}
             }
           </span>
-          @if (!commonZone()) {
-            @if (zoneOf(c); as zone) {
-              <span class="zone"><eras-icon [name]="zoneIcon(zone)" /> {{ zone }}</span>
-            }
-          }
         </button>
         @if (!c.faceDown || game.seeAll()) {
           <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>
         }
       </div>
-    } @empty {
-      <p class="hint">No hay cartas que cumplan.</p>
+    </ng-template>
+    @if (prompt.reorderRest || !groups().length) {
+      @for (c of shown(); track c.instanceId; let i = $index) {
+        <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+      } @empty {
+        <p class="hint">No hay cartas que cumplan.</p>
+      }
+    } @else {
+      @for (g of groups(); track g.zone) {
+        <section class="zone-box" [attr.aria-label]="g.zone">
+          <span class="zone-name"><eras-icon [name]="zoneIcon(g.zone)" /> {{ g.zone }}</span>
+          <div class="zone-cards">
+            @for (c of g.cards; track c.instanceId; let i = $index) {
+              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+            }
+          </div>
+        </section>
+      }
     }
   </div>
   }
@@ -127,6 +125,21 @@
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>
       } @else {
+        @if (hiddenCount() > 0) {
+          <!-- The cards that do not meet it, shown locked or hidden: a switch, no line of its own -->
+          <button
+            erasIconButton
+            type="button"
+            size="sm"
+            class="show-all"
+            icon="filter"
+            [class.on]="showAll()"
+            [attr.aria-pressed]="showAll()"
+            [attr.aria-label]="(showAll() ? 'Ocultar' : 'Mostrar') + ' las que no cumplen (' + hiddenCount() + ')'"
+            [title]="(showAll() ? 'Ocultar' : 'Mostrar') + ' las que no cumplen (' + hiddenCount() + ')'"
+            (click)="showAll.set(!showAll())"
+          ></button>
+        }
         <span class="count">{{ chosen().size }} de {{ prompt.max }}</span>
         <button erasButton type="button" [disabled]="!canConfirm()" [loading]="sending()" (click)="confirm()">{{ confirmLabel() }}</button>
       }

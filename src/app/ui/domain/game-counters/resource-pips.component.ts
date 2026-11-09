@@ -26,6 +26,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       --btn: 1.5rem;
       display: inline-flex;
       align-items: center;
+      // As wide as what it holds, centered where it lies (in a column or a grid cell wider than it)
+      align-self: center;
+      justify-self: center;
+      inline-size: fit-content;
       gap: var(--space-1);
       padding: 0.2rem;
       border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);

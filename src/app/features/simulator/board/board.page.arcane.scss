@@ -25,17 +25,18 @@
 :host(.arcane) {
   @include arcane-colors;
 
-  background: radial-gradient(ellipse at 50% 50%, #12151a, #07080a);
+  // The stone over the whole board, edge to edge (the table on it has no background of its own: no darker bands
+  // around it): faint diagonal grain, lit in the middle, in shadow towards the edges
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgb(0 0 0 / 55%) 100%),
+    repeating-linear-gradient(115deg, rgb(255 255 255 / 2%) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #1d2129, #14171d 50%, #1d2129);
 }
 
 .table.arcane {
   @include arcane-colors;
 
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(ellipse at 50% 50%, transparent 45%, rgb(0 0 0 / 55%) 100%),
-    repeating-linear-gradient(115deg, rgb(255 255 255 / 2%) 0 2px, transparent 2px 7px),
-    linear-gradient(180deg, #1d2129, #14171d 50%, #1d2129);
+  background: none;
   color: #e8e3d6;
 }
 

@@ -156,11 +156,13 @@ export class BoardPage {
     });
     // In a game: a phone held upright hides the choices too (they are in the top layer), behind "Gira el teléfono"
     effect(() => this.document.body.classList.toggle('eras-in-game', this.inGame()));
+    // "Estilo de la mesa: arcano": the whole room (menus, dialogs and sheets too) in stone and gold while a game is on
+    effect(() => this.document.body.classList.toggle('eras-arcane', this.inGame() && this.prefs.arcane()));
     // A chain is shown above the choices (they leave it room)
     effect(() => this.document.body.classList.toggle('eras-chain-open', !!this.game.state()?.chain?.length));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
     effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
-    destroyRef.onDestroy(() => this.document.body.classList.remove('eras-in-game', 'eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
+    destroyRef.onDestroy(() => this.document.body.classList.remove('eras-in-game', 'eras-arcane', 'eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
     // While something plays, the next updates wait: each one is seen after the animation before it
     effect(() => this.game.holdUpdates.set(!this.animations.idle()));
     destroyRef.onDestroy(() => this.game.holdUpdates.set(false));

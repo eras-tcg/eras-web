@@ -1,8 +1,10 @@
 // "Estilo de la mesa: arcano" (see board.page.arcane.scss): the half's zones are engraved in the stone, with gold
-// corners, and the field's lines are named in gold. "Visibilidad de zonas: nula" still hides the frames
+// corners, and the field's lines are named in gold. "Visibilidad de zonas" still applies: "suave" leaves only the gold
+// outlines and corners (no sunk fill), "nula" only the gold line between the Línea frontal and the Retaguardia.
+// (Compound :host-context(.a.b) selectors: a :not() inside :host-context is not kept by the style encapsulation)
 
 // The field and the side zones (not the hand): sunk into the stone, a gold hairline inside
-:host-context(.arcane:not(.zones-none)) {
+:host-context(.arcane) {
   .field,
   eras-game-zone:not(.hand) {
     border: 0;
@@ -49,19 +51,11 @@
     border-block-start: 1px solid var(--arcane-gold-soft);
   }
 
-  // A zone a card can be dropped on, or the field under a finger's card: the gold lights up
-  eras-game-zone.drop-active,
-  .field.drop-active,
-  .field.touch-over {
-    box-shadow:
-      inset 0 0 0 2px var(--arcane-gold),
-      inset 0 2px 10px rgb(0 0 0 / 55%),
-      0 0 16px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+  .line.front {
+    background: transparent;
   }
-}
 
-// The names of the lines and zones: the display face in gold
-:host-context(.arcane) {
+  // The names of the lines and zones: the display face in gold
   .line-label {
     color: var(--arcane-gold);
     font-family: var(--font-family-display);
@@ -74,5 +68,49 @@
 
   .hand-cards:empty::after {
     color: var(--arcane-gold-light);
+  }
+}
+
+// "Suave": the outlines and corners only, nothing sunk
+:host-context(.arcane.zones-soft) {
+  .field,
+  eras-game-zone:not(.hand) {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--arcane-gold-soft);
+  }
+
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    opacity: 0.6;
+  }
+}
+
+// "Nula": no frames or corners, only the line between the two lines of the field
+:host-context(.arcane.zones-none) {
+  .field,
+  eras-game-zone:not(.hand) {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .field::before,
+  .field::after,
+  eras-game-zone:not(.hand)::before,
+  eras-game-zone:not(.hand)::after {
+    display: none;
+  }
+}
+
+// A zone a card can be dropped on, or the field under a finger's card: the gold lights up (in every visibility)
+:host-context(.arcane) {
+  // (The class twice: as specific as the visibility rules above, and later)
+  eras-game-zone.drop-active.drop-active,
+  .field.drop-active.drop-active,
+  .field.touch-over.touch-over {
+    box-shadow:
+      inset 0 0 0 2px var(--arcane-gold),
+      0 0 16px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
   }
 }

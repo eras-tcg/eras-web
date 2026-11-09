@@ -91,6 +91,8 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         mask-image: linear-gradient(to left, #000 60%, rgb(0 0 0 / 45%));
       }
       .side.theirs { mask-image: linear-gradient(to right, #000 60%, rgb(0 0 0 / 45%)); }
+      // Mirrored: each side's steps lean towards the middle
+      .side.theirs .step { transform: skewX(24deg); }
       .step {
         flex: 1;
         padding: 0;
@@ -179,8 +181,10 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         border: 1px solid #3a404b;
         border-radius: 1px;
         background: #2a2f38;
-        transform: rotate(45deg);
+        transform: rotate(-45deg);
       }
+      // Mirrored: each side's gems lean towards the middle
+      :host-context(.arcane) .side.theirs .step { transform: rotate(45deg); }
       :host-context(.arcane) .side.mine .step.lit {
         border-color: #9af0bd;
         background: linear-gradient(135deg, #b7f7cf, var(--arcane-ally) 50%, #0f6b33);

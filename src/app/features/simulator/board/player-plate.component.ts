@@ -22,8 +22,9 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
       padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
       border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
       border-radius: var(--radius-pill);
+      // Opaque: it overlaps the lives or the hand beside it, which must not show through (it would look under them)
       background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 22%, var(--color-surface)) 0%,
-        color-mix(in srgb, var(--color-surface) 92%, transparent) 75%);
+        var(--color-surface) 75%);
       box-shadow: 0 2px 10px rgb(0 0 0 / 25%);
     }
     :host(.away) { border-color: var(--color-danger); opacity: 0.75; }

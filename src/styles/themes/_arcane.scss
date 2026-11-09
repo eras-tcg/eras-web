@@ -1,0 +1,25 @@
+// "Estilo de la mesa: arcano" (the game's preferences) while a game is on (body.eras-arcane, BoardPage): the whole room
+// is dark stone and gold in both themes — the page behind the table, the sidebar, and the menus, dialogs and sheets
+// that open over it (they live in the overlay container, inside body)
+body.eras-arcane {
+  --color-bg: #0f1115;
+  --color-surface: #1c1f26;
+  --color-surface-muted: #262a33;
+  --color-border: rgb(201 162 75 / 28%);
+  --color-text: #e8e3d6;
+  --color-text-muted: #b9b2a2;
+  --color-text-subtle: #7d7768;
+  --color-primary: #c9a24b;
+  --color-primary-hover: #dcb862;
+  --color-on-primary: #17140f;
+  --color-link: #e3c77f;
+  --color-focus: #f2e3bd;
+  --color-overlay: rgb(0 0 0 / 65%);
+  --shadow-sm: 0 1px 4px rgb(0 0 0 / 40%);
+  --shadow-md: 0 2px 20px rgb(0 0 0 / 50%);
+  --shadow-lg: 0 12px 40px rgb(0 0 0 / 70%), 0 0 0 1px rgb(201 162 75 / 28%);
+
+  color-scheme: dark;
+  // Behind the board (the notch's side, a moment while it loads): the stone's color; the board paints the stone itself
+  background: #14171d;
+}

@@ -52,6 +52,22 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       .end { order: 2; max-block-size: 80dvh; overflow: auto; }
       .start { order: 3; max-block-size: none; }
     }
+    /* Phones in landscape (after the width rules, which it overrides): little height, so the three panes stay side
+       by side, each scrolling on its own, and nothing goes below the screen */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host {
+        display: grid;
+        grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(0, 1.4fr);
+        grid-template-areas: 'start main end';
+        grid-template-rows: minmax(0, 1fr);
+        gap: var(--space-2);
+        block-size: auto;
+        min-block-size: 0;
+      }
+      .pane { overflow: auto; padding: var(--space-2); }
+      .start { max-block-size: none; }
+      .end { max-block-size: none; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

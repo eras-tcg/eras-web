@@ -133,7 +133,7 @@
         @for (group of draft.groups(); track group.type) {
           <eras-section-header [title]="(typeLabels[group.type] ?? group.type) + ' (' + group.count + ')'" />
           @if (groupCopies()) {
-          <eras-grid minColumn="7.5rem" [gap]="3">
+          <eras-grid minColumn="var(--deck-column, 7.5rem)" [gap]="3">
             @for (entry of group.entries; track entry.card.id) {
               <!-- The buttons sit over the card, to save space -->
               <div class="entry" [class.lacking]="lacking(entry) > 0" [attr.title]="lacking(entry) > 0 ? 'Te faltan ' + lacking(entry) + ' de tu colección' : null" (contextmenu)="contextRemove($event, entry.card)">
@@ -169,7 +169,7 @@
           </eras-grid>
           } @else {
           <!-- Every copy by itself, smaller: each with its finish (the player's finest first), in grey when lacking -->
-          <eras-grid minColumn="4.75rem" [gap]="2">
+          <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
             @for (entry of group.entries; track entry.card.id) {
               @for (copy of copies(entry); track $index) {
                 <div class="copy" [class.lacking]="copy.finish === null" [attr.title]="copy.finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
@@ -214,28 +214,41 @@
 
   <!-- ── Right: search ───────────────────────────────────────────────── -->
   <div pane-end>
-    <eras-stack [gap]="3">
-      <!-- The quick filters, each kind in its own row -->
-      <eras-toggle-group label="Mostrar todas las…" [options]="showOptions()" [selected]="shown()" (toggled)="toggleShown($event)" />
-      @if (signedIn()) {
-        <eras-toggle-group label="Colección" [options]="ownershipOptions" [selected]="[ownership() || 'all']" (toggled)="ownership.set($event === 'all' ? '' : $any($event))" />
-      }
+    <eras-stack [gap]="3" class="search">
+      <!-- The quick filters, each kind in its own row (folded behind "Opciones" on phones in landscape) -->
+      <div id="search-options" class="search-options" [class.open]="searchOptionsOpen()">
+        <eras-toggle-group label="Mostrar todas las…" [options]="showOptions()" [selected]="shown()" (toggled)="toggleShown($event)" />
+        @if (signedIn()) {
+          <eras-toggle-group label="Colección" [options]="ownershipOptions" [selected]="[ownership() || 'all']" (toggled)="ownership.set($event === 'all' ? '' : $any($event))" />
+          <button
+            erasButton
+            variant="ghost"
+            size="sm"
+            type="button"
+            class="break-extras"
+            title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
+            [disabled]="collection.extras() === 0 || collection.busy()"
+            (click)="breakExtras()"
+          >
+            Romper sobrantes ({{ collection.extras() }})
+          </button>
+        }
+      </div>
       <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
         <span>{{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}</span>
         <eras-stack direction="row" [gap]="1">
-          @if (signedIn()) {
-            <button
-              erasButton
-              variant="ghost"
-              size="sm"
-              type="button"
-              title="Rompe las copias de más de 4 de una misma carta, por fragmentos"
-              [disabled]="collection.extras() === 0 || collection.busy()"
-              (click)="breakExtras()"
-            >
-              Romper sobrantes ({{ collection.extras() }})
-            </button>
-          }
+          <button
+            erasButton
+            variant="ghost"
+            size="sm"
+            type="button"
+            class="options-toggle"
+            aria-controls="search-options"
+            [attr.aria-expanded]="searchOptionsOpen()"
+            (click)="searchOptionsOpen.set(!searchOptionsOpen())"
+          >
+            <eras-icon [name]="searchOptionsOpen() ? 'chevron-up' : 'chevron-down'" /> Opciones
+          </button>
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar</button>
           }
@@ -253,7 +266,7 @@
       @if (cards.loading() && resultCount() === 0) {
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else {
-        <eras-grid minColumn="6.5rem" [gap]="2">
+        <eras-grid minColumn="var(--search-column, 6.5rem)" [gap]="2">
           @for (item of visibleResults(); track item.key) {
             @let card = item.card;
             <div

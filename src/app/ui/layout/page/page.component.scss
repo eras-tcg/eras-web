@@ -102,3 +102,45 @@
     letter-spacing: 0.03em;
   }
 }
+
+// Phones in landscape (the installed app's only orientation): little height to spare, so the top row is one thin
+// line and the content starts right below it. A long title is cut with an ellipsis instead of taking more lines.
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    --page-top: max(var(--space-2), env(safe-area-inset-top));
+
+    padding-block-end: var(--space-4);
+  }
+
+  .bar,
+  :host(.fill) .bar {
+    margin-block-end: var(--space-2);
+  }
+
+  :host(.fill) {
+    padding-block-end: var(--space-2);
+  }
+
+  .content,
+  :host(.fill) .content {
+    gap: var(--space-2);
+  }
+
+  .heading {
+    min-block-size: 2rem;
+  }
+
+  .title {
+    overflow: hidden;
+    padding-inline-start: var(--space-2);
+    border-inline-start-width: 3px;
+    font-size: 1.1rem;
+    letter-spacing: 0.03em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .actions {
+    flex-wrap: nowrap;
+  }
+}

@@ -26,7 +26,8 @@ import { CollectionAction, CollectionActionData, CollectionActionDialogComponent
   `,
   styles: `
     :host { display: flex; flex-direction: column; gap: var(--space-2); }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    /* Side by side when they fit; one under the other in a narrow pane (phones in landscape) */
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(6.5rem, 100%), 1fr)); gap: var(--space-2); }
     .wide { inline-size: 100%; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

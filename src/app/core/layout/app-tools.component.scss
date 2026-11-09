@@ -100,6 +100,18 @@
   outline-offset: -2px;
 }
 
+// Phones in landscape: the thin top row (see eras-page), so smaller icons
+@media (orientation: landscape) and (max-height: 30rem) {
+  .item {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .item eras-icon {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+}
+
 // Missions waiting to be claimed: a count on the corner of their button
 .missions {
   position: relative;

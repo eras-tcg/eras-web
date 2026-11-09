@@ -89,6 +89,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        path: 'profile/history',
+        title: 'Historial de partidas · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/profile/match-history.page').then((m) => m.MatchHistoryPage),
+      },
+      {
         path: 'public-decks',
         title: 'Mazos públicos · ERAS',
         loadComponent: () => import('@features/decks/public-decks.page').then((m) => m.PublicDecksPage),

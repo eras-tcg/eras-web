@@ -2,9 +2,18 @@
   <!-- Who you are and where you stand: icon, name and rank over your playmat -->
   <eras-profile-hero [username]="username()" />
 
-  <!-- Your games on the left (what is looked at most); how you look and your account on the right -->
+  <!-- Your games, a view of their own -->
+  <div class="links">
+    <a erasButton variant="secondary" routerLink="/profile/history"><eras-icon name="history" /> Historial de partidas</a>
+  </div>
+
+  <!-- Your preferences on the left (the site's look and the table's, kept with your account); how you look and your
+       account on the right -->
   <div class="profile">
-    <eras-match-history class="history" />
+    <eras-card padding="md" class="preferences">
+      <eras-section-header title="Preferencias" />
+      <eras-game-preferences-panel withInterface />
+    </eras-card>
 
     <div class="side">
       <eras-card padding="md">
@@ -59,10 +68,6 @@
             }
           </section>
 
-          <!-- Kept on this device (the theme is not part of the account on the server) -->
-          <section class="setting">
-            <eras-toggle-group label="Tema" [options]="themeOptions" [selected]="[theme.theme()]" (toggled)="setTheme($event)" />
-          </section>
         </eras-stack>
       </eras-card>
 

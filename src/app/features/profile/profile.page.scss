@@ -8,7 +8,18 @@
   margin-block-start: var(--space-4);
 }
 
-.history {
+// Under the hero: the views the profile opens (the games)
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.preferences {
+  // A fixed height (the card does not jump between sections), lower than the game's dialog
+  --prefs-height: 20rem;
+
   display: block;
   min-inline-size: 0;
 }

@@ -76,7 +76,7 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     MenuComponent,
     MenuItemDirective,
   ],
-  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardPreferences, BoardScreen],
+  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardScreen],
   templateUrl: './board.page.html',
   // The phone layouts (upright: turn it; landscape: compact) and the arcane table's style apart, within the size
   // budget of a stylesheet

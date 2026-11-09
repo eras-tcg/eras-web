@@ -10,6 +10,7 @@ const SOCIAL: ScreenLink = { route: '/social', label: 'Social' };
 const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
+const PROFILE: ScreenLink = { route: '/profile', label: 'Mi perfil' };
 
 /** Administration's tools (not /admin itself, which hangs from the home). */
 const ADMIN_SCREENS = /^\/(?:users-manager|activity-log|roles|permissions|updates-manager|card-ref|games-manager|card-meta)$/;
@@ -26,6 +27,7 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [ADMIN_SCREENS, ADMIN],
+  [/^\/profile\/history$/, PROFILE],
 ];
 
 /** Path of a router URL, without query or fragment. */

@@ -6,11 +6,13 @@ import { persistedNumber } from '@core/storage/persisted-number';
 const TABLE_TILT_MAX = 24;
 
 /**
- * The table's preferences, remembered on the device (the options sidebar sets them), and the sidebar's own state.
- * Provided by the board page: its components read them from here.
+ * The table's preferences, remembered on the device and with the account (PreferenceSync), and the sidebar's own state.
+ * One for the whole app: the game's preferences dialog and the profile set the same ones.
  */
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class BoardPreferences {
+  /** "Animaciones" off: the table changes at once (BoardAnimations reads it). */
+  readonly animationsOff = persistedFlag('eras-sim-animations-off');
   /** "Zonas espejadas": the rival's lives and gems swap with their piles. */
   readonly mirrored = persistedFlag('eras-sim-mirrored');
   /** How much the table's zones show: 0 all (filled and outlined), 1 only their outlines, 2 only the line between the field's lines. */

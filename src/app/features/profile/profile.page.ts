@@ -5,19 +5,18 @@ import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage, fieldErrors } from '@core/http/api-error';
 import { AvatarStore } from '@core/auth/avatar.store';
 import { PlaymatStore } from '@core/auth/playmat.store';
-import { ThemeService } from '@core/theme/theme.service';
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
-import { MatchHistoryComponent } from './match-history.component';
+import { RouterLink } from '@angular/router';
+import { GamePreferencesPanelComponent } from '@features/simulator/board/game-preferences-panel.component';
 import { ProfileHeroComponent } from './profile-hero.component';
 import { matching } from '../auth/matching.validator';
 
@@ -29,7 +28,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, ToggleGroupComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent, MatchHistoryComponent, ProfileHeroComponent],
+  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, AvatarComponent, IconComponent, ProfileHeroComponent, GamePreferencesPanelComponent, RouterLink],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,17 +38,6 @@ export class ProfilePage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly username = computed(() => this.auth.user()?.username ?? '');
-
-  // ── Preferences ────────────────────────────────────────────────────────
-  protected readonly theme = inject(ThemeService);
-  protected readonly themeOptions: ToggleOption[] = [
-    { value: 'dark', label: 'Oscuro' },
-    { value: 'light', label: 'Claro' },
-  ];
-
-  protected setTheme(value: string): void {
-    if (value !== this.theme.theme()) this.theme.toggle();
-  }
 
   // ── Player icon (navbar and beside the name in the simulator) ──────────
   protected readonly avatar = inject(AvatarStore);

@@ -9,7 +9,6 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { MatchesApi, MatchSummary } from '@data/simulator/matches.api';
 import { CardComponent } from '@ui/surfaces/card/card.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
@@ -41,10 +40,9 @@ interface Row {
 /** The signed-in player's last games (online and Modo solo): the result, the rival, the deck and how long it took. */
 @Component({
   selector: 'eras-match-history',
-  imports: [DatePipe, CardComponent, SectionHeaderComponent, BadgeComponent, ButtonComponent, SpinnerComponent, AlertComponent],
+  imports: [DatePipe, CardComponent, BadgeComponent, ButtonComponent, SpinnerComponent, AlertComponent],
   template: `
     <eras-card padding="md">
-      <eras-section-header title="Historial de partidas" />
       @if (replayError(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }

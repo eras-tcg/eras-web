@@ -94,3 +94,16 @@ eras-icon {
   transform: translateY(-50%);
   pointer-events: none;
 }
+
+// The icon in contrast (a filled tile): your side's bot beside the rival's
+:host(.contrast) eras-icon {
+  box-sizing: border-box;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-text);
+  color: var(--color-surface);
+}
+
+:host(.contrast.on) eras-icon {
+  background: var(--color-primary);
+}

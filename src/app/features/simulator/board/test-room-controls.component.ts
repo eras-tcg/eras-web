@@ -21,7 +21,8 @@ import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
       El bot juega el lado del rival
     </button>
     @if (game.simulatorAdmin() || game.state()?.editorSelfBot) {
-      <button type="button" erasSidebarItem icon="user" [on]="!!game.state()?.editorSelfBot" (click)="game.setEditorSelfBot(!game.state()?.editorSelfBot)">
+      <!-- Your side's bot: the same bot, in contrast -->
+      <button type="button" erasSidebarItem icon="bot" class="contrast" [on]="!!game.state()?.editorSelfBot" (click)="game.setEditorSelfBot(!game.state()?.editorSelfBot)">
         Un bot juega tu lado
       </button>
     }

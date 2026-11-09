@@ -269,3 +269,32 @@ eras-sheet.with-panel {
     line-height: 1.35;
   }
 }
+
+// A row of cards in a sheet that fits (no scroll): the row takes the height left by the title, the subtitle and the
+// buttons, and the cards are as tall as it lets them (never taller than usual)
+.body.fit {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.body.fit .cards {
+  flex: 1 1 13rem;
+  min-block-size: 0;
+  container-type: size;
+}
+
+.body.fit .pick {
+  --game-card-width: min(7rem, calc((100cqh - 1.6rem) * 63 / 88));
+}
+
+@media (orientation: landscape) and (max-height: 30rem) {
+  .body.fit .cards {
+    flex-basis: 9rem;
+  }
+
+  .body.fit .pick {
+    --game-card-width: min(4.5rem, calc((100cqh - 1.4rem) * 63 / 88));
+  }
+}

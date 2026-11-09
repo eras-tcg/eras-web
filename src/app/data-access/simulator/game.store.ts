@@ -463,6 +463,27 @@ export class GameStore {
   setPaused(paused: boolean): void {
     this.send('SET_PAUSED', { paused });
   }
+  /** The bots were paused by [holdBots] (and are resumed when released). */
+  private pausedByHold = false;
+  /**
+   * The bots wait while `held` (the game's menu open): in this browser the engine holds its bot; online, the Sala de
+   * pruebas pauses its bots (if they were not paused already) and resumes them when released.
+   */
+  holdBots(held: boolean): void {
+    if (this.transport?.local) {
+      this.transport.holdBots?.(held);
+      return;
+    }
+    const s = this.state();
+    if (!s?.editor || !(s.editorBot || s.editorSelfBot)) return;
+    if (held && !s.paused) {
+      this.pausedByHold = true;
+      this.setPaused(true);
+    } else if (!held && this.pausedByHold) {
+      this.pausedByHold = false;
+      this.setPaused(false);
+    }
+  }
   /** Sala de pruebas: through the time line, `by` moves back (negative) or forth, or to the move `to`. */
   timeStep(step: { by: number } | { to: number }): void {
     this.send('TIME_STEP', step);

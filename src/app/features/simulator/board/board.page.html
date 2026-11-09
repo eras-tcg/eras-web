@@ -28,8 +28,8 @@
     <!-- Expanded by hand it lies over the table, like a modal: a click outside collapses it -->
     <button type="button" class="sidebar-backdrop" aria-label="Contraer el menú" (click)="prefs.toggleSidebar(); $event.stopPropagation()"></button>
   }
-  <!-- Menú de partida: a round button at the table's top left, with the history, the table's preferences and the
-       way out -->
+  <!-- Menú de partida: a round button at the table's top left, with the history, the deck, the table's preferences and
+       the way out; while it is open the bots wait -->
   <button
     type="button"
     erasIconButton
@@ -39,10 +39,13 @@
     title="Menú de partida"
     [cdkMenuTriggerFor]="gameMenu"
     [cdkMenuPosition]="gameMenuPosition"
+    (cdkMenuOpened)="game.holdBots(true)"
+    (cdkMenuClosed)="game.holdBots(false)"
   ></button>
   <ng-template #gameMenu>
     <eras-menu aria-label="Menú de partida">
       <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
+      <button erasMenuItem (triggered)="dialogs.decklist()"><eras-icon name="cards" />Ver mi mazo</button>
       <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>
       <hr />
       @if (canSurrender()) {
@@ -81,11 +84,10 @@
         Mostrar cartas ocultas (manos, vidas, mazo)
       </button>
     }
-    <button type="button" erasSidebarItem icon="cards" (click)="dialogs.decklist()">Ver mi mazo</button>
     @if (game.editorRoom() || game.replayRoom()) {
       @if (otherSide(); as other) {
         <button type="button" erasSidebarItem icon="user" (click)="game.followActive.set(false); game.playSide(other.userId)">
-          Cambiar perspectiva (ver desde {{ other.username }})
+          Cambiar perspectiva
         </button>
       }
       @if (game.editorRoom()) {

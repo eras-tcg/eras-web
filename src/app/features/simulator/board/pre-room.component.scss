@@ -82,7 +82,6 @@
 .seat.empty { background: none; }
 .plate.waiting { background: var(--color-surface); color: var(--color-text-muted); }
 .plate.waiting .name { color: var(--color-text); }
-.seat.playing .starter-empty { border-color: var(--color-hub-accent); border-style: solid; }
 // The side whose deck is being chosen glows whole (card and nameplate); the other can be tapped to switch to it
 .seat.playing {
   box-shadow: inset 0 0 0 2px var(--color-hub-accent), 0 0 1.25rem color-mix(in srgb, var(--color-hub-accent) 30%, transparent);
@@ -90,7 +89,6 @@
 .seat.pickable { cursor: pointer; transition: background-color var(--duration-fast) ease; }
 .seat.pickable:hover { background-color: color-mix(in srgb, var(--color-hub-accent) 8%, transparent); }
 .seat.pickable:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.seat.playing .starter-slot eras-game-card { box-shadow: 0 0 0 3px var(--color-hub-accent), 0 10px 24px rgb(0 0 0 / 35%); }
 
 // The starter, large; a confirmed player's glows
 .starter-slot { --game-card-width: 11rem; position: relative; inline-size: 11rem; }

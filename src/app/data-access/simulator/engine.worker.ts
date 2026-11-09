@@ -46,6 +46,9 @@ async function text(url: string): Promise<string> {
   return response.text();
 }
 
+/** The page holds the bot (a menu open): it does not move until released. */
+let held = false;
+
 function stopBot(): void {
   if (botTimer !== null) clearTimeout(botTimer);
   botTimer = null;
@@ -61,12 +64,12 @@ function deliver(id: number, bodies: readonly string[] | null | undefined): void
  * it has nothing to do. An action that arrives meanwhile is applied between two moves.
  */
 function pumpBot(): void {
-  if (botTimer !== null || !match) return;
+  if (botTimer !== null || !match || held) return;
   const game = match;
   const id = matchId;
   const next = () => {
     botTimer = null;
-    if (game !== match) return;
+    if (game !== match || held) return;
     let moves: string[] | null | undefined;
     try {
       moves = game.step();
@@ -103,6 +106,7 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
       try {
         if (!installed) throw new Error('El motor no está cargado');
         await installed;
+        held = false;
         match = new LocalMatch(JSON.stringify(data.config));
         matchId = data.id;
         recorder = new GameRecorder(data.config, Date.now());
@@ -130,6 +134,12 @@ addEventListener('message', async ({ data }: MessageEvent<ToEngine>) => {
       pumpBot();
       return;
     }
+    case 'hold':
+      if (data.id !== matchId) return;
+      held = data.held;
+      if (held) stopBot();
+      else pumpBot();
+      return;
     case 'dispose':
       if (data.id !== matchId) return;
       stopBot();

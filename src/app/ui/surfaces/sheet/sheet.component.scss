@@ -194,3 +194,10 @@
     padding: var(--space-1) var(--space-3) var(--space-2);
   }
 }
+
+// Fit: the body takes the room left and never scrolls (what it holds sizes itself to it)
+:host(.fit) .body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: hidden;
+}

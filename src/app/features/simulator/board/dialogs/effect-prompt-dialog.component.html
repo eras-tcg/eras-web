@@ -4,8 +4,8 @@
 }
 <!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
      blocking…) say it in their title and buttons -->
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [title]="prompt.title" [subtitle]="prompt.purpose || prompt.effects?.length ? null : prompt.instruction">
-  <div class="body">
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="prompt.purpose || prompt.effects?.length ? null : prompt.instruction">
+  <div class="body" [class.fit]="!prompt.effects?.length && cardsShown()">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {

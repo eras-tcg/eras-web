@@ -70,10 +70,18 @@
 // takes the same room in both styles
 @media all {
   .table.arcane .strip .turn {
+    padding-block: var(--space-2);
     padding-inline: var(--space-3);
     font-family: inherit;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.04em;
+  }
+}
+
+// Phones in landscape: the plaque as low as the strip there
+@media (orientation: landscape) and (max-height: 30rem) {
+  .table.arcane .strip .turn {
+    padding-block: 0.2rem;
   }
 }
 

@@ -218,18 +218,20 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       }
     }
 
-    /* Wide screens: the same marker sized for them — each bar as long as its ten steps (not the whole width), next to
-       the gem, which is bigger */
+    /* Wide screens: the same marker, bigger — each step a piece of its own size, so each bar is as long as its ten
+       steps; the gem in the middle grows with them */
     @media not all and (orientation: landscape) and (max-height: 30rem) {
       .compact { gap: var(--space-3); }
-      .side { inline-size: min(100%, 17rem); block-size: 0.65rem; gap: 4px; }
+      .side { gap: 0.55rem; block-size: 1.4rem; }
       .side.mine { justify-self: end; }
       .side.theirs { justify-self: start; }
-      .value { inline-size: 2.75rem; block-size: 2.75rem; font-size: var(--font-size-lg); }
-      :host-context(.arcane) .side { block-size: 1.2rem; gap: 4px; padding: 0 0.5rem; }
-      :host-context(.arcane) .step { max-block-size: 0.7rem; }
-      :host-context(.arcane) .value { inline-size: 3.25rem; block-size: 3.25rem; }
-      :host-context(.arcane) .value::before { inset: 0.5rem; }
+      .step { flex: none; inline-size: 2.3rem; block-size: 100%; border-radius: 4px; }
+      .value { inline-size: 4.25rem; block-size: 4.25rem; font-size: 1.6rem; }
+      .value::before { inset: 0.6rem; border-width: 2px; }
+      :host-context(.arcane) .side { gap: 1rem; block-size: 2.5rem; padding: 0 1rem; border-radius: 1.25rem; }
+      :host-context(.arcane) .step { inline-size: 1.4rem; block-size: 1.4rem; max-block-size: none; aspect-ratio: auto; border-width: 2px; border-radius: 3px; }
+      :host-context(.arcane) .value { inline-size: 4.75rem; block-size: 4.75rem; font-size: 1.6rem; }
+      :host-context(.arcane) .value::before { inset: 0.7rem; box-shadow: 0 0 0 3px var(--arcane-gold), 0 4px 12px rgb(0 0 0 / 60%); }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -277,8 +277,9 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
     /* Wide screens: the phase button and its phases, a size bigger */
     @media not all and (orientation: landscape) and (max-height: 30rem) {
-      .current-phase { padding: var(--space-1) var(--space-4); font-size: var(--font-size-sm); }
-      .choice { padding: var(--space-1) var(--space-4); font-size: var(--font-size-sm); }
+      .current-phase { padding: var(--space-2) var(--space-4); font-size: var(--font-size-md, 1rem); }
+      .caret { inline-size: 1.1rem; block-size: 1.1rem; }
+      .choice { padding: var(--space-2) var(--space-4); font-size: var(--font-size-md, 1rem); }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

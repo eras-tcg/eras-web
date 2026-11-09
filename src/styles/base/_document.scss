@@ -2,6 +2,8 @@ html {
   font-family: var(--font-family-base);
   font-size: 16px;
   line-height: var(--line-height-base);
+  // No light-blue box over what is tapped on Android (the buttons show their own pressed and focus states)
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {

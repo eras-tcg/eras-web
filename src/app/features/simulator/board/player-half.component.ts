@@ -24,7 +24,7 @@ import { isTouchOnly } from './board-touch';
 import { DOCUMENT } from '@angular/common';
 
 /** How far from the middle (in cards) a card of the fan still shows well; the ones beyond it sink below the edge. */
-const HAND_UPRIGHT_FAN = 2.9;
+const HAND_UPRIGHT_FAN = 3.9;
 /** A sideways swipe on the hand turns it half a card every this many pixels. */
 const SWIPE_STEP_PX = 28;
 
@@ -47,12 +47,13 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
     '[class.info]': 'game.showInfo()',
     '[class.has-playmat]': '!!player().playmat',
     '[style.--playmat]': 'playmatImage()',
+    '[style.--hand-lift]': 'prefs.handLift()',
   },
 })
 export class PlayerHalfComponent {
   readonly player = input.required<PlayerState>();
   readonly opponent = input(false, { transform: booleanAttribute });
-  private readonly prefs = inject(BoardPreferences);
+  protected readonly prefs = inject(BoardPreferences);
   /** "Zonas espejadas": the rival's lives and gem marker swap places with their piles. */
   protected readonly mirrored = computed(() => this.opponent() && this.prefs.mirrored());
   /** "Mano recta": the hand in a row instead of a fan. */
@@ -147,27 +148,44 @@ export class PlayerHalfComponent {
         },
         true,
       );
+      // With the mouse a card of the hand is dragged to the table (upwards); dragging it sideways turns the hand
+      // instead, so the card's own drag does not start (captured before the card)
+      row.addEventListener(
+        'dragstart',
+        (e) => {
+          if (this.swipeX === null) return;
+          const dx = Math.abs(e.clientX - this.swipeStartX);
+          const dy = Math.abs(e.clientY - this.swipeStartY);
+          if (dx < dy) return;
+          e.preventDefault();
+          e.stopPropagation();
+        },
+        true,
+      );
     });
   }
   protected readonly handTurn = computed(() => Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurnWanted())));
 
-  /** A finger on the hand: where it was when the hand last turned (null: no swipe under way). */
+  /** A finger or the mouse on the hand: where it was when the hand last turned (null: no swipe under way). */
   private swipeX: number | null = null;
   private swipeY = 0;
-  /** The last finger's move turned the hand (its click is swallowed). */
+  /** Where the swipe began (a sideways drag of a card turns the hand instead of dragging the card). */
+  private swipeStartX = 0;
+  private swipeStartY = 0;
+  /** The last move turned the hand (its click is swallowed). */
   private swiped = false;
 
-  /** A finger (touch or pen) lands on the hand: a sideways swipe may turn it, as the arrows do. */
+  /** A finger, a pen or the mouse's main button on the hand: a sideways swipe may turn it. */
   protected swipeStart(e: PointerEvent): void {
-    if (e.pointerType === 'mouse' || !this.handTurnMax()) return;
-    this.swipeX = e.clientX;
-    this.swipeY = e.clientY;
+    if ((e.pointerType === 'mouse' && e.button !== 0) || !this.handTurnMax()) return;
+    this.swipeX = this.swipeStartX = e.clientX;
+    this.swipeY = this.swipeStartY = e.clientY;
     this.swiped = false;
   }
 
   /**
-   * Moving sideways turns the hand half a card every 28px (right: the cards on the left come in, as "‹"); a mostly
-   * upward move is left alone.
+   * Moving sideways turns the hand half a card every 28px (right: the cards on the left come in); a mostly upward
+   * move is left alone (with the mouse, that drags the card to the table).
    */
   protected swipeMove(e: PointerEvent): void {
     if (this.swipeX === null) return;

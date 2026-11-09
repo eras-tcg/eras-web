@@ -1,33 +1,47 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
 /**
  * The phases of the turn, in the table's middle strip. They are its controls: on your turn, the next phase you can
  * go to is a button.
- * Phones in landscape: one button with the current phase; on your turn, tapping it unfolds to its left the phases
- * you can go to next (choosing one goes there, tapping the current one again folds them).
+ * Phones in landscape: one button with the current phase; on your turn, tapping it unfolds over it every phase of
+ * the turn (the current one marked, the ones you can go to enabled); choosing one goes there, tapping the button
+ * again folds them.
  */
 @Component({
   selector: 'eras-phase-bar',
+  imports: [IconComponent],
   template: `
     <div class="compact">
       @if (open()) {
-        <div class="choices" role="group" aria-label="Ir a la fase">
-          @for (p of nextPhases(); track p.id) {
-            <button type="button" class="choice" (click)="goTo(p.id); open.set(false)">{{ p.choice }}</button>
+        <ol class="choices" aria-label="Ir a la fase">
+          @for (p of phases; track p.id; let i = $index) {
+            <li [style.--i]="phases.length - 1 - i">
+              <button
+                type="button"
+                class="choice"
+                [class.current]="currentPhase() === p.id"
+                [class.mine]="game.isMyTurn()"
+                [disabled]="!canGoTo(p.id)"
+                [attr.aria-current]="currentPhase() === p.id ? 'step' : null"
+                (click)="goTo(p.id); open.set(false)"
+              >{{ choiceLabel(p.id, p.label) }}</button>
+            </li>
           }
-        </div>
+        </ol>
       }
       <button
         type="button"
         class="current-phase"
         [class.mine]="game.isMyTurn()"
-        [class.can]="nextPhases().length > 0"
-        [attr.aria-expanded]="nextPhases().length ? open() : null"
+        [class.can]="canChoose()"
+        [class.open]="open()"
+        [attr.aria-expanded]="canChoose() ? open() : null"
         [attr.aria-label]="'Fase ' + currentLabel()"
-        (click)="nextPhases().length && open.set(!open())"
-      >{{ currentLabel() }}@if (nextPhases().length) {<span class="caret" aria-hidden="true">{{ open() ? '›' : '‹' }}</span>}</button>
+        (click)="canChoose() && open.set(!open())"
+      >{{ currentLabel() }}@if (canChoose()) {<eras-icon class="caret" name="chevron-up" aria-hidden="true" />}</button>
     </div>
 
     <ol class="phases" aria-label="Fases del turno">
@@ -138,30 +152,80 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         background: color-mix(in srgb, var(--color-sim-ally) 14%, color-mix(in srgb, var(--color-surface) 70%, transparent));
       }
       .current-phase.can { cursor: pointer; box-shadow: 0 0 10px 1px color-mix(in srgb, var(--color-sim-ally) 35%, transparent); }
-      .caret { font-weight: var(--font-weight-regular); }
-      // Over the strip, to the left of the button
+      .caret {
+        inline-size: 0.9rem;
+        block-size: 0.9rem;
+        transition: transform var(--duration-base, 200ms) var(--easing-standard, ease);
+      }
+      .current-phase.open .caret { transform: rotate(180deg); }
+      .current-phase:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+      // Over the button, every phase of the turn; they rise one after the other from the button
       .choices {
         position: absolute;
-        inset-block: 0;
-        inset-inline-end: calc(100% + var(--space-1));
-        z-index: 5;
+        inset-block-end: calc(100% + var(--space-2));
+        inset-inline-end: 0;
+        z-index: 30;
         display: flex;
+        flex-direction: column;
+        align-items: stretch;
         gap: var(--space-1);
+        min-inline-size: 100%;
+        margin: 0;
+        padding: var(--space-1);
+        border-radius: var(--radius-lg);
+        background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow-lg);
+        list-style: none;
+        transform-origin: bottom right;
+        animation: phases-open var(--duration-base, 200ms) var(--easing-standard, ease) both;
+      }
+      .choices li {
+        animation: phase-rise var(--duration-base, 200ms) var(--easing-standard, ease) both;
+        animation-delay: calc(var(--i) * 45ms);
       }
       .choice {
-        padding: 0.15rem var(--space-3);
-        border: 1px solid var(--color-sim-ally);
-        background: color-mix(in srgb, var(--color-surface) 85%, transparent);
-        backdrop-filter: blur(6px);
-        color: var(--color-text);
+        inline-size: 100%;
+        padding: 0.25rem var(--space-3);
+        border: 1px solid transparent;
+        background: none;
+        color: var(--color-text-muted);
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-bold);
         letter-spacing: 0.04em;
+        text-align: start;
         text-transform: uppercase;
         white-space: nowrap;
-        box-shadow: var(--shadow-md);
+      }
+      .choice:not(:disabled) {
+        border-color: var(--color-sim-ally);
+        color: var(--color-text);
         cursor: pointer;
       }
+      .choice:not(:disabled):active { background: color-mix(in srgb, var(--color-sim-ally) 20%, transparent); }
+      // The current phase: filled, no outline (only the ones you can go to are outlined)
+      .choice.current,
+      .choice.current.mine {
+        border-color: transparent;
+        background: color-mix(in srgb, var(--color-sim-rival) 16%, transparent);
+        box-shadow: none;
+        color: var(--color-text);
+      }
+      .choice.current.mine { background: color-mix(in srgb, var(--color-sim-ally) 16%, transparent); }
+      .choice:disabled:not(.current) { opacity: 0.5; }
+    }
+
+    @keyframes phases-open {
+      from { opacity: 0; transform: translateY(6px) scale(0.92); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes phase-rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .choices, .choices li { animation: none; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -178,16 +242,16 @@ export class PhaseBarComponent {
   ];
   protected readonly currentPhase = computed(() => (this.game.phase() === 'END' ? 'END_PHASE' : this.game.phase()));
   protected readonly currentLabel = computed(() => this.phases.find((p) => p.id === this.currentPhase())?.label ?? '');
-  /** Phones: the phases unfolded to the left of the current one. */
+  /** Phones: the phases unfolded over the button. */
   protected readonly open = signal(false);
-  /**
-   * Phones: what tapping the current phase offers, the ones after it you can go to (from Principal, Final; in the
-   * Final phase, ending the turn).
-   */
-  protected readonly nextPhases = computed(() => {
-    if (!this.canGoTo('END_PHASE')) return [];
-    return [{ id: 'END_PHASE', choice: this.currentPhase() === 'END_PHASE' ? 'Terminar turno' : 'Final ›' }];
-  });
+  /** Phones: some phase can be chosen now (on your turn, with nothing pending). */
+  protected readonly canChoose = computed(() => this.phases.some((p) => this.canGoTo(p.id)));
+
+  /** Phones: each phase's name in the unfolded list; the one that ends the turn says so. */
+  protected choiceLabel(id: string, label: string): string {
+    if (!this.canGoTo(id)) return label;
+    return this.currentPhase() === id ? `${label} · terminar turno` : `${label} ›`;
+  }
 
   constructor() {
     // Folded again whenever the phase or the turn changes

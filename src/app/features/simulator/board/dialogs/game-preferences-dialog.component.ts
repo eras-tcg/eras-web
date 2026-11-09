@@ -32,6 +32,21 @@ import { BoardScreen } from '../board-screen';
           <span class="text"><strong>Mano recta</strong><small>Las cartas de la mano en fila, sin curva</small></span>
           <span class="state">{{ prefs.straightHand() ? 'Sí' : 'No' }}</span>
         </button>
+        <label class="pref tilt">
+          <eras-icon name="hand" />
+          <span class="text">
+            <strong>Altura de la mano</strong>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              aria-label="Altura de la mano"
+              [value]="prefs.handLift()"
+              (input)="prefs.handLift.set($any($event.target).valueAsNumber)"
+            />
+          </span>
+        </label>
         <button type="button" class="pref" role="switch" [attr.aria-checked]="prefs.mirrored()" (click)="prefs.mirrored.set(!prefs.mirrored())">
           <eras-icon name="layers" />
           <span class="text"><strong>Zonas espejadas</strong><small>Las vidas y las pilas del rival cambian de lado</small></span>

@@ -142,29 +142,7 @@
       }
     </div>
   </div>
-  @if (handTurnMax() > 0) {
-    <!-- A big hand turns (or the wheel turns it) so the cards at its ends stand up and can be seen whole -->
-    <button
-      type="button"
-      erasIconButton
-      icon="chevron-left"
-      class="hand-turn start"
-      aria-label="Rotar la mano: ver las cartas de la izquierda"
-      title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() <= -handTurnMax() || animating()"
-      (click)="turnHandBy(-1); $event.stopPropagation()"
-    ></button>
-    <button
-      type="button"
-      erasIconButton
-      icon="chevron-right"
-      class="hand-turn end"
-      aria-label="Rotar la mano: ver las cartas de la derecha"
-      title="Rotar la mano (también con la rueda del mouse)"
-      [disabled]="handTurn() >= handTurnMax() || animating()"
-      (click)="turnHandBy(1); $event.stopPropagation()"
-    ></button>
-  }
+  <!-- A big hand turns by dragging it sideways (finger or mouse) or with the wheel, so the cards at its ends stand up -->
 </eras-game-zone>
 
 <!-- Deck and piles -->

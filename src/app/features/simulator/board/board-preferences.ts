@@ -18,6 +18,8 @@ export class BoardPreferences {
   readonly zoneLookNames = ['total', 'suave', 'nula'];
   /** "Mano recta": the hands in a row instead of a fan. */
   readonly straightHand = persistedFlag('eras-sim-straight-hand');
+  /** "Altura de la mano": how much higher your hand stands over the table's edge, from low (0) to high (1). */
+  readonly handLift = persistedNumber('eras-sim-hand-lift', 0.4, 0, 1);
   /**
    * "Mesa en perspectiva": how far the table leans back, as seen from your seat (not on phones), from flat (0) to
    * TABLE_TILT_MAX (1). Only a slider, no number.

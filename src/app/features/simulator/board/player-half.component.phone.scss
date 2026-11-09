@@ -32,7 +32,7 @@
   }
 
   .hand-cards {
-    inset-block-start: calc(var(--hand-reach) - 0.25rem);
+    inset-block-start: calc(var(--hand-reach) - 0.25rem - var(--hand-raise));
   }
 
   :host(.opponent) .hand-cards {

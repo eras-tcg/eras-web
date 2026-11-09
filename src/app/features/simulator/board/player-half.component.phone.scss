@@ -89,8 +89,8 @@
     font-size: 0.6rem;
 
     eras-icon {
-      inline-size: 1.4rem;
-      block-size: 1.4rem;
+      inline-size: min(1.4rem, 30cqh);
+      block-size: min(1.4rem, 30cqh);
     }
 
     span {

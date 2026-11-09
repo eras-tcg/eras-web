@@ -466,23 +466,23 @@ eras-player-plate {
 // Under my deck: the switches of the game (optional effects…)
 .pile-controls {
   grid-area: controls;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
+  // Two halves of its place, however low the Retaguardia is: the buttons never go past it
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
   min-inline-size: 0;
+  min-block-size: 0;
+  container-type: size;
 }
 
 // Big buttons with only their icon, one over the other, filling the place under the deck (their words stay for screen
 // readers, and in the tooltip)
 .optional-toggle {
   display: inline-flex;
-  flex: 1;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-block-size: 2.5rem;
+  min-block-size: 0;
   padding: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -491,11 +491,11 @@ eras-player-plate {
   font-size: var(--font-size-xs);
   cursor: pointer;
 
-  // Big enough not to get lost in the button
+  // Big enough not to get lost in the button (and never taller than it)
   eras-icon {
     flex: none;
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
+    inline-size: min(2.25rem, 30cqh);
+    block-size: min(2.25rem, 30cqh);
   }
 
   span {
@@ -528,16 +528,12 @@ eras-player-plate {
   container-type: size;
 }
 
-// The pile's card as big as its zone allows with its edge under it (up to 16px), the two together centered in the
-// zone: the card rises half its edge (the rival's, turned round, has it above: it goes down)
+// The pile's card as big as its zone allows with its edge under it (up to 16px; the rival's too: its card's face is
+// turned, not the card), the two together centered in the zone: the card rises half its edge
 .pile eras-game-card {
   --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 0.5rem - 16px) * 63 / 88));
 
   translate: 0 calc(var(--edge, 0px) * -0.5);
-}
-
-:host(.opponent) .pile eras-game-card {
-  translate: 0 calc(var(--edge, 0px) * 0.5);
 }
 
 @media (max-width: 48rem) {

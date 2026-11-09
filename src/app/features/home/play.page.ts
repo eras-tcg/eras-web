@@ -101,6 +101,18 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
       inline-size: 1rem;
       block-size: 1rem;
     }
+    /* Upright phones (the browser; the game itself is played in landscape): getting the app is what matters here,
+       so its buttons go above the menu, full width, instead of below the fold */
+    @media (max-width: 63.99rem) and (orientation: portrait) {
+      .extras {
+        flex-direction: column-reverse;
+        order: -1;
+      }
+      .extras > * {
+        justify-content: center;
+        inline-size: 100%;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

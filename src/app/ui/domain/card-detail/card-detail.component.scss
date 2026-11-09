@@ -244,3 +244,19 @@ dd {
     justify-self: center;
   }
 }
+
+// Phones in landscape: the picture as tall as the screen lets it (it fits without scrolling), the text beside it
+@media (orientation: landscape) and (max-height: 30rem) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-4);
+  }
+
+  .image {
+    inline-size: calc((100dvh - 4.5rem) * 63 / 88);
+  }
+
+  .name {
+    font-size: var(--font-size-lg);
+  }
+}

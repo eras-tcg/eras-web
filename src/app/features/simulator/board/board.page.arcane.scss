@@ -66,9 +66,9 @@
   filter: drop-shadow(0 0 0.5px var(--arcane-gold)) drop-shadow(0 0 0.5px var(--arcane-gold));
 }
 
-// Phones in landscape: the plaque fills the strip's side with the clean style's letters (the display face is too wide
-// for it), so the turn takes the same room in both styles
-@media (orientation: landscape) and (max-height: 30rem) {
+// The plaque fills the strip's side with the clean style's letters (the display face is too wide for it), so the turn
+// takes the same room in both styles
+@media all {
   .table.arcane .strip .turn {
     padding-inline: var(--space-3);
     font-family: inherit;

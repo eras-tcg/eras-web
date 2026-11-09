@@ -126,8 +126,8 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 
     .compact { display: none; }
 
-    // Phones in landscape: one button with the current phase, the next ones unfold to its left
-    @media (orientation: landscape) and (max-height: 30rem) {
+    // On every screen: one button with the current phase; the phases unfold over it
+    @media all {
       :host { position: relative; }
       .phases { display: none; }
       .compact { display: flex; justify-content: flex-end; }
@@ -257,7 +257,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       backdrop-filter: none;
       box-shadow: 0 0 0 1px var(--arcane-gold-soft), var(--shadow-lg);
     }
-    @media (orientation: landscape) and (max-height: 30rem) {
+    @media all {
       :host-context(.arcane) .current-phase,
       :host-context(.arcane) .choice {
         font-family: inherit;

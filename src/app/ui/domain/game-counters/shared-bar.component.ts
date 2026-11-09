@@ -65,8 +65,8 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
     .compact { display: none; }
 
-    /* Phones in landscape: the value and the two bars (the radio group above stays for screen readers) */
-    @media (orientation: landscape) and (max-height: 30rem) {
+    /* On every screen: the value and the two bars (the radio group above stays for screen readers) */
+    @media all {
       .bar {
         position: absolute;
         inline-size: 1px;
@@ -163,7 +163,7 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), var(--arcane-rival);
       box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 12px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
     }
-    @media (orientation: landscape) and (max-height: 30rem) {
+    @media all {
       :host-context(.arcane) .side {
         align-items: center;
         gap: 2px;

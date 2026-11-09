@@ -32,7 +32,77 @@
   }
 }
 
-// Phones in landscape (little height): narrow side columns and a one-row strip, so the field gets the room
+// The strip across the middle, on every screen: no frame or box, the turn on the left, the gem marker in the middle
+// (its value in a cut gem, a bar to each side) and one phase button on the right that unfolds the phases
+:host {
+  // The turn and the phase: the same room on both sides, whatever their text and the table's style
+  --strip-side: 11rem;
+}
+
+// No frame or background: the turn, the gem marker and the phase float over the table's middle line
+.strip,
+.strip.with-gems {
+  grid-template-columns: var(--strip-side) minmax(0, 1fr) var(--strip-side);
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-size-sm);
+}
+
+.strip > :first-child,
+.strip > :last-child {
+  justify-self: stretch;
+  min-inline-size: 0;
+  padding-inline: 0;
+}
+
+.strip .gems {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+// Whose turn: a see-through pill with a dot of the side's color
+.strip .turn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  gap: var(--space-1);
+  padding: 0.15rem var(--space-3) 0.15rem var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 55%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.strip .turn::before {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-danger);
+  content: '';
+}
+
+.strip .turn.my-turn {
+  border-color: color-mix(in srgb, var(--color-success) 55%, transparent);
+  color: var(--color-text);
+}
+
+.strip .turn.my-turn::before {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+// Phones in landscape (little height): narrow side columns and smaller letters in the strip, so the field gets the room
 @media (orientation: landscape) and (max-height: 30rem) {
   :host {
     --side: 7.5rem;
@@ -45,67 +115,10 @@
     gap: var(--space-1);
   }
 
-  // No frame or background: the turn, the gem marker and the phase float over the table's middle line
+  // The strip's letters, smaller
   .strip,
   .strip.with-gems {
-    grid-template-columns: var(--strip-side) minmax(0, 1fr) var(--strip-side);
-    gap: var(--space-3);
-    padding: 0;
-    border: 0;
-    background: none;
     font-size: var(--font-size-xs);
-  }
-
-  .strip > :first-child,
-  .strip > :last-child {
-    justify-self: stretch;
-    min-inline-size: 0;
-    padding-inline: 0;
-  }
-
-  .strip .gems {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  // Whose turn: a see-through pill with a dot of the side's color
-  .strip .turn {
-    display: inline-flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    gap: var(--space-1);
-    padding: 0.15rem var(--space-3) 0.15rem var(--space-2);
-    border: 1px solid color-mix(in srgb, var(--color-danger) 55%, transparent);
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
-    color: var(--color-text);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .strip .turn::before {
-    inline-size: 0.5rem;
-    block-size: 0.5rem;
-    border-radius: 50%;
-    background: var(--color-danger);
-    box-shadow: 0 0 6px var(--color-danger);
-    content: '';
-  }
-
-  .strip .turn.my-turn {
-    border-color: color-mix(in srgb, var(--color-success) 55%, transparent);
-    color: var(--color-text);
-  }
-
-  .strip .turn.my-turn::before {
-    background: var(--color-success);
-    box-shadow: 0 0 6px var(--color-success);
   }
 }
 

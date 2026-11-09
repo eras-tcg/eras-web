@@ -170,7 +170,16 @@ import { BoardScreen } from '../board-screen';
     .tab eras-icon { inline-size: 1rem; block-size: 1rem; }
     .tab.on { background: var(--color-primary); color: var(--color-on-primary); }
     .tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-    .prefs { display: flex; flex-direction: column; gap: var(--space-1); }
+    /* The same height on every section (the window keeps its size); a longer one scrolls inside */
+    .prefs {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      block-size: min(27rem, calc(100dvh - 14rem));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .prefs > * { flex: none; }
     .pref {
       display: flex;
       align-items: center;

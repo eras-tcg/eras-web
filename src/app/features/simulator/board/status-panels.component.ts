@@ -112,6 +112,15 @@ import { CardPeekComponent } from './card-peek.component';
     .mulligan .pick { --game-card-width: min(7rem, calc((100vw - 8rem) / 5)); }
     .foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); }
     .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    /* Phones in landscape: a smaller panel, clear of the game menu's button at the table's top left */
+    @media (orientation: landscape) and (max-height: 30rem) {
+      :host:has(.mulligan) { --status-width: min(34rem, 62vw); }
+      .panel { gap: var(--space-2); }
+      .title { font-size: 1rem; line-height: 1.5rem; }
+      .subtitle { font-size: var(--font-size-xs); }
+      .mulligan .pick { --game-card-width: min(4.6rem, calc((62vw - 5rem) / 5)); padding: 2px; }
+      .tag { min-block-size: 0; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -36,7 +36,8 @@ const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure:
       padding: 0;
       list-style: none;
     }
-    li { display: flex; justify-content: center; }
+    /* As wide as its card, centered in the column: the eye sits at the card's corner */
+    li { display: flex; justify-self: center; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

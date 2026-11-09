@@ -48,6 +48,16 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     </div>
   `,
   styles: `
+    /* Emerald-cut gems (outline, step bands lit from above, the table, facet lines and a shine), drawn once: long ones
+       for the bar's steps, an upright one edged in gold for the value — green yours, red the rival's, off a dull grey */
+    :host {
+      --bar-gem-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.2 -1.2 62.4 24.4' preserveAspectRatio='none'%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='%2322c55e'/%3E%3Cpolygon points='5,0 55,0 52.29,3.96 7.71,3.96' fill='%23d1fae5'/%3E%3Cpolygon points='55,0 60,5 56.04,7.71 52.29,3.96' fill='%23d1fae5'/%3E%3Cpolygon points='60,5 60,17 56.04,14.29 56.04,7.71' fill='%234ade80'/%3E%3Cpolygon points='60,17 55,22 52.29,18.04 56.04,14.29' fill='%230f6b33'/%3E%3Cpolygon points='55,22 5,22 7.71,18.04 52.29,18.04' fill='%230f6b33'/%3E%3Cpolygon points='5,22 0,17 3.96,14.29 7.71,18.04' fill='%230f6b33'/%3E%3Cpolygon points='0,17 0,5 3.96,7.71 3.96,14.29' fill='%234ade80'/%3E%3Cpolygon points='0,5 5,0 7.71,3.96 3.96,7.71' fill='%23d1fae5'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='%2322c55e'/%3E%3Cpolygon points='7.71,18.04 3.96,14.29 3.96,7.71 7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04' fill='%2322c55e'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='%2386efac'/%3E%3Cpolygon points='52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,11 52.52,11' fill='%2316a34a' opacity='0.55'/%3E%3Cline x1='5' y1='0' x2='9.98' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='0' x2='50.02' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='5' x2='52.52' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='17' x2='52.52' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='22' x2='50.02' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='5' y1='22' x2='9.98' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='17' x2='7.48' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='5' x2='7.48' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='0.6'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='0.6'/%3E%3Crect x='14.7848' y='8.7472' width='12.8128' height='0.9856' rx='0.4928' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='none' stroke='%23e9fff1' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --bar-gem-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.2 -1.2 62.4 24.4' preserveAspectRatio='none'%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='%23e5484d'/%3E%3Cpolygon points='5,0 55,0 52.29,3.96 7.71,3.96' fill='%23fee2e2'/%3E%3Cpolygon points='55,0 60,5 56.04,7.71 52.29,3.96' fill='%23fee2e2'/%3E%3Cpolygon points='60,5 60,17 56.04,14.29 56.04,7.71' fill='%23f87171'/%3E%3Cpolygon points='60,17 55,22 52.29,18.04 56.04,14.29' fill='%237a1b1e'/%3E%3Cpolygon points='55,22 5,22 7.71,18.04 52.29,18.04' fill='%237a1b1e'/%3E%3Cpolygon points='5,22 0,17 3.96,14.29 7.71,18.04' fill='%237a1b1e'/%3E%3Cpolygon points='0,17 0,5 3.96,7.71 3.96,14.29' fill='%23f87171'/%3E%3Cpolygon points='0,5 5,0 7.71,3.96 3.96,7.71' fill='%23fee2e2'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='%23e5484d'/%3E%3Cpolygon points='7.71,18.04 3.96,14.29 3.96,7.71 7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04' fill='%23e5484d'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='%23fca5a5'/%3E%3Cpolygon points='52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,11 52.52,11' fill='%23c0353a' opacity='0.55'/%3E%3Cline x1='5' y1='0' x2='9.98' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='0' x2='50.02' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='5' x2='52.52' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='17' x2='52.52' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='22' x2='50.02' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='5' y1='22' x2='9.98' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='17' x2='7.48' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='5' x2='7.48' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='0.6'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='0.6'/%3E%3Crect x='14.7848' y='8.7472' width='12.8128' height='0.9856' rx='0.4928' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='none' stroke='%23fff0f0' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --bar-gem-off: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.2 -1.2 62.4 24.4' preserveAspectRatio='none'%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='%23353a45'/%3E%3Cpolygon points='5,0 55,0 52.29,3.96 7.71,3.96' fill='%237c8290'/%3E%3Cpolygon points='55,0 60,5 56.04,7.71 52.29,3.96' fill='%237c8290'/%3E%3Cpolygon points='60,5 60,17 56.04,14.29 56.04,7.71' fill='%234b5160'/%3E%3Cpolygon points='60,17 55,22 52.29,18.04 56.04,14.29' fill='%2312151a'/%3E%3Cpolygon points='55,22 5,22 7.71,18.04 52.29,18.04' fill='%2312151a'/%3E%3Cpolygon points='5,22 0,17 3.96,14.29 7.71,18.04' fill='%2312151a'/%3E%3Cpolygon points='0,17 0,5 3.96,7.71 3.96,14.29' fill='%234b5160'/%3E%3Cpolygon points='0,5 5,0 7.71,3.96 3.96,7.71' fill='%237c8290'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='%23353a45'/%3E%3Cpolygon points='7.71,18.04 3.96,14.29 3.96,7.71 7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04' fill='%23353a45'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='%234a505c'/%3E%3Cpolygon points='52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,11 52.52,11' fill='%232b3039' opacity='0.55'/%3E%3Cline x1='5' y1='0' x2='9.98' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='0' x2='50.02' y2='7.48' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='5' x2='52.52' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='60' y1='17' x2='52.52' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='55' y1='22' x2='50.02' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='5' y1='22' x2='9.98' y2='14.52' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='17' x2='7.48' y2='12.02' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cline x1='0' y1='5' x2='7.48' y2='9.98' stroke='%23fff' stroke-opacity='0.35' stroke-width='0.6'/%3E%3Cpolygon points='7.71,3.96 52.29,3.96 56.04,7.71 56.04,14.29 52.29,18.04 7.71,18.04 3.96,14.29 3.96,7.71' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='0.6'/%3E%3Cpolygon points='9.98,7.48 50.02,7.48 52.52,9.98 52.52,12.02 50.02,14.52 9.98,14.52 7.48,12.02 7.48,9.98' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='0.6'/%3E%3Crect x='14.7848' y='8.7472' width='12.8128' height='0.9856' rx='0.4928' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='5,0 55,0 60,5 60,17 55,22 5,22 0,17 0,5' fill='none' stroke='%236b7280' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --big-gem-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-2.4 -2.4 44.8 58.8' preserveAspectRatio='none'%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='%2322c55e'/%3E%3Cpolygon points='9,0 31,0 26.05,7.2 13.95,7.2' fill='%23d1fae5'/%3E%3Cpolygon points='31,0 40,9 32.8,13.95 26.05,7.2' fill='%23d1fae5'/%3E%3Cpolygon points='40,9 40,45 32.8,40.05 32.8,13.95' fill='%234ade80'/%3E%3Cpolygon points='40,45 31,54 26.05,46.8 32.8,40.05' fill='%230f6b33'/%3E%3Cpolygon points='31,54 9,54 13.95,46.8 26.05,46.8' fill='%230f6b33'/%3E%3Cpolygon points='9,54 0,45 7.2,40.05 13.95,46.8' fill='%230f6b33'/%3E%3Cpolygon points='0,45 0,9 7.2,13.95 7.2,40.05' fill='%234ade80'/%3E%3Cpolygon points='0,9 9,0 13.95,7.2 7.2,13.95' fill='%23d1fae5'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='%2322c55e'/%3E%3Cpolygon points='13.95,46.8 7.2,40.05 7.2,13.95 13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8' fill='%2322c55e'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='%2386efac'/%3E%3Cpolygon points='26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,27 26.4,27' fill='%2316a34a' opacity='0.55'/%3E%3Cline x1='9' y1='0' x2='18.1' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='0' x2='21.9' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='9' x2='26.4' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='45' x2='26.4' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='54' x2='21.9' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='9' y1='54' x2='18.1' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='45' x2='13.6' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='9' x2='13.6' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='1.2'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='1.2'/%3E%3Crect x='18.556' y='18.424' width='1.216' height='3.752' rx='1.876' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='none' stroke='%23c9a24b' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --big-gem-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-2.4 -2.4 44.8 58.8' preserveAspectRatio='none'%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='%23e5484d'/%3E%3Cpolygon points='9,0 31,0 26.05,7.2 13.95,7.2' fill='%23fee2e2'/%3E%3Cpolygon points='31,0 40,9 32.8,13.95 26.05,7.2' fill='%23fee2e2'/%3E%3Cpolygon points='40,9 40,45 32.8,40.05 32.8,13.95' fill='%23f87171'/%3E%3Cpolygon points='40,45 31,54 26.05,46.8 32.8,40.05' fill='%237a1b1e'/%3E%3Cpolygon points='31,54 9,54 13.95,46.8 26.05,46.8' fill='%237a1b1e'/%3E%3Cpolygon points='9,54 0,45 7.2,40.05 13.95,46.8' fill='%237a1b1e'/%3E%3Cpolygon points='0,45 0,9 7.2,13.95 7.2,40.05' fill='%23f87171'/%3E%3Cpolygon points='0,9 9,0 13.95,7.2 7.2,13.95' fill='%23fee2e2'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='%23e5484d'/%3E%3Cpolygon points='13.95,46.8 7.2,40.05 7.2,13.95 13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8' fill='%23e5484d'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='%23fca5a5'/%3E%3Cpolygon points='26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,27 26.4,27' fill='%23c0353a' opacity='0.55'/%3E%3Cline x1='9' y1='0' x2='18.1' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='0' x2='21.9' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='9' x2='26.4' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='45' x2='26.4' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='54' x2='21.9' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='9' y1='54' x2='18.1' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='45' x2='13.6' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='9' x2='13.6' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='1.2'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='1.2'/%3E%3Crect x='18.556' y='18.424' width='1.216' height='3.752' rx='1.876' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='none' stroke='%23c9a24b' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --big-gem-off: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-2.4 -2.4 44.8 58.8' preserveAspectRatio='none'%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='%23353a45'/%3E%3Cpolygon points='9,0 31,0 26.05,7.2 13.95,7.2' fill='%237c8290'/%3E%3Cpolygon points='31,0 40,9 32.8,13.95 26.05,7.2' fill='%237c8290'/%3E%3Cpolygon points='40,9 40,45 32.8,40.05 32.8,13.95' fill='%234b5160'/%3E%3Cpolygon points='40,45 31,54 26.05,46.8 32.8,40.05' fill='%2312151a'/%3E%3Cpolygon points='31,54 9,54 13.95,46.8 26.05,46.8' fill='%2312151a'/%3E%3Cpolygon points='9,54 0,45 7.2,40.05 13.95,46.8' fill='%2312151a'/%3E%3Cpolygon points='0,45 0,9 7.2,13.95 7.2,40.05' fill='%234b5160'/%3E%3Cpolygon points='0,9 9,0 13.95,7.2 7.2,13.95' fill='%237c8290'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='%23353a45'/%3E%3Cpolygon points='13.95,46.8 7.2,40.05 7.2,13.95 13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8' fill='%23353a45'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='%234a505c'/%3E%3Cpolygon points='26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,27 26.4,27' fill='%232b3039' opacity='0.55'/%3E%3Cline x1='9' y1='0' x2='18.1' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='0' x2='21.9' y2='13.6' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='9' x2='26.4' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='40' y1='45' x2='26.4' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='31' y1='54' x2='21.9' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='9' y1='54' x2='18.1' y2='40.4' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='45' x2='13.6' y2='35.9' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cline x1='0' y1='9' x2='13.6' y2='18.1' stroke='%23fff' stroke-opacity='0.35' stroke-width='1.2'/%3E%3Cpolygon points='13.95,7.2 26.05,7.2 32.8,13.95 32.8,40.05 26.05,46.8 13.95,46.8 7.2,40.05 7.2,13.95' fill='none' stroke='%23fff' stroke-opacity='0.3' stroke-width='1.2'/%3E%3Cpolygon points='18.1,13.6 21.9,13.6 26.4,18.1 26.4,35.9 21.9,40.4 18.1,40.4 13.6,35.9 13.6,18.1' fill='none' stroke='%23fff' stroke-opacity='0.45' stroke-width='1.2'/%3E%3Crect x='18.556' y='18.424' width='1.216' height='3.752' rx='1.876' fill='%23fff' fill-opacity='0.7'/%3E%3Cpolygon points='9,0 31,0 40,9 40,45 31,54 9,54 0,45 0,9' fill='none' stroke='%23c9a24b' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
     .bar { display: grid; grid-template-columns: repeat(21, minmax(0, 1fr)); gap: 2px; }
     .bar button {
       padding: var(--space-1) 0;
@@ -178,31 +188,25 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         aspect-ratio: 1;
         block-size: auto;
         max-block-size: 0.5rem;
-        border: 1px solid #3a404b;
-        border-radius: 1px;
-        /* A dull gem (a long cut): its ridge catches a faint light, the rest smoky */
-        background:
-          linear-gradient(180deg, rgb(255 255 255 / 16%) 0 22%, transparent 22%),
-          linear-gradient(180deg, #4a4f5a 0, #2f343d 46%, #15181d 54%, #2a2f38 100%);
-        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+        border: 0;
+        border-radius: 0;
+        /* A dull emerald cut */
+        background: var(--bar-gem-off) center / 100% 100% no-repeat;
+        box-shadow: none;
         transform: rotate(-45deg);
       }
       // Mirrored: each side's gems lean towards the middle
       :host-context(.arcane) .side.theirs .step { transform: rotate(45deg); }
       /* Lit: a cut gem of the side's color — the shine along its ridge, the light facet above, the dark one below */
       :host-context(.arcane) .side.mine .step.lit {
-        border-color: #c8f9da;
-        background:
-          linear-gradient(180deg, rgb(255 255 255 / 70%) 0 18%, transparent 18%),
-          linear-gradient(180deg, #b7f7cf 0, var(--arcane-ally) 46%, #0f6b33 54%, #16a34a 100%);
-        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), 0 0 8px var(--arcane-ally);
+        background: var(--bar-gem-green) center / 100% 100% no-repeat;
+        box-shadow: none;
+        filter: drop-shadow(0 0 4px var(--arcane-ally));
       }
       :host-context(.arcane) .side.theirs .step.lit {
-        border-color: #ffd6d6;
-        background:
-          linear-gradient(180deg, rgb(255 255 255 / 70%) 0 18%, transparent 18%),
-          linear-gradient(180deg, #ffd0d0 0, var(--arcane-rival) 46%, #7a1b1e 54%, #c0353a 100%);
-        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), 0 0 8px var(--arcane-rival);
+        background: var(--bar-gem-red) center / 100% 100% no-repeat;
+        box-shadow: none;
+        filter: drop-shadow(0 0 4px var(--arcane-rival));
       }
       :host-context(.arcane) .value {
         inline-size: 2.4rem;
@@ -211,26 +215,25 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         font-family: var(--font-family-display);
         text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
       }
-      /* The value in a big cut gem: four facets lit from the top left and a shine, ringed in gold */
+      /* The value in a big upright emerald cut, edged in gold; it glows in its side's color */
       :host-context(.arcane) .value::before {
-        inset: 0.4rem;
+        inset: 0 13%;
         border: 0;
-        background:
-          linear-gradient(135deg, rgb(255 255 255 / 45%) 0 20%, transparent 20%),
-          conic-gradient(from 0deg at 50% 50%, #9aa0aa 0 25%, #5b616c 25% 50%, #1e2229 50% 75%, #3b414c 75% 100%);
-        box-shadow: 0 0 0 2px var(--arcane-gold), 0 3px 8px rgb(0 0 0 / 60%);
+        border-radius: 0;
+        background: var(--big-gem-off) center / 100% 100% no-repeat;
+        box-shadow: none;
+        filter: drop-shadow(0 3px 5px rgb(0 0 0 / 60%));
+        transform: none;
       }
       :host-context(.arcane) .value.mine::before {
-        background:
-          linear-gradient(135deg, rgb(255 255 255 / 55%) 0 20%, transparent 20%),
-          conic-gradient(from 0deg at 50% 50%, #86efac 0 25%, var(--arcane-ally) 25% 50%, #0f6b33 50% 75%, #16a34a 75% 100%);
-        box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-ally) 60%, transparent);
+        background: var(--big-gem-green) center / 100% 100% no-repeat;
+        box-shadow: none;
+        filter: drop-shadow(0 0 8px color-mix(in srgb, var(--arcane-ally) 70%, transparent));
       }
       :host-context(.arcane) .value.theirs::before {
-        background:
-          linear-gradient(135deg, rgb(255 255 255 / 55%) 0 20%, transparent 20%),
-          conic-gradient(from 0deg at 50% 50%, #fca5a5 0 25%, var(--arcane-rival) 25% 50%, #7a1b1e 50% 75%, #c0353a 75% 100%);
-        box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
+        background: var(--big-gem-red) center / 100% 100% no-repeat;
+        box-shadow: none;
+        filter: drop-shadow(0 0 8px color-mix(in srgb, var(--arcane-rival) 70%, transparent));
       }
     }
 
@@ -243,9 +246,8 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       .value::before { inset: 0.5rem; border-width: 2px; }
       :host-context(.arcane) .side { gap: 6px; block-size: 1.6rem; padding: 0 0.75rem; border-radius: 0.8rem; }
       /* Thick bars (thin ones look frail across a wide screen) */
-      :host-context(.arcane) .step { max-block-size: 1.15rem; border-width: 1.5px; border-radius: 2px; }
+      :host-context(.arcane) .step { max-block-size: 1.15rem; }
       :host-context(.arcane) .value { inline-size: 3.75rem; block-size: 3.75rem; font-size: 1.35rem; }
-      :host-context(.arcane) .value::before { inset: 0.55rem; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -274,6 +274,12 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       color: var(--arcane-gold-light);
       box-shadow: none;
     }
+
+    /* Wide screens: the phase button and its phases, a size bigger */
+    @media not all and (orientation: landscape) and (max-height: 30rem) {
+      .current-phase { padding: var(--space-1) var(--space-4); font-size: var(--font-size-sm); }
+      .choice { padding: var(--space-1) var(--space-4); font-size: var(--font-size-sm); }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

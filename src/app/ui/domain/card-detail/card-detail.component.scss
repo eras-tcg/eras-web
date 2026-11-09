@@ -245,15 +245,30 @@ dd {
   }
 }
 
-// Phones in landscape: the picture as tall as the screen lets it (it fits without scrolling), the text beside it
+// Phones in landscape: the text beside the picture; the picture, a little below the dialog's close button, and the
+// controls right under it (the finishes) fit the screen's height together, without scrolling
 @media (orientation: landscape) and (max-height: 30rem) {
   .detail {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-4);
+    grid-template-rows: auto 1fr;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .info {
+    grid-row: 1 / span 2;
   }
 
   .image {
-    inline-size: calc((100dvh - 4.5rem) * 63 / 88);
+    position: static;
+    grid-row: 1;
+    inline-size: calc((100dvh - 8.5rem) * 63 / 88);
+    margin-block-start: var(--space-5);
+  }
+
+  .under {
+    grid-row: 2;
+    align-self: start;
+    justify-self: center;
   }
 
   .name {

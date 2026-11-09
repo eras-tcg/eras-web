@@ -217,6 +217,20 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         box-shadow: 0 0 0 2px var(--arcane-gold), 0 0 16px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
       }
     }
+
+    /* Wide screens: the same marker sized for them — each bar as long as its ten steps (not the whole width), next to
+       the gem, which is bigger */
+    @media not all and (orientation: landscape) and (max-height: 30rem) {
+      .compact { gap: var(--space-3); }
+      .side { inline-size: min(100%, 17rem); block-size: 0.65rem; gap: 4px; }
+      .side.mine { justify-self: end; }
+      .side.theirs { justify-self: start; }
+      .value { inline-size: 2.75rem; block-size: 2.75rem; font-size: var(--font-size-lg); }
+      :host-context(.arcane) .side { block-size: 1.2rem; gap: 4px; padding: 0 0.5rem; }
+      :host-context(.arcane) .step { max-block-size: 0.7rem; }
+      :host-context(.arcane) .value { inline-size: 3.25rem; block-size: 3.25rem; }
+      :host-context(.arcane) .value::before { inset: 0.5rem; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

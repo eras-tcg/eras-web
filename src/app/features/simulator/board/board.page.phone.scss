@@ -70,7 +70,7 @@
   justify-content: center;
   box-sizing: border-box;
   gap: var(--space-1);
-  padding: 0.15rem var(--space-3) 0.15rem var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
   border: 1px solid color-mix(in srgb, var(--color-danger) 55%, transparent);
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--color-surface) 70%, transparent);
@@ -115,10 +115,14 @@
     gap: var(--space-1);
   }
 
-  // The strip's letters, smaller
+  // The strip's letters and the turn's pill, smaller
   .strip,
   .strip.with-gems {
     font-size: var(--font-size-xs);
+  }
+
+  .strip .turn {
+    padding-block: 0.15rem;
   }
 }
 

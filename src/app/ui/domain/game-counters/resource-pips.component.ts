@@ -96,6 +96,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
     @media (prefers-reduced-motion: reduce) {
       .pip, .step { transition: none; }
     }
+    /* Wide screens: a lower tray (the lives' zone under it starts nearer the Línea frontal's top) */
+    @media not all and (orientation: landscape) and (max-height: 30rem) {
+      :host { --pip: 0.8rem; --btn: 1.25rem; padding: 0.1rem; }
+    }
     /* Phones in landscape: small enough (with − and +) for the table's narrow side column */
     @media (orientation: landscape) and (max-height: 30rem) {
       :host { --pip: 0.6rem; --btn: 1.05rem; gap: 2px; padding: 2px; }

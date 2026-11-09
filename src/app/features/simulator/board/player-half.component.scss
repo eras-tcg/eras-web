@@ -528,8 +528,10 @@ eras-player-plate {
   container-type: size;
 }
 
+// The pile's card, centered in its zone under the label, with the room for its edge (up to 16px) below it on both
+// sides of the center: it never goes past the zone's border
 .pile eras-game-card {
-  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem) * 63 / 88));
+  --game-card-width: min(calc(100cqw - 0.5rem), calc((100cqh - 1.5rem - 32px) * 63 / 88));
 }
 
 @media (max-width: 48rem) {

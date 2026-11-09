@@ -68,17 +68,18 @@
 
   // One column as wide as the side column (not as its widest child: the gem marker with − and + is wider than a
   // phone's side column, and pushed the lives and the marker over the field)
-  .lives {
+  // (.lives twice, as .piles: the half's own rule loads after this file)
+  .lives.lives {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) var(--hand-peek);
   }
 
-  .lives eras-player-plate {
+  .lives.lives eras-player-plate {
     align-self: end;
   }
 
-  :host(.opponent) .lives {
+  :host(.opponent) .lives.lives {
     grid-template-rows: var(--hand-peek) minmax(0, 1fr) auto;
   }
 

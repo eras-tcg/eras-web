@@ -7,21 +7,18 @@
             <!-- The card with its Materiales peeking out behind it, and its Recursos under it, as on the table -->
             <div class="art" [style.--materials]="s.materials.length">
               @for (m of s.materials; track m.instanceId; let i = $index) {
-                <div class="material" [style.--i]="i">
+                <!-- Held pressed: the card in detail -->
+                <div class="material" [style.--i]="i" [erasHoldPeek]="!m.faceDown || game.seeAll()" (peek)="openDetail(m)">
                   <eras-game-card [imageUrl]="m.imageUrl" [foil]="m.finish ?? null" [name]="m.cardName ?? null" [hidden]="m.faceDown && !game.seeAll()" [peeked]="m.faceDown && game.seeAll()" />
-                  @if (!m.faceDown || game.seeAll()) {
-                    <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (m.cardName ?? 'el material')" (click)="openDetail(m)"></button>
-                  }
                 </div>
               }
-              <div class="main-card">
+              <div class="main-card" erasHoldPeek (peek)="openDetail(s)">
                 <eras-game-card class="main" [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" [materialsCount]="s.materials.length" />
-                <button type="button" erasIconButton icon="eye" size="md" class="peek-btn" [attr.aria-label]="'Ver ' + (s.cardName ?? 'la carta')" (click)="openDetail(s)"></button>
               </div>
             </div>
             <!-- Its Recursos under it, as on the table: only their name and the effect they pass on (just the name if none) -->
             @for (r of resourceViews(); track r.id) {
-              <div class="resource-row">
+              <div class="resource-row" erasHoldPeek (peek)="openDetail(r.slot)">
                 <div class="resource" [class.name-only]="r.lines.length === 0" role="img" [attr.aria-label]="'Recurso: ' + r.name">
                   @if (r.imageUrl) {
                     <img [src]="r.imageUrl" alt="" />
@@ -29,7 +26,6 @@
                     <span>{{ r.name }}</span>
                   }
                 </div>
-                <button type="button" erasIconButton icon="eye" size="sm" [attr.aria-label]="'Ver ' + r.name" (click)="openDetail(r.slot)"></button>
               </div>
             }
           </div>

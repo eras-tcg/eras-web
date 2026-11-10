@@ -18,6 +18,7 @@
             [attr.aria-pressed]="chosen().has(effectKey(e))"
             (click)="toggle(effectKey(e))"
           >
+            <eras-card-peek [card]="cardOf(e.sourceId)" />
             <!-- Inherited: the Recurso that gives it, small at the corner -->
             <eras-card-with-source [imageUrl]="cardOf(e.sourceId)?.imageUrl ?? null" [name]="e.sourceName" [sourceName]="e.inheritedFromName" [sourceImage]="e.inheritedFromImage" />
             <span class="offered-body">
@@ -67,7 +68,7 @@
           [class.locked]="!selectable(c)"
           [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM' || orderOnly"
           [attr.aria-pressed]="chosen().has(c.instanceId)"
-          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : ', supera la suma de niveles') : ', no cumple el efecto')"
+          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : (prompt.distinctLevels ? ', ya elegiste una de ese nivel' : ', supera la suma de niveles')) : ', no cumple el efecto')"
           (click)="toggle(c.instanceId)"
         >
           @if (hostOf(c); as host) {
@@ -92,9 +93,8 @@
             <span class="tag">{{ effectLabel }}</span>
           }
         </button>
-        @if (!c.faceDown || game.seeAll()) {
-          <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>
-        }
+        <!-- Held pressed: the card in detail -->
+        <eras-card-peek [card]="c" />
       </div>
     </ng-template>
     @if (prompt.reorderRest || !groups().length) {

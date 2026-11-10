@@ -141,7 +141,10 @@ export class PlayerHalfComponent {
       const row = this.handCards()?.nativeElement;
       if (row) resize.observe(row);
     });
-    inject(DestroyRef).onDestroy(() => resize.disconnect());
+    inject(DestroyRef).onDestroy(() => {
+      resize.disconnect();
+      this.listenSwipeEnd(false);
+    });
     // A swipe that turned the hand is not a tap: the card under the finger is not raised (captured before the card)
     afterRenderEffect(() => {
       const row = this.handCards()?.nativeElement;
@@ -189,12 +192,36 @@ export class PlayerHalfComponent {
   /** The last move turned the hand (its click is swallowed). */
   private swiped = false;
 
+  /**
+   * Ends the swipe wherever the pointer is let go: outside the hand, over a sheet that opened meanwhile, or when the
+   * window loses focus (the hand alone never hears that release, and the swipe went on at the next hover).
+   */
+  private readonly swipeRelease = (): void => {
+    this.swipeEnd();
+    // The click that follows a release is the swipe's, not a tap (after it, a real tap must not be swallowed)
+    setTimeout(() => (this.swiped = false));
+  };
+  private readonly swipeHidden = (): void => {
+    if (document.visibilityState === 'hidden') this.swipeRelease();
+  };
+  private swipeListening = false;
+
+  private listenSwipeEnd(on: boolean): void {
+    if (on === this.swipeListening) return;
+    this.swipeListening = on;
+    const method = on ? 'addEventListener' : 'removeEventListener';
+    for (const type of ['pointerup', 'pointercancel', 'dragend']) window[method](type, this.swipeRelease, true);
+    window[method]('blur', this.swipeRelease);
+    document[method]('visibilitychange', this.swipeHidden);
+  }
+
   /** A finger, a pen or the mouse's main button on the hand: a sideways swipe may turn it. */
   protected swipeStart(e: PointerEvent): void {
     if ((e.pointerType === 'mouse' && e.button !== 0) || !this.handTurnMax()) return;
     this.swipeX = this.swipeStartX = this.swipeLastX = e.clientX;
     this.swipeY = this.swipeStartY = this.swipeLastY = e.clientY;
     this.swiped = false;
+    this.listenSwipeEnd(true);
   }
 
   /**
@@ -203,6 +230,11 @@ export class PlayerHalfComponent {
    */
   protected swipeMove(e: PointerEvent): void {
     if (this.swipeX === null) return;
+    // The mouse came back without its button pressed: that swipe ended somewhere else
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      this.swipeRelease();
+      return;
+    }
     this.swipeLastX = e.clientX;
     this.swipeLastY = e.clientY;
     const dx = e.clientX - this.swipeX;
@@ -215,6 +247,7 @@ export class PlayerHalfComponent {
 
   protected swipeEnd(): void {
     this.swipeX = null;
+    this.listenSwipeEnd(false);
   }
 
   /** An animation is playing: the hand's arrows (and the lines' ones) keep still, so a flying card lands where aimed. */
@@ -273,6 +306,16 @@ export class PlayerHalfComponent {
   protected readonly tributeActions = computed(() => {
     const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c));
     return { play: actions.includes('ritual'), activate: actions.includes('activate') };
+  });
+  /**
+   * The piles holding cards the open choice asks for ("toma 1 [retador] de tus tributos"): they glow, so the player
+   * knows to open them (the cards inside glow in the pile's viewer).
+   */
+  protected readonly promptPiles = computed(() => {
+    const valid = new Set(this.game.myPrompt()?.validIds ?? []);
+    const has = (cards: readonly { instanceId: string }[]) => valid.size > 0 && cards.some((c) => valid.has(c.instanceId));
+    const p = this.player();
+    return { lifeStack: has(p.lifeStack), tributeZone: has(p.tributeZone), discardPile: has(p.discardPile) };
   });
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
   protected readonly rows = computed(() => fieldRows(this.player().field));

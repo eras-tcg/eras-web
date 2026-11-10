@@ -557,7 +557,9 @@ eras-game-zone.can-play {
   box-shadow: 0 0 0 2px var(--color-sim-ally), 0 0 14px 3px color-mix(in srgb, var(--color-sim-ally) 70%, transparent);
 }
 
-eras-game-zone.can-activate {
+eras-game-zone.can-activate,
+// A pile holding cards the open choice asks for
+eras-game-zone.prompt-pick {
   box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 14px 3px color-mix(in srgb, var(--color-sim-gold) 70%, transparent);
 }
 

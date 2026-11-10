@@ -11,8 +11,7 @@ import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
-import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardInfoData, CardInfoDialogComponent } from './card-info-dialog.component';
+import { CardPeekComponent } from '../card-peek.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconName } from '@ui/primitives/icon/icon.component';
@@ -31,14 +30,13 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EffectPromptDialogComponent {
   protected readonly game = inject(GameStore);
-  private readonly modal = inject(ModalService);
   protected readonly prompt = inject<EffectPromptData>(DIALOG_DATA).prompt;
 
   protected readonly sheet = inject(SheetState);
@@ -168,9 +166,18 @@ export class EffectPromptDialogComponent {
     this.prompt.cards.filter((c) => this.chosen().has(c.instanceId)).reduce((sum, c) => sum + (c.level ?? 0), 0),
   );
 
-  /** It meets the effect and, with a level-sum limit, still fits with those already chosen. */
+  /** The levels already taken by the cards chosen ("con distinto nivel"). */
+  private readonly takenLevels = computed(
+    () => new Set(this.prompt.cards.filter((c) => this.chosen().has(c.instanceId)).map((c) => c.level ?? null)),
+  );
+
+  /**
+   * It meets the effect and still fits with those already chosen: with a level-sum limit, within it; with "distinto
+   * nivel", of a level not taken yet.
+   */
   protected selectable(c: CardSlot): boolean {
     if (!this.valid.has(c.instanceId)) return false;
+    if (this.prompt.distinctLevels && !this.chosen().has(c.instanceId) && this.takenLevels().has(c.level ?? null)) return false;
     const max = this.levelSum;
     return max === null || this.chosen().has(c.instanceId) || this.chosenLevels() + (c.level ?? 0) <= max;
   }
@@ -178,19 +185,6 @@ export class EffectPromptDialogComponent {
   private selectableId(id: string): boolean {
     const card = this.cardOf(id);
     return !!card && this.selectable(card);
-  }
-
-  /** The card in detail as on the board (with its Materiales and Recursos), wherever it is now. */
-  protected detail(c: CardSlot): void {
-    for (const opponent of [false, true]) {
-      const player = opponent ? this.game.opponentState() : this.game.myState();
-      const zone = ZONES.find((z) => player?.[z].some((x) => x.instanceId === c.instanceId));
-      if (zone) {
-        const data: CardInfoData = { instanceId: c.instanceId, zone, opponent, readonly: true };
-        this.modal.open(CardInfoDialogComponent, { data });
-        return;
-      }
-    }
   }
 
   /** What is answered to chain an offered effect. */

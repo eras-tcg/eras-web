@@ -7,8 +7,8 @@ import { LAYER, TIMING } from './timing';
 
 /**
  * The life lost by direct damage: before its update is shown it turns face up where it lies on its pile; when the
- * update asks its owner to Reforzar with it, it waits face up on top of the lives (not in the hand) until the answer,
- * then goes to the bottom of the lives or to the hand.
+ * update asks its owner to Reforzar with it (or to play it), it waits face up on top of the lives (not in the hand) until
+ * the answer, then goes to the bottom of the lives, to the table or to the hand.
  */
 export class LifeFlights {
   /** Lives turned face up on their pile before their update is shown, and the state they were shown on. */
@@ -64,7 +64,8 @@ export class LifeFlights {
   park(state: GameState): void {
     this.shown = this.shown.filter((l) => (l.on === state ? true : (l.element.remove(), false)));
     const prompt = state.prompt;
-    const id = prompt?.purpose === 'REINFORCE' ? prompt.subjectId : null;
+    // Reforzar, or play a revealed utility or structure: for its owner and for the rival alike (the server shows it to both)
+    const id = prompt?.purpose === 'REINFORCE' || prompt?.purpose === 'LIFE_PLAY' ? prompt.subjectId : null;
     const seen = id ? this.lifeSeen.get(id) : undefined;
     if (id && seen && !this.parked.has(id)) {
       const { element, inner } = this.flyer.still(seen);

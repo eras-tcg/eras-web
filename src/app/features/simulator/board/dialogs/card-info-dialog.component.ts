@@ -9,7 +9,7 @@ import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.compon
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
+import { HoldPeekDirective } from '../hold-peek';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { displayStrength } from '@data/simulator/game-rules';
@@ -34,7 +34,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent],
+  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, HoldPeekDirective],
   templateUrl: './card-info-dialog.component.html',
   styleUrl: './card-info-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

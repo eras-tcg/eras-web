@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
+import { findSlot } from '@data/simulator/game-rules';
 import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-source.component';
+import { CardPeekComponent } from './card-peek.component';
 
 /**
  * The chain being built or resolved: the highest link first, since it resolves first (rule 11.3.0.6).
@@ -9,7 +11,7 @@ import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-s
  */
 @Component({
   selector: 'eras-chain-list',
-  imports: [CardWithSourceComponent],
+  imports: [CardWithSourceComponent, CardPeekComponent],
   template: `
     @if (links().length) {
       <section class="chain" aria-label="Cadena">
@@ -19,6 +21,8 @@ import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-s
             <li [class.resolving]="l.resolving" [class.mine]="l.mine">
               <span class="link">{{ l.link }}</span>
               <!-- Its card; an inherited effect, with the Recurso that gives it small at the corner (as in the chaining choice) -->
+              <!-- Held pressed: its card in detail -->
+              <eras-card-peek [card]="l.slot" />
               <eras-card-with-source class="thumb" [imageUrl]="l.imageUrl" [name]="l.sourceName" [sourceName]="l.inheritedFromName" [sourceImage]="l.sourceImage" />
               <span class="name">{{ l.sourceName }} · {{ l.label }}@if (l.inheritedFromName) {<small class="inherited">Heredado de {{ l.inheritedFromName }}</small>}<small class="text">{{ l.text }}</small></span>
               <span class="state">{{ l.resolving ? 'resolviendo' : l.mine ? 'tuyo' : 'del rival' }}</span>
@@ -75,6 +79,7 @@ export class ChainListComponent {
       resolving: !!e.resolutionId,
       imageUrl: this.imageOf(e.sourceInstanceId, e.sourceName),
       sourceImage: e.inheritedFromImage ?? (e.inheritedFromName ? this.imageOf(null, e.inheritedFromName) : null),
+      slot: findSlot(this.game.state(), e.sourceInstanceId) ?? null,
     }));
   });
 

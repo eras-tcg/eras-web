@@ -3,10 +3,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CardSlot } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
-import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
-import { CardInfoData, CardInfoDialogComponent } from './card-info-dialog.component';
+import { CardPeekComponent } from '../card-peek.component';
 
 export interface AttackTargetData {
   attacker: CardSlot;
@@ -18,7 +16,7 @@ export interface AttackTargetData {
 /** The rival, or one of their creatures it can attack. Closes with the creature id, null for the rival, undefined if cancelled. */
 @Component({
   selector: 'eras-attack-target-dialog',
-  imports: [SheetComponent, GameCardComponent, IconComponent, IconButtonComponent],
+  imports: [SheetComponent, GameCardComponent, IconComponent, CardPeekComponent],
   template: `
     <eras-sheet size="lg" [title]="'Atacar con ' + (data.attacker.cardName ?? 'tu criatura')" subtitle="Se agota al declarar el ataque. Elige el objetivo." (closed)="ref.close()">
       <div class="targets" role="group" aria-label="Objetivos del ataque">
@@ -34,7 +32,8 @@ export interface AttackTargetData {
               <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" [tapped]="!!c.tapped" />
               <small>{{ c.tapped ? 'Agotada' : 'Activa' }}</small>
             </button>
-            <button type="button" erasIconButton icon="eye" size="sm" class="peek-btn" [attr.aria-label]="'Ver ' + (c.cardName ?? 'la carta')" (click)="detail(c)"></button>
+            <!-- Held pressed: the creature in detail -->
+            <eras-card-peek [card]="c" />
           </div>
         }
       </div>
@@ -62,8 +61,6 @@ export interface AttackTargetData {
     .target:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .rival eras-icon { inline-size: 2.5rem; block-size: 2.5rem; }
     .slot { position: relative; display: flex; }
-    .peek-btn { position: absolute; inset-block-start: 0.4rem; inset-inline-end: 0.4rem; z-index: 2; opacity: 0.85; }
-    .peek-btn:hover, .peek-btn:focus-visible { opacity: 1; }
     small { color: var(--color-text-muted); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,11 +68,4 @@ export interface AttackTargetData {
 export class AttackTargetDialogComponent {
   protected readonly data = inject<AttackTargetData>(DIALOG_DATA);
   protected readonly ref = inject<DialogRef<string | null>>(DialogRef);
-  private readonly modal = inject(ModalService);
-
-  /** The creature in detail as on the board, with its Materiales and Recursos. */
-  protected detail(c: CardSlot): void {
-    const data: CardInfoData = { instanceId: c.instanceId, zone: 'field', opponent: true, readonly: true };
-    this.modal.open(CardInfoDialogComponent, { data });
-  }
 }

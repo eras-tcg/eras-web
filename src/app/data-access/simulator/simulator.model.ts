@@ -392,6 +392,8 @@ export interface EffectPrompt {
   effectText?: string | null;
   /** The levels of the cards chosen may add up to this at most. */
   maxLevelSum?: number | null;
+  /** The cards chosen must all be of different levels ("con distinto nivel"): a level already chosen is locked. */
+  distinctLevels?: boolean;
   /** Exactly `max` cards or none ("puedes enviar 5 de tus tributos…"). */
   exactOrNone?: boolean;
   /**

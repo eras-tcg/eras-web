@@ -71,13 +71,19 @@ export class EffectPromptDialogComponent {
   protected readonly orderOnly = !!this.prompt.topOrBottom;
   protected readonly shown = computed(() => (this.showAll() || this.showsEverything ? this.order() : this.order().filter((c) => this.valid.has(c.instanceId))));
   protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
-  /** Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. */
+  /**
+   * Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. Instead of the damage ("tributa
+   * esta carta más 2 [retador]"), one of them is chosen first, and choosing none takes the damage.
+   */
   private readonly required = new Set(this.prompt.requiredIds ?? []);
-  protected readonly chosen = signal<Set<string>>(new Set(this.required));
+  private readonly oneRequiredFirst = this.prompt.purpose === 'DAMAGE_TRIBUTE' && this.required.size > 0;
+  protected readonly chosen = signal<Set<string>>(new Set(this.oneRequiredFirst ? [] : this.required));
+  private readonly requiredChosen = computed(() => [...this.required].some((id) => this.chosen().has(id)));
   protected readonly sending = signal(false);
   protected readonly canConfirm = computed(() => {
     const n = this.chosen().size;
     if (this.prompt.exactOrNone && n > 0 && n !== this.prompt.max) return false;
+    if (this.oneRequiredFirst && n > 0 && !this.requiredChosen()) return false;
     return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
   });
 
@@ -177,6 +183,8 @@ export class EffectPromptDialogComponent {
    */
   protected selectable(c: CardSlot): boolean {
     if (!this.valid.has(c.instanceId)) return false;
+    // Its required card first (Estoque): the others wait for it
+    if (this.oneRequiredFirst && !this.chosen().has(c.instanceId) && !this.required.has(c.instanceId) && !this.requiredChosen()) return false;
     if (this.prompt.distinctLevels && !this.chosen().has(c.instanceId) && this.takenLevels().has(c.level ?? null)) return false;
     const max = this.levelSum;
     return max === null || this.chosen().has(c.instanceId) || this.chosenLevels() + (c.level ?? 0) <= max;
@@ -213,7 +221,7 @@ export class EffectPromptDialogComponent {
 
   protected toggle(id: string): void {
     if (this.prompt.effects?.length ? !this.prompt.effects.some((e) => this.effectKey(e) === id) : !this.selectableId(id)) return;
-    if (this.required.has(id)) return;
+    if (this.required.has(id) && !this.oneRequiredFirst) return;
     const next = new Set(this.chosen());
     if (next.has(id)) next.delete(id);
     else if (next.size < this.prompt.max) next.add(id);

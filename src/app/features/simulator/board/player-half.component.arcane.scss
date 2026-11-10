@@ -115,6 +115,25 @@
   }
 }
 
+// A pile one of whose cards can do something now (blue: summon, gold: effect), or holding cards the open choice asks
+// for: it glows as on the other tables, over the stone (in every visibility; the class twice, as the rules above)
+:host-context(.arcane) {
+  eras-game-zone.can-play.can-play {
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      0 0 0 2px var(--color-sim-ally),
+      0 0 14px 3px color-mix(in srgb, var(--color-sim-ally) 70%, transparent);
+  }
+
+  eras-game-zone.can-activate.can-activate,
+  eras-game-zone.prompt-pick.prompt-pick {
+    box-shadow:
+      inset 0 0 0 1px var(--arcane-gold-soft),
+      0 0 0 2px var(--color-sim-gold),
+      0 0 14px 3px color-mix(in srgb, var(--color-sim-gold) 70%, transparent);
+  }
+}
+
 // The switches under the deck (optional effects, the table's information): round stones sunk like the zones, edged
 // in gold, each centered in its half of the place
 :host-context(.arcane) {

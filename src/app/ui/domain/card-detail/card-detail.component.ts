@@ -38,7 +38,7 @@ export interface CardTextGroup {
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.stacked]': 'stacked()' },
+  host: { '[class.stacked]': 'stacked()', '[class.fill]': 'fill()' },
 })
 export class CardDetailComponent {
   /**
@@ -46,6 +46,12 @@ export class CardDetailComponent {
    * and the effect text.
    */
   readonly stacked = input(false, { transform: booleanAttribute });
+  /**
+   * Takes its container's whole size, which stays the same from card to card (a dialog of a fixed size): the image and
+   * [detail-under-image] fill the height and never move, the rest of the width is for the text, the only part that
+   * scrolls. The container says how tall [detail-under-image] is with `--detail-under-size`.
+   */
+  readonly fill = input(false, { transform: booleanAttribute });
   readonly name = input.required<string>();
   readonly edition = input.required<string>();
   readonly number = input<number | null>(null);

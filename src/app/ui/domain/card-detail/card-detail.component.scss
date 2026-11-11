@@ -275,3 +275,80 @@ dd {
     font-size: var(--font-size-lg);
   }
 }
+
+// Fill: the whole container, its size fixed from card to card. The image, as tall as the height left after the
+// controls under it, and those controls stay put; the text takes the rest of the width and scrolls alone
+:host(.fill) {
+  block-size: 100%;
+}
+
+:host(.fill) .detail {
+  --under-size: var(--detail-under-size, 0px);
+
+  container-type: size;
+  block-size: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+}
+
+:host(.fill) .info {
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  min-block-size: 0;
+  padding-inline-end: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:host(.fill) .image {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  inline-size: min(calc((100cqb - var(--under-size) - var(--space-2)) * 63 / 88), 50cqi);
+  margin: 0;
+  // Centered over the controls under it when they are wider (a short screen)
+  justify-self: center;
+}
+
+:host(.fill) .under {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  justify-self: stretch;
+}
+
+// A phone held upright: the image and its controls on top, centered, the text under them scrolling alone
+@media (orientation: portrait) and (max-width: 44rem) {
+  :host(.fill) .detail {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  :host(.fill) .image {
+    grid-column: 1;
+    grid-row: 1;
+    inline-size: min(16rem, 100cqi, calc((55cqb - var(--under-size)) * 63 / 88));
+    justify-self: center;
+  }
+
+  :host(.fill) .under {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+    inline-size: min(100%, 22rem);
+  }
+
+  :host(.fill) .info {
+    grid-row: 3;
+    padding-inline-end: 0;
+  }
+}
+
+// Phones in landscape: tighter, the name smaller
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host(.fill) .detail {
+    gap: var(--space-2) var(--space-4);
+  }
+}

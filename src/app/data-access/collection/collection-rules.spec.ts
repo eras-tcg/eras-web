@@ -1,6 +1,6 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { altCopies, bestAlt, copyArt, copyFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, ownedCount } from './collection-rules';
+import { altCopies, bestAlt, copyArt, copyFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, nearestFinish, ownedCount } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
@@ -103,5 +103,13 @@ describe('collection rules', () => {
     expect(coverFinish({ cards: ['a'], deckImage: 'img/a' }, catalog, collection)).toBe('foil');
     expect(coverFinish({ cards: ['a'], deckImage: 'img/b' }, catalog, collection)).toBeNull();
     expect(coverFinish({ cards: ['a'], deckImage: null }, catalog, collection)).toBeNull();
+  });
+
+  it('shows the preferred finish, or the closest one the card comes in (a tie goes to the plainer one)', () => {
+    expect(nearestFinish('foil', ['plain', 'foil', 'prism'])).toBe('foil');
+    expect(nearestFinish('prism', ['plain', 'foil'])).toBe('foil');
+    expect(nearestFinish('plain', ['prism'])).toBe('prism');
+    expect(nearestFinish('foil', ['plain', 'prism'])).toBe('plain');
+    expect(nearestFinish('foil', [])).toBeNull();
   });
 });

@@ -7,7 +7,12 @@ import { CardsStore } from '@data/cards/cards.store';
 import { coverFinish, ownedCount, shineOf } from '@data/collection/collection-rules';
 import { CollectionStore } from '@data/collection/collection.store';
 import { Deck } from '@data/decks/deck.model';
+import { DeckBox } from '@data/decks/deckbox.model';
+import { decksIn, deckBoxColor, looseDecks } from '@data/decks/deckbox-rules';
+import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { DecksStore } from '@data/decks/decks.store';
+import { loadStarterDecks } from '@data/simulator/starter-decks';
+import { DeckBoxTileComponent } from '@features/decks/deckbox-tile.component';
 import { GameStore } from '@data/simulator/game.store';
 import { BotLevel, CardSlot, PlayerState } from '@data/simulator/simulator.model';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
@@ -38,6 +43,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     AlertComponent,
     ToggleGroupComponent,
     DeckCoverComponent,
+    DeckBoxTileComponent,
     GameCardComponent,
     EmptyStateComponent,
     AvatarComponent,
@@ -54,6 +60,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 export class PreRoomComponent {
   protected readonly game = inject(GameStore);
   private readonly decks = inject(DecksStore);
+  private readonly deckBoxes = inject(DeckBoxesStore);
   private readonly cards = inject(CardsStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -79,18 +86,59 @@ export class PreRoomComponent {
     return this.game.editorRoom() && seats[1]?.userId === host ? [seats[1], seats[0]] : seats;
   });
 
+  /** The names of the starter decks (ST1–ST4): online they are public decks, the only ones of others offered. */
+  private readonly starterNames = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * The decks to choose from: mine, then the starter decks (no one else's public decks). Offline, the decks the engine
+   * was given (the starter decks, and mine as they were loaded).
+   */
   protected readonly allDecks = computed(() => {
-    // Offline: the decks the engine was given (the starter decks, and mine as they were loaded)
     if (this.game.local()) return this.game.localDecks();
     const mine = this.decks.myDecks();
     const ids = new Set(mine.map((d) => d.id));
-    return [...mine, ...this.decks.publicDecks().filter((d) => !ids.has(d.id))];
+    const names = this.starterNames();
+    const seen = new Set<string>();
+    const starters = this.decks
+      .publicDecks()
+      .filter((d) => !ids.has(d.id) && names.has(d.deckName) && !seen.has(d.deckName) && !!seen.add(d.deckName))
+      .sort((a, b) => a.deckName.localeCompare(b.deckName));
+    return [...mine, ...starters];
   });
   protected readonly myIds = computed(() => new Set(this.decks.myDecks().map((d) => d.id)));
+  /** The open deckbox (null: the whole shelf, or a deckbox that no longer exists). */
+  protected readonly openBoxId = signal<string | null>(null);
+  protected readonly openBox = computed(() => this.deckBoxes.boxes().find((b) => b.id === this.openBoxId()) ?? null);
+  protected readonly boxColor = deckBoxColor;
+  /**
+   * The decks in sight, as in "Mazos": the open deckbox's; while searching, every match; otherwise the loose ones
+   * (mine in no deckbox, then the starter decks).
+   */
   protected readonly matches = computed(() => {
     const q = this.search().trim().toLowerCase();
-    return q ? this.allDecks().filter((d) => d.deckName.toLowerCase().includes(q)) : this.allDecks();
+    if (q) return this.allDecks().filter((d) => d.deckName.toLowerCase().includes(q));
+    const open = this.openBox();
+    return open ? decksIn(open, this.allDecks()) : looseDecks(this.allDecks(), this.deckBoxes.boxes());
   });
+  /** The player's deckboxes before the loose decks (not while searching nor inside one), with the chosen deck's lit. */
+  protected readonly shelf = computed(() => {
+    if (this.search().trim() || this.openBox()) return [];
+    const all = this.allDecks();
+    const picked = this.pickedDeckId();
+    return this.deckBoxes.boxes().map((box) => {
+      const inside = decksIn(box, all);
+      return {
+        box,
+        count: inside.length,
+        covers: inside.slice(0, 4).map((d) => d.deckImage ?? null),
+        chosen: !!picked && inside.some((d) => d.id === picked),
+      };
+    });
+  });
+
+  protected openShelfBox(box: DeckBox): void {
+    this.openBoxId.set(box.id);
+  }
 
   /**
    * Decks that cannot be chosen, and why (the server refuses them too): with cards the simulator does not run yet, or
@@ -228,7 +276,14 @@ export class PreRoomComponent {
     if (this.game.local()) return;
     void this.decks.loadPublic();
     const id = this.auth.user()?.id;
-    if (id) void this.decks.loadMine(id);
+    if (id) {
+      void this.decks.loadMine(id);
+      void this.deckBoxes.load(id);
+    }
+    loadStarterDecks()
+      .then((file) => this.starterNames.set(new Set(Object.values(file.decks).map((d) => d.deckName))))
+      // Without the file: the names they have always had
+      .catch(() => this.starterNames.set(new Set(['ST1', 'ST2', 'ST3', 'ST4'])));
   }
 
   /** The starter chosen by a player, from their deck list (of the rival's, the server sends only that card). */

@@ -4,18 +4,20 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 
 /** What was chosen: a list file to import, exporting the list, or printing proxies. */
-export type DeckOption = { action: 'import'; file: File } | { action: 'export' } | { action: 'proxies' } | { action: 'craft-missing' };
+export type DeckOption = { action: 'import'; file: File } | { action: 'export' } | { action: 'proxies' } | { action: 'craft-missing' } | { action: 'deckbox' };
 
 export interface DeckOptionsData {
   /** The deck has no cards: there is nothing to export or print. */
   empty: boolean;
   /** Copies the deck needs that the player lacks (0 hides crafting them; null when signed out). */
   missing: number | null;
+  /** The player's own saved deck (manage_decks): offer choosing its deckbox. */
+  deckbox?: boolean;
 }
 
 /**
  * The deck's other options, behind the builder's options icon: craft the cards the player lacks, import a list,
- * export it, print proxies.
+ * export it, print proxies, and choose the deckbox of a saved deck.
  */
 @Component({
   selector: 'eras-deck-options-dialog',
@@ -32,6 +34,9 @@ export interface DeckOptionsData {
         <input #file type="file" accept=".txt,text/plain" hidden (change)="pick($event)" />
         <button erasButton variant="secondary" type="button" [disabled]="data.empty" (click)="ref.close({ action: 'export' })">Exportar lista</button>
         <button erasButton variant="secondary" type="button" [disabled]="data.empty" (click)="ref.close({ action: 'proxies' })">Proxies</button>
+        @if (data.deckbox) {
+          <button erasButton variant="secondary" type="button" (click)="ref.close({ action: 'deckbox' })">Guardar en deckbox</button>
+        }
       </div>
     </eras-modal>
   `,

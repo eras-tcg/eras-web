@@ -1,6 +1,9 @@
 <eras-page title="Mazos" width="wide" fill>
-  @if (store.error(); as error) {
-    <eras-alert tone="danger">{{ error }}</eras-alert>
+  @if (store.error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
+  }
+  @if (boxes.error() ?? error(); as message) {
+    <eras-alert tone="danger">{{ message }}</eras-alert>
   }
 
   <eras-deck-browser
@@ -10,25 +13,93 @@
     [(direction)]="direction"
     [sortOptions]="sortOptions"
     [editions]="editions()"
-    [shown]="decks().length"
+    [shown]="shown()"
     [total]="store.myDecks().length"
     [loading]="store.loading() && store.myDecks().length === 0"
     [note]="note()"
   >
-    <a *erasCan="'manage_decks'" deck-lead class="new-deck" routerLink="/deck-builder">
-      <span class="new-ring" aria-hidden="true"><eras-icon name="plus" /></span>
-      <span class="new-label">Nuevo mazo</span>
-    </a>
+    <!-- Inside a deckbox: back to the shelf (a deck dropped there is taken out), its name and its settings -->
+    @if (openBox(); as open) {
+      <nav deck-boxes class="crumbs" aria-label="Ubicación">
+        <button
+          erasButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="shelf"
+          [class.drop]="dropOn() === 'out'"
+          (click)="closeBox()"
+          (dragover)="overShelf($event)"
+          (dragleave)="leave('out')"
+          (drop)="dropOnShelf($event)"
+        >
+          <eras-icon name="chevron-left" /> Mazos
+        </button>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="here" aria-current="page"><span class="dot" [style.background]="openColor()" aria-hidden="true"></span>{{ open.name }}</span>
+        @if (canManage()) {
+          <button erasButton variant="secondary" size="sm" type="button" class="edit" (click)="configureBox(open)"><eras-icon name="edit" /> Editar deckbox</button>
+        }
+        @if (dragged()?.kind === 'deck') {
+          <span class="hint">Suelta el mazo en «Mazos» para sacarlo de la deckbox</span>
+        }
+      </nav>
+    }
+
+    @if (canManage()) {
+      @if (openBox(); as open) {
+        <a deck-lead class="new-deck" routerLink="/deck-builder" [queryParams]="{ box: open.id }">
+          <span class="new-ring" aria-hidden="true"><eras-icon name="plus" /></span>
+          <span class="new-label">Nuevo mazo</span>
+        </a>
+      } @else {
+        <!-- One tile, two halves: a new deck or a new deckbox -->
+        <div deck-lead class="new-split">
+          <a class="half" routerLink="/deck-builder">
+            <span class="new-ring" aria-hidden="true"><eras-icon name="plus" /></span>
+            <span class="new-label">Nuevo mazo</span>
+          </a>
+          <button type="button" class="half" (click)="configureBox()">
+            <span class="new-ring" aria-hidden="true"><eras-icon name="box" /></span>
+            <span class="new-label">Nueva deckbox</span>
+          </button>
+        </div>
+      }
+    }
+
+    @for (item of shelf(); track item.box.id) {
+      <div
+        class="cell"
+        [class.dragging]="dragged()?.id === item.box.id"
+        [attr.draggable]="canManage()"
+        (dragstart)="startDrag($event, { kind: 'box', id: item.box.id })"
+        (dragend)="endDrag()"
+        (dragover)="overBox($event, item.box)"
+        (dragleave)="leave(item.box.id)"
+        (drop)="dropOnBox($event, item.box)"
+      >
+        <eras-deckbox-tile [box]="item.box" [count]="item.count" [covers]="item.covers" [dropTarget]="dropOn() === item.box.id" (opened)="openShelfBox(item.box)" />
+      </div>
+    }
+
     @for (deck of decks(); track deck.id) {
-      <eras-deck-cover
-        [name]="deck.deckName"
-        [imageUrl]="deck.deckImage ?? null"
-        [foil]="coverShine(deck)"
-        [cardCount]="deck.cards.length"
-        [isPrivate]="!!deck.privateDeck"
-        [isPublic]="!deck.privateDeck"
-        (selected)="view(deck)"
-      />
+      <div
+        class="cell"
+        [class.dragging]="dragged()?.id === deck.id"
+        [attr.draggable]="canManage()"
+        (dragstart)="startDrag($event, { kind: 'deck', id: deck.id })"
+        (dragend)="endDrag()"
+      >
+        <eras-deck-cover
+          [name]="deck.deckName"
+          [imageUrl]="deck.deckImage ?? null"
+          [foil]="coverShine(deck)"
+          [cardCount]="deck.cards.length"
+          [isPrivate]="!!deck.privateDeck"
+          [isPublic]="!deck.privateDeck"
+          (selected)="view(deck)"
+        />
+      </div>
     }
   </eras-deck-browser>
 </eras-page>

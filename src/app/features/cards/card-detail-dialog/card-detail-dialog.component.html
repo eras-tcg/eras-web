@@ -31,6 +31,8 @@
     zoomable
     zoomLabel="Ver el arte en pantalla completa"
     (imageOpened)="openArt()"
+    fill
+    [class.with-versions]="showVersions"
   >
     <ng-container ngProjectAs="[detail-actions]">
       <ng-container *erasEdit="'manage_cards'">
@@ -97,13 +99,19 @@
       </ng-container>
     </ng-container>
 
-    <!-- The plain catalog: every version of the card, its finishes and its alternative arts -->
+    <!--
+      The plain catalog: every version of the card. Its finishes right under the image, always the same height so the
+      image never moves; its alternative arts (few cards have them) at the top of the text
+    -->
     @if (showVersions) {
       <div ngProjectAs="[detail-under-image]" class="versions">
-        <eras-toggle-group label="Acabado" [options]="finishOptions" [selected]="[pickedFinish()]" (toggled)="pickedFinish.set($any($event))" />
-        @if (arts().length) {
-          <eras-toggle-group label="Arte" [options]="artOptions()" [selected]="[pickedArt() ?? '']" (toggled)="pickArt($event)" />
-        }
+        <eras-toggle-group label="Acabado" [options]="finishOptions()" [selected]="[pickedFinish()]" (toggled)="preferredFinish.set($any($event))" />
+      </div>
+    }
+    <!-- (Its own block: one with two roots would not reach their slots) -->
+    @if (showVersions && arts().length) {
+      <div ngProjectAs="[detail-top]" class="versions">
+        <eras-toggle-group label="Arte" [options]="artOptions()" [selected]="[pickedArt() ?? '']" (toggled)="pickArt($event)" />
       </div>
     }
   </eras-card-detail>

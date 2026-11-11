@@ -9,6 +9,8 @@ import { CardsStore } from '@data/cards/cards.store';
 import { entriesFromIds, groupByType, idsFromEntries, totalCards } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
 import { DecksStore } from '@data/decks/decks.store';
+import { boxOf, deckBoxColor } from '@data/decks/deckbox-rules';
+import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -21,6 +23,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { chooseDeckBox } from './deckbox-picker-dialog.component';
 import { FROM_PUBLIC_DECKS, deckBuilderQuery } from './deck-links';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-dialog/proxy-print-dialog.component';
 
@@ -30,7 +33,8 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
 
 /**
  * Read-only view of a deck: cards grouped by type, card detail, proxies, edit (owner) and copy (signed in). One
- * screen high: the name, the buttons and the quick buttons stay; only the cards scroll.
+ * screen high: the name, the buttons and the quick buttons stay; only the cards scroll. The owner sees the deckbox
+ * the deck is in under the buttons (it opens it) and picks it with "Deckbox" (manage_decks).
  */
 @Component({
   selector: 'eras-deck-view-page',
@@ -56,6 +60,21 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
       gap: var(--space-2);
       min-block-size: 2.75rem;
     }
+    .in-box {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-self: flex-start;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-pill);
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+      text-decoration: none;
+    }
+    .in-box:hover { color: var(--color-text); }
+    .in-box .dot { inline-size: 0.6rem; block-size: 0.6rem; border-radius: 50%; }
     .body {
       display: flex;
       flex: 1;
@@ -97,6 +116,23 @@ export class DeckViewPage {
   protected readonly copyQuery = computed(() => deckBuilderQuery(this.id(), true));
   private readonly router = inject(Router);
   protected readonly deleting = signal(false);
+  private readonly boxes = inject(DeckBoxesStore);
+  protected readonly canManageBoxes = computed(() => this.auth.can('manage_decks'));
+  /** The deckbox the (owner's) deck is in, or null when it is loose. */
+  protected readonly inBox = computed(() => (this.canEdit() ? boxOf(this.id(), this.boxes.boxes()) : null));
+  protected readonly boxColor = deckBoxColor;
+
+  /** "Deckbox" (the owner): in which of their deckboxes this deck goes. */
+  protected async pickBox(): Promise<void> {
+    const deck = this.deck();
+    if (!deck) return;
+    this.error.set(null);
+    try {
+      await chooseDeckBox(this.modal, this.boxes, { deckId: deck.id, deckName: deck.deckName });
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'No se pudo mover el mazo');
+    }
+  }
 
   /** "Borrar" (the owner): after confirming, the deck is deleted and the player goes back to their decks. */
   protected async remove(): Promise<void> {
@@ -124,6 +160,8 @@ export class DeckViewPage {
   constructor() {
     void this.cards.load();
     void this.editions.load();
+    const userId = this.auth.user()?.id;
+    if (userId) void this.boxes.load(userId);
     effect(() => {
       const id = this.id();
       untracked(() => void this.load(id));

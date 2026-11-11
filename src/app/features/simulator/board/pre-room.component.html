@@ -167,11 +167,24 @@
     <div class="picker-head">
       <h2 class="picker-title">{{ pickingBot() ? 'Mazo del bot' : game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo' }}</h2>
       <input class="search" type="search" aria-label="Buscar mazo" placeholder="Buscar mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
+      <!-- Inside a deckbox: back to every deck, and its name -->
+      @if (openBox(); as open) {
+        <nav class="crumbs" aria-label="Ubicación">
+          <button type="button" class="crumb-back" (click)="openBoxId.set(null)"><eras-icon name="chevron-left" /> Todos</button>
+          <span class="crumb-here" aria-current="page"><span class="dot" [style.background]="boxColor(open)" aria-hidden="true"></span>{{ open.name }}</span>
+        </nav>
+      }
     </div>
     @if (allDecks().length === 0) {
       <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
     } @else {
       <eras-grid minColumn="var(--deck-column, 9.5rem)" [gap]="3">
+        <!-- The player's deckboxes first (the one holding the chosen deck is lit); tapping one opens it -->
+        @for (item of shelf(); track item.box.id) {
+          <div class="deck" [class.chosen]="item.chosen">
+            <eras-deckbox-tile [box]="item.box" [count]="item.count" [covers]="item.covers" (opened)="openShelfBox(item.box)" />
+          </div>
+        }
         @for (deck of matches(); track deck.id) {
           @let blocked = unplayable().get(deck.id);
           <div
@@ -194,7 +207,9 @@
             }
           </div>
         } @empty {
-          <eras-empty-state title="Ningún mazo coincide con la búsqueda" />
+          @if (shelf().length === 0) {
+            <eras-empty-state [title]="search().trim() ? 'Ningún mazo coincide con la búsqueda' : 'Esta deckbox está vacía'" />
+          }
         }
       </eras-grid>
     }

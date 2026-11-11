@@ -48,6 +48,7 @@
 </aside>
 
 <section class="decks" aria-label="Mazos">
+  <ng-content select="[deck-boxes]" />
   <div class="decks-head">
     <span>{{ countLabel() }}</span>
     @if (filtersActive()) {

@@ -67,9 +67,6 @@
   color: var(--color-primary);
 }
 .slot { display: flex; }
-.slot.cdk-drag-preview { box-shadow: var(--shadow-lg); }
-.slot.cdk-drag-placeholder { opacity: 0.3; }
-.cdk-drop-list-dragging .slot:not(.cdk-drag-placeholder) { transition: transform var(--duration-base) var(--easing-standard); }
 .pick {
   --game-card-width: 7rem;
   display: flex;
@@ -120,8 +117,11 @@
   pointer-events: none;
 }
 .chosen-mark eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
-.chosen-mark.order { background: var(--color-surface-muted); color: var(--color-text); }
 .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+// Sending the rest: a numbered card (its place in the order), framed and marked in the primary color
+.pick.numbered { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.chosen-mark.order { background: var(--color-primary); }
+
 eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
 @keyframes new-card {
   from { box-shadow: 0 0 0 2px var(--color-card-w), 0 0 6px 2px color-mix(in srgb, var(--color-card-w) 40%, transparent); }
@@ -213,7 +213,7 @@ eras-sheet.with-panel {
   }
 }
 
-// A disabled button swallows the mouse: the card can still be dragged to order it
+// A disabled button swallows the mouse: the card can still be held to see it in detail
 .pick:disabled {
   pointer-events: none;
 }

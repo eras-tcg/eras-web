@@ -741,6 +741,31 @@ function maxWithOrNull(_this__u8e3s4, comparator) {
 function distinct(_this__u8e3s4) {
   return toList_0(toMutableSet(_this__u8e3s4));
 }
+function toSet_0(_this__u8e3s4) {
+  if (isInterface(_this__u8e3s4, Collection)) {
+    var tmp;
+    switch (_this__u8e3s4.k()) {
+      case 0:
+        tmp = emptySet();
+        break;
+      case 1:
+        var tmp_0;
+        if (isInterface(_this__u8e3s4, KtList)) {
+          tmp_0 = _this__u8e3s4.m(0);
+        } else {
+          tmp_0 = _this__u8e3s4.h().j();
+        }
+
+        tmp = setOf(tmp_0);
+        break;
+      default:
+        tmp = toCollection_0(_this__u8e3s4, LinkedHashSet_init_$Create$_1(mapCapacity(_this__u8e3s4.k())));
+        break;
+    }
+    return tmp;
+  }
+  return optimizeReadOnlySet(toCollection_0(_this__u8e3s4, LinkedHashSet_init_$Create$()));
+}
 function indexOf_5(_this__u8e3s4, element) {
   return _this__u8e3s4.r(element);
 }
@@ -866,31 +891,6 @@ function single_0(_this__u8e3s4) {
       throw IllegalArgumentException_init_$Create$_0('Collection has more than one element.');
     return single;
   }
-}
-function toSet_0(_this__u8e3s4) {
-  if (isInterface(_this__u8e3s4, Collection)) {
-    var tmp;
-    switch (_this__u8e3s4.k()) {
-      case 0:
-        tmp = emptySet();
-        break;
-      case 1:
-        var tmp_0;
-        if (isInterface(_this__u8e3s4, KtList)) {
-          tmp_0 = _this__u8e3s4.m(0);
-        } else {
-          tmp_0 = _this__u8e3s4.h().j();
-        }
-
-        tmp = setOf(tmp_0);
-        break;
-      default:
-        tmp = toCollection_0(_this__u8e3s4, LinkedHashSet_init_$Create$_1(mapCapacity(_this__u8e3s4.k())));
-        break;
-    }
-    return tmp;
-  }
-  return optimizeReadOnlySet(toCollection_0(_this__u8e3s4, LinkedHashSet_init_$Create$()));
 }
 function single_1(_this__u8e3s4) {
   var tmp;
@@ -8419,9 +8419,6 @@ function EmptySet_getInstance() {
     new EmptySet();
   return EmptySet_instance;
 }
-function hashSetOf(elements) {
-  return toCollection(elements, HashSet_init_$Create$_1(mapCapacity(elements.length)));
-}
 function optimizeReadOnlySet(_this__u8e3s4) {
   switch (_this__u8e3s4.k()) {
     case 0:
@@ -8431,6 +8428,9 @@ function optimizeReadOnlySet(_this__u8e3s4) {
     default:
       return _this__u8e3s4;
   }
+}
+function hashSetOf(elements) {
+  return toCollection(elements, HashSet_init_$Create$_1(mapCapacity(elements.length)));
 }
 function reversed(_this__u8e3s4) {
   var tmp;
@@ -9377,6 +9377,11 @@ function split(_this__u8e3s4, delimiters, ignoreCase, limit) {
     destination.f(tmp$ret$3);
   }
   return destination;
+}
+function substringBefore(_this__u8e3s4, delimiter, missingDelimiterValue) {
+  missingDelimiterValue = missingDelimiterValue === VOID ? _this__u8e3s4 : missingDelimiterValue;
+  var index = indexOf_7(_this__u8e3s4, delimiter);
+  return index === -1 ? missingDelimiterValue : substring(_this__u8e3s4, 0, index);
 }
 function removePrefix(_this__u8e3s4, prefix) {
   if (startsWith_1(_this__u8e3s4, prefix)) {
@@ -13327,6 +13332,7 @@ export {
   toList_0 as toList3jhuyej2anx2q,
   toList as toList383f556t1dixk,
   toMap as toMap1vec9topfei08,
+  toSet_0 as toSet2orjxp16sotqu,
   withIndex as withIndex3s8q7w1g0hyfn,
   reverseOrder as reverseOrder2s0vaorjckcnt,
   reversed as reversed3cb5fwpceefdb,
@@ -13437,6 +13443,7 @@ export {
   startsWith as startsWith26w8qjqapeeq6,
   startsWith_0 as startsWith5hna0vjiqaqm,
   substringAfterLast as substringAfterLast3r0t0my8cpqhk,
+  substringBefore as substringBefore3n7kj60w69hju,
   substring_0 as substring3saq8ornu0luv,
   substring as substringiqarkczpya5m,
   toCharArray as toCharArray32huqyw9tt7kx,

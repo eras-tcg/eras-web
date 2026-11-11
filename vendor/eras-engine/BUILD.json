@@ -1,8 +1,8 @@
 {
-  "commit": "3385377d38c5f6957ae5e23a0a9efb461e456a73",
+  "commit": "a88c11d6d1237cd54be396f2b6c45deb1123e162",
   "dirty": false,
-  "subject": "What a choice did is sent before the next link starts",
-  "copiedAt": "2026-11-09T17:25:35.445Z",
+  "subject": "Merge pull request #65 from eras-tcg/fix/reactivar-turno-oponente",
+  "copiedAt": "2026-11-11T00:45:06.019Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

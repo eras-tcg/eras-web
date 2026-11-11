@@ -4,9 +4,9 @@ The ERAS game engine for the browser (`@eras/engine`), as DriveManager's `eras-e
 (`./gradlew jsBrowserProductionLibraryDistribution` → `build/dist/js/productionLibrary`). It runs "Modo solo sin conexión":
 a game against the bot played entirely in the browser, in a Web Worker (`src/app/data-access/simulator/engine.worker.ts`).
 
-**Built from:** DriveManager `997a7a6326e94241ea52f3784bf65643e6b04ec8` ("feat(engine): LocalMatch.result(): an offline
-game's result and digest, the same on the JVM and in the browser"). `BUILD.json` records the commit of the copy in this
-folder.
+**Built from:** DriveManager `a88c11d6d1237cd54be396f2b6c45deb1123e162` ("Merge pull request #65 from
+eras-tcg/fix/reactivar-turno-oponente": the card corrections of 2026-11-10). `BUILD.json` records the commit of the copy in
+this folder.
 
 | File | What | How the site uses it |
 |---|---|---|

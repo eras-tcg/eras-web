@@ -1,4 +1,3 @@
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
@@ -16,6 +15,7 @@ import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconName } from '@ui/primitives/icon/icon.component';
 import { EffectCardPanelComponent } from '../effect-card-panel.component';
+import { OrderEnd, orderComplete, orderHint, toggleInOrder } from '../card-order';
 
 export interface EffectPromptData {
   prompt: EffectPrompt;
@@ -24,13 +24,16 @@ export interface EffectPromptData {
 /**
  * A choice the rules engine is waiting for. It cannot be dismissed: the effect goes on only after the player
  * confirms a valid selection. Only the cards that meet the effect are shown (a toggle shows the rest, locked).
- * When the cards not chosen go back to the deck (reorderRest), their order is set by dragging. Chaining choices
+ * A search (reorderRest) goes in two steps in this same sheet, as every search reads: first the cards that meet it
+ * are picked, then the rest is sent to the deck, in the order the player sets (each tap on a card gives it the next
+ * number; 1 ends up highest) and, when the effect leaves it to the player, to the top or to the bottom (a button each).
+ * Chaining choices
  * list each effect with its card: a card can trigger several at once (its own and the inherited ones). The chain
  * itself is shown on the board, above this sheet.
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CdkDropList, CdkDrag, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,13 +66,45 @@ export class EffectPromptDialogComponent {
   protected readonly valid = new Set(this.prompt.validIds);
   /** The most the chosen cards' levels may add up to, or null without that limit. */
   protected readonly levelSum = this.prompt.maxLevelSum ?? null;
-  protected readonly order = signal<CardSlot[]>([...this.prompt.cards]);
   /** Cards that do not meet the effect are hidden unless asked (all of them are needed to order the rest). */
   protected readonly showAll = signal(false);
   private readonly showsEverything = this.prompt.reorderRest || this.prompt.kind === 'CONFIRM';
-  /** The cards are only ordered, not picked: "al tope o al fondo" is answered with the buttons. */
+  /** The cards are only sent: in the order set, to the top or to the bottom ("al tope o al fondo"), a button each. */
   protected readonly orderOnly = !!this.prompt.topOrBottom;
-  protected readonly shown = computed(() => (this.showAll() || this.showsEverything ? this.order() : this.order().filter((c) => this.valid.has(c.instanceId))));
+  /** The cards not taken go back to the deck in the order the player sets. */
+  protected readonly ordering = this.prompt.reorderRest;
+  /** Where the effect sends the rest, when it does not leave it to the player. */
+  protected readonly restEnd: OrderEnd = this.prompt.restToTop ? 'top' : 'bottom';
+  /** The step: picking the cards that meet the search, then sending the rest (straight there with nothing to pick). */
+  protected readonly step = signal<'pick' | 'rest'>(this.orderOnly || (this.ordering && this.prompt.max === 0) ? 'rest' : 'pick');
+  /** From the rest, back to change what was picked. */
+  protected readonly canGoBack = this.ordering && !this.orderOnly && this.prompt.max > 0;
+  /** The ids numbered so far among the cards not taken, number 1 first. */
+  protected readonly restOrder = signal<string[]>([]);
+  /** The cards not taken, as the engine listed them. */
+  private readonly rest = computed(() => this.prompt.cards.filter((c) => !this.chosen().has(c.instanceId)).map((c) => c.instanceId));
+  protected readonly restCount = computed(() => this.rest().length);
+  /** They are ordered only when there are two or more; one alone just goes. */
+  protected readonly needsOrder = computed(() => this.ordering && this.rest().length > 1);
+  private readonly orderReady = computed(() => !this.needsOrder() || orderComplete(this.restOrder(), this.rest()));
+  /** Sending the rest: what number 1 means. */
+  protected readonly orderText = computed(() => (this.step() === 'rest' && this.needsOrder() ? orderHint(this.orderOnly ? null : this.restEnd) : null));
+  /**
+   * Under the title: what an effect's text asks to do (the rules' own choices say it in their title and buttons); sending
+   * the rest, where it goes.
+   */
+  protected readonly subtitle = computed(() => {
+    if (this.step() === 'rest') {
+      // "Al tope o al fondo" comes after a search: what it sends is its rest
+      const what = this.canGoBack || this.orderOnly ? 'Envía el resto' : 'Envía las cartas';
+      return this.orderOnly ? `${what} al tope o al fondo de tu mazo.` : `${what} al ${this.restEnd === 'top' ? 'tope' : 'fondo'} de tu mazo.`;
+    }
+    return this.prompt.purpose || this.prompt.effects?.length ? null : this.prompt.instruction;
+  });
+  protected readonly shown = computed(() => {
+    if (this.step() === 'rest') return this.prompt.cards.filter((c) => !this.chosen().has(c.instanceId));
+    return this.showAll() || this.showsEverything ? this.prompt.cards : this.prompt.cards.filter((c) => this.valid.has(c.instanceId));
+  });
   protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   /**
    * Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. Instead of the damage ("tributa
@@ -87,6 +122,9 @@ export class EffectPromptDialogComponent {
     return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
   });
 
+  /** Sending the rest: every card numbered (one alone needs none). */
+  protected readonly canSend = computed(() => !this.sending() && this.orderReady());
+
   /** Optional choices can be confirmed with nothing chosen ("No bloquear"). */
   protected readonly confirmLabel = computed(() => {
     if (this.chosen().size > 0 && this.prompt.purpose === 'RITUAL') return this.prompt.summonerId ? 'Invocar' : 'Continuar';
@@ -96,7 +134,8 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
     if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
-    if (this.prompt.reorderRest && this.prompt.max === 0) return 'Confirmar orden';
+    // A search: its rest is sent next (with nothing left to order, it goes with this answer)
+    if (this.ordering && this.needsOrder()) return 'Continuar';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
@@ -230,14 +269,22 @@ export class EffectPromptDialogComponent {
       next.add(id);
     }
     this.chosen.set(next);
+    // A card taken is not among the ones ordered
+    if (next.has(id)) this.restOrder.update((order) => order.filter((x) => x !== id));
   }
 
-  /** The drop indexes are of the cards shown, which may leave out the ones that do not meet the effect. */
-  protected reorder(event: CdkDragDrop<CardSlot[]>): void {
-    const shown = this.shown();
-    const list = [...this.order()];
-    moveItemInArray(list, list.indexOf(shown[event.previousIndex]), list.indexOf(shown[event.currentIndex]));
-    this.order.set(list);
+  /** A tap on a card: sending the rest, it numbers it (or takes its number back); else it picks it. */
+  protected tap(c: CardSlot): void {
+    if (this.step() !== 'rest') {
+      this.toggle(c.instanceId);
+      return;
+    }
+    if (this.needsOrder()) this.restOrder.set(toggleInOrder(this.restOrder(), c.instanceId));
+  }
+
+  /** A card's place in the order (1 ends up highest), 0 when it has none. */
+  protected numberOf(c: CardSlot): number {
+    return this.restOrder().indexOf(c.instanceId) + 1;
   }
 
   /** The effect of this choice is in the chain (its text is shown in the chain panel). */
@@ -262,18 +309,34 @@ export class EffectPromptDialogComponent {
     this.game.resolvePrompt(this.prompt.id, yes ? this.prompt.validIds.slice(0, 1) : []);
   }
 
-  /** "al tope o al fondo": every card in the order set, sent where the player picked. */
-  protected sendLooked(top: boolean): void {
-    this.sending.set(true);
-    this.game.resolvePrompt(this.prompt.id, top ? this.prompt.validIds.slice(0, 1) : [], this.order().map((c) => c.instanceId));
-  }
-
-  /** The board closes this dialog when the engine moves on to the next step. */
+  /**
+   * The board closes this dialog when the engine moves on to the next step. A search goes on to sending its rest (when
+   * there is any to order); else the cards not picked go as they are.
+   */
   protected confirm(): void {
     if (!this.canConfirm()) return;
+    if (this.ordering && this.needsOrder()) {
+      this.step.set('rest');
+      return;
+    }
+    this.send(this.restEnd);
+  }
+
+  /**
+   * Sends the answer: the cards picked and the rest in the order set. "Al tope o al fondo" is answered choosing a card
+   * (any valid one) for the top and none for the bottom.
+   */
+  protected send(end: OrderEnd): void {
+    if (this.sending()) return;
     this.sending.set(true);
-    const chosen = [...this.chosen()];
-    const rest = this.order().filter((c) => !this.chosen().has(c.instanceId)).map((c) => c.instanceId);
+    const rest = this.needsOrder() ? this.restOrder() : this.rest();
+    const chosen = this.orderOnly ? (end === 'top' ? this.prompt.validIds.slice(0, 1) : []) : [...this.chosen()];
     this.game.resolvePrompt(this.prompt.id, chosen, rest);
+  }
+
+  /** Back to the search, to change what was picked; the order starts over. */
+  protected back(): void {
+    this.restOrder.set([]);
+    this.step.set('pick');
   }
 }

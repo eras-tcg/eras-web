@@ -1,8 +1,8 @@
 {
-  "commit": "a88c11d6d1237cd54be396f2b6c45deb1123e162",
+  "commit": "aea0384cef2250ff3807da20bea1d5cefb81dca3",
   "dirty": false,
-  "subject": "Merge pull request #65 from eras-tcg/fix/reactivar-turno-oponente",
-  "copiedAt": "2026-11-11T00:45:06.019Z",
+  "subject": "wip(deckboxes): a deck is in one deckbox at most (work in progress, not run here)",
+  "copiedAt": "2026-11-12T00:00:18.543Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

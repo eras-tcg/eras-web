@@ -11,6 +11,7 @@ import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { DECK_NAME_MAX, MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
+import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { DecksStore } from '@data/decks/decks.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
@@ -29,6 +30,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { CraftMissingData, CraftMissingDialogComponent } from './craft-missing-dialog.component';
+import { chooseDeckBox } from '../deckbox-picker-dialog.component';
 import { DeckOption, DeckOptionsData, DeckOptionsDialogComponent } from './deck-options-dialog.component';
 import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-deck-dialog.component';
 import { firstValueFrom } from 'rxjs';
@@ -88,6 +90,8 @@ export class DeckBuilderPage {
   /** `?id=` deck to edit, `?copy=true` to start a copy of it (bound by the router). */
   readonly id = input<string>();
   readonly copy = input<string>();
+  /** `?box=`: a new deck started inside this deckbox goes into it when first saved. */
+  readonly box = input<string>();
 
   protected readonly draft = inject(DeckDraft);
   protected readonly cards = inject(CardsStore);
@@ -95,6 +99,7 @@ export class DeckBuilderPage {
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
+  private readonly deckBoxes = inject(DeckBoxesStore);
   private readonly modal = inject(ModalService);
 
   protected readonly maxCards = MAX_CARDS;
@@ -304,8 +309,13 @@ export class DeckBuilderPage {
 
   protected async save(): Promise<void> {
     this.saveError.set(null);
+    const isNew = this.draft.id() === null;
     try {
       await this.draft.save();
+      // A new deck started inside a deckbox ("Nuevo mazo" there) goes into it
+      const box = this.box();
+      const savedId = this.draft.id();
+      if (isNew && box && savedId) await this.deckBoxes.moveDeck(savedId, box);
       this.savedNotice.set(true);
       this.copyNotice.set(false);
     } catch (e) {
@@ -356,14 +366,34 @@ export class DeckBuilderPage {
     if (this.renderCount() < this.resultCount()) this.renderCount.update((n) => n + PAGE_SIZE);
   }
 
-  /** The options icon: crafting the missing cards, importing a list, exporting it or printing proxies. */
+  /** The options icon: crafting the missing cards, importing a list, exporting it, printing proxies, its deckbox. */
   protected async openOptions(): Promise<void> {
-    const data: DeckOptionsData = { empty: this.draft.total() === 0, missing: this.signedIn() ? this.missing() : null };
+    const data: DeckOptionsData = {
+      empty: this.draft.total() === 0,
+      missing: this.signedIn() ? this.missing() : null,
+      // Only a saved deck of the player's own (someone else's deck is edited as an unsaved copy)
+      deckbox: this.canSave() && this.draft.id() !== null,
+    };
     const choice = await firstValueFrom(this.modal.open<DeckOption, DeckOptionsData>(DeckOptionsDialogComponent, { data }).closed);
     if (choice?.action === 'import') await this.importList(choice.file);
     if (choice?.action === 'export') this.exportList();
     if (choice?.action === 'proxies') this.openProxies();
     if (choice?.action === 'craft-missing') this.craftMissing();
+    if (choice?.action === 'deckbox') void this.pickBox();
+  }
+
+  /** In which of the player's deckboxes the saved deck goes. */
+  private async pickBox(): Promise<void> {
+    const deckId = this.draft.id();
+    const userId = this.auth.user()?.id;
+    if (!deckId || !userId) return;
+    this.saveError.set(null);
+    try {
+      await this.deckBoxes.load(userId);
+      await chooseDeckBox(this.modal, this.deckBoxes, { deckId, deckName: this.draft.name() });
+    } catch (e) {
+      this.saveError.set(e instanceof Error ? e.message : 'No se pudo mover el mazo');
+    }
   }
 
   /** What crafting the deck's missing cards costs, and crafting them all when the fragments are enough. */

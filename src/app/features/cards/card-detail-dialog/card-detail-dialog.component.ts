@@ -6,7 +6,7 @@ import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
 import { altArtName, altArtsOf, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
-import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, nearestFinish, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
@@ -83,11 +83,19 @@ export class CardDetailDialogComponent {
 
   /** The plain catalog: the buttons under the card show its finishes and alternative arts. */
   protected readonly showVersions = !this.data.copy && !this.data.collection;
-  /** The version picked under the card (plain catalog only): a finish and an art (null: the usual one). */
-  protected readonly pickedFinish = signal<Finish>('plain');
+  /**
+   * The version picked under the card (plain catalog only): a finish and an art (null: the usual one). The finish is a
+   * preference that stays while moving to other cards and printings; the art is the card's own and resets.
+   */
+  protected readonly preferredFinish = signal<Finish>('plain');
   protected readonly pickedArt = signal<string | null>(null);
 
-  protected readonly finishOptions: ToggleOption[] = FINISHES.map((f) => ({ value: f, label: FINISH_LABELS[f] }));
+  /** The finishes the card shown comes in (every printing comes in all of them). */
+  private readonly availableFinishes = computed<readonly Finish[]>(() => FINISHES);
+  /** The finish shown: the preferred one, or the closest the card comes in. */
+  protected readonly pickedFinish = computed(() => nearestFinish(this.preferredFinish(), this.availableFinishes()) ?? 'plain');
+
+  protected readonly finishOptions = computed<ToggleOption[]>(() => this.availableFinishes().map((f) => ({ value: f, label: FINISH_LABELS[f] })));
   protected readonly artOptions = computed<ToggleOption[]>(() => {
     const arts = this.arts();
     return [
@@ -275,9 +283,8 @@ export class CardDetailDialogComponent {
     this.resetVersion();
   }
 
-  /** Another card or printing opens in its usual version. */
+  /** Another card or printing opens in its usual art, in the finish preferred (or the closest it comes in). */
   private resetVersion(): void {
-    this.pickedFinish.set('plain');
     this.pickedArt.set(null);
   }
 

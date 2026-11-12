@@ -1,5 +1,6 @@
-// "Nuevo mazo", projected first into the deck browser's grid
-.new-deck {
+// "Nuevo mazo", projected first into the deck browser's grid (split with "Nueva deckbox" on the shelf)
+.new-deck,
+.new-split {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,7 +18,9 @@
 }
 
 .new-deck:hover,
-.new-deck:focus-visible {
+.new-deck:focus-visible,
+.new-split .half:hover,
+.new-split .half:focus-visible {
   border-color: var(--color-hub-accent);
   color: var(--color-text);
   transform: translateY(-2px);
@@ -44,6 +47,109 @@
   text-align: center;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+// The split tile: two halves, each a whole button
+.new-split {
+  gap: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.new-split .half {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    background var(--duration-fast) var(--easing-standard);
+}
+
+.new-split .half + .half {
+  border-block-start: 2px dashed var(--color-border);
+}
+
+.new-split .half:hover,
+.new-split .half:focus-visible {
+  background: var(--color-surface-muted);
+  transform: none;
+}
+
+.new-split .new-ring {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+}
+
+.new-split .new-ring eras-icon {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.new-split .new-label {
+  font-size: var(--font-size-sm);
+}
+
+// A deck or deckbox in the grid; faded while it is dragged
+.cell {
+  min-inline-size: 0;
+}
+
+.cell.dragging {
+  opacity: 0.4;
+}
+
+// Inside a deckbox: "Mazos / <name>", its settings
+.crumbs {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.crumbs .shelf.drop {
+  outline: 2px dashed var(--color-focus);
+  outline-offset: 2px;
+}
+
+.crumbs .sep {
+  color: var(--color-text-subtle);
+}
+
+.crumbs .here {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-md);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.crumbs .dot {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border-radius: 50%;
+}
+
+.crumbs .edit {
+  margin-inline-start: auto;
+}
+
+.crumbs .hint {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 56rem) {

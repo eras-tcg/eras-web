@@ -198,6 +198,20 @@ export function shineOf(finish: Finish | null | undefined): 'foil' | 'prism' | n
   return finish === 'foil' || finish === 'prism' ? finish : null;
 }
 
+/**
+ * The finish shown for a preferred one: itself when the card comes in it, else the closest it comes in (a tie goes to
+ * the plainer one); the preference itself is kept for the next card. Null when the card comes in none.
+ */
+export function nearestFinish(preferred: Finish, available: readonly Finish[]): Finish | null {
+  const at = FINISHES.indexOf(preferred);
+  let best: Finish | null = null;
+  for (const finish of FINISHES) {
+    if (!available.includes(finish)) continue;
+    if (best === null || Math.abs(FINISHES.indexOf(finish) - at) < Math.abs(FINISHES.indexOf(best) - at)) best = finish;
+  }
+  return best;
+}
+
 /** A deck's copies of one card that the player lacks. */
 export interface MissingCard {
   card: CatalogCard;

@@ -1,16 +1,21 @@
 :host {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
-  inline-size: min(90rem, 100vw - 2 * var(--space-3));
+  // One size for every card, whatever its text: the largest the screen allows, up to a limit (the installed app
+  // measures its screen as --app-width/--app-height)
+  inline-size: min(90rem, var(--app-width, 100vw) - 2 * var(--space-3));
+  block-size: min(52rem, var(--app-height, 100dvh) - 2 * var(--space-5));
 }
 
+// The text scrolls inside the card's detail (fill); the panel itself never does
 .panel {
   position: relative;
-  max-block-size: calc(100dvh - 2 * var(--space-5));
-  overflow: auto;
-  overscroll-behavior: none;
+  align-self: stretch;
+  min-block-size: 0;
+  overflow: hidden;
   padding: var(--space-7) var(--space-5) var(--space-5);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -50,9 +55,11 @@
   inset-inline-end: var(--space-2);
 }
 
-@media (max-width: 44rem) {
+// A phone held upright: the panel over the whole width, the arrows under it
+@media (orientation: portrait) and (max-width: 44rem) {
   :host {
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
   .panel {
@@ -157,6 +164,11 @@
   display: contents;
 }
 
+// The height kept under the image for the finishes (one toggle row)
+eras-card-detail.with-versions {
+  --detail-under-size: 2.75rem;
+}
+
 .alt-preview {
   flex-shrink: 0;
   inline-size: 4rem;
@@ -167,9 +179,23 @@
 
 // Phones in landscape: a tighter panel (the card's picture fits its height) and smaller arrows
 @media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    block-size: calc(var(--app-height, 100dvh) - 2 * var(--space-2));
+  }
+
+  // The finishes' title over them, so they take no more width than the card and leave it to the text
+  .versions {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  eras-card-detail.with-versions {
+    --detail-under-size: 4.25rem;
+  }
+
+  // Room on the right for the close button, beside the card (the height is what is scarce)
   .panel {
-    max-block-size: calc(100dvh - 2 * var(--space-2));
-    padding: var(--space-5) var(--space-4) var(--space-3);
+    padding: var(--space-3) var(--space-7) var(--space-3) var(--space-4);
   }
 
   .nav {

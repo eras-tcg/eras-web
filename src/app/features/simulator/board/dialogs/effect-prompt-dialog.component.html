@@ -4,7 +4,7 @@
 }
 <!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
      blocking…) say it in their title and buttons -->
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="prompt.purpose || prompt.effects?.length ? null : prompt.instruction">
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="subtitle()">
   <div class="body" [class.fit]="!prompt.effects?.length && cardsShown()">
   @if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
@@ -48,28 +48,31 @@
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
+  @if (orderText(); as text) {
+    <!-- Sending the rest: what number 1 means -->
+    <p class="hint">{{ text }}</p>
+  }
   <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
-  <div
-    class="cards"
-    cdkDropList
-    cdkDropListOrientation="horizontal"
-    [cdkDropListDisabled]="!prompt.reorderRest"
-    (cdkDropListDropped)="reorder($event)"
-    role="group"
-    [attr.aria-label]="prompt.title"
-  >
-    <ng-template #slotTpl let-c let-i="i">
-      <div class="slot" cdkDrag [cdkDragDisabled]="!prompt.reorderRest">
+  <div class="cards" role="group" [attr.aria-label]="prompt.title">
+    <ng-template #slotTpl let-c>
+      <div class="slot">
+        <!-- Sending the rest, a tap numbers the card; else it picks it -->
         <button
           type="button"
           class="pick"
-          [class.static]="prompt.kind === 'CONFIRM' || orderOnly"
+          [class.static]="prompt.kind === 'CONFIRM'"
           [class.chosen]="chosen().has(c.instanceId)"
-          [class.locked]="!selectable(c)"
-          [disabled]="!selectable(c) || sending() || prompt.kind === 'CONFIRM' || orderOnly"
-          [attr.aria-pressed]="chosen().has(c.instanceId)"
-          [attr.aria-label]="(c.cardName ?? 'Carta') + (valid.has(c.instanceId) ? (selectable(c) ? '' : (prompt.distinctLevels ? ', ya elegiste una de ese nivel' : ', supera la suma de niveles')) : ', no cumple el efecto')"
-          (click)="toggle(c.instanceId)"
+          [class.numbered]="numberOf(c) > 0"
+          [class.locked]="step() === 'pick' && !selectable(c)"
+          [disabled]="sending() || prompt.kind === 'CONFIRM' || (step() === 'pick' && !selectable(c))"
+          [attr.aria-pressed]="step() === 'rest' ? numberOf(c) > 0 : chosen().has(c.instanceId)"
+          [attr.aria-label]="
+            (c.cardName ?? 'Carta') +
+            (step() === 'rest'
+              ? (numberOf(c) ? ', número ' + numberOf(c) : ', sin número')
+              : valid.has(c.instanceId) ? (selectable(c) ? '' : (prompt.distinctLevels ? ', ya elegiste una de ese nivel' : ', supera la suma de niveles')) : ', no cumple el efecto')
+          "
+          (click)="tap(c)"
         >
           @if (hostOf(c); as host) {
             <!-- A Material or Recurso: the card it belongs to, with it small at the corner -->
@@ -86,8 +89,8 @@
                 <eras-icon name="check" />
               }
             </span>
-          } @else if (orderOnly) {
-            <span class="chosen-mark order">{{ i + 1 }}</span>
+          } @else if (numberOf(c); as n) {
+            <span class="chosen-mark order">{{ n }}</span>
           }
           @if (!chosen().has(c.instanceId) && valid.has(c.instanceId) && prompt.cardLabels?.[c.instanceId]; as effectLabel) {
             <span class="tag">{{ effectLabel }}</span>
@@ -98,8 +101,8 @@
       </div>
     </ng-template>
     @if (prompt.reorderRest || !groups().length) {
-      @for (c of shown(); track c.instanceId; let i = $index) {
-        <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+      @for (c of shown(); track c.instanceId) {
+        <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
       } @empty {
         <p class="hint">No hay cartas que cumplan.</p>
       }
@@ -108,8 +111,8 @@
         <section class="zone-box" [attr.aria-label]="g.zone">
           <span class="zone-name"><eras-icon [name]="zoneIcon(g.zone)" /> {{ g.zone }}</span>
           <div class="zone-cards">
-            @for (c of g.cards; track c.instanceId; let i = $index) {
-              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c, i: i }" />
+            @for (c of g.cards; track c.instanceId) {
+              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
             }
           </div>
         </section>
@@ -120,9 +123,23 @@
   </div>
   <ng-container sheet-footer>
     <eras-stack direction="row" [gap]="2" align="center" justify="end" wrap>
-      @if (orderOnly) {
-        <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="sendLooked(false)"><eras-icon name="chevron-down" /> Al fondo</button>
-        <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="sendLooked(true)"><eras-icon name="chevron-up" /> Al tope</button>
+      @if (step() === 'rest') {
+        <!-- Sending the rest: its order, then the button (or the two, top and bottom) that sends it -->
+        @if (canGoBack) {
+          <button erasButton variant="ghost" type="button" [disabled]="sending()" (click)="back()">Volver</button>
+        }
+        @if (needsOrder()) {
+          <button erasButton variant="ghost" type="button" [disabled]="!restOrder().length || sending()" (click)="restOrder.set([])">Reiniciar orden</button>
+          <span class="count">{{ restOrder().length }} de {{ restCount() }}</span>
+        }
+        @if (orderOnly) {
+          <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="!canSend()" (click)="send('bottom')"><eras-icon name="chevron-down" /> Enviar al fondo</button>
+          <button erasButton class="big-choice" type="button" [disabled]="!canSend()" [loading]="sending()" (click)="send('top')"><eras-icon name="chevron-up" /> Enviar al tope</button>
+        } @else {
+          <button erasButton class="big-choice" type="button" [disabled]="!canSend()" [loading]="sending()" (click)="send(restEnd)">
+            <eras-icon [name]="restEnd === 'top' ? 'chevron-up' : 'chevron-down'" /> {{ restEnd === 'top' ? 'Enviar al tope' : 'Enviar al fondo' }}
+          </button>
+        }
       } @else if (prompt.kind === 'CONFIRM') {
         <button erasButton variant="secondary" class="big-choice" type="button" [disabled]="sending()" (click)="answer(false)">No</button>
         <button erasButton class="big-choice" type="button" [disabled]="sending()" [loading]="sending()" (click)="answer(true)">Sí</button>

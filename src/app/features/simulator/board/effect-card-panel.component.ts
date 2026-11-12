@@ -1,19 +1,25 @@
 import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, inject, input } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
+import { GameStore } from '@data/simulator/game.store';
 import { CardSlot } from '@data/simulator/simulator.model';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { CardDetailDialogComponent, CardDetailDialogData } from '../../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetail } from './card-peek.component';
+import { HoldPeekDirective } from './hold-peek';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 
 /**
  * Beside a choice, the card it is about: big, with its effects written out, and the effect that asks lit up in
- * cyan. The choice below then only says what to do and shows the cards to pick.
+ * cyan. The choice below then only says what to do and shows the cards to pick. Held pressed, the card opens in
+ * detail, as any card listed in a choice.
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [IconComponent],
+  imports: [IconComponent, HoldPeekDirective],
   template: `
     @if (imageUrl()) {
-      <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
+      <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" [erasHoldPeek]="!!slot() || !!catalog()" (peek)="openDetail()" />
     }
     @if (facts().length) {
       <div class="facts">
@@ -67,6 +73,8 @@ import { effectLines, matchingLine } from './card-effect-lines';
     }
     .art {
       display: block;
+      cursor: zoom-in;
+      -webkit-touch-callout: none;
       inline-size: 100%;
       aspect-ratio: 63 / 88;
       border-radius: var(--radius-md);
@@ -121,6 +129,8 @@ import { effectLines, matchingLine } from './card-effect-lines';
 })
 export class EffectCardPanelComponent {
   private readonly cards = inject(CardsStore);
+  private readonly game = inject(GameStore);
+  private readonly modal = inject(ModalService);
   private readonly host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
 
   /** The card on the table, when it is there (its live numbers); else it is found in the catalog by its name. */
@@ -130,7 +140,7 @@ export class EffectCardPanelComponent {
   /** The text of the effect that asks, lit up among the card's effects. */
   readonly activeText = input<string | null | undefined>(null);
 
-  private readonly catalog = computed(() => {
+  protected readonly catalog = computed(() => {
     const id = this.slot()?.cardId;
     const all = this.cards.cards();
     return (id ? all.find((c) => c.id === id) : null) ?? all.find((c) => c.name === this.name()) ?? null;
@@ -153,6 +163,19 @@ export class EffectCardPanelComponent {
     if (s.strength != null) facts.push({ label: 'Fuerza', value: String(s.strength) });
     return facts;
   });
+
+  /** The card in detail: as it is on the table, else from the catalog. */
+  protected openDetail(): void {
+    const slot = this.slot();
+    if (slot) {
+      openCardDetail(this.game, this.cards, this.modal, slot);
+      return;
+    }
+    const catalog = this.catalog();
+    if (!catalog) return;
+    const data: CardDetailDialogData = { cards: [catalog], index: 0 };
+    this.modal.open(CardDetailDialogComponent, { data });
+  }
 
   constructor() {
     // The lit effect in view, on a card with many effects

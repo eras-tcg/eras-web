@@ -81,10 +81,10 @@
             [class.formed-end]="place?.end"
           >
             <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
-            <!-- Enlace: its arrows, toward the creatures next to it (lit while it points to one) -->
-            @for (a of linkArrows().get(s.instanceId) ?? []; track a.side) {
-              <span class="link-arrow" [class.left]="a.side === 'left'" [class.right]="a.side === 'right'" [class.on]="a.on" aria-hidden="true">
-                <eras-icon [name]="a.side === 'left' ? 'chevron-left' : 'chevron-right'" />
+            <!-- Enlace: who points to whom between it and the creature to its right -->
+            @if (line === 'front' ? linkMarks().get(s.instanceId) : null; as dir) {
+              <span class="link-mark" aria-hidden="true">
+                <eras-icon [name]="dir === 'both' ? 'link-both' : dir === 'right' ? 'chevron-right' : 'chevron-left'" />
               </span>
             }
           </div>

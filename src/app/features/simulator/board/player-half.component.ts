@@ -326,14 +326,19 @@ export class PlayerHalfComponent {
    * Enlace: the arrows of each face-up card of the field that has them, lit when it points to the creature on that side (Línea
    * frontal, active), dim otherwise.
    */
-  protected readonly linkArrows = computed(() => {
+  /**
+   * Enlace: between two creatures side by side on the Línea frontal, one mark of who points to whom (by the left one's id):
+   * towards the right one, towards the left one, or both. None where nobody points (an exhausted creature points to nothing).
+   */
+  protected readonly linkMarks = computed(() => {
     const order = frontOrder(this.player().field);
-    const arrows = new Map<string, { side: 'left' | 'right'; on: boolean }[]>();
-    for (const c of this.player().field) {
-      if (c.faceDown || !c.arrows?.length) continue;
-      arrows.set(c.instanceId, (['left', 'right'] as const).filter((side) => c.arrows!.includes(side)).map((side) => ({ side, on: pointsSide(order, c, side) })));
+    const marks = new Map<string, 'left' | 'right' | 'both'>();
+    for (let i = 0; i + 1 < order.length; i++) {
+      const toRight = pointsSide(order, order[i], 'right');
+      const toLeft = pointsSide(order, order[i + 1], 'left');
+      if (toRight || toLeft) marks.set(order[i].instanceId, toRight && toLeft ? 'both' : toRight ? 'right' : 'left');
     }
-    return arrows;
+    return marks;
   });
   /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */
   protected get lines(): readonly ('front' | 'back')[] {

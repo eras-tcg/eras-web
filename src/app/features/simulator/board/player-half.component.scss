@@ -306,36 +306,28 @@ eras-player-plate {
 }
 
 // Enlace: an arrow on the card's edge toward its neighbour; lit while it points to it (active), dim otherwise
-.link-arrow {
+// A card carrying a link mark stands over its neighbours, so the mark (in the gap, over the next card's edge) is never under them
+.placed:has(> .link-mark) {
+  z-index: 5;
+}
+
+// Enlace: one mark in the gap between two creatures, who points to whom
+.link-mark {
   position: absolute;
   inset-block-start: 50%;
-  z-index: 3;
+  inset-inline-start: calc(100% + var(--space-2) / 2);
+  z-index: 10;
   display: grid;
   place-items: center;
-  inline-size: 1.1rem;
-  block-size: 1.1rem;
+  inline-size: 1.2rem;
+  block-size: 1.2rem;
   border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text-subtle);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 0.8rem;
-  opacity: 0.6;
   box-shadow: var(--shadow-sm);
   pointer-events: none;
   transform: translate(-50%, -50%);
-}
-
-.link-arrow.left {
-  inset-inline-start: 0;
-}
-
-.link-arrow.right {
-  inset-inline-start: 100%;
-}
-
-.link-arrow.on {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  opacity: 1;
 }
 
 .placed.near {

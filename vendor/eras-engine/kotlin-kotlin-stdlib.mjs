@@ -9537,16 +9537,16 @@ function substringBefore_0(_this__u8e3s4, delimiter, missingDelimiterValue) {
   var index = indexOf_7(_this__u8e3s4, delimiter);
   return index === -1 ? missingDelimiterValue : substring(_this__u8e3s4, 0, index);
 }
+function substringAfterLast(_this__u8e3s4, delimiter, missingDelimiterValue) {
+  missingDelimiterValue = missingDelimiterValue === VOID ? _this__u8e3s4 : missingDelimiterValue;
+  var index = lastIndexOf(_this__u8e3s4, delimiter);
+  return index === -1 ? missingDelimiterValue : substring(_this__u8e3s4, index + 1 | 0, _this__u8e3s4.length);
+}
 function removePrefix(_this__u8e3s4, prefix) {
   if (startsWith_1(_this__u8e3s4, prefix)) {
     return substring_0(_this__u8e3s4, charSequenceLength(prefix));
   }
   return _this__u8e3s4;
-}
-function substringAfterLast(_this__u8e3s4, delimiter, missingDelimiterValue) {
-  missingDelimiterValue = missingDelimiterValue === VOID ? _this__u8e3s4 : missingDelimiterValue;
-  var index = lastIndexOf(_this__u8e3s4, delimiter);
-  return index === -1 ? missingDelimiterValue : substring(_this__u8e3s4, index + 1 | 0, _this__u8e3s4.length);
 }
 function contains_8(_this__u8e3s4, char, ignoreCase) {
   ignoreCase = ignoreCase === VOID ? false : ignoreCase;
@@ -9730,26 +9730,6 @@ function rangesDelimitedBy(_this__u8e3s4, delimiters, startIndex, ignoreCase, li
 function substring_1(_this__u8e3s4, range) {
   return toString_1(charSequenceSubSequence(_this__u8e3s4, range.gb(), range.hb() + 1 | 0));
 }
-function startsWith_1(_this__u8e3s4, prefix, ignoreCase) {
-  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
-  var tmp;
-  var tmp_0;
-  if (!ignoreCase) {
-    tmp_0 = typeof _this__u8e3s4 === 'string';
-  } else {
-    tmp_0 = false;
-  }
-  if (tmp_0) {
-    tmp = typeof prefix === 'string';
-  } else {
-    tmp = false;
-  }
-  if (tmp)
-    return startsWith(_this__u8e3s4, prefix);
-  else {
-    return regionMatchesImpl(_this__u8e3s4, 0, prefix, 0, charSequenceLength(prefix), ignoreCase);
-  }
-}
 function lastIndexOf(_this__u8e3s4, char, startIndex, ignoreCase) {
   startIndex = startIndex === VOID ? get_lastIndex_3(_this__u8e3s4) : startIndex;
   ignoreCase = ignoreCase === VOID ? false : ignoreCase;
@@ -9772,6 +9752,26 @@ function lastIndexOf(_this__u8e3s4, char, startIndex, ignoreCase) {
     tmp = _this__u8e3s4.lastIndexOf(str, startIndex);
   }
   return tmp;
+}
+function startsWith_1(_this__u8e3s4, prefix, ignoreCase) {
+  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
+  var tmp;
+  var tmp_0;
+  if (!ignoreCase) {
+    tmp_0 = typeof _this__u8e3s4 === 'string';
+  } else {
+    tmp_0 = false;
+  }
+  if (tmp_0) {
+    tmp = typeof prefix === 'string';
+  } else {
+    tmp = false;
+  }
+  if (tmp)
+    return startsWith(_this__u8e3s4, prefix);
+  else {
+    return regionMatchesImpl(_this__u8e3s4, 0, prefix, 0, charSequenceLength(prefix), ignoreCase);
+  }
 }
 function regionMatchesImpl(_this__u8e3s4, thisOffset, other, otherOffset, length, ignoreCase) {
   if (otherOffset < 0 || thisOffset < 0 || thisOffset > (charSequenceLength(_this__u8e3s4) - length | 0) || otherOffset > (charSequenceLength(other) - length | 0)) {

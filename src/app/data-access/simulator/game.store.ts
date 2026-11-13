@@ -436,8 +436,11 @@ export class GameStore {
     this.send('ACTIVATE_EFFECT', { instanceId, scriptId });
   }
 
-  /** Enlace, in your main phase: the creature links with the one next to it (joins its formation, or both form one). */
-  formationJoin(instanceId: string, targetId: string): void {
+  /**
+   * Enlace, in your main phase: the creature links with `targetId` (joins its formation, or both form one), taking a place
+   * next to it; without a target the engine opens the link sheet (FORMATION_ENTRY) to choose where and with whom.
+   */
+  formationJoin(instanceId: string, targetId: string | null = null): void {
     this.send('FORMATION_JOIN', { instanceId, targetId });
   }
 

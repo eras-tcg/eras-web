@@ -425,6 +425,12 @@ export class PlayerHalfComponent {
       return;
     }
 
+    // Enlace, outside editor mode: a creature of my Línea frontal that can link, dropped on my field, opens the link sheet
+    if (!this.game.editorMode() && !this.opponent() && to === 'field' && card.fromZone === 'field' && this.game.rules().formationJoins[card.instanceId]) {
+      this.game.formationJoin(card.instanceId);
+      return;
+    }
+
     // Outside editor mode only the rules' drops: a card of the hand onto the field (or onto a creature for its special summon)
     if (!this.game.editorMode() && (this.opponent() || card.fromZone !== 'hand' || to !== 'field')) return;
 

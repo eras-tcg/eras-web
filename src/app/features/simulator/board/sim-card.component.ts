@@ -119,7 +119,7 @@ export class SimCardComponent {
       !this.touchOnly &&
       !this.opponent() &&
       !this.lookOnly() &&
-      ((this.zone() === 'hand' && this.canPlay()) || this.game.editorMode() || this.canAttack()),
+      ((this.zone() === 'hand' && this.canPlay()) || this.game.editorMode() || this.canAttack() || this.canLink()),
   );
   /** One of your creatures that can attack now: dragged onto a target, it attacks. */
   protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
@@ -154,13 +154,10 @@ export class SimCardComponent {
   protected readonly actions = computed<LegalAction[]>(() =>
     this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
   );
-  /** Enlace, in my main phase: the creatures next to it it can link with now ("Enlazar con …"). */
-  protected readonly joins = computed(() => {
-    if (this.opponent() || this.lookOnly() || this.zone() !== 'field') return [];
-    const ids = this.game.rules().formationJoins[this.slot().instanceId] ?? [];
-    const field = this.game.myState()?.field ?? [];
-    return ids.map((id) => ({ id, name: field.find((c) => c.instanceId === id)?.cardName ?? 'la criatura' }));
-  });
+  /** Enlace, in my main phase: a creature of the Línea frontal that can link now; dragged onto my front line, the link sheet opens. */
+  protected readonly canLink = computed(
+    () => !this.opponent() && !this.lookOnly() && this.zone() === 'field' && !!this.game.rules().formationJoins[this.slot().instanceId],
+  );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));
 
@@ -256,12 +253,6 @@ export class SimCardComponent {
         return;
       }
     }
-  }
-
-  protected join(targetId: string, event: Event): void {
-    event.stopPropagation();
-    this.game.selectedId.set(null);
-    this.game.formationJoin(this.slot().instanceId, targetId);
   }
 
   protected activate(scriptId: string, event: Event): void {

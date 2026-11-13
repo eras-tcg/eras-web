@@ -121,11 +121,8 @@
       }
     </div>
   }
-  @if (p.field.length === 0 && (opponent() || touchOnly)) {
-    <span class="hint">{{ opponent() ? 'Campo del rival' : 'Toca una carta de tu mano para jugarla' }}</span>
-  }
-  @if (nearby() && !opponent()) {
-    <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>
+  @if (p.field.length === 0 && opponent()) {
+    <span class="hint">Campo del rival</span>
   }
 </div>
 

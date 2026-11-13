@@ -333,15 +333,6 @@ eras-player-plate {
   border-radius: var(--radius-sm);
 }
 
-.interact-hint {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: var(--space-2);
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  text-align: center;
-}
 
 // The hand lies at the edge of the table: its cards go past it (the board clips them), so only their upper half
 // (the art) shows. The rival's hangs from the top edge.

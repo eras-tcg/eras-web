@@ -51,10 +51,6 @@
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
-  @if (orderText(); as text) {
-    <!-- Sending the rest: what number 1 means -->
-    <p class="hint">{{ text }}</p>
-  }
   <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
   <div class="cards" role="group" [attr.aria-label]="prompt.title">
     <ng-template #slotTpl let-c>

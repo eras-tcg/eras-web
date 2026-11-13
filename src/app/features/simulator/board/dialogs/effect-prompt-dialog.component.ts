@@ -17,7 +17,7 @@ import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconName } from '@ui/primitives/icon/icon.component';
 import { EffectCardPanelComponent } from '../effect-card-panel.component';
-import { OrderEnd, orderComplete, orderHint, toggleInOrder } from '../card-order';
+import { OrderEnd, orderComplete, toggleInOrder } from '../card-order';
 import { FormationEntryComponent } from './formation-entry.component';
 
 export interface EffectPromptData {
@@ -103,7 +103,6 @@ export class EffectPromptDialogComponent {
   protected readonly needsOrder = computed(() => this.ordering && this.rest().length > 1);
   private readonly orderReady = computed(() => !this.needsOrder() || orderComplete(this.restOrder(), this.rest()));
   /** Sending the rest: what number 1 means. */
-  protected readonly orderText = computed(() => (this.step() === 'rest' && this.needsOrder() ? orderHint(this.orderOnly ? null : this.restEnd) : null));
   /**
    * Under the title: what an effect's text asks to do (the rules' own choices say it in their title and buttons); sending
    * the rest, where it goes.

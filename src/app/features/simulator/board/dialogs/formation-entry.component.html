@@ -14,7 +14,7 @@
 </ng-template>
 
 <div class="wrap" #wrap>
-  <div class="row" #row role="group" [attr.aria-label]="prompt().title" (wheel)="wheel($event)">
+  <div class="row" #row erasWheelScrollX role="group" [attr.aria-label]="prompt().title">
     @for (it of layout(); track $index) {
       @if (it.kind === 'gap') {
         @if (it.target; as target) {

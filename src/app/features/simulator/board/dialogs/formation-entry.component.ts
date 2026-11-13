@@ -1,3 +1,4 @@
+import { WheelScrollXDirective } from '@ui/primitives/wheel-scroll/wheel-scroll.directive';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
 import { CardSlot, EffectPrompt } from '@data/simulator/simulator.model';
 import { NgTemplateOutlet } from '@angular/common';
@@ -22,7 +23,7 @@ const EDGE_SPEED = 14;
  */
 @Component({
   selector: 'eras-formation-entry',
-  imports: [GameCardComponent, CardPeekComponent, NgTemplateOutlet, ZoneBoxComponent],
+  imports: [WheelScrollXDirective, GameCardComponent, CardPeekComponent, NgTemplateOutlet, ZoneBoxComponent],
   templateUrl: './formation-entry.component.html',
   styleUrl: './formation-entry.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -168,11 +169,4 @@ export class FormationEntryComponent {
     this.frame = requestAnimationFrame(() => this.edgeScroll());
   }
 
-  /** The mouse wheel up or down scrolls the row sideways. */
-  protected wheel(e: WheelEvent): void {
-    const row = this.row().nativeElement;
-    if (row.scrollWidth <= row.clientWidth || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
-    e.preventDefault();
-    row.scrollLeft += e.deltaY;
-  }
 }

@@ -80,8 +80,8 @@ export interface ZoneDialogData {
               @if (actionsOf(c).includes('ritual')) {
                 <button erasButton size="sm" type="button" (click)="special(c)">{{ kindLabel(c) }}</button>
               }
-              @for (e of effectsOf(c); track e.scriptId) {
-                <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">{{ e.label }}</button>
+              @for (e of effectsOf(c); track e.scriptId; let n = $index, many = $count) {
+                <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">Activar efecto{{ many > 1 ? ' ' + (n + 1) : '' }}</button>
               }
 
             </li>

@@ -1,3 +1,4 @@
+import { WheelScrollXDirective } from '@ui/primitives/wheel-scroll/wheel-scroll.directive';
 import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { ZoneBoxComponent } from '@ui/domain/zone-box/zone-box.component';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
@@ -36,7 +37,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent, PickCardComponent, ZoneBoxComponent],
+  imports: [WheelScrollXDirective, SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent, PickCardComponent, ZoneBoxComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

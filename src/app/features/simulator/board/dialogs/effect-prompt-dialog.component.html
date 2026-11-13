@@ -52,7 +52,7 @@
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
   <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
-  <div class="cards" role="group" [attr.aria-label]="prompt.title">
+  <div class="cards" erasWheelScrollX role="group" [attr.aria-label]="prompt.title">
     <ng-template #slotTpl let-c>
       <div class="slot">
         <!-- Sending the rest, a tap numbers the card; else it picks it -->

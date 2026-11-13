@@ -1222,7 +1222,7 @@ protoOf(ArrayListSerializer).rn = function (_this__u8e3s4, expectedSize) {
     return ArrayList_init_$Create$_1(_this__u8e3s4);
   // Inline function 'kotlin.also' call
   var this_0 = ArrayList_init_$Create$_0(expectedSize);
-  this_0.s(_this__u8e3s4);
+  this_0.r(_this__u8e3s4);
   return this_0;
 };
 protoOf(ArrayListSerializer).sn = function (_this__u8e3s4, expectedSize) {

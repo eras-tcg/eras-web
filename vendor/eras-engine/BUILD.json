@@ -1,8 +1,8 @@
 {
-  "commit": "aea0384cef2250ff3807da20bea1d5cefb81dca3",
+  "commit": "df4f77402a352f37fffe6ba6f445b0711dc56c70",
   "dirty": false,
-  "subject": "wip(deckboxes): a deck is in one deckbox at most (work in progress, not run here)",
-  "copiedAt": "2026-11-12T00:00:18.543Z",
+  "subject": "feat(cards): program the 13 Ángeles cards in testing (T1)",
+  "copiedAt": "2026-11-13T11:28:49.519Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

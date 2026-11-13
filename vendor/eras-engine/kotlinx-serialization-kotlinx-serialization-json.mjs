@@ -537,9 +537,9 @@ protoOf(JsonArray).l = function (index) {
   return this.jz_1.l(index);
 };
 protoOf(JsonArray).lz = function (element) {
-  return this.jz_1.r(element);
+  return this.jz_1.s(element);
 };
-protoOf(JsonArray).r = function (element) {
+protoOf(JsonArray).s = function (element) {
   if (!(element instanceof JsonElement))
     return -1;
   return this.lz(element instanceof JsonElement ? element : THROW_CCE());

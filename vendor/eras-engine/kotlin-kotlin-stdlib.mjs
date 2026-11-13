@@ -794,8 +794,20 @@ function first(_this__u8e3s4) {
 function distinct(_this__u8e3s4) {
   return toList_0(toMutableSet(_this__u8e3s4));
 }
+function plus(_this__u8e3s4, elements) {
+  if (isInterface(elements, Collection)) {
+    var result = ArrayList_init_$Create$_0(_this__u8e3s4.k() + elements.k() | 0);
+    result.r(_this__u8e3s4);
+    result.r(elements);
+    return result;
+  } else {
+    var result_0 = ArrayList_init_$Create$_1(_this__u8e3s4);
+    addAll_0(result_0, elements);
+    return result_0;
+  }
+}
 function indexOf_5(_this__u8e3s4, element) {
-  return _this__u8e3s4.r(element);
+  return _this__u8e3s4.s(element);
 }
 function lastOrNull(_this__u8e3s4) {
   return _this__u8e3s4.m() ? null : _this__u8e3s4.l(_this__u8e3s4.k() - 1 | 0);
@@ -815,18 +827,6 @@ function toDoubleArray(_this__u8e3s4) {
     result[_unary__edvuaz] = element;
   }
   return result;
-}
-function plus(_this__u8e3s4, elements) {
-  if (isInterface(elements, Collection)) {
-    var result = ArrayList_init_$Create$_0(_this__u8e3s4.k() + elements.k() | 0);
-    result.s(_this__u8e3s4);
-    result.s(elements);
-    return result;
-  } else {
-    var result_0 = ArrayList_init_$Create$_1(_this__u8e3s4);
-    addAll_0(result_0, elements);
-    return result_0;
-  }
 }
 function toList_0(_this__u8e3s4) {
   if (isInterface(_this__u8e3s4, Collection)) {
@@ -868,7 +868,7 @@ function toMutableList(_this__u8e3s4) {
 }
 function indexOf_6(_this__u8e3s4, element) {
   if (isInterface(_this__u8e3s4, KtList))
-    return _this__u8e3s4.r(element);
+    return _this__u8e3s4.s(element);
   var index = 0;
   var _iterator__ex2g4s = _this__u8e3s4.h();
   while (_iterator__ex2g4s.i()) {
@@ -3229,7 +3229,7 @@ protoOf(AbstractMutableCollection).y1 = function (element) {
   }
   return false;
 };
-protoOf(AbstractMutableCollection).s = function (elements) {
+protoOf(AbstractMutableCollection).r = function (elements) {
   this.g3();
   var modified = false;
   var _iterator__ex2g4s = elements.h();
@@ -3383,9 +3383,9 @@ protoOf(AbstractMutableList).h = function () {
   return new IteratorImpl(this);
 };
 protoOf(AbstractMutableList).n = function (element) {
-  return this.r(element) >= 0;
+  return this.s(element) >= 0;
 };
-protoOf(AbstractMutableList).r = function (element) {
+protoOf(AbstractMutableList).s = function (element) {
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.indexOfFirst' call
@@ -3638,7 +3638,7 @@ protoOf(ArrayList).e2 = function (index, element) {
   this.p_1.splice(insertionRangeCheck(this, index), 0, element);
   this.l3_1 = this.l3_1 + 1 | 0;
 };
-protoOf(ArrayList).s = function (elements) {
+protoOf(ArrayList).r = function (elements) {
   this.g3();
   if (elements.m())
     return false;
@@ -3660,13 +3660,13 @@ protoOf(ArrayList).b2 = function (index, elements) {
   this.g3();
   insertionRangeCheck(this, index);
   if (index === this.k())
-    return this.s(elements);
+    return this.r(elements);
   if (elements.m())
     return false;
   // Inline function 'kotlin.js.asDynamic' call
   // Inline function 'kotlin.js.unsafeCast' call
   var tail = this.p_1.splice(index);
-  this.s(elements);
+  this.r(elements);
   var offset = increaseLength(this, tail.length);
   // Inline function 'kotlin.repeat' call
   var times = tail.length;
@@ -3726,7 +3726,7 @@ protoOf(ArrayList).a2 = function () {
   tmp.p_1 = [];
   this.l3_1 = this.l3_1 + 1 | 0;
 };
-protoOf(ArrayList).r = function (element) {
+protoOf(ArrayList).s = function (element) {
   return indexOf(this.p_1, element);
 };
 protoOf(ArrayList).toString = function () {
@@ -3964,7 +3964,7 @@ protoOf(HashMapKeys).a2 = function () {
 protoOf(HashMapKeys).f = function (element) {
   throw UnsupportedOperationException_init_$Create$();
 };
-protoOf(HashMapKeys).s = function (elements) {
+protoOf(HashMapKeys).r = function (elements) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(HashMapKeys).y1 = function (element) {
@@ -4003,7 +4003,7 @@ protoOf(HashMapValues).f = function (element) {
 protoOf(HashMapValues).e5 = function (elements) {
   throw UnsupportedOperationException_init_$Create$();
 };
-protoOf(HashMapValues).s = function (elements) {
+protoOf(HashMapValues).r = function (elements) {
   return this.e5(elements);
 };
 protoOf(HashMapValues).h = function () {
@@ -4053,7 +4053,7 @@ protoOf(HashMapEntrySetBase).m5 = function (element) {
 protoOf(HashMapEntrySetBase).f = function (element) {
   return this.m5((!(element == null) ? isInterface(element, Entry) : false) ? element : THROW_CCE());
 };
-protoOf(HashMapEntrySetBase).s = function (elements) {
+protoOf(HashMapEntrySetBase).r = function (elements) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(HashMapEntrySetBase).n5 = function (element) {
@@ -7502,7 +7502,7 @@ function AbstractList() {
 protoOf(AbstractList).h = function () {
   return new IteratorImpl_0(this);
 };
-protoOf(AbstractList).r = function (element) {
+protoOf(AbstractList).s = function (element) {
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.indexOfFirst' call
@@ -7858,7 +7858,7 @@ protoOf(EmptyList).l = function (index) {
 protoOf(EmptyList).wc = function (element) {
   return -1;
 };
-protoOf(EmptyList).r = function (element) {
+protoOf(EmptyList).s = function (element) {
   if (!false)
     return -1;
   var tmp;
@@ -8204,11 +8204,11 @@ function filterInPlace_0(_this__u8e3s4, predicate, predicateResultToRemove) {
   return result;
 }
 function addAll(_this__u8e3s4, elements) {
-  return _this__u8e3s4.s(asList(elements));
+  return _this__u8e3s4.r(asList(elements));
 }
 function addAll_0(_this__u8e3s4, elements) {
   if (isInterface(elements, Collection))
-    return _this__u8e3s4.s(elements);
+    return _this__u8e3s4.r(elements);
   else {
     var result = false;
     var _iterator__ex2g4s = elements.h();
@@ -8652,7 +8652,7 @@ protoOf(EnumEntriesList).oe = function (element) {
   var target = getOrNull(this.me_1, ordinal);
   return target === element ? ordinal : -1;
 };
-protoOf(EnumEntriesList).r = function (element) {
+protoOf(EnumEntriesList).s = function (element) {
   if (!(element instanceof Enum))
     return -1;
   return this.oe(element instanceof Enum ? element : THROW_CCE());

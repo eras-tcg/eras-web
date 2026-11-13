@@ -6,17 +6,17 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
 import { holdToPeek } from './hold-peek';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 
 /**
- * Beside a choice, the card it is about: big, with its effects written out, and the effect that asks lit up in
- * cyan. The choice below then only says what to do and shows the cards to pick. Held pressed anywhere on the panel, the
+ * Beside a choice, the card it is about: big, with its effects written out (`eras-effect-line`), and the effect that
+ * asks lit up in the activating color (`--color-sim-effect-active`). The choice below then only says what to do and shows the cards to pick. Held pressed anywhere on the panel, the
  * card opens in detail, as any card listed in a choice.
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [IconComponent],
+  imports: [EffectLineComponent],
   template: `
     @if (imageUrl()) {
       <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
@@ -32,31 +32,17 @@ import { effectLines, matchingLine } from './card-effect-lines';
       <ul class="effects" aria-label="Efectos de la carta">
         @for (line of lines(); track $index) {
           <li class="effect" [class.active]="$index === active()" [attr.aria-current]="$index === active() ? 'true' : null">
-            @if (line.moment || line.tags.length) {
-              <span class="chips">
-                @if ($index === active()) {
-                  <span class="chip now"><eras-icon name="zap" /> Se activa</span>
-                }
-                @if (line.moment) {
-                  <span class="chip moment">{{ line.moment }}</span>
-                }
-                @for (t of line.tags; track $index) {
-                  <span class="chip">{{ t }}</span>
-                }
-              </span>
-            }
-            <span class="text">{{ line.text }}</span>
+            <eras-effect-line [moment]="line.moment" [tags]="line.tags" [text]="line.text" [activeLabel]="$index === active() ? 'Se activa' : null" />
           </li>
         }
       </ul>
-    } @else if (fallbackText()) {
+    } @else if (fallbackText(); as text) {
       <!-- No card data (yet): the effect's own text -->
-      <p class="effect active"><span class="text">{{ fallbackText() }}</span></p>
+      <div class="effect active"><eras-effect-line [text]="text" /></div>
     }
   `,
   styles: `
     :host {
-      --panel-cyan: #38bdf8;
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
@@ -94,36 +80,18 @@ import { effectLines, matchingLine } from './card-effect-lines';
     .fact small { color: var(--color-text-muted); }
     .effects { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
     .effect {
-      display: grid;
-      gap: var(--space-1);
       margin: 0;
       padding: var(--space-2);
       border-radius: var(--radius-md);
       background: var(--color-surface-muted);
       font-size: var(--font-size-sm);
-      line-height: 1.45;
       transition: background var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
     }
-    /* The effect that asks: cyan, as the game marks what is activating */
+    /* The effect that asks: in the color the game marks what is activating */
     .effect.active {
-      background: color-mix(in srgb, var(--panel-cyan) 18%, var(--color-surface));
-      box-shadow: inset 3px 0 0 var(--panel-cyan), 0 0 14px color-mix(in srgb, var(--panel-cyan) 35%, transparent);
+      background: color-mix(in srgb, var(--color-sim-effect-active) 18%, var(--color-surface));
+      box-shadow: inset 3px 0 0 var(--color-sim-effect-active), 0 0 14px color-mix(in srgb, var(--color-sim-effect-active) 35%, transparent);
     }
-    .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      padding: 0 var(--space-2);
-      border-radius: var(--radius-pill);
-      background: var(--color-surface);
-      color: var(--color-text-muted);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-bold);
-    }
-    .chip.moment { color: var(--color-text); }
-    .chip.now { background: var(--panel-cyan); color: #04202e; }
-    .chip eras-icon { inline-size: 0.8rem; block-size: 0.8rem; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

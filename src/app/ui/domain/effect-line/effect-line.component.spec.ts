@@ -20,4 +20,9 @@ describe('EffectLineComponent', () => {
     const el = render({ text: 'Gana +1 de fuerza.', source: 'Recurso X', moment: 'Al Atacar', tags: ['una vez por turno'] });
     expect(chips(el)).toEqual(['source:Recurso X', 'moment:Al Atacar', 'tag:una vez por turno']);
   });
+
+  it('puts the active chip before everything else', () => {
+    const el = render({ text: 'Roba 1 carta.', moment: 'Al Invocar', activeLabel: 'Se activa' });
+    expect(chips(el)).toEqual(['active:Se activa', 'moment:Al Invocar']);
+  });
 });

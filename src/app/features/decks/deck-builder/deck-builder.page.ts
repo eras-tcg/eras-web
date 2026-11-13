@@ -117,6 +117,11 @@ export class DeckBuilderPage {
   // ── Collection ────────────────────────────────────────────────────────
   /** Copies the deck needs that the player does not own (signed in only). */
   protected readonly missing = computed(() => (this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0));
+  /** A card in testing: outside the economy (always available, never crafted or broken). */
+  protected testCard(card: CatalogCard): boolean {
+    return isTestEdition(card.edition);
+  }
+
   protected owns(card: CatalogCard): boolean {
     // A card in testing is never owned: a tester uses it as if it were (it plays in the test room)
     return !this.signedIn() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;

@@ -29,7 +29,7 @@
             <span>{{ draft.countOf(card.id) }} en el mazo</span>
             <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+1</button>
           </eras-stack>
-          @if (signedIn() && card.meta) {
+          @if (signedIn() && card.meta && !testCard(card)) {
             <eras-collection-panel ngProjectAs="[detail-under-image]" [card]="card" />
           }
         </eras-card-detail>

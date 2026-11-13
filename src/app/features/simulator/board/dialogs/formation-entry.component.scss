@@ -1,5 +1,3 @@
-@use 'zone-box';
-
 // The row takes the height the sheet leaves it; the cards are as tall as it lets them (never taller than a choice's cards)
 :host {
   --entry-card-width: min(7rem, calc((100cqh - 3.4rem) * 63 / 88));
@@ -27,26 +25,6 @@
   overscroll-behavior: contain;
   padding-block-end: var(--space-1);
   touch-action: pan-x;
-}
-
-.zone-box {
-  position: relative;
-}
-
-// A loose creature: no box (only its room), unless the entering one forms a formation with it
-.zone-box:not(.boxed) {
-  border-color: transparent;
-  background: none;
-}
-
-// The dragged creature over one of its sides: the box it would be in lights up
-.zone-box.lit {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-}
-
-.zone-box.lit:not(.boxed) {
-  border-style: dashed;
 }
 
 .member,

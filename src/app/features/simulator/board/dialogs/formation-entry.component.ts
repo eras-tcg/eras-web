@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, i
 import { CardSlot, EffectPrompt } from '@data/simulator/simulator.model';
 import { NgTemplateOutlet } from '@angular/common';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { ZoneBoxComponent } from '@ui/domain/zone-box/zone-box.component';
 import { CardPeekComponent } from '../card-peek.component';
 import { MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from '../formation-entry';
 
@@ -22,7 +22,7 @@ const EDGE_SPEED = 14;
  */
 @Component({
   selector: 'eras-formation-entry',
-  imports: [GameCardComponent, IconComponent, CardPeekComponent, NgTemplateOutlet],
+  imports: [GameCardComponent, CardPeekComponent, NgTemplateOutlet, ZoneBoxComponent],
   templateUrl: './formation-entry.component.html',
   styleUrl: './formation-entry.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

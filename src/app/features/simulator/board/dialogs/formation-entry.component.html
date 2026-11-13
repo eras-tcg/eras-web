@@ -27,31 +27,34 @@
         }
       } @else {
         <!-- A formation boxed as a zone of a choice; a loose creature, boxed only when the entering one forms one with it -->
-        <section class="zone-box" [class.boxed]="it.formation || it.joined" [class.lit]="!!hover() && it.targets.includes(hover()!)">
-          @if (it.formation || it.joined) {
-            <span class="zone-name"><eras-icon name="link" /> Formación</span>
-          }
-          <div class="zone-cards">
-            @for (c of it.items; track c.kind === 'card' ? c.card.instanceId : 'subject') {
-              @if (c.kind === 'subject') {
-                <ng-container *ngTemplateOutlet="subjectTpl" />
-              } @else {
-                <div class="member" [class.over-left]="!!c.left && hover() === c.left" [class.over-right]="!!c.right && hover() === c.right">
-                  <eras-game-card [imageUrl]="c.card.imageUrl" [foil]="c.card.finish ?? null" [name]="c.card.cardName" />
-                  <!-- Its sides: the link through each one, where the engine gives it -->
-                  @if (c.left; as target) {
-                    <span class="half left" [attr.data-target]="target" aria-hidden="true"></span>
-                  }
-                  @if (c.right; as target) {
-                    <span class="half right" [attr.data-target]="target" aria-hidden="true"></span>
-                  }
-                  <!-- Held pressed: the card in detail -->
-                  <eras-card-peek [card]="c.card" />
-                </div>
-              }
+        <!-- class zone-box / boxed: what the drag measures (formation-entry.ts) -->
+        <eras-zone-box
+          class="zone-box"
+          [class.boxed]="it.formation || it.joined"
+          [label]="it.formation || it.joined ? 'Formación' : null"
+          icon="link"
+          [bare]="!(it.formation || it.joined)"
+          [lit]="!!hover() && it.targets.includes(hover()!)"
+        >
+          @for (c of it.items; track c.kind === 'card' ? c.card.instanceId : 'subject') {
+            @if (c.kind === 'subject') {
+              <ng-container *ngTemplateOutlet="subjectTpl" />
+            } @else {
+              <div class="member" [class.over-left]="!!c.left && hover() === c.left" [class.over-right]="!!c.right && hover() === c.right">
+                <eras-game-card [imageUrl]="c.card.imageUrl" [foil]="c.card.finish ?? null" [name]="c.card.cardName" />
+                <!-- Its sides: the link through each one, where the engine gives it -->
+                @if (c.left; as target) {
+                  <span class="half left" [attr.data-target]="target" aria-hidden="true"></span>
+                }
+                @if (c.right; as target) {
+                  <span class="half right" [attr.data-target]="target" aria-hidden="true"></span>
+                }
+                <!-- Held pressed: the card in detail -->
+                <eras-card-peek [card]="c.card" />
+              </div>
             }
-          </div>
-        </section>
+          }
+        </eras-zone-box>
       }
     }
   </div>

@@ -101,14 +101,11 @@
       }
     } @else {
       @for (g of groups(); track g.zone) {
-        <section class="zone-box" [attr.aria-label]="g.zone">
-          <span class="zone-name"><eras-icon [name]="zoneIcon(g.zone)" /> {{ g.zone }}</span>
-          <div class="zone-cards">
-            @for (c of g.cards; track c.instanceId) {
-              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
-            }
-          </div>
-        </section>
+        <eras-zone-box [label]="g.zone" [icon]="zoneIcon(g.zone)">
+          @for (c of g.cards; track c.instanceId) {
+            <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
+          }
+        </eras-zone-box>
       }
     }
   </div>

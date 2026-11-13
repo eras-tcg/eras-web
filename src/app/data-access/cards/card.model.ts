@@ -57,6 +57,9 @@ export interface CardMeta {
   /** Criatura Enlace: the link effect it gives the neighbours it points to. */
   formationEffects?: CardEffect[] | null;
   formationKeywordEffects?: KeywordEffect[] | null;
+  /** Criatura Enlace: the category and its printed arrows ("left", "right"). */
+  enlace?: boolean | null;
+  arrows?: string[] | null;
   specialCost?: number | null;
   specialSummonKind?: string | null;
   requirement?: string | null;

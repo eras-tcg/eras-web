@@ -48,6 +48,10 @@ export function cardDetailView(card: CatalogCard, ref: CardRefData | null, unpro
           title: 'Efectos heredados',
           lines: [...(meta.inheritEffects ?? []).map((e) => renderEffect(e, ref)), ...(meta.inheritKeywordEffects ?? []).map((k) => renderKeywordEffect(k, ref))],
         },
+        {
+          title: 'Efectos de enlace',
+          lines: [...(meta.formationEffects ?? []).map((e) => renderEffect(e, ref)), ...(meta.formationKeywordEffects ?? []).map((k) => renderKeywordEffect(k, ref))],
+        },
       ]
     : [];
   return {

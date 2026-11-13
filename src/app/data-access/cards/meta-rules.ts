@@ -22,6 +22,11 @@ export interface MetaForm {
   inheritEffects: CardEffect[];
   keywordEffects: KeywordEffect[];
   inheritKeywordEffects: KeywordEffect[];
+  /** Criatura Enlace: its arrows ("left", "right") and the link effect it gives the neighbours it points to. */
+  enlace: boolean;
+  arrows: string[];
+  formationEffects: CardEffect[];
+  formationKeywordEffects: KeywordEffect[];
 }
 
 const clone = <T>(v: T): T => structuredClone(v);
@@ -47,6 +52,10 @@ export const blankMeta = (edition = ''): MetaForm => ({
   inheritEffects: [],
   keywordEffects: [],
   inheritKeywordEffects: [],
+  enlace: false,
+  arrows: [],
+  formationEffects: [],
+  formationKeywordEffects: [],
 });
 
 const editionOf = (d: Pick<DriveCard, 'edition' | 'sub_edition'>) => (d.sub_edition ? `${d.edition}.${d.sub_edition}` : d.edition);
@@ -69,6 +78,10 @@ function gameFields(m: CardMeta): Partial<MetaForm> {
     inheritEffects: clone(m.inheritEffects ?? []),
     keywordEffects: clone(m.keywordEffects ?? []),
     inheritKeywordEffects: clone(m.inheritKeywordEffects ?? []),
+    enlace: m.enlace ?? false,
+    arrows: [...(m.arrows ?? [])],
+    formationEffects: clone(m.formationEffects ?? []),
+    formationKeywordEffects: clone(m.formationKeywordEffects ?? []),
   };
 }
 
@@ -145,6 +158,11 @@ export function toMetaPayload(f: MetaForm): Omit<CardMeta, 'id'> {
     inheritEffects: f.inheritEffects,
     keywordEffects: f.keywordEffects.filter((k) => k.keyword),
     inheritKeywordEffects: f.inheritKeywordEffects.filter((k) => k.keyword),
+    // Enlace: kept as they are (the backend leaves them out when empty)
+    enlace: f.enlace || null,
+    arrows: f.arrows.length ? f.arrows : null,
+    formationEffects: f.formationEffects.length ? f.formationEffects : null,
+    formationKeywordEffects: f.formationKeywordEffects.filter((k) => k.keyword).length ? f.formationKeywordEffects.filter((k) => k.keyword) : null,
   };
 }
 

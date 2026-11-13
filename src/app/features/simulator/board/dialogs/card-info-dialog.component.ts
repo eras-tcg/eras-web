@@ -67,6 +67,11 @@ export class CardInfoDialogComponent {
     const m = this.meta(this.slot()?.cardId);
     return this.lines(m?.effects, m?.keywordEffects);
   });
+  /** Criatura Enlace: its printed link effect (what it gives the neighbours it points to). */
+  protected readonly ownLink = computed(() => {
+    const m = this.meta(this.slot()?.cardId);
+    return this.lines(m?.formationEffects, m?.formationKeywordEffects);
+  });
   /** Its Recursos, with what each one gives it. */
   protected readonly resourceViews = computed(() =>
     (this.slot()?.resources ?? []).map((r) => {

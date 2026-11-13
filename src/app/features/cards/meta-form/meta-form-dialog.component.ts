@@ -29,8 +29,8 @@ export interface MetaFormData {
   ref: CardRefData | null;
 }
 
-type EffectList = 'effects' | 'inheritEffects';
-type KeywordList = 'keywordEffects' | 'inheritKeywordEffects';
+type EffectList = 'effects' | 'inheritEffects' | 'formationEffects';
+type KeywordList = 'keywordEffects' | 'inheritKeywordEffects' | 'formationKeywordEffects';
 type NumberField = 'cardNumber' | 'strength' | 'cost' | 'level' | 'specialCost';
 
 /** Create or edit a card's metadata (manage_cards). Closes with `true` when saved. */
@@ -73,14 +73,17 @@ export class MetaFormDialogComponent {
   protected readonly classes = computed(() => [...(this.data.ref?.classes ?? [])].sort());
   protected readonly keywords = computed(() => Object.keys(this.data.ref?.keywordEffects ?? {}).sort());
   protected readonly summary = effectSummary;
-  protected readonly effectLists: { key: EffectList; title: string }[] = [
+  // A Criatura Enlace also has its link effect (what it gives the neighbours it points to)
+  protected readonly effectLists = computed<{ key: EffectList; title: string }[]>(() => [
     { key: 'effects', title: 'Efectos' },
     { key: 'inheritEffects', title: 'Efectos heredados' },
-  ];
-  protected readonly keywordLists: { key: KeywordList; title: string }[] = [
+    ...(this.f().enlace ? [{ key: 'formationEffects' as const, title: 'Efectos de enlace' }] : []),
+  ]);
+  protected readonly keywordLists = computed<{ key: KeywordList; title: string }[]>(() => [
     { key: 'keywordEffects', title: 'Keywords' },
     { key: 'inheritKeywordEffects', title: 'Keywords heredados' },
-  ];
+    ...(this.f().enlace ? [{ key: 'formationKeywordEffects' as const, title: 'Keywords de enlace' }] : []),
+  ]);
 
   protected set<K extends keyof MetaForm>(key: K, value: MetaForm[K]): void {
     this.f.update((f) => ({ ...f, [key]: value }));

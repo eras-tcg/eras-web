@@ -84,7 +84,7 @@
 
       <eras-multiselect label="Clases" placeholder="Ninguna" [options]="classes()" [value]="v.cardClasses" (valueChange)="set('cardClasses', $event)" />
 
-      @for (list of effectLists; track list.key) {
+      @for (list of effectLists(); track list.key) {
         @let key = list.key;
         <eras-section-header [title]="list.title">
           <button erasButton variant="secondary" size="sm" type="button" (click)="editEffect(key, null)"><eras-icon name="plus" /> Agregar</button>
@@ -100,7 +100,7 @@
         }
       }
 
-      @for (list of keywordLists; track list.key) {
+      @for (list of keywordLists(); track list.key) {
         @let key = list.key;
         <eras-section-header [title]="list.title">
           <button erasButton variant="secondary" size="sm" type="button" [disabled]="keywords().length === 0" (click)="addKeyword(key)"><eras-icon name="plus" /> Agregar</button>

@@ -77,6 +77,26 @@
                 <p class="muted">Sin efectos.</p>
               }
             </section>
+            @if (ownLink().length) {
+              <section class="panel">
+                <h4><eras-icon name="link" /> Efecto de enlace</h4>
+                @for (line of ownLink(); track $index) {
+                  <div class="effect">
+                    @if (line.moment || line.tags.length) {
+                      <div class="chips">
+                        @if (line.moment) {
+                          <span class="chip moment">{{ line.moment }}</span>
+                        }
+                        @for (t of line.tags; track $index) {
+                          <span class="chip tag">{{ t }}</span>
+                        }
+                      </div>
+                    }
+                    <p>{{ line.text }}</p>
+                  </div>
+                }
+              </section>
+            }
             @if (inheritedLines().length) {
               <section class="panel">
                 <h4><eras-icon name="layers" /> Efectos de sus recursos</h4>
@@ -97,8 +117,8 @@
               </section>
             }
             @if (grants().length) {
-              <section class="panel" aria-label="Efectos de enlace">
-                <h4><eras-icon name="link" /> Efectos de enlace</h4>
+              <section class="panel" aria-label="Recibe por enlace">
+                <h4><eras-icon name="link" /> Recibe por enlace</h4>
                 @for (e of grants(); track $index) {
                   <div class="effect">
                     <div class="chips">

@@ -132,7 +132,6 @@
           <button erasButton variant="ghost" type="button" [disabled]="sending()" (click)="back()">Volver</button>
         }
         @if (needsOrder()) {
-          <button erasButton variant="ghost" type="button" [disabled]="!restOrder().length || sending()" (click)="restOrder.set([])">Reiniciar orden</button>
           <span class="count">{{ restOrder().length }} de {{ restCount() }}</span>
         }
         @if (orderOnly) {

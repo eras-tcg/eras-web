@@ -89,7 +89,8 @@
 .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 // Sending the rest: a numbered card (its place in the order), framed and marked in the primary color
 .pick.numbered { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
-.chosen-mark.order { background: var(--color-primary); }
+// The number in the theme's text color over its primary color (white on a light primary could not be read)
+.chosen-mark.order { border-color: var(--color-on-primary); background: var(--color-primary); color: var(--color-on-primary); }
 
 eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
 @keyframes new-card {

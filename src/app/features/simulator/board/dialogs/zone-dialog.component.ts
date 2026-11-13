@@ -5,6 +5,7 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZONE_LABELS, ZoneName } from '@data/simulator/simulator.model';
 import { legalActions, specialKindLabel } from '@data/simulator/legal-actions';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -36,7 +37,7 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent, PickCardComponent],
   template: `
     <eras-modal size="xl" [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -55,11 +56,11 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li>
               <button
+                erasPickCard
                 type="button"
                 class="pick"
-                [class.chosen]="selected().has(c.instanceId)"
-                [class.static]="!canAct()"
-                [attr.aria-pressed]="canAct() ? selected().has(c.instanceId) : null"
+                [chosen]="selected().has(c.instanceId)"
+                [viewOnly]="!canAct()"
                 [attr.aria-label]="label(c, i)"
                 (click)="canAct() && toggle(c.instanceId)"
               >
@@ -110,25 +111,6 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
       list-style: none;
     }
     li { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-    .pick {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1);
-      border: 2px solid transparent;
-      border-radius: var(--radius-md);
-      background: none;
-      color: inherit;
-      cursor: pointer;
-    }
-    .pick:hover:not(.static) { background: var(--color-surface-muted); }
-    .pick.static { cursor: default; }
-    // Selected: the same glow as the choices of an effect
-    .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
-    .pick.chosen eras-game-card { box-shadow: 0 0 0 2px var(--color-success), 0 0 14px 3px color-mix(in srgb, var(--color-success) 60%, transparent); }
-    .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .position { color: var(--color-text-muted); font-size: var(--font-size-xs); }
     .send {
       position: absolute;

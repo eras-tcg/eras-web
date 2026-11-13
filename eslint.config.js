@@ -40,6 +40,7 @@ module.exports = defineConfig([
       'src/app/ui/primitives/button/*.ts',
       'src/app/ui/primitives/chip/*.ts',
       'src/app/ui/primitives/icon-button/*.ts',
+      'src/app/ui/domain/pick-card/*.ts',
       'src/app/features/simulator/board/sidebar-item.component.ts',
     ],
     rules: {

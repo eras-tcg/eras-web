@@ -61,14 +61,15 @@
       <div class="slot">
         <!-- Sending the rest, a tap numbers the card; else it picks it -->
         <button
+          erasPickCard
           type="button"
           class="pick"
-          [class.static]="prompt.kind === 'CONFIRM'"
-          [class.chosen]="chosen().has(c.instanceId)"
-          [class.numbered]="numberOf(c) > 0"
-          [class.locked]="step() === 'pick' && !selectable(c)"
+          [viewOnly]="prompt.kind === 'CONFIRM'"
+          [chosen]="chosen().has(c.instanceId)"
+          [mark]="chainNumber(c.instanceId)"
+          [order]="numberOf(c)"
+          [dimmed]="step() === 'pick' && !selectable(c)"
           [disabled]="sending() || prompt.kind === 'CONFIRM' || (step() === 'pick' && !selectable(c))"
-          [attr.aria-pressed]="step() === 'rest' ? numberOf(c) > 0 : chosen().has(c.instanceId)"
           [attr.aria-label]="
             (c.cardName ?? 'Carta') +
             (step() === 'rest'
@@ -83,18 +84,7 @@
           } @else {
             <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
-          <!-- Chosen: the green frame and a mark over the card (its link number when it chains); nothing under it -->
-          @if (chosen().has(c.instanceId)) {
-            <span class="chosen-mark">
-              @if (chainNumber(c.instanceId); as n) {
-                {{ n }}
-              } @else {
-                <eras-icon name="check" />
-              }
-            </span>
-          } @else if (numberOf(c); as n) {
-            <span class="chosen-mark order">{{ n }}</span>
-          }
+          <!-- Chosen: the green frame and a check over the card (its link number when it chains); nothing under it -->
           @if (!chosen().has(c.instanceId) && valid.has(c.instanceId) && prompt.cardLabels?.[c.instanceId]; as effectLabel) {
             <span class="tag">{{ effectLabel }}</span>
           }

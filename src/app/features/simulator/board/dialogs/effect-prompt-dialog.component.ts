@@ -1,3 +1,4 @@
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
@@ -34,7 +35,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent, PickCardComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

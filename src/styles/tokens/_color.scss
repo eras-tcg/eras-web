@@ -14,6 +14,8 @@
   --color-focus: var(--theme-focus);
   --color-danger: var(--theme-danger);
   --color-success: var(--theme-success);
+  /** Text and marks on the success color (a chosen card's check), in every theme */
+  --color-on-success: #fff;
   --color-warning: var(--theme-warning);
   --color-overlay: var(--theme-overlay);
 
@@ -57,6 +59,9 @@
   /** Text on those colors */
   --color-sim-on-moment: #1b1d24;
   --color-sim-on-rival: #fff;
+  /** The effect that is activating now (the side panel of a choice): the chain's own color */
+  --color-sim-effect-active: var(--color-sim-link-mine);
+  --color-sim-on-effect-active: #04202e;
   // Home hub: light text and dark glass over the edition artwork (same in every theme)
   --color-hub-text: #f5f6fa;
   --color-hub-muted: rgb(245 246 250 / 72%);

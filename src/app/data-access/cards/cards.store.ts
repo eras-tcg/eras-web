@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AuthService } from '@core/auth/auth.service';
 import { ServerAccess } from '@core/server/server-access';
@@ -21,6 +21,16 @@ export class CardsStore {
   private readonly images = signal<DriveCard[]>([]);
   private readonly meta = signal<CardMeta[]>([]);
   private loaded = false;
+
+  constructor() {
+    // The catalog depends on who asks (cards in testing need a permission): another user reads it again
+    let user: string | null | undefined;
+    effect(() => {
+      const now = this.auth.user()?.id ?? null;
+      if (user !== undefined && now !== user && this.loaded) void this.load(true);
+      user = now;
+    });
+  }
 
   readonly ref = signal<CardRefData | null>(null);
   /** What the simulator does not run yet, by metadata id (cards fully programmed are not here). */

@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
@@ -18,9 +19,20 @@ const KEPT_KEY = 'editions';
 export class EditionsStore {
   private readonly api = inject(EditionsApi);
   private readonly access = inject(ServerAccess);
+  private readonly auth = inject(AuthService);
 
   private readonly items = signal<Edition[]>([]);
   private readonly loaded = signal(false);
+
+  constructor() {
+    // What is listed depends on who asks (testing editions need a permission): another user reads them again
+    let user: string | null | undefined;
+    effect(() => {
+      const now = this.auth.user()?.id ?? null;
+      if (user !== undefined && now !== user && untracked(this.loaded)) void this.load(true);
+      user = now;
+    });
+  }
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);

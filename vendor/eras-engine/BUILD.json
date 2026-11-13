@@ -1,8 +1,8 @@
 {
-  "commit": "2dba426ef049eaf48c49340f6e85a498d1efe30b",
+  "commit": "4dcd2f98973b61521ea667943646c9cb72cd198c",
   "dirty": false,
-  "subject": "feat(cards): Ángeles adjustments after the designer's answers",
-  "copiedAt": "2026-11-13T12:08:59.063Z",
+  "subject": "feat(engine): Enlace (formations) and the 11 Paladines cards in testing (T1)",
+  "copiedAt": "2026-11-13T16:06:59.439Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

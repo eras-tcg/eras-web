@@ -13,6 +13,7 @@ import { HoldPeekDirective } from '../hold-peek';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { displayStrength } from '@data/simulator/game-rules';
+import { formationGrants } from '@data/simulator/formations';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
 import { effectLines } from '../card-effect-lines';
@@ -87,6 +88,12 @@ export class CardInfoDialogComponent {
     const continuous = gained.length ? `Gana ${gained.join(', ')}` : null;
     const manual = s.strengthModifier || 0;
     return strength || floating.length || continuous || manual ? { strength, floating, continuous, manual } : null;
+  });
+
+  /** Enlace: the link effects it receives now, by the member that gives each. */
+  protected readonly grants = computed(() => {
+    const s = this.slot();
+    return s && this.data.zone === 'field' ? formationGrants(s) : [];
   });
 
   /** The effects its Recursos give it, with their source. */

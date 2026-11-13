@@ -146,6 +146,7 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
   transition: border-color var(--duration-fast, 120ms) ease, background var(--duration-fast, 120ms) ease;
 }
 .offered-effect:hover:not(:disabled) { border-color: var(--color-primary); }
+.offered-effect.entry-option { grid-template-columns: minmax(0, 1fr); }
 .offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, transparent); }
 .offered-effect:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .offered-body { display: grid; gap: var(--space-1); }

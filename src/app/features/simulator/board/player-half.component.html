@@ -71,8 +71,22 @@
       <!-- The line's cards: a crowded line slides sideways with the arrows (or the wheel) -->
       <div class="line-cards" erasLineScroll #row="erasLineScroll">
         @for (s of rows()[line]; track s.instanceId) {
-          <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
+          @let place = line === 'front' ? formation().get(s.instanceId) : undefined;
+          <div
+            class="placed"
+            [attr.data-instance-id]="s.instanceId"
+            [class.near]="nearby()?.instanceId === s.instanceId"
+            [class.formed]="!!place"
+            [class.formed-start]="place?.start"
+            [class.formed-end]="place?.end"
+          >
             <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+            <!-- Enlace: its arrows, toward the creatures next to it (lit while it points to one) -->
+            @for (a of linkArrows().get(s.instanceId) ?? []; track a.side) {
+              <span class="link-arrow" [class.left]="a.side === 'left'" [class.right]="a.side === 'right'" [class.on]="a.on" aria-hidden="true">
+                <eras-icon [name]="a.side === 'left' ? 'chevron-left' : 'chevron-right'" />
+              </span>
+            }
           </div>
         }
       </div>

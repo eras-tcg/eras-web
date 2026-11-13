@@ -41,6 +41,12 @@ export interface CardSlot {
   finish?: 'foil' | 'prism' | null;
   /** What of its effects the rules engine does not run yet (played by hand); null when all of it runs. */
   unprogrammed?: string | null;
+  /** Enlace: the arrows printed on it ("left", "right"); missing for a card without them. */
+  arrows?: ('left' | 'right')[];
+  /** A "Criatura Enlace". */
+  enlace?: boolean;
+  /** The link effects it receives now, one per member pointing to it: "sourceInstanceId|since|sourceName". */
+  formationGrants?: string[];
 }
 
 /** "Pierde 3 de fuerza hasta el final del turno", from Arc xioma. */
@@ -104,6 +110,8 @@ export interface PlayerState {
   tributeZone: CardSlot[];
   discardPile: CardSlot[];
   field: CardSlot[];
+  /** Enlace: their formations, each the instance ids of its members (missing when there are none). */
+  formations?: string[][];
 }
 
 export type RoomStatus = 'WAITING' | 'SELECTING_STARTER' | 'MULLIGAN' | 'IN_PROGRESS' | 'POST_GAME' | 'FINISHED';
@@ -212,6 +220,8 @@ export interface GameState {
   legalActions?: Record<string, Record<string, ('attack' | 'summon' | 'ritual' | 'play' | 'activate')[]>> | null;
   /** The enemies each attacker can attack, by player and then by attacker. */
   attackTargets?: Record<string, Record<string, string[]>> | null;
+  /** Enlace: by player and then by a creature of their Línea frontal in no formation, those next to it it can link with now (FORMATION_JOIN). */
+  formationJoins?: Record<string, Record<string, string[]>> | null;
   /** Who won the game that just ended, and why. */
   winnerId?: string | null;
   endReason?: 'lives' | 'surrender' | 'deck' | null;
@@ -351,7 +361,14 @@ export type PromptPurpose =
   /** The cards tributed instead of receiving damage (Estoque De Los Guerreros Jurados): Estoque first. */
   | 'DAMAGE_TRIBUTE'
   /** "cuando esta carta fuera a ser ascendida: gana …" (Espada De Los Leones Dorados), shown to be activated. */
-  | 'ASCEND_GAIN';
+  | 'ASCEND_GAIN'
+  /**
+   * Enlace: a creature that entered the Línea frontal (subjectId) takes a position and may join a formation. validIds are options
+   * ("pos:<i>" or "pos:<i>:<id>"), not cards; cardLabels says each one.
+   */
+  | 'FORMATION_ENTRY'
+  /** A link effect: the ally placed on top of the lives instead of the removal. */
+  | 'REPLACE_LIFE';
 
 /** A choice the engine waits for; it cannot be dismissed. */
 export interface EffectPrompt {

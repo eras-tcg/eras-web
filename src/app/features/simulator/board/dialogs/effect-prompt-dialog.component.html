@@ -4,9 +4,20 @@
 }
 <!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
      blocking…) say it in their title and buttons -->
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="subtitle()">
-  <div class="body" [class.fit]="!prompt.effects?.length && cardsShown()">
-  @if (prompt.effects?.length) {
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="fit()" [title]="prompt.title" [subtitle]="subtitle()">
+  <div class="body" [class.fit]="fit()">
+  @if (entryOptions) {
+    <!-- Enlace: the positions in the Línea frontal, and the link each one makes -->
+    <ul class="offered" [attr.aria-label]="prompt.title">
+      @for (o of entryOptions; track o.id) {
+        <li>
+          <button type="button" class="offered-effect entry-option" [class.chosen]="chosen().has(o.id)" [disabled]="sending()" [attr.aria-pressed]="chosen().has(o.id)" (click)="pickOption(o.id)">
+            {{ o.label }}
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
         <li>
@@ -44,7 +55,7 @@
     <!-- An effect already in the chain shows its text there, above this sheet -->
     <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
   }
-  @if (!prompt.effects?.length && cardsShown()) {
+  @if (!entryOptions && !prompt.effects?.length && cardsShown()) {
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }

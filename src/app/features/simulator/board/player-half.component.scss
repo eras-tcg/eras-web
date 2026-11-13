@@ -271,7 +271,71 @@ eras-player-plate {
 .placed {
   --game-card-width: min(var(--field-card-max, calc(9 * var(--bu, 1rem))), calc((100cqh - 1.4rem) * 63 / 88));
 
+  position: relative;
   flex: none;
+}
+
+// Enlace: the members of a formation share one band behind them, from the first to the last (it fills the gaps between them)
+.placed.formed {
+  isolation: isolate;
+}
+
+.placed.formed::before {
+  position: absolute;
+  inset-block: -0.3rem;
+  inset-inline: calc(var(--space-2) / -2);
+  z-index: -1;
+  border-block: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.placed.formed-start::before {
+  inset-inline-start: -0.3rem;
+  border-inline-start: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
+}
+
+.placed.formed-end::before {
+  inset-inline-end: -0.3rem;
+  border-inline-end: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
+}
+
+// Enlace: an arrow on the card's edge toward its neighbour; lit while it points to it (active), dim otherwise
+.link-arrow {
+  position: absolute;
+  inset-block-start: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text-subtle);
+  font-size: 0.8rem;
+  opacity: 0.6;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.link-arrow.left {
+  inset-inline-start: 0;
+}
+
+.link-arrow.right {
+  inset-inline-start: 100%;
+}
+
+.link-arrow.on {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  opacity: 1;
 }
 
 .placed.near {

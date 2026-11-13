@@ -154,6 +154,13 @@ export class SimCardComponent {
   protected readonly actions = computed<LegalAction[]>(() =>
     this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
   );
+  /** Enlace, in my main phase: the creatures next to it it can link with now ("Enlazar con …"). */
+  protected readonly joins = computed(() => {
+    if (this.opponent() || this.lookOnly() || this.zone() !== 'field') return [];
+    const ids = this.game.rules().formationJoins[this.slot().instanceId] ?? [];
+    const field = this.game.myState()?.field ?? [];
+    return ids.map((id) => ({ id, name: field.find((c) => c.instanceId === id)?.cardName ?? 'la criatura' }));
+  });
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));
 
@@ -249,6 +256,12 @@ export class SimCardComponent {
         return;
       }
     }
+  }
+
+  protected join(targetId: string, event: Event): void {
+    event.stopPropagation();
+    this.game.selectedId.set(null);
+    this.game.formationJoin(this.slot().instanceId, targetId);
   }
 
   protected activate(scriptId: string, event: Event): void {

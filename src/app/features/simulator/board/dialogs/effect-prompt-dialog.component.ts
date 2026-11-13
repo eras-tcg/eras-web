@@ -61,6 +61,15 @@ export class EffectPromptDialogComponent {
     return !(this.prompt.kind === 'CONFIRM' && own && this.prompt.cards.every((c) => c.instanceId === own));
   });
 
+  /**
+   * Enlace: where a creature that entered the Línea frontal goes and whether it links; its options are not cards but positions, each
+   * said by the engine (cardLabels). Null for any other choice.
+   */
+  protected readonly entryOptions =
+    this.prompt.purpose === 'FORMATION_ENTRY' ? this.prompt.validIds.map((id) => ({ id, label: this.prompt.cardLabels?.[id] ?? id })) : null;
+  /** The sheet fits a row of cards (none for chaining choices or the Enlace positions). */
+  protected readonly fit = computed(() => !this.prompt.effects?.length && !this.entryOptions && this.cardsShown());
+
   /** A choice with its card beside it, or with effects to chain, takes the wide sheet. */
   protected readonly withSource = !!this.prompt.sourceImageUrl || !!this.prompt.effects?.length;
   protected readonly valid = new Set(this.prompt.validIds);
@@ -105,7 +114,7 @@ export class EffectPromptDialogComponent {
     if (this.step() === 'rest') return this.prompt.cards.filter((c) => !this.chosen().has(c.instanceId));
     return this.showAll() || this.showsEverything ? this.prompt.cards : this.prompt.cards.filter((c) => this.valid.has(c.instanceId));
   });
-  protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
+  protected readonly hiddenCount = computed(() => (this.showsEverything || this.entryOptions ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   /**
    * Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. Instead of the damage ("tributa
    * esta carta más 2 [retador]"), one of them is chosen first, and choosing none takes the damage.
@@ -134,6 +143,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
     if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
+    if (this.prompt.purpose === 'FORMATION_ENTRY') return this.chosen().size > 0 ? (this.prompt.chosenLabel ?? 'Confirmar') : 'Dejarla donde está';
     // A search: its rest is sent next (with nothing left to order, it goes with this answer)
     if (this.ordering && this.needsOrder()) return 'Continuar';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
@@ -258,6 +268,11 @@ export class EffectPromptDialogComponent {
     return this.cardOf(id);
   }
 
+  /** Enlace: one position (and link) at most; tapping the chosen one again leaves it unchosen. */
+  protected pickOption(id: string): void {
+    this.chosen.set(this.chosen().has(id) ? new Set() : new Set([id]));
+  }
+
   protected toggle(id: string): void {
     if (this.prompt.effects?.length ? !this.prompt.effects.some((e) => this.effectKey(e) === id) : !this.selectableId(id)) return;
     if (this.required.has(id) && !this.oneRequiredFirst) return;
@@ -329,7 +344,7 @@ export class EffectPromptDialogComponent {
   protected send(end: OrderEnd): void {
     if (this.sending()) return;
     this.sending.set(true);
-    const rest = this.needsOrder() ? this.restOrder() : this.rest();
+    const rest = this.entryOptions ? [] : this.needsOrder() ? this.restOrder() : this.rest();
     const chosen = this.orderOnly ? (end === 'top' ? this.prompt.validIds.slice(0, 1) : []) : [...this.chosen()];
     this.game.resolvePrompt(this.prompt.id, chosen, rest);
   }

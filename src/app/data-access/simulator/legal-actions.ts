@@ -9,6 +9,8 @@ export interface RulesView {
   attackTargets: Record<string, string[]>;
   /** Slow effects I can activate now. */
   activatable: ActivatableEffect[];
+  /** Enlace: the creatures each of mine in no formation can link with now, by its instance id. */
+  formationJoins: Record<string, string[]>;
 }
 
 export function rulesView(state: GameState | null, me: string | null): RulesView {
@@ -16,6 +18,7 @@ export function rulesView(state: GameState | null, me: string | null): RulesView
     legal: (me && state?.legalActions?.[me]) || {},
     attackTargets: (me && state?.attackTargets?.[me]) || {},
     activatable: (me && state?.activatable?.[me]) || [],
+    formationJoins: (me && state?.formationJoins?.[me]) || {},
   };
 }
 

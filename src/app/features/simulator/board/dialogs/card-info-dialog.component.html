@@ -96,6 +96,14 @@
                 }
               </section>
             }
+            @if (grants().length) {
+              <section class="panel" aria-label="Efectos de enlace">
+                <h4><eras-icon name="link" /> Efectos de enlace</h4>
+                @for (g of grants(); track $index) {
+                  <p>Enlace de {{ g.sourceName }}</p>
+                }
+              </section>
+            }
             @if (s.materials.length) {
               <section class="panel">
                 <h4><eras-icon name="stack" /> Materiales ({{ s.materials.length }})</h4>

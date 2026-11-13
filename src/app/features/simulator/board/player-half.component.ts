@@ -4,6 +4,7 @@ import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
+import { formationPlaces, frontOrder, pointsSide } from '@data/simulator/formations';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
@@ -319,6 +320,21 @@ export class PlayerHalfComponent {
   });
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
   protected readonly rows = computed(() => fieldRows(this.player().field));
+  /** Enlace: the cards of the Línea frontal in a formation, with where each run starts and ends (drawn as one group). */
+  protected readonly formation = computed(() => formationPlaces(this.player(), this.rows().front));
+  /**
+   * Enlace: the arrows of each face-up card of the field that has them, lit when it points to the creature on that side (Línea
+   * frontal, active), dim otherwise.
+   */
+  protected readonly linkArrows = computed(() => {
+    const order = frontOrder(this.player().field);
+    const arrows = new Map<string, { side: 'left' | 'right'; on: boolean }[]>();
+    for (const c of this.player().field) {
+      if (c.faceDown || !c.arrows?.length) continue;
+      arrows.set(c.instanceId, (['left', 'right'] as const).filter((side) => c.arrows!.includes(side)).map((side) => ({ side, on: pointsSide(order, c, side) })));
+    }
+    return arrows;
+  });
   /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */
   protected get lines(): readonly ('front' | 'back')[] {
     return this.opponent() ? ['back', 'front'] : ['front', 'back'];

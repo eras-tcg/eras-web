@@ -422,6 +422,11 @@ export class GameStore {
     this.send('ACTIVATE_EFFECT', { instanceId, scriptId });
   }
 
+  /** Enlace, in your main phase: the creature links with the one next to it (joins its formation, or both form one). */
+  formationJoin(instanceId: string, targetId: string): void {
+    this.send('FORMATION_JOIN', { instanceId, targetId });
+  }
+
   /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */
   sacrificeCard(instanceId: string): void {
     this.send('SACRIFICE_CARD', { instanceId });

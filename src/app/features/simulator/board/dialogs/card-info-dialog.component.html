@@ -112,31 +112,10 @@
               <eras-game-card small [imageUrl]="a.imageUrl" [foil]="a.finish ?? null" [name]="a.cardName ?? null" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
               @if (!data.readonly) {
                 <!-- "Enviar a…": on the card's lower right corner -->
-                <button type="button" class="send" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
+                <button type="button" class="send" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'" (click)="sendAttachment(s, a, type, i)">
                   <eras-icon name="external" />
                 </button>
               }
-              <ng-template #actions>
-                <eras-menu>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'hand')">A la mano</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'discardPile')">Al descarte</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'tributeZone')">A tributos</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'deck', 'bottom')">Al fondo del mazo</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'lifeStack', 'top', true)">A las vidas (boca abajo)</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'field')">Al campo</button>
-                  <hr />
-                  <button erasMenuItem (triggered)="game.swapWithMain(a.instanceId, type, s.instanceId, targetPlayer())">Intercambiar con la principal</button>
-                  <button erasMenuItem (triggered)="game.reclassifyAttachment(a.instanceId, type, s.instanceId, targetPlayer())">
-                    Pasar a {{ type === 'materials' ? 'recursos' : 'materiales' }}
-                  </button>
-                  @if (i > 0) {
-                    <button erasMenuItem (triggered)="reorder(s, type, i, -1)">Subir</button>
-                  }
-                  @if (i < s[type].length - 1) {
-                    <button erasMenuItem (triggered)="reorder(s, type, i, 1)">Bajar</button>
-                  }
-                </eras-menu>
-              </ng-template>
             </div>
           }
         </eras-stack>

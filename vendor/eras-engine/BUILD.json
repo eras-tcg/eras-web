@@ -1,8 +1,8 @@
 {
-  "commit": "050aba3f63842c069fb4f4b6885a04621a7faa8a",
+  "commit": "ff36e75db1b88cc40ef45b27475250634a103f06",
   "dirty": false,
-  "subject": "fix(engine): a creature moved by hand to the front line is asked to link at once",
-  "copiedAt": "2026-11-13T17:32:12.033Z",
+  "subject": "feat(cards): Peón de las Armaduras Marfil sends the cards it does not take to the deck bottom (new print)",
+  "copiedAt": "2026-11-13T17:36:38.563Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

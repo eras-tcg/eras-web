@@ -1,8 +1,8 @@
 {
-  "commit": "324cfca0e966eb413fc69addfd5e56b377022a89",
+  "commit": "dee0b7fa619ebc71393d3d87ef3529eb59cf3f3a",
   "dirty": false,
-  "subject": "fix(engine): a creature entering the front line never splits a formation while it chooses its place",
-  "copiedAt": "2026-11-13T19:39:03.166Z",
+  "subject": "fix(test): the language catalog export lists Kotlin data objects too (70 steps, 21 conditions, 21 amounts, 10 reactions)",
+  "copiedAt": "2026-11-13T20:20:40.665Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

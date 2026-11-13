@@ -75,12 +75,17 @@ export function homePlace(cards: readonly CardSlot[], subjectId: string, formati
 }
 
 /** The row: gaps and groups, left to right, with the entering creature where `place` puts it. */
+/** The drop target of the place where the creature stands now, when no option alone is offered there (keeps it there). */
+export const HOME = 'home';
+
 export function entryLayout(
   cards: readonly CardSlot[],
   subjectId: string,
   formations: readonly (readonly string[])[],
   validIds: readonly string[],
   place: EntryPlace,
+  /** Where it stands now: always a place to drop it back (HOME when no option alone is there). */
+  homeGap: number | null = null,
 ): EntryItem[] {
   const valid = new Set(validIds);
   const others = cards.filter((c) => c.instanceId !== subjectId);
@@ -103,7 +108,12 @@ export function entryLayout(
     return !!p && p.gap === gap && !!p.withId && ids.has(p.withId);
   }) ?? null;
 
-  const gapItem = (gap: number): EntryGap => ({ kind: 'gap', gap, target: valid.has(`pos:${gap}`) ? `pos:${gap}` : null, holds: !place.withId && place.gap === gap });
+  const gapItem = (gap: number): EntryGap => ({
+    kind: 'gap',
+    gap,
+    target: valid.has(`pos:${gap}`) ? `pos:${gap}` : gap === homeGap ? HOME : null,
+    holds: !place.withId && place.gap === gap,
+  });
 
   const out: EntryItem[] = [];
   for (const run of runs) {
@@ -168,6 +178,9 @@ export function entrySpots(items: readonly MeasuredItem[]): EntrySpot[] {
       spots.push({ target: c.rightTarget, left: mid, right, gap: false });
     });
   }
+  // The gaps at both ends reach the row's ends
+  if (spots[0]?.gap) spots[0].left = -Infinity;
+  if (spots.at(-1)?.gap) spots.at(-1)!.right = Infinity;
   // A gap reaches its neighbours
   spots.forEach((s, i) => {
     if (!s.gap) return;

@@ -67,11 +67,12 @@
   inset-inline-end: 0;
 }
 
-// Where it would go: a bar in the gap, or at the side of the creature it would link with
-.gap::after,
-.member::after {
+// Where it would go alone: a bar in the gap. Linking (joining a formation or forming one): the formation's frame shines
+// instead, not the card the pointer is over
+.gap::after {
   position: absolute;
   inset-block: 0.25rem;
+  inset-inline-start: calc(50% - 2px);
   inline-size: 4px;
   border-radius: 2px;
   background: var(--color-primary);
@@ -82,22 +83,12 @@
   // No fade: a bar fading out would linger where the next place (or the dropped card) already is
 }
 
-.gap::after {
-  inset-inline-start: calc(50% - 2px);
-}
-
-.gap.over::after,
-.member.over-left::after,
-.member.over-right::after {
+.gap.over::after {
   opacity: 1;
 }
 
-.member.over-left::after {
-  inset-inline-start: calc(var(--space-2) / -2 - 2px);
-}
-
-.member.over-right::after {
-  inset-inline-start: calc(100% + var(--space-2) / 2 - 2px);
+eras-zone-box.lit {
+  box-shadow: 0 0 0 1px var(--color-primary), 0 0 14px 3px color-mix(in srgb, var(--color-primary) 55%, transparent);
 }
 
 // The entering creature, lit; it is picked up and dragged (a finger on it does not scroll the row)

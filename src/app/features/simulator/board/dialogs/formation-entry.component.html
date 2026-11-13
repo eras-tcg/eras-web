@@ -40,7 +40,7 @@
             @if (c.kind === 'subject') {
               <ng-container *ngTemplateOutlet="subjectTpl" />
             } @else {
-              <div class="member" [class.over-left]="!!c.left && hover() === c.left" [class.over-right]="!!c.right && hover() === c.right">
+              <div class="member">
                 <eras-game-card [imageUrl]="c.card.imageUrl" [foil]="c.card.finish ?? null" [name]="c.card.cardName" />
                 <!-- Its sides: the link through each one, where the engine gives it -->
                 @if (c.left; as target) {

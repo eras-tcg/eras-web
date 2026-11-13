@@ -5,7 +5,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { ZoneBoxComponent } from '@ui/domain/zone-box/zone-box.component';
 import { CardPeekComponent } from '../card-peek.component';
-import { MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from '../formation-entry';
+import { HOME, MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from '../formation-entry';
 
 /** A press on the entering creature must move this far to lift it (less is a tap). */
 const LIFT_PX = 5;
@@ -45,7 +45,8 @@ export class FormationEntryComponent {
     const p = this.prompt();
     // Lifted, it is out of the row: no place next to itself
     const place = this.dragging() ? { gap: -1, withId: null } : (readPlace(this.choice()) ?? this.home());
-    return entryLayout(p.cards, p.subjectId ?? '', this.formations(), p.validIds, place);
+    const home = this.home();
+    return entryLayout(p.cards, p.subjectId ?? '', this.formations(), p.validIds, place, home.withId ? null : home.gap);
   });
 
   /** The option under the dragged creature (null: none there). */
@@ -103,7 +104,8 @@ export class FormationEntryComponent {
     if (!p || e.pointerId !== p.id) return;
     const target = this.ghost() ? this.hover() : null;
     this.stop();
-    if (target) this.choice.set(target);
+    // Dropped back where it stands: no choice (it stays, without linking)
+    if (target) this.choice.set(target === HOME || target === `pos:${this.home().gap}` ? null : target);
   }
 
   private stop(): void {

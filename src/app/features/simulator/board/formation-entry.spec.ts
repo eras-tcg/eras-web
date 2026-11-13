@@ -1,5 +1,5 @@
 import { CardSlot } from '@data/simulator/simulator.model';
-import { EntryCard, EntryGap, EntryGroup, MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from './formation-entry';
+import { EntryCard, EntryGap, EntryGroup, HOME, MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from './formation-entry';
 
 const card = (id: string) => ({ instanceId: id, cardName: id }) as CardSlot;
 
@@ -19,6 +19,13 @@ describe('formation entry layout', () => {
   const cards = ['a', 'b', 'c', 'd', 's'].map(card);
   const formations = [['a', 'b']];
   const valid = ['pos:0', 'pos:1:a', 'pos:2', 'pos:2:b', 'pos:2:c', 'pos:3', 'pos:3:c', 'pos:3:d', 'pos:4', 'pos:4:d'];
+
+  it('keeps a place to drop it back where it stands when only links are offered (main phase)', () => {
+    const links = valid.filter((o) => o.split(':').length === 3);
+    const items = entryLayout(cards, 's', formations, links, { gap: -1, withId: null }, 4);
+    expect((items.at(-1) as EntryGap).target).toBe(HOME);
+    expect((items[0] as EntryGap).target).toBeNull();
+  });
 
   it('reads the options of the engine', () => {
     expect(readPlace('pos:3')).toEqual({ gap: 3, withId: null });

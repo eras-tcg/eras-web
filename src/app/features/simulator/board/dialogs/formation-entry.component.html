@@ -1,0 +1,76 @@
+<ng-template #subjectTpl>
+  <!-- The entering creature: dragged to its place (lifted, its place stays faint) -->
+  <div
+    class="subject"
+    [class.lifted]="!!ghost()"
+    [class.locked]="disabled()"
+    role="img"
+    [attr.aria-label]="name(subject())"
+    (pointerdown)="down($event)"
+    (pointermove)="move($event)"
+    (pointerup)="up($event)"
+    (pointercancel)="stop()"
+    (lostpointercapture)="stop()"
+    (contextmenu)="$event.preventDefault()"
+  >
+    <eras-game-card [imageUrl]="subject()?.imageUrl ?? null" [foil]="subject()?.finish ?? null" [name]="subject()?.cardName ?? null" />
+  </div>
+</ng-template>
+
+<div class="wrap" #wrap>
+  <div class="row" #row role="group" [attr.aria-label]="prompt().title" (wheel)="wheel($event)">
+    @for (it of layout(); track $index) {
+      @if (it.kind === 'gap') {
+        @if (it.target; as target) {
+          <button
+            type="button"
+            class="gap"
+            [attr.data-target]="target"
+            [class.over]="hover() === target"
+            [disabled]="disabled()"
+            [attr.aria-label]="label(target)"
+            [attr.aria-pressed]="choice() === target"
+            (click)="pick(target)"
+          ></button>
+        } @else {
+          <span class="gap" aria-hidden="true"></span>
+        }
+        @if (it.holds) {
+          <ng-container *ngTemplateOutlet="subjectTpl" />
+        }
+      } @else {
+        <!-- A formation boxed as a zone of a choice; a loose creature, boxed only when the entering one forms one with it -->
+        <section class="zone-box" [class.boxed]="it.formation || it.joined" [class.lit]="!!hover() && it.targets.includes(hover()!)">
+          @if (it.formation || it.joined) {
+            <span class="zone-name"><eras-icon name="link" /> Formación</span>
+          }
+          <div class="zone-cards">
+            @for (c of it.items; track c.kind === 'card' ? c.card.instanceId : 'subject') {
+              @if (c.kind === 'subject') {
+                <ng-container *ngTemplateOutlet="subjectTpl" />
+              } @else {
+                <div class="member" [class.over-left]="!!c.left && hover() === c.left" [class.over-right]="!!c.right && hover() === c.right">
+                  <eras-game-card [imageUrl]="c.card.imageUrl" [foil]="c.card.finish ?? null" [name]="c.card.cardName" />
+                  <!-- Its sides: the link through each one, where the engine gives it -->
+                  @if (c.left; as target) {
+                    <button type="button" class="half left" [attr.data-target]="target" [disabled]="disabled()" [attr.aria-label]="label(target)" [attr.aria-pressed]="choice() === target" (click)="pick(target)"></button>
+                  }
+                  @if (c.right; as target) {
+                    <button type="button" class="half right" [attr.data-target]="target" [disabled]="disabled()" [attr.aria-label]="label(target)" [attr.aria-pressed]="choice() === target" (click)="pick(target)"></button>
+                  }
+                  <!-- Held pressed: the card in detail -->
+                  <eras-card-peek [card]="c.card" />
+                </div>
+              }
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+  @if (ghost(); as g) {
+    <div class="ghost" aria-hidden="true" [style.left.px]="g.x" [style.top.px]="g.y">
+      <eras-game-card [imageUrl]="subject()?.imageUrl ?? null" [foil]="subject()?.finish ?? null" [name]="subject()?.cardName ?? null" />
+    </div>
+  }
+</div>

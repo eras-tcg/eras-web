@@ -1,3 +1,5 @@
+@use 'zone-box';
+
 /* Yes / no (Reforzar, playing a life, activating an effect): big enough to hit at once */
 :host button.big-choice {
   min-inline-size: 8rem;
@@ -21,39 +23,6 @@
 
 .cards > .slot {
   flex: none;
-}
-
-// The cards of one zone, boxed and named
-.zone-box {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2) var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
-}
-
-.zone-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--color-text-muted);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.zone-name eras-icon {
-  inline-size: 0.85rem;
-  block-size: 0.85rem;
-}
-
-.zone-cards {
-  display: flex;
-  gap: var(--space-2);
 }
 
 .zone-cards > .slot {
@@ -146,7 +115,6 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
   transition: border-color var(--duration-fast, 120ms) ease, background var(--duration-fast, 120ms) ease;
 }
 .offered-effect:hover:not(:disabled) { border-color: var(--color-primary); }
-.offered-effect.entry-option { grid-template-columns: minmax(0, 1fr); }
 .offered-effect.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, transparent); }
 .offered-effect:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .offered-body { display: grid; gap: var(--space-1); }
@@ -231,23 +199,6 @@ eras-sheet.with-panel {
 
   .cards {
     min-block-size: 0;
-  }
-
-  // The zone's name stands up at the box's side: no line of its own over the cards
-  .zone-box {
-    flex-direction: row;
-    padding: var(--space-1);
-  }
-
-  .zone-name {
-    font-size: 0.6rem;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-  }
-
-  // The name reads upwards; its icon stays upright
-  .zone-name eras-icon {
-    transform: rotate(180deg);
   }
 
   .tag:empty {

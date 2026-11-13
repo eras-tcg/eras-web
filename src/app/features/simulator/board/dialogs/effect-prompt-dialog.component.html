@@ -6,17 +6,9 @@
      blocking…) say it in their title and buttons -->
 <eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="fit()" [title]="prompt.title" [subtitle]="subtitle()">
   <div class="body" [class.fit]="fit()">
-  @if (entryOptions) {
-    <!-- Enlace: the positions in the Línea frontal, and the link each one makes -->
-    <ul class="offered" [attr.aria-label]="prompt.title">
-      @for (o of entryOptions; track o.id) {
-        <li>
-          <button type="button" class="offered-effect entry-option" [class.chosen]="chosen().has(o.id)" [disabled]="sending()" [attr.aria-pressed]="chosen().has(o.id)" (click)="pickOption(o.id)">
-            {{ o.label }}
-          </button>
-        </li>
-      }
-    </ul>
+  @if (entry) {
+    <!-- Enlace: the Línea frontal, its formations boxed; the entering creature is dragged to its place -->
+    <eras-formation-entry [prompt]="prompt" [formations]="formations()" [disabled]="sending()" [choice]="entryChoice()" (choiceChange)="chooseEntry($event)" />
   } @else if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
@@ -55,7 +47,7 @@
     <!-- An effect already in the chain shows its text there, above this sheet -->
     <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
   }
-  @if (!entryOptions && !prompt.effects?.length && cardsShown()) {
+  @if (!entry && !prompt.effects?.length && cardsShown()) {
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }

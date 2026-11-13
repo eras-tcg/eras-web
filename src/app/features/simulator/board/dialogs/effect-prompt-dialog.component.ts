@@ -16,6 +16,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconName } from '@ui/primitives/icon/icon.component';
 import { EffectCardPanelComponent } from '../effect-card-panel.component';
 import { OrderEnd, orderComplete, orderHint, toggleInOrder } from '../card-order';
+import { FormationEntryComponent } from './formation-entry.component';
 
 export interface EffectPromptData {
   prompt: EffectPrompt;
@@ -33,7 +34,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,13 +63,16 @@ export class EffectPromptDialogComponent {
   });
 
   /**
-   * Enlace: where a creature that entered the Línea frontal goes and whether it links; its options are not cards but positions, each
-   * said by the engine (cardLabels). Null for any other choice.
+   * Enlace: where a creature that entered the Línea frontal goes and whether it links; its options are not cards but positions
+   * ("pos:i", "pos:i:id"), chosen by dragging it in its row (FormationEntryComponent).
    */
-  protected readonly entryOptions =
-    this.prompt.purpose === 'FORMATION_ENTRY' ? this.prompt.validIds.map((id) => ({ id, label: this.prompt.cardLabels?.[id] ?? id })) : null;
-  /** The sheet fits a row of cards (none for chaining choices or the Enlace positions). */
-  protected readonly fit = computed(() => !this.prompt.effects?.length && !this.entryOptions && this.cardsShown());
+  protected readonly entry = this.prompt.purpose === 'FORMATION_ENTRY';
+  /** Enlace: the player's formations now, boxed in the row. */
+  protected readonly formations = computed(() => this.game.state()?.players[this.prompt.playerId]?.formations ?? []);
+  /** Enlace: the position chosen, null to leave it where it is. */
+  protected readonly entryChoice = computed(() => [...this.chosen()][0] ?? null);
+  /** The sheet fits a row of cards (none for chaining choices). */
+  protected readonly fit = computed(() => !this.prompt.effects?.length && this.cardsShown());
 
   /** A choice with its card beside it, or with effects to chain, takes the wide sheet. */
   protected readonly withSource = !!this.prompt.sourceImageUrl || !!this.prompt.effects?.length;
@@ -114,7 +118,7 @@ export class EffectPromptDialogComponent {
     if (this.step() === 'rest') return this.prompt.cards.filter((c) => !this.chosen().has(c.instanceId));
     return this.showAll() || this.showsEverything ? this.prompt.cards : this.prompt.cards.filter((c) => this.valid.has(c.instanceId));
   });
-  protected readonly hiddenCount = computed(() => (this.showsEverything || this.entryOptions ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
+  protected readonly hiddenCount = computed(() => (this.showsEverything || this.entry ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   /**
    * Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. Instead of the damage ("tributa
    * esta carta más 2 [retador]"), one of them is chosen first, and choosing none takes the damage.
@@ -268,9 +272,9 @@ export class EffectPromptDialogComponent {
     return this.cardOf(id);
   }
 
-  /** Enlace: one position (and link) at most; tapping the chosen one again leaves it unchosen. */
-  protected pickOption(id: string): void {
-    this.chosen.set(this.chosen().has(id) ? new Set() : new Set([id]));
+  /** Enlace: one position (and link) at most, or none (it stays where it is). */
+  protected chooseEntry(id: string | null): void {
+    this.chosen.set(id ? new Set([id]) : new Set());
   }
 
   protected toggle(id: string): void {
@@ -344,7 +348,7 @@ export class EffectPromptDialogComponent {
   protected send(end: OrderEnd): void {
     if (this.sending()) return;
     this.sending.set(true);
-    const rest = this.entryOptions ? [] : this.needsOrder() ? this.restOrder() : this.rest();
+    const rest = this.entry ? [] : this.needsOrder() ? this.restOrder() : this.rest();
     const chosen = this.orderOnly ? (end === 'top' ? this.prompt.validIds.slice(0, 1) : []) : [...this.chosen()];
     this.game.resolvePrompt(this.prompt.id, chosen, rest);
   }

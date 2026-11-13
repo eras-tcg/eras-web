@@ -1,0 +1,190 @@
+@use 'zone-box';
+
+// The row takes the height the sheet leaves it; the cards are as tall as it lets them (never taller than a choice's cards)
+:host {
+  --entry-card-width: min(7rem, calc((100cqh - 3.4rem) * 63 / 88));
+
+  display: block;
+  flex: 1 1 13rem;
+  min-block-size: 0;
+  container-type: size;
+}
+
+.wrap {
+  position: relative;
+  block-size: 100%;
+}
+
+// Always one row, scrolled sideways (wheel, bar, swipe); a swipe on the entering creature drags it instead
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: safe center;
+  block-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  padding-block-end: var(--space-1);
+  touch-action: pan-x;
+}
+
+.zone-box {
+  position: relative;
+}
+
+// A loose creature: no box (only its room), unless the entering one forms a formation with it
+.zone-box:not(.boxed) {
+  border-color: transparent;
+  background: none;
+}
+
+// The dragged creature over one of its sides: the box it would be in lights up
+.zone-box.lit {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.zone-box.lit:not(.boxed) {
+  border-style: dashed;
+}
+
+.member,
+.subject {
+  --game-card-width: var(--entry-card-width);
+
+  position: relative;
+  flex: none;
+}
+
+// A gap between boxes (and at both ends): the creature goes there alone
+.gap {
+  position: relative;
+  flex: none;
+  align-self: stretch;
+  inline-size: var(--space-4);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+button.gap {
+  cursor: pointer;
+}
+
+// Each side of a creature: the link through it
+.half {
+  position: absolute;
+  inset-block: 0;
+  z-index: 1;
+  inline-size: 50%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.half.left {
+  inset-inline-start: 0;
+}
+
+.half.right {
+  inset-inline-end: 0;
+}
+
+.half:focus-visible,
+.gap:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+// Where it would go: a bar in the gap, or at the side of the creature it would link with
+.gap::after,
+.member::after {
+  position: absolute;
+  inset-block: 0.25rem;
+  inline-size: 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-primary) 70%, transparent);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast, 120ms) ease;
+}
+
+.gap::after {
+  inset-inline-start: calc(50% - 2px);
+}
+
+.gap.over::after,
+.gap:not(:disabled):is(:hover, :focus-visible)::after,
+.member.over-left::after,
+.member.over-right::after,
+.member:has(> .half:not(:disabled):is(:hover, :focus-visible))::after {
+  opacity: 1;
+}
+
+.member.over-left::after,
+.member:has(> .half.left:not(:disabled):is(:hover, :focus-visible))::after {
+  inset-inline-start: calc(var(--space-2) / -2 - 2px);
+}
+
+.member.over-right::after,
+.member:has(> .half.right:not(:disabled):is(:hover, :focus-visible))::after {
+  inset-inline-start: calc(100% + var(--space-2) / 2 - 2px);
+}
+
+// The entering creature, lit; it is picked up and dragged (a finger on it does not scroll the row)
+.subject {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 14px 4px color-mix(in srgb, var(--color-primary) 55%, transparent);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.subject.locked {
+  cursor: default;
+}
+
+// Alone in a gap: level with the cards in the boxes
+.row > .subject {
+  margin-block-end: calc(var(--space-2) + 1px);
+}
+
+// Lifted: its place stays faint while it follows the pointer
+.subject.lifted {
+  opacity: 0.3;
+}
+
+.ghost {
+  --game-card-width: var(--entry-card-width);
+
+  position: absolute;
+  z-index: 3;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 2px var(--color-primary), 0 12px 28px rgb(0 0 0 / 55%);
+  cursor: grabbing;
+  pointer-events: none;
+  transform: rotate(-3deg) scale(1.04);
+}
+
+// Phones in landscape: smaller cards, as in every choice
+@media (orientation: landscape) and (max-height: 30rem) {
+  :host {
+    --entry-card-width: min(4.5rem, calc((100cqh - 2rem) * 63 / 88));
+
+    flex-basis: 9rem;
+  }
+
+  .row > .subject {
+    margin-block-end: calc(var(--space-1) + 1px);
+  }
+}

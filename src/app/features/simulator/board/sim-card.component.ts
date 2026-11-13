@@ -329,7 +329,7 @@ export class SimCardComponent {
     const ghost = card.cloneNode(true) as HTMLElement;
     Object.assign(ghost.style, {
       position: 'fixed',
-      zIndex: '1000',
+      zIndex: 'var(--z-sim-drag)',
       width: `${rect.width}px`,
       height: `${rect.height}px`,
       margin: '0',

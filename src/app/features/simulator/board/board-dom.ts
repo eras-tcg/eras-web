@@ -1,4 +1,5 @@
 import { ZoneName } from '@data/simulator/simulator.model';
+import { LAYER } from './timing';
 
 /**
  * Where the board draws each card and pile (its `data-*` marks), for the animations that measure them or draw over
@@ -10,9 +11,31 @@ export function fieldCard(doc: Document, id: string): HTMLElement | null {
   return doc.querySelector<HTMLElement>(`[data-instance-id="${id}"] eras-game-card`);
 }
 
-/** A field card's place (the box around it, that moves with it). */
+/**
+ * A field card's place: its box in the row, which also draws its share of an Enlace band and the link mark beside it.
+ * Animations never move or hide it (the table stays still): they move or hide the card's sprite (`fieldSprite`).
+ */
 export function fieldPlace(doc: Document, id: string): HTMLElement | null {
   return doc.querySelector<HTMLElement>(`[data-instance-id="${id}"]`);
+}
+
+/** A field card's sprite: the card drawn in its place (with its values and marks), which animations move or hide. */
+export function fieldSprite(doc: Document, id: string): HTMLElement | null {
+  return doc.querySelector<HTMLElement>(`[data-instance-id="${id}"] > eras-sim-card`);
+}
+
+/**
+ * A field card's place stands over its neighbours (and their link marks) while its sprite animates in it, so the sprite
+ * is never covered; nothing moves. Returns how to put it back.
+ */
+export function liftPlace(place: HTMLElement | null): () => void {
+  if (!place) return () => undefined;
+  const was = place.style.zIndex;
+  place.style.zIndex = LAYER.fieldLifted;
+  return () => {
+    // Unless the board set another since (a link mark's order)
+    if (place.style.zIndex === LAYER.fieldLifted) place.style.zIndex = was;
+  };
 }
 
 /** A card in a hand, as drawn. */

@@ -6,8 +6,8 @@ import { LAYER, TIMING } from './timing';
 const SVG = 'http://www.w3.org/2000/svg';
 
 /**
- * The cards' own motions on the table: a destroyed card breaking where it lies, a field card gliding to its new line
- * or in from where it was summoned, and the burst of light where a summoned card lands.
+ * The cards' own motions on the table: a destroyed card breaking where it lies (a copy, over the table) and the burst
+ * of light where a summoned card lands. A field card going to its new line or summoned flies as a copy (CardFlyer).
  */
 export class CardMotions {
   constructor(
@@ -16,8 +16,6 @@ export class CardMotions {
     private readonly measure: TableMeasure,
     /** Runs an animation now, or once what plays ends. */
     private readonly run: (fn: () => void) => void,
-    /** Something started playing with this update: the motions wait for it, held where they start. */
-    private readonly deferring: () => boolean,
   ) {}
 
   /** A destroyed card cracks where it was: it shakes, a red flash and a burst of shards. */
@@ -66,51 +64,6 @@ export class CardMotions {
     const gone = () => (lying?.layer ?? box).remove();
     animation.onfinish = gone;
     animation.oncancel = gone;
-  }
-
-  /**
-   * The real card travels from where it was to where it is now (it is put back there and let go): straight for a
-   * summon, in an arc (rising a little, then down) for a change of line.
-   */
-  glide(box: HTMLElement, card: HTMLElement, from: Seen, duration: number, arc: boolean): void {
-    if (this.animations.still()) return;
-    const rect = card.getBoundingClientRect();
-    let dx = from.x - (rect.left + rect.width / 2);
-    let dy = from.y - (rect.top + rect.height / 2);
-    // On the leaning table it moves on the plane: the distance in its own pixels, not the screen's
-    const plane = tablePlane(this.document);
-    if (plane?.holds(card)) {
-      const a = plane.toLocal(from.x, from.y);
-      const b = plane.toLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      dx = a.x - b.x;
-      dy = a.y - b.y;
-    }
-    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
-    const scale = card.offsetWidth ? from.width / card.offsetWidth : 1;
-    const lift = Math.min(40, Math.hypot(dx, dy) * 0.25);
-    const frames: Keyframe[] = arc
-      ? [
-          { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, filter: 'drop-shadow(0 0 0 transparent)' },
-          { transform: `translate(${dx / 2}px, ${dy / 2 - lift}px) scale(${scale * 1.08})`, filter: 'drop-shadow(0 14px 18px rgb(0 0 0 / 55%))', offset: 0.5 },
-          { transform: 'translate(0, 0) scale(1)', filter: 'drop-shadow(0 0 0 transparent)' },
-        ]
-      : [
-          { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
-          { transform: 'translate(0, 0) scale(1.06)', offset: 0.85 },
-          { transform: 'translate(0, 0) scale(1)' },
-        ];
-    // Above its neighbours while it travels; held where it was while something else plays
-    box.style.position ||= 'relative';
-    box.style.zIndex = LAYER.raised;
-    if (this.deferring()) box.style.transform = String(frames[0]['transform']);
-    this.run(() => {
-      box.style.transform = '';
-      this.animations.hold(duration);
-      const animation = box.animate(frames, { duration, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
-      const done = () => (box.style.zIndex = '');
-      animation.onfinish = done;
-      animation.oncancel = done;
-    });
   }
 
   /**

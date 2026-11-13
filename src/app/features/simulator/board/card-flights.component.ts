@@ -6,7 +6,7 @@ import { fieldRows } from '@data/simulator/legal-actions';
 import { CardSlot, GameEvent, GameState, ZoneName } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
 import { BoardChoreography } from './board-choreography';
-import { fieldCard, fieldPlace, handCard, handPlace, pile } from './board-dom';
+import { fieldCard, fieldSprite, handCard, handPlace, pile } from './board-dom';
 import { CardFlyer } from './card-flyer';
 import { CardMotions } from './card-motions';
 import { poseOf } from './card-pose';
@@ -30,8 +30,8 @@ interface Hop {
  * - cards leaving a hand (the mulligan, a tribute, a discard) or going from pile to pile fly there, in the turns they
  *   happened;
  * - a card that joins a creature as a Material or Recurso flies under it;
- * - on the field, a card that changes line glides there in an arc, and a summoned one comes from its hand or pile and
- *   lands with a burst of light;
+ * - on the field, a card that changes line flies there in an arc, and a summoned one comes from its hand or pile and
+ *   lands with a burst of light (a copy flies over the table; the card's place, its Enlace band and marks stay still);
  * - the life lost by direct damage turns face up on its pile (and waits there while its owner decides to Reforzar).
  * The opening hand is not dealt: the cards kept in the mulligan are already the hand, only the ones drawn to replace
  * those sent to the bottom fly.
@@ -52,7 +52,7 @@ export class CardFlightsComponent {
     before: () => this.previous,
     deferring: () => this.deferring,
   });
-  private readonly motions = new CardMotions(this.document, this.animations, this.measure, (fn) => this.run(fn), () => this.deferring);
+  private readonly motions = new CardMotions(this.document, this.animations, this.measure, (fn) => this.run(fn));
   private readonly lives = new LifeFlights(this.document, this.measure, this.flyer);
   private readonly timeline = new TimelineCursor();
 
@@ -286,9 +286,10 @@ export class CardFlightsComponent {
   }
 
   /**
-   * Field cards that changed line glide there in an arc; those new on the field (summoned) come from the hand or
-   * the pile they were in, and light up as they land. Only once there is a previous drawing to compare with. True
-   * when a card was summoned.
+   * Field cards that changed line fly there in an arc; those new on the field (summoned) come from the hand or
+   * the pile they were in, and light up as they land. A copy flies over the table while the card's sprite waits hidden
+   * in its place (the place itself, its Enlace band and marks, never move). Only once there is a previous drawing to
+   * compare with. True when a card was summoned.
    */
   private fieldMoves(state: GameState): boolean {
     if (!this.seen.size && !this.handSeen.size) return false;
@@ -297,24 +298,34 @@ export class CardFlightsComponent {
     for (const p of Object.values(state.players ?? {})) {
       const front = new Set(fieldRows(p.field).front.map((c) => c.instanceId));
       for (const c of p.field) {
-        const box = fieldPlace(this.document, c.instanceId);
-        const card = box?.querySelector<HTMLElement>('eras-game-card');
-        if (!box || !card) continue;
+        const sprite = fieldSprite(this.document, c.instanceId);
+        const card = sprite?.querySelector<HTMLElement>('eras-game-card');
+        if (!sprite || !card) continue;
         const was = this.seen.get(c.instanceId);
         if (was) {
-          if (was.front !== front.has(c.instanceId)) this.motions.glide(box, card, was, TIMING.move, true);
+          if (was.front !== front.has(c.instanceId)) this.glide(sprite, card, c, was, TIMING.move);
           continue;
         }
         // New on the field: from its place in the hand, else from the pile it was in. Where it lands is measured
         // before it starts to travel (once it moves, its box is where it comes from)
         const landing = card.getBoundingClientRect();
         const from = this.handSeen.get(c.instanceId) ?? this.measure.pile(this.pileOf.get(c.instanceId));
-        if (from) this.motions.glide(box, card, from, TIMING.summon, false);
+        if (from) this.glide(sprite, card, c, from, TIMING.summon);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;
       }
     }
     return summoned;
+  }
+
+  /** A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands). */
+  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number): void {
+    if (this.animations.still()) return;
+    const to = card.getBoundingClientRect();
+    if (Math.abs(from.x - (to.left + to.width / 2)) < 2 && Math.abs(from.y - (to.top + to.height / 2)) < 2) return;
+    // A face-down card in a hand (the rival's) turns over as it flies, when it lands face up
+    const imageUrl = slot.faceDown ? null : (slot.imageUrl ?? from.imageUrl);
+    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, { fromBack: !from.imageUrl && !!imageUrl, duration, hide: sprite });
   }
 
   /**
@@ -324,7 +335,8 @@ export class CardFlightsComponent {
   private shatterNow(id: string): Promise<void> {
     const from = this.seen.get(id) ?? this.handSeen.get(id) ?? (this.pileOf.has(id) ? this.measure.pile(this.pileOf.get(id)) : null);
     if (!from || this.animations.still()) return Promise.resolve();
-    const real = fieldPlace(this.document, id) ?? handPlace(this.document, id);
+    // The sprite of a field card (its place, its Enlace band and marks, stay as they are), else its place in the hand
+    const real = fieldSprite(this.document, id) ?? handPlace(this.document, id);
     // As drawn now: a blocker exhausted with its block breaks turned
     const tapped = from.tapped || !!real?.querySelector('eras-game-card.tapped');
     this.motions.shatter({ ...from, tapped, imageUrl: from.imageUrl ?? findSlot(this.game.state(), id)?.imageUrl ?? null });

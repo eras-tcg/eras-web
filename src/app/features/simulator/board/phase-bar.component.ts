@@ -168,7 +168,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         position: absolute;
         inset-block-end: calc(100% + var(--space-2));
         inset-inline-end: 0;
-        z-index: 30;
+        z-index: var(--z-sim-popup);
         display: flex;
         flex-direction: column;
         align-items: stretch;

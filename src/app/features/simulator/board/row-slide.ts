@@ -8,8 +8,9 @@ const SLIDE = 'eras-row-slide';
  * The cards of a row slide to their new places when its order changes (two creatures swap places, one is put in a new place of the
  * row, the row closes up when one leaves): where each card was is measured before the row is drawn again, and once drawn each card
  * that stayed in it travels from there (FLIP). In layout pixels and with `translate`, so it works on the leaning table, on the
- * rival's half and while the row is slid sideways, and never fights a card's own transform. Cards new to the row are left alone (they
- * fly or glide in on their own, CardMotions).
+ * rival's half and while the row is slid sideways, and never fights a card's own transform. Only each card's sprite slides: its place
+ * (its share of an Enlace band, its link mark) is at once where it ends, so the band is drawn whole all along. Cards new to the row
+ * are left alone (they fly in on their own, CardFlights).
  */
 export class RowSlide {
   private before = new Map<string, number>();
@@ -21,17 +22,18 @@ export class RowSlide {
 
   constructor(private readonly animations: BoardAnimations | null) {}
 
-  /** Before the row is drawn again: where each card stands now (where a slide under way has it). */
+  /** Before the row is drawn again: where each card stands now (where a slide under way has its sprite). */
   measure(cards: readonly HTMLElement[]): void {
     this.deferring = !(this.animations?.idle() ?? true);
     this.before = new Map();
     for (const el of cards) {
       const id = el.dataset['instanceId'];
       if (!id) continue;
-      this.before.set(id, el.offsetLeft + shownShift(el));
-      for (const a of el.getAnimations()) if (a.id === SLIDE) a.cancel();
-      el.style.translate = '';
-      this.latest.delete(el);
+      const sprite = spriteOf(el);
+      this.before.set(id, el.offsetLeft + shownShift(sprite));
+      for (const a of sprite.getAnimations()) if (a.id === SLIDE) a.cancel();
+      sprite.style.translate = '';
+      this.latest.delete(sprite);
     }
   }
 
@@ -45,7 +47,7 @@ export class RowSlide {
       const was = before.get(el.dataset['instanceId'] ?? '');
       if (was === undefined) continue;
       const dx = was - el.offsetLeft;
-      if (Math.abs(dx) >= 1) moves.push({ el, dx });
+      if (Math.abs(dx) >= 1) moves.push({ el: spriteOf(el), dx });
     }
     if (!moves.length) return;
     const animations = this.animations;
@@ -65,6 +67,11 @@ export class RowSlide {
     for (const { el, dx } of moves) el.style.translate = `${dx}px 0`;
     animations.whenIdle(start);
   }
+}
+
+/** The card drawn in a place (what slides), else the place itself. */
+function spriteOf(place: HTMLElement): HTMLElement {
+  return place.querySelector<HTMLElement>(':scope > eras-sim-card') ?? place;
 }
 
 /** How far a card is shifted sideways now by its slide (0: none). */

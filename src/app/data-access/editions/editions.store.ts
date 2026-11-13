@@ -3,7 +3,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { Edition, EditionSaveRequest } from './edition.model';
-import { sortEditions } from './edition-rules';
+import { isTestEdition, sortEditions } from './edition-rules';
 import { EditionsApi } from './editions.api';
 
 /** Where the last editions read are kept on the device (IndexedDB "eras"/kv): the installed app shows them before connecting. */
@@ -24,7 +24,10 @@ export class EditionsStore {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly editions = computed(() => sortEditions(this.items()));
+  /** The released editions (the shop, the editions page, the hub): never a testing one. */
+  readonly editions = computed(() => sortEditions(this.items().filter((e) => !isTestEdition(e.editionId))));
+  /** Every edition the player may filter the cards by: the released ones and, for a tester, the testing ones (T1…). */
+  readonly catalogEditions = computed(() => sortEditions(this.items()));
   readonly releaseDates = computed(() => new Map(this.items().map((e) => [e.editionId, e.releaseDate ?? ''])));
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */

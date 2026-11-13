@@ -1,10 +1,21 @@
 import { BoxConfig, BoxEntry, Edition } from './edition.model';
 
-/** Starter decks (ST*) first, then by edition number (E1, E1.1, E1.2, E2...). */
+/**
+ * A testing edition ("T1", "T1.2"): cards with no edition yet. The backend shows them only to players with the
+ * test_cards permission; they are never sold nor listed among the editions.
+ */
+export function isTestEdition(editionId: string | null | undefined): boolean {
+  return !!editionId && /^T\d+(?:\.\d+)?$/i.test(editionId.trim());
+}
+
+/** Starter decks (ST*) first, then by edition number (E1, E1.1, E1.2, E2...), testing editions (T*) last. */
 export function compareEditionIds(a: string, b: string): number {
   const aStarter = a.startsWith('ST');
   const bStarter = b.startsWith('ST');
   if (aStarter !== bStarter) return aStarter ? -1 : 1;
+  const aTest = isTestEdition(a);
+  const bTest = isTestEdition(b);
+  if (aTest !== bTest) return aTest ? 1 : -1;
   return parseFloat(a.replace(/[^0-9.]/g, '')) - parseFloat(b.replace(/[^0-9.]/g, ''));
 }
 

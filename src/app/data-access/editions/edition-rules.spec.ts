@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BoxEntry, Edition } from './edition.model';
-import { canSimulateBox, canSimulatePack, compareEditionIds, pickRandomPackFromBox, validateBoxConfig } from './edition-rules';
+import { canSimulateBox, canSimulatePack, compareEditionIds, isTestEdition, pickRandomPackFromBox, validateBoxConfig } from './edition-rules';
 
 const entry = (packTypeName: string, mode: BoxEntry['mode'], quantity = 0, probOptions: BoxEntry['probOptions'] = []): BoxEntry => ({
   packTypeName,
@@ -13,6 +13,17 @@ describe('compareEditionIds', () => {
   it('puts starter decks first, then orders by edition number', () => {
     const ids = ['E2', 'E1.1', 'ST2', 'E1', 'ST1', 'E10'];
     expect([...ids].sort(compareEditionIds)).toEqual(['ST1', 'ST2', 'E1', 'E1.1', 'E2', 'E10']);
+  });
+
+  it('puts the testing editions last', () => {
+    expect(['T2', 'E2', 'T1', 'ST1', 'E1'].sort(compareEditionIds)).toEqual(['ST1', 'E1', 'E2', 'T1', 'T2']);
+  });
+});
+
+describe('isTestEdition', () => {
+  it('is T and a number', () => {
+    expect(['T1', 't3', 'T1.2'].every(isTestEdition)).toBe(true);
+    expect(['E1', 'ST1', 'T', '', null].some(isTestEdition)).toBe(false);
   });
 });
 

@@ -12,6 +12,32 @@ export function frontOrder(field: readonly CardSlot[]): CardSlot[] {
     .map(({ c }) => c);
 }
 
+/**
+ * The Línea frontal as drawn (`row`: its cards by x). Creatures in no formation standing between two members of one (one that just
+ * entered and whose place is not chosen yet, or one the client put there before the engine answers) are drawn at the end of the
+ * row, where the engine leaves them when nothing is chosen (Formations.splits): a formation is never drawn broken in the meantime.
+ */
+export function drawnFrontRow(player: PlayerState, row: readonly CardSlot[]): CardSlot[] {
+  const formations = player.formations ?? [];
+  const of = (c: CardSlot | undefined) => (c?.instanceId ? formations.findIndex((f) => f.includes(c.instanceId)) : -1);
+  const creatures = row.filter((c) => c.cardType === 'creature');
+  const apart = new Set<string>();
+  for (let i = 0; i < creatures.length; ) {
+    if (of(creatures[i]) >= 0) {
+      i++;
+      continue;
+    }
+    // A run of creatures in no formation, between two members of the same one
+    let j = i;
+    while (j < creatures.length && of(creatures[j]) < 0) j++;
+    const left = of(creatures[i - 1]);
+    if (left >= 0 && left === of(creatures[j])) creatures.slice(i, j).forEach((c) => apart.add(c.instanceId));
+    i = j;
+  }
+  if (!apart.size) return [...row];
+  return [...row.filter((c) => !apart.has(c.instanceId)), ...row.filter((c) => apart.has(c.instanceId))];
+}
+
 /** `from` points to its neighbour on that side: the arrow printed toward it, a creature there, and `from` active (face up, not exhausted). */
 export function pointsSide(order: readonly CardSlot[], from: CardSlot, side: 'left' | 'right'): boolean {
   if (from.tapped || from.faceDown || !from.arrows?.includes(side)) return false;

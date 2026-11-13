@@ -24,6 +24,8 @@ export const TIMING = {
   draw: 550,
   drawStagger: 120,
   move: 520,
+  /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
+  slide: 450,
   summon: 600,
   burst: 750,
   /** The life lost turning face up on its pile. */

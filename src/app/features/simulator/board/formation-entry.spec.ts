@@ -1,5 +1,5 @@
 import { CardSlot } from '@data/simulator/simulator.model';
-import { EntryCard, EntryGap, EntryGroup, entryLayout, homePlace, readPlace } from './formation-entry';
+import { EntryCard, EntryGap, EntryGroup, MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from './formation-entry';
 
 const card = (id: string) => ({ instanceId: id, cardName: id }) as CardSlot;
 
@@ -71,5 +71,50 @@ describe('formation entry layout', () => {
     const split = ['a', 's', 'b', 'c'].map(card);
     expect(homePlace(split, 's', formations)).toEqual({ gap: 3, withId: null });
     expect(homePlace(['a', 'b', 's', 'c'].map(card), 's', formations)).toEqual({ gap: 2, withId: null });
+  });
+
+  describe('where the dragged creature goes', () => {
+    // On the screen: a gap, the box of [a b] (padding 9px), a gap, loose c (its room 9px wider each side), a gap
+    const row: MeasuredItem[] = [
+      { kind: 'gap', target: 'pos:0', left: 0, right: 16 },
+      { kind: 'group', boxed: true, left: 16, right: 170, cards: [
+        { left: 25, right: 85, leftTarget: null, rightTarget: 'pos:1:a' },
+        { left: 101, right: 161, leftTarget: 'pos:1:a', rightTarget: 'pos:2:b' },
+      ] },
+      { kind: 'gap', target: 'pos:2', left: 170, right: 186 },
+      { kind: 'group', boxed: false, left: 186, right: 264, cards: [{ left: 195, right: 255, leftTarget: 'pos:2:c', rightTarget: 'pos:3:c' }] },
+      { kind: 'gap', target: 'pos:3', left: 264, right: 280 },
+    ];
+    const spots = entrySpots(row);
+    /** The options met sweeping from x0 to x1, one per change. */
+    const sweep = (x0: number, x1: number) => {
+      const seen: (string | null)[] = [];
+      for (let x = x0; x0 < x1 ? x <= x1 : x >= x1; x += x0 < x1 ? 0.5 : -0.5) {
+        const t = spotAt(spots, x);
+        if (seen[seen.length - 1] !== t) seen.push(t);
+      }
+      return seen;
+    };
+
+    it('leaves no hole: the padding of a box is its end card side, a gap reaches the next card', () => {
+      expect(spotAt(spots, 165)).toBe('pos:2:b');
+      expect(spotAt(spots, 172)).toBe('pos:2');
+      expect(spotAt(spots, 190)).toBe('pos:2');
+      expect(spotAt(spots, 196)).toBe('pos:2:c');
+      expect(spotAt(spots, 20)).toBe('pos:0');
+      expect(spotAt(spots, 260)).toBe('pos:3');
+    });
+
+    it('goes through the places in order when swept across the right edge of a formation, both ways', () => {
+      expect(sweep(131, 220)).toEqual(['pos:2:b', 'pos:2', 'pos:2:c']);
+      expect(sweep(220, 131)).toEqual(['pos:2:c', 'pos:2', 'pos:2:b']);
+      expect(sweep(0, 290)).toEqual(['pos:0', 'pos:1:a', 'pos:2:b', 'pos:2', 'pos:2:c', 'pos:3:c', 'pos:3']);
+    });
+
+    it('takes the nearest place where a side gives no link', () => {
+      expect(spotAt(spots, 30)).toBe('pos:0');
+      expect(spotAt(spots, 80)).toBe('pos:1:a');
+      expect(spotAt(spots, 300)).toBe('pos:3');
+    });
   });
 });

@@ -126,3 +126,70 @@ export function entryLayout(
   out.push(gapItem(others.length));
   return out;
 }
+
+/** A stretch while the spots are measured: a gap's reaches its neighbours. */
+interface Spot {
+  target: string | null;
+  left: number;
+  right: number;
+  gap: boolean;
+}
+
+/** A box of the row as measured on the screen (left to right): a gap, or a group with its cards and the options of their halves. */
+export type MeasuredItem =
+  | { kind: 'gap'; target: string | null; left: number; right: number }
+  | { kind: 'group'; boxed: boolean; left: number; right: number; cards: { left: number; right: number; leftTarget: string | null; rightTarget: string | null }[] };
+
+/** The stretch of the row (screen x) that takes the dragged creature to one option. */
+export interface EntrySpot {
+  target: string;
+  left: number;
+  right: number;
+}
+
+/**
+ * Where each option takes the dragged creature, left to right, with no hole between them: each half of a creature is its own side;
+ * the halves at the ends of a formation's box reach its frame (its padding is theirs); a gap takes the whole space between its
+ * neighbours (from a box's frame, or a loose creature's edge, to the next one), so the place alone after a formation is as wide as
+ * the room between it and the next card.
+ */
+export function entrySpots(items: readonly MeasuredItem[]): EntrySpot[] {
+  const spots: Spot[] = [];
+  for (const it of items) {
+    if (it.kind === 'gap') {
+      spots.push({ target: it.target, left: it.left, right: it.right, gap: true });
+      continue;
+    }
+    it.cards.forEach((c, i) => {
+      const mid = (c.left + c.right) / 2;
+      const left = it.boxed && i === 0 ? it.left : c.left;
+      const right = it.boxed && i === it.cards.length - 1 ? it.right : c.right;
+      spots.push({ target: c.leftTarget, left, right: mid, gap: false });
+      spots.push({ target: c.rightTarget, left: mid, right, gap: false });
+    });
+  }
+  // A gap reaches its neighbours
+  spots.forEach((s, i) => {
+    if (!s.gap) return;
+    const before = spots[i - 1];
+    const after = spots[i + 1];
+    if (before) s.left = Math.min(s.left, before.right);
+    if (after) s.right = Math.max(s.right, after.left);
+  });
+  return spots.filter((s): s is Spot & { target: string } => !!s.target).map(({ target, left, right }) => ({ target, left, right }));
+}
+
+/** The option at screen x: the stretch it is in, else the nearest one (the first of two as near). */
+export function spotAt(spots: readonly EntrySpot[], x: number): string | null {
+  let best: string | null = null;
+  let bestDistance = Infinity;
+  for (const s of spots) {
+    if (x >= s.left && x < s.right) return s.target;
+    const distance = x < s.left ? s.left - x : x - s.right;
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = s.target;
+    }
+  }
+  return best;
+}

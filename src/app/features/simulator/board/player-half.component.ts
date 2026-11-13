@@ -1,10 +1,10 @@
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, booleanAttribute, computed, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, booleanAttribute, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
-import { formationPlaces, frontOrder, pointsSide } from '@data/simulator/formations';
+import { drawnFrontRow, formationPlaces, pointsSide } from '@data/simulator/formations';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
@@ -16,6 +16,7 @@ import { LineScrollDirective } from './line-scroll';
 import { BoardDrag } from './board-drag';
 import { BoardPreferences } from './board-preferences';
 import { PlayerPlateComponent } from './player-plate.component';
+import { RowSlide } from './row-slide';
 import { SimCardComponent } from './sim-card.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
@@ -121,6 +122,16 @@ export class PlayerHalfComponent {
   private readonly handCards = viewChild<ElementRef<HTMLElement>>('handCards');
 
   constructor() {
+    // The Línea frontal changed its order: where its cards stand is measured before it is drawn again (a component's effect runs
+    // before its template), and they slide from there once drawn
+    effect(() => {
+      this.frontIds();
+      untracked(() => this.frontSlide.measure(this.frontCards()));
+    });
+    afterRenderEffect(() => {
+      this.frontIds();
+      untracked(() => this.frontSlide.play(this.frontCards()));
+    });
     // What sticks out on each side, in cards: past its place (plus half a card for the lean and the arrow), or the end
     // cards dropping below the edge (the fan drops fan² × 0.18rem: from about 3 cards out they sink too far)
     const measure = () => {
@@ -319,7 +330,18 @@ export class PlayerHalfComponent {
     return { lifeStack: has(p.lifeStack), tributeZone: has(p.tributeZone), discardPile: has(p.discardPile) };
   });
   protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
-  protected readonly rows = computed(() => fieldRows(this.player().field));
+  /** The lines' cards by x; in the Línea frontal a creature left between two members of a formation it is not in, drawn at its end. */
+  protected readonly rows = computed(() => {
+    const rows = fieldRows(this.player().field);
+    return { front: drawnFrontRow(this.player(), rows.front), back: rows.back };
+  });
+  /** The order of the Línea frontal as drawn: when it changes, its cards slide to their new places. */
+  private readonly frontIds = computed(() => this.rows().front.map((c) => c.instanceId).join('|'));
+  private readonly host: HTMLElement = inject(ElementRef<HTMLElement>).nativeElement;
+  private readonly frontSlide = new RowSlide(this.animations);
+  private frontCards(): HTMLElement[] {
+    return Array.from(this.host.querySelectorAll<HTMLElement>('.line.front .placed[data-instance-id]'));
+  }
   /** Enlace: the cards of the Línea frontal in a formation, with where each run starts and ends (drawn as one group). */
   protected readonly formation = computed(() => formationPlaces(this.player(), this.rows().front));
   /**
@@ -332,7 +354,7 @@ export class PlayerHalfComponent {
    * between creatures of different formations or out of any.
    */
   protected readonly linkMarks = computed(() => {
-    const order = frontOrder(this.player().field);
+    const order = this.rows().front.filter((c) => c.cardType === 'creature');
     const formations = this.player().formations ?? [];
     const sameFormation = (a: string, b: string) => formations.some((f) => f.includes(a) && f.includes(b));
     const marks = new Map<string, 'left' | 'right' | 'both'>();

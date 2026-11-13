@@ -4,7 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { CardPeekComponent } from '../card-peek.component';
-import { entryLayout, homePlace, readPlace } from '../formation-entry';
+import { MeasuredItem, entryLayout, entrySpots, homePlace, readPlace, spotAt } from '../formation-entry';
 
 /** A press on the entering creature must move this far to lift it (less is a tap). */
 const LIFT_PX = 5;
@@ -123,28 +123,32 @@ export class FormationEntryComponent {
     const frame = this.wrap().nativeElement.getBoundingClientRect();
     this.ghost.set({ x: p.x - frame.left - p.grabX, y: p.y - frame.top - p.grabY });
     const row = this.row().nativeElement;
-    const under = document.elementFromPoint(p.x, p.y)?.closest<HTMLElement>('[data-target]');
-    if (under && row.contains(under)) {
-      this.hover.set(under.dataset['target'] ?? null);
-      return;
-    }
-    // Anywhere else on the row: the nearest place (a gap is narrow)
+    // Over the row: the option of the stretch under the pointer (each place reaches its neighbours, no hole between them)
     const r = row.getBoundingClientRect();
     if (p.y < r.top || p.y > r.bottom || p.x < r.left || p.x > r.right) {
       this.hover.set(null);
       return;
     }
-    let best: string | null = null;
-    let bestDistance = Infinity;
-    for (const el of Array.from(row.querySelectorAll<HTMLElement>('[data-target]'))) {
+    this.hover.set(spotAt(entrySpots(this.measured(row)), p.x));
+  }
+
+  /** The row's gaps and groups as they are on the screen now, left to right. */
+  private measured(row: HTMLElement): MeasuredItem[] {
+    const items: MeasuredItem[] = [];
+    for (const el of Array.from(row.children) as HTMLElement[]) {
       const b = el.getBoundingClientRect();
-      const distance = p.x < b.left ? b.left - p.x : p.x > b.right ? p.x - b.right : 0;
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        best = el.dataset['target'] ?? null;
+      if (el.classList.contains('gap')) {
+        items.push({ kind: 'gap', target: el.dataset['target'] ?? null, left: b.left, right: b.right });
+      } else if (el.classList.contains('zone-box')) {
+        const cards = Array.from(el.querySelectorAll<HTMLElement>('.member')).map((m) => {
+          const c = m.getBoundingClientRect();
+          const side = (s: string) => m.querySelector<HTMLElement>(`:scope > .half.${s}`)?.dataset['target'] ?? null;
+          return { left: c.left, right: c.right, leftTarget: side('left'), rightTarget: side('right') };
+        });
+        items.push({ kind: 'group', boxed: el.classList.contains('boxed'), left: b.left, right: b.right, cards });
       }
     }
-    this.hover.set(best);
+    return items;
   }
 
   /** Near an end of the row, it scrolls that way (faster the nearer), every frame while the creature is lifted. */

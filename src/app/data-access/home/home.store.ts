@@ -6,6 +6,7 @@ import { Deck } from '../decks/deck.model';
 import { Edition } from '../editions/edition.model';
 import { normalizeSlots, toSaveRequest } from './home-rules';
 import { HomeApi } from './home.api';
+import { SharedLoad } from '../shared/shared-load';
 import { HomeContent } from './home.model';
 
 /**
@@ -20,6 +21,7 @@ export class HomeStore {
   private readonly saved = signal<HomeContent>({ edition: null, decks: normalizeSlots([]) });
   private readonly draft = signal<HomeContent | null>(null);
   private loaded = false;
+  private readonly loader = new SharedLoad(() => this.fetch(), () => this.loaded);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -32,16 +34,8 @@ export class HomeStore {
   load(force = false): Promise<void> {
     // The installed app before connecting (ServerAccess): the home shows its news without the featured content
     if (!this.access.allowed()) return Promise.resolve();
-    if (!force && this.loaded) return Promise.resolve();
-    if (!force && this.pending) return this.pending;
-    const pending = this.fetch().finally(() => {
-      if (this.pending === pending) this.pending = null;
-    });
-    this.pending = pending;
-    return pending;
+    return this.loader.run(force);
   }
-
-  private pending: Promise<void> | null = null;
 
   private async fetch(): Promise<void> {
     this.loading.set(true);

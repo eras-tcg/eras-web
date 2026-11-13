@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Edition, EditionSaveRequest } from './edition.model';
 import { isTestEdition, sortEditions } from './edition-rules';
 import { EditionsApi } from './editions.api';
+import { SharedLoad } from '../shared/shared-load';
 
 /** Where the last editions read are kept on the device (IndexedDB "eras"/kv): the installed app shows them before connecting. */
 const KEPT_KEY = 'editions';
@@ -23,6 +24,7 @@ export class EditionsStore {
 
   private readonly items = signal<Edition[]>([]);
   private readonly loaded = signal(false);
+  private readonly loader = new SharedLoad(() => this.fetch(), () => this.loaded());
 
   constructor() {
     // What is listed depends on who asks (testing editions need a permission): another user reads them again
@@ -44,16 +46,8 @@ export class EditionsStore {
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
-    if (!force && this.loaded()) return Promise.resolve();
-    if (!force && this.pending) return this.pending;
-    const pending = this.fetch().finally(() => {
-      if (this.pending === pending) this.pending = null;
-    });
-    this.pending = pending;
-    return pending;
+    return this.loader.run(force);
   }
-
-  private pending: Promise<void> | null = null;
 
   private async fetch(): Promise<void> {
     if (!this.access.allowed()) return this.loadKept();

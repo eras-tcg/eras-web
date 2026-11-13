@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
 import { filterOptions, mergeCards } from './card-rules';
 import { CardsApi } from './cards.api';
+import { SharedLoad } from '../shared/shared-load';
 
 /**
  * Whole card catalog (images + metadata + reference data), loaded once and shared. The installed app before connecting
@@ -21,6 +22,7 @@ export class CardsStore {
   private readonly images = signal<DriveCard[]>([]);
   private readonly meta = signal<CardMeta[]>([]);
   private loaded = false;
+  private readonly loader = new SharedLoad(() => this.fetch(), () => this.loaded);
 
   constructor() {
     // The catalog depends on who asks (cards in testing need a permission): another user reads it again
@@ -57,16 +59,8 @@ export class CardsStore {
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
     if (!this.access.allowed()) return this.loadKept();
-    if (!force && this.loaded) return Promise.resolve();
-    if (!force && this.pending) return this.pending;
-    const pending = this.fetch().finally(() => {
-      if (this.pending === pending) this.pending = null;
-    });
-    this.pending = pending;
-    return pending;
+    return this.loader.run(force);
   }
-
-  private pending: Promise<void> | null = null;
 
   /** Not connected: the cards kept on the device with the player's decks (not marked as loaded). */
   private async loadKept(): Promise<void> {

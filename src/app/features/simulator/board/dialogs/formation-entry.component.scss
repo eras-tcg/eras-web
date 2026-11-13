@@ -69,10 +69,6 @@
   color: inherit;
 }
 
-button.gap {
-  cursor: pointer;
-}
-
 // Each side of a creature: the link through it
 .half {
   position: absolute;
@@ -83,7 +79,6 @@ button.gap {
   border: 0;
   border-radius: var(--radius-sm);
   background: none;
-  cursor: pointer;
 }
 
 .half.left {
@@ -92,16 +87,6 @@ button.gap {
 
 .half.right {
   inset-inline-end: 0;
-}
-
-.half:focus-visible,
-.gap:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-button:disabled {
-  cursor: default;
 }
 
 // Where it would go: a bar in the gap, or at the side of the creature it would link with
@@ -124,20 +109,16 @@ button:disabled {
 }
 
 .gap.over::after,
-.gap:not(:disabled):is(:hover, :focus-visible)::after,
 .member.over-left::after,
-.member.over-right::after,
-.member:has(> .half:not(:disabled):is(:hover, :focus-visible))::after {
+.member.over-right::after {
   opacity: 1;
 }
 
-.member.over-left::after,
-.member:has(> .half.left:not(:disabled):is(:hover, :focus-visible))::after {
+.member.over-left::after {
   inset-inline-start: calc(var(--space-2) / -2 - 2px);
 }
 
-.member.over-right::after,
-.member:has(> .half.right:not(:disabled):is(:hover, :focus-visible))::after {
+.member.over-right::after {
   inset-inline-start: calc(100% + var(--space-2) / 2 - 2px);
 }
 

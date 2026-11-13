@@ -7,10 +7,6 @@
     role="img"
     [attr.aria-label]="name(subject())"
     (pointerdown)="down($event)"
-    (pointermove)="move($event)"
-    (pointerup)="up($event)"
-    (pointercancel)="stop()"
-    (lostpointercapture)="stop()"
     (contextmenu)="$event.preventDefault()"
   >
     <eras-game-card [imageUrl]="subject()?.imageUrl ?? null" [foil]="subject()?.finish ?? null" [name]="subject()?.cardName ?? null" />
@@ -22,16 +18,7 @@
     @for (it of layout(); track $index) {
       @if (it.kind === 'gap') {
         @if (it.target; as target) {
-          <button
-            type="button"
-            class="gap"
-            [attr.data-target]="target"
-            [class.over]="hover() === target"
-            [disabled]="disabled()"
-            [attr.aria-label]="label(target)"
-            [attr.aria-pressed]="choice() === target"
-            (click)="pick(target)"
-          ></button>
+          <span class="gap" [attr.data-target]="target" [class.over]="hover() === target" aria-hidden="true"></span>
         } @else {
           <span class="gap" aria-hidden="true"></span>
         }
@@ -53,10 +40,10 @@
                   <eras-game-card [imageUrl]="c.card.imageUrl" [foil]="c.card.finish ?? null" [name]="c.card.cardName" />
                   <!-- Its sides: the link through each one, where the engine gives it -->
                   @if (c.left; as target) {
-                    <button type="button" class="half left" [attr.data-target]="target" [disabled]="disabled()" [attr.aria-label]="label(target)" [attr.aria-pressed]="choice() === target" (click)="pick(target)"></button>
+                    <span class="half left" [attr.data-target]="target" aria-hidden="true"></span>
                   }
                   @if (c.right; as target) {
-                    <button type="button" class="half right" [attr.data-target]="target" [disabled]="disabled()" [attr.aria-label]="label(target)" [attr.aria-pressed]="choice() === target" (click)="pick(target)"></button>
+                    <span class="half right" [attr.data-target]="target" aria-hidden="true"></span>
                   }
                   <!-- Held pressed: the card in detail -->
                   <eras-card-peek [card]="c.card" />

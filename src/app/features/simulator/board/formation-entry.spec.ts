@@ -33,6 +33,10 @@ describe('formation entry layout', () => {
     expect(draw(entryLayout(cards, 's', formations, valid, home))).toBe('|* [a b] |* (c) |* (d) |*S');
   });
 
+  it('leaves the entering one out while it is dragged: one place per gap, none next to itself', () => {
+    expect(draw(entryLayout(cards, 's', formations, valid, { gap: -1, withId: null }))).toBe('|* [a b] |* (c) |* (d) |*');
+  });
+
   it('never boxes a lone member: a formation is at least 2 creatures side by side', () => {
     const split = ['a', 'c', 'b', 's'].map(card);
     expect(draw(entryLayout(split, 's', formations, ['pos:0', 'pos:3'], homePlace(split, 's', formations)))).toBe('|* (a) | (c) | (b) |*S');

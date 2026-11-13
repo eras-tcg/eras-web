@@ -16,8 +16,9 @@ const EDGE_SPEED = 14;
 /**
  * Enlace: the Línea frontal of a creature that entered it (FORMATION_ENTRY), its formations boxed as the zones of a choice. The
  * entering creature is dragged (mouse, finger or pen) to a gap (alone) or to a side of a creature (linking with it: its formation,
- * or a new one); only the engine's options take it, and it shows where it would go. Every target is a button too (keyboard).
- * The row scrolls sideways (wheel, bar, swipe anywhere but on the entering creature) and by itself while dragging near its ends.
+ * or a new one); only the engine's options take it, and it shows where it would go. While it is dragged it leaves the row, so
+ * every place offered is among the others (none next to itself). The row scrolls sideways (wheel, bar, swipe anywhere but on the
+ * entering creature) and by itself while dragging near its ends.
  */
 @Component({
   selector: 'eras-formation-entry',
@@ -41,7 +42,8 @@ export class FormationEntryComponent {
   private readonly home = computed(() => homePlace(this.prompt().cards, this.prompt().subjectId ?? '', this.formations()));
   protected readonly layout = computed(() => {
     const p = this.prompt();
-    const place = readPlace(this.choice()) ?? this.home();
+    // Lifted, it is out of the row: no place next to itself
+    const place = this.dragging() ? { gap: -1, withId: null } : (readPlace(this.choice()) ?? this.home());
     return entryLayout(p.cards, p.subjectId ?? '', this.formations(), p.validIds, place);
   });
 
@@ -49,26 +51,23 @@ export class FormationEntryComponent {
   protected readonly hover = signal<string | null>(null);
   /** The creature lifted: where it is drawn while it follows the pointer (in the row's frame). */
   protected readonly ghost = signal<{ x: number; y: number } | null>(null);
+  /** The entering creature is lifted (out of the row). */
+  private readonly dragging = signal(false);
 
   private press: { id: number; x0: number; y0: number; grabX: number; grabY: number; x: number; y: number } | null = null;
   private frame = 0;
 
-  constructor() {
-    inject(DestroyRef).onDestroy(() => cancelAnimationFrame(this.frame));
-  }
+  // Followed on the document: the creature leaves the row once lifted (its element goes away)
+  private readonly onMove = (e: PointerEvent) => this.move(e);
+  private readonly onUp = (e: PointerEvent) => this.up(e);
+  private readonly onCancel = () => this.stop();
 
-  protected label(option: string): string {
-    return this.prompt().cardLabels?.[option] ?? option;
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.stop());
   }
 
   protected name(c: CardSlot | null): string {
     return c?.cardName ?? 'Carta';
-  }
-
-  /** A target tapped or pressed with the keyboard: it goes there; the chosen one again, back to where it stands. */
-  protected pick(option: string): void {
-    if (this.disabled()) return;
-    this.choice.set(this.choice() === option ? null : option);
   }
 
   // ------------------------------------------------------------------ Dragging the entering creature
@@ -79,23 +78,26 @@ export class FormationEntryComponent {
     const rect = el.getBoundingClientRect();
     // No text selection nor the browser's own drag of the image
     e.preventDefault();
-    el.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', this.onMove);
+    document.addEventListener('pointerup', this.onUp);
+    document.addEventListener('pointercancel', this.onCancel);
     this.press = { id: e.pointerId, x0: e.clientX, y0: e.clientY, grabX: e.clientX - rect.left, grabY: e.clientY - rect.top, x: e.clientX, y: e.clientY };
   }
 
-  protected move(e: PointerEvent): void {
+  private move(e: PointerEvent): void {
     const p = this.press;
     if (!p || e.pointerId !== p.id) return;
     p.x = e.clientX;
     p.y = e.clientY;
     if (!this.ghost()) {
       if (Math.hypot(p.x - p.x0, p.y - p.y0) < LIFT_PX) return;
+      this.dragging.set(true);
       this.frame = requestAnimationFrame(() => this.edgeScroll());
     }
     this.follow();
   }
 
-  protected up(e: PointerEvent): void {
+  private up(e: PointerEvent): void {
     const p = this.press;
     if (!p || e.pointerId !== p.id) return;
     const target = this.ghost() ? this.hover() : null;
@@ -103,8 +105,12 @@ export class FormationEntryComponent {
     if (target) this.choice.set(target);
   }
 
-  protected stop(): void {
+  private stop(): void {
+    document.removeEventListener('pointermove', this.onMove);
+    document.removeEventListener('pointerup', this.onUp);
+    document.removeEventListener('pointercancel', this.onCancel);
     this.press = null;
+    this.dragging.set(false);
     cancelAnimationFrame(this.frame);
     this.ghost.set(null);
     this.hover.set(null);
@@ -116,8 +122,29 @@ export class FormationEntryComponent {
     if (!p) return;
     const frame = this.wrap().nativeElement.getBoundingClientRect();
     this.ghost.set({ x: p.x - frame.left - p.grabX, y: p.y - frame.top - p.grabY });
+    const row = this.row().nativeElement;
     const under = document.elementFromPoint(p.x, p.y)?.closest<HTMLElement>('[data-target]');
-    this.hover.set(under && this.row().nativeElement.contains(under) ? (under.dataset['target'] ?? null) : null);
+    if (under && row.contains(under)) {
+      this.hover.set(under.dataset['target'] ?? null);
+      return;
+    }
+    // Anywhere else on the row: the nearest place (a gap is narrow)
+    const r = row.getBoundingClientRect();
+    if (p.y < r.top || p.y > r.bottom || p.x < r.left || p.x > r.right) {
+      this.hover.set(null);
+      return;
+    }
+    let best: string | null = null;
+    let bestDistance = Infinity;
+    for (const el of Array.from(row.querySelectorAll<HTMLElement>('[data-target]'))) {
+      const b = el.getBoundingClientRect();
+      const distance = p.x < b.left ? b.left - p.x : p.x > b.right ? p.x - b.right : 0;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = el.dataset['target'] ?? null;
+      }
+    }
+    this.hover.set(best);
   }
 
   /** Near an end of the row, it scrolls that way (faster the nearer), every frame while the creature is lifted. */

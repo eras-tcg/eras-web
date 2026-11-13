@@ -1,8 +1,8 @@
 {
-  "commit": "ff36e75db1b88cc40ef45b27475250634a103f06",
+  "commit": "eec3a379fb1733a5bd0bf813f433d80a3bfc4aca",
   "dirty": false,
-  "subject": "feat(cards): Peón de las Armaduras Marfil sends the cards it does not take to the deck bottom (new print)",
-  "copiedAt": "2026-11-13T17:36:38.563Z",
+  "subject": "fix(engine): a granted link effect carries the picture of the member that gives it",
+  "copiedAt": "2026-11-13T18:12:05.636Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

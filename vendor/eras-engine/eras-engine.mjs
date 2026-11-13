@@ -17369,7 +17369,7 @@ protoOf(CardTraits).equals = function (other) {
   return true;
 };
 function whyNot($this, room, userId, card, script, played) {
-  var e = $this.f2m(script, userId, card, played.n23_1);
+  var e = $this.f2m(script, userId, card, played.n23_1, room);
   if ($this.h2m(room, e, script))
     return $this.g2m(room, e, script);
   if (!(script.w1v_1 == null) && !script.w1v_1.s2d(room, played, card, userId))
@@ -18130,11 +18130,11 @@ protoOf(Chain).g2n = function (room, effect, script) {
   return true;
 };
 protoOf(Chain).b2c = function (room, script, controllerId, source, triggerSeq) {
-  var e = this.f2m(script, controllerId, source, triggerSeq);
+  var e = this.f2m(script, controllerId, source, triggerSeq, room);
   e.m20_1 = room.q2h('eff');
   return e;
 };
-protoOf(Chain).f2m = function (script, controllerId, source, triggerSeq) {
+protoOf(Chain).f2m = function (script, controllerId, source, triggerSeq, room) {
   var e = new PendingEffect();
   e.n20_1 = script.p1v_1;
   e.o20_1 = controllerId;
@@ -18164,6 +18164,15 @@ protoOf(Chain).f2m = function (script, controllerId, source, triggerSeq) {
     var tmp = e;
     var tmp1_elvis_lhs = grant == null ? null : grant.y2k_1;
     tmp.w20_1 = tmp1_elvis_lhs == null ? link : tmp1_elvis_lhs;
+    var tmp_0 = e;
+    var tmp_1;
+    if (!(room == null) && !(grant == null)) {
+      var tmp2_safe_receiver = EffectEngine_getInstance().y23(room, grant.w2k_1);
+      tmp_1 = tmp2_safe_receiver == null ? null : tmp2_safe_receiver.f1c_1;
+    } else {
+      tmp_1 = null;
+    }
+    tmp_0.x20_1 = tmp_1;
   }
   var from = CardEffects_getInstance().o2c(script.p1v_1);
   if (!(from == null)) {
@@ -18183,8 +18192,8 @@ protoOf(Chain).f2m = function (script, controllerId, source, triggerSeq) {
     }
     var resource = tmp$ret$2;
     e.w20_1 = !(resource == null) ? resource.k1c_1 : from;
-    var tmp_0 = e;
-    tmp_0.x20_1 = resource == null ? null : resource.f1c_1;
+    var tmp_2 = e;
+    tmp_2.x20_1 = resource == null ? null : resource.f1c_1;
   }
   return e;
 };
@@ -18265,7 +18274,7 @@ protoOf(Chain).p2h = function (room, playerId, top) {
           continue $l$loop_2;
         var tmp1_safe_receiver = activation;
         var tmp2_elvis_lhs = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.n23_1;
-        var e_0 = this.f2m(script, playerId, card, tmp2_elvis_lhs == null ? room.o18_1 : tmp2_elvis_lhs);
+        var e_0 = this.f2m(script, playerId, card, tmp2_elvis_lhs == null ? room.o18_1 : tmp2_elvis_lhs, room);
         if (this.h2m(room, e_0, script))
           continue $l$loop_2;
         if (this.g2n(room, e_0, script)) {
@@ -18315,7 +18324,7 @@ protoOf(Chain).a2o = function (room, userId) {
           continue $l$loop_2;
         if (!(script.w1v_1 == null) && !script.w1v_1.s2d(room, null, card, userId))
           continue $l$loop_2;
-        var e = this.f2m(script, userId, card, room.o18_1);
+        var e = this.f2m(script, userId, card, room.o18_1, room);
         if (this.h2m(room, e, script))
           continue $l$loop_2;
         if (this.g2n(room, e, script)) {

@@ -93,7 +93,12 @@ export class CardInfoDialogComponent {
   /** Enlace: the link effects it receives now, by the member that gives each. */
   protected readonly grants = computed(() => {
     const s = this.slot();
-    return s && this.data.zone === 'field' ? formationGrants(s) : [];
+    if (!s || this.data.zone !== 'field') return [];
+    const field = (this.data.opponent ? this.game.opponentState() : this.game.myState())?.field ?? [];
+    return formationGrants(s).flatMap((g) => {
+      const m = this.meta(field.find((c) => c.instanceId === g.sourceId)?.cardId);
+      return this.lines(m?.formationEffects, m?.formationKeywordEffects).map((line) => ({ source: g.sourceName, line }));
+    });
   });
 
   /** The effects its Recursos give it, with their source. */

@@ -99,8 +99,19 @@
             @if (grants().length) {
               <section class="panel" aria-label="Efectos de enlace">
                 <h4><eras-icon name="link" /> Efectos de enlace</h4>
-                @for (g of grants(); track $index) {
-                  <p>Enlace de {{ g.sourceName }}</p>
+                @for (e of grants(); track $index) {
+                  <div class="effect">
+                    <div class="chips">
+                      <span class="chip source">{{ e.source }}</span>
+                      @if (e.line.moment) {
+                        <span class="chip moment">{{ e.line.moment }}</span>
+                      }
+                      @for (t of e.line.tags; track $index) {
+                        <span class="chip tag">{{ t }}</span>
+                      }
+                    </div>
+                    <p>{{ e.line.text }}</p>
+                  </div>
                 }
               </section>
             }

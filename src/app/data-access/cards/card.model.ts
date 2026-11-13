@@ -54,6 +54,9 @@ export interface CardMeta {
   inheritEffects?: CardEffect[] | null;
   keywordEffects?: KeywordEffect[] | null;
   inheritKeywordEffects?: KeywordEffect[] | null;
+  /** Criatura Enlace: the link effect it gives the neighbours it points to. */
+  formationEffects?: CardEffect[] | null;
+  formationKeywordEffects?: KeywordEffect[] | null;
   specialCost?: number | null;
   specialSummonKind?: string | null;
   requirement?: string | null;

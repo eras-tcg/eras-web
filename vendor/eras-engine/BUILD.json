@@ -1,8 +1,8 @@
 {
-  "commit": "27789d59190ddb40cab31c636b82de58c89e6c17",
+  "commit": "324cfca0e966eb413fc69addfd5e56b377022a89",
   "dirty": false,
-  "subject": "feat(engine): link in the main phase with any creature of the front line",
-  "copiedAt": "2026-11-13T18:54:46.910Z",
+  "subject": "fix(engine): a creature entering the front line never splits a formation while it chooses its place",
+  "copiedAt": "2026-11-13T19:39:03.166Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

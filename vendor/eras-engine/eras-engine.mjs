@@ -25535,13 +25535,33 @@ function noteEntries($this, room, p, order) {
       var id = _iterator__ex2g4s_1.j();
       if (!seen.n(id) && !p.y1e_1.n(id)) {
         p.y1e_1.f(id);
+        var tmp$ret$6;
+        $l$block_1: {
+          // Inline function 'kotlin.collections.firstOrNull' call
+          var _iterator__ex2g4s_2 = order.h();
+          while (_iterator__ex2g4s_2.i()) {
+            var element_0 = _iterator__ex2g4s_2.j();
+            if (element_0.d1c_1 === id) {
+              tmp$ret$6 = element_0;
+              break $l$block_1;
+            }
+          }
+          tmp$ret$6 = null;
+        }
+        var tmp0_safe_receiver = tmp$ret$6;
+        if (tmp0_safe_receiver == null)
+          null;
+        else {
+          // Inline function 'kotlin.let' call
+          Formations_instance.j1l(p, tmp0_safe_receiver);
+        }
       }
     }
   }
   var now = ArrayList_init_$Create$_0(ids);
-  var _iterator__ex2g4s_2 = seen.h();
-  while (_iterator__ex2g4s_2.i()) {
-    var id_0 = _iterator__ex2g4s_2.j();
+  var _iterator__ex2g4s_3 = seen.h();
+  while (_iterator__ex2g4s_3.i()) {
+    var id_0 = _iterator__ex2g4s_3.j();
     if (!now.n(id_0) && inTransit($this, room, id_0)) {
       now.f(id_0);
     }
@@ -25955,8 +25975,8 @@ protoOf(Formations).s2s = function (room) {
   var _iterator__ex2g4s = room.z17_1.w1().h();
   while (_iterator__ex2g4s.i()) {
     var p = _iterator__ex2g4s.j();
+    noteEntries(this, room, p, this.e2y(p));
     var order = this.e2y(p);
-    noteEntries(this, room, p, order);
     if (!p.w1e_1.m()) {
       dropLeavers(this, room, p);
     }

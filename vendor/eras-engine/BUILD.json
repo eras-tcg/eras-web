@@ -1,8 +1,8 @@
 {
-  "commit": "4dcd2f98973b61521ea667943646c9cb72cd198c",
+  "commit": "050aba3f63842c069fb4f4b6885a04621a7faa8a",
   "dirty": false,
-  "subject": "feat(engine): Enlace (formations) and the 11 Paladines cards in testing (T1)",
-  "copiedAt": "2026-11-13T16:06:59.439Z",
+  "subject": "fix(engine): a creature moved by hand to the front line is asked to link at once",
+  "copiedAt": "2026-11-13T17:32:12.033Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

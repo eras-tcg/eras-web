@@ -35,7 +35,11 @@ export function formationPlaces(player: PlayerState, row: readonly CardSlot[]): 
   row.forEach((c, i) => {
     const index = indexOf(c.instanceId);
     if (index < 0) return;
-    places.set(c.instanceId, { index, start: indexOf(row[i - 1]?.instanceId) !== index, end: indexOf(row[i + 1]?.instanceId) !== index });
+    const start = indexOf(row[i - 1]?.instanceId) !== index;
+    const end = indexOf(row[i + 1]?.instanceId) !== index;
+    // A formation has at least 2 creatures side by side: a member standing apart is drawn as a lone creature
+    if (start && end) return;
+    places.set(c.instanceId, { index, start, end });
   });
   return places;
 }

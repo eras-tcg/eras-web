@@ -94,6 +94,8 @@ export function entryLayout(
     if (f >= 0 && last?.formation && formationOf(last.members[0].card.instanceId) === f) last.members.push({ card, index });
     else runs.push({ formation: f >= 0, members: [{ card, index }] });
   });
+  // A formation has at least 2 creatures side by side: a member standing apart is drawn as a lone creature
+  for (const run of runs) if (run.members.length < 2) run.formation = false;
 
   // The link through a gap with this run: the option at that gap whose creature is one of its members
   const linkAt = (gap: number, ids: Set<string>) => validIds.find((o) => {

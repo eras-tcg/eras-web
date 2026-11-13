@@ -1,25 +1,25 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { CardDetailDialogComponent, CardDetailDialogData } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
-import { HoldPeekDirective } from './hold-peek';
+import { holdToPeek } from './hold-peek';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 
 /**
  * Beside a choice, the card it is about: big, with its effects written out, and the effect that asks lit up in
- * cyan. The choice below then only says what to do and shows the cards to pick. Held pressed, the card opens in
- * detail, as any card listed in a choice.
+ * cyan. The choice below then only says what to do and shows the cards to pick. Held pressed anywhere on the panel, the
+ * card opens in detail, as any card listed in a choice.
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [IconComponent, HoldPeekDirective],
+  imports: [IconComponent],
   template: `
     @if (imageUrl()) {
-      <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" [erasHoldPeek]="!!slot() || !!catalog()" (peek)="openDetail()" />
+      <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
     }
     @if (facts().length) {
       <div class="facts">
@@ -178,6 +178,8 @@ export class EffectCardPanelComponent {
   }
 
   constructor() {
+    // Held pressed anywhere on it (its picture, numbers or effects): the card in detail
+    inject(DestroyRef).onDestroy(holdToPeek(this.host, () => !!this.slot() || !!this.catalog(), () => this.openDetail()));
     // The lit effect in view, on a card with many effects
     afterRenderEffect(() => {
       if (this.active() < 0) return;

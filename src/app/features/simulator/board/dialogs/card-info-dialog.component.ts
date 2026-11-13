@@ -15,7 +15,7 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { displayStrength } from '@data/simulator/game-rules';
 import { formationGrants } from '@data/simulator/formations';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
 import { effectLines } from '../card-effect-lines';
 
 export type AttachmentType = 'materials' | 'resources';
@@ -129,9 +129,7 @@ export class CardInfoDialogComponent {
   /** The card in detail, as in the cards catalog. */
   protected openDetail(card: CardSlot): void {
     const catalog = this.cards.cards().find((c) => c.id === card.cardId);
-    if (!catalog) return;
-    const data: CardDetailDialogData = { cards: [catalog], index: 0 };
-    this.modal.open(CardDetailDialogComponent, { data });
+    if (catalog) openCardDetailDialog(this.modal, [catalog]);
   }
 
   protected readonly groups = computed<AttachmentType[]>(() => {

@@ -24,7 +24,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
-import { CardDetailDialogComponent, CardDetailDialogData } from './card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from './card-detail-dialog/card-detail-dialog.component';
 import { CardFiltersPanelComponent } from './card-filters-panel/card-filters-panel.component';
 import { CardView, DEFAULT_VIEW } from './card-view';
 
@@ -181,7 +181,6 @@ export class CardsPage {
 
   protected open(card: CatalogCard): void {
     const cards = this.displayed();
-    const data: CardDetailDialogData = { cards, index: cards.indexOf(card), collection: this.showCollection() };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, cards, cards.indexOf(card), { collection: this.showCollection() });
   }
 }

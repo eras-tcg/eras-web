@@ -3,7 +3,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
 import { holdToPeek } from './hold-peek';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -172,9 +172,7 @@ export class EffectCardPanelComponent {
       return;
     }
     const catalog = this.catalog();
-    if (!catalog) return;
-    const data: CardDetailDialogData = { cards: [catalog], index: 0 };
-    this.modal.open(CardDetailDialogComponent, { data });
+    if (catalog) openCardDetailDialog(this.modal, [catalog]);
   }
 
   constructor() {

@@ -37,6 +37,20 @@ export interface CardDetailDialogData {
 }
 
 /**
+ * Opens cards in detail: `cards` is the list ←/→ walk (one card alone has no arrows), `index` the one shown first.
+ * Every page that shows a card in detail opens it through here.
+ */
+export function openCardDetailDialog(
+  modal: ModalService,
+  cards: readonly CatalogCard[],
+  index = 0,
+  options: Pick<CardDetailDialogData, 'copy' | 'collection'> = {},
+): void {
+  const data: CardDetailDialogData = { cards, index, ...options };
+  modal.open(CardDetailDialogComponent, { data });
+}
+
+/**
  * One card in detail. ←/→ move through the grid; the printing arrows switch between editions of the same name. In the
  * plain catalog (no collection, no obtained copy) the buttons under the card show its versions: each finish and each
  * alternative art.

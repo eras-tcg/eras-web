@@ -327,13 +327,17 @@ export class PlayerHalfComponent {
    * frontal, active), dim otherwise.
    */
   /**
-   * Enlace: between two creatures side by side on the Línea frontal, one mark of who points to whom (by the left one's id):
-   * towards the right one, towards the left one, or both. None where nobody points (an exhausted creature points to nothing).
+   * Enlace: between two members of one formation side by side, one mark of who points to whom (by the left one's id): towards
+   * the right one, towards the left one, or both. None where nobody points (an exhausted creature points to nothing), and none
+   * between creatures of different formations or out of any.
    */
   protected readonly linkMarks = computed(() => {
     const order = frontOrder(this.player().field);
+    const formations = this.player().formations ?? [];
+    const sameFormation = (a: string, b: string) => formations.some((f) => f.includes(a) && f.includes(b));
     const marks = new Map<string, 'left' | 'right' | 'both'>();
     for (let i = 0; i + 1 < order.length; i++) {
+      if (!sameFormation(order[i].instanceId, order[i + 1].instanceId)) continue;
       const toRight = pointsSide(order, order[i], 'right');
       const toLeft = pointsSide(order, order[i + 1], 'left');
       if (toRight || toLeft) marks.set(order[i].instanceId, toRight && toLeft ? 'both' : toRight ? 'right' : 'left');

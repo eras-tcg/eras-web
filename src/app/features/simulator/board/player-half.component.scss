@@ -306,11 +306,8 @@ eras-player-plate {
 }
 
 // Enlace: an arrow on the card's edge toward its neighbour; lit while it points to it (active), dim otherwise
-// A card carrying a link mark stands over its neighbours, so the mark (in the gap, over the next card's edge) is never under them
-.placed:has(> .link-mark) {
-  z-index: 5;
-}
-
+// A card carrying a link mark stands over the cards to its right (z-index set by its place in the row), so the mark, in the gap
+// over the next card's edge, is never under them
 // Enlace: one mark in the gap between two creatures, who points to whom
 .link-mark {
   position: absolute;

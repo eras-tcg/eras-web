@@ -70,10 +70,11 @@
       </span>
       <!-- The line's cards: a crowded line slides sideways with the arrows (or the wheel) -->
       <div class="line-cards" erasLineScroll #row="erasLineScroll">
-        @for (s of rows()[line]; track s.instanceId) {
+        @for (s of rows()[line]; track s.instanceId; let i = $index, count = $count) {
           @let place = line === 'front' ? formation().get(s.instanceId) : undefined;
           <div
             class="placed"
+            [style.z-index]="line === 'front' && linkMarks().has(s.instanceId) ? 5 + count - i : null"
             [attr.data-instance-id]="s.instanceId"
             [class.near]="nearby()?.instanceId === s.instanceId"
             [class.formed]="!!place"

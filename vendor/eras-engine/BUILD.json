@@ -1,8 +1,8 @@
 {
-  "commit": "df4f77402a352f37fffe6ba6f445b0711dc56c70",
+  "commit": "2dba426ef049eaf48c49340f6e85a498d1efe30b",
   "dirty": false,
-  "subject": "feat(cards): program the 13 Ángeles cards in testing (T1)",
-  "copiedAt": "2026-11-13T11:28:49.519Z",
+  "subject": "feat(cards): Ángeles adjustments after the designer's answers",
+  "copiedAt": "2026-11-13T12:08:59.063Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

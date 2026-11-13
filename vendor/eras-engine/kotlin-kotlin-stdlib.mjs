@@ -7813,6 +7813,18 @@ function get_indices_1(_this__u8e3s4) {
 function listOf_0(elements) {
   return elements.length > 0 ? asList(elements) : emptyList();
 }
+function arrayListOf(elements) {
+  var tmp;
+  if (elements.length === 0) {
+    tmp = ArrayList_init_$Create$();
+  } else {
+    // Inline function 'kotlin.collections.asArrayList' call
+    // Inline function 'kotlin.js.unsafeCast' call
+    // Inline function 'kotlin.js.asDynamic' call
+    tmp = new ArrayList(elements);
+  }
+  return tmp;
+}
 function EmptyList() {
   EmptyList_instance = this;
   this.uc_1 = new Long(-1478467534, -1720727600);
@@ -13310,6 +13322,7 @@ export {
   addAll as addAll21mdhg523wnoa,
   addAll_0 as addAll1k27qatfgp3k5,
   arrayCopy as arrayCopytctsywo3h7gj,
+  arrayListOf as arrayListOf1fz8nib0ncbow,
   asSequence_0 as asSequence2phdjljfh9jhx,
   checkCountOverflow as checkCountOverflow1ro2fe1r4xvgf,
   checkIndexOverflow as checkIndexOverflow3frtmheghr0th,

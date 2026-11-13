@@ -172,7 +172,7 @@
           <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
             @for (entry of group.entries; track entry.card.id) {
               @for (copy of copies(entry); track $index) {
-                <div class="copy" [class.lacking]="copy.finish === null" [attr.title]="copy.finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
+                <div class="copy" [class.lacking]="copy.finish === null && !testCard(entry.card)" [attr.title]="copy.finish === null && !testCard(entry.card) ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
                   <eras-card-thumb
                     [name]="entry.card.name ?? ''"
                     [imageUrl]="altImageUrl(entry.card, copy.art)"

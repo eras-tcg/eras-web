@@ -8,6 +8,7 @@ import { CatalogCard } from '@data/cards/card.model';
 import { altArtsOf, cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { AltCopy, bestAlt, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { isTestEdition } from '@data/editions/edition-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -144,7 +145,9 @@ export class CardsPage {
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */
   protected owned(card: CatalogCard): Finish | null {
-    return bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card)?.finish ?? null;
+    const finish = bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card)?.finish ?? null;
+    // A card in testing is outside the collection: always available, as a plain copy
+    return finish ?? (isTestEdition(card.edition) ? 'plain' : null);
   }
 
   /** The player's finest copy of a card with one of its alternative arts (shown instead), null when none. */

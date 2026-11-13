@@ -105,13 +105,8 @@
 }
 .panel h4 eras-icon { inline-size: 1rem; block-size: 1rem; color: var(--color-primary); }
 .panel p { margin: 0; line-height: 1.5; }
-.effect { display: grid; gap: var(--space-1); padding-block-start: var(--space-2); border-block-start: 1px dashed var(--color-border); }
+.effect { padding-block-start: var(--space-2); border-block-start: 1px dashed var(--color-border); }
 .panel h4 + .effect { padding-block-start: 0; border-block-start: none; }
-.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.chip { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
-.chip.moment { background: color-mix(in srgb, var(--color-sim-moment) 22%, transparent); color: color-mix(in srgb, var(--color-sim-moment) 80%, var(--color-text)); }
-.chip.tag { background: color-mix(in srgb, var(--color-sim-effect) 20%, transparent); color: color-mix(in srgb, var(--color-sim-effect) 80%, var(--color-text)); }
-.chip.source { background: color-mix(in srgb, var(--color-card-g) 20%, transparent); color: color-mix(in srgb, var(--color-card-g) 80%, var(--color-text)); }
 .materials { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .link {
   display: inline-flex;

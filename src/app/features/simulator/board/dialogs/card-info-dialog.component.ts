@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
+import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
@@ -35,7 +36,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [IconComponent, ModalComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, HoldPeekDirective],
+  imports: [IconComponent, ModalComponent, EffectLineComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, HoldPeekDirective],
   templateUrl: './card-info-dialog.component.html',
   styleUrl: './card-info-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -108,8 +109,6 @@ export class CardInfoDialogComponent {
 
   /** The effects its Recursos give it, with their source. */
   protected readonly inherited = computed(() => this.resourceViews().flatMap((r) => r.lines.map((line) => ({ source: r.name, line }))));
-  protected readonly ownLines = this.own;
-  protected readonly inheritedLines = computed(() => this.inherited().map((e) => ({ source: e.source, line: e.line })));
 
   /** Its printed numbers at a glance; the strength as it is now (marked when it changed). */
   protected readonly facts = computed(() => {
@@ -132,13 +131,8 @@ export class CardInfoDialogComponent {
     if (catalog) openCardDetailDialog(this.modal, [catalog]);
   }
 
-  protected readonly groups = computed<AttachmentType[]>(() => {
-    const s = this.slot();
-    // Moving attachments by hand is only for "Separar materiales/recursos" (editor mode)
-    if (!s || this.data.zone !== 'field' || !this.data.only) return [];
-    if (this.data.only) return [this.data.only];
-    return (['materials', 'resources'] as const).filter((t) => s[t].length > 0);
-  });
+  // Moving attachments by hand is only for "Separar materiales/recursos" (editor mode)
+  protected readonly groups = computed<AttachmentType[]>(() => (this.slot() && this.data.zone === 'field' && this.data.only ? [this.data.only] : []));
   protected readonly targetPlayer = computed(() => (this.data.opponent ? (this.game.opponentState()?.userId ?? null) : null));
 
   protected moveOut(a: CardSlot, type: AttachmentType, toZone: ZoneName, position: 'top' | 'bottom' = 'bottom', faceDown = false): void {

@@ -17545,10 +17545,14 @@ function Chain() {
 }
 protoOf(Chain).n1l = function (room) {
   EffectEngine_getInstance().m1l(room);
-  $l$loop: while (room.q18_1 == null && room.y17_1.equals(RoomStatus_IN_PROGRESS_getInstance())) {
+  $l$loop_0: while (room.q18_1 == null && room.y17_1.equals(RoomStatus_IN_PROGRESS_getInstance())) {
     if (!room.u18_1.m()) {
       Removals_getInstance().u2m(room);
-      continue $l$loop;
+      continue $l$loop_0;
+    }
+    if (Formations_instance.o1l(room)) {
+      Formations_instance.v2m(room);
+      continue $l$loop_0;
     }
     var chain = room.p18_1;
     var tmp$ret$0;
@@ -17587,12 +17591,10 @@ protoOf(Chain).n1l = function (room) {
       if (this.x2m(room))
         return Unit_instance;
       Resolution_getInstance().y2m(room);
-    } else if (Formations_instance.o1l(room)) {
-      Formations_instance.w2m(room);
     } else if (!(room.v18_1 == null)) {
       Summons_instance.o2g(room);
     } else if (!(room.x18_1 == null)) {
-      CombatRules_instance.v2m(room);
+      CombatRules_instance.w2m(room);
     } else {
       return Unit_instance;
     }
@@ -18945,7 +18947,7 @@ protoOf(CombatRules).p2g = function (room, userId, attacker, targetId, byEffect,
   var targetName = !(target == null) ? EffectEngine_getInstance().y2b(target) : !(opponent == null) ? opponent.e1e_1 : 'el rival';
   EffectEngine_getInstance().b2c(room, 'ATTACK_DECLARED', userId, attacker, null, null, effect, data, byEffect ? plus(ensureNotNull(player).e1e_1, ': ') + EffectEngine_getInstance().y2b(attacker) + ' ataca a ' + targetName : plus(ensureNotNull(player).e1e_1, ' agota a ') + EffectEngine_getInstance().y2b(attacker) + ' y ataca a ' + targetName);
 };
-protoOf(CombatRules).v2m = function (room) {
+protoOf(CombatRules).w2m = function (room) {
   var c = ensureNotNull(room.x18_1);
   var owner = room.y1d(c.y1y_1);
   var defender = room.y1d(c.z1y_1);
@@ -26218,7 +26220,7 @@ protoOf(Formations).o1l = function (room) {
   }
   return tmp$ret$0;
 };
-protoOf(Formations).w2m = function (room) {
+protoOf(Formations).v2m = function (room) {
   var tmp0 = room.z17_1.w1();
   var tmp$ret$0;
   $l$block: {

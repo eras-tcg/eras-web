@@ -1,8 +1,8 @@
 {
-  "commit": "dee0b7fa619ebc71393d3d87ef3529eb59cf3f3a",
+  "commit": "919358449061f91a0482ae395beea747c148ccbe",
   "dirty": false,
-  "subject": "fix(test): the language catalog export lists Kotlin data objects too (70 steps, 21 conditions, 21 amounts, 10 reactions)",
-  "copiedAt": "2026-11-13T20:20:40.665Z",
+  "subject": "fix(engine): a creature entering the front line chooses its link at once, before the effects its entrance triggers",
+  "copiedAt": "2026-11-13T22:00:08.688Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

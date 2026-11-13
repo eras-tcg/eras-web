@@ -5,7 +5,8 @@ import { SidebarItemComponent } from './sidebar-item.component';
 import { sidebarTimeline } from './sidebar-timeline';
 
 /**
- * The sidebar's controls of the Sala de pruebas: the side played, the bots (and their pause), and the time line —
+ * The sidebar's controls of the Sala de pruebas: its test actions (on or off), the side played, the bots (and their
+ * pause), and the time line —
  * back and forth through the moves ("al presente" brings the last one back). The bots' edge and pace are in the
  * game's preferences (Bots).
  */
@@ -13,6 +14,10 @@ import { sidebarTimeline } from './sidebar-timeline';
   selector: 'eras-test-room-controls',
   imports: [SidebarItemComponent],
   template: `
+    <!-- Off, the board takes the gestures and menus of a regular game (the manual moves and the card-on-card dialog are masked) -->
+    <button type="button" erasSidebarItem icon="hand" [on]="!game.testActionsOff()" (click)="game.toggleTestActions()">
+      Acciones de prueba: {{ game.testActionsOff() ? 'desactivadas' : 'activadas' }}
+    </button>
     <button type="button" erasSidebarItem icon="swap" [on]="game.followActive()" (click)="game.followActive.set(!game.followActive())">
       Cambiar de lado según quién actúa
     </button>

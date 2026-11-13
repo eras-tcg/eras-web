@@ -91,11 +91,23 @@ export class GameStore {
   readonly ownRoom = computed(() => this.editorRoom() || this.botRoom());
   private readonly siteEditMode = inject(EditModeService);
   /**
-   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). On in a test room (also without the connection: its games count for nothing) and while
-   * the site's edit mode (the navigation bar's switch) is on, never in an offline game against the bot.
+   * "Acciones de prueba" off: in a test room the board takes the gestures and menus of a regular game (no free moves
+   * between zones, no creature-on-creature dialog, no manual actions). Only the client masks them: the room stays a test
+   * room. Remembered on the device and with the account.
    */
-  readonly editorMode = computed(() => this.editorRoom() || (!this.local() && this.siteEditMode.active()));
+  readonly testActionsOff = persistedFlag('eras-sim-test-actions-off');
+
+  toggleTestActions(): void {
+    this.testActionsOff.set(!this.testActionsOff());
+  }
+
+  /**
+   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
+   * attachments, strength…). The one gate of those actions: on in a test room (also without the connection: its games
+   * count for nothing) unless its "Acciones de prueba" are off, and elsewhere while the site's edit mode (the
+   * navigation bar's switch) is on, never in an offline game against the bot.
+   */
+  readonly editorMode = computed(() => (this.editorRoom() ? !this.testActionsOff() : !this.local() && this.siteEditMode.active()));
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */
@@ -106,8 +118,10 @@ export class GameStore {
    */
   private readonly revealChoice = signal<boolean | null>(null);
   readonly revealHidden = computed(() => this.revealChoice() ?? (this.editorRoom() || this.replayRoom()));
+  /** "Mostrar cartas ocultas" can be chosen: a test room (with or without its test actions) or the editor mode. */
+  readonly canRevealHidden = computed(() => this.editorRoom() || this.editorMode());
   /** Every hidden card in view: a test room (by choice) or a replay (the game is over). */
-  readonly seeAll = computed(() => this.replayRoom() || (this.editorMode() && this.revealHidden()));
+  readonly seeAll = computed(() => this.replayRoom() || (this.canRevealHidden() && this.revealHidden()));
 
   toggleRevealHidden(): void {
     this.revealChoice.set(!this.revealHidden());

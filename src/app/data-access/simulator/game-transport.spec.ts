@@ -117,6 +117,22 @@ describe('GameStore transports', () => {
     expect(store.editorMode()).toBe(false);
   });
 
+  it('a test room with its test actions off has no manual actions (not even with the site edit mode on), but can show hidden cards', async () => {
+    editMode.set(true);
+    await store.connect('abc');
+    made[0].events!.message(state({ bot: false, editor: true }));
+    expect(store.editorMode()).toBe(true);
+    store.toggleTestActions();
+    try {
+      expect(store.editorMode()).toBe(false);
+      expect(store.canRevealHidden()).toBe(true);
+      expect(store.seeAll()).toBe(true);
+    } finally {
+      store.toggleTestActions();
+    }
+    expect(store.editorMode()).toBe(true);
+  });
+
   it('switching closes the transport before, and what it still says is ignored', async () => {
     await store.connect('abc');
     await store.connectLocal({ decks: {} }, []);

@@ -6,8 +6,10 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
 import { holdToPeek } from './hold-peek';
+import { CardFactsComponent } from '@ui/domain/card-facts/card-facts.component';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
+import { slotFacts } from './slot-facts';
 
 /**
  * Beside a choice, the card it is about: big, with its effects written out (`eras-effect-line`), and the effect that
@@ -16,17 +18,13 @@ import { effectLines, matchingLine } from './card-effect-lines';
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [EffectLineComponent],
+  imports: [EffectLineComponent, CardFactsComponent],
   template: `
     @if (imageUrl()) {
       <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
     }
     @if (facts().length) {
-      <div class="facts">
-        @for (f of facts(); track f.label) {
-          <span class="fact"><small>{{ f.label }}</small><strong>{{ f.value }}</strong></span>
-        }
-      </div>
+      <eras-card-facts compact [facts]="facts()" />
     }
     @if (lines().length) {
       <ul class="effects" aria-label="Efectos de la carta">
@@ -67,17 +65,6 @@ import { effectLines, matchingLine } from './card-effect-lines';
       object-fit: cover;
       box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
     }
-    .facts { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-    .fact {
-      display: inline-flex;
-      align-items: baseline;
-      gap: var(--space-1);
-      padding: 0.125rem var(--space-2);
-      border-radius: var(--radius-pill);
-      background: var(--color-surface-muted);
-      font-size: var(--font-size-xs);
-    }
-    .fact small { color: var(--color-text-muted); }
     .effects { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
     .effect {
       margin: 0;
@@ -122,14 +109,11 @@ export class EffectCardPanelComponent {
   /** When the card's effects are not known, the effect's text alone. */
   protected readonly fallbackText = computed(() => this.activeText() ?? null);
 
+  /** Its numbers as in the card info (the strength as it is now on the table). */
   protected readonly facts = computed(() => {
     const s = this.slot();
-    const facts: { label: string; value: string }[] = [];
-    if (!s) return facts;
-    if (s.level != null) facts.push({ label: 'Nivel', value: String(s.level) });
-    if (s.cost != null) facts.push({ label: 'Coste', value: String(s.cost) });
-    if (s.strength != null) facts.push({ label: 'Fuerza', value: String(s.strength) });
-    return facts;
+    const onField = !!s && Object.values(this.game.state()?.players ?? {}).some((p) => p.field.some((c) => c.instanceId === s.instanceId));
+    return slotFacts(s, { onField });
   });
 
   /** The card in detail: as it is on the table, else from the catalog. */

@@ -1,15 +1,10 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
+import { CardFact, CardFactsComponent } from '../card-facts/card-facts.component';
 import { CardImageComponent } from '../card-image/card-image.component';
 import { ColorPipComponent } from '../color-pip/color-pip.component';
 
-export interface CardFact {
-  label: string;
-  value: string;
-  /** Spans the whole row (long text). */
-  wide?: boolean;
-}
 
 export interface CardTextSegment {
   kind: 'text' | 'keyword' | 'note';
@@ -34,7 +29,7 @@ export interface CardTextGroup {
  */
 @Component({
   selector: 'eras-card-detail',
-  imports: [ButtonComponent, IconComponent, CardImageComponent, ColorPipComponent],
+  imports: [ButtonComponent, IconComponent, CardImageComponent, ColorPipComponent, CardFactsComponent],
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

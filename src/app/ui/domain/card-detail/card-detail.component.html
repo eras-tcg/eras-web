@@ -46,14 +46,7 @@
     }
 
     @if (facts().length) {
-      <dl class="facts">
-        @for (fact of facts(); track fact.label) {
-          <div class="fact" [class.wide]="fact.wide">
-            <dt>{{ fact.label }}</dt>
-            <dd>{{ fact.value }}</dd>
-          </div>
-        }
-      </dl>
+      <eras-card-facts class="facts" [facts]="facts()" />
     }
 
     @for (group of textGroups(); track group.title) {

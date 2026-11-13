@@ -31,11 +31,7 @@
           </div>
           <div class="effects">
             @if (facts().length) {
-              <div class="facts">
-                @for (f of facts(); track f.label) {
-                  <span class="fact" [class.changed]="f.changed"><small>{{ f.label }}</small><strong>{{ f.value }}</strong></span>
-                }
-              </div>
+              <eras-card-facts [facts]="facts()" />
             }
             @if (s.unprogrammed) {
               <p class="unprogrammed" role="note"><eras-icon name="alert" /> Sin programar en el simulador: {{ s.unprogrammed }}. Se juega a mano.</p>

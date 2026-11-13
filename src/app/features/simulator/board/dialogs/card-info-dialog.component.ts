@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
+import { CardFactsComponent } from '@ui/domain/card-facts/card-facts.component';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
@@ -18,6 +19,7 @@ import { formationGrants } from '@data/simulator/formations';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../../cards/card-detail-dialog/card-detail-dialog.component';
 import { effectLines } from '../card-effect-lines';
+import { slotFacts } from '../slot-facts';
 
 export type AttachmentType = 'materials' | 'resources';
 
@@ -36,7 +38,7 @@ const ATTACH_LABELS: Record<AttachmentType, string> = { materials: 'Materiales',
 /** Card details on the board plus its attachments (materials/resources) and what can be done with them. */
 @Component({
   selector: 'eras-card-info-dialog',
-  imports: [IconComponent, ModalComponent, EffectLineComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, HoldPeekDirective],
+  imports: [IconComponent, ModalComponent, EffectLineComponent, CardFactsComponent, GameCardComponent, StackComponent, SectionHeaderComponent, EmptyStateComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective, HoldPeekDirective],
   templateUrl: './card-info-dialog.component.html',
   styleUrl: './card-info-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,16 +115,7 @@ export class CardInfoDialogComponent {
   /** Its printed numbers at a glance; the strength as it is now (marked when it changed). */
   protected readonly facts = computed(() => {
     const s = this.slot();
-    if (!s || (s.faceDown && !this.game.seeAll())) return [];
-    const facts: { label: string; value: string; changed?: boolean }[] = [];
-    if (s.level != null) facts.push({ label: 'Nivel', value: String(s.level) });
-    if (s.cost != null) facts.push({ label: 'Coste', value: String(s.cost) });
-    if (s.strength != null) {
-      const now = this.data.zone === 'field' ? displayStrength(s) : s.strength;
-      facts.push({ label: 'Fuerza', value: String(now), changed: now !== s.strength });
-    }
-    if (s.classes?.length) facts.push({ label: 'Clase', value: s.classes.join(' · ') });
-    return facts;
+    return slotFacts(s, { onField: this.data.zone === 'field', visible: !!s && (!s.faceDown || this.game.seeAll()) });
   });
 
   /** The card in detail, as in the cards catalog. */

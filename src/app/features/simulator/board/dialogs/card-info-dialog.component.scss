@@ -62,20 +62,6 @@
 .resource img { display: block; inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
 .resource span { display: block; padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .effects { display: grid; gap: var(--space-3); min-inline-size: 0; }
-.facts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.fact {
-  display: grid;
-  gap: 1px;
-  min-inline-size: 4.5rem;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-muted);
-}
-.fact small { color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.06em; }
-.fact strong { font-size: var(--font-size-lg); }
-.fact.changed { border-color: var(--color-primary); }
-.fact.changed strong { color: var(--color-primary); }
 .unprogrammed {
   display: flex;
   align-items: center;
@@ -134,6 +120,5 @@
   .info { grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); }
   .showcase { --game-card-width: calc(55 * var(--app-vh, 1vh) * 63 / 88); padding: var(--space-2); }
   .effects { gap: var(--space-2); }
-  .fact { min-inline-size: 3.5rem; padding: 2px var(--space-2); }
-  .fact strong { font-size: var(--font-size-md); }
+  eras-card-facts { --card-fact-min: 3.5rem; --card-fact-padding: 2px var(--space-2); --card-fact-value-size: var(--font-size-md); }
 }

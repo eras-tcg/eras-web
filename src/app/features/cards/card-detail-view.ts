@@ -1,6 +1,7 @@
 import { CARD_TYPE_LABELS, COLOR_LABELS, CardRefData, CatalogCard, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { cardImageUrl, fullEditionId, renderEffect, renderKeywordEffect } from '@data/cards/card-rules';
-import { CardFact, CardTextGroup } from '@ui/domain/card-detail/card-detail.component';
+import { CardTextGroup } from '@ui/domain/card-detail/card-detail.component';
+import { CardFact } from '@ui/domain/card-facts/card-facts.component';
 
 export interface CardDetailView {
   name: string;

@@ -463,7 +463,7 @@ export function buildCard(
   const badge = first('REGULATION BG') ?? first('Rectángulo redondeado 4');
   if (ed?.text && badge) {
     // Regulation letter inside its badge: white badge and black letter, dark badge on white cards.
-    const [bx0, by0, bx1, by1] = badge.bbox;
+    const [bx0, , bx1] = badge.bbox;
     ed.text.transform[4] = bx0 - 4;
     ed.text.justify = 'right';
     ed.text.box = null;
@@ -473,7 +473,8 @@ export function buildCard(
     letter.name = 'REGULATION';
     letter.text!.justify = 'center';
     letter.text!.transform[4] = (bx0 + bx1) / 2;
-    letter.text!.transform[5] = by1 - (by1 - by0) * 0.2;
+    // In the PSD the letter is part of the edition text, on its baseline.
+    letter.text!.transform[5] = ed.text.transform[5];
     setText(letter, card.regulation || '', white ? '#ffffff' : '#000000');
     const siblings = parentOf(spec.layers, ed);
     siblings?.splice(siblings.indexOf(ed) + 1, 0, letter);

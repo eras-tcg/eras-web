@@ -905,7 +905,8 @@ export function buildCard(
           }
         }
       });
-    setText(first('SPEC COST'), String(card.specialCost ?? ''), white ? '#000000' : null);
+    // The special cost sits on the hexagon in the method's color: its number is always white.
+    setText(first('SPEC COST'), String(card.specialCost ?? ''), '#ffffff');
     const req = `${KIND_LABEL[kind] ?? kind}: ${card.requirement || ''}`.trim();
     const one = first('REQUIREMENT');
     const two = first('REQUIREMENT 2 LINES');

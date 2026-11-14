@@ -2,6 +2,7 @@ import { CardEffect, KeywordEffect, KeywordEffectRef } from '@data/cards/card.mo
 import { BuiltCard, EffectSlot, Measure } from './card-build';
 import { PieceStyle, PieceTable } from './spec.model';
 import { SvgRenderer, svgEl } from './svg-render';
+import { betweenCopiesMark } from '../effect-text';
 
 /** Effect text sizes tried in order until the text fits its box (points at 300 dpi). */
 export const EFFECT_SIZES = [7, 6.5, 6, 5.5, 5];
@@ -16,11 +17,12 @@ export type Token =
   | { t: 'space' }
   | { t: 'break' }
   | { t: 'ultimate' }
+  | { t: 'ultimateEnd' }
   | { t: 'piece'; kind: PieceKind; label: string };
 
 const USAGE: Record<string, { piece?: string; after?: string; ultimate?: boolean }> = {
   'once per turn': { piece: 'una vez por turno' },
-  'once per turn between copies': { piece: 'una vez por turno', after: 'entre copias,' },
+  'once per turn between copies': { piece: 'una vez por turno', after: 'entre copias' },
   'ultimate effect': { ultimate: true },
 };
 
@@ -113,7 +115,8 @@ export class EffectTokens {
     });
     if (usage?.after) {
       out.push({ t: 'space' });
-      words(usage.after, false, out);
+      // A colon closes the conditions; a comma when another condition follows.
+      words(`${usage.after}${betweenCopiesMark(e)}`, false, out);
     }
     for (const b of e.effectBlocks ?? []) {
       const found: { keyword: string; value: string | null; label: string }[] = [];
@@ -227,21 +230,33 @@ export function layoutAt(
   const lines: PlacedToken[][] = [[]];
   let x = 0;
   let pendingSpace = false;
-  for (const tok of tokens) {
+  // The ultimate effect sits between two bars: its heading and, where the effect ends, a closing one.
+  let inUltimate = false;
+  const closeUltimate = () => {
+    if (!inUltimate) return;
+    if (lines[lines.length - 1].length) lines.push([]);
+    lines[lines.length - 1].push({ tok: { t: 'ultimateEnd' }, x: 0, w: width });
+    lines.push([]);
+    inUltimate = false;
+  };
+  for (const tok of [...tokens, { t: 'break' } as Token]) {
     if (tok.t === 'space') {
       pendingSpace = true;
       continue;
     }
     if (tok.t === 'break' || tok.t === 'ultimate') {
+      closeUltimate();
       if (lines[lines.length - 1].length) lines.push([]);
       if (tok.t === 'ultimate') {
         lines[lines.length - 1].push({ tok, x: 0, w: width });
         lines.push([]);
+        inUltimate = true;
       }
       x = 0;
       pendingSpace = false;
       continue;
     }
+    if (tok.t === 'ultimateEnd') continue;
     // A momento right after another (no space) interlocks with it: it starts under the other's tip, with extra
     // body on the left so its text clears the tip.
     const prev = lines[lines.length - 1].at(-1);
@@ -266,7 +281,11 @@ export function layoutAt(
   }
   while (lines.length && !lines[lines.length - 1].length) lines.pop();
   const lineHeights = lines.map((l) =>
-    l.some((i) => i.tok.t === 'ultimate') ? lineH * 1.15 : lineH,
+    l.some((i) => i.tok.t === 'ultimate')
+      ? lineH * 1.15
+      : l.some((i) => i.tok.t === 'ultimateEnd')
+        ? lineH * 0.6
+        : lineH,
   );
   const total = lineHeights.reduce((a, b) => a + b, 0);
   return { lines, lineHeights, height: total, pt, px, fits: total <= height };
@@ -363,6 +382,7 @@ function drawSlot(
         );
         lastPiece = pg;
       } else if (tok.t === 'ultimate') drawUltimate(g, slot.box, y, px, measure);
+      else if (tok.t === 'ultimateEnd') drawUltimateBar(g, slot.box, y + px * 0.3, px);
       else if (tok.t === 'word') {
         svgEl(
           'text',
@@ -465,19 +485,11 @@ function drawPiece(
   ).textContent = tok.label;
 }
 
-function drawUltimate(
-  g: Element,
-  box: EffectSlot['box'],
-  y: number,
-  px: number,
-  measure: Measure,
-): void {
-  const mid = y + px * 0.6;
-  const label = 'Efecto Definitivo';
-  const tw = measure(label, effectFont(px, true)) + px * 1.4;
-  const cx = box.x + box.w / 2;
-  const h = px * 1.2;
-  const purple = '#5b3b6e';
+const ULTIMATE_PURPLE = '#5b3b6e';
+
+/** The ultimate effect's bar across the box, with a diamond at each end, centered on `mid`. */
+function drawUltimateBar(g: Element, box: EffectSlot['box'], mid: number, px: number): void {
+  const purple = ULTIMATE_PURPLE;
   svgEl(
     'rect',
     {
@@ -500,13 +512,28 @@ function drawUltimate(
       g,
     );
   }
+}
+
+function drawUltimate(
+  g: Element,
+  box: EffectSlot['box'],
+  y: number,
+  px: number,
+  measure: Measure,
+): void {
+  const mid = y + px * 0.6;
+  const label = 'Efecto Definitivo';
+  const tw = measure(label, effectFont(px, true)) + px * 1.4;
+  const cx = box.x + box.w / 2;
+  const h = px * 1.2;
+  drawUltimateBar(g, box, mid, px);
   const l = cx - tw / 2;
   const rr = cx + tw / 2;
   svgEl(
     'path',
     {
       d: `M${l} ${mid}L${l + h / 2} ${mid - h / 2}L${rr - h / 2} ${mid - h / 2}L${rr} ${mid}L${rr - h / 2} ${mid + h / 2}L${l + h / 2} ${mid + h / 2}Z`,
-      fill: purple,
+      fill: ULTIMATE_PURPLE,
     },
     g,
   );

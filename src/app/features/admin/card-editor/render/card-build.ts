@@ -493,67 +493,61 @@ function fixGold(layers: SpecNode[], link: boolean): void {
     const len = Math.hypot(nx, ny);
     return [cx + rx * Math.cos(t) + (k * nx) / len, cy + ry * Math.sin(t) + (k * ny) / len];
   };
-  // The band starts on the cap's upper right (60 degrees above its middle); the side line comes into it with a 45
-  // degree diagonal, as on inherit cards.
+  // One continuous gold line 4 px wide, drawn as part of the same shape as the right side line so that its bevel
+  // runs on without seams: it starts where the side line ends (the link mapping moves that end 18 px lower), falls,
+  // comes into the cap with a 45 degree diagonal, follows the cap 6 px away from it from 60 degrees above its middle
+  // (so the black between stays even), runs under the name as the bottom line and rises with a diagonal into the
+  // level ring's flat bottom (its gold, 4.2 px inside the flattened circle, centered at y 1020.1).
+  let side: SpecNode | null = null;
+  let sideBox: number[] = [];
+  walk(g.children, (n) => {
+    const hit = n.visible && n.paths?.find((sp) => near(pathBox(sp.d), [734, 30, 738, 926]));
+    if (hit && (!side || (n.paths?.length ?? 0) > (side.paths?.length ?? 0))) {
+      side = n;
+      sideBox = pathBox(hit.d);
+    }
+  });
+  const target = side as SpecNode | null;
+  if (!target?.paths) return;
+  const [lx0, , lx1, ly1] = sideBox;
+  const lx = (lx0 + lx1) / 2;
+  const hw = (lx1 - lx0) / 2;
+  const lineEnd = ly1 + 18;
   const t0 = -Math.PI / 3;
-  const steps = 40;
-  const outer: [number, number][] = [];
-  const inner: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = t0 + ((Math.PI / 2 - t0) * i) / steps;
-    outer.push(offset(t, 8));
-    inner.push(offset(t, 4));
-  }
-  const yIn = cy + ry + 4;
-  const yOut = cy + ry + 8;
-  // At the left the bottom line rises with a diagonal into the level ring's flat bottom (its gold, 4.2 px inside
-  // the flattened circle, ends at y 1022.2), starting from the cut's corner.
-  const band = [...outer, [104, yOut], [94, 1022.2], [94, 1018], [104, yIn], ...inner.reverse()];
-  // Joint: the side line (x 734-738) falls on to where a 45 degree diagonal from it reaches the band's middle line.
   const [px, py] = offset(t0, 6);
-  const ys = py - (736 - px);
-  const quad = (ax: number, ay: number, bx: number, by: number) => {
-    const l = Math.hypot(bx - ax, by - ay);
-    const [nx, ny] = [(-(by - ay) / l) * 2, ((bx - ax) / l) * 2];
-    return [
-      [ax + nx, ay + ny],
-      [bx + nx, by + ny],
-      [bx - nx, by - ny],
-      [ax - nx, ay - ny],
-    ];
+  const center: number[][] = [
+    [lx, lineEnd],
+    [lx, py - (lx - px)],
+  ];
+  for (let i = 0; i <= 48; i++) center.push(offset(t0 + ((Math.PI / 2 - t0) * i) / 48, 6));
+  center.push([104, cy + ry + 6], [94, 1020.1], [90, 1020.1]);
+  const line = strokeOutline(center, hw);
+  target.paths.push({
+    d: `M${line.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
+    op: 1,
+  });
+}
+
+/** Outline of a polyline drawn hw to each side, with mitered corners. */
+function strokeOutline(pts: number[][], hw: number): number[][] {
+  const unit = (a: number[], b: number[]) => {
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
   };
-  const k = 1 / Math.SQRT2;
-  const fall = quad(736, 940, 736, ys + 2 * k);
-  const entry = quad(736 + 2 * k, ys - 2 * k, px - k, py + k);
-  const poly = (pts: number[][]) =>
-    `M${pts.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`;
-  const capBand: SpecNode = {
-    name: 'GOLD CAP',
-    kind: 'shape',
-    visible: true,
-    opacity: 1,
-    bbox: [94, 935, 744, yOut + 1],
-    fill: '#ffee13',
-    fx: {
-      bevel: {
-        size: 2,
-        depth: 100,
-        angle: 120,
-        altitude: 30,
-        useGlobal: true,
-        hi: '#ffffff',
-        hiOpacity: 0.75,
-        sh: '#000000',
-        shOpacity: 0.75,
-      },
-    },
-    paths: [
-      { d: poly(band), op: 1 },
-      { d: poly(fall), op: 1 },
-      { d: poly(entry), op: 1 },
-    ],
-  };
-  g.children.push(capBand);
+  const left: number[][] = [];
+  const right: number[][] = [];
+  pts.forEach((p, i) => {
+    const din = i > 0 ? unit(pts[i - 1], p) : unit(p, pts[i + 1]);
+    const dout = i < pts.length - 1 ? unit(p, pts[i + 1]) : din;
+    const n0 = [-din[1], din[0]];
+    let n = [-(din[1] + dout[1]), din[0] + dout[0]];
+    const l = Math.hypot(n[0], n[1]) || 1;
+    n = [n[0] / l, n[1] / l];
+    const m = hw / Math.max(0.25, n[0] * n0[0] + n[1] * n0[1]);
+    left.push([p[0] + n[0] * m, p[1] + n[1] * m]);
+    right.push([p[0] - n[0] * m, p[1] - n[1] * m]);
+  });
+  return [...left, ...right.reverse()];
 }
 
 /** Moves every x y pair of an absolute path (M, L, C). */

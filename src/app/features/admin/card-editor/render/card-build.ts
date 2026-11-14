@@ -418,13 +418,12 @@ const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v
  * Gold border details the prototypes left out:
  * - Plain creatures, utilities and structures join the right side line to the name bar with a straight diagonal:
  *   it becomes a curve.
- * - Link cards: the name bar ends in a round cap like the inherit cards' one, 114 px lower; the inherit
- *   prototype's joint from the side line goes there, then a gold band around the cap (4 px from it all along)
- *   that runs on as the bottom line to the level ring.
+ * - Link cards: the name bar ends in an oval cap; the
+ *   gold goes around that cap at an even distance and runs on as the bottom line to the level ring.
  * - Inherit cards: their gold outline is a picture that still carries the plain creature's bottom line, which
  *   crosses the inherit effect box; it is cut out.
  */
-function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, CardSpec>): void {
+function fixGold(layers: SpecNode[], link: boolean): void {
   let gold: SpecNode | null = null;
   walk(layers, (n) => {
     if (!gold && n.name === 'GOLD BORDER') gold = n;
@@ -470,40 +469,44 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
     });
   });
   if (!link) return;
-  // The inherit prototype's cap curve and its joints, moved to the link's name bar.
-  const her = templates['CRIATURA HER - PROTOTIPO'];
-  const pieces: SpecNode[] = [];
-  walk(her?.layers ?? [], (n) => {
-    if (/^Rectángulo 33 copia 14$/.test(n.name) && n.paths && n.fill)
-      pieces.push({
-        ...clone(n),
-        visible: true,
-        paths: n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + 114]) })),
-        bbox: [n.bbox[0], n.bbox[1] + 114, n.bbox[2], n.bbox[3] + 114],
-      });
+  // The name bar ends in an oval cap (the first subpath of its "left curved side" shape). Around it goes a gold
+  // band 4 px wide at exactly 4 px from it all along (a true offset of the oval, so the black between stays even),
+  // joined to the side line above by a diagonal and running on below as the bottom line to the level ring, met with
+  // a short diagonal.
+  let capPath: string | null = null;
+  walk(layers, (n) => {
+    // Another shape of the same name (a box at the left of the name bar) comes first: the cap is the one at the right.
+    if (
+      !capPath &&
+      n.name === 'left curved side' &&
+      n.paths?.length &&
+      pathBox(n.paths[0].d)[0] > 600
+    )
+      capPath = n.paths[0].d;
   });
-  g.children.push(...pieces);
-  // Around the name bar's round cap (center 703,988, radii 28 x 33) a gold band 4 px wide, 4 px away from it all
-  // along; at the bottom it runs on as the bottom line, under the name, to the level ring, which it meets with a
-  // short diagonal.
-  const [cx, cy, rx, ry] = [703, 988, 28, 33];
-  const ring = (k: number, t: number): [number, number] => [
-    cx + (rx + k) * Math.cos(t),
-    cy + (ry + k) * Math.sin(t),
-  ];
-  // Starts where the joint from the side line arrives.
-  const t0 = Math.asin((957 - cy) / (ry + 6));
-  const steps = 24;
+  if (!capPath) return;
+  const [x0, y0, x1, y1] = pathBox(capPath);
+  const [cx, cy, rx, ry] = [(x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2];
+  const offset = (t: number, k: number): [number, number] => {
+    const nx = Math.cos(t) / rx;
+    const ny = Math.sin(t) / ry;
+    const len = Math.hypot(nx, ny);
+    return [cx + rx * Math.cos(t) + (k * nx) / len, cy + ry * Math.sin(t) + (k * ny) / len];
+  };
+  // The band starts where the cap is almost upright (its middle line at x 736.6, the side line's): the line falls
+  // straight into it.
+  const t0 = -0.22;
+  const steps = 40;
   const outer: [number, number][] = [];
   const inner: [number, number][] = [];
   for (let i = 0; i <= steps; i++) {
     const t = t0 + ((Math.PI / 2 - t0) * i) / steps;
-    outer.push(ring(8, t));
-    inner.push(ring(4, t));
+    outer.push(offset(t, 8));
+    inner.push(offset(t, 4));
   }
   const yIn = cy + ry + 4;
   const yOut = cy + ry + 8;
-  const pts = [
+  const band = [
     ...outer,
     [104, yOut],
     [96, yOut - 6],
@@ -511,12 +514,46 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
     [104, yIn],
     ...inner.reverse(),
   ];
+  // Joint: the side line (x 734-738, ending at y 944) keeps falling and bends into the band, tangent to it: a cubic
+  // from the line going down to the band's middle at t0 going along the band, 4 px wide.
+  const [px, py] = offset(t0, 6);
+  const tl = Math.hypot(rx * Math.sin(t0), ry * Math.cos(t0));
+  const [tx, ty] = [(-rx * Math.sin(t0)) / tl, (ry * Math.cos(t0)) / tl];
+  const L = (py - 940) / 2;
+  const ctrl = [736, 940, 736, 940 + L, px - tx * L, py - ty * L, px, py];
+  const at = (u: number) => {
+    const [a, b, c, d] = [(1 - u) ** 3, 3 * (1 - u) ** 2 * u, 3 * (1 - u) * u ** 2, u ** 3];
+    const x = a * ctrl[0] + b * ctrl[2] + c * ctrl[4] + d * ctrl[6];
+    const y = a * ctrl[1] + b * ctrl[3] + c * ctrl[5] + d * ctrl[7];
+    const dx =
+      3 *
+      ((1 - u) ** 2 * (ctrl[2] - ctrl[0]) +
+        2 * (1 - u) * u * (ctrl[4] - ctrl[2]) +
+        u ** 2 * (ctrl[6] - ctrl[4]));
+    const dy =
+      3 *
+      ((1 - u) ** 2 * (ctrl[3] - ctrl[1]) +
+        2 * (1 - u) * u * (ctrl[5] - ctrl[3]) +
+        u ** 2 * (ctrl[7] - ctrl[5]));
+    const l = Math.hypot(dx, dy);
+    return [x, y, -dy / l, dx / l];
+  };
+  const left: number[][] = [];
+  const right: number[][] = [];
+  for (let i = 0; i <= 16; i++) {
+    const [x, y, nx, ny] = at(i / 16);
+    left.push([x + 2 * nx, y + 2 * ny]);
+    right.push([x - 2 * nx, y - 2 * ny]);
+  }
+  const joint = [...left, ...right.reverse()];
+  const poly = (pts: number[][]) =>
+    `M${pts.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`;
   const capBand: SpecNode = {
     name: 'GOLD CAP',
     kind: 'shape',
     visible: true,
     opacity: 1,
-    bbox: [94, 940, 744, yOut + 1],
+    bbox: [94, 935, 744, yOut + 1],
     fill: '#ffee13',
     fx: {
       bevel: {
@@ -532,10 +569,8 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
       },
     },
     paths: [
-      {
-        d: `M${pts.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
-        op: 1,
-      },
+      { d: poly(band), op: 1 },
+      { d: poly(joint), op: 1 },
     ],
   };
   g.children.push(capBand);
@@ -634,7 +669,7 @@ export function buildCard(
     }
   }
 
-  if (card.goldBorder) fixGold(spec.layers, !!card.enlace, templates);
+  if (card.goldBorder) fixGold(spec.layers, !!card.enlace);
 
   // Full art: the gold border's black box under the card type label stays out (the label sits on the art).
   if (style === 'full')

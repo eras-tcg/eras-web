@@ -68,10 +68,7 @@ const KEY_COLOR: Record<string, string> = Object.fromEntries(
 );
 
 type Role = 'primary' | 'special' | 'effectBg' | 'margin' | 'dark' | 'edge';
-interface Swatch extends Record<Role, string> {
-  bi: string;
-  biBg: string;
-}
+type Swatch = Record<Role, string>;
 
 /** Colors of each part, taken from the COLOR OBJECTS groups of the prototypes. */
 export const PALETTE: Record<string, Swatch> = {
@@ -82,8 +79,6 @@ export const PALETTE: Record<string, Swatch> = {
     margin: '#d83982',
     dark: '#511117',
     edge: '#74090a',
-    bi: '#990608',
-    biBg: '#fea1ce',
   },
   B: {
     primary: '#022fff',
@@ -92,8 +87,6 @@ export const PALETTE: Record<string, Swatch> = {
     margin: '#3b67ff',
     dark: '#0a1883',
     edge: '#0012a1',
-    bi: '#022fff',
-    biBg: '#afc7f6',
   },
   G: {
     primary: '#277b09',
@@ -102,8 +95,6 @@ export const PALETTE: Record<string, Swatch> = {
     margin: '#51ce38',
     dark: '#192c16',
     edge: '#2f8116',
-    bi: '#277b09',
-    biBg: '#affdac',
   },
   P: {
     primary: '#441eea',
@@ -112,8 +103,6 @@ export const PALETTE: Record<string, Swatch> = {
     margin: '#835aff',
     dark: '#26108e',
     edge: '#13038b',
-    bi: '#441fea',
-    biBg: '#d0c1fe',
   },
   W: {
     primary: '#ebf3f3',
@@ -122,8 +111,6 @@ export const PALETTE: Record<string, Swatch> = {
     margin: '#ebf3f3',
     dark: '#364546',
     edge: '#d7e6e6',
-    bi: '#ffffff',
-    biBg: '#c5d8d8',
   },
 };
 
@@ -234,13 +221,12 @@ export function rolePaint(
   role: Role,
   cols: string[],
   scale = role === 'effectBg' ? 100 : 20,
-  link = false,
 ): Paint {
   const [a, b] = cols.map((c) => PALETTE[c]);
   if (!b) return a[role];
-  if (role === 'primary' || role === 'special') return gradient(a.bi, b.bi, scale);
-  if (role === 'effectBg')
-    return link ? gradient(a.biBg, b.biBg, scale) : gradient(a.effectBg, b.effectBg, scale);
+  // Each side keeps its one-color palette.
+  if (role === 'primary' || role === 'special') return gradient(a.primary, b.primary, scale);
+  if (role === 'effectBg') return gradient(a.effectBg, b.effectBg, scale);
   if (role === 'dark') return gradient(a.dark, b.dark, scale);
   if (role === 'margin') return gradient(a.margin, b.margin, scale);
   return null;
@@ -266,7 +252,7 @@ function repaint(group: SpecNode, cols: string[]): void {
     if (n.children) return;
     // Link cards: the left and right arrows take one color each.
     if (two && (n.name === 'LA' || n.name === 'RA')) {
-      n.fill = PALETTE[cols[n.name === 'LA' ? 0 : 1]].bi;
+      n.fill = PALETTE[cols[n.name === 'LA' ? 0 : 1]].primary;
       return;
     }
     const role = roleOf(n.name);
@@ -289,12 +275,7 @@ function repaint(group: SpecNode, cols: string[]): void {
       }
       return;
     }
-    n.fill = rolePaint(
-      role,
-      cols,
-      scaleOf(n.fill) ?? (role === 'effectBg' ? 100 : 20),
-      n.name.startsWith('LINK'),
-    );
+    n.fill = rolePaint(role, cols, scaleOf(n.fill) ?? (role === 'effectBg' ? 100 : 20));
   });
 }
 

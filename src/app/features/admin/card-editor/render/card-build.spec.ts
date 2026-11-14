@@ -37,8 +37,8 @@ describe('card-build', () => {
     expect(rolePaint('primary', ['R'])).toBe('#990608');
     const blend = rolePaint('primary', ['P', 'W']);
     expect(typeof blend === 'object' && blend?.gradient.stops.map((s) => s.color)).toEqual([
-      '#441fea',
-      '#ffffff',
+      '#441eea',
+      '#ebf3f3',
     ]);
     const margin = rolePaint('margin', ['P', 'W']);
     expect(typeof margin === 'object' && margin?.gradient.stops.map((s) => s.color)).toEqual([
@@ -47,8 +47,8 @@ describe('card-build', () => {
     ]);
     const flipped = rolePaint('primary', ['W', 'P']);
     expect(typeof flipped === 'object' && flipped?.gradient.stops.map((s) => s.color)).toEqual([
-      '#ffffff',
-      '#441fea',
+      '#ebf3f3',
+      '#441eea',
     ]);
     expect(typeof flipped === 'object' && flipped?.gradient.scale).toBe(20);
     const bg = rolePaint('effectBg', ['G', 'B']);

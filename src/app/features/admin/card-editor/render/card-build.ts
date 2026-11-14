@@ -404,6 +404,78 @@ function flatLevel(grow: number): { d: string; op: number }[] {
   ];
 }
 
+/** Bounds of an absolute path's points. */
+function pathBox(d: string): [number, number, number, number] {
+  const nums = (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  const xs = nums.filter((_, i) => i % 2 === 0);
+  const ys = nums.filter((_, i) => i % 2 === 1);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
+
+/**
+ * Gold border details the prototypes left out (the link card's bottom line also ends on its cap curve):
+ * - Plain creatures, utilities and structures join the right side line to the name bar with a straight diagonal:
+ *   it becomes a curve.
+ * - Link cards: the name bar ends in a round cap like the inherit cards' one, 119 px lower; the inherit
+ *   prototype's gold curve around that cap goes there, replacing the diagonal and the line under the cap.
+ * - Inherit cards: their gold outline is a picture that still carries the plain creature's bottom line, which
+ *   crosses the inherit effect box; it is cut out.
+ */
+function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, CardSpec>): void {
+  let gold: SpecNode | null = null;
+  walk(layers, (n) => {
+    if (!gold && n.name === 'GOLD BORDER') gold = n;
+  });
+  const g = gold as SpecNode | null;
+  if (!g?.children) return;
+  const curve = (x0: number) =>
+    `M${x0 + 4} 923C${x0 + 4} 936 ${x0 - 12} 930 ${x0 - 12} 943L${x0 - 16} 943C${x0 - 16} 928 ${x0} 934 ${x0} 923Z`;
+  const diagonal = [718, 923, 738, 943];
+  const underCap = [[718, 940, 722, 1002]];
+  walk(g.children, (n) => {
+    if (n.children) return;
+    if (typeof n.raster === 'string' && n.bbox[3] > 1030) {
+      // Inherit cards: clip the stray bottom line out of the picture.
+      n.paths = [
+        { d: rectPath(0, 0, 744, 1039), op: 1 },
+        { d: rectPath(70, 1008, 712, 1021), op: 1 },
+      ];
+      return;
+    }
+    if (!n.paths) return;
+    n.paths = n.paths.flatMap((sp) => {
+      const box = pathBox(sp.d);
+      if (near(box, diagonal)) return link ? [] : [{ ...sp, d: curve(734) }];
+      if (link && underCap.some((b) => near(box, b))) return [];
+      // Link: the bottom right corner arc goes; the bottom line runs on to the cap curve's tail instead.
+      if (link && box[0] >= 686 && box[1] >= 980 && box[2] <= 724 && box[3] <= 1020) return [];
+      if (link && near(box, [80, 1012, 707, 1016]))
+        return [{ ...sp, d: rectPath(box[0], box[1], 721, box[3]) }];
+      return [sp];
+    });
+  });
+  if (!link) return;
+  // The inherit prototype's cap curve and its joints, moved to the link's name bar.
+  const her = templates['CRIATURA HER - PROTOTIPO'];
+  const pieces: SpecNode[] = [];
+  walk(her?.layers ?? [], (n) => {
+    if (
+      /^(Elipse 11( copia)?|Rectángulo 35( copia)?|Rectángulo 33 copia 14)$/.test(n.name) &&
+      n.paths &&
+      n.fill
+    )
+      pieces.push({
+        ...clone(n),
+        visible: true,
+        paths: n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + 119]) })),
+        bbox: [n.bbox[0], n.bbox[1] + 119, n.bbox[2], n.bbox[3] + 119],
+      });
+  });
+  g.children.push(...pieces);
+}
+
 /** Moves every x y pair of an absolute path (M, L, C). */
 function mapPoints(d: string, fn: (x: number, y: number) => [number, number]): string {
   const nums = d.match(/-?\d+(?:\.\d+)?/g) ?? [];
@@ -496,6 +568,14 @@ export function buildCard(
       walk([copy], (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
     }
   }
+
+  if (card.goldBorder) fixGold(spec.layers, !!card.enlace, templates);
+
+  // Full art: the gold border's black box under the card type label stays out (the label sits on the art).
+  if (style === 'full')
+    walk(spec.layers, (n, p) => {
+      if (p.includes('GOLD BORDER') && /^Rect.ngulo 3[46]$/.test(n.name)) n.visible = false;
+    });
 
   // Frame: standard = NONFULLART; semi = semi frame over the full-art pieces (translucent boxes); full = full-art pieces.
   walk(spec.layers, (n) => {
@@ -761,7 +841,8 @@ export function buildCard(
         if (x >= 372 && x <= 475) return [x + 30, y];
       }
       if (x < 30 && y > 900 && y < 960) return [x, y + 17];
-      if (y > 1005 && x <= 85) return [100, y];
+      // Right side line: down to where the link's name bar curve begins.
+      if (x > 730 && y > 900 && y < 930) return [x, y + 23];
       return [x, y];
     };
     // Where an arrow is, the side line breaks in a V around it: on each side of the arrow's tip a gold triangle
@@ -825,7 +906,12 @@ export function buildCard(
         if (n.name === 'Rectángulo 34' && style === 'full') n.visible = false;
         if (n.paths) {
           n.paths = n.paths.flatMap((sp) => {
-            const d = mapPoints(sp.d, linkPoint);
+            // Pieces under the name bar (bottom line, bottom right corner) move whole, 17 px lower; the bottom line
+            // starts after the level badge.
+            const d =
+              pathBox(sp.d)[1] >= 980
+                ? mapPoints(sp.d, (x, y) => [x <= 85 ? 100 : x, y + 17])
+                : mapPoints(sp.d, linkPoint);
             const nums = (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
             const xs = nums.filter((_, i) => i % 2 === 0);
             const ys = nums.filter((_, i) => i % 2 === 1);

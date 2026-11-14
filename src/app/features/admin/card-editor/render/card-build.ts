@@ -418,7 +418,7 @@ const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v
  * Gold border details the prototypes left out:
  * - Plain creatures, utilities and structures join the right side line to the name bar with a straight diagonal:
  *   it becomes a curve.
- * - Link cards: the name bar ends in a round cap like the inherit cards' one, 119 px lower; the inherit
+ * - Link cards: the name bar ends in a round cap like the inherit cards' one, 114 px lower; the inherit
  *   prototype's gold curve around that cap goes there and, as on inherit cards, the side line then drops to the
  *   card's edge: no bottom line nor bottom corner.
  * - Inherit cards: their gold outline is a picture that still carries the plain creature's bottom line, which
@@ -453,6 +453,19 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
       // Link: no bottom line nor bottom right corner; after the cap curve the side line drops to the card's edge.
       if (link && box[0] >= 686 && box[1] >= 980 && box[2] <= 724 && box[3] <= 1020) return [];
       if (link && near(box, [80, 1012, 707, 1016])) return [];
+      // Link: the left side line enters the flattened level ring right at its top left corner (coordinates before
+      // the link's 17 px drop of the level).
+      if (link && near(box, [6, 924, 25, 943])) {
+        const [ax, ay, bx, by] = [8, 925, 24, 940];
+        const len = Math.hypot(bx - ax, by - ay);
+        const [nx, ny] = [(-(by - ay) / len) * 2, ((bx - ax) / len) * 2];
+        return [
+          {
+            ...sp,
+            d: `M${ax + nx} ${ay + ny}L${bx + nx} ${by + ny}L${bx - nx} ${by - ny}L${ax - nx} ${ay - ny}Z`,
+          },
+        ];
+      }
       return [sp];
     });
   });
@@ -469,8 +482,8 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
       pieces.push({
         ...clone(n),
         visible: true,
-        paths: n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + 119]) })),
-        bbox: [n.bbox[0], n.bbox[1] + 119, n.bbox[2], n.bbox[3] + 119],
+        paths: n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + 114]) })),
+        bbox: [n.bbox[0], n.bbox[1] + 114, n.bbox[2], n.bbox[3] + 114],
       });
   });
   g.children.push(...pieces);
@@ -842,7 +855,7 @@ export function buildCard(
       }
       if (x < 30 && y > 900 && y < 960) return [x, y + 17];
       // Right side line: down to where the link's name bar curve begins.
-      if (x > 730 && y > 900 && y < 930) return [x, y + 23];
+      if (x > 730 && y > 900 && y < 930) return [x, y + 18];
       return [x, y];
     };
     // Where an arrow is, the side line breaks in a V around it: on each side of the arrow's tip a gold triangle

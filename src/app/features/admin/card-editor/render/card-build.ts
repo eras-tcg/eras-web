@@ -725,7 +725,8 @@ export function buildCard(
       if (typeof n.raster === 'string')
         n.paths = [
           ...(n.paths?.length ? n.paths : [{ d: rectPath(0, 0, 744, 1039), op: 1 }]),
-          { d: rectPath(0, 0, 744, top), op: 1 },
+          // The side lines (x 6-10, 734-738) keep running up to the corners.
+          { d: rectPath(12, 0, 732, top), op: 1 },
         ];
     });
     // A shape that draws the whole outline at once (the plain creature's) loses its top subpaths.

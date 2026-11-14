@@ -1,8 +1,8 @@
 {
-  "commit": "0dcca6271ced29476e111f023773e0e526e690dc",
+  "commit": "cc4fae62749635c4bf8513e0c13eb0c120a70f3b",
   "dirty": false,
-  "subject": "fix(engine): choice texts say only what is done now; a special summon can always be given up",
-  "copiedAt": "2026-11-14T00:28:22.251Z",
+  "subject": "fix(cards): Trampa Vegetal chooses which of the enemies that entered together to exhaust",
+  "copiedAt": "2026-11-14T01:20:37.294Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

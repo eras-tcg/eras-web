@@ -1,8 +1,8 @@
 {
-  "commit": "919358449061f91a0482ae395beea747c148ccbe",
+  "commit": "0dcca6271ced29476e111f023773e0e526e690dc",
   "dirty": false,
-  "subject": "fix(engine): a creature entering the front line chooses its link at once, before the effects its entrance triggers",
-  "copiedAt": "2026-11-13T22:00:08.688Z",
+  "subject": "fix(engine): choice texts say only what is done now; a special summon can always be given up",
+  "copiedAt": "2026-11-14T00:28:22.251Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

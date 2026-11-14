@@ -134,7 +134,9 @@ export class EffectPromptDialogComponent {
     const n = this.chosen().size;
     if (this.prompt.exactOrNone && n > 0 && n !== this.prompt.max) return false;
     if (this.oneRequiredFirst && n > 0 && !this.requiredChosen()) return false;
-    return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
+    // A special summon or a Ritual can always be given up ("No invocar")
+    const givenUp = n === 0 && (this.prompt.purpose === 'SPECIAL' || this.prompt.purpose === 'RITUAL');
+    return !this.sending() && (givenUp || (n >= this.prompt.min && n <= this.prompt.max));
   });
 
   /** Sending the rest: every card numbered (one alone needs none). */
@@ -152,6 +154,7 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'FORMATION_ENTRY') return this.chosen().size > 0 ? (this.prompt.chosenLabel ?? 'Confirmar') : 'Dejarla donde está';
     // A search: its rest is sent next (with nothing left to order, it goes with this answer)
     if (this.ordering && this.needsOrder()) return 'Continuar';
+    if (this.chosen().size === 0 && this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';

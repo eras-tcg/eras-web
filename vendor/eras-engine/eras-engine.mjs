@@ -14708,7 +14708,8 @@ protoOf(Answers).v1i = function (room, userId, promptId, chosen, order) {
   var picks = chosen == null ? frozenListOf([]) : chosen;
   if (!(HashSet_init_$Create$_0(picks).k() === picks.k()))
     return 'Elegiste la misma carta dos veces';
-  if (picks.k() < prompt.f1m_1 || picks.k() > prompt.g1m_1) {
+  var givenUp = picks.m() && (PromptPurpose_SPECIAL_getInstance().l1f(prompt.x1l_1) || PromptPurpose_RITUAL_getInstance().l1f(prompt.x1l_1));
+  if (!givenUp && (picks.k() < prompt.f1m_1 || picks.k() > prompt.g1m_1)) {
     return prompt.f1m_1 === prompt.g1m_1 ? 'Debes elegir ' + prompt.f1m_1 + ' ' + EffectEngine_getInstance().a2c(prompt.f1m_1, 'carta', 'cartas') : 'Puedes elegir hasta ' + prompt.g1m_1 + ' ' + EffectEngine_getInstance().a2c(prompt.g1m_1, 'carta', 'cartas');
   }
   var allowed = HashSet_init_$Create$_0(prompt.e1m_1);
@@ -17605,6 +17606,7 @@ protoOf(Chain).a2n = function (room) {
   room.s18_1.a2();
   var triggered = ArrayList_init_$Create$();
   var seen = HashMap_init_$Create$_0();
+  var eventCards = HashMap_init_$Create$_0();
   var _iterator__ex2g4s = events.h();
   while (_iterator__ex2g4s.i()) {
     var event = _iterator__ex2g4s.j();
@@ -17619,76 +17621,176 @@ protoOf(Chain).a2n = function (room) {
         seen.g2(key, n);
         triggered.f(e);
       }
+      // Inline function 'kotlin.collections.getOrPut' call
+      var value = eventCards.u1(key);
+      var tmp;
+      if (value == null) {
+        var answer = ArrayList_init_$Create$();
+        eventCards.g2(key, answer);
+        tmp = answer;
+      } else {
+        tmp = value;
+      }
+      var cards = tmp;
+      if (!(event.t23_1 == null) && !cards.n(event.t23_1)) {
+        cards.f(event.t23_1);
+      }
+    }
+  }
+  var _iterator__ex2g4s_1 = triggered.h();
+  while (_iterator__ex2g4s_1.i()) {
+    var e_0 = _iterator__ex2g4s_1.j();
+    var cards_0 = eventCards.u1(plus(e_0.r20_1, '|') + e_0.p20_1);
+    var tmp_0;
+    if (!(cards_0 == null) && cards_0.k() > 1) {
+      var tmp0_safe_receiver = EffectEngine_getInstance().i2e(e_0).x1v_1;
+      var tmp_1;
+      if (tmp0_safe_receiver == null) {
+        tmp_1 = null;
+      } else {
+        var tmp$ret$3;
+        $l$block_0: {
+          // Inline function 'kotlin.collections.any' call
+          var tmp_2;
+          if (isInterface(tmp0_safe_receiver, Collection)) {
+            tmp_2 = tmp0_safe_receiver.m();
+          } else {
+            tmp_2 = false;
+          }
+          if (tmp_2) {
+            tmp$ret$3 = false;
+            break $l$block_0;
+          }
+          var _iterator__ex2g4s_2 = tmp0_safe_receiver.h();
+          while (_iterator__ex2g4s_2.i()) {
+            var element = _iterator__ex2g4s_2.j();
+            var tmp_3;
+            if (element instanceof IfSaved) {
+              tmp_3 = element.d2n_1 === 'eventCards';
+            } else {
+              tmp_3 = false;
+            }
+            if (tmp_3) {
+              tmp$ret$3 = true;
+              break $l$block_0;
+            }
+          }
+          tmp$ret$3 = false;
+        }
+        tmp_1 = tmp$ret$3;
+      }
+      tmp_0 = tmp_1 === true;
+    } else {
+      tmp_0 = false;
+    }
+    if (tmp_0) {
+      var tmp0 = e_0.g21_1;
+      var tmp2 = 'eventCards';
+      // Inline function 'kotlin.collections.filterTo' call
+      var destination = ArrayList_init_$Create$();
+      var _iterator__ex2g4s_3 = cards_0.h();
+      while (_iterator__ex2g4s_3.i()) {
+        var element_0 = _iterator__ex2g4s_3.j();
+        var tmp0_0 = room.z17_1.w1();
+        var tmp$ret$7;
+        $l$block_2: {
+          // Inline function 'kotlin.collections.any' call
+          var tmp_4;
+          if (isInterface(tmp0_0, Collection)) {
+            tmp_4 = tmp0_0.m();
+          } else {
+            tmp_4 = false;
+          }
+          if (tmp_4) {
+            tmp$ret$7 = false;
+            break $l$block_2;
+          }
+          var _iterator__ex2g4s_4 = tmp0_0.h();
+          while (_iterator__ex2g4s_4.i()) {
+            var element_1 = _iterator__ex2g4s_4.j();
+            if (!(EffectEngine_getInstance().r29(element_1.w1e_1, element_0) == null)) {
+              tmp$ret$7 = true;
+              break $l$block_2;
+            }
+          }
+          tmp$ret$7 = false;
+        }
+        if (tmp$ret$7) {
+          destination.f(element_0);
+        }
+      }
+      // Inline function 'kotlin.collections.set' call
+      tmp0.g2(tmp2, destination);
     }
   }
   var active = room.b18_1;
   // Inline function 'com.drive.drive_manager.simulator.engine.comparingInt' call
-  var tmp = Chain$queueTriggers$lambda_0(active);
-  var tmp$ret$1 = new sam$kotlin_Comparator$0_22(tmp);
-  sortWith(triggered, tmp$ret$1);
+  var tmp_5 = Chain$queueTriggers$lambda_0(active);
+  var tmp$ret$10 = new sam$kotlin_Comparator$0_22(tmp_5);
+  sortWith(triggered, tmp$ret$10);
   room.r18_1.r(triggered);
-  var _iterator__ex2g4s_1 = events.h();
-  $l$loop: while (_iterator__ex2g4s_1.i()) {
-    var event_0 = _iterator__ex2g4s_1.j();
+  var _iterator__ex2g4s_5 = events.h();
+  $l$loop: while (_iterator__ex2g4s_5.i()) {
+    var event_0 = _iterator__ex2g4s_5.j();
     if (!('PLAY' === event_0.r23_1))
       continue $l$loop;
-    var tmp$ret$2;
-    $l$block_0: {
+    var tmp$ret$11;
+    $l$block_4: {
       // Inline function 'kotlin.collections.any' call
-      var tmp_0;
+      var tmp_6;
       if (isInterface(triggered, Collection)) {
-        tmp_0 = triggered.m();
+        tmp_6 = triggered.m();
       } else {
-        tmp_0 = false;
+        tmp_6 = false;
       }
-      if (tmp_0) {
-        tmp$ret$2 = false;
-        break $l$block_0;
+      if (tmp_6) {
+        tmp$ret$11 = false;
+        break $l$block_4;
       }
-      var _iterator__ex2g4s_2 = triggered.h();
-      while (_iterator__ex2g4s_2.i()) {
-        var element = _iterator__ex2g4s_2.j();
-        if (element.r20_1 == event_0.t23_1 && equals_0(EffectEngine_getInstance().i2e(element).s1v_1, Moment_ON_PLAY_getInstance())) {
-          tmp$ret$2 = true;
-          break $l$block_0;
+      var _iterator__ex2g4s_6 = triggered.h();
+      while (_iterator__ex2g4s_6.i()) {
+        var element_2 = _iterator__ex2g4s_6.j();
+        if (element_2.r20_1 == event_0.t23_1 && equals_0(EffectEngine_getInstance().i2e(element_2).s1v_1, Moment_ON_PLAY_getInstance())) {
+          tmp$ret$11 = true;
+          break $l$block_4;
         }
       }
-      tmp$ret$2 = false;
+      tmp$ret$11 = false;
     }
-    var resolves = tmp$ret$2;
+    var resolves = tmp$ret$11;
     var owner = room.y1d(event_0.s23_1);
     var card = owner == null ? null : EffectEngine_getInstance().r29(owner.w1e_1, event_0.t23_1);
-    var tmp_1;
+    var tmp_7;
     if (!resolves && !(card == null) && 'utility' === card.m1c_1) {
-      var tmp0 = CardEffects_getInstance().n1z(card);
-      var tmp$ret$4;
-      $l$block_2: {
+      var tmp0_1 = CardEffects_getInstance().n1z(card);
+      var tmp$ret$13;
+      $l$block_6: {
         // Inline function 'kotlin.collections.any' call
-        var tmp_2;
-        if (isInterface(tmp0, Collection)) {
-          tmp_2 = tmp0.m();
+        var tmp_8;
+        if (isInterface(tmp0_1, Collection)) {
+          tmp_8 = tmp0_1.m();
         } else {
-          tmp_2 = false;
+          tmp_8 = false;
         }
-        if (tmp_2) {
-          tmp$ret$4 = false;
-          break $l$block_2;
+        if (tmp_8) {
+          tmp$ret$13 = false;
+          break $l$block_6;
         }
-        var _iterator__ex2g4s_3 = tmp0.h();
-        while (_iterator__ex2g4s_3.i()) {
-          var element_0 = _iterator__ex2g4s_3.j();
-          if (equals_0(element_0.s1v_1, Moment_ON_PLAY_getInstance())) {
-            tmp$ret$4 = true;
-            break $l$block_2;
+        var _iterator__ex2g4s_7 = tmp0_1.h();
+        while (_iterator__ex2g4s_7.i()) {
+          var element_3 = _iterator__ex2g4s_7.j();
+          if (equals_0(element_3.s1v_1, Moment_ON_PLAY_getInstance())) {
+            tmp$ret$13 = true;
+            break $l$block_6;
           }
         }
-        tmp$ret$4 = false;
+        tmp$ret$13 = false;
       }
-      tmp_1 = tmp$ret$4;
+      tmp_7 = tmp$ret$13;
     } else {
-      tmp_1 = false;
+      tmp_7 = false;
     }
-    if (tmp_1) {
+    if (tmp_7) {
       ensureNotNull(owner).w1e_1.y1(card);
       Removals_getInstance().d1f(card);
       owner.v1e_1.f(card);
@@ -17723,9 +17825,9 @@ protoOf(Chain).c2n = function (room, event) {
       break;
   }
   if (!(moment == null) && !(event.t23_1 == null)) {
-    var controllerId = equals_0(moment, Moment_ON_DESTROY_getInstance()) ? EffectEngine_getInstance().d2n(event) : event.s23_1;
+    var controllerId = equals_0(moment, Moment_ON_DESTROY_getInstance()) ? EffectEngine_getInstance().f2n(event) : event.s23_1;
     var zone = equals_0(moment, Moment_ON_DESTROY_getInstance()) ? event.w23_1 : 'field';
-    var source = EffectEngine_getInstance().e2n(room, controllerId, zone, event.t23_1);
+    var source = EffectEngine_getInstance().g2n(room, controllerId, zone, event.t23_1);
     if (!(source == null)) {
       var scripts = ArrayList_init_$Create$_0(CardEffects_getInstance().n1z(source));
       var tmp1_safe_receiver = event.z23_1;
@@ -17776,7 +17878,7 @@ protoOf(Chain).c2n = function (room, event) {
       while (_iterator__ex2g4s_1.i()) {
         var script = _iterator__ex2g4s_1.j();
         if (equals_0(script.s1v_1, moment)) {
-          this.f2n(room, result, script, event, source, controllerId);
+          this.h2n(room, result, script, event, source, controllerId);
         }
       }
     }
@@ -17837,14 +17939,14 @@ protoOf(Chain).c2n = function (room, event) {
             continue $l$loop_3;
           if (Zone_FIELD_getInstance().l1f(zone_0) && compare(event.p23_1, card.c1d_1) < 0)
             continue $l$loop_3;
-          this.f2n(room, result, script_1, event, card, p_0.d1e_1);
+          this.h2n(room, result, script_1, event, card, p_0.d1e_1);
         }
       }
     }
   }
   return result;
 };
-protoOf(Chain).f2n = function (room, result, script, event, source, controllerId) {
+protoOf(Chain).h2n = function (room, result, script, event, source, controllerId) {
   if (!(script.y1v_1 == null) && !script.y1v_1.u2d(room, event, source, controllerId))
     return Unit_instance;
   var e = this.d2c(room, script, controllerId, source, event.p23_1);
@@ -17859,14 +17961,14 @@ protoOf(Chain).f2n = function (room, result, script, event, source, controllerId
 protoOf(Chain).n2m = function (room, e, script) {
   if (equals_0(script.b1w_1, Limit_DEFINITIVE_getInstance()) && room.b19_1)
     return true;
-  return !equals_0(script.b1w_1, Limit_NONE_getInstance()) && room.z18_1.n(this.g2n(e, script));
+  return !equals_0(script.b1w_1, Limit_NONE_getInstance()) && room.z18_1.n(this.i2n(e, script));
 };
 protoOf(Chain).m2m = function (room, e, script) {
   if (!equals_0(script.b1w_1, Limit_DEFINITIVE_getInstance()))
     return 'su efecto ya se us\xF3 este turno';
   return room.b19_1 ? 'no se pueden activar Efectos Definitivos en el primer turno de la partida' : 'ya activaste un Efecto Definitivo este turno (solo 1 por turno)';
 };
-protoOf(Chain).h2n = function (room, userId, card) {
+protoOf(Chain).j2n = function (room, userId, card) {
   if (!('utility' === card.m1c_1))
     return null;
   // Inline function 'kotlin.collections.filter' call
@@ -17937,7 +18039,7 @@ protoOf(Chain).h2n = function (room, userId, card) {
     }
   }
 };
-protoOf(Chain).g2n = function (e, script) {
+protoOf(Chain).i2n = function (e, script) {
   if (equals_0(script.b1w_1, Limit_DEFINITIVE_getInstance()))
     return plus(e.q20_1, '|') + 'definitive';
   if (equals_0(script.b1w_1, Limit_ONE_EFFECT_OF_NAME_PER_TURN_getInstance())) {
@@ -17991,10 +18093,10 @@ protoOf(Chain).z2m = function (room) {
   var group = this.r2h(room);
   if (script.t1v_1 && !effect.m21_1) {
     if (group.k() > 1 || room.x17_1) {
-      var sources = this.i2n(room, group);
+      var sources = this.k2n(room, group);
       var instruction = group.k() > 1 ? 'Estos efectos son obligatorios: se encadenan todos. Elige cu\xE1l entra ahora como Cadena ' + (room.p18_1.k() + 1 | 0) + '; despu\xE9s eliges el siguiente. La cadena se resuelve al rev\xE9s: ' + 'el \xFAltimo eslab\xF3n se resuelve primero.' : 'Este efecto es obligatorio: conf\xEDrmalo para encadenarlo como Cadena ' + (room.p18_1.k() + 1 | 0) + '.';
-      EffectEngine_getInstance().k2n(room, effect.q20_1, PromptPurpose_ORDER_getInstance().j2n(), group.k() > 1 ? 'Encadenar efectos obligatorios' : 'Efecto obligatorio', instruction, 'Encadenar', sources, sources);
-      this.l2n(room, ensureNotNull(room.q18_1), group);
+      EffectEngine_getInstance().m2n(room, effect.q20_1, PromptPurpose_ORDER_getInstance().l2n(), group.k() > 1 ? 'Encadenar efectos obligatorios' : 'Efecto obligatorio', instruction, 'Encadenar', sources, sources);
+      this.n2n(room, ensureNotNull(room.q18_1), group);
       ensureNotNull(room.q18_1).f1m_1 = 1;
       ensureNotNull(room.q18_1).g1m_1 = 1;
       return Unit_instance;
@@ -18020,7 +18122,7 @@ protoOf(Chain).z2m = function (room) {
       var e_0 = _iterator__ex2g4s_0.j();
       var s = EffectEngine_getInstance().i2e(e_0);
       var used = this.n2m(room, e_0, s);
-      if (used || !this.m2n(room, e_0, s)) {
+      if (used || !this.o2n(room, e_0, s)) {
         room.r18_1.y1(e_0);
         EffectEngine_getInstance().c2c(room, plus(e_0.t20_1, ': ') + e_0.u20_1 + (used ? ': ' + this.m2m(room, e_0, s) : ' no puede activarse (no se puede pagar su coste o no hay objetivos v\xE1lidos)'), null);
         dropped = true;
@@ -18028,10 +18130,10 @@ protoOf(Chain).z2m = function (room) {
     }
     if (dropped)
       return Unit_instance;
-    var sources_0 = this.i2n(room, group);
+    var sources_0 = this.k2n(room, group);
     if (!sources_0.m()) {
-      EffectEngine_getInstance().k2n(room, effect.q20_1, PromptPurpose_OPTIONAL_getInstance().j2n(), 'Encadenar efectos', 'Elige 1 efecto para encadenarlo como Cadena ' + (room.p18_1.k() + 1 | 0) + (group.k() > 1 ? ' (despu\xE9s podr\xE1s elegir otro)' : '') + ', o no encadenes m\xE1s. ' + 'La cadena se resuelve al rev\xE9s: el \xFAltimo eslab\xF3n se resuelve primero.', 'Encadenar', sources_0, sources_0);
-      this.l2n(room, ensureNotNull(room.q18_1), group);
+      EffectEngine_getInstance().m2n(room, effect.q20_1, PromptPurpose_OPTIONAL_getInstance().l2n(), 'Encadenar efectos', 'Elige 1 efecto para encadenarlo como Cadena ' + (room.p18_1.k() + 1 | 0) + (group.k() > 1 ? ' (despu\xE9s podr\xE1s elegir otro)' : '') + ', o no encadenes m\xE1s. ' + 'La cadena se resuelve al rev\xE9s: el \xFAltimo eslab\xF3n se resuelve primero.', 'Encadenar', sources_0, sources_0);
+      this.n2n(room, ensureNotNull(room.q18_1), group);
       return Unit_instance;
     }
   }
@@ -18043,7 +18145,7 @@ protoOf(Chain).z2m = function (room) {
       if (!Resolution_getInstance().o2m(room, effect, step)) {
         EffectEngine_getInstance().c2c(room, plus(effect.t20_1, ': ') + effect.u20_1 + ' no puede activarse (no hay objetivos v\xE1lidos)', null);
         if (equals_0(script.s1v_1, Moment_ON_PLAY_getInstance())) {
-          Resolution_getInstance().n2n(room, effect);
+          Resolution_getInstance().p2n(room, effect);
         }
         return Unit_instance;
       }
@@ -18051,12 +18153,12 @@ protoOf(Chain).z2m = function (room) {
     this.g2e(room, effect);
     return Unit_instance;
   }
-  if (!this.m2n(room, effect, script)) {
+  if (!this.o2n(room, effect, script)) {
     room.r18_1.f2(0);
     return Unit_instance;
   }
   var link = room.p18_1.k() + 1 | 0;
-  var prompt = StepHelpers_getInstance().o2n(room, effect, Kind_CONFIRM_getInstance(), (link === 1 ? '\xBFActivas este efecto como Cadena 1? ' : '\xBFLo encadenas como Cadena ' + link + '? Se resolver\xE1 antes que los eslabones que ya est\xE1n en la cadena. ') + effect.v20_1);
+  var prompt = StepHelpers_getInstance().q2n(room, effect, Kind_CONFIRM_getInstance(), (link === 1 ? '\xBFActivas este efecto como Cadena 1? ' : '\xBFLo encadenas como Cadena ' + link + '? Se resolver\xE1 antes que los eslabones que ya est\xE1n en la cadena. ') + effect.v20_1);
   var source = EffectEngine_getInstance().h2c(room, effect.q20_1, effect.r20_1);
   if (!(source == null)) {
     prompt.d1m_1 = ArrayList_init_$Create$_0(frozenListOf([source]));
@@ -18067,7 +18169,7 @@ protoOf(Chain).z2m = function (room) {
   prompt.c1m_1 = 'Activar';
   room.q18_1 = prompt;
 };
-protoOf(Chain).i2n = function (room, group) {
+protoOf(Chain).k2n = function (room, group) {
   var sources = ArrayList_init_$Create$();
   var _iterator__ex2g4s = group.h();
   while (_iterator__ex2g4s.i()) {
@@ -18079,8 +18181,8 @@ protoOf(Chain).i2n = function (room, group) {
   }
   return sources;
 };
-protoOf(Chain).l2n = function (room, prompt, group) {
-  prompt.l1m_1 = this.p2n(group);
+protoOf(Chain).n2n = function (room, prompt, group) {
+  prompt.l1m_1 = this.r2n(group);
   var tmp = prompt;
   // Inline function 'kotlin.collections.map' call
   // Inline function 'kotlin.collections.mapTo' call
@@ -18096,7 +18198,7 @@ protoOf(Chain).l2n = function (room, prompt, group) {
 protoOf(Chain).a2e = function (e, pick) {
   return e.o20_1 == pick || e.r20_1 == pick;
 };
-protoOf(Chain).p2n = function (group) {
+protoOf(Chain).r2n = function (group) {
   var labels = LinkedHashMap_init_$Create$();
   var _iterator__ex2g4s = group.h();
   while (_iterator__ex2g4s.i()) {
@@ -18110,7 +18212,7 @@ protoOf(Chain).p2n = function (group) {
 protoOf(Chain).g2e = function (room, effect) {
   var script = EffectEngine_getInstance().i2e(effect);
   if (!equals_0(script.b1w_1, Limit_NONE_getInstance())) {
-    room.z18_1.f(this.g2n(effect, script));
+    room.z18_1.f(this.i2n(effect, script));
   }
   effect.x20_1 = room.p18_1.k() + 1 | 0;
   EffectEngine_getInstance().b2c(room, 'EFFECT_ACTIVATED', effect.q20_1, null, null, null, effect, frozenMapOf_4('label', effect.u20_1, 'link', effect.x20_1, 'sourceId', effect.r20_1, 'sourceName', effect.t20_1, 'scriptId', effect.p20_1), 'Cadena ' + effect.x20_1 + ': se activa el efecto ' + effect.u20_1 + ' de ' + effect.t20_1);
@@ -18119,7 +18221,7 @@ protoOf(Chain).g2e = function (room, effect) {
 protoOf(Chain).h2e = function (effect) {
   return effect.a21_1 < ensureNotNull(EffectEngine_getInstance().i2e(effect).w1v_1).k();
 };
-protoOf(Chain).q2n = function (step) {
+protoOf(Chain).s2n = function (step) {
   var tmp;
   if (step instanceof IfDone) {
     tmp = step.b2o_1;
@@ -18137,10 +18239,10 @@ protoOf(Chain).q2n = function (step) {
             tmp = step.v2n_1;
           } else {
             if (step instanceof IfSaved) {
-              tmp = step.u2n_1;
+              tmp = step.e2n_1;
             } else {
               if (step instanceof MayDo) {
-                tmp = step.s2n_1;
+                tmp = step.u2n_1;
               } else {
                 tmp = 0;
               }
@@ -18152,7 +18254,7 @@ protoOf(Chain).q2n = function (step) {
   }
   return tmp;
 };
-protoOf(Chain).m2n = function (room, effect, script) {
+protoOf(Chain).o2n = function (room, effect, script) {
   var _iterator__ex2g4s = ensureNotNull(script.w1v_1).h();
   while (_iterator__ex2g4s.i()) {
     var step = _iterator__ex2g4s.j();
@@ -18195,7 +18297,7 @@ protoOf(Chain).m2n = function (room, effect, script) {
     var tmp_0 = steps.l(i);
     if (tmp_0 instanceof IfPossible)
       return true;
-    var covers = this.q2n(steps.l(i));
+    var covers = this.s2n(steps.l(i));
     if (covers > 0) {
       i = i + covers | 0;
       i = i + 1 | 0;
@@ -18321,7 +18423,7 @@ protoOf(Chain).x2m = function (room) {
       }
     }
     var sources = distinct(destination);
-    EffectEngine_getInstance().k2n(room, playerId, PromptPurpose_PRIORITY_getInstance().j2n(), 'Responder a ' + top.t20_1, 'Puedes activar un efecto en respuesta a ' + top.u20_1 + ' de ' + top.t20_1 + ', o pasar.', 'Activar', sources, sources);
+    EffectEngine_getInstance().m2n(room, playerId, PromptPurpose_PRIORITY_getInstance().l2n(), 'Responder a ' + top.t20_1, 'Puedes activar un efecto en respuesta a ' + top.u20_1 + ' de ' + top.t20_1 + ', o pasar.', 'Activar', sources, sources);
     return true;
   }
   // Inline function 'kotlin.collections.forEach' call
@@ -18369,7 +18471,7 @@ protoOf(Chain).s2h = function (room, playerId, top) {
         var e_0 = this.l2m(script, playerId, card, tmp2_elvis_lhs == null ? room.o18_1 : tmp2_elvis_lhs, room);
         if (this.n2m(room, e_0, script))
           continue $l$loop_2;
-        if (this.m2n(room, e_0, script)) {
+        if (this.o2n(room, e_0, script)) {
           result.f(e_0);
         }
       }
@@ -18419,7 +18521,7 @@ protoOf(Chain).g2o = function (room, userId) {
         var e = this.l2m(script, userId, card, room.o18_1, room);
         if (this.n2m(room, e, script))
           continue $l$loop_2;
-        if (this.m2n(room, e, script)) {
+        if (this.o2n(room, e, script)) {
           result.f(e);
         }
       }
@@ -19048,7 +19150,7 @@ protoOf(CombatRules).s2o = function (room, c, owner, defender, attacker) {
           }
           var options = destination;
           if (!options.m()) {
-            EffectEngine_getInstance().k2n(room, owner.d1e_1, PromptPurpose_PROVOKE_getInstance().j2n(), EffectEngine_getInstance().y2b(attacker) + ' \xB7 Provocar', 'Puedes elegir 1 enemigo' + (provoke > 0 ? ' nivel ' + provoke + ' o menor' : '') + ': deber\xE1 bloquear este ataque.', 'Provocar', options, defender.w1e_1);
+            EffectEngine_getInstance().m2n(room, owner.d1e_1, PromptPurpose_PROVOKE_getInstance().l2n(), EffectEngine_getInstance().y2b(attacker) + ' \xB7 Provocar', 'Puedes elegir 1 enemigo' + (provoke > 0 ? ' nivel ' + provoke + ' o menor' : '') + ': deber\xE1 bloquear este ataque.', 'Provocar', options, defender.w1e_1);
             return false;
           }
         }
@@ -19075,7 +19177,7 @@ protoOf(CombatRules).s2o = function (room, c, owner, defender, attacker) {
         }
         var options_0 = tmp;
         if (!options_0.m()) {
-          EffectEngine_getInstance().k2n(room, defender.d1e_1, PromptPurpose_BLOCK_getInstance().j2n(), EffectEngine_getInstance().y2b(attacker) + ' ataca', 'Puedes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota), o ninguna.', 'Bloquear', options_0, defender.w1e_1);
+          EffectEngine_getInstance().m2n(room, defender.d1e_1, PromptPurpose_BLOCK_getInstance().l2n(), EffectEngine_getInstance().y2b(attacker) + ' ataca', 'Puedes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota), o ninguna.', 'Bloquear', options_0, defender.w1e_1);
           return false;
         }
       }
@@ -19148,12 +19250,12 @@ protoOf(CombatRules).x2o = function (room, c, owner, defender, attacker) {
     var tribute = _destruct__k2r9zo.ld();
     var creature = 'creature' === life.m1c_1;
     if (creature && !tribute && revealedNow) {
-      this.d2p(room, defender, life, PromptPurpose_REINFORCE_getInstance().j2n(), 'Reforzar', EffectEngine_getInstance().y2b(life) + ' tiene m\xE1s fuerza que el da\xF1o y va a tu mano. \xBFRefuerzas con ella? Se coloca bocarriba al fondo de tu pila de vidas.', 'Reforzar');
+      this.d2p(room, defender, life, PromptPurpose_REINFORCE_getInstance().l2n(), 'Reforzar', EffectEngine_getInstance().y2b(life) + ' tiene m\xE1s fuerza que el da\xF1o y va a tu mano. \xBFRefuerzas con ella? Se coloca bocarriba al fondo de tu pila de vidas.', 'Reforzar');
       return false;
     }
     var lifeCost = CardEffects_getInstance().n2h(life);
-    if (('utility' === life.m1c_1 || 'structure' === life.m1c_1) && Chain_instance.h2n(room, defender.d1e_1, life) == null && EffectEngine_getInstance().g2f(room, defender.d1e_1, lifeCost)) {
-      this.d2p(room, defender, life, PromptPurpose_LIFE_PLAY_getInstance().j2n(), 'Vida revelada', '\xBFJuegas ' + EffectEngine_getInstance().y2b(life) + (lifeCost > 0 ? ' pagando ' + EffectEngine_getInstance().e2p(lifeCost) : ' sin pagar su coste') + '? Si no, queda en tu mano.', 'Jugar');
+    if (('utility' === life.m1c_1 || 'structure' === life.m1c_1) && Chain_instance.j2n(room, defender.d1e_1, life) == null && EffectEngine_getInstance().g2f(room, defender.d1e_1, lifeCost)) {
+      this.d2p(room, defender, life, PromptPurpose_LIFE_PLAY_getInstance().l2n(), 'Vida revelada', '\xBFJuegas ' + EffectEngine_getInstance().y2b(life) + (lifeCost > 0 ? ' pagando ' + EffectEngine_getInstance().e2p(lifeCost) : ' sin pagar su coste') + '? Si no, queda en tu mano.', 'Jugar');
       return false;
     }
     if (ensureNotNull(c.h1z_1) > 0 && !defender.t1e_1.m())
@@ -19197,7 +19299,7 @@ protoOf(CombatRules).f2e = function (room, defender, blocker) {
   var others = destination;
   if (others.m())
     return false;
-  EffectEngine_getInstance().k2n(room, defender.d1e_1, PromptPurpose_BLOCK_SWAP_getInstance().j2n(), EffectEngine_getInstance().y2b(holder) + ' \xB7 Turno Oponente', 'En lugar de ' + EffectEngine_getInstance().y2b(blocker) + ', puedes reactivarlo y elegir otro aliado para que bloquee. O ninguno.', 'Bloquea', others, defender.w1e_1);
+  EffectEngine_getInstance().m2n(room, defender.d1e_1, PromptPurpose_BLOCK_SWAP_getInstance().l2n(), EffectEngine_getInstance().y2b(holder) + ' \xB7 Turno Oponente', 'En lugar de ' + EffectEngine_getInstance().y2b(blocker) + ', puedes reactivarlo y elegir otro aliado para que bloquee. O ninguno.', 'Bloquea', others, defender.w1e_1);
   ensureNotNull(room.q18_1).j1m_1 = blocker.e1c_1;
   ensureNotNull(room.q18_1).f1m_1 = 0;
   return true;
@@ -19244,7 +19346,7 @@ protoOf(CombatRules).y2o = function (room, c, defender, damage) {
   var options = destination;
   if (options.m())
     return false;
-  EffectEngine_getInstance().k2n(room, defender.d1e_1, PromptPurpose_DAMAGE_REPLACE_getInstance().j2n(), 'Da\xF1o directo: ' + damage, 'En lugar de recibir el da\xF1o, puedes invocar 1 de estas cartas agotada en tu l\xEDnea frontal reduciendo su coste. O ninguna.', 'Invocar', options, options);
+  EffectEngine_getInstance().m2n(room, defender.d1e_1, PromptPurpose_DAMAGE_REPLACE_getInstance().l2n(), 'Da\xF1o directo: ' + damage, 'En lugar de recibir el da\xF1o, puedes invocar 1 de estas cartas agotada en tu l\xEDnea frontal reduciendo su coste. O ninguna.', 'Invocar', options, options);
   ensureNotNull(room.q18_1).f1m_1 = 0;
   return true;
 };
@@ -19390,7 +19492,7 @@ protoOf(CombatRules).z2o = function (room, defender, damage, context) {
     }
   }
   var valid = destination;
-  EffectEngine_getInstance().k2n(room, defender.d1e_1, PromptPurpose_DAMAGE_TRIBUTE_getInstance().j2n(), 'Vas a recibir ' + damage + ' de da\xF1o', 'En su lugar, puedes tributar Estoque De Los Guerreros Jurados y 2 [retador] m\xE1s de tu mano, los 3 de distinto nivel. O ninguna.', 'Tributar', valid, defender.q1e_1);
+  EffectEngine_getInstance().m2n(room, defender.d1e_1, PromptPurpose_DAMAGE_TRIBUTE_getInstance().l2n(), 'Vas a recibir ' + damage + ' de da\xF1o', 'En su lugar, puedes tributar Estoque De Los Guerreros Jurados y 2 [retador] m\xE1s de tu mano, los 3 de distinto nivel. O ninguna.', 'Tributar', valid, defender.q1e_1);
   ensureNotNull(room.q18_1).f1m_1 = 0;
   ensureNotNull(room.q18_1).g1m_1 = 3;
   ensureNotNull(room.q18_1).p1m_1 = true;
@@ -19563,7 +19665,7 @@ protoOf(CombatRules).q2e = function (room, prompt, player, picks) {
   return null;
 };
 protoOf(CombatRules).d2p = function (room, defender, life, purpose, title, instruction, label) {
-  EffectEngine_getInstance().k2n(room, defender.d1e_1, purpose, title, instruction, label, frozenListOf([life]), frozenListOf([life]));
+  EffectEngine_getInstance().m2n(room, defender.d1e_1, purpose, title, instruction, label, frozenListOf([life]), frozenListOf([life]));
   ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.q18_1).j1m_1 = life.e1c_1;
 };
@@ -19685,7 +19787,7 @@ protoOf(CombatRules).j2p = function (room, effect, opponentOnly) {
     return false;
   }
   var opponent = room.y1d(room.f1i(userId));
-  var prompt = StepHelpers_getInstance().o2n(room, effect, Kind_PICK_getInstance(), EffectEngine_getInstance().y2b(subject) + ' declara ataque: elige una criatura agotada a la que atacar, o ninguna para atacar a tu rival.');
+  var prompt = StepHelpers_getInstance().q2n(room, effect, Kind_PICK_getInstance(), EffectEngine_getInstance().y2b(subject) + ' declara ataque: elige una criatura agotada a la que atacar, o ninguna para atacar a tu rival.');
   prompt.d1m_1 = ArrayList_init_$Create$_0(ensureNotNull(opponent).w1e_1);
   prompt.e1m_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().u2b(targets));
   prompt.f1m_1 = 0;
@@ -20343,7 +20445,7 @@ function isDestruction($this, event) {
   return 'DESTROY' === event.r23_1 || 'SACRIFICE' === event.r23_1;
 }
 function ownerOf($this, event) {
-  return EffectEngine_getInstance().d2n(event);
+  return EffectEngine_getInstance().f2n(event);
 }
 function All(all) {
   this.l2q_1 = all;
@@ -21080,7 +21182,7 @@ protoOf(YouReducedStrength).u2d = function (room, event, source, controller) {
     return false;
   if (!this.y2r_1)
     return true;
-  var target = EffectEngine_getInstance().e2n(room, ownerOf(Companion_instance_13, event), 'field', event.t23_1);
+  var target = EffectEngine_getInstance().g2n(room, ownerOf(Companion_instance_13, event), 'field', event.t23_1);
   return !(target == null) && EffectEngine_getInstance().p1o(target) > 0;
 };
 protoOf(YouReducedStrength).toString = function () {
@@ -22304,11 +22406,11 @@ protoOf(EffectEngine).p2q = function (room, event) {
   return true;
 };
 protoOf(EffectEngine).x2q = function (room, event) {
-  var owner = !(this.d2n(ensureNotNull(event)) == null) ? this.d2n(event) : event.s23_1;
+  var owner = !(this.f2n(ensureNotNull(event)) == null) ? this.f2n(event) : event.s23_1;
   var zone = !(event.w23_1 == null) ? event.w23_1 : 'field';
-  return this.e2n(room, owner, zone, event.t23_1);
+  return this.g2n(room, owner, zone, event.t23_1);
 };
-protoOf(EffectEngine).d2n = function (event) {
+protoOf(EffectEngine).f2n = function (event) {
   var tmp;
   if (event.z23_1 == null) {
     tmp = null;
@@ -22430,7 +22532,7 @@ protoOf(EffectEngine).m1l = function (room) {
 };
 protoOf(EffectEngine).s29 = function (player, instanceId) {
   var found = CardLocator_getInstance().c2t(player, instanceId, CardLocator_getInstance().m1h_1, false);
-  return found == null ? null : new Located(found.d2t_1, ensureNotNull(found.e2t_1).j2n());
+  return found == null ? null : new Located(found.d2t_1, ensureNotNull(found.e2t_1).l2n());
 };
 protoOf(EffectEngine).h2c = function (room, playerId, instanceId) {
   var p = room.y1d(playerId);
@@ -22485,7 +22587,7 @@ protoOf(EffectEngine).r29 = function (cards, instanceId) {
   }
   return tmp$ret$0;
 };
-protoOf(EffectEngine).e2n = function (room, playerId, zone, instanceId) {
+protoOf(EffectEngine).g2n = function (room, playerId, zone, instanceId) {
   var p = playerId == null ? null : room.y1d(playerId);
   return p == null || zone == null ? null : this.r29(EffectEngine_getInstance().w2c(p, zone), instanceId);
 };
@@ -22680,7 +22782,7 @@ protoOf(EffectEngine).g2f = function (room, userId, cost) {
 protoOf(EffectEngine).o2h = function (room, userId, cost) {
   room.d18_1 = this.c1t(room.d18_1 - imul(cost, this.h2t(room, userId)) | 0);
 };
-protoOf(EffectEngine).k2n = function (room, playerId, purpose, title, instruction, chosenLabel, options, shown) {
+protoOf(EffectEngine).m2n = function (room, playerId, purpose, title, instruction, chosenLabel, options, shown) {
   var p = new Prompt();
   p.t1l_1 = room.t2h('prompt');
   p.u1l_1 = Kind_PICK_getInstance();
@@ -23522,15 +23624,15 @@ function SubjectFromTrigger_getInstance() {
   return SubjectFromTrigger_instance;
 }
 function MayDo(question, covers) {
-  this.r2n_1 = question;
-  this.s2n_1 = covers;
+  this.t2n_1 = question;
+  this.u2n_1 = covers;
 }
 protoOf(MayDo).toString = function () {
-  return 'MayDo(question=' + this.r2n_1 + ', covers=' + this.s2n_1 + ')';
+  return 'MayDo(question=' + this.t2n_1 + ', covers=' + this.u2n_1 + ')';
 };
 protoOf(MayDo).hashCode = function () {
-  var result = this.r2n_1 == null ? 0 : getStringHashCode(this.r2n_1);
-  result = imul(result, 31) + this.s2n_1 | 0;
+  var result = this.t2n_1 == null ? 0 : getStringHashCode(this.t2n_1);
+  result = imul(result, 31) + this.u2n_1 | 0;
   return result;
 };
 protoOf(MayDo).equals = function (other) {
@@ -23538,22 +23640,22 @@ protoOf(MayDo).equals = function (other) {
     return true;
   if (!(other instanceof MayDo))
     return false;
-  if (!(this.r2n_1 == other.r2n_1))
+  if (!(this.t2n_1 == other.t2n_1))
     return false;
-  if (!(this.s2n_1 === other.s2n_1))
+  if (!(this.u2n_1 === other.u2n_1))
     return false;
   return true;
 };
 function IfSaved(name, covers) {
-  this.t2n_1 = name;
-  this.u2n_1 = covers;
+  this.d2n_1 = name;
+  this.e2n_1 = covers;
 }
 protoOf(IfSaved).toString = function () {
-  return 'IfSaved(name=' + this.t2n_1 + ', covers=' + this.u2n_1 + ')';
+  return 'IfSaved(name=' + this.d2n_1 + ', covers=' + this.e2n_1 + ')';
 };
 protoOf(IfSaved).hashCode = function () {
-  var result = this.t2n_1 == null ? 0 : getStringHashCode(this.t2n_1);
-  result = imul(result, 31) + this.u2n_1 | 0;
+  var result = this.d2n_1 == null ? 0 : getStringHashCode(this.d2n_1);
+  result = imul(result, 31) + this.e2n_1 | 0;
   return result;
 };
 protoOf(IfSaved).equals = function (other) {
@@ -23561,9 +23663,9 @@ protoOf(IfSaved).equals = function (other) {
     return true;
   if (!(other instanceof IfSaved))
     return false;
-  if (!(this.t2n_1 == other.t2n_1))
+  if (!(this.d2n_1 == other.d2n_1))
     return false;
-  if (!(this.u2n_1 === other.u2n_1))
+  if (!(this.e2n_1 === other.e2n_1))
     return false;
   return true;
 };
@@ -25052,6 +25154,10 @@ protoOf(EngineContext).z2w = function () {
   return StepHelpers_getInstance().m2b(this.q2u_1, this.r2u_1);
 };
 protoOf(EngineContext).u2u = function () {
+  var chosen = this.r2u_1.g21_1.u1('eventCard');
+  // Inline function 'kotlin.collections.isNullOrEmpty' call
+  if (!(chosen == null || chosen.m()))
+    return this.a2x(chosen.l(0));
   var trigger = EffectEngine_getInstance().j2b(this.q2u_1, this.r2u_1);
   return trigger == null ? null : this.a2x(trigger.t23_1);
 };
@@ -25087,7 +25193,7 @@ protoOf(EngineContext).h2x = function (cost) {
   return EffectEngine_getInstance().g2f(this.q2u_1, this.r2u_1.q20_1, cost);
 };
 protoOf(EngineContext).i2x = function (card) {
-  return Chain_instance.h2n(this.q2u_1, this.r2u_1.q20_1, ensureNotNull(card)) == null;
+  return Chain_instance.j2n(this.q2u_1, this.r2u_1.q20_1, ensureNotNull(card)) == null;
 };
 protoOf(EngineContext).j2x = function () {
   return !(this.r2u_1.p20_1 == null) && equals_0(EffectEngine_getInstance().i2e(this.r2u_1).s1v_1, Moment_DELAYED_getInstance());
@@ -25361,8 +25467,8 @@ protoOf(FlowSteps).l2b = function (room, effect, step) {
   var player = ensureNotNull(room.y1d(effect.q20_1));
   var userId = player.d1e_1;
   if (step instanceof IfSaved) {
-    if (EngineContext_init_$Create$(room, effect).h2q(step.t2n_1).m())
-      effect.e21_1 = effect.e21_1 + step.u2n_1 | 0;
+    if (EngineContext_init_$Create$(room, effect).h2q(step.d2n_1).m())
+      effect.e21_1 = effect.e21_1 + step.e2n_1 | 0;
     return false;
   } else {
     if (step instanceof IfCondition) {
@@ -25519,7 +25625,7 @@ protoOf(FlowSteps).l2b = function (room, effect, step) {
                               var tmp_4 = i;
                               var tmp0_2 = steps.k();
                               // Inline function 'kotlin.math.min' call
-                              var b = next + step.s2n_1 | 0;
+                              var b = next + step.u2n_1 | 0;
                               tmp_3 = tmp_4 < Math.min(tmp0_2, b);
                             } else {
                               tmp_3 = false;
@@ -25539,10 +25645,10 @@ protoOf(FlowSteps).l2b = function (room, effect, step) {
                             i = i + 1 | 0;
                           }
                           if (!can) {
-                            effect.e21_1 = effect.e21_1 + step.s2n_1 | 0;
+                            effect.e21_1 = effect.e21_1 + step.u2n_1 | 0;
                             return false;
                           }
-                          var prompt = StepHelpers_getInstance().o2n(room, effect, Kind_CONFIRM_getInstance(), step.r2n_1);
+                          var prompt = StepHelpers_getInstance().q2n(room, effect, Kind_CONFIRM_getInstance(), step.t2n_1);
                           var source_0 = EffectEngine_getInstance().h2c(room, userId, effect.r20_1);
                           if (!(source_0 == null)) {
                             prompt.d1m_1 = ArrayList_init_$Create$_0(frozenListOf([source_0]));
@@ -25572,7 +25678,7 @@ protoOf(FlowSteps).o2c = function (room, effect, step, player, picks, order, rep
   var userId = player.d1e_1;
   if (step instanceof MayDo) {
     if (picks.m())
-      effect.e21_1 = effect.e21_1 + step.s2n_1 | 0;
+      effect.e21_1 = effect.e21_1 + step.u2n_1 | 0;
   } else {
     return 'Este paso no espera ninguna elecci\xF3n';
   }
@@ -25796,7 +25902,7 @@ function entryPrompt($this, room, player, card, options) {
   var p = new Prompt();
   p.t1l_1 = room.t2h('prompt');
   p.u1l_1 = Kind_PICK_getInstance();
-  p.x1l_1 = PromptPurpose_FORMATION_ENTRY_getInstance().j2n();
+  p.x1l_1 = PromptPurpose_FORMATION_ENTRY_getInstance().l2n();
   p.v1l_1 = player.d1e_1;
   p.y1l_1 = EffectEngine_getInstance().y2b(card);
   p.z1l_1 = card.g1c_1;
@@ -28140,7 +28246,7 @@ protoOf(LookSteps).l2b = function (room, effect, step) {
     var tmp_1 = StepHelpers_getInstance();
     var tmp_2 = Kind_TAKE_REVEALED_REST_BOTTOM_getInstance();
     var tmp_3 = ensureNotNull(step.a2u_1);
-    var prompt = tmp_1.o2n(room, effect, tmp_2, 'Toma ' + joinToString(tmp_3, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_0) + ' para tu mano. Ordena el resto: ir\xE1 al fondo de tu mazo.');
+    var prompt = tmp_1.q2n(room, effect, tmp_2, 'Toma ' + joinToString(tmp_3, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_0) + ' para tu mano.');
     prompt.d1m_1 = ArrayList_init_$Create$_0(effect.l21_1);
     prompt.e1m_1 = ArrayList_init_$Create$_0(valid);
     prompt.f1m_1 = 0;
@@ -28181,7 +28287,7 @@ protoOf(LookSteps).l2b = function (room, effect, step) {
         destination_2.f(tmp$ret$14);
       }
       var valid_0 = destination_2;
-      var prompt_0 = StepHelpers_getInstance().o2n(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.r2t_1 + ' cartas ' + ensureNotNull(step.s2t_1).z2b() + ' con distinto nivel para tu mano. Ordena el resto: ir\xE1 al fondo de tu mazo.');
+      var prompt_0 = StepHelpers_getInstance().q2n(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.r2t_1 + ' cartas ' + ensureNotNull(step.s2t_1).z2b() + ' con distinto nivel para tu mano.');
       prompt_0.d1m_1 = ArrayList_init_$Create$_0(effect.l21_1);
       prompt_0.e1m_1 = ArrayList_init_$Create$_0(valid_0);
       prompt_0.f1m_1 = 0;
@@ -29228,7 +29334,7 @@ var $ENTRIES_9;
 function PromptPurpose(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
-protoOf(PromptPurpose).j2n = function () {
+protoOf(PromptPurpose).l2n = function () {
   return this.j2_1;
 };
 protoOf(PromptPurpose).l1f = function (purpose) {
@@ -30020,7 +30126,7 @@ protoOf(Removals).u2m = function (room) {
     destination.f(tmp$ret$2);
   }
   var sources = distinct(destination);
-  EffectEngine_getInstance().k2n(room, ensureNotNull(owner).d1e_1, PromptPurpose_REPLACE_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + (pending.t32_1 ? ' va a ser destruida' : ' va a ser removida'), 'Puedes usar 1 de estos efectos, o dejar que ' + (pending.t32_1 ? 'sea destruida.' : 'sea removida.'), 'Usar', sources, sources);
+  EffectEngine_getInstance().m2n(room, ensureNotNull(owner).d1e_1, PromptPurpose_REPLACE_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + (pending.t32_1 ? ' va a ser destruida' : ' va a ser removida'), 'Puedes usar 1 de estos efectos, o dejar que ' + (pending.t32_1 ? 'sea destruida.' : 'sea removida.'), 'Usar', sources, sources);
   ensureNotNull(room.q18_1).j1m_1 = ensureNotNull(card).e1c_1;
   var tmp = ensureNotNull(room.q18_1);
   // Inline function 'kotlin.collections.map' call
@@ -30252,7 +30358,7 @@ protoOf(Removals).r2e = function (room, prompt, player, picks) {
   }
   switch (ensureNotNull(r.d2j_1).k2_1) {
     case 7:
-      EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_RESOURCES_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Elige primero el recurso que tributas y despu\xE9s el que a\xF1ades a tu mano; luego ' + EffectEngine_getInstance().y2b(card) + ' es removida.', 'Elegir', card.n1d_1, card.n1d_1);
+      EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_RESOURCES_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Elige primero el recurso que tributas y despu\xE9s el que a\xF1ades a tu mano; luego ' + EffectEngine_getInstance().y2b(card) + ' es removida.', 'Elegir', card.n1d_1, card.n1d_1);
       ensureNotNull(room.q18_1).f1m_1 = 2;
       ensureNotNull(room.q18_1).g1m_1 = 2;
       return null;
@@ -30274,7 +30380,7 @@ protoOf(Removals).r2e = function (room, prompt, player, picks) {
       }
 
       valid.r(destination_2);
-      EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_GUARD_getInstance().j2n(), EffectEngine_getInstance().y2b(guard_0) + ' \xB7 ' + r.y2i_1, 'Tributa 1 material de ' + EffectEngine_getInstance().y2b(guard_0) + ' y sacrifica 1 ' + ensureNotNull(r.e2j_1).z2b() + ' bajo tu control: ' + 'no se remueve ning\xFAn aliado [' + joinToString(ensureNotNull(ensureNotNull(CardEffects_getInstance().k2l(guard_0)).m2j_1).d2m(), ', ') + '] de este efecto.', 'Pagar', valid, valid);
+      EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_GUARD_getInstance().l2n(), EffectEngine_getInstance().y2b(guard_0) + ' \xB7 ' + r.y2i_1, 'Tributa 1 material de ' + EffectEngine_getInstance().y2b(guard_0) + ' y sacrifica 1 ' + ensureNotNull(r.e2j_1).z2b() + ' bajo tu control: ' + 'no se remueve ning\xFAn aliado [' + joinToString(ensureNotNull(ensureNotNull(CardEffects_getInstance().k2l(guard_0)).m2j_1).d2m(), ', ') + '] de este efecto.', 'Pagar', valid, valid);
       ensureNotNull(room.q18_1).f1m_1 = 2;
       ensureNotNull(room.q18_1).g1m_1 = 2;
       ensureNotNull(room.q18_1).j1m_1 = guard_0.e1c_1;
@@ -30369,7 +30475,7 @@ protoOf(Removals).r2e = function (room, prompt, player, picks) {
       }
 
       var valid_0 = destination_5;
-      EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_MATERIALS_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Coloca hasta 2 de estas criaturas en tu retaguardia; luego ' + EffectEngine_getInstance().y2b(card) + ' es destruida.', 'A la retaguardia', valid_0, card.m1d_1);
+      EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_MATERIALS_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Coloca hasta 2 de estas criaturas en tu retaguardia; luego ' + EffectEngine_getInstance().y2b(card) + ' es destruida.', 'A la retaguardia', valid_0, card.m1d_1);
       ensureNotNull(room.q18_1).f1m_1 = 1;
       var tmp_4 = ensureNotNull(room.q18_1);
       // Inline function 'kotlin.math.min' call
@@ -30393,12 +30499,12 @@ protoOf(Removals).r2e = function (room, prompt, player, picks) {
       }
 
       var allies = destination_6;
-      EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_LIFE_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Coloca 1 aliado al tope de tus vidas bocabajo: ' + EffectEngine_getInstance().y2b(card) + ' no es ' + (pending.t32_1 ? 'destruida.' : 'removida.'), 'A tus vidas', allies, allies);
+      EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_LIFE_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Coloca 1 aliado al tope de tus vidas bocabajo: ' + EffectEngine_getInstance().y2b(card) + ' no es ' + (pending.t32_1 ? 'destruida.' : 'removida.'), 'A tus vidas', allies, allies);
       ensureNotNull(room.q18_1).f1m_1 = 1;
       ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
       return null;
     case 1:
-      EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_HAND_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Tributa 1 carta de tu mano: ' + EffectEngine_getInstance().y2b(card) + ' no es destruida.', 'Tributar', player.q1e_1, player.q1e_1);
+      EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_HAND_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + r.y2i_1, 'Tributa 1 carta de tu mano: ' + EffectEngine_getInstance().y2b(card) + ' no es destruida.', 'Tributar', player.q1e_1, player.q1e_1);
       ensureNotNull(room.q18_1).f1m_1 = 1;
       return null;
     default:
@@ -30520,7 +30626,7 @@ protoOf(Resolution).y2m = function (room) {
     EffectEngine_getInstance().b2c(room, 'EFFECT_RESOLVED', effect.q20_1, null, null, null, effect, null, 'Se resuelve ' + (effect.x20_1 > 0 ? 'la Cadena ' + effect.x20_1 + ': ' : '') + effect.u20_1 + ' de ' + effect.t20_1);
     room.p18_1.f2(room.p18_1.k() - 1 | 0);
     if (equals_0(script.s1v_1, Moment_ON_PLAY_getInstance())) {
-      this.n2n(room, effect);
+      this.p2n(room, effect);
     }
     LinkWatch_getInstance().h32(room);
     return Unit_instance;
@@ -30534,7 +30640,7 @@ protoOf(Resolution).y2m = function (room) {
     LinkWatch_getInstance().f32(room);
   }
 };
-protoOf(Resolution).n2n = function (room, effect) {
+protoOf(Resolution).p2n = function (room, effect) {
   var player = room.y1d(effect.q20_1);
   var card = player == null ? null : EffectEngine_getInstance().r29(player.w1e_1, effect.r20_1);
   if (card == null || !('utility' === card.m1c_1) || effect.r21_1)
@@ -31374,7 +31480,7 @@ protoOf(Rituals).f2f = function (room, userId, card) {
   return tmp;
 };
 protoOf(Rituals).f34 = function (room, player, card, summoner, valid, instruction, max) {
-  EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_RITUAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 Ritual', instruction + ' Si no eliges ninguna, no se invoca.', 'Sacrificar', valid, player.w1e_1);
+  EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_RITUAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 Ritual', instruction + ' Si no eliges ninguna, no se invoca.', 'Sacrificar', valid, player.w1e_1);
   ensureNotNull(room.q18_1).g1m_1 = max;
   ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
   if (!(summoner == null))
@@ -33661,7 +33767,7 @@ protoOf(SpecialSummons).r36 = function (room, userId, instanceId, summonerId) {
         shown.r(EffectEngine_getInstance().w2c(player, z));
       }
       shown.y1(card);
-      EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SPECIAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, 'Declara el invocador: 1 criatura nivel ' + req.r2f_1 + ' de ' + SpecialRequirements_getInstance().m36(req.d2g_1) + '. Luego eliges ' + req.x2f_1 + (req.e2g_1 ? ' o m\xE1s ' : ' ') + EffectEngine_getInstance().a2c(req.x2f_1, 'material', 'materiales') + '. Si no eliges ninguna, no se invoca.', 'Invocador', summoners, shown);
+      EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SPECIAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, 'Declara el invocador: 1 criatura nivel ' + req.r2f_1 + ' de ' + SpecialRequirements_getInstance().m36(req.d2g_1) + '. Luego eliges ' + req.x2f_1 + (req.e2g_1 ? ' o m\xE1s ' : ' ') + EffectEngine_getInstance().a2c(req.x2f_1, 'material', 'materiales') + '. Si no eliges ninguna, no se invoca.', 'Invocador', summoners, shown);
       ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
       return null;
     }
@@ -33677,7 +33783,7 @@ protoOf(SpecialSummons).r36 = function (room, userId, instanceId, summonerId) {
     shown_0.y1(card);
     shown_0.y1(summoner);
     var materialOptions = SpecialRequirements_getInstance().w35(player, card, req, summoner);
-    EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SPECIAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, summoner), 'Material', materialOptions, shown_0);
+    EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SPECIAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, summoner), 'Material', materialOptions, shown_0);
     ensureNotNull(room.q18_1).f1m_1 = req.x2f_1;
     ensureNotNull(room.q18_1).g1m_1 = req.e2g_1 ? materialOptions.k() : req.x2f_1;
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
@@ -33694,7 +33800,7 @@ protoOf(SpecialSummons).r36 = function (room, userId, instanceId, summonerId) {
       var z_1 = _iterator__ex2g4s_1.j();
       shown_1.r(EffectEngine_getInstance().w2c(player, z_1));
     }
-    EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SPECIAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, null), 'Material', materials, shown_1);
+    EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SPECIAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, null), 'Material', materials, shown_1);
     ensureNotNull(room.q18_1).f1m_1 = req.x2f_1;
     ensureNotNull(room.q18_1).g1m_1 = req.x2f_1;
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
@@ -33727,7 +33833,7 @@ protoOf(SpecialSummons).r36 = function (room, userId, instanceId, summonerId) {
   if (summonerId == null) {
     if (summoners_0.m())
       return possible.m() ? missing : 'No tienes gemas suficientes para invocar a ' + EffectEngine_getInstance().y2b(card) + ' con ninguna de tus criaturas';
-    EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SPECIAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, 'Elige el invocador: 1 criatura nivel ' + req.r2f_1 + (req.v2f_1 ? ' o mayor' : req.w2f_1 > req.r2f_1 ? ' o ' + req.w2f_1 : '') + (!(req.a2g_1 == null) ? ' (o nivel ' + req.a2g_1.r2f_1 + ')' : '') + '. ' + EffectEngine_getInstance().y2b(card) + ' ocupa su lugar y hereda su estado. Si no eliges ninguna, no se invoca.', 'Invocador', summoners_0, player.w1e_1);
+    EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SPECIAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, 'Elige el invocador: 1 criatura nivel ' + req.r2f_1 + (req.v2f_1 ? ' o mayor' : req.w2f_1 > req.r2f_1 ? ' o ' + req.w2f_1 : '') + (!(req.a2g_1 == null) ? ' (o nivel ' + req.a2g_1.r2f_1 + ')' : '') + '. ' + EffectEngine_getInstance().y2b(card) + ' ocupa su lugar y hereda su estado. Si no eliges ninguna, no se invoca.', 'Invocador', summoners_0, player.w1e_1);
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
     return null;
   }
@@ -33750,7 +33856,7 @@ protoOf(SpecialSummons).r36 = function (room, userId, instanceId, summonerId) {
       var z_2 = _iterator__ex2g4s_4.j();
       shown_2.r(EffectEngine_getInstance().w2c(player, z_2));
     }
-    EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SPECIAL_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, summoner_0), 'Material', materials_0, shown_2);
+    EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SPECIAL_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().y35(req, card, summoner_0), 'Material', materials_0, shown_2);
     var tmp_1 = ensureNotNull(room.q18_1);
     // Inline function 'kotlin.math.max' call
     var b = option.x2f_1;
@@ -33775,7 +33881,7 @@ protoOf(SpecialSummons).n2g = function (room, player, card, req, summoner, mater
     if (!(opponent == null)) {
       shown.r(opponent.w1e_1);
     }
-    EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_ASCEND_ATTACK_getInstance().j2n(), EffectEngine_getInstance().y2b(summoner) + ' va a ser ascendida', 'Puede declarar ataque antes: elige ' + EffectEngine_getInstance().y2b(summoner) + ' para atacar al oponente, o una criatura enemiga agotada. ' + 'O ninguna para ascenderla ya.', 'Atacar', options, shown);
+    EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_ASCEND_ATTACK_getInstance().l2n(), EffectEngine_getInstance().y2b(summoner) + ' va a ser ascendida', 'Puede declarar ataque antes: elige ' + EffectEngine_getInstance().y2b(summoner) + ' para atacar al oponente, o una criatura enemiga agotada. ' + 'O ninguna para ascenderla ya.', 'Atacar', options, shown);
     ensureNotNull(room.q18_1).f1m_1 = 0;
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
     ensureNotNull(room.q18_1).k1m_1 = summoner.e1c_1;
@@ -33783,7 +33889,7 @@ protoOf(SpecialSummons).n2g = function (room, player, card, req, summoner, mater
   }
   var gain = 'promotion' === req.q2f_1 && !(summoner == null) ? CardEffects_getInstance().u2l(summoner) : null;
   if (!(gain == null) && player.d1e_1 == room.b18_1 && room.v18_1 == null && room.z18_1.f('ascend-gain|' + card.e1c_1)) {
-    EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_ASCEND_GAIN_getInstance().j2n(), EffectEngine_getInstance().y2b(ensureNotNull(summoner)) + ' va a ser ascendida', 'Cuando esta carta fuera a ser ascendida: esta carta gana ' + gain + ' hasta el final del turno.', 'Activar', frozenListOf([summoner]), frozenListOf([summoner]));
+    EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_ASCEND_GAIN_getInstance().l2n(), EffectEngine_getInstance().y2b(ensureNotNull(summoner)) + ' va a ser ascendida', 'Cuando esta carta fuera a ser ascendida: esta carta gana ' + gain + ' hasta el final del turno.', 'Activar', frozenListOf([summoner]), frozenListOf([summoner]));
     ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
     ensureNotNull(room.q18_1).k1m_1 = summoner.e1c_1;
@@ -33798,7 +33904,7 @@ protoOf(SpecialSummons).n2g = function (room, player, card, req, summoner, mater
     if (!materials.m()) {
       room.z18_1.f('discount-materials|' + card.e1c_1 + '|' + joinToString(EffectEngine_getInstance().u2b(materials), ','));
     }
-    EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_SUMMONER_DISCOUNT_getInstance().j2n(), EffectEngine_getInstance().y2b(use.g2h_1) + ' \xB7 ' + use.f2h_1.u2g_1, CostModifiers_getInstance().n2s(use), 'Pagar', CostModifiers_getInstance().m2s(player, use, card), player.u1e_1);
+    EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_SUMMONER_DISCOUNT_getInstance().l2n(), EffectEngine_getInstance().y2b(use.g2h_1) + ' \xB7 ' + use.f2h_1.u2g_1, CostModifiers_getInstance().n2s(use), 'Pagar', CostModifiers_getInstance().m2s(player, use, card), player.u1e_1);
     ensureNotNull(room.q18_1).g1m_1 = ensureNotNull(use.f2h_1.a2h_1).s2g_1;
     if (equals_0(ensureNotNull(use.f2h_1.a2h_1).r2g_1, PaymentKind_SELF_DAMAGE_getInstance()))
       ensureNotNull(room.q18_1).f1m_1 = 0;
@@ -33912,7 +34018,7 @@ protoOf(SpecialSummons).l33 = function (room, player, card, ally) {
     }
     shown.y1(card);
     shown.y1(ally);
-    EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_REPLACE_SUMMON_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 en lugar de que ' + EffectEngine_getInstance().y2b(ally) + ' sea removida', SpecialRequirements_getInstance().y35(req, card, ally), 'Material', materials, shown);
+    EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_REPLACE_SUMMON_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 en lugar de que ' + EffectEngine_getInstance().y2b(ally) + ' sea removida', SpecialRequirements_getInstance().y35(req, card, ally), 'Material', materials, shown);
     var tmp = ensureNotNull(room.q18_1);
     // Inline function 'kotlin.math.max' call
     var b = option.x2f_1;
@@ -34004,7 +34110,7 @@ protoOf(StepHelpers).d2b = function (effect, player, sacrifice) {
   return tmp;
 };
 protoOf(StepHelpers).v2b = function (room, effect, instruction, chosenLabel, cards, validIds, count) {
-  var prompt = this.o2n(room, effect, Kind_PICK_getInstance(), instruction);
+  var prompt = this.q2n(room, effect, Kind_PICK_getInstance(), instruction);
   prompt.d1m_1 = ArrayList_init_$Create$_0(ensureNotNull(cards));
   prompt.e1m_1 = ArrayList_init_$Create$_0(validIds);
   prompt.f1m_1 = count;
@@ -34012,7 +34118,7 @@ protoOf(StepHelpers).v2b = function (room, effect, instruction, chosenLabel, car
   prompt.c1m_1 = chosenLabel;
   room.q18_1 = prompt;
 };
-protoOf(StepHelpers).o2n = function (room, effect, kind, instruction) {
+protoOf(StepHelpers).q2n = function (room, effect, kind, instruction) {
   var p = new Prompt();
   p.t1l_1 = room.t2h('prompt');
   p.u1l_1 = kind;
@@ -34356,7 +34462,7 @@ protoOf(StepHelpers).t2p = function (room, effect, opponent) {
   return valid;
 };
 protoOf(StepHelpers).k32 = function (room, effect, kind, instruction, valid, max) {
-  var prompt = this.o2n(room, effect, kind, instruction);
+  var prompt = this.q2n(room, effect, kind, instruction);
   prompt.d1m_1 = ArrayList_init_$Create$_0(effect.l21_1);
   prompt.e1m_1 = ArrayList_init_$Create$_0(valid);
   prompt.f1m_1 = 0;
@@ -34431,7 +34537,7 @@ protoOf(StepHelpers).i37 = function (steps, index) {
     do {
       var i = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
-      var covers = Chain_instance.q2n(steps.l(i));
+      var covers = Chain_instance.s2n(steps.l(i));
       if (covers > 0 && index <= (i + covers | 0))
         return true;
     }
@@ -35359,7 +35465,7 @@ protoOf(Summons).t1i = function (room, userId, instanceId, x, y) {
     }
     var answer = tmp$ret$3;
     if (answer == null && !options.m()) {
-      EffectEngine_getInstance().k2n(room, userId, PromptPurpose_SUMMON_SACRIFICE_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 al invocarla', 'Puedes sacrificar 1 aliado [dinosaurio] activo para invocar ' + EffectEngine_getInstance().y2b(card) + ' en tu l\xEDnea frontal reduciendo su coste en el coste ' + 'del aliado. O ninguno.', 'Sacrificar', options, player.w1e_1);
+      EffectEngine_getInstance().m2n(room, userId, PromptPurpose_SUMMON_SACRIFICE_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 al invocarla', 'Puedes sacrificar 1 aliado [dinosaurio] activo para invocar ' + EffectEngine_getInstance().y2b(card) + ' en tu l\xEDnea frontal reduciendo su coste en el coste ' + 'del aliado. O ninguno.', 'Sacrificar', options, player.w1e_1);
       ensureNotNull(room.q18_1).f1m_1 = 0;
       ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
       ensureNotNull(room.q18_1).k1m_1 = y == null ? '' : y.toString();
@@ -35386,7 +35492,7 @@ protoOf(Summons).t1i = function (room, userId, instanceId, x, y) {
   }
   var tap = CostModifiers_getInstance().j2s(room, player, Event_SUMMON_getInstance(), null, card);
   if (!(tap == null)) {
-    EffectEngine_getInstance().k2n(room, userId, PromptPurpose_COST_TAP_getInstance().j2n(), EffectEngine_getInstance().y2b(tap.g2h_1) + ' \xB7 ' + tap.f2h_1.u2g_1, '\xBFAgotas ' + EffectEngine_getInstance().y2b(tap.g2h_1) + ' para reducir en ' + tap.f2h_1.h2h(room, userId) + ' el coste de ' + EffectEngine_getInstance().y2b(card) + '?', 'Agotar', frozenListOf([tap.g2h_1]), frozenListOf([tap.g2h_1]));
+    EffectEngine_getInstance().m2n(room, userId, PromptPurpose_COST_TAP_getInstance().l2n(), EffectEngine_getInstance().y2b(tap.g2h_1) + ' \xB7 ' + tap.f2h_1.u2g_1, '\xBFAgotas ' + EffectEngine_getInstance().y2b(tap.g2h_1) + ' para reducir en ' + tap.f2h_1.h2h(room, userId) + ' el coste de ' + EffectEngine_getInstance().y2b(card) + '?', 'Agotar', frozenListOf([tap.g2h_1]), frozenListOf([tap.g2h_1]));
     ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
     ensureNotNull(room.q18_1).k1m_1 = 'normal-summon|' + toString(y == null ? '' : y);
@@ -35422,7 +35528,7 @@ protoOf(Summons).y31 = function (room, userId, card) {
     return 'Solo las utilidades y estructuras se juegan';
   if ('structure' === card.m1c_1 && this.p37(room, userId))
     return 'Solo puedes jugar una estructura por turno';
-  var blocked = Chain_instance.h2n(room, userId, card);
+  var blocked = Chain_instance.j2n(room, userId, card);
   if (!(blocked == null))
     return blocked;
   var cost = CardEffects_getInstance().j2l(room, userId, card);
@@ -35461,7 +35567,7 @@ protoOf(Summons).q37 = function (room, userId) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!(Chain_instance.h2n(room, userId, element) == null)) {
+    if (!(Chain_instance.j2n(room, userId, element) == null)) {
       destination.f(element);
     }
   }
@@ -35525,7 +35631,7 @@ protoOf(Summons).q34 = function (room, userId, card, cost) {
 };
 protoOf(Summons).t36 = function (room, player, card, effect) {
   if ('creature' === card.m1c_1 && !EffectEngine_getInstance().s1o(card) && !(EffectEngine_getInstance().r29(player.w1e_1, card.e1c_1) == null)) {
-    EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_SPECIAL_FRONT_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 L\xEDnea frontal', '\xBFMueves a ' + EffectEngine_getInstance().y2b(card) + ' a tu l\xEDnea frontal? Despu\xE9s robas 1 carta por la invocaci\xF3n.', 'A la l\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
+    EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_SPECIAL_FRONT_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 L\xEDnea frontal', '\xBFMueves a ' + EffectEngine_getInstance().y2b(card) + ' a tu l\xEDnea frontal? Despu\xE9s robas 1 carta por la invocaci\xF3n.', 'A la l\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
     ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
     if (!(effect == null))
@@ -35543,7 +35649,7 @@ protoOf(Summons).k34 = function (room, player, card, kind, summonerId) {
     tmp = tmp0_elvis_lhs;
   }
   var use = tmp;
-  EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_COST_TAP_getInstance().j2n(), EffectEngine_getInstance().y2b(use.g2h_1) + ' \xB7 ' + use.f2h_1.u2g_1, '\xBFAgotas ' + EffectEngine_getInstance().y2b(use.g2h_1) + ' para reducir en ' + use.f2h_1.h2h(room, player.d1e_1) + ' el coste especial de ' + EffectEngine_getInstance().y2b(card) + '?', 'Agotar', frozenListOf([use.g2h_1]), frozenListOf([use.g2h_1]));
+  EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_COST_TAP_getInstance().l2n(), EffectEngine_getInstance().y2b(use.g2h_1) + ' \xB7 ' + use.f2h_1.u2g_1, '\xBFAgotas ' + EffectEngine_getInstance().y2b(use.g2h_1) + ' para reducir en ' + use.f2h_1.h2h(room, player.d1e_1) + ' el coste especial de ' + EffectEngine_getInstance().y2b(card) + '?', 'Agotar', frozenListOf([use.g2h_1]), frozenListOf([use.g2h_1]));
   ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
   ensureNotNull(room.q18_1).k1m_1 = summonerId;
@@ -35618,7 +35724,7 @@ protoOf(Summons).o2g = function (room) {
 protoOf(Summons).o37 = function (room, player, card) {
   if (!(room.q18_1 == null) || EffectEngine_getInstance().u2o(card, 'Asalto') == null || EffectEngine_getInstance().s1o(card))
     return Unit_instance;
-  EffectEngine_getInstance().k2n(room, player.d1e_1, PromptPurpose_ASSAULT_getInstance().j2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 Asalto', 'En lugar de quedar en tu retaguardia, puedes colocarla agotada en tu l\xEDnea frontal.', 'L\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
+  EffectEngine_getInstance().m2n(room, player.d1e_1, PromptPurpose_ASSAULT_getInstance().l2n(), EffectEngine_getInstance().y2b(card) + ' \xB7 Asalto', 'En lugar de quedar en tu retaguardia, puedes colocarla agotada en tu l\xEDnea frontal.', 'L\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
   ensureNotNull(room.q18_1).u1l_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.q18_1).j1m_1 = card.e1c_1;
 };
@@ -36221,7 +36327,7 @@ protoOf(TurnRules).s37 = function (room, userId, startOfTurn) {
   if (back.m())
     return Unit_instance;
   var title = startOfTurn ? 'Inicio de turno' : 'Final de turno';
-  EffectEngine_getInstance().k2n(room, userId, PromptPurpose_ADVANCE_getInstance().j2n(), title + ' \xB7 L\xEDnea frontal', 'Elige las criaturas de tu retaguardia que suben a la l\xEDnea frontal (todas a la vez), o ninguna.', 'A la l\xEDnea frontal', back, back);
+  EffectEngine_getInstance().m2n(room, userId, PromptPurpose_ADVANCE_getInstance().l2n(), title + ' \xB7 L\xEDnea frontal', 'Elige las criaturas de tu retaguardia que suben a la l\xEDnea frontal (todas a la vez), o ninguna.', 'A la l\xEDnea frontal', back, back);
   ensureNotNull(room.q18_1).g1m_1 = back.k();
 };
 protoOf(TurnRules).f1l = function (room, playerId) {
@@ -38669,6 +38775,7 @@ function label($this, to) {
 function instruction($this, ctx, action, min, max) {
   var what = (min < max ? 'hasta ' : '') + max + ' ' + (max === 1 ? 'carta' : 'cartas');
   var filter = ensureNotNull(action.z36_1).f2y().z2b();
+  var from = action.z36_1.w2x_1 === 'looked' ? '' : ' de ' + ctx.a2w(action.z36_1.w2x_1);
   var tmp;
   var tmp$ret$0;
   $l$block: {
@@ -38689,7 +38796,7 @@ function instruction($this, ctx, action, min, max) {
   } else {
     tmp = ' ' + filter;
   }
-  var cards = what + tmp + ' de ' + ctx.a2w(action.z36_1.w2x_1);
+  var cards = what + tmp + from;
   if (action.z36_1.f3b().equals(Self_REQUIRE_getInstance()))
     cards = cards + ', incluida esta carta';
   var random = action.b37_1 ? ' en orden aleatorio' : '';
@@ -38698,10 +38805,6 @@ function instruction($this, ctx, action, min, max) {
   }
   if ('deckTopKept' === action.g37_1)
     return instructionOf($this, action, cards, random) + ' El resto vuelve al tope de tu mazo en su orden.';
-  if (!(action.g37_1 == null)) {
-    var rest = 'deckTop' === action.g37_1 ? ' Ordena el resto: vuelve al tope de tu mazo (la de la izquierda queda arriba).' : ' Ordena el resto: ir\xE1 al fondo de tu mazo en ese orden.';
-    return instructionOf($this, action, cards, random) + rest;
-  }
   return instructionOf($this, action, cards, random);
 }
 function instructionOf($this, action, cards, random) {
@@ -45264,7 +45367,7 @@ function Zone(name, ordinal, id, cards, shortLabel, logLabel, ownLabel) {
   this.j1f_1 = logLabel;
   this.k1f_1 = ownLabel;
 }
-protoOf(Zone).j2n = function () {
+protoOf(Zone).l2n = function () {
   return this.g1f_1;
 };
 protoOf(Zone).s1l = function (player) {

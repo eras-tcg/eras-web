@@ -300,6 +300,42 @@ function selectColorGroup(parent: SpecNode, cols: string[]): SpecNode | null {
   return pick;
 }
 
+/** Horizontal extent of a one-line text as drawn (Book Antiqua Bold, the font of name, class and edition). */
+export function textSpan(n: SpecNode, measure: Measure): [number, number] {
+  const t = n.text!;
+  const [xx, , , yy, tx] = t.transform;
+  const size = (t.runs[0]?.size ?? 12) * yy;
+  const firstLine = t.text.replace(/\r[\s\S]*$/, '');
+  const w = measure(firstLine, `700 ${size}px "ERAS Book Antiqua"`) * (xx / yy);
+  let x = tx;
+  if (t.box) {
+    const [l, , r] = t.box;
+    x =
+      tx + (t.justify === 'center' ? ((r - l) / 2) * xx : t.justify === 'right' ? (r - l) * xx : 0);
+  }
+  if (t.justify === 'center') return [x - w / 2, x + w / 2];
+  if (t.justify === 'right') return [x - w, x];
+  return [x, x + w];
+}
+
+/**
+ * Where a text sits on a two-color bar that has white on one side: 'white' when it lies wholly on the white side,
+ * 'color' wholly on the other side, 'both' when it crosses the blend band (the middle 20% of the bar).
+ */
+export function sideOf(
+  span: [number, number],
+  bar: number[],
+  whiteLeft: boolean,
+): 'white' | 'color' | 'both' {
+  const c = (bar[0] + bar[2]) / 2;
+  const half = ((bar[2] - bar[0]) / 2) * 0.2;
+  const left = span[1] <= c - half;
+  const right = span[0] >= c + half;
+  if (left) return whiteLeft ? 'white' : 'color';
+  if (right) return whiteLeft ? 'color' : 'white';
+  return 'both';
+}
+
 function setText(n: SpecNode | undefined, text: string, color?: string | null): void {
   if (!n?.text) return;
   n.text.text = text;
@@ -472,6 +508,31 @@ export function buildCard(
 
   const ed = first('EDITION');
   setText(ed, `${cardCode(card)} ${card.rarity || ''}`.trim(), onPrimary);
+  // White and another color: a text wholly on the white side is black; one crossing both colors is white with a
+  // black outline; one on the other color stays white.
+  const halfWhite = cols.length === 2 && cols.includes('W');
+  const widest = (name: string) =>
+    (byName.get(name) ?? []).reduce<number[] | undefined>(
+      (a, n) => (!a || n.bbox[2] - n.bbox[0] > a[2] - a[0] ? n.bbox : a),
+      undefined,
+    );
+  const typeBar = widest('Type Frame');
+  const nameBar = widest('br corner') ?? widest('left curved side');
+  const sides = new Map<SpecNode, 'white' | 'color' | 'both'>();
+  const onBar = (n: SpecNode | undefined, bar: number[] | undefined) => {
+    if (!halfWhite || !n?.text || !n.visible || !bar) return;
+    const side = sideOf(textSpan(n, measure), bar, cols[0] === 'W');
+    sides.set(n, side);
+    n.text.runs[0].color = side === 'white' ? '#000000' : '#ffffff';
+    if (side === 'both')
+      n.fx = {
+        ...n.fx,
+        stroke: { size: 1, pos: 'OutF', opacity: 1, color: '#000000', gradient: null },
+      };
+  };
+  const edOnWhite = () => white || (ed ? sides.get(ed) === 'white' : false);
+  onBar(first('NAME'), nameBar);
+  onBar(first('TYPE'), typeBar);
   const badge = first('REGULATION BG') ?? first('Rectángulo redondeado 4');
   if (ed?.text && badge) {
     // Regulation letter inside its badge: white badge and black letter, dark badge on white cards.
@@ -479,15 +540,16 @@ export function buildCard(
     ed.text.transform[4] = bx0 - 4;
     ed.text.justify = 'right';
     ed.text.box = null;
+    onBar(ed, typeBar);
     badge.visible = !!card.regulation;
-    if (!badge.fill) badge.fill = white ? '#364546' : '#ffffff';
+    if (!badge.fill) badge.fill = edOnWhite() ? '#364546' : '#ffffff';
     const letter = clone(ed);
     letter.name = 'REGULATION';
     letter.text!.justify = 'center';
     letter.text!.transform[4] = (bx0 + bx1) / 2;
     // In the PSD the letter is part of the edition text, on its baseline.
     letter.text!.transform[5] = ed.text.transform[5];
-    setText(letter, card.regulation || '', white ? '#ffffff' : '#000000');
+    setText(letter, card.regulation || '', edOnWhite() ? '#ffffff' : '#000000');
     const siblings = parentOf(spec.layers, ed);
     siblings?.splice(siblings.indexOf(ed) + 1, 0, letter);
   }

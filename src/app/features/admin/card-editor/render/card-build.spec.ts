@@ -1,4 +1,13 @@
-import { cardCode, colorsOf, rolePaint, roleOf, roman, templateFor, wrapText } from './card-build';
+import {
+  sideOf,
+  cardCode,
+  colorsOf,
+  rolePaint,
+  roleOf,
+  roman,
+  templateFor,
+  wrapText,
+} from './card-build';
 
 describe('card-build', () => {
   it('picks the prototype by type, inheritance, link and white', () => {
@@ -64,5 +73,14 @@ describe('card-build', () => {
       'tres',
       'cuatro',
     ]);
+  });
+
+  it('tells on which side of a white two-color bar a text sits', () => {
+    const bar = [0, 0, 1000, 40];
+    // Blend band: 400..600.
+    expect(sideOf([650, 700], bar, false)).toBe('white');
+    expect(sideOf([650, 700], bar, true)).toBe('color');
+    expect(sideOf([300, 700], bar, false)).toBe('both');
+    expect(sideOf([100, 390], bar, true)).toBe('white');
   });
 });

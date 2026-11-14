@@ -107,7 +107,18 @@ import { ColorLut, convertCanvas } from './render/color-lut';
 
       <div class="layout">
         <div class="card-pane">
-          <div class="card-wrap">
+          <div class="card-wrap" [class.framing]="framing()">
+            @if (framing() && ghost(); as g) {
+              <img
+                class="ghost"
+                alt=""
+                [src]="g.src"
+                [style.left.%]="g.left"
+                [style.top.%]="g.top"
+                [style.width.%]="g.width"
+                [style.height.%]="g.height"
+              />
+            }
             <div
               #preview
               class="preview"
@@ -116,13 +127,16 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               (pointermove)="dragMove($event)"
               (pointerup)="dragEnd()"
               (pointercancel)="dragEnd()"
+              (wheel)="wheelZoom($event)"
             ></div>
-            <eras-card-hotspots
-              [zones]="zones()"
-              [(form)]="form"
-              [classes]="classes()"
-              (effectZone)="editEffects($event)"
-            />
+            @if (!framing()) {
+              <eras-card-hotspots
+                [zones]="zones()"
+                [(form)]="form"
+                [classes]="classes()"
+                (effectZone)="editEffects($event)"
+              />
+            }
             @if (effectZone(); as z) {
               @if (catalog(); as cat) {
                 <eras-effect-editor
@@ -222,11 +236,14 @@ import { ColorLut, convertCanvas } from './render/color-lut';
           <eras-section-header title="Arte" />
           <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
           @if (art(); as a) {
+            <button erasChip [selected]="framing()" (click)="toggleFraming()">
+              Encuadrar arte
+            </button>
             <eras-form-field label="Zoom">
               <input
                 type="range"
-                min="1"
-                max="4"
+                [min]="minZoom"
+                [max]="maxZoom"
                 step="0.01"
                 [value]="a.scale"
                 (input)="zoom($any($event.target).valueAsNumber)"
@@ -236,7 +253,7 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
                 Centrar
               </button>
-              <button erasButton variant="ghost" size="sm" type="button" (click)="art.set(null)">
+              <button erasButton variant="ghost" size="sm" type="button" (click)="removeArt()">
                 Quitar arte
               </button>
             </eras-stack>
@@ -293,6 +310,10 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       justify-items: center;
       gap: var(--space-2);
     }
+    .card-pane {
+      overflow: hidden;
+      padding: var(--space-6);
+    }
     .card-wrap {
       position: relative;
       inline-size: min(100%, 34rem);
@@ -304,6 +325,17 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     .label {
       font-size: var(--font-size-sm);
       color: var(--color-text-muted);
+    }
+    .ghost {
+      position: absolute;
+      max-inline-size: none;
+      opacity: 0.4;
+      pointer-events: none;
+      user-select: none;
+    }
+    .card-wrap.framing .preview {
+      position: relative;
+      outline: 2px solid var(--color-primary);
     }
     .preview {
       width: 100%;
@@ -594,7 +626,7 @@ export class CardEditorPage {
     this.form.set(blankMeta(this.form().edition));
     this.metaId.set(null);
     this.query.set('');
-    this.art.set(null);
+    this.removeArt();
   }
 
   protected async save(): Promise<void> {
@@ -633,6 +665,7 @@ export class CardEditorPage {
         c.height = img.naturalHeight;
         c.getContext('2d')!.drawImage(img, 0, 0);
         const lut = this.lut();
+        this.artScreen.set(String(reader.result));
         if (lut) convertCanvas(c, (px) => lut.inverse(px));
         this.art.set({
           src: c.toDataURL('image/jpeg', 0.95),
@@ -648,8 +681,50 @@ export class CardEditorPage {
     reader.readAsDataURL(file);
   }
 
+  /** Zoom range: below 1 the art can fit the standard frame's window, smaller than the card. */
+  protected readonly minZoom = 0.2;
+  protected readonly maxZoom = 4;
+  /** Framing the art: the hotspots step aside, the whole image shows faded around the card, drag and wheel move it. */
+  protected readonly framing = signal(false);
+  /** The uploaded image as it came (screen colors), for the faded view around the card. */
+  private readonly artScreen = signal<string | null>(null);
+  protected readonly ghost = computed(() => {
+    const a = this.art();
+    const src = this.artScreen();
+    if (!a || !src) return null;
+    const cover = Math.max(744 / a.width, 1039 / a.height) * a.scale;
+    const w = a.width * cover;
+    const h = a.height * cover;
+    return {
+      src,
+      left: (((744 - w) / 2 + a.x) / 744) * 100,
+      top: (((1039 - h) / 2 + a.y) / 1039) * 100,
+      width: (w / 744) * 100,
+      height: (h / 1039) * 100,
+    };
+  });
+
+  protected removeArt(): void {
+    this.art.set(null);
+    this.artScreen.set(null);
+    this.framing.set(false);
+  }
+
+  protected toggleFraming(): void {
+    this.effectZone.set(null);
+    this.framing.update((v) => !v);
+  }
+
   protected zoom(scale: number): void {
-    this.art.update((a) => (a ? { ...a, scale } : a));
+    const s = Math.min(this.maxZoom, Math.max(this.minZoom, scale));
+    this.art.update((a) => (a ? { ...a, scale: s } : a));
+  }
+
+  protected wheelZoom(e: WheelEvent): void {
+    const a = this.art();
+    if (!this.framing() || !a) return;
+    e.preventDefault();
+    this.zoom(a.scale * Math.exp(-e.deltaY * 0.0015));
   }
 
   protected centerArt(): void {

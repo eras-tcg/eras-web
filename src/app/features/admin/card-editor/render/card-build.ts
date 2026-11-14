@@ -667,6 +667,41 @@ export function buildCard(
     }
   }
 
+  // Inherit utilities and structures got the inherit creature's frames, whose top (straight black margin, tab the
+  // width of "Criatura") is not theirs: the top pieces of each frame come from the plain utility or structure.
+  const plainTpl = /^(UTILIDAD|ESTRUCTURA) HER/.test(templateFor(card))
+    ? templates[templateFor(card).replace(' HER', '')]
+    : undefined;
+  if (plainTpl) {
+    const topOf = 52;
+    const groupIn = (layers: SpecNode[], name: string) =>
+      layers
+        .flatMap(function find(n: SpecNode): SpecNode[] {
+          return n.name === name ? [n] : (n.children ?? []).flatMap(find);
+        })
+        .at(0);
+    for (const frame of Object.values(STYLE_GROUP)) {
+      const mine = groupIn(spec.layers, frame);
+      const theirs = groupIn(plainTpl.layers, frame);
+      if (!mine?.children || !theirs?.children) continue;
+      // Each parent (by its path inside the frame) loses its top pieces and gets the plain card's, in their place.
+      const parents = new Map<string, { node: SpecNode; at: number }>();
+      walk([mine], (n, p) => {
+        if (!n.children) return;
+        const key = p.slice(1).join('/');
+        const at = n.children.findIndex((c) => !c.children && c.bbox[3] <= topOf);
+        n.children = n.children.filter((c) => c.children || c.bbox[3] > topOf);
+        parents.set(key, { node: n, at: at < 0 ? n.children.length : at });
+      });
+      walk([theirs], (n, p) => {
+        if (n.children || n.bbox[3] > topOf) return;
+        const parent = parents.get(p.slice(1, -1).join('/')) ?? parents.get('');
+        if (!parent?.node.children) return;
+        parent.node.children.splice(parent.at++, 0, clone(n));
+      });
+    }
+  }
+
   // Nor has it a semi full art frame: it borrows the plain creature's, drawn between the full-art pieces and the
   // standard frame as there.
   const structure = first('CARD-STRUCTURE');
@@ -790,6 +825,27 @@ export function buildCard(
         n.visible = false;
     });
   }
+  // Utilities and structures: a strip in the card's colors along the top edge. The prototypes keep it in only some
+  // of the special summon's color groups, so it is taken out of all of them and put back once, painted with the
+  // card's colors (a blend for two, in their order).
+  const isStrip = (n: SpecNode, p: string[]) =>
+    !n.children &&
+    /^Rect.ngulo redondeado 4 copia/.test(n.name) &&
+    p.includes('COLOR OBJECTS') &&
+    n.bbox[1] < 0;
+  let strip: SpecNode | null = null;
+  for (const layers of [spec.layers, templates['UTILIDAD - PROTOTIPO']?.layers ?? []])
+    walk(layers, (n, p) => {
+      if (!strip && isStrip(n, p)) strip = clone(n);
+    });
+  walk(spec.layers, (n, p) => {
+    if (n.children) n.children = n.children.filter((c) => !isStrip(c, [...p, c.name]));
+  });
+  const altColors = first('Alt Summon')?.children?.find((c) => c.name === 'COLOR OBJECTS');
+  const shown = altColors?.children?.find((g) => isColorGroup(g) && g.visible !== false);
+  const s0 = strip as SpecNode | null;
+  if (s0 && shown?.children && (card.cardType === 'utility' || card.cardType === 'structure'))
+    shown.children.push({ ...s0, visible: true, fill: rolePaint('dark', cols) });
 
   // Special summon: its box, icon, cost and requirement.
   const alt = first('Alt Summon');
@@ -1137,6 +1193,33 @@ export function buildCard(
     if (card.noCost && COST_PARTS.test(n.name)) n.visible = false;
     if (card.noStrength && STRENGTH_PARTS.test(n.name)) n.visible = false;
   });
+  // With no strength the standard frame's top right corner of the art is cut at 45 degrees like the cost's one (a
+  // black diamond on the corner); utilities carry it, creatures do not: it is the cost's diamond mirrored.
+  if (card.noStrength) {
+    const std = byName.get('NONFULLART')?.[0];
+    let hasCorner = false;
+    let costCorner: SpecNode | null = null;
+    let parent: SpecNode | null = null;
+    walk(std ? [std] : [], (n) => {
+      if (n.name === 'NOSTRENGHT CORNER') hasCorner = true;
+      for (const c of n.children ?? [])
+        if (!costCorner && /^Pol.gono 2 copia 2$/.test(c.name) && c.paths) {
+          costCorner = c;
+          parent = n;
+        }
+    });
+    const cc = costCorner as SpecNode | null;
+    const par = parent as SpecNode | null;
+    if (!hasCorner && cc?.paths && par?.children) {
+      const [x0, y0, x1, y1] = cc.bbox;
+      par.children.splice(par.children.indexOf(cc) + 1, 0, {
+        ...clone(cc),
+        name: 'NOSTRENGHT CORNER',
+        bbox: [744 - x1, y0, 744 - x0, y1],
+        paths: cc.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [744 - x, y]) })),
+      });
+    }
+  }
 
   // Starter tag, structure / utility icon.
   const ini = first('INICIADOR');

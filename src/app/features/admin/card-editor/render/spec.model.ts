@@ -127,8 +127,8 @@ export interface ArtPlacement {
 
 export interface PieceStyle {
   label: string;
-  /** [offset, color] stops, bottom to top. */
-  fill: [number, string][];
+  /** [offset, color, CMYK in percent?] stops, bottom to top. */
+  fill: ([number, string] | [number, string, number[]])[];
   text: string | null;
   textStroke: string | null;
   textStrokeSize: number | null;

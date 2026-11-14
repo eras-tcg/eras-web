@@ -426,7 +426,7 @@ function drawPiece(
     { id: grad, gradientUnits: 'userSpaceOnUse', x1: x, y1: y + h, x2: x, y2: y },
     r.defs,
   );
-  for (const [at, c] of st.fill) svgEl('stop', { offset: at, 'stop-color': c }, lg);
+  for (const [at, c] of cmykStops(st.fill)) svgEl('stop', { offset: at, 'stop-color': c }, lg);
   const paint = `url(#${grad})`;
   if (tok.kind === 'timing') {
     const d = `M${x} ${y + h / 2}L${x + h / 2} ${y}L${x + w - h / 2} ${y}L${x + w} ${y + h / 2}L${x + w - h / 2} ${y + h}L${x + h / 2} ${y + h}Z`;
@@ -459,10 +459,7 @@ function drawPiece(
       'font-family': FONT,
       'font-weight': 700,
       'font-size': px,
-      stroke: st.textStroke,
-      'stroke-width': st.textStroke ? (st.textStrokeSize || 1) * 2 : null,
-      'paint-order': 'stroke',
-      'stroke-linejoin': 'round',
+      filter: st.textStroke ? `url(#${r.outline(st.textStrokeSize || 1, st.textStroke)})` : null,
     },
     g,
   ).textContent = tok.label;
@@ -527,4 +524,34 @@ function drawUltimate(
     },
     g,
   ).textContent = label;
+}
+
+/**
+ * Gradient stops blended as Photoshop does in a CMYK file: when every stop carries its CMYK, the run between two
+ * stops is sampled in CMYK (a black-to-green momento darkens sooner than an RGB blend would).
+ */
+export function cmykStops(fill: PieceStyle['fill'], steps = 8): [number, string][] {
+  if (!fill.every((f) => f.length > 2)) return fill.map(([at, c]) => [at, c]);
+  const naive = (k: number[]) => {
+    const [c, m, y, b] = k.map((v) => v / 100);
+    const ch = (v: number) =>
+      Math.round(255 * (1 - v) * (1 - b))
+        .toString(16)
+        .padStart(2, '0');
+    return `#${ch(c)}${ch(m)}${ch(y)}`;
+  };
+  const out: [number, string][] = [];
+  for (let i = 0; i < fill.length; i++) {
+    const [at, , k] = fill[i] as [number, string, number[]];
+    if (i === 0 || at === fill[i - 1][0]) {
+      out.push([at, naive(k)]);
+      continue;
+    }
+    const [at0, , k0] = fill[i - 1] as [number, string, number[]];
+    for (let s = 1; s <= steps; s++) {
+      const t = s / steps;
+      out.push([at0 + (at - at0) * t, naive(k0.map((v, j) => v + (k[j] - v) * t))]);
+    }
+  }
+  return out;
 }

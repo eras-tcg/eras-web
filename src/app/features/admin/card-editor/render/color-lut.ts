@@ -57,7 +57,10 @@ function apply(t: Uint8Array, px: Uint8ClampedArray): void {
 }
 
 /** Runs a conversion over a whole canvas. */
-export function convertCanvas(canvas: HTMLCanvasElement, run: (px: Uint8ClampedArray) => void): HTMLCanvasElement {
+export function convertCanvas(
+  canvas: HTMLCanvasElement,
+  run: (px: Uint8ClampedArray) => void,
+): HTMLCanvasElement {
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
   const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
   run(img.data);

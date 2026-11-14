@@ -33,7 +33,11 @@ export interface CardDraft {
 }
 
 export type FrameStyle = 'standard' | 'semi' | 'full';
-export const FRAME_STYLE_LABELS: Record<FrameStyle, string> = { standard: 'Estándar', semi: 'Semi full art', full: 'Full art' };
+export const FRAME_STYLE_LABELS: Record<FrameStyle, string> = {
+  standard: 'Estándar',
+  semi: 'Semi full art',
+  full: 'Full art',
+};
 
 /** A built card: its spec plus the effect boxes the effect layout fills. */
 export interface BuiltCard extends CardSpec {
@@ -52,8 +56,16 @@ export interface EffectSlot {
 /** Measures text width in pixels with a CSS font. */
 export type Measure = (text: string, font: string) => number;
 
-const COLOR_KEYS: Record<string, string> = { R: 'RED', B: 'BLUE', G: 'GREEN', P: 'PURPLE', W: 'WHITE' };
-const KEY_COLOR: Record<string, string> = Object.fromEntries(Object.entries(COLOR_KEYS).map(([k, v]) => [v, k]));
+const COLOR_KEYS: Record<string, string> = {
+  R: 'RED',
+  B: 'BLUE',
+  G: 'GREEN',
+  P: 'PURPLE',
+  W: 'WHITE',
+};
+const KEY_COLOR: Record<string, string> = Object.fromEntries(
+  Object.entries(COLOR_KEYS).map(([k, v]) => [v, k]),
+);
 
 type Role = 'primary' | 'special' | 'effectBg' | 'margin' | 'dark' | 'edge';
 interface Swatch extends Record<Role, string> {
@@ -63,21 +75,90 @@ interface Swatch extends Record<Role, string> {
 
 /** Colors of each part, taken from the COLOR OBJECTS groups of the prototypes. */
 export const PALETTE: Record<string, Swatch> = {
-  R: { primary: '#990608', special: '#b4070c', effectBg: '#fea1ce', margin: '#d83982', dark: '#511117', edge: '#74090a', bi: '#990608', biBg: '#fea1ce' },
-  B: { primary: '#022fff', special: '#022fff', effectBg: '#afc7f6', margin: '#3b67ff', dark: '#0a1883', edge: '#0012a1', bi: '#022fff', biBg: '#afc7f6' },
-  G: { primary: '#277b09', special: '#277b09', effectBg: '#affdac', margin: '#51ce38', dark: '#192c16', edge: '#2f8116', bi: '#277b09', biBg: '#affdac' },
-  P: { primary: '#441eea', special: '#441eea', effectBg: '#d0c0fe', margin: '#835aff', dark: '#26108e', edge: '#13038b', bi: '#441fea', biBg: '#d0c1fe' },
-  W: { primary: '#ebf3f3', special: '#ebf3f3', effectBg: '#9bb4b5', margin: '#ebf3f3', dark: '#364546', edge: '#d7e6e6', bi: '#ffffff', biBg: '#c5d8d8' },
+  R: {
+    primary: '#990608',
+    special: '#b4070c',
+    effectBg: '#fea1ce',
+    margin: '#d83982',
+    dark: '#511117',
+    edge: '#74090a',
+    bi: '#990608',
+    biBg: '#fea1ce',
+  },
+  B: {
+    primary: '#022fff',
+    special: '#022fff',
+    effectBg: '#afc7f6',
+    margin: '#3b67ff',
+    dark: '#0a1883',
+    edge: '#0012a1',
+    bi: '#022fff',
+    biBg: '#afc7f6',
+  },
+  G: {
+    primary: '#277b09',
+    special: '#277b09',
+    effectBg: '#affdac',
+    margin: '#51ce38',
+    dark: '#192c16',
+    edge: '#2f8116',
+    bi: '#277b09',
+    biBg: '#affdac',
+  },
+  P: {
+    primary: '#441eea',
+    special: '#441eea',
+    effectBg: '#d0c0fe',
+    margin: '#835aff',
+    dark: '#26108e',
+    edge: '#13038b',
+    bi: '#441fea',
+    biBg: '#d0c1fe',
+  },
+  W: {
+    primary: '#ebf3f3',
+    special: '#ebf3f3',
+    effectBg: '#9bb4b5',
+    margin: '#ebf3f3',
+    dark: '#364546',
+    edge: '#d7e6e6',
+    bi: '#ffffff',
+    biBg: '#c5d8d8',
+  },
 };
 
-const KIND_GROUP: Record<string, string> = { materialization: 'Materialization', promotion: 'Promotion', ritual: 'Sacrifice', evolution: 'Evolve' };
+const KIND_GROUP: Record<string, string> = {
+  materialization: 'Materialization',
+  promotion: 'Promotion',
+  ritual: 'Sacrifice',
+  evolution: 'Evolve',
+};
 /** The special summon box takes the color of its kind, not the card's. */
-const KIND_COLOR: Record<string, string> = { materialization: 'B', promotion: 'R', ritual: 'P', evolution: 'G' };
-const KIND_LABEL: Record<string, string> = { materialization: 'Materialización', promotion: 'Ascenso', ritual: 'Ritual', evolution: 'Evolución' };
-const TYPE_LABEL: Record<string, string> = { creature: 'Criatura', utility: 'Utilidad', structure: 'Estructura' };
-const STYLE_GROUP: Record<FrameStyle, string> = { standard: 'NONFULLART', semi: 'SEMI-FULLART', full: 'FULLART' };
+const KIND_COLOR: Record<string, string> = {
+  materialization: 'B',
+  promotion: 'R',
+  ritual: 'P',
+  evolution: 'G',
+};
+const KIND_LABEL: Record<string, string> = {
+  materialization: 'Materialización',
+  promotion: 'Ascenso',
+  ritual: 'Ritual',
+  evolution: 'Evolución',
+};
+const TYPE_LABEL: Record<string, string> = {
+  creature: 'Criatura',
+  utility: 'Utilidad',
+  structure: 'Estructura',
+};
+const STYLE_GROUP: Record<FrameStyle, string> = {
+  standard: 'NONFULLART',
+  semi: 'SEMI-FULLART',
+  full: 'FULLART',
+};
 
-const has = <T>(a: readonly T[] | null | undefined): a is readonly T[] => Array.isArray(a) && a.length > 0;
+const has = <T>(a: readonly T[] | null | undefined): a is readonly T[] =>
+  Array.isArray(a) && a.length > 0;
 const clone = <T>(v: T): T => structuredClone(v);
 
 /** Roman numeral of a level (1 → I); other values as digits. */
@@ -118,7 +199,10 @@ export function cardCode(card: CardDraft): string {
 
 /** The role a shape plays in the color scheme, by its layer name. */
 export function roleOf(name: string): Role | null {
-  if (/^(Type Frame|br corner|left curved side|LA|RA|Rect.ngulo 27|Special Summon Frame)$/.test(name)) return 'primary';
+  if (
+    /^(Type Frame|br corner|left curved side|LA|RA|Rect.ngulo 27|Special Summon Frame)$/.test(name)
+  )
+    return 'primary';
   if (name === 'special cost') return 'special';
   if (/BACK EFFECT/.test(name)) return 'effectBg';
   if (/EFFECT MARGIN|^LINK EFFECT/.test(name)) return 'margin';
@@ -128,7 +212,17 @@ export function roleOf(name: string): Role | null {
 }
 
 const gradient = (a: string, b: string): { gradient: Gradient } => ({
-  gradient: { type: 'Lnr', angle: 0, scale: 100, reverse: false, stops: [{ at: 0, color: a }, { at: 1, color: b }], alphas: [] },
+  gradient: {
+    type: 'Lnr',
+    angle: 0,
+    scale: 100,
+    reverse: false,
+    stops: [
+      { at: 0, color: a },
+      { at: 1, color: b },
+    ],
+    alphas: [],
+  },
 });
 
 /** Paint of a role for one color, or a left-to-right blend for two. Null: no stroke (bicolor margins have none). */
@@ -141,7 +235,11 @@ export function rolePaint(role: Role, cols: string[]): Paint {
   return null;
 }
 
-function walk(nodes: SpecNode[], fn: (n: SpecNode, path: string[]) => void, path: string[] = []): void {
+function walk(
+  nodes: SpecNode[],
+  fn: (n: SpecNode, path: string[]) => void,
+  path: string[] = [],
+): void {
   for (const n of nodes) {
     const p = [...path, n.name];
     fn(n, p);
@@ -180,7 +278,9 @@ function selectColorGroup(parent: SpecNode, cols: string[]): SpecNode | null {
   let pick = groups.find((g) => g.name === name(cols));
   const exact = !!pick;
   if (!pick && cols.length === 2) {
-    pick = groups.find((g) => g.name === name([cols[1], cols[0]])) ?? groups.find((g) => g.name.split(' ').length === 2);
+    pick =
+      groups.find((g) => g.name === name([cols[1], cols[0]])) ??
+      groups.find((g) => g.name.split(' ').length === 2);
   }
   pick ??= groups.find((g) => g.name === COLOR_KEYS[cols[0]]) ?? groups[0];
   for (const g of groups) g.visible = g === pick;
@@ -229,7 +329,11 @@ function slotBox(text: TextSpec, bbox: number[]): EffectSlot['box'] {
 }
 
 /** Builds the spec of a card from its prototype. */
-export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, measure: Measure): BuiltCard {
+export function buildCard(
+  card: CardDraft,
+  templates: Record<string, CardSpec>,
+  measure: Measure,
+): BuiltCard {
   const spec = clone(templates[templateFor(card)]);
   const cols = colorsOf(card);
   const white = cols.length === 1 && cols[0] === 'W';
@@ -246,7 +350,12 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
     if (n.name !== 'CARD-STRUCTURE' || !n.children) return;
     for (const c of n.children) {
       if (!Object.values(STYLE_GROUP).includes(c.name)) continue;
-      c.visible = style === 'standard' ? c.name === 'NONFULLART' : style === 'semi' ? c.name !== 'NONFULLART' : c.name === 'FULLART';
+      c.visible =
+        style === 'standard'
+          ? c.name === 'NONFULLART'
+          : style === 'semi'
+            ? c.name !== 'NONFULLART'
+            : c.name === 'FULLART';
     }
   });
 
@@ -254,11 +363,13 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
   walk(spec.layers, (n) => {
     if (!n.children) return;
     if (n.name === 'COLOR OBJECTS') selectColorGroup(n, cols);
-    else if (n.name === 'Alt Summon' || n.name === 'REQ') selectColorGroup(n, kind && KIND_COLOR[kind] ? [KIND_COLOR[kind]] : cols);
+    else if (n.name === 'Alt Summon' || n.name === 'REQ')
+      selectColorGroup(n, kind && KIND_COLOR[kind] ? [KIND_COLOR[kind]] : cols);
   });
   if (style !== 'standard') {
     walk(spec.layers, (n, p) => {
-      if (p.includes('COLOR OBJECTS') && !n.children && roleOf(n.name) === 'effectBg' && n.fill) n.visible = false;
+      if (p.includes('COLOR OBJECTS') && !n.children && roleOf(n.name) === 'effectBg' && n.fill)
+        n.visible = false;
     });
   }
 
@@ -269,13 +380,19 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
     for (const c of alt.children ?? []) {
       if (c.name === 'COLOR OBJECTS') continue;
       if (!kind) c.visible = false;
-      else if (/^(SPEC COST|REQUIREMENT 2 LINES|Special Summon Frame)$/.test(c.name)) c.visible = true;
+      else if (/^(SPEC COST|REQUIREMENT 2 LINES|Special Summon Frame)$/.test(c.name))
+        c.visible = true;
     }
   }
   walk(spec.layers, (n, p) => {
-    if (Object.values(KIND_GROUP).includes(n.name) && p.some((x) => x === 'Alt Summon' || x === 'REQ')) n.visible = !!kind && n.name === KIND_GROUP[kind];
+    if (
+      Object.values(KIND_GROUP).includes(n.name) &&
+      p.some((x) => x === 'Alt Summon' || x === 'REQ')
+    )
+      n.visible = !!kind && n.name === KIND_GROUP[kind];
     if (p.includes('COLOR OBJECTS') && n.name === 'REQ') n.visible = !!kind;
-    if (!kind && /^(Special Summon Frame|special cost|special cost edge)( copia)?$/.test(n.name)) n.visible = false;
+    if (!kind && /^(Special Summon Frame|special cost|special cost edge)( copia)?$/.test(n.name))
+      n.visible = false;
   });
   if (kind && alt) {
     // The chosen color group may lack this kind's icon: borrow it from another group (all icons are white strokes).
@@ -284,7 +401,8 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
       if (!source && c.name === KIND_GROUP[kind] && c.children) source = c;
     });
     for (const g of (alt.children ?? []).filter((c) => isColorGroup(c) && c.visible)) {
-      if (source && !g.children!.some((c) => c.name === KIND_GROUP[kind])) g.children!.push({ ...clone(source as SpecNode), visible: true });
+      if (source && !g.children!.some((c) => c.name === KIND_GROUP[kind]))
+        g.children!.push({ ...clone(source as SpecNode), visible: true });
     }
   }
   if (kind) {
@@ -315,7 +433,9 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
   const ini = first('INICIADOR');
   if (ini) {
     ini.visible = !!card.starter;
-    const want = ({ R: 'ROJO', B: 'AZUL', G: 'VERDE', P: 'PURPLE', W: 'BLANCO' } as Record<string, string>)[cols[0]];
+    const want = (
+      { R: 'ROJO', B: 'AZUL', G: 'VERDE', P: 'PURPLE', W: 'BLANCO' } as Record<string, string>
+    )[cols[0]];
     for (const c of ini.children ?? []) c.visible = c.name.endsWith(want);
   }
   for (const k of ['STRUCTURE', 'UTILITY']) {
@@ -329,9 +449,14 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
   setText(first('COST'), String(card.cost ?? ''));
   setText(first('STRENGHT'), card.cardType === 'creature' ? String(card.strength ?? '') : '');
   setText(first('LEVEL'), roman(card.level));
-  setText(first('TYPE'), has(card.cardClasses) ? `[${card.cardClasses.join(' | ')}]` : '', onPrimary);
+  setText(
+    first('TYPE'),
+    has(card.cardClasses) ? `[${card.cardClasses.join(' | ')}]` : '',
+    onPrimary,
+  );
   const typeLabel = card.enlace ? 'Criatura Enlace' : (TYPE_LABEL[card.cardType ?? ''] ?? '');
-  for (const name of ['CARD-TYPE', 'CARD-TYPE copia 2']) for (const n of byName.get(name) ?? []) setText(n, typeLabel);
+  for (const name of ['CARD-TYPE', 'CARD-TYPE copia 2'])
+    for (const n of byName.get(name) ?? []) setText(n, typeLabel);
 
   const ed = first('EDITION');
   setText(ed, `${cardCode(card)} ${card.rarity || ''}`.trim(), onPrimary);
@@ -364,9 +489,10 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
   }
 
   // Art over the whole card, under the frame.
-  if (card.art) walk(spec.layers, (n) => {
-    if (n.name === 'Fondo') n.art = card.art;
-  });
+  if (card.art)
+    walk(spec.layers, (n) => {
+      if (n.name === 'Fondo') n.art = card.art;
+    });
 
   return { ...spec, effectSlots, card, colors: cols, style };
 }

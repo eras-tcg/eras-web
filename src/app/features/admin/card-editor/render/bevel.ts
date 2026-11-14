@@ -77,7 +77,13 @@ export function insideDistance(alpha: Float32Array, w: number, h: number): Float
  * Highlight and shadow strengths of a chisel hard inner bevel. The alpha comes at `scale` times the output size
  * (w x h): the distance is measured on that finer grid and the height averaged down, so curved edges stay smooth.
  */
-export function bevelMaps(fine: Float32Array, w: number, h: number, light: BevelLight, scale = 1): BevelMaps {
+export function bevelMaps(
+  fine: Float32Array,
+  w: number,
+  h: number,
+  light: BevelLight,
+  scale = 1,
+): BevelMaps {
   const fw = w * scale;
   const dist = insideDistance(fine, fw, h * scale);
   const size = Math.max(1, light.size);
@@ -108,7 +114,8 @@ export function bevelMaps(fine: Float32Array, w: number, h: number, light: Bevel
   const lz = Math.sin(el);
   const hi = new Float32Array(w * h);
   const sh = new Float32Array(w * h);
-  const at = (x: number, y: number) => height[Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))];
+  const at = (x: number, y: number) =>
+    height[Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;

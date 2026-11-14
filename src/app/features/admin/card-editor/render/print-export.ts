@@ -26,8 +26,56 @@ export async function svgToCanvas(svg: SVGSVGElement, scale = 1): Promise<HTMLCa
   }
 }
 
+/**
+ * Draws an SVG at `ss` times its size and averages it back down. Photoshop anti-aliases by exact coverage; the
+ * browser's own text rendering at card size is hinted and heavier, light text on dark most of all.
+ */
+export async function svgToCanvasFine(svg: SVGSVGElement, ss = 4): Promise<HTMLCanvasElement> {
+  const big = await svgToCanvas(svg, ss);
+  const w = Number(svg.getAttribute('width'));
+  const h = Number(svg.getAttribute('height'));
+  const src = big
+    .getContext('2d', { willReadFrequently: true })!
+    .getImageData(0, 0, big.width, big.height).data;
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const ctx = out.getContext('2d')!;
+  const img = ctx.createImageData(w, h);
+  const bw = big.width;
+  const n = ss * ss;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // Average premultiplied colors so transparent samples do not darken the edges.
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0;
+      for (let sy = 0; sy < ss; sy++) {
+        let i = ((y * ss + sy) * bw + x * ss) * 4;
+        for (let sx = 0; sx < ss; sx++, i += 4) {
+          const al = src[i + 3];
+          r += src[i] * al;
+          g += src[i + 1] * al;
+          b += src[i + 2] * al;
+          a += al;
+        }
+      }
+      const o = (y * w + x) * 4;
+      img.data[o] = a ? r / a : 0;
+      img.data[o + 1] = a ? g / a : 0;
+      img.data[o + 2] = a ? b / a : 0;
+      img.data[o + 3] = a / n;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return out;
+}
+
 export function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('PNG'))), 'image/png'));
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('PNG'))), 'image/png'),
+  );
 }
 
 /** RGBA pixels → CMYK bytes (alpha is flattened over white). */
@@ -108,7 +156,9 @@ export function cmykTiff(img: CmykImage, dpi = CARD_DPI): Blob {
 }
 
 async function deflate(data: Uint8Array): Promise<Uint8Array> {
-  const stream = new Blob([data as BlobPart]).stream().pipeThrough(new CompressionStream('deflate'));
+  const stream = new Blob([data as BlobPart])
+    .stream()
+    .pipeThrough(new CompressionStream('deflate'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
@@ -143,9 +193,16 @@ export async function cmykPdf(pages: CmykImage[], widthMm = 63, heightMm = 88): 
     const page = 3 + i * 3;
     const img = pages[i];
     const content = enc.encode(`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`);
-    obj(page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${page + 1} 0 R >> >> /Contents ${page + 2} 0 R >>`);
+    obj(
+      page,
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${page + 1} 0 R >> >> /Contents ${page + 2} 0 R >>`,
+    );
     const data = await deflate(img.data);
-    obj(page + 1, `<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /FlateDecode /Length ${data.length} >>`, data);
+    obj(
+      page + 1,
+      `<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /FlateDecode /Length ${data.length} >>`,
+      data,
+    );
     obj(page + 2, `<< /Length ${content.length} >>`, content);
   }
   const count = 3 + pages.length * 3;

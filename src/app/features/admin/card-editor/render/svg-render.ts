@@ -29,6 +29,7 @@ export function svgEl(name: string, attrs: Attrs, parent?: Element): SVGElement 
 /** Renders a spec as an SVG element. Layers are bottom to top; invisible layers are skipped. */
 export class SvgRenderer {
   private uid = 0;
+  private readonly outlines = new Map<string, string>();
   private readonly bevels: { g: SVGElement; bevel: Bevel; bbox: number[] }[] = [];
   readonly svg: SVGSVGElement;
   readonly defs: SVGElement;
@@ -321,10 +322,10 @@ export class SvgRenderer {
     };
     const inMask = shapeMask(false);
     const outMask = shapeMask(true);
-    const area = (attrs: Attrs, where: Element) =>
-      hasSub
-        ? svgEl('rect', { ...BIG, ...attrs, mask: inMask }, where)
-        : svgEl('path', { d, ...attrs }, where);
+    // Fill, overlays and inside strokes are composed first and cut by the shape once, as Photoshop does: cutting
+    // each one separately lets the fill show through the anti-aliased edge of an inside stroke.
+    const inner = svgEl('g', { mask: inMask }, g);
+    const area = (attrs: Attrs, where: Element) => svgEl('rect', { ...BIG, ...attrs }, where);
     const fx = n.fx ?? {};
     const strokes: { w: number; align: string; paint: Paint; op: number }[] = [];
     if (n.stroke)
@@ -344,8 +345,7 @@ export class SvgRenderer {
     const stroke = (s: (typeof strokes)[number], where: Element) => {
       const inside = /Inside|InsF/.test(s.align);
       const outside = /Outside|OutF/.test(s.align);
-      const holder =
-        inside || outside ? svgEl('g', { mask: inside ? inMask : outMask }, where) : where;
+      const holder = inside ? inner : outside ? svgEl('g', { mask: outMask }, where) : where;
       svgEl(
         'path',
         {
@@ -361,18 +361,49 @@ export class SvgRenderer {
     };
     const fillOpacity = n.fillOpacity ?? 1;
     if (n.fill && fillOpacity > 0)
-      area({ fill: this.paint(n.fill, n.bbox), 'fill-opacity': fillOpacity }, g);
+      area({ fill: this.paint(n.fill, n.bbox), 'fill-opacity': fillOpacity }, inner);
     if (fx.colorOverlay?.color)
-      area({ fill: fx.colorOverlay.color, 'fill-opacity': fx.colorOverlay.opacity }, g);
+      area({ fill: fx.colorOverlay.color, 'fill-opacity': fx.colorOverlay.opacity }, inner);
     if (fx.gradientOverlay?.gradient)
       area(
         {
           fill: this.gradient(fx.gradientOverlay.gradient, n.bbox),
           'fill-opacity': fx.gradientOverlay.opacity,
         },
-        g,
+        inner,
       );
     for (const s of strokes) stroke(s, g);
+  }
+
+  /**
+   * Outside stroke of a text, as Photoshop's stroke effect: the glyphs' rasterized alpha grown by the stroke size and
+   * painted under them (a vector outline anti-aliases thicker and uneven at small sizes).
+   */
+  outline(size: number, color: string): string {
+    const key = `${size}|${color}`;
+    const known = this.outlines.get(key);
+    if (known) return known;
+    const fid = this.id('o');
+    const f = svgEl(
+      'filter',
+      { id: fid, x: '-5%', y: '-20%', width: '110%', height: '140%' },
+      this.defs,
+    );
+    svgEl(
+      'feMorphology',
+      { in: 'SourceAlpha', operator: 'dilate', radius: size, result: 'wide' },
+      f,
+    );
+    // Photoshop fills every pixel the stroke touches solid: harden the grown edge instead of leaving it half grey.
+    const hard = svgEl('feComponentTransfer', { in: 'wide', result: 'grown' }, f);
+    svgEl('feFuncA', { type: 'linear', slope: 3, intercept: 0 }, hard);
+    svgEl('feFlood', { 'flood-color': color, result: 'ink' }, f);
+    svgEl('feComposite', { in: 'ink', in2: 'grown', operator: 'in', result: 'edge' }, f);
+    const m = svgEl('feMerge', {}, f);
+    svgEl('feMergeNode', { in: 'edge' }, m);
+    svgEl('feMergeNode', { in: 'SourceGraphic' }, m);
+    this.outlines.set(key, fid);
+    return fid;
   }
 
   private drawText(n: SpecNode, parent: Element): void {
@@ -405,12 +436,7 @@ export class SvgRenderer {
         'font-size': size,
         'text-anchor': anchor,
         'letter-spacing': run?.tracking ? (run.tracking / 1000) * size : null,
-        stroke: fx.stroke?.color ?? null,
-        'stroke-width': fx.stroke
-          ? fx.stroke.size * (/OutF|InsF/.test(fx.stroke.pos) ? 2 : 1)
-          : null,
-        'paint-order': fx.stroke ? 'stroke' : null,
-        'stroke-linejoin': fx.stroke ? 'round' : null,
+        filter: fx.stroke?.color ? `url(#${this.outline(fx.stroke.size, fx.stroke.color)})` : null,
         // Horizontal scale of the PSD text (width over height), anchored at the text's x.
         transform:
           Math.abs(xx / yy - 1) > 0.005

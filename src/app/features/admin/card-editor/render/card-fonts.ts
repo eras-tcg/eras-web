@@ -13,12 +13,54 @@ export interface FontSlot {
 }
 
 export const FONT_SLOTS: FontSlot[] = [
-  { key: 'antiqua', label: 'Book Antiqua Bold', family: 'ERAS Book Antiqua', weight: 700, style: 'normal', locals: ['Book Antiqua Bold', 'BookAntiqua-Bold'] },
-  { key: 'agency', label: 'Agency FB Bold', family: 'ERAS Agency FB', weight: 700, style: 'normal', locals: ['Agency FB Bold', 'AgencyFB-Bold'] },
-  { key: 'arial', label: 'Arial', family: 'ERAS Arial', weight: 400, style: 'normal', locals: ['Arial', 'ArialMT'] },
-  { key: 'arial-i', label: 'Arial Italic', family: 'ERAS Arial', weight: 400, style: 'italic', locals: ['Arial Italic', 'Arial-ItalicMT'] },
-  { key: 'arial-b', label: 'Arial Bold', family: 'ERAS Arial', weight: 700, style: 'normal', locals: ['Arial Bold', 'Arial-BoldMT'] },
-  { key: 'arial-bi', label: 'Arial Bold Italic', family: 'ERAS Arial', weight: 700, style: 'italic', locals: ['Arial Bold Italic', 'Arial-BoldItalicMT'] },
+  {
+    key: 'antiqua',
+    label: 'Book Antiqua Bold',
+    family: 'ERAS Book Antiqua',
+    weight: 700,
+    style: 'normal',
+    locals: ['Book Antiqua Bold', 'BookAntiqua-Bold'],
+  },
+  {
+    key: 'agency',
+    label: 'Agency FB Bold',
+    family: 'ERAS Agency FB',
+    weight: 700,
+    style: 'normal',
+    locals: ['Agency FB Bold', 'AgencyFB-Bold'],
+  },
+  {
+    key: 'arial',
+    label: 'Arial',
+    family: 'ERAS Arial',
+    weight: 400,
+    style: 'normal',
+    locals: ['Arial', 'ArialMT'],
+  },
+  {
+    key: 'arial-i',
+    label: 'Arial Italic',
+    family: 'ERAS Arial',
+    weight: 400,
+    style: 'italic',
+    locals: ['Arial Italic', 'Arial-ItalicMT'],
+  },
+  {
+    key: 'arial-b',
+    label: 'Arial Bold',
+    family: 'ERAS Arial',
+    weight: 700,
+    style: 'normal',
+    locals: ['Arial Bold', 'Arial-BoldMT'],
+  },
+  {
+    key: 'arial-bi',
+    label: 'Arial Bold Italic',
+    family: 'ERAS Arial',
+    weight: 700,
+    style: 'italic',
+    locals: ['Arial Bold Italic', 'Arial-BoldItalicMT'],
+  },
 ];
 
 const DB = 'eras-card-fonts';
@@ -67,7 +109,8 @@ export async function saveFontFile(key: string, file: File): Promise<void> {
 function toDataUrl(buf: ArrayBuffer): string {
   let bin = '';
   const bytes = new Uint8Array(buf);
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return `data:font/ttf;base64,${btoa(bin)}`;
 }
 
@@ -84,7 +127,9 @@ export async function loadCardFonts(): Promise<LoadedFonts> {
   const rules: string[] = [];
   const missing: FontSlot[] = [];
   for (const slot of FONT_SLOTS) {
-    const src = files[slot.key] ? `url("${toDataUrl(files[slot.key])}")` : slot.locals.map((n) => `local("${n}")`).join(', ');
+    const src = files[slot.key]
+      ? `url("${toDataUrl(files[slot.key])}")`
+      : slot.locals.map((n) => `local("${n}")`).join(', ');
     const face = new FontFace(slot.family, src, { weight: String(slot.weight), style: slot.style });
     try {
       await face.load();
@@ -92,7 +137,9 @@ export async function loadCardFonts(): Promise<LoadedFonts> {
     } catch {
       missing.push(slot);
     }
-    rules.push(`@font-face{font-family:"${slot.family}";src:${src};font-weight:${slot.weight};font-style:${slot.style}}`);
+    rules.push(
+      `@font-face{font-family:"${slot.family}";src:${src};font-weight:${slot.weight};font-style:${slot.style}}`,
+    );
   }
   return { css: rules.join(''), missing };
 }

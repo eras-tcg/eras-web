@@ -38,7 +38,7 @@ import {
   cmykPdf,
   cmykTiff,
   download,
-  svgToCanvas,
+  svgToCanvasFine,
 } from './render/print-export';
 import { ArtPlacement, CardSpec, PieceTable } from './render/spec.model';
 import { SvgRenderer } from './render/svg-render';
@@ -360,7 +360,7 @@ export class CardEditorPage {
     // The preview shows the screen colors (as Photoshop's Save for Web), drawn once the bevels are ready.
     const gen = ++this.generation;
     void this.baking
-      .then(() => svgToCanvas(r.svg))
+      .then(() => svgToCanvasFine(r.svg))
       .then((canvas) => {
         if (gen === this.generation)
           host.replaceChildren(convertCanvas(canvas, (px) => lut.forward(px)));
@@ -473,7 +473,7 @@ export class CardEditorPage {
   private async canvas(): Promise<HTMLCanvasElement> {
     if (!this.lastSvg) throw new Error('Sin vista previa');
     await this.baking;
-    return svgToCanvas(this.lastSvg);
+    return svgToCanvasFine(this.lastSvg);
   }
 
   private async exporting$(run: () => Promise<void>): Promise<void> {

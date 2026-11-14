@@ -526,6 +526,15 @@ function fixGold(layers: SpecNode[], link: boolean): void {
     d: `M${line.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
     op: 1,
   });
+  // The bevel is worked out inside the shape's box: it must hold the new line too.
+  const [bx0, by0, bx1, by1] = pathBox(target.paths[target.paths.length - 1].d);
+  const tb = target.bbox;
+  target.bbox = [
+    Math.min(tb[0], Math.floor(bx0)),
+    Math.min(tb[1], Math.floor(by0)),
+    Math.max(tb[2], Math.ceil(bx1)),
+    Math.max(tb[3], Math.ceil(by1)),
+  ];
 }
 
 /** Outline of a polyline drawn hw to each side, with mitered corners. */

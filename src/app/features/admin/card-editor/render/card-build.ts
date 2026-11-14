@@ -452,19 +452,8 @@ function fixGold(layers: SpecNode[], link: boolean): void {
       // Link: no bottom line nor bottom right corner; after the cap curve the side line drops to the card's edge.
       if (link && box[0] >= 686 && box[1] >= 980 && box[2] <= 724 && box[3] <= 1020) return [];
       if (link && near(box, [80, 1012, 707, 1016])) return [];
-      // Link: the left side line enters the flattened level ring right at its top left corner (coordinates before
-      // the link's 17 px drop of the level).
-      if (link && near(box, [6, 924, 25, 943])) {
-        const [ax, ay, bx, by] = [8, 925, 24, 940];
-        const len = Math.hypot(bx - ax, by - ay);
-        const [nx, ny] = [(-(by - ay) / len) * 2, ((bx - ax) / len) * 2];
-        return [
-          {
-            ...sp,
-            d: `M${ax + nx} ${ay + ny}L${bx + nx} ${by + ny}L${bx - nx} ${by - ny}L${ax - nx} ${ay - ny}Z`,
-          },
-        ];
-      }
+      // Link: the left side line's diagonal into the level ring is drawn again below, joined to the line.
+      if (link && near(box, [6, 924, 25, 943])) return [];
       return [sp];
     });
   });
@@ -526,8 +515,34 @@ function fixGold(layers: SpecNode[], link: boolean): void {
     d: `M${line.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
     op: 1,
   });
+  // Left: the side line (x 6-10) falls a little, comes down with a 45 degree diagonal and enters the level ring's
+  // flat top (its gold centered at y 956.9) right at the cut's corner. Worked out where it ends up; the link
+  // mapping later moves points left of x 30 between y 900 and 960 by 17 px, so those are given 17 px higher.
+  let leftBox: number[] = [];
+  walk(g.children, (n) => {
+    const hit = n === target && n.paths?.find((sp) => near(pathBox(sp.d), [6, 29, 10, 927]));
+    if (hit) leftBox = pathBox(hit.d);
+  });
+  if (leftBox.length) {
+    const lx = (leftBox[0] + leftBox[2]) / 2;
+    const end = leftBox[3] + 17;
+    const ringTop = 988 - 33.2 + 2.1;
+    const outline = strokeOutline(
+      [
+        [lx, end],
+        [lx, end + 0.5],
+        [lx + ringTop - end - 0.5, ringTop],
+        [34, ringTop],
+      ],
+      (leftBox[2] - leftBox[0]) / 2,
+    ).map(([x, y]) => (x < 30 && y - 17 > 900 && y - 17 < 960 ? [x, y - 17] : [x, y]));
+    target.paths.push({
+      d: `M${outline.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
+      op: 1,
+    });
+  }
   // The bevel is worked out inside the shape's box: it must hold the new line too.
-  const [bx0, by0, bx1, by1] = pathBox(target.paths[target.paths.length - 1].d);
+  const [bx0, by0, bx1, by1] = pathBox(target.paths.map((sp) => sp.d).join(' '));
   const tb = target.bbox;
   target.bbox = [
     Math.min(tb[0], Math.floor(bx0)),
@@ -652,7 +667,94 @@ export function buildCard(
     }
   }
 
+  // Nor has it a semi full art frame: it borrows the plain creature's, drawn between the full-art pieces and the
+  // standard frame as there.
+  const structure = first('CARD-STRUCTURE');
+  if (
+    style === 'semi' &&
+    structure?.children &&
+    !structure.children.some((c) => c.name === 'SEMI-FULLART')
+  ) {
+    const semi = (templates['CRIATURA - PROTOTIPO']?.layers ?? [])
+      .flatMap(function find(n: SpecNode): SpecNode[] {
+        return n.name === 'SEMI-FULLART' ? [n] : (n.children ?? []).flatMap(find);
+      })
+      .at(0);
+    if (semi) {
+      const copy = clone(semi);
+      const at = structure.children.findIndex((c) => c.name === 'FULLART');
+      structure.children.splice(at + 1, 0, copy);
+      walk([copy], (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
+    }
+  }
+
+  // The level badge's backgrounds and rings are circles flattened by two subtracted boxes that stop a fraction of a pixel
+  // short of the circle's top or bottom: the sliver left shows under the translucent boxes. The boxes reach 2 px
+  // past the circle.
+  walk(spec.layers, (n) => {
+    if (
+      !/^(LEVEL BACKGROUND|BACK LV|circulo interior)/.test(n.name) ||
+      !n.paths?.some((sp) => sp.op === 2)
+    )
+      return;
+    const [, top, , bottom] = pathBox(n.paths.find((sp) => sp.op === 1)?.d ?? '');
+    const mid = (top + bottom) / 2;
+    n.paths = n.paths.map((sp) => {
+      if (sp.op !== 2) return sp;
+      const [x0, y0, x1, y1] = pathBox(sp.d);
+      return y1 < mid
+        ? { ...sp, d: rectPath(x0, Math.min(y0, top - 2), x1, y1) }
+        : { ...sp, d: rectPath(x0, y0, x1, Math.max(y1, bottom + 2)) };
+    });
+  });
+
   if (card.goldBorder) fixGold(spec.layers, !!card.enlace);
+
+  // Inherit utilities and structures got the inherit creature's gold top, whose straight line runs under the
+  // utility's colored strip at the card's top: they take the top (lines, curves under the strip, tab and label) of
+  // the plain utility's or structure's gold border instead.
+  const tpl = templateFor(card);
+  const plainGold = /^(UTILIDAD|ESTRUCTURA) HER/.test(tpl)
+    ? (templates[tpl.replace(' HER', '')]?.layers ?? [])
+        .flatMap(function find(n: SpecNode): SpecNode[] {
+          return n.name === 'GOLD BORDER' ? [n] : (n.children ?? []).flatMap(find);
+        })
+        .at(0)
+    : undefined;
+  const herGold = first('GOLD BORDER');
+  if (card.goldBorder && plainGold && herGold?.children) {
+    const top = 47;
+    walk(herGold.children, (n) => {
+      if (n.children) return;
+      if (typeof n.raster === 'string')
+        n.paths = [
+          ...(n.paths ?? [{ d: rectPath(0, 0, 744, 1039), op: 1 }]),
+          { d: rectPath(0, 0, 744, top), op: 1 },
+        ];
+    });
+    // The old top pieces go (dropped, not hidden: the texts step would show the old label again).
+    const drop = (list: SpecNode[]): SpecNode[] =>
+      list
+        .filter((n) => n.children || typeof n.raster === 'string' || n.bbox[3] > top)
+        .map((n) => (n.children ? { ...n, children: drop(n.children) } : n));
+    const kept = drop(herGold.children);
+    const gone = new Set<SpecNode>();
+    walk(herGold.children, (n) => {
+      if (!n.children && typeof n.raster !== 'string' && n.bbox[3] <= top) gone.add(n);
+    });
+    herGold.children = kept;
+    for (const [name, list] of byName)
+      byName.set(
+        name,
+        list.filter((n) => !gone.has(n)),
+      );
+    walk(plainGold.children ?? [], (n) => {
+      if (n.children || n.bbox[3] > top || n.visible === false) return;
+      const copy = clone(n);
+      herGold.children?.push(copy);
+      byName.set(copy.name, [...(byName.get(copy.name) ?? []), copy]);
+    });
+  }
 
   // Full art: the gold border's black box under the card type label stays out (the label sits on the art).
   if (style === 'full')
@@ -1048,6 +1150,11 @@ export function buildCard(
   for (const k of ['STRUCTURE', 'UTILITY']) {
     const g = first(k);
     if (g) g.visible = (k === 'STRUCTURE') === (card.cardType === 'structure');
+    // On the white name bar the icon is black (the white utility prototype's is; there is no white structure one).
+    if (g && white)
+      walk([g], (n) => {
+        if (n.stroke) n.stroke = { ...n.stroke, color: '#000000', gradient: null };
+      });
   }
 
   // Texts.
@@ -1074,6 +1181,21 @@ export function buildCard(
       )
         n.visible = false;
     });
+  // Every card type label has the 1 px black outline of the plain prototypes' (some gold and inherit labels lack
+  // it): over the art of a full art card it is what sets the label off.
+  for (const name of ['CARD-TYPE', 'CARD-TYPE copia', 'CARD-TYPE copia 2'])
+    for (const n of byName.get(name) ?? [])
+      if (!n.fx?.stroke)
+        n.fx = {
+          ...n.fx,
+          stroke: {
+            size: 1,
+            pos: 'OutF',
+            opacity: 1,
+            color: '#000000',
+            gradient: null,
+          },
+        };
 
   // Black text keeps no black outline (the link prototype outlines its white name; on white cards it went black).
   if (white)

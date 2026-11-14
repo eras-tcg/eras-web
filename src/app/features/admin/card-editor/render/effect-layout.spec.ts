@@ -44,7 +44,7 @@ describe('effect-layout', () => {
       ussageLimit: 'once per turn between copies',
       effectBlocks: [{ activationCondition: 'si un aliado es destruido', cost: 'puedes tributar 1 carta', resolution: 'roba 1 carta.' }],
     });
-    expect(text(t)).toBe('<Turno Aliado> <En Mano> <una vez por turno> entre copias, si un aliado es destruido: puedes tributar 1 carta; roba 1 carta.');
+    expect(text(t)).toBe('<Turno Aliado><En Mano> <una vez por turno> entre copias, si un aliado es destruido: puedes tributar 1 carta; roba 1 carta.');
     expect(text(tokens.effect({ ussageLimit: 'ultimate effect', effectBlocks: [{ resolution: 'gana 1 gema.' }] }))).toBe('[ED] gana 1 gema.');
   });
 

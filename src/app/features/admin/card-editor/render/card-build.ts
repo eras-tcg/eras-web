@@ -530,26 +530,25 @@ export function buildCard(
         stroke: { size: 1, pos: 'OutF', opacity: 1, color: '#000000', gradient: null },
       };
   };
-  const edOnWhite = () => white || (ed ? sides.get(ed) === 'white' : false);
   onBar(first('NAME'), nameBar);
   onBar(first('TYPE'), typeBar);
   const badge = first('REGULATION BG') ?? first('Rectángulo redondeado 4');
   if (ed?.text && badge) {
-    // Regulation letter inside its badge: white badge and black letter, dark badge on white cards.
+    // Regulation letter inside its badge: black border, white badge and black letter on every card.
     const [bx0, , bx1] = badge.bbox;
     ed.text.transform[4] = bx0 - 4;
     ed.text.justify = 'right';
     ed.text.box = null;
     onBar(ed, typeBar);
     badge.visible = !!card.regulation;
-    if (!badge.fill) badge.fill = edOnWhite() ? '#364546' : '#ffffff';
+    if (!badge.fill) badge.fill = '#ffffff';
     const letter = clone(ed);
     letter.name = 'REGULATION';
     letter.text!.justify = 'center';
     letter.text!.transform[4] = (bx0 + bx1) / 2;
     // In the PSD the letter is part of the edition text, on its baseline.
     letter.text!.transform[5] = ed.text.transform[5];
-    setText(letter, card.regulation || '', edOnWhite() ? '#ffffff' : '#000000');
+    setText(letter, card.regulation || '', '#000000');
     const siblings = parentOf(spec.layers, ed);
     siblings?.splice(siblings.indexOf(ed) + 1, 0, letter);
   }

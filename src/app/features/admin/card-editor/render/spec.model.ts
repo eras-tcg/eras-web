@@ -93,6 +93,8 @@ export interface SpecNode {
   opacity: number;
   fillOpacity?: number;
   bbox: number[];
+  /** Bounds of the visible shape (after subtracted parts), where Photoshop aligns its gradients. */
+  shapeBox?: number[];
   children?: SpecNode[];
   paths?: SubPath[];
   fill?: Paint;

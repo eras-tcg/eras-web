@@ -273,9 +273,21 @@ export class SvgRenderer {
     const a = (g.angle * Math.PI) / 180;
     const dx = Math.cos(a);
     const dy = -Math.sin(a);
-    const half = ((Math.abs(dx) * (x1 - x0) + Math.abs(dy) * (y1 - y0)) / 2) * (g.scale / 100);
-    let p1 = [cx - dx * half, cy - dy * half];
-    let p2 = [cx + dx * half, cy + dy * half];
+    const reach = (Math.abs(dx) * (x1 - x0) + Math.abs(dy) * (y1 - y0)) / 2;
+    let half = reach * (g.scale / 100);
+    let mx = cx;
+    let my = cy;
+    // A shortened gradient (the 20% band where two colors meet) is drawn by Photoshop a little shorter and off center,
+    // with eased ends; fitted on the prototypes' own composites.
+    const short = g.scale < 100 && !/Rdl/.test(g.type);
+    if (short) {
+      const shift = -0.08 * reach * (g.scale / 100) * 2;
+      mx += dx * shift;
+      my += dy * shift;
+      half *= 0.86;
+    }
+    let p1 = [mx - dx * half, my - dy * half];
+    let p2 = [mx + dx * half, my + dy * half];
     if (g.reverse) [p1, p2] = [p2, p1];
     const node = /Rdl/.test(g.type)
       ? svgEl(
@@ -288,7 +300,8 @@ export class SvgRenderer {
           { id: gid, gradientUnits: 'userSpaceOnUse', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
           this.defs,
         );
-    for (const s of g.stops)
+    const stops = short ? easedStops(g) : g.stops.map((s) => ({ at: s.at, color: s.color }));
+    for (const s of stops)
       svgEl(
         'stop',
         { offset: s.at, 'stop-color': s.color, 'stop-opacity': alphaAt(g, s.at) },
@@ -351,7 +364,7 @@ export class SvgRenderer {
         {
           d,
           fill: 'none',
-          stroke: this.paint(s.paint, n.bbox),
+          stroke: this.paint(s.paint, n.shapeBox ?? n.bbox),
           'stroke-width': inside || outside ? s.w * 2 : s.w,
           'stroke-opacity': s.op,
           'stroke-linejoin': 'round',
@@ -361,13 +374,13 @@ export class SvgRenderer {
     };
     const fillOpacity = n.fillOpacity ?? 1;
     if (n.fill && fillOpacity > 0)
-      area({ fill: this.paint(n.fill, n.bbox), 'fill-opacity': fillOpacity }, inner);
+      area({ fill: this.paint(n.fill, n.shapeBox ?? n.bbox), 'fill-opacity': fillOpacity }, inner);
     if (fx.colorOverlay?.color)
       area({ fill: fx.colorOverlay.color, 'fill-opacity': fx.colorOverlay.opacity }, inner);
     if (fx.gradientOverlay?.gradient)
       area(
         {
-          fill: this.gradient(fx.gradientOverlay.gradient, n.bbox),
+          fill: this.gradient(fx.gradientOverlay.gradient, n.shapeBox ?? n.bbox),
           'fill-opacity': fx.gradientOverlay.opacity,
         },
         inner,
@@ -449,6 +462,39 @@ export class SvgRenderer {
       svgEl('tspan', { x, dy: i ? lead : 0 }, te).textContent = ln;
     });
   }
+}
+
+/** Stops resampled along Photoshop's smooth gradient curve (30% smoothstep over linear). */
+export function easedStops(g: Gradient, steps = 12): { at: number; color: string }[] {
+  const colorAt = (t: number): string => {
+    const st = g.stops;
+    if (t <= st[0].at) return st[0].color;
+    for (let i = 1; i < st.length; i++) {
+      if (t <= st[i].at) {
+        const f = (t - st[i - 1].at) / (st[i].at - st[i - 1].at || 1);
+        const a = hexRgb(st[i - 1].color);
+        const b = hexRgb(st[i].color);
+        return (
+          '#' +
+          a
+            .map((v, k) =>
+              Math.round(v + (b[k] - v) * f)
+                .toString(16)
+                .padStart(2, '0'),
+            )
+            .join('')
+        );
+      }
+    }
+    return st[st.length - 1].color;
+  };
+  const out: { at: number; color: string }[] = [];
+  for (let k = 0; k <= steps; k++) {
+    const t = k / steps;
+    const eased = 0.7 * t + 0.3 * t * t * (3 - 2 * t);
+    out.push({ at: t, color: colorAt(eased) });
+  }
+  return out;
 }
 
 function hexRgb(hex: string): [number, number, number] {

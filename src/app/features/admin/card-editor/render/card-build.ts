@@ -286,8 +286,21 @@ function repaint(group: SpecNode, cols: string[]): void {
 
 /** Shows the color group that matches the card (exact pair, either order, first color) and repaints it if needed. */
 function selectColorGroup(parent: SpecNode, cols: string[]): SpecNode | null {
-  const groups = (parent.children ?? []).filter(isColorGroup);
-  if (!groups.length) return null;
+  const all = (parent.children ?? []).filter(isColorGroup);
+  if (!all.length) return null;
+  // Some prototypes keep groups left over from another layout (the link prototype's WHITE and PURPLE pairs carry
+  // the plain creature's boxes): only groups shaped like most of them are used.
+  const shape = (g: SpecNode) => {
+    let top = -1;
+    walk(g.children ?? [], (n) => {
+      if (top < 0 && n.name === 'Type Frame') top = Math.round(n.bbox[1]);
+    });
+    return top;
+  };
+  const counts = new Map<number, number>();
+  for (const g of all) counts.set(shape(g), (counts.get(shape(g)) ?? 0) + 1);
+  const usual = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const groups = all.filter((g) => shape(g) === usual);
   const name = (cs: string[]) => cs.map((c) => COLOR_KEYS[c]).join(' ');
   let pick = groups.find((g) => g.name === name(cols));
   // Two colors: the prototypes' pair groups differ in small ways from pair to pair, so any of them is only the
@@ -299,8 +312,12 @@ function selectColorGroup(parent: SpecNode, cols: string[]): SpecNode | null {
       groups.find((g) => g.name === name([cols[1], cols[0]])) ??
       groups.find((g) => g.name.split(' ').length === 2);
   }
-  pick ??= groups.find((g) => g.name === COLOR_KEYS[cols[0]]) ?? groups[0];
-  for (const g of groups) g.visible = g === pick;
+  // A missing one-color group borrows the shape of another one-color group, never a pair.
+  pick ??=
+    groups.find((g) => g.name === COLOR_KEYS[cols[0]]) ??
+    groups.find((g) => g.name.split(' ').length === 1) ??
+    groups[0];
+  for (const g of all) g.visible = g === pick;
   if (!exact) repaint(pick, cols);
   return pick;
 }
@@ -341,6 +358,24 @@ export function sideOf(
   return 'both';
 }
 
+const rectPath = (x0: number, y0: number, x1: number, y1: number) =>
+  `M${x0} ${y0}L${x1} ${y0}L${x1} ${y1}L${x0} ${y1}Z`;
+
+/** The widest node with this name whose branch is shown (the visible color group's piece). */
+function widestNode(nodes: SpecNode[], name: string): SpecNode | null {
+  let best: SpecNode | null = null;
+  const visit = (ns: SpecNode[]) => {
+    for (const n of ns) {
+      if (!n.visible) continue;
+      if (n.name === name && (!best || n.bbox[2] - n.bbox[0] > best.bbox[2] - best.bbox[0]))
+        best = n;
+      if (n.children) visit(n.children);
+    }
+  };
+  visit(nodes);
+  return best;
+}
+
 /** A black rectangle node (card pixels). */
 function rectNode(name: string, x0: number, y0: number, x1: number, y1: number): SpecNode {
   return {
@@ -350,7 +385,7 @@ function rectNode(name: string, x0: number, y0: number, x1: number, y1: number):
     opacity: 1,
     bbox: [x0, y0, x1, y1],
     fill: '#000000',
-    paths: [{ d: `M${x0} ${y0}L${x1} ${y0}L${x1} ${y1}L${x0} ${y1}Z`, op: 1 }],
+    paths: [{ d: rectPath(x0, y0, x1, y1), op: 1 }],
   };
 }
 
@@ -564,6 +599,10 @@ export function buildCard(
       }
     }
     if (style === 'full') {
+      // Each arrow (a diamond half under the effect box) gets a larger black diamond with the same center and bevel
+      // behind it; both start at the effect box's border, so only the part outside the box shows over the art.
+      const box =
+        widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
       const shown: SpecNode[] = [];
       walk(spec.layers, (n) => {
         if ((n.name === 'LA' || n.name === 'RA') && n.visible && n.paths) shown.push(n);
@@ -572,17 +611,26 @@ export function buildCard(
         const holder = parentOf(spec.layers, n);
         if (!holder) continue;
         const [x0, y0, x1, y1] = n.bbox;
+        const cut = box ? [{ d: rectPath(box.bbox[0], y0 - 40, box.bbox[2], y1 + 40), op: 2 }] : [];
+        n.paths = [...n.paths!, ...cut];
         const back: SpecNode = {
           ...clone(n),
           name: `${n.name} BACK`,
           fill: '#000000',
-          fx: undefined,
           stroke: undefined,
-          paths: n.paths!.map((sp) => ({
-            ...sp,
-            d: scalePath(sp.d, (x0 + x1) / 2, (y0 + y1) / 2, 1.55),
-          })),
+          paths: [
+            ...n
+              .paths!.filter((sp) => sp.op !== 2)
+              .map((sp) => ({ ...sp, d: scalePath(sp.d, (x0 + x1) / 2, (y0 + y1) / 2, 1.5) })),
+            ...cut,
+          ],
         };
+        back.bbox = [
+          x0 - (x1 - x0) * 0.25,
+          y0 - (y1 - y0) * 0.25,
+          x1 + (x1 - x0) * 0.25,
+          y1 + (y1 - y0) * 0.25,
+        ];
         holder.splice(holder.indexOf(n), 0, back);
       }
     }

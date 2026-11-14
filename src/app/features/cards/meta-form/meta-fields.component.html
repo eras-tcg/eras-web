@@ -68,6 +68,9 @@
       @for (c of colors; track c) {
         <button erasChip [selected]="v.colors.includes(c)" (click)="toggleColor(c)">{{ colorLabels[c] }}</button>
       }
+      @if (v.colors.length === 2) {
+        <button erasChip (click)="set('colors', [v.colors[1], v.colors[0]])">Invertir colores</button>
+      }
       <button erasChip [selected]="v.starter" (click)="set('starter', !v.starter)">Iniciador</button>
     </eras-stack>
   </eras-stack>

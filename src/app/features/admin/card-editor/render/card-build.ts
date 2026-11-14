@@ -211,11 +211,11 @@ export function roleOf(name: string): Role | null {
   return null;
 }
 
-const gradient = (a: string, b: string): { gradient: Gradient } => ({
+const gradient = (a: string, b: string, scale = 100): { gradient: Gradient } => ({
   gradient: {
     type: 'Lnr',
     angle: 0,
-    scale: 100,
+    scale,
     reverse: false,
     stops: [
       { at: 0, color: a },
@@ -225,13 +225,24 @@ const gradient = (a: string, b: string): { gradient: Gradient } => ({
   },
 });
 
-/** Paint of a role for one color, or a left-to-right blend for two. Null: no stroke (bicolor margins have none). */
-export function rolePaint(role: Role, cols: string[]): Paint {
+/**
+ * Paint of a role for one color, or for two a left-to-right blend: first color on the left. `scale` is the blend's
+ * width in percent of the shape (the prototypes use 20 for frames and margins, so the colors meet in a short band
+ * in the middle; 100 for the effect background).
+ */
+export function rolePaint(
+  role: Role,
+  cols: string[],
+  scale = role === 'effectBg' ? 100 : 20,
+  link = false,
+): Paint {
   const [a, b] = cols.map((c) => PALETTE[c]);
   if (!b) return a[role];
-  if (role === 'primary' || role === 'special') return gradient(a.bi, b.bi);
-  if (role === 'effectBg') return gradient(a.biBg, b.biBg);
-  if (role === 'dark') return gradient(a.dark, b.dark);
+  if (role === 'primary' || role === 'special') return gradient(a.bi, b.bi, scale);
+  if (role === 'effectBg')
+    return link ? gradient(a.biBg, b.biBg, scale) : gradient(a.effectBg, b.effectBg, scale);
+  if (role === 'dark') return gradient(a.dark, b.dark, scale);
+  if (role === 'margin') return gradient(a.margin, b.margin, scale);
   return null;
 }
 
@@ -250,23 +261,40 @@ function walk(
 const isColorGroup = (n: SpecNode) => !!n.children && n.name.split(' ').every((w) => KEY_COLOR[w]);
 
 function repaint(group: SpecNode, cols: string[]): void {
+  const two = cols.length === 2;
   walk(group.children ?? [], (n) => {
+    if (n.children) return;
+    // Link cards: the left and right arrows take one color each.
+    if (two && (n.name === 'LA' || n.name === 'RA')) {
+      n.fill = PALETTE[cols[n.name === 'LA' ? 0 : 1]].bi;
+      return;
+    }
     const role = roleOf(n.name);
-    if (!role || n.children) return;
-    const p = rolePaint(role, cols);
-    if (role === 'margin' || role === 'edge') {
-      const target = n.stroke ?? n.fx?.stroke;
-      if (!target) return;
-      if (p === null) {
-        delete n.stroke;
-        if (n.fx) delete n.fx.stroke;
+    if (!role) return;
+    const stroke = n.stroke ?? n.fx?.stroke;
+    const scaleOf = (p: Paint | undefined | null) =>
+      p && typeof p === 'object' ? p.gradient.scale : undefined;
+    if (role === 'margin' || role === 'edge' || (stroke && !n.fill)) {
+      if (!stroke) return;
+      // A stroke on an effect background (inherit box) is drawn in the frame colors.
+      const strokeRole: Role = role === 'effectBg' ? 'primary' : role;
+      const p = rolePaint(strokeRole, cols, stroke.gradient?.scale ?? 20);
+      if (p === null) return;
+      if (typeof p === 'string') {
+        stroke.color = p;
+        stroke.gradient = null;
       } else {
-        target.color = p as string;
-        target.gradient = null;
+        stroke.color = null;
+        stroke.gradient = p.gradient;
       }
       return;
     }
-    n.fill = p;
+    n.fill = rolePaint(
+      role,
+      cols,
+      scaleOf(n.fill) ?? (role === 'effectBg' ? 100 : 20),
+      n.name.startsWith('LINK'),
+    );
   });
 }
 
@@ -276,9 +304,12 @@ function selectColorGroup(parent: SpecNode, cols: string[]): SpecNode | null {
   if (!groups.length) return null;
   const name = (cs: string[]) => cs.map((c) => COLOR_KEYS[c]).join(' ');
   let pick = groups.find((g) => g.name === name(cols));
-  const exact = !!pick;
-  if (!pick && cols.length === 2) {
+  // Two colors: the prototypes' pair groups differ in small ways from pair to pair, so any of them is only the
+  // shape; it is always repainted by role, in the card's order (either way round).
+  const exact = !!pick && cols.length === 1;
+  if (cols.length === 2) {
     pick =
+      groups.find((g) => g.name === name(cols)) ??
       groups.find((g) => g.name === name([cols[1], cols[0]])) ??
       groups.find((g) => g.name.split(' ').length === 2);
   }

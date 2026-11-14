@@ -40,7 +40,21 @@ describe('card-build', () => {
       '#441fea',
       '#ffffff',
     ]);
-    expect(rolePaint('margin', ['P', 'W'])).toBeNull();
+    const margin = rolePaint('margin', ['P', 'W']);
+    expect(typeof margin === 'object' && margin?.gradient.stops.map((s) => s.color)).toEqual([
+      '#835aff',
+      '#ebf3f3',
+    ]);
+    const flipped = rolePaint('primary', ['W', 'P']);
+    expect(typeof flipped === 'object' && flipped?.gradient.stops.map((s) => s.color)).toEqual([
+      '#ffffff',
+      '#441fea',
+    ]);
+    expect(typeof flipped === 'object' && flipped?.gradient.scale).toBe(20);
+    const bg = rolePaint('effectBg', ['G', 'B']);
+    expect(
+      typeof bg === 'object' && [bg?.gradient.scale, ...bg!.gradient.stops.map((s) => s.color)],
+    ).toEqual([100, '#affdac', '#afc7f6']);
   });
 
   it('wraps words by measured width', () => {

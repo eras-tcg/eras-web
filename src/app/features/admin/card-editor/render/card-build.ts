@@ -493,9 +493,9 @@ function fixGold(layers: SpecNode[], link: boolean): void {
     const len = Math.hypot(nx, ny);
     return [cx + rx * Math.cos(t) + (k * nx) / len, cy + ry * Math.sin(t) + (k * ny) / len];
   };
-  // The band starts where the cap is almost upright (its middle line at x 736.6, the side line's): the line falls
-  // straight into it.
-  const t0 = -0.22;
+  // The band starts on the cap's upper right (60 degrees above its middle); the side line comes into it with a 45
+  // degree diagonal, as on inherit cards.
+  const t0 = -Math.PI / 3;
   const steps = 40;
   const outer: [number, number][] = [];
   const inner: [number, number][] = [];
@@ -506,46 +506,25 @@ function fixGold(layers: SpecNode[], link: boolean): void {
   }
   const yIn = cy + ry + 4;
   const yOut = cy + ry + 8;
-  const band = [
-    ...outer,
-    [104, yOut],
-    [96, yOut - 6],
-    [99, yIn - 6],
-    [104, yIn],
-    ...inner.reverse(),
-  ];
-  // Joint: the side line (x 734-738, ending at y 944) keeps falling and bends into the band, tangent to it: a cubic
-  // from the line going down to the band's middle at t0 going along the band, 4 px wide.
+  // At the left the bottom line rises with a diagonal into the level ring's flat bottom (its gold, 4.2 px inside
+  // the flattened circle, ends at y 1022.2), starting from the cut's corner.
+  const band = [...outer, [104, yOut], [94, 1022.2], [94, 1018], [104, yIn], ...inner.reverse()];
+  // Joint: the side line (x 734-738) falls on to where a 45 degree diagonal from it reaches the band's middle line.
   const [px, py] = offset(t0, 6);
-  const tl = Math.hypot(rx * Math.sin(t0), ry * Math.cos(t0));
-  const [tx, ty] = [(-rx * Math.sin(t0)) / tl, (ry * Math.cos(t0)) / tl];
-  const L = (py - 940) / 2;
-  const ctrl = [736, 940, 736, 940 + L, px - tx * L, py - ty * L, px, py];
-  const at = (u: number) => {
-    const [a, b, c, d] = [(1 - u) ** 3, 3 * (1 - u) ** 2 * u, 3 * (1 - u) * u ** 2, u ** 3];
-    const x = a * ctrl[0] + b * ctrl[2] + c * ctrl[4] + d * ctrl[6];
-    const y = a * ctrl[1] + b * ctrl[3] + c * ctrl[5] + d * ctrl[7];
-    const dx =
-      3 *
-      ((1 - u) ** 2 * (ctrl[2] - ctrl[0]) +
-        2 * (1 - u) * u * (ctrl[4] - ctrl[2]) +
-        u ** 2 * (ctrl[6] - ctrl[4]));
-    const dy =
-      3 *
-      ((1 - u) ** 2 * (ctrl[3] - ctrl[1]) +
-        2 * (1 - u) * u * (ctrl[5] - ctrl[3]) +
-        u ** 2 * (ctrl[7] - ctrl[5]));
-    const l = Math.hypot(dx, dy);
-    return [x, y, -dy / l, dx / l];
+  const ys = py - (736 - px);
+  const quad = (ax: number, ay: number, bx: number, by: number) => {
+    const l = Math.hypot(bx - ax, by - ay);
+    const [nx, ny] = [(-(by - ay) / l) * 2, ((bx - ax) / l) * 2];
+    return [
+      [ax + nx, ay + ny],
+      [bx + nx, by + ny],
+      [bx - nx, by - ny],
+      [ax - nx, ay - ny],
+    ];
   };
-  const left: number[][] = [];
-  const right: number[][] = [];
-  for (let i = 0; i <= 16; i++) {
-    const [x, y, nx, ny] = at(i / 16);
-    left.push([x + 2 * nx, y + 2 * ny]);
-    right.push([x - 2 * nx, y - 2 * ny]);
-  }
-  const joint = [...left, ...right.reverse()];
+  const k = 1 / Math.SQRT2;
+  const fall = quad(736, 940, 736, ys + 2 * k);
+  const entry = quad(736 + 2 * k, ys - 2 * k, px - k, py + k);
   const poly = (pts: number[][]) =>
     `M${pts.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`;
   const capBand: SpecNode = {
@@ -570,7 +549,8 @@ function fixGold(layers: SpecNode[], link: boolean): void {
     },
     paths: [
       { d: poly(band), op: 1 },
-      { d: poly(joint), op: 1 },
+      { d: poly(fall), op: 1 },
+      { d: poly(entry), op: 1 },
     ],
   };
   g.children.push(capBand);

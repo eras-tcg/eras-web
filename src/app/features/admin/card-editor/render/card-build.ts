@@ -389,17 +389,6 @@ function rectNode(name: string, x0: number, y0: number, x1: number, y1: number):
   };
 }
 
-/** Scales an absolute path (M, L, C with x y pairs) around a point. */
-export function scalePath(d: string, cx: number, cy: number, k: number): string {
-  let i = 0;
-  return d.replace(/-?\d+(?:\.\d+)?/g, (v) => {
-    const n = Number(v);
-    const out = i % 2 === 0 ? cx + (n - cx) * k : cy + (n - cy) * k;
-    i++;
-    return String(Math.round(out * 100) / 100);
-  });
-}
-
 function setText(n: SpecNode | undefined, text: string, color?: string | null): void {
   if (!n?.text) return;
   n.text.text = text;
@@ -599,8 +588,9 @@ export function buildCard(
       }
     }
     if (style === 'full') {
-      // Each arrow (a diamond half under the effect box) gets a larger black diamond with the same center and bevel
-      // behind it; both start at the effect box's border, so only the part outside the box shows over the art.
+      // Each arrow (a diamond whose inner half sits under the effect box) is drawn as its outer half: a triangle
+      // with a straight base through the diamond's center. Behind it goes a larger black triangle with the same
+      // center and bevel, its tip further out and its base on the effect box's border.
       const box =
         widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
       const shown: SpecNode[] = [];
@@ -610,27 +600,29 @@ export function buildCard(
       for (const n of shown) {
         const holder = parentOf(spec.layers, n);
         if (!holder) continue;
+        const left = n.name === 'LA';
         const [x0, y0, x1, y1] = n.bbox;
-        const cut = box ? [{ d: rectPath(box.bbox[0], y0 - 40, box.bbox[2], y1 + 40), op: 2 }] : [];
-        n.paths = [...n.paths!, ...cut];
+        const cx = (x0 + x1) / 2;
+        const cy = (y0 + y1) / 2;
+        const r = (x1 - x0) / 2;
+        const dir = left ? -1 : 1;
+        const tri = (tip: number, base: number) => {
+          const h = Math.abs(tip - base);
+          return `M${tip} ${cy}L${base} ${cy - h}L${base} ${cy + h}Z`;
+        };
+        n.paths = [{ d: tri(cx + dir * r, cx), op: 1 }];
+        n.bbox = left ? [x0, y0, cx, y1] : [cx, y0, x1, y1];
+        const edge = box ? (left ? box.bbox[0] : box.bbox[2]) : cx - dir * r * 0.25;
+        const tip = cx + dir * r * 1.5;
+        const h = Math.abs(tip - edge);
         const back: SpecNode = {
           ...clone(n),
           name: `${n.name} BACK`,
           fill: '#000000',
           stroke: undefined,
-          paths: [
-            ...n
-              .paths!.filter((sp) => sp.op !== 2)
-              .map((sp) => ({ ...sp, d: scalePath(sp.d, (x0 + x1) / 2, (y0 + y1) / 2, 1.5) })),
-            ...cut,
-          ],
+          paths: [{ d: tri(tip, edge), op: 1 }],
+          bbox: [Math.min(tip, edge), cy - h, Math.max(tip, edge), cy + h],
         };
-        back.bbox = [
-          x0 - (x1 - x0) * 0.25,
-          y0 - (y1 - y0) * 0.25,
-          x1 + (x1 - x0) * 0.25,
-          y1 + (y1 - y0) * 0.25,
-        ];
         holder.splice(holder.indexOf(n), 0, back);
       }
     }

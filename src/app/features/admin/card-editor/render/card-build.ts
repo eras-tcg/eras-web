@@ -483,6 +483,20 @@ export function buildCard(
   walk(spec.layers, (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
   const first = (name: string) => byName.get(name)?.[0];
 
+  // The white creature prototype has no gold border: it borrows the plain creature's (same frame geometry).
+  if (card.goldBorder && !first('GOLD BORDER')) {
+    let borrowed: SpecNode | null = null;
+    walk(templates['CRIATURA - PROTOTIPO']?.layers ?? [], (n) => {
+      if (!borrowed && n.name === 'GOLD BORDER') borrowed = n;
+    });
+    const structure = first('CARD-STRUCTURE');
+    if (borrowed && structure?.children) {
+      const copy = clone(borrowed as SpecNode);
+      structure.children.push(copy);
+      walk([copy], (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
+    }
+  }
+
   // Frame: standard = NONFULLART; semi = semi frame over the full-art pieces (translucent boxes); full = full-art pieces.
   walk(spec.layers, (n) => {
     if (n.name === 'GOLD BORDER') n.visible = !!card.goldBorder;
@@ -750,11 +764,17 @@ export function buildCard(
       if (y > 1005 && x <= 85) return [100, y];
       return [x, y];
     };
-    // Where an arrow is, the side line breaks in a V: it turns before the arrow and runs back along its edge (5 px
-    // away from it, or from its black back in full art) to the effect box.
+    // Where an arrow is, the side line breaks in a V around it: on each side of the arrow's tip a gold triangle
+    // whose edges are the side line, the black notch's edge (the semi frame's notch, a diamond of radius 57 on the
+    // card's edge) and the arrow's edge 5 px away (from its black back in full art). The triangles sit inside the
+    // black of the standard and semi frames, and their corners end in points.
     const box =
       widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
-    const vees: { cuts: [number, number]; bands: string[]; side: 'left' | 'right' }[] = [];
+    interface Shape {
+      d: string;
+      op: number;
+    }
+    const vees: { cuts: [number, number]; shapes: Shape[]; side: 'left' | 'right' }[] = [];
     walk(spec.layers, (n) => {
       if ((n.name !== 'LA' && n.name !== 'RA') || !n.visible || !box) return;
       const left = n.name === 'LA';
@@ -762,28 +782,33 @@ export function buildCard(
       const cx = (x0 + x1) / 2;
       const cy = (y0 + y1) / 2;
       const r = (x1 - x0) / 2;
-      // Distance from the card's edge, mirrored for the right side.
-      const tipIn = left
+      // Distances from the card's edge (u), mirrored for the right side.
+      const tip = left
         ? cx - r * (style === 'full' ? 1.3 : 1)
         : 744 - (cx + r * (style === 'full' ? 1.3 : 1));
-      const boxIn = left ? box.bbox[0] : 744 - box.bbox[2];
-      const g = 5 * Math.SQRT2;
-      const w = 4 * Math.SQRT2;
-      const at = (x: number, off: number) => cy - (x - tipIn) - off;
-      const X = (x: number) => (left ? x : 744 - x);
-      const band = (sign: 1 | -1) => {
-        const Y = (y: number) => (sign === 1 ? y : 2 * cy - y);
-        const pts = [
-          [6, at(6, g)],
-          [boxIn, at(boxIn, g)],
-          [boxIn, at(boxIn, g + w)],
-          [6, at(6, g + w)],
-        ].map(([x, y]) => `${X(x)} ${Y(y)}`);
-        return `M${pts[0]}L${pts[1]}L${pts[2]}L${pts[3]}Z`;
+      const R = 57;
+      const s2 = Math.SQRT2;
+      const notch = (u: number, s: number) => cy - R + u + s * s2;
+      const arrow = (u: number, t: number) => cy - (u - tip) - t * s2;
+      const meet = (s: number, t: number) => (R + tip - (s + t) * s2) / 2;
+      const X = (u: number) => (left ? u : 744 - u);
+      const tri = (u0: number, s: number, t: number, flip: boolean): Shape => {
+        const Y = (y: number) => (flip ? 2 * cy - y : y);
+        const um = meet(s, t);
+        const pts: [number, number][] = [
+          [u0, notch(u0, s)],
+          [um, notch(um, s)],
+          [u0, arrow(u0, t)],
+        ];
+        return { d: `M${pts.map(([u, y]) => `${X(u)} ${Y(y)}`).join('L')}Z`, op: 1 };
       };
+      const half = (flip: boolean): Shape[] => [
+        tri(6, 1, 5, flip),
+        { ...tri(10, 5, 9, flip), op: 2 },
+      ];
       vees.push({
-        cuts: [at(6, g), 2 * cy - at(6, g)],
-        bands: [band(1), band(-1)],
+        cuts: [notch(6, 1), 2 * cy - notch(6, 1)],
+        shapes: [...half(false), ...half(true)],
         side: left ? 'left' : 'right',
       });
     });
@@ -814,12 +839,12 @@ export function buildCard(
               (e) => (e.side === 'left' ? maxX <= 12 : minX >= 732) && maxY - minY > 300,
             );
             if (!v) return [{ ...sp, d }];
-            // Side line split around the V, plus the V's two bands (only on the gold outline itself).
-            const pieces = [
+            // Side line split around the V, plus the two triangles (outer minus inner).
+            return [
               { ...sp, d: rectPath(minX, minY, maxX, v.cuts[0] + 1) },
               { ...sp, d: rectPath(minX, v.cuts[1] - 1, maxX, maxY) },
+              ...v.shapes,
             ];
-            return n.stroke ? [...pieces, ...v.bands.map((b) => ({ d: b, op: 1 }))] : pieces;
           });
         }
         if (n.text) {
@@ -878,6 +903,14 @@ export function buildCard(
         first('GOLD BORDER')
       )
         n.visible = false;
+    });
+
+  // Black text keeps no black outline (the link prototype outlines its white name; on white cards it went black).
+  if (white)
+    walk(spec.layers, (n) => {
+      const st = n.fx?.stroke;
+      if (n.text && st?.color === '#000000' && (n.text.runs[0]?.color ?? '') === '#000000')
+        delete n.fx!.stroke;
     });
 
   const ed = first('EDITION');

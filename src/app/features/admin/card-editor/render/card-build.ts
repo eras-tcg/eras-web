@@ -415,11 +415,12 @@ function pathBox(d: string): [number, number, number, number] {
 const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
 
 /**
- * Gold border details the prototypes left out (the link card's bottom line also ends on its cap curve):
+ * Gold border details the prototypes left out:
  * - Plain creatures, utilities and structures join the right side line to the name bar with a straight diagonal:
  *   it becomes a curve.
  * - Link cards: the name bar ends in a round cap like the inherit cards' one, 119 px lower; the inherit
- *   prototype's gold curve around that cap goes there, replacing the diagonal and the line under the cap.
+ *   prototype's gold curve around that cap goes there and, as on inherit cards, the side line then drops to the
+ *   card's edge: no bottom line nor bottom corner.
  * - Inherit cards: their gold outline is a picture that still carries the plain creature's bottom line, which
  *   crosses the inherit effect box; it is cut out.
  */
@@ -449,10 +450,9 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
       const box = pathBox(sp.d);
       if (near(box, diagonal)) return link ? [] : [{ ...sp, d: curve(734) }];
       if (link && underCap.some((b) => near(box, b))) return [];
-      // Link: the bottom right corner arc goes; the bottom line runs on to the cap curve's tail instead.
+      // Link: no bottom line nor bottom right corner; after the cap curve the side line drops to the card's edge.
       if (link && box[0] >= 686 && box[1] >= 980 && box[2] <= 724 && box[3] <= 1020) return [];
-      if (link && near(box, [80, 1012, 707, 1016]))
-        return [{ ...sp, d: rectPath(box[0], box[1], 721, box[3]) }];
+      if (link && near(box, [80, 1012, 707, 1016])) return [];
       return [sp];
     });
   });
@@ -462,7 +462,7 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
   const pieces: SpecNode[] = [];
   walk(her?.layers ?? [], (n) => {
     if (
-      /^(Elipse 11( copia)?|Rectángulo 35( copia)?|Rectángulo 33 copia 14)$/.test(n.name) &&
+      /^(Elipse 11( copia)?|Rectángulo 35( copia)?|Rectángulo 33 copia 1[34])$/.test(n.name) &&
       n.paths &&
       n.fill
     )

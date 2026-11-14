@@ -169,22 +169,22 @@ export function colorsOf(card: CardDraft): string[] {
   return list.filter((c) => PALETTE[c]).slice(0, 2);
 }
 
-/** Which prototype draws the card. */
+/**
+ * Which prototype draws the card's body: the plain, inherit or link creature, whatever the color (colors are painted
+ * by role from the palette). Utilities and structures share the creature's body; their own parts (top edge, icon, no
+ * strength) are laid over it from FAMILY_TOP.
+ */
 export function templateFor(card: CardDraft): string {
-  const type = card.cardType || 'creature';
   const her = card.her ?? (has(card.inheritEffects) || has(card.inheritKeywordEffects));
-  const white = colorsOf(card).join('') === 'W';
-  if (type === 'creature') {
-    if (card.enlace) return 'CRIATURA ENLACE - PROTOTIPO';
-    if (her) return 'CRIATURA HER - PROTOTIPO';
-    return white ? 'CRIATURA BLANCA - PROTOTIPO' : 'CRIATURA - PROTOTIPO';
-  }
-  if (type === 'utility') {
-    if (her) return 'UTILIDAD HER - PROTOTIPO';
-    return white ? 'UTILIDAD BLANCA - PROTOTIPO' : 'UTILIDAD - PROTOTIPO';
-  }
-  return her ? 'ESTRUCTURA HER - PROTOTIPO' : 'ESTRUCTURA - PROTOTIPO';
+  if ((card.cardType || 'creature') === 'creature' && card.enlace)
+    return 'CRIATURA ENLACE - PROTOTIPO';
+  return her ? 'CRIATURA HER - PROTOTIPO' : 'CRIATURA - PROTOTIPO';
 }
+
+/** Prototype of the parts utilities and structures have of their own (same for both, any layout and color). */
+const FAMILY_TOP = 'UTILIDAD - PROTOTIPO';
+/** Frame and gold pieces lying wholly above this line make the card's top edge. */
+const TOP_EDGE = 52;
 
 /** Printed code: E1-P04. */
 export function cardCode(card: CardDraft): string {
@@ -653,27 +653,12 @@ export function buildCard(
   walk(spec.layers, (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
   const first = (name: string) => byName.get(name)?.[0];
 
-  // The white creature prototype has no gold border: it borrows the plain creature's (same frame geometry).
-  if (card.goldBorder && !first('GOLD BORDER')) {
-    let borrowed: SpecNode | null = null;
-    walk(templates['CRIATURA - PROTOTIPO']?.layers ?? [], (n) => {
-      if (!borrowed && n.name === 'GOLD BORDER') borrowed = n;
-    });
-    const structure = first('CARD-STRUCTURE');
-    if (borrowed && structure?.children) {
-      const copy = clone(borrowed as SpecNode);
-      structure.children.push(copy);
-      walk([copy], (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
-    }
-  }
-
-  // Inherit utilities and structures got the inherit creature's frames, whose top (straight black margin, tab the
-  // width of "Criatura") is not theirs: the top pieces of each frame come from the plain utility or structure.
-  const plainTpl = /^(UTILIDAD|ESTRUCTURA) HER/.test(templateFor(card))
-    ? templates[templateFor(card).replace(' HER', '')]
-    : undefined;
-  if (plainTpl) {
-    const topOf = 52;
+  // Utilities and structures: the top edge of every frame (black margin under the colored strip, tab, the corner
+  // cut where creatures have their strength) is theirs, the same on any body: it replaces the creature's.
+  const family = card.cardType === 'utility' || card.cardType === 'structure';
+  const familyTpl = family ? templates[FAMILY_TOP] : undefined;
+  if (familyTpl) {
+    const topOf = TOP_EDGE;
     const groupIn = (layers: SpecNode[], name: string) =>
       layers
         .flatMap(function find(n: SpecNode): SpecNode[] {
@@ -682,7 +667,7 @@ export function buildCard(
         .at(0);
     for (const frame of Object.values(STYLE_GROUP)) {
       const mine = groupIn(spec.layers, frame);
-      const theirs = groupIn(plainTpl.layers, frame);
+      const theirs = groupIn(familyTpl.layers, frame);
       if (!mine?.children || !theirs?.children) continue;
       // Each parent (by its path inside the frame) loses its top pieces and gets the plain card's, in their place.
       const parents = new Map<string, { node: SpecNode; at: number }>();
@@ -699,27 +684,6 @@ export function buildCard(
         if (!parent?.node.children) return;
         parent.node.children.splice(parent.at++, 0, clone(n));
       });
-    }
-  }
-
-  // Nor has it a semi full art frame: it borrows the plain creature's, drawn between the full-art pieces and the
-  // standard frame as there.
-  const structure = first('CARD-STRUCTURE');
-  if (
-    style === 'semi' &&
-    structure?.children &&
-    !structure.children.some((c) => c.name === 'SEMI-FULLART')
-  ) {
-    const semi = (templates['CRIATURA - PROTOTIPO']?.layers ?? [])
-      .flatMap(function find(n: SpecNode): SpecNode[] {
-        return n.name === 'SEMI-FULLART' ? [n] : (n.children ?? []).flatMap(find);
-      })
-      .at(0);
-    if (semi) {
-      const copy = clone(semi);
-      const at = structure.children.findIndex((c) => c.name === 'FULLART');
-      structure.children.splice(at + 1, 0, copy);
-      walk([copy], (n) => byName.set(n.name, [...(byName.get(n.name) ?? []), n]));
     }
   }
 
@@ -745,12 +709,9 @@ export function buildCard(
 
   if (card.goldBorder) fixGold(spec.layers, !!card.enlace);
 
-  // Inherit utilities and structures got the inherit creature's gold top, whose straight line runs under the
-  // utility's colored strip at the card's top: they take the top (lines, curves under the strip, tab and label) of
-  // the plain utility's or structure's gold border instead.
-  const tpl = templateFor(card);
-  const plainGold = /^(UTILIDAD|ESTRUCTURA) HER/.test(tpl)
-    ? (templates[tpl.replace(' HER', '')]?.layers ?? [])
+  // Utilities and structures: the gold border's top edge too (lines dipping under the colored strip, tab, label).
+  const plainGold = familyTpl
+    ? familyTpl.layers
         .flatMap(function find(n: SpecNode): SpecNode[] {
           return n.name === 'GOLD BORDER' ? [n] : (n.children ?? []).flatMap(find);
         })
@@ -758,14 +719,19 @@ export function buildCard(
     : undefined;
   const herGold = first('GOLD BORDER');
   if (card.goldBorder && plainGold && herGold?.children) {
-    const top = 47;
+    const top = TOP_EDGE - 5;
     walk(herGold.children, (n) => {
       if (n.children) return;
       if (typeof n.raster === 'string')
         n.paths = [
-          ...(n.paths ?? [{ d: rectPath(0, 0, 744, 1039), op: 1 }]),
+          ...(n.paths?.length ? n.paths : [{ d: rectPath(0, 0, 744, 1039), op: 1 }]),
           { d: rectPath(0, 0, 744, top), op: 1 },
         ];
+    });
+    // A shape that draws the whole outline at once (the plain creature's) loses its top subpaths.
+    walk(herGold.children, (n) => {
+      if (!n.children && typeof n.raster !== 'string' && n.paths && n.bbox[3] > top)
+        n.paths = n.paths.filter((sp) => pathBox(sp.d)[3] > top);
     });
     // The old top pieces go (dropped, not hidden: the texts step would show the old label again).
     const drop = (list: SpecNode[]): SpecNode[] =>
@@ -789,6 +755,46 @@ export function buildCard(
       herGold.children?.push(copy);
       byName.set(copy.name, [...(byName.get(copy.name) ?? []), copy]);
     });
+  }
+
+  // The family's tab fits its prototype's label ("Utilidad"); a longer one ("Estructura") widens it as much, half to
+  // each side: the tab pieces of the frames and the gold border left of the middle move left, those right of it right.
+  if (familyTpl) {
+    let ref: SpecNode | null = null;
+    walk(familyTpl.layers, (n, p) => {
+      if (!ref && n.name === 'CARD-TYPE' && n.text && !p.includes('GOLD BORDER')) ref = n;
+    });
+    const r0 = ref as SpecNode | null;
+    const label = TYPE_LABEL[card.cardType ?? ''] ?? '';
+    if (r0?.text) {
+      const width = (text: string) => {
+        const [a, b] = textSpan({ ...r0, text: { ...r0.text!, text } }, measure);
+        return b - a;
+      };
+      const grow = Math.max(0, (width(label) - width(r0.text.text)) / 2);
+      const mid = 372;
+      const tabPoint = (x: number, y: number): [number, number] =>
+        Math.abs(x - mid) <= 110 ? [x + Math.sign(x - mid) * grow, y] : [x, y];
+      if (grow > 0.5)
+        walk(spec.layers, (n, p) => {
+          const inFrame = p.some(
+            (g) => Object.values(STYLE_GROUP).includes(g) || g === 'GOLD BORDER',
+          );
+          if (
+            n.children ||
+            !n.paths ||
+            !inFrame ||
+            n.bbox[3] > TOP_EDGE ||
+            p.includes('COLOR OBJECTS')
+          )
+            return;
+          if (typeof n.raster === 'string') return;
+          n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, tabPoint) }));
+          const [a] = tabPoint(n.bbox[0], n.bbox[1]);
+          const [c] = tabPoint(n.bbox[2], n.bbox[3]);
+          n.bbox = [a, n.bbox[1], c, n.bbox[3]];
+        });
+    }
   }
 
   // Full art: the gold border's black box under the card type label stays out (the label sits on the art).
@@ -827,25 +833,31 @@ export function buildCard(
   }
   // Utilities and structures: a strip in the card's colors along the top edge. The prototypes keep it in only some
   // of the special summon's color groups, so it is taken out of all of them and put back once, painted with the
-  // card's colors (a blend for two, in their order).
+  // card's colors (a blend for two, in their order), from the family's prototype.
   const isStrip = (n: SpecNode, p: string[]) =>
     !n.children &&
     /^Rect.ngulo redondeado 4 copia/.test(n.name) &&
     p.includes('COLOR OBJECTS') &&
     n.bbox[1] < 0;
   let strip: SpecNode | null = null;
-  for (const layers of [spec.layers, templates['UTILIDAD - PROTOTIPO']?.layers ?? []])
+  for (const layers of [familyTpl?.layers ?? []])
     walk(layers, (n, p) => {
       if (!strip && isStrip(n, p)) strip = clone(n);
     });
   walk(spec.layers, (n, p) => {
     if (n.children) n.children = n.children.filter((c) => !isStrip(c, [...p, c.name]));
   });
-  const altColors = first('Alt Summon')?.children?.find((c) => c.name === 'COLOR OBJECTS');
-  const shown = altColors?.children?.find((g) => isColorGroup(g) && g.visible !== false);
+  // It goes over the frames and under the gold border, whose top dips around it.
+  const frames = first('CARD-STRUCTURE');
   const s0 = strip as SpecNode | null;
-  if (s0 && shown?.children && (card.cardType === 'utility' || card.cardType === 'structure'))
-    shown.children.push({ ...s0, visible: true, fill: rolePaint('dark', cols) });
+  if (s0 && frames?.children && family) {
+    const gold = frames.children.findIndex((c) => c.name === 'GOLD BORDER');
+    frames.children.splice(gold < 0 ? frames.children.length : gold, 0, {
+      ...s0,
+      visible: true,
+      fill: rolePaint('dark', cols),
+    });
+  }
 
   // Special summon: its box, icon, cost and requirement.
   const alt = first('Alt Summon');
@@ -1175,11 +1187,8 @@ export function buildCard(
             ];
           });
         }
-        if (n.text) {
-          // "Criatura Enlace" is nearly as wide as the tab: a little smaller so the gold sides clear it.
-          n.text.transform[4] = 372;
-          n.text.runs = n.text.runs.map((r) => ({ ...r, size: r.size * 0.86 }));
-        }
+        // The label keeps the size of every card type label, centered in the widened tab.
+        if (n.text) n.text.transform[4] = 372;
         const [a, b] = linkPoint(n.bbox[0], n.bbox[1]);
         const [c, d] = linkPoint(n.bbox[2], n.bbox[3]);
         n.bbox = [Math.min(a, n.bbox[0]), b, Math.max(c, n.bbox[2]), d];
@@ -1188,14 +1197,15 @@ export function buildCard(
 
   // Cost and strength can be left out (cards with no normal cost, creatures with no strength).
   const COST_PARTS = /^(COST|COST FRAME|COST BACKGROUND|Pol.gono 1 copia)$/;
+  const noStrength = card.noStrength || family;
   const STRENGTH_PARTS = /^(STRENGHT|strengthfigure|BACK TR|BACK TR copia)$/;
   walk(spec.layers, (n) => {
     if (card.noCost && COST_PARTS.test(n.name)) n.visible = false;
-    if (card.noStrength && STRENGTH_PARTS.test(n.name)) n.visible = false;
+    if (noStrength && STRENGTH_PARTS.test(n.name)) n.visible = false;
   });
   // With no strength the standard frame's top right corner of the art is cut at 45 degrees like the cost's one (a
   // black diamond on the corner); utilities carry it, creatures do not: it is the cost's diamond mirrored.
-  if (card.noStrength) {
+  if (noStrength) {
     const std = byName.get('NONFULLART')?.[0];
     let hasCorner = false;
     let costCorner: SpecNode | null = null;
@@ -1221,6 +1231,32 @@ export function buildCard(
     }
   }
 
+  // Utilities and structures: their icons (gear, tower) come from the family's prototype, moved to the body's name
+  // bar (the inherit body's sits higher).
+  if (familyTpl && !first('UTILITY')) {
+    const find = (layers: SpecNode[], name: string) => {
+      let hit: SpecNode | null = null;
+      walk(layers, (n) => {
+        if (!hit && n.name === name) hit = n;
+      });
+      return hit as SpecNode | null;
+    };
+    const dy = (first('TYPE')?.bbox[1] ?? 0) - (find(familyTpl.layers, 'TYPE')?.bbox[1] ?? 0);
+    const home = parentOf(spec.layers, first('TYPE')!) ?? spec.layers;
+    for (const name of ['UTILITY', 'STRUCTURE']) {
+      const src = find(familyTpl.layers, name);
+      if (!src) continue;
+      const copy = clone(src);
+      walk([copy], (n) => {
+        n.bbox = [n.bbox[0], n.bbox[1] + dy, n.bbox[2], n.bbox[3] + dy];
+        if (n.paths)
+          n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + dy]) }));
+        byName.set(n.name, [...(byName.get(n.name) ?? []), n]);
+      });
+      home.push(copy);
+    }
+  }
+
   // Starter tag, structure / utility icon.
   const ini = first('INICIADOR');
   if (ini) {
@@ -1233,10 +1269,17 @@ export function buildCard(
   for (const k of ['STRUCTURE', 'UTILITY']) {
     const g = first(k);
     if (g) g.visible = (k === 'STRUCTURE') === (card.cardType === 'structure');
+    // The tower's pieces are drawn with an inside stroke only, which leaves a hole in its body: they are solid (the
+    // gap between its legs and the line under its top are gaps between pieces, and stay).
+    if (g && k === 'STRUCTURE')
+      walk([g], (n) => {
+        if (!n.children && n.stroke && !n.fill) n.fill = n.stroke.color;
+      });
     // On the white name bar the icon is black (the white utility prototype's is; there is no white structure one).
     if (g && white)
       walk([g], (n) => {
         if (n.stroke) n.stroke = { ...n.stroke, color: '#000000', gradient: null };
+        if (n.fill) n.fill = '#000000';
       });
   }
 

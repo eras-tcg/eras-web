@@ -10,20 +10,17 @@ import {
 } from './card-build';
 
 describe('card-build', () => {
-  it('picks the prototype by type, inheritance, link and white', () => {
+  it('picks the body prototype by layout only: plain, inherit or link creature', () => {
     expect(templateFor({ cardType: 'creature', colors: ['P'] })).toBe('CRIATURA - PROTOTIPO');
-    expect(templateFor({ cardType: 'creature', colors: ['W'] })).toBe(
-      'CRIATURA BLANCA - PROTOTIPO',
-    );
-    expect(templateFor({ cardType: 'creature', colors: ['W', 'R'] })).toBe('CRIATURA - PROTOTIPO');
+    expect(templateFor({ cardType: 'creature', colors: ['W'] })).toBe('CRIATURA - PROTOTIPO');
     expect(templateFor({ cardType: 'creature', enlace: true })).toBe('CRIATURA ENLACE - PROTOTIPO');
     expect(templateFor({ cardType: 'creature', inheritEffects: [{}] })).toBe(
       'CRIATURA HER - PROTOTIPO',
     );
-    expect(templateFor({ cardType: 'utility', colors: ['W'] })).toBe('UTILIDAD BLANCA - PROTOTIPO');
+    expect(templateFor({ cardType: 'utility', colors: ['W'] })).toBe('CRIATURA - PROTOTIPO');
     expect(
       templateFor({ cardType: 'structure', inheritKeywordEffects: [{ keyword: 'Furia' }] }),
-    ).toBe('ESTRUCTURA HER - PROTOTIPO');
+    ).toBe('CRIATURA HER - PROTOTIPO');
   });
 
   it('reads one or two known colors', () => {

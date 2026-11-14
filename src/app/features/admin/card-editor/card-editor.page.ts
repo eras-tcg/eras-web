@@ -108,9 +108,10 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       <div class="layout">
         <div class="card-pane">
           <div class="card-wrap" [class.framing]="framing()">
-            @if (framing() && ghost(); as g) {
+            @if ((framing() || pendingArt()) && ghost(); as g) {
               <img
                 class="ghost"
+                [class.live]="!!pendingArt()"
                 alt=""
                 [src]="g.src"
                 [style.left.%]="g.left"
@@ -220,9 +221,6 @@ import { ColorLut, convertCanvas } from './render/color-lut';
             @if (form().colors.length === 2) {
               <button erasChip (click)="swapColors()">Invertir colores</button>
             }
-            <button erasChip [selected]="form().starter" (click)="toggleStarter()">
-              Iniciador
-            </button>
           </eras-stack>
           <span class="label">Marco</span>
           <eras-stack direction="row" [gap]="1" wrap>
@@ -246,7 +244,8 @@ import { ColorLut, convertCanvas } from './render/color-lut';
                 [max]="maxZoom"
                 step="0.01"
                 [value]="a.scale"
-                (input)="zoom($any($event.target).valueAsNumber)"
+                (input)="previewZoom($any($event.target).valueAsNumber)"
+                (change)="commitArt()"
               />
             </eras-form-field>
             <eras-stack direction="row" [gap]="2">
@@ -332,6 +331,10 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       opacity: 0.4;
       pointer-events: none;
       user-select: none;
+    }
+    .ghost.live {
+      z-index: 2;
+      opacity: 0.6;
     }
     .card-wrap.framing .preview {
       position: relative;
@@ -570,10 +573,6 @@ export class CardEditorPage {
     });
   }
 
-  protected toggleStarter(): void {
-    this.form.update((f) => ({ ...f, starter: !f.starter }));
-  }
-
   protected toggleArrow(a: string): void {
     this.form.update((f) => ({
       ...f,
@@ -688,8 +687,15 @@ export class CardEditorPage {
   protected readonly framing = signal(false);
   /** The uploaded image as it came (screen colors), for the faded view around the card. */
   private readonly artScreen = signal<string | null>(null);
+  /**
+   * Placement being moved (drag, wheel, zoom slider): only the faded image follows it; the card is redrawn once,
+   * when the move ends.
+   */
+  protected readonly pendingArt = signal<ArtPlacement | null>(null);
+  private wheelTimer: ReturnType<typeof setTimeout> | null = null;
+
   protected readonly ghost = computed(() => {
-    const a = this.art();
+    const a = this.pendingArt() ?? this.art();
     const src = this.artScreen();
     if (!a || !src) return null;
     const cover = Math.max(744 / a.width, 1039 / a.height) * a.scale;
@@ -715,16 +721,30 @@ export class CardEditorPage {
     this.framing.update((v) => !v);
   }
 
-  protected zoom(scale: number): void {
-    const s = Math.min(this.maxZoom, Math.max(this.minZoom, scale));
-    this.art.update((a) => (a ? { ...a, scale: s } : a));
+  private clampZoom(scale: number): number {
+    return Math.min(this.maxZoom, Math.max(this.minZoom, scale));
+  }
+
+  protected previewZoom(scale: number): void {
+    const a = this.pendingArt() ?? this.art();
+    if (a) this.pendingArt.set({ ...a, scale: this.clampZoom(scale) });
+  }
+
+  /** Applies the moved placement to the card. */
+  protected commitArt(): void {
+    const p = this.pendingArt();
+    if (!p) return;
+    this.pendingArt.set(null);
+    this.art.set(p);
   }
 
   protected wheelZoom(e: WheelEvent): void {
-    const a = this.art();
+    const a = this.pendingArt() ?? this.art();
     if (!this.framing() || !a) return;
     e.preventDefault();
-    this.zoom(a.scale * Math.exp(-e.deltaY * 0.0015));
+    this.pendingArt.set({ ...a, scale: this.clampZoom(a.scale * Math.exp(-e.deltaY * 0.0015)) });
+    if (this.wheelTimer) clearTimeout(this.wheelTimer);
+    this.wheelTimer = setTimeout(() => this.commitArt(), 400);
   }
 
   protected centerArt(): void {
@@ -740,18 +760,19 @@ export class CardEditorPage {
   }
 
   protected dragMove(e: PointerEvent): void {
-    if (!this.dragFrom) return;
+    const a = this.art();
+    if (!this.dragFrom || !a) return;
     // Screen pixels → card pixels.
     const k = 744 / this.preview().nativeElement.clientWidth;
     const { x, y, ax, ay } = this.dragFrom;
-    this.art.update((a) =>
-      a ? { ...a, x: ax + (e.clientX - x) * k, y: ay + (e.clientY - y) * k } : a,
-    );
+    const base = this.pendingArt() ?? a;
+    this.pendingArt.set({ ...base, x: ax + (e.clientX - x) * k, y: ay + (e.clientY - y) * k });
   }
 
   protected dragEnd(): void {
     this.dragFrom = null;
     this.dragging.set(false);
+    this.commitArt();
   }
 
   // ── Exports ───────────────────────────────────────────────────────────

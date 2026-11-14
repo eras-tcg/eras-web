@@ -588,9 +588,9 @@ export function buildCard(
       }
     }
     if (style === 'full') {
-      // Each arrow (a diamond whose inner half sits under the effect box) is drawn as its outer half: a triangle
-      // with a straight base through the diamond's center. Behind it goes a larger black triangle with the same
-      // center and bevel, its tip further out and its base on the effect box's border.
+      // Measured on a full art link card exported by Photoshop (T1-R07): the colored diamond shows up to the effect
+      // box's border; behind it a black triangle with the same bevel, its tip 0.3 of the diamond's half-width
+      // further out and its base on the box's border (45° sides).
       const box =
         widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
       const shown: SpecNode[] = [];
@@ -606,21 +606,25 @@ export function buildCard(
         const cy = (y0 + y1) / 2;
         const r = (x1 - x0) / 2;
         const dir = left ? -1 : 1;
-        const tri = (tip: number, base: number) => {
-          const h = Math.abs(tip - base);
-          return `M${tip} ${cy}L${base} ${cy - h}L${base} ${cy + h}Z`;
-        };
-        n.paths = [{ d: tri(cx + dir * r, cx), op: 1 }];
-        n.bbox = left ? [x0, y0, cx, y1] : [cx, y0, x1, y1];
-        const edge = box ? (left ? box.bbox[0] : box.bbox[2]) : cx - dir * r * 0.25;
-        const tip = cx + dir * r * 1.5;
+        const edge = box ? (left ? box.bbox[0] : box.bbox[2]) : cx;
+        // Colored diamond cut at the box border.
+        n.paths = [
+          ...n.paths!,
+          {
+            d: rectPath(left ? edge : edge - 2 * r, y0 - 10, left ? edge + 2 * r : edge, y1 + 10),
+            op: 2,
+          },
+        ];
+        n.shapeBox = left ? [x0, y0, edge, y1] : [edge, y0, x1, y1];
+        const tip = cx + dir * r * 1.3;
         const h = Math.abs(tip - edge);
         const back: SpecNode = {
           ...clone(n),
           name: `${n.name} BACK`,
           fill: '#000000',
           stroke: undefined,
-          paths: [{ d: tri(tip, edge), op: 1 }],
+          shapeBox: undefined,
+          paths: [{ d: `M${tip} ${cy}L${edge} ${cy - h}L${edge} ${cy + h}Z`, op: 1 }],
           bbox: [Math.min(tip, edge), cy - h, Math.max(tip, edge), cy + h],
         };
         holder.splice(holder.indexOf(n), 0, back);

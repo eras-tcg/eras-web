@@ -8,6 +8,7 @@ export type ZoneKey =
   | 'level'
   | 'name'
   | 'classes'
+  | 'starter'
   | 'code'
   | 'specialAdd'
   | 'specialCost'
@@ -98,9 +99,18 @@ export function cardZones(card: BuiltCard, measure: Measure): Zone[] {
     const y1 = Math.max(bottom + 6, badge ? badge.bbox[3] + 2 : bottom + 6);
     add('code', [span[0] - 4, y0, right, y1]);
   }
+  // Starter tag (creatures with the tag in their prototype): its place on the type bar.
+  const starterGroup = findAny(L, 'INICIADOR');
+  const starterTag = starterGroup?.children ? findAny(starterGroup.children, 'P3') : null;
+  let classLeft = 130;
+  if (starterTag && card.card.cardType === 'creature') {
+    const [x0, y0, x1, y1] = starterTag.bbox;
+    add('starter', [x0 - 2, y0 - 2, x1 + 2, y1 + 2]);
+    classLeft = Math.max(classLeft, x1 + 6);
+  }
   if (type?.text) {
     const [top, bottom] = textRows(type);
-    add('classes', [130, top - 2, codeLeft - 8, bottom + 2]);
+    add('classes', [classLeft, top - 2, codeLeft - 8, bottom + 2]);
   }
 
   // Special summon: its parts when the card has one, else an add button over its box.

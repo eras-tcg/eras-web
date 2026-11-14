@@ -42,6 +42,8 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
         class="zone"
         [class.add]="z.key === 'specialAdd'"
         [class.remove]="z.key === 'specialRemove'"
+        [class.starter]="z.key === 'starter'"
+        [class.on]="z.key === 'starter' && form().starter"
         [class.active]="active() === z.key"
         [style.left.%]="(z.rect[0] / W) * 100"
         [style.top.%]="(z.rect[1] / H) * 100"
@@ -53,6 +55,8 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
       >
         @if (z.key === 'specialAdd') {
           <span>Añadir invocación especial</span>
+        } @else if (z.key === 'starter' && !form().starter) {
+          <span class="proposal">Iniciador</span>
         } @else if (z.key === 'specialRemove') {
           <span aria-hidden="true">🗑</span>
         }
@@ -215,6 +219,20 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
       border-color: var(--color-primary);
       background: color-mix(in srgb, var(--color-primary) 12%, transparent);
     }
+    .zone.starter .proposal {
+      display: grid;
+      place-items: center;
+      block-size: 100%;
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+      color: var(--color-text);
+      font-size: var(--font-size-sm);
+      font-weight: 700;
+      opacity: 0;
+    }
+    .zone.starter:hover .proposal {
+      opacity: 0.85;
+    }
     .zone.add {
       border-color: var(--color-primary);
       background: color-mix(in srgb, var(--color-surface) 80%, transparent);
@@ -315,6 +333,7 @@ export class CardHotspotsComponent {
     level: 'Nivel',
     name: 'Nombre',
     classes: 'Clases',
+    starter: 'Iniciador',
     code: 'Código, rareza y regulación',
     specialAdd: 'Añadir invocación especial',
     specialCost: 'Coste especial',
@@ -358,6 +377,11 @@ export class CardHotspotsComponent {
     if (key === 'effects' || key === 'inheritEffects' || key === 'formationEffects') {
       this.active.set(null);
       this.effectZone.emit(zone);
+      return;
+    }
+    if (key === 'starter') {
+      this.form.update((f) => ({ ...f, starter: !f.starter }));
+      this.active.set(null);
       return;
     }
     if (key === 'specialAdd') {

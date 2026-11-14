@@ -524,14 +524,18 @@ export class CardEditorPage {
   }
 
   protected toggleColor(c: string): void {
-    this.form.update((f) => ({
-      ...f,
-      colors: f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c],
-    }));
+    this.form.update((f) => {
+      const colors = f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c];
+      // The code's color letters follow the card's colors.
+      return { ...f, colors, colorIdentity: colors.join('') || f.colorIdentity };
+    });
   }
 
   protected swapColors(): void {
-    this.form.update((f) => ({ ...f, colors: [...f.colors].reverse() }));
+    this.form.update((f) => {
+      const colors = [...f.colors].reverse();
+      return { ...f, colors, colorIdentity: colors.join('') || f.colorIdentity };
+    });
   }
 
   protected toggleStarter(): void {

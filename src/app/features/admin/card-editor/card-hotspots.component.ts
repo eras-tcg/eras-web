@@ -12,24 +12,23 @@ import {
 } from '@angular/core';
 import { CARD_RARITIES, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { MetaForm } from '@data/cards/meta-rules';
-import { applyCode, classMatches, defaultSummonKind } from './card-editor-rules';
+import { classMatches, defaultSummonKind } from './card-editor-rules';
 import { Zone, ZoneKey } from './render/card-zones';
 
 const W = 744;
 const H = 1039;
-type TextKey = 'name' | 'regulation' | 'requirement' | 'code';
+type TextKey = 'name' | 'requirement';
 type NumberKey = 'cost' | 'strength' | 'level' | 'specialCost';
 const NUMBER_KEYS: ZoneKey[] = ['cost', 'strength', 'level', 'specialCost'];
-const TEXT_KEYS: ZoneKey[] = ['name', 'regulation', 'requirement', 'code'];
+const TEXT_KEYS: ZoneKey[] = ['name', 'requirement'];
 const NUMBER_FIELD: Record<NumberKey, keyof MetaForm> = {
   cost: 'cost',
   strength: 'strength',
   level: 'level',
   specialCost: 'specialCost',
 };
-const TEXT_FIELD: Record<Exclude<TextKey, 'code'>, keyof MetaForm> = {
+const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
   name: 'cardName',
-  regulation: 'regulation',
   requirement: 'requirement',
 };
 
@@ -64,7 +63,8 @@ const TEXT_FIELD: Record<Exclude<TextKey, 'code'>, keyof MetaForm> = {
       <div
         class="editor"
         [class.above]="z.rect[1] > H * 0.6"
-        [style.left.%]="(z.rect[0] / W) * 100"
+        [style.left.%]="z.rect[0] > W * 0.55 ? null : (z.rect[0] / W) * 100"
+        [style.right.%]="z.rect[0] > W * 0.55 ? 100 - (z.rect[2] / W) * 100 : null"
         [style.top.%]="z.rect[1] > H * 0.6 ? null : (z.rect[3] / H) * 100"
         [style.bottom.%]="z.rect[1] > H * 0.6 ? 100 - (z.rect[1] / H) * 100 : null"
         (pointerdown)="$event.stopPropagation()"
@@ -93,30 +93,62 @@ const TEXT_FIELD: Record<Exclude<TextKey, 'code'>, keyof MetaForm> = {
               (blur)="commitText(z.key, $any($event.target).value)"
             />
           }
-          @case ('rarity') {
-            <div class="options" role="listbox" [attr.aria-label]="labels[z.key]">
-              @for (r of rarities; track r) {
+          @case ('code') {
+            <div class="code-menu">
+              <label
+                >Edición
+                <input
+                  #field
+                  type="text"
+                  [value]="form().edition"
+                  (change)="setField('edition', $any($event.target).value.trim().toUpperCase())"
+                  (keydown.escape)="close()"
+              /></label>
+              <label
+                >Número
+                <input
+                  type="number"
+                  min="0"
+                  [value]="form().cardNumber ?? ''"
+                  (change)="setNumberField($any($event.target).value)"
+                  (keydown.escape)="close()"
+              /></label>
+              <span class="fixed">Color: {{ colorLetters() || '—' }}</span>
+              <span class="fixed">Rareza</span>
+              <div class="options" role="listbox" aria-label="Rareza">
+                @for (r of rarities; track r) {
+                  <button
+                    type="button"
+                    role="option"
+                    [attr.aria-selected]="form().rarity === r"
+                    (click)="setField('rarity', r)"
+                  >
+                    {{ r }}
+                  </button>
+                }
                 <button
                   type="button"
                   role="option"
-                  [attr.aria-selected]="form().rarity === r"
-                  (click)="setRarity(r)"
+                  [attr.aria-selected]="!form().rarity"
+                  (click)="setField('rarity', null)"
                 >
-                  {{ r }}
+                  —
                 </button>
-              }
-              <button
-                type="button"
-                role="option"
-                [attr.aria-selected]="!form().rarity"
-                (click)="setRarity(null)"
-              >
-                —
-              </button>
+              </div>
+              <label
+                >Regulación
+                <input
+                  type="text"
+                  maxlength="2"
+                  [value]="form().regulation"
+                  (change)="setField('regulation', $any($event.target).value.trim().toUpperCase())"
+                  (keydown.escape)="close()"
+              /></label>
+              <button type="button" class="done" (click)="close()">Listo</button>
             </div>
           }
           @case ('kind') {
-            <div class="options" role="listbox" [attr.aria-label]="labels[z.key]">
+            <div class="options column" role="listbox" [attr.aria-label]="labels[z.key]">
               @for (k of kinds; track k) {
                 <button
                   type="button"
@@ -224,8 +256,37 @@ const TEXT_FIELD: Record<Exclude<TextKey, 'code'>, keyof MetaForm> = {
       color: var(--color-text);
       cursor: pointer;
     }
+    .options.column {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .editor:has(.column) {
+      min-inline-size: 10rem;
+    }
     .options button[aria-selected='true'] {
       border-color: var(--color-primary);
+    }
+    .code-menu {
+      display: grid;
+      gap: var(--space-2);
+    }
+    .code-menu label {
+      display: grid;
+      gap: var(--space-1);
+      font-size: var(--font-size-sm);
+    }
+    .fixed {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+    .done {
+      justify-self: end;
+      padding: var(--space-1) var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface-muted);
+      color: var(--color-text);
+      cursor: pointer;
     }
     .classes {
       display: flex;
@@ -254,9 +315,7 @@ export class CardHotspotsComponent {
     level: 'Nivel',
     name: 'Nombre',
     classes: 'Clases',
-    code: 'Código',
-    rarity: 'Rareza',
-    regulation: 'Regulación',
+    code: 'Código, rareza y regulación',
     specialAdd: 'Añadir invocación especial',
     specialCost: 'Coste especial',
     specialKind: 'Método de invocación especial',
@@ -285,10 +344,10 @@ export class CardHotspotsComponent {
     });
   }
 
-  protected kindOf(key: ZoneKey): 'number' | 'text' | 'rarity' | 'kind' | 'classes' | null {
+  protected kindOf(key: ZoneKey): 'number' | 'text' | 'code' | 'kind' | 'classes' | null {
     if (NUMBER_KEYS.includes(key)) return 'number';
+    if (key === 'code') return 'code';
     if (TEXT_KEYS.includes(key)) return 'text';
-    if (key === 'rarity') return 'rarity';
     if (key === 'specialKind') return 'kind';
     if (key === 'classes') return 'classes';
     return null;
@@ -330,10 +389,7 @@ export class CardHotspotsComponent {
   }
 
   protected textValue(key: ZoneKey): string {
-    const f = this.form();
-    if (key === 'code')
-      return `${f.edition}-${f.colorIdentity ?? ''}${String(f.cardNumber ?? '').padStart(2, '0')}`;
-    return String(f[TEXT_FIELD[key as Exclude<TextKey, 'code'>]] ?? '');
+    return String(this.form()[TEXT_FIELD[key as TextKey]] ?? '');
   }
 
   protected commitNumber(key: ZoneKey, raw: string): void {
@@ -348,18 +404,26 @@ export class CardHotspotsComponent {
 
   protected commitText(key: ZoneKey, raw: string): void {
     if (this.active() !== key) return;
-    if (key === 'code') this.form.update((f) => applyCode(f, raw));
-    else
-      this.form.update((f) => ({
-        ...f,
-        [TEXT_FIELD[key as Exclude<TextKey, 'code'>]]: raw.trim(),
-      }));
+    this.form.update((f) => ({ ...f, [TEXT_FIELD[key as TextKey]]: raw.trim() }));
     this.close();
   }
 
-  protected setRarity(r: string | null): void {
-    this.form.update((f) => ({ ...f, rarity: r }));
-    this.close();
+  /** Color letters of the code: the card's colors, not editable here. */
+  protected readonly colorLetters = computed(() => {
+    const f = this.form();
+    return f.colors.length ? f.colors.join('') : (f.colorIdentity ?? '');
+  });
+
+  protected setField<K extends 'edition' | 'rarity' | 'regulation'>(
+    key: K,
+    value: MetaForm[K],
+  ): void {
+    this.form.update((f) => ({ ...f, [key]: value }));
+  }
+
+  protected setNumberField(raw: string): void {
+    const n = raw.trim() === '' ? null : Math.max(0, Math.round(Number(raw)));
+    this.form.update((f) => ({ ...f, cardNumber: n === null || Number.isNaN(n) ? null : n }));
   }
 
   protected setKind(k: string): void {

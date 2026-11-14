@@ -9,8 +9,6 @@ export type ZoneKey =
   | 'name'
   | 'classes'
   | 'code'
-  | 'rarity'
-  | 'regulation'
   | 'specialAdd'
   | 'specialCost'
   | 'specialKind'
@@ -91,30 +89,14 @@ export function cardZones(card: BuiltCard, measure: Measure): Zone[] {
   const badge = shown('REGULATION BG') ?? shown('Rectángulo redondeado 4');
   let codeLeft = 600;
   if (ed?.text) {
+    // Code, rarity and regulation: one area that opens a menu with each part.
     const span = textSpan(ed, measure);
     const [top, bottom] = textRows(ed);
-    const rarity = card.card.rarity || '';
-    const size = (ed.text.runs[0]?.size ?? 12) * ed.text.transform[3];
-    const rarityW = rarity
-      ? measure(` ${rarity}`, FONT(size)) * (ed.text.transform[0] / ed.text.transform[3])
-      : 0;
-    const codeEnd = span[1] - rarityW;
     codeLeft = span[0];
-    add('code', [span[0] - 4, top - 6, codeEnd, bottom + 6]);
-    // With no rarity yet, a small slot right of the code still opens the list.
-    add(
-      'rarity',
-      rarity
-        ? [codeEnd, top - 6, span[1] + 3, bottom + 6]
-        : [span[1] - 2, top - 6, span[1] + 14, bottom + 6],
-    );
-    const regX = badge ? badge.bbox[0] : span[1] + 8;
-    add(
-      'regulation',
-      badge
-        ? [badge.bbox[0] - 2, badge.bbox[1] - 2, badge.bbox[2] + 2, badge.bbox[3] + 2]
-        : [regX, top - 6, regX + 24, bottom + 6],
-    );
+    const right = badge ? Math.max(badge.bbox[2], span[1]) + 3 : span[1] + 26;
+    const y0 = Math.min(top - 6, badge ? badge.bbox[1] - 2 : top - 6);
+    const y1 = Math.max(bottom + 6, badge ? badge.bbox[3] + 2 : bottom + 6);
+    add('code', [span[0] - 4, y0, right, y1]);
   }
   if (type?.text) {
     const [top, bottom] = textRows(type);

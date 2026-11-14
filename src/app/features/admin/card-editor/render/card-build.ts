@@ -184,7 +184,8 @@ export function templateFor(card: CardDraft): string {
 /** Printed code: E1-P04. */
 export function cardCode(card: CardDraft): string {
   if (card.code) return card.code;
-  const color = card.colorIdentity || colorsOf(card).join('');
+  // The color letters come from the card's colors.
+  const color = colorsOf(card).join('');
   return `${card.edition || ''}-${color}${String(card.cardNumber ?? 0).padStart(2, '0')}`;
 }
 
@@ -340,6 +341,30 @@ export function sideOf(
   return 'both';
 }
 
+/** A black rectangle node (card pixels). */
+function rectNode(name: string, x0: number, y0: number, x1: number, y1: number): SpecNode {
+  return {
+    name,
+    kind: 'shape',
+    visible: true,
+    opacity: 1,
+    bbox: [x0, y0, x1, y1],
+    fill: '#000000',
+    paths: [{ d: `M${x0} ${y0}L${x1} ${y0}L${x1} ${y1}L${x0} ${y1}Z`, op: 1 }],
+  };
+}
+
+/** Scales an absolute path (M, L, C with x y pairs) around a point. */
+export function scalePath(d: string, cx: number, cy: number, k: number): string {
+  let i = 0;
+  return d.replace(/-?\d+(?:\.\d+)?/g, (v) => {
+    const n = Number(v);
+    const out = i % 2 === 0 ? cx + (n - cx) * k : cy + (n - cy) * k;
+    i++;
+    return String(Math.round(out * 100) / 100);
+  });
+}
+
 function setText(n: SpecNode | undefined, text: string, color?: string | null): void {
   if (!n?.text) return;
   n.text.text = text;
@@ -458,6 +483,19 @@ export function buildCard(
     }
   }
   if (kind) {
+    // The special cost hexagon takes its method's color, also where it sits in the card color's group (white cards).
+    const k = KIND_COLOR[kind];
+    if (k)
+      walk(spec.layers, (n) => {
+        if (n.name === 'special cost' && n.fill) n.fill = PALETTE[k].special;
+        if (n.name === 'special cost edge') {
+          const st = n.stroke ?? n.fx?.stroke;
+          if (st) {
+            st.color = PALETTE[k].edge;
+            st.gradient = null;
+          }
+        }
+      });
     setText(first('SPEC COST'), String(card.specialCost ?? ''), white ? '#000000' : null);
     const req = `${KIND_LABEL[kind] ?? kind}: ${card.requirement || ''}`.trim();
     const one = first('REQUIREMENT');
@@ -481,13 +519,73 @@ export function buildCard(
     }
   }
 
-  // Link arrows: only the ones the card has.
+  // Link arrows: only the ones the card has. The semi and standard frames notch their edge where an arrow is and
+  // run straight where there is none; in full art each arrow sits on a larger black copy of itself, to stand out
+  // over the art.
   if (card.enlace) {
     const arrows = card.arrows ?? [];
+    const has = (side: 'left' | 'right') => arrows.includes(side);
     walk(spec.layers, (n) => {
-      if (n.name === 'LA') n.visible = arrows.includes('left');
-      if (n.name === 'RA') n.visible = arrows.includes('right');
+      if (n.name === 'LA') n.visible = has('left');
+      if (n.name === 'RA') n.visible = has('right');
     });
+    const sideOfNotch = (n: SpecNode): 'left' | 'right' | null =>
+      /^Pol.gono 2( copia( \d+)?)?$/.test(n.name) && n.bbox[1] > 500 && n.bbox[3] < 700
+        ? n.bbox[0] < 30
+          ? 'left'
+          : n.bbox[2] > 714
+            ? 'right'
+            : null
+        : null;
+    const gaps: Record<'left' | 'right', number[] | null> = { left: null, right: null };
+    walk(spec.layers, (n, p) => {
+      const side = sideOfNotch(n);
+      if (!side) return;
+      n.visible = has(side);
+      if (!p.includes('SEMI-FULLART')) return;
+      const g = gaps[side];
+      gaps[side] = g
+        ? [
+            Math.min(g[0], n.bbox[0]),
+            Math.min(g[1], n.bbox[1]),
+            Math.max(g[2], n.bbox[2]),
+            Math.max(g[3], n.bbox[3]),
+          ]
+        : [...n.bbox];
+    });
+    const semi = first('SEMI-FULLART');
+    if (style === 'semi' && semi?.children) {
+      // The semi margin leaves room for the notch: close it with a straight edge where there is no arrow.
+      for (const side of ['left', 'right'] as const) {
+        const g = gaps[side];
+        if (!g || has(side)) continue;
+        const [x0, x1] = side === 'left' ? [0, 18] : [726, 744];
+        semi.children.push(rectNode(`EDGE ${side}`, x0, g[1], x1, g[3]));
+      }
+    }
+    if (style === 'full') {
+      const shown: SpecNode[] = [];
+      walk(spec.layers, (n) => {
+        if ((n.name === 'LA' || n.name === 'RA') && n.visible && n.paths) shown.push(n);
+      });
+      for (const n of shown) {
+        const holder = parentOf(spec.layers, n);
+        if (!holder) continue;
+        const [x0, y0, x1, y1] = n.bbox;
+        const back: SpecNode = {
+          ...clone(n),
+          name: `${n.name} BACK`,
+          fill: '#000000',
+          fx: undefined,
+          stroke: undefined,
+          paths: n.paths!.map((sp) => ({
+            ...sp,
+            d: scalePath(sp.d, (x0 + x1) / 2, (y0 + y1) / 2, 1.55),
+          })),
+        };
+        holder.splice(holder.indexOf(n), 0, back);
+      }
+    }
   }
 
   // Starter tag, structure / utility icon.

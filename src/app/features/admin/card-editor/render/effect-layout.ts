@@ -1,0 +1,320 @@
+import { CardEffect, KeywordEffect, KeywordEffectRef } from '@data/cards/card.model';
+import { BuiltCard, EffectSlot, Measure } from './card-build';
+import { PieceStyle, PieceTable } from './spec.model';
+import { SvgRenderer, svgEl } from './svg-render';
+
+/** Effect text sizes tried in order until the text fits its box (points at 300 dpi). */
+export const EFFECT_SIZES = [7, 6.5, 6, 5.5, 5];
+export const ptToPx = (pt: number) => (pt * 300) / 72;
+const FONT = '"ERAS Arial"';
+export const effectFont = (px: number, italic = false) => `${italic ? 'italic ' : ''}700 ${px}px ${FONT}`;
+
+export type PieceKind = 'timing' | 'condition' | 'keyword';
+export type Token =
+  | { t: 'word'; text: string; italic: boolean; glue?: boolean }
+  | { t: 'space' }
+  | { t: 'break' }
+  | { t: 'ultimate' }
+  | { t: 'piece'; kind: PieceKind; label: string };
+
+const USAGE: Record<string, { piece?: string; after?: string; ultimate?: boolean }> = {
+  'once per turn': { piece: 'una vez por turno' },
+  'once per turn between copies': { piece: 'una vez por turno', after: 'entre copias,' },
+  'ultimate effect': { ultimate: true },
+};
+
+/** Lowercase ASCII key of a label ("En Invocación" → "en invocacion"). */
+export const pieceKey = (s: string) =>
+  (s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+const fill = (text: string, value: string | number | null | undefined) =>
+  value == null || value === '' ? text : text.replace(/\{[^}]+\}/g, String(value));
+
+/** Reminder text of a keyword: the reference's display text, or its effect written out. */
+export function keywordReminder(keyword: string, value: string | number | null | undefined, ref: Record<string, KeywordEffectRef | undefined>): string | null {
+  const entry = ref[keyword] ?? ref[keyword.replace(/\{[^}]+\}/, '').trim()];
+  if (!entry) return null;
+  let text = entry.displayText || entry.description || '';
+  if (!text && entry.effect) {
+    text = (entry.effect.effectBlocks ?? [])
+      .map((b) => `${b.activationCondition ? `${b.activationCondition}: ` : ''}${b.cost ? `${b.cost}; ` : ''}${b.resolution ?? ''}`.trim())
+      .join(' ');
+  }
+  // The reference text carries the keyword's own heading ("<Todos Los Turnos> [una vez por turno]"): reminders print without it.
+  text = text.replace(/<[^>]+>\s*/g, '').replace(/\[(una vez por turno|efecto definitivo)\]\s*/gi, '').trim();
+  return text ? fill(text, value) : null;
+}
+
+export class EffectTokens {
+  constructor(
+    private readonly pieces: PieceTable,
+    private readonly ref: Record<string, KeywordEffectRef | undefined>,
+  ) {}
+
+  /** One box: own keywords first, then the effects, one paragraph each. */
+  slot(effects: readonly CardEffect[] | null | undefined, keywords: readonly KeywordEffect[] | null | undefined): Token[] {
+    const paragraphs: Token[][] = [];
+    for (const k of keywords ?? []) paragraphs.push(this.keyword(k));
+    for (const e of effects ?? []) paragraphs.push(this.effect(e));
+    const out: Token[] = [];
+    for (const p of paragraphs.filter((p) => p.length)) {
+      if (out.length) out.push({ t: 'break' });
+      out.push(...p);
+    }
+    return out;
+  }
+
+  keyword(k: KeywordEffect): Token[] {
+    const out: Token[] = [];
+    if (!k.keyword) return out;
+    out.push({ t: 'piece', kind: 'keyword', label: fill(k.keyword, k.number) });
+    const note = keywordReminder(k.keyword, k.number, this.ref);
+    if (note) {
+      out.push({ t: 'space' });
+      words(`(${note})`, true, out);
+    }
+    return out;
+  }
+
+  effect(e: CardEffect): Token[] {
+    const out: Token[] = [];
+    const usage = USAGE[e.ussageLimit ?? ''];
+    if (usage?.ultimate) out.push({ t: 'ultimate' });
+    const head: Token[] = (e.instance ?? '')
+      .split('>')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((label) => ({ t: 'piece', kind: 'timing', label }) as Token);
+    if (usage?.piece) head.push({ t: 'piece', kind: 'condition', label: usage.piece });
+    head.forEach((p, i) => {
+      if (i) out.push({ t: 'space' });
+      out.push(p);
+    });
+    if (usage?.after) {
+      out.push({ t: 'space' });
+      words(usage.after, false, out);
+    }
+    for (const b of e.effectBlocks ?? []) {
+      const found: { keyword: string; value: string | null; label: string }[] = [];
+      const cond = (b.activationCondition ?? '').trim();
+      if (cond) {
+        if (out.length) out.push({ t: 'space' });
+        // A condition from the symbol sheet ("por efecto") is a piece and takes no colon.
+        if (this.pieces.conditions[pieceKey(cond)]) out.push({ t: 'piece', kind: 'condition', label: cond });
+        else {
+          found.push(...rich(cond, out));
+          append(out, ':');
+        }
+      }
+      if (b.cost) {
+        out.push({ t: 'space' });
+        found.push(...rich(b.cost, out));
+        append(out, ';');
+      }
+      if (b.resolution) {
+        out.push({ t: 'space' });
+        found.push(...rich(b.resolution, out));
+      }
+      for (const f of found) {
+        const note = keywordReminder(f.keyword, f.value, this.ref);
+        if (note) {
+          out.push({ t: 'space' });
+          words(`(${f.label}: ${note})`, true, out);
+        }
+      }
+    }
+    return out;
+  }
+}
+
+function words(text: string, italic: boolean, out: Token[]): void {
+  for (const w of text.split(/(\s+)/)) {
+    if (!w) continue;
+    out.push(/^\s+$/.test(w) ? { t: 'space' } : { t: 'word', text: w, italic });
+  }
+}
+
+/** "text [[Keyword:3]] more" → words and keyword pieces; returns the keywords found. */
+function rich(text: string, out: Token[]): { keyword: string; value: string | null; label: string }[] {
+  const found: { keyword: string; value: string | null; label: string }[] = [];
+  let last = 0;
+  for (const m of text.matchAll(/\[\[([^\]:]+)(?::([^\]]*))?\]\]/g)) {
+    if (m.index > last) words(text.slice(last, m.index), false, out);
+    const label = fill(m[1], m[2]);
+    out.push({ t: 'piece', kind: 'keyword', label });
+    found.push({ keyword: m[1], value: m[2] ?? null, label });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) words(text.slice(last), false, out);
+  return found;
+}
+
+function append(out: Token[], punct: string): void {
+  const last = out[out.length - 1];
+  if (last?.t === 'word') last.text += punct;
+  else out.push({ t: 'word', text: punct, italic: false, glue: true });
+}
+
+// ── Layout ──────────────────────────────────────────────────────────────────
+
+export interface PlacedToken {
+  tok: Token;
+  x: number;
+  w: number;
+}
+
+export interface EffectLayout {
+  lines: PlacedToken[][];
+  lineHeights: number[];
+  height: number;
+  pt: number;
+  px: number;
+  fits: boolean;
+}
+
+export function pieceMetrics(kind: PieceKind, label: string, px: number, measure: Measure): { w: number; h: number } {
+  const h = kind === 'timing' ? px * 1.2 : px * 1.07;
+  const pad = kind === 'timing' ? h * 0.5 : px * 0.22;
+  return { w: measure(label, effectFont(px)) + pad * 2, h };
+}
+
+/** Greedy line breaking at one size; pieces never break. */
+export function layoutAt(tokens: Token[], width: number, height: number, pt: number, measure: Measure): EffectLayout {
+  const px = ptToPx(pt);
+  const lineH = px * 1.2;
+  const space = measure(' ', effectFont(px));
+  const lines: PlacedToken[][] = [[]];
+  let x = 0;
+  let pendingSpace = false;
+  for (const tok of tokens) {
+    if (tok.t === 'space') {
+      pendingSpace = true;
+      continue;
+    }
+    if (tok.t === 'break' || tok.t === 'ultimate') {
+      if (lines[lines.length - 1].length) lines.push([]);
+      if (tok.t === 'ultimate') {
+        lines[lines.length - 1].push({ tok, x: 0, w: width });
+        lines.push([]);
+      }
+      x = 0;
+      pendingSpace = false;
+      continue;
+    }
+    const w = tok.t === 'piece' ? pieceMetrics(tok.kind, tok.label, px, measure).w : measure(tok.text, effectFont(px, tok.italic));
+    const gap = pendingSpace && x > 0 ? space : 0;
+    if (x > 0 && x + gap + w > width && !(tok.t === 'word' && tok.glue)) {
+      lines.push([]);
+      x = 0;
+    } else x += gap;
+    lines[lines.length - 1].push({ tok, x, w });
+    x += w;
+    pendingSpace = false;
+  }
+  while (lines.length && !lines[lines.length - 1].length) lines.pop();
+  const lineHeights = lines.map((l) => (l.some((i) => i.tok.t === 'ultimate') ? lineH * 1.15 : lineH));
+  const total = lineHeights.reduce((a, b) => a + b, 0);
+  return { lines, lineHeights, height: total, pt, px, fits: total <= height };
+}
+
+/** The largest size that fits, or the smallest one. */
+export function layoutFit(tokens: Token[], width: number, height: number, measure: Measure): EffectLayout {
+  let lay = layoutAt(tokens, width, height, EFFECT_SIZES[0], measure);
+  for (const pt of EFFECT_SIZES.slice(1)) {
+    if (lay.fits) break;
+    lay = layoutAt(tokens, width, height, pt, measure);
+  }
+  return lay;
+}
+
+// ── Drawing ─────────────────────────────────────────────────────────────────
+
+/** Writes every effect box of a built card into its SVG. Returns the size used in each box. */
+export function drawEffects(r: SvgRenderer, card: BuiltCard, pieces: PieceTable, ref: Record<string, KeywordEffectRef | undefined>, measure: Measure): EffectLayout[] {
+  const tokens = new EffectTokens(pieces, ref);
+  const draft = card.card;
+  const color = card.style === 'standard' ? '#000000' : '#ffffff';
+  const slots = [...card.effectSlots].sort((a, b) => a.box.y - b.box.y);
+  const inherit = slots.find((s) => s.name === 'INHERIT EFFECT');
+  const content: [CardEffect[] | null | undefined, KeywordEffect[] | null | undefined][] = [];
+  // A Criatura Enlace prints its link effect in the upper box.
+  if (draft.enlace) content.push([draft.formationEffects, draft.formationKeywordEffects]);
+  content.push([draft.effects, draft.keywordEffects]);
+  const out: EffectLayout[] = [];
+  slots
+    .filter((s) => s !== inherit)
+    .forEach((slot, i) => {
+      const [e, k] = content[i] ?? [];
+      out.push(drawSlot(r, slot, tokens.slot(e, k), color, pieces, measure));
+    });
+  if (inherit) out.push(drawSlot(r, inherit, tokens.slot(draft.inheritEffects, draft.inheritKeywordEffects), color, pieces, measure));
+  return out;
+}
+
+function drawSlot(r: SvgRenderer, slot: EffectSlot, tokens: Token[], color: string, pieces: PieceTable, measure: Measure): EffectLayout {
+  const g = svgEl('g', { 'data-name': `effect:${slot.name}` }, r.svg);
+  const lay = layoutFit(tokens, slot.box.w, slot.box.h, measure);
+  const px = lay.px;
+  let y = slot.box.y;
+  lay.lines.forEach((line, i) => {
+    const baseline = y + px * 0.92;
+    for (const { tok, x } of line) {
+      const X = slot.box.x + x;
+      if (tok.t === 'piece') drawPiece(r, g, tok, X, baseline, px, color !== '#000000', pieces, measure);
+      else if (tok.t === 'ultimate') drawUltimate(g, slot.box, y, px, measure);
+      else if (tok.t === 'word') {
+        svgEl('text', { x: X, y: baseline, fill: color, 'font-family': FONT, 'font-weight': 700, 'font-style': tok.italic ? 'italic' : 'normal', 'font-size': px }, g).textContent = tok.text;
+      }
+    }
+    y += lay.lineHeights[i];
+  });
+  return lay;
+}
+
+function pieceStyle(pieces: PieceTable, kind: PieceKind, label: string): PieceStyle | null {
+  const table = { timing: pieces.timings, condition: pieces.conditions, keyword: pieces.keywords }[kind];
+  return table[pieceKey(label)] ?? table[pieceKey(label.replace(/\s*\d+$/, ''))] ?? null;
+}
+
+function drawPiece(r: SvgRenderer, g: Element, tok: Extract<Token, { t: 'piece' }>, x: number, baseline: number, px: number, dark: boolean, pieces: PieceTable, measure: Measure): void {
+  const { w, h } = pieceMetrics(tok.kind, tok.label, px, measure);
+  let st: PieceStyle = pieceStyle(pieces, tok.kind, tok.label) ?? { label: tok.label, fill: [[0, '#555555'], [1, '#777777']], text: '#ffffff', textStroke: null, textStrokeSize: null };
+  // Over the art (semi / full art) the usage-limit piece has yellow text.
+  if (dark && tok.kind === 'condition' && pieceKey(tok.label) === 'una vez por turno') st = { ...st, text: '#f9f713' };
+  const y = baseline - px * 0.78 - (h - px) / 2 + px * 0.04;
+  const grad = r.id('pg');
+  const lg = svgEl('linearGradient', { id: grad, gradientUnits: 'userSpaceOnUse', x1: x, y1: y + h, x2: x, y2: y }, r.defs);
+  for (const [at, c] of st.fill) svgEl('stop', { offset: at, 'stop-color': c }, lg);
+  const paint = `url(#${grad})`;
+  if (tok.kind === 'timing') {
+    const d = `M${x} ${y + h / 2}L${x + h / 2} ${y}L${x + w - h / 2} ${y}L${x + w} ${y + h / 2}L${x + w - h / 2} ${y + h}L${x + h / 2} ${y + h}Z`;
+    svgEl('path', { d, fill: paint }, g);
+  } else if (tok.kind === 'condition') {
+    const b = px * 0.07;
+    svgEl('rect', { x: x - b, y: y - b, width: w + 2 * b, height: h + 2 * b, rx: px * 0.17, fill: st.border || '#ffffff' }, g);
+    svgEl('rect', { x, y, width: w, height: h, rx: px * 0.15, fill: paint }, g);
+  } else {
+    svgEl('rect', { x, y, width: w, height: h, rx: px * 0.17, fill: paint }, g);
+  }
+  svgEl('text', {
+    x: x + w / 2, y: baseline, 'text-anchor': 'middle', fill: st.text || '#ffffff', 'font-family': FONT, 'font-weight': 700, 'font-size': px,
+    stroke: st.textStroke, 'stroke-width': st.textStroke ? (st.textStrokeSize || 1) * 2 : null, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+  }, g).textContent = tok.label;
+}
+
+function drawUltimate(g: Element, box: EffectSlot['box'], y: number, px: number, measure: Measure): void {
+  const mid = y + px * 0.6;
+  const label = 'Efecto Definitivo';
+  const tw = measure(label, effectFont(px, true)) + px * 1.4;
+  const cx = box.x + box.w / 2;
+  const h = px * 1.2;
+  const purple = '#5b3b6e';
+  svgEl('rect', { x: box.x + px * 0.3, y: mid - px * 0.09, width: box.w - px * 0.6, height: px * 0.18, rx: px * 0.09, fill: purple }, g);
+  for (const ex of [box.x + px * 0.3, box.x + box.w - px * 0.3]) {
+    svgEl('path', { d: `M${ex - px * 0.35} ${mid}L${ex} ${mid - px * 0.35}L${ex + px * 0.35} ${mid}L${ex} ${mid + px * 0.35}Z`, fill: purple }, g);
+  }
+  const l = cx - tw / 2;
+  const rr = cx + tw / 2;
+  svgEl('path', { d: `M${l} ${mid}L${l + h / 2} ${mid - h / 2}L${rr - h / 2} ${mid - h / 2}L${rr} ${mid}L${rr - h / 2} ${mid + h / 2}L${l + h / 2} ${mid + h / 2}Z`, fill: purple }, g);
+  svgEl('text', { x: cx, y: mid + px * 0.35, 'text-anchor': 'middle', fill: '#ebc868', 'font-family': FONT, 'font-weight': 700, 'font-style': 'italic', 'font-size': px }, g).textContent = label;
+}

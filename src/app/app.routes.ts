@@ -178,6 +178,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/ruling/ruling.page').then((m) => m.RulingPage),
       },
       {
+        path: 'card-editor',
+        title: 'Editor de cartas · ERAS',
+        canMatch: [permissionGuard('manage_cards')],
+        loadComponent: () => import('@features/admin/card-editor/card-editor.page').then((m) => m.CardEditorPage),
+      },
+      {
         path: 'card-meta',
         title: 'Metadatos de cartas · ERAS',
         canMatch: [permissionGuard('manage_cards')],

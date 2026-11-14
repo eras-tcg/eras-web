@@ -28,6 +28,7 @@ export const ADMIN_TOOLS: AdminTool[] = [
   { label: 'Roles', description: 'Roles y los permisos que otorgan', route: '/roles', icon: 'shield', group: 'Cuentas y acceso', permissions: ['manage_roles'] },
   { label: 'Permisos', description: 'Catálogo de permisos', route: '/permissions', icon: 'key', group: 'Cuentas y acceso', permissions: ['manage_permissions', 'read_permissions'] },
   { label: 'Datos de referencia', description: 'Clases, instancias, tags y efectos keyword', route: '/card-ref', icon: 'list', group: 'Cartas', permissions: ['manage_cards'] },
+  { label: 'Editor de cartas', description: 'Arma la carta desde sus datos y exporta PNG o archivos de imprenta', route: '/card-editor', icon: 'edit', group: 'Cartas', permissions: ['manage_cards'] },
   { label: 'Metadatos de cartas', description: 'Metadatos sin imagen y asignación de imágenes', route: '/card-meta', icon: 'cards', group: 'Cartas', permissions: ['manage_cards'] },
   { label: 'Gestionar cambios', description: 'Imágenes de cartas pendientes de aplicar', route: '/updates-manager', icon: 'refresh', group: 'Cartas', permissions: ['manage_cards'] },
   { label: 'Registro de partidas', description: 'Partidas jugadas, notas y estadísticas', route: '/games-manager', icon: 'trophy', group: 'Partidas', permissions: ['manage_decks'] },

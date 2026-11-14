@@ -23,6 +23,10 @@ export interface CardDraft {
   formationEffects?: CardEffect[] | null;
   formationKeywordEffects?: KeywordEffect[] | null;
   enlace?: boolean | null;
+  /** Link arrows printed on the card ("left", "right"). */
+  arrows?: string[] | null;
+  /** Inherit (HER) frame even before the card has inherit effects. */
+  her?: boolean | null;
   specialCost?: number | null;
   specialSummonKind?: string | null;
   requirement?: string | null;
@@ -163,7 +167,7 @@ export function colorsOf(card: CardDraft): string[] {
 /** Which prototype draws the card. */
 export function templateFor(card: CardDraft): string {
   const type = card.cardType || 'creature';
-  const her = has(card.inheritEffects) || has(card.inheritKeywordEffects);
+  const her = card.her ?? (has(card.inheritEffects) || has(card.inheritKeywordEffects));
   const white = colorsOf(card).join('') === 'W';
   if (type === 'creature') {
     if (card.enlace) return 'CRIATURA ENLACE - PROTOTIPO';
@@ -475,6 +479,15 @@ export function buildCard(
       setText(target, lines.join('\r'));
       target.text!.runs[0].size = size;
     }
+  }
+
+  // Link arrows: only the ones the card has.
+  if (card.enlace) {
+    const arrows = card.arrows ?? [];
+    walk(spec.layers, (n) => {
+      if (n.name === 'LA') n.visible = arrows.includes('left');
+      if (n.name === 'RA') n.visible = arrows.includes('right');
+    });
   }
 
   // Starter tag, structure / utility icon.

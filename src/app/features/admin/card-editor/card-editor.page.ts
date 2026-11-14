@@ -22,13 +22,23 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
-import { SplitComponent } from '@ui/layout/split/split.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ChipComponent } from '@ui/primitives/chip/chip.component';
-import { MetaFieldsComponent } from '../../cards/meta-form/meta-fields.component';
+import { CARD_COLORS, COLOR_LABELS } from '@data/cards/card.model';
+import { CardHotspotsComponent } from './card-hotspots.component';
+import { EffectEditorComponent } from './effect-editor.component';
+import { Line, effectsToLines, linesToEffects, pieceCatalog } from './effect-text';
+import { Zone, cardZones } from './render/card-zones';
 import { feedbackState } from '../admin-feedback';
-import { draftFromForm, exportName } from './card-editor-rules';
+import {
+  CARD_KINDS,
+  CardKind,
+  applyCardKind,
+  cardKindOf,
+  draftFromForm,
+  exportName,
+} from './card-editor-rules';
 import { FRAME_STYLE_LABELS, FrameStyle, buildCard } from './render/card-build';
 import {
   FontSlot,
@@ -55,14 +65,14 @@ import { ColorLut, convertCanvas } from './render/color-lut';
   selector: 'eras-card-editor-page',
   imports: [
     PageComponent,
-    SplitComponent,
     StackComponent,
     SectionHeaderComponent,
     FormFieldComponent,
     AlertComponent,
     ButtonComponent,
     ChipComponent,
-    MetaFieldsComponent,
+    CardHotspotsComponent,
+    EffectEditorComponent,
   ],
   template: `
     <eras-page title="Editor de cartas" width="wide">
@@ -95,9 +105,9 @@ import { ColorLut, convertCanvas } from './render/color-lut';
         </eras-alert>
       }
 
-      <eras-split aside="26rem">
-        <div split-aside class="preview-pane">
-          <eras-stack [gap]="3">
+      <div class="layout">
+        <div class="card-pane">
+          <div class="card-wrap">
             <div
               #preview
               class="preview"
@@ -107,93 +117,47 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               (pointerup)="dragEnd()"
               (pointercancel)="dragEnd()"
             ></div>
-            @if (sizes().length) {
-              <span class="note">Texto de efecto: {{ sizes() }}</span>
-            }
-
-            <eras-section-header title="Arte y marco" />
-            <eras-stack direction="row" [gap]="1" wrap>
-              @for (s of styles; track s) {
-                <button erasChip [selected]="style() === s" (click)="style.set(s)">
-                  {{ styleLabels[s] }}
-                </button>
-              }
-            </eras-stack>
-            <eras-form-field label="Imagen">
-              <input type="file" accept="image/*" (change)="pickArt($event)" />
-            </eras-form-field>
-            @if (art(); as a) {
-              <eras-form-field label="Zoom">
-                <input
-                  type="range"
-                  min="1"
-                  max="4"
-                  step="0.01"
-                  [value]="a.scale"
-                  (input)="zoom($any($event.target).valueAsNumber)"
+            <eras-card-hotspots
+              [zones]="zones()"
+              [(form)]="form"
+              [classes]="classes()"
+              (effectZone)="editEffects($event)"
+            />
+            @if (effectZone(); as z) {
+              @if (catalog(); as cat) {
+                <eras-effect-editor
+                  [zone]="z"
+                  [lines]="effectLines()"
+                  [catalog]="cat"
+                  [pieces]="pieces()!"
+                  (changed)="applyEffects($event)"
+                  (closed)="closeEffects($event)"
                 />
-              </eras-form-field>
-              <span class="note">Arrastra la vista previa para mover el arte.</span>
-              <eras-stack direction="row" [gap]="2">
-                <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
-                  Centrar
-                </button>
-                <button erasButton variant="ghost" size="sm" type="button" (click)="art.set(null)">
-                  Quitar arte
-                </button>
-              </eras-stack>
+              }
             }
-
-            <eras-section-header title="Exportar" />
-            <eras-stack direction="row" [gap]="2" wrap>
-              <button
-                erasButton
-                variant="secondary"
-                type="button"
-                [disabled]="!ready() || exporting()"
-                (click)="exportPng()"
-              >
-                PNG
-              </button>
-              <button
-                erasButton
-                variant="secondary"
-                type="button"
-                [disabled]="!ready() || exporting()"
-                (click)="exportTiff()"
-              >
-                TIFF CMYK
-              </button>
-              <button
-                erasButton
-                variant="secondary"
-                type="button"
-                [disabled]="!ready() || exporting()"
-                (click)="exportPdf()"
-              >
-                PDF CMYK
-              </button>
-            </eras-stack>
-          </eras-stack>
+          </div>
+          @if (sizes().length) {
+            <span class="note">Texto de efecto: {{ sizes() }}</span>
+          }
         </div>
 
-        <eras-stack [gap]="4">
-          <eras-stack direction="row" [gap]="2" align="end" wrap>
-            <eras-form-field label="Abrir carta">
-              <input
-                type="search"
-                list="card-editor-cards"
-                placeholder="Nombre…"
-                [value]="query()"
-                (change)="open($any($event.target).value)"
-                (input)="query.set($any($event.target).value)"
-              />
-              <datalist id="card-editor-cards">
-                @for (c of matches(); track c.key) {
-                  <option [value]="c.key">{{ c.label }}</option>
-                }
-              </datalist>
-            </eras-form-field>
+        <eras-stack [gap]="3" class="panel">
+          <eras-form-field label="Abrir carta">
+            <input
+              type="search"
+              list="card-editor-cards"
+              placeholder="Nombre…"
+              [value]="query()"
+              (change)="open($any($event.target).value)"
+              (input)="query.set($any($event.target).value)"
+            />
+            <datalist id="card-editor-cards">
+              @for (c of matches(); track c.key) {
+                <option [value]="c.key">{{ c.label }}</option>
+              }
+            </datalist>
+          </eras-form-field>
+          <eras-stack direction="row" [gap]="2" wrap>
             <button erasButton variant="ghost" type="button" (click)="newCard()">
               Carta nueva
             </button>
@@ -210,15 +174,136 @@ import { ColorLut, convertCanvas } from './render/color-lut';
           @for (e of errors(); track e) {
             <eras-alert tone="danger">{{ e }}</eras-alert>
           }
-          <eras-meta-fields [(form)]="form" [refData]="store.ref()" />
+
+          <eras-section-header title="Estructura" />
+          <eras-form-field label="Tipo de carta">
+            <select (change)="setKind($any($event.target).value)">
+              @for (k of kinds; track k) {
+                <option [value]="k" [selected]="k === kind()">{{ kindLabels[k] }}</option>
+              }
+            </select>
+          </eras-form-field>
+          @if (form().enlace) {
+            <eras-stack direction="row" [gap]="1" wrap>
+              @for (a of arrowOptions; track a.key) {
+                <button
+                  erasChip
+                  [selected]="form().arrows.includes(a.key)"
+                  (click)="toggleArrow(a.key)"
+                >
+                  {{ a.label }}
+                </button>
+              }
+            </eras-stack>
+          }
+          <span class="label">Colores</span>
+          <eras-stack direction="row" [gap]="1" wrap>
+            @for (c of colors; track c) {
+              <button erasChip [selected]="form().colors.includes(c)" (click)="toggleColor(c)">
+                {{ colorLabels[c] }}
+              </button>
+            }
+            @if (form().colors.length === 2) {
+              <button erasChip (click)="swapColors()">Invertir colores</button>
+            }
+            <button erasChip [selected]="form().starter" (click)="toggleStarter()">
+              Iniciador
+            </button>
+          </eras-stack>
+          <span class="label">Marco</span>
+          <eras-stack direction="row" [gap]="1" wrap>
+            @for (s of styles; track s) {
+              <button erasChip [selected]="style() === s" (click)="style.set(s)">
+                {{ styleLabels[s] }}
+              </button>
+            }
+          </eras-stack>
+
+          <eras-section-header title="Arte" />
+          <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
+          @if (art(); as a) {
+            <eras-form-field label="Zoom">
+              <input
+                type="range"
+                min="1"
+                max="4"
+                step="0.01"
+                [value]="a.scale"
+                (input)="zoom($any($event.target).valueAsNumber)"
+              />
+            </eras-form-field>
+            <eras-stack direction="row" [gap]="2">
+              <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
+                Centrar
+              </button>
+              <button erasButton variant="ghost" size="sm" type="button" (click)="art.set(null)">
+                Quitar arte
+              </button>
+            </eras-stack>
+          }
+
+          <eras-section-header title="Exportar" />
+          <eras-stack direction="row" [gap]="2" wrap>
+            <button
+              erasButton
+              variant="secondary"
+              type="button"
+              [disabled]="!ready() || exporting()"
+              (click)="exportPng()"
+            >
+              PNG
+            </button>
+            <button
+              erasButton
+              variant="secondary"
+              type="button"
+              [disabled]="!ready() || exporting()"
+              (click)="exportTiff()"
+            >
+              TIFF CMYK
+            </button>
+            <button
+              erasButton
+              variant="secondary"
+              type="button"
+              [disabled]="!ready() || exporting()"
+              (click)="exportPdf()"
+            >
+              PDF CMYK
+            </button>
+          </eras-stack>
         </eras-stack>
-      </eras-split>
+      </div>
     </eras-page>
   `,
   styles: `
-    .preview-pane {
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 22rem;
+      gap: var(--space-5);
+      align-items: start;
+    }
+    @media (max-width: 56rem) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .card-pane {
+      display: grid;
+      justify-items: center;
+      gap: var(--space-2);
+    }
+    .card-wrap {
+      position: relative;
+      inline-size: min(100%, 34rem);
+    }
+    .panel {
       position: sticky;
       top: var(--space-4);
+    }
+    .label {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
     }
     .preview {
       width: 100%;
@@ -269,6 +354,22 @@ export class CardEditorPage {
   protected readonly errors = signal<string[]>([]);
   protected readonly dragging = signal(false);
   protected readonly sizes = signal('');
+  /** Inherit (HER) frame chosen before the card has inherit effects. */
+  private readonly her = signal(false);
+  protected readonly zones = signal<Zone[]>([]);
+  protected readonly effectZone = signal<Zone | null>(null);
+  protected readonly kinds = Object.keys(CARD_KINDS) as CardKind[];
+  protected readonly kindLabels = CARD_KINDS;
+  protected readonly kind = computed(() =>
+    cardKindOf(this.form(), this.her() || this.form().inheritEffects.length > 0),
+  );
+  protected readonly colors = CARD_COLORS;
+  protected readonly colorLabels = COLOR_LABELS;
+  protected readonly arrowOptions = [
+    { key: 'left', label: 'Flecha izquierda' },
+    { key: 'right', label: 'Flecha derecha' },
+  ];
+  protected readonly classes = computed(() => [...(this.store.ref()?.classes ?? [])].sort());
 
   private readonly templates = signal<Record<string, CardSpec> | null>(null);
   private readonly pieces = signal<PieceTable | null>(null);
@@ -369,8 +470,13 @@ export class CardEditorPage {
     const host = this.preview().nativeElement;
     const lut = this.lut();
     if (!templates || !pieces || css === null || !lut) return;
-    const draft = { ...draftFromForm(this.form()), frameStyle: this.style(), art: this.art() };
+    const draft = {
+      ...draftFromForm(this.form(), this.her()),
+      frameStyle: this.style(),
+      art: this.art(),
+    };
     const built = buildCard(draft, templates, this.measure);
+    this.zones.set(cardZones(built, this.measure));
     const r = new SvgRenderer(built, css);
     r.render();
     const layouts = drawEffects(
@@ -403,13 +509,84 @@ export class CardEditorPage {
   protected open(key: string): void {
     const hit = this.openable().find((m) => m.key === key);
     if (!hit) return;
+    this.effectZone.set(null);
     this.form.set(metaFormFor(hit.card));
+    this.her.set(false);
     this.metaId.set(hit.card.meta?.id ?? null);
     this.errors.set([]);
     this.fb.clear();
   }
 
+  protected setKind(kind: CardKind): void {
+    const next = applyCardKind(this.form(), kind);
+    this.form.set(next.form);
+    this.her.set(next.her);
+  }
+
+  protected toggleColor(c: string): void {
+    this.form.update((f) => ({
+      ...f,
+      colors: f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c],
+    }));
+  }
+
+  protected swapColors(): void {
+    this.form.update((f) => ({ ...f, colors: [...f.colors].reverse() }));
+  }
+
+  protected toggleStarter(): void {
+    this.form.update((f) => ({ ...f, starter: !f.starter }));
+  }
+
+  protected toggleArrow(a: string): void {
+    this.form.update((f) => ({
+      ...f,
+      arrows: f.arrows.includes(a) ? f.arrows.filter((x) => x !== a) : [...f.arrows, a],
+    }));
+  }
+
+  /** Labels the effect editor turns into pieces. */
+  protected readonly catalog = computed(() => {
+    const pieces = this.pieces();
+    return pieces
+      ? pieceCatalog(pieces, Object.keys(this.store.ref()?.keywordEffects ?? {}))
+      : null;
+  });
+  /** The effect lists each effect box edits. */
+  private readonly effectLists = {
+    effects: ['effects', 'keywordEffects'],
+    inheritEffects: ['inheritEffects', 'inheritKeywordEffects'],
+    formationEffects: ['formationEffects', 'formationKeywordEffects'],
+  } as const;
+  /** Lines of the box being edited, taken once when it opens. */
+  protected readonly effectLines = signal<Line[]>([]);
+
+  /** An effect box was clicked: its in-card editor opens over it. */
+  protected editEffects(zone: Zone): void {
+    const cat = this.catalog();
+    if (!cat) return;
+    const [e, k] = this.effectLists[zone.key as keyof typeof this.effectLists];
+    const f = this.form();
+    this.effectLines.set(effectsToLines(f[e], f[k], cat));
+    this.effectZone.set(zone);
+  }
+
+  protected applyEffects(lines: Line[]): void {
+    const zone = this.effectZone();
+    if (!zone) return;
+    const [e, k] = this.effectLists[zone.key as keyof typeof this.effectLists];
+    const { effects, keywords } = linesToEffects(lines);
+    this.form.update((f) => ({ ...f, [e]: effects, [k]: keywords }));
+  }
+
+  protected closeEffects(lines: Line[]): void {
+    this.applyEffects(lines);
+    this.effectZone.set(null);
+  }
+
   protected newCard(): void {
+    this.effectZone.set(null);
+    this.her.set(false);
     this.form.set(blankMeta(this.form().edition));
     this.metaId.set(null);
     this.query.set('');

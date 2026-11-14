@@ -8,6 +8,8 @@ export type ZoneKey =
   | 'level'
   | 'name'
   | 'classes'
+  | 'costToggle'
+  | 'strengthToggle'
   | 'starter'
   | 'code'
   | 'specialAdd'
@@ -71,11 +73,19 @@ export function cardZones(card: BuiltCard, measure: Measure): Zone[] {
     if (rect) zones.push({ key, rect });
   };
 
+  // Cost and strength: the value when shown (with a small switch to leave it out), else the switch alone.
   const cost = findAny(L, 'COST');
-  if (cost?.text) add('cost', around(cost, 34, 56, 22));
+  if (cost?.text) {
+    const r = around(cost, 34, 56, 22);
+    if (!card.card.noCost) add('cost', r);
+    add('costToggle', card.card.noCost ? r : [r[2] - 6, r[1] - 4, r[2] + 16, r[1] + 18]);
+  }
   const strength = findAny(L, 'STRENGHT');
-  if (card.card.cardType === 'creature' && strength?.text)
-    add('strength', around(strength, 38, 56, 22));
+  if (card.card.cardType === 'creature' && strength?.text) {
+    const r = around(strength, 38, 56, 22);
+    if (!card.card.noStrength) add('strength', r);
+    add('strengthToggle', card.card.noStrength ? r : [r[0] - 16, r[1] - 4, r[0] + 6, r[1] + 18]);
+  }
   const level = findAny(L, 'LEVEL');
   if (level?.text) add('level', around(level, 44, 58, 32));
 

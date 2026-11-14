@@ -25,6 +25,11 @@ export interface CardDraft {
   enlace?: boolean | null;
   /** Link arrows printed on the card ("left", "right"). */
   arrows?: string[] | null;
+  /** No cost / no strength printed: their hexagon or rings are left out. */
+  noCost?: boolean | null;
+  noStrength?: boolean | null;
+  /** Gold border around the card. */
+  goldBorder?: boolean | null;
   /** Inherit (HER) frame even before the card has inherit effects. */
   her?: boolean | null;
   specialCost?: number | null;
@@ -376,6 +381,16 @@ function widestNode(nodes: SpecNode[], name: string): SpecNode | null {
   return best;
 }
 
+/** Moves every x y pair of an absolute path (M, L, C). */
+function mapPoints(d: string, fn: (x: number, y: number) => [number, number]): string {
+  const nums = d.match(/-?\d+(?:\.\d+)?/g) ?? [];
+  const out: number[] = [];
+  for (let i = 0; i + 1 < nums.length; i += 2)
+    out.push(...fn(Number(nums[i]), Number(nums[i + 1])));
+  let k = 0;
+  return d.replace(/-?\d+(?:\.\d+)?/g, () => String(Math.round(out[k++] * 100) / 100));
+}
+
 /** A black rectangle node (card pixels). */
 function rectNode(name: string, x0: number, y0: number, x1: number, y1: number): SpecNode {
   return {
@@ -447,7 +462,7 @@ export function buildCard(
 
   // Frame: standard = NONFULLART; semi = semi frame over the full-art pieces (translucent boxes); full = full-art pieces.
   walk(spec.layers, (n) => {
-    if (n.name === 'GOLD BORDER') n.visible = false;
+    if (n.name === 'GOLD BORDER') n.visible = !!card.goldBorder;
     if (n.name !== 'CARD-STRUCTURE' || !n.children) return;
     for (const c of n.children) {
       if (!Object.values(STYLE_GROUP).includes(c.name)) continue;
@@ -674,6 +689,50 @@ export function buildCard(
     }
   }
 
+  // Gold border on link cards: the prototype carries the plain creature's one. Its card type tab is 31 px wider
+  // on each side and its level circle sits 17.5 px lower, so the border's points follow them.
+  if (card.enlace && card.goldBorder) {
+    const gold = first('GOLD BORDER');
+    const linkPoint = (x: number, y: number): [number, number] => {
+      if (y < 46) {
+        if (x >= 270 && x < 372) return [x - 31, y];
+        if (x >= 372 && x <= 475) return [x + 30, y];
+      }
+      if (x < 30 && y > 900 && y < 960) return [x, y + 17];
+      if (y > 1005 && x <= 85) return [100, y];
+      return [x, y];
+    };
+    if (gold?.children)
+      walk(gold.children, (n) => {
+        if (n.children) return;
+        if (n.name === 'Elipse 9') {
+          n.paths = n.paths?.map((sp) => ({
+            ...sp,
+            d: mapPoints(sp.d, (x, y) => [x - 1, y + 17.5]),
+          }));
+          n.bbox = [n.bbox[0] - 1, n.bbox[1] + 17.5, n.bbox[2] - 1, n.bbox[3] + 17.5];
+          return;
+        }
+        if (n.paths) n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, linkPoint) }));
+        if (n.text) {
+          // "Criatura Enlace" is nearly as wide as the tab: a little smaller so the gold sides clear it.
+          n.text.transform[4] = 372;
+          n.text.runs = n.text.runs.map((r) => ({ ...r, size: r.size * 0.86 }));
+        }
+        const [a, b] = linkPoint(n.bbox[0], n.bbox[1]);
+        const [c, d] = linkPoint(n.bbox[2], n.bbox[3]);
+        n.bbox = [Math.min(a, n.bbox[0]), b, Math.max(c, n.bbox[2]), d];
+      });
+  }
+
+  // Cost and strength can be left out (cards with no normal cost, creatures with no strength).
+  const COST_PARTS = /^(COST|COST FRAME|COST BACKGROUND|Pol.gono 1 copia)$/;
+  const STRENGTH_PARTS = /^(STRENGHT|strengthfigure|BACK TR|BACK TR copia)$/;
+  walk(spec.layers, (n) => {
+    if (card.noCost && COST_PARTS.test(n.name)) n.visible = false;
+    if (card.noStrength && STRENGTH_PARTS.test(n.name)) n.visible = false;
+  });
+
   // Starter tag, structure / utility icon.
   const ini = first('INICIADOR');
   if (ini) {
@@ -700,8 +759,18 @@ export function buildCard(
     onPrimary,
   );
   const typeLabel = card.enlace ? 'Criatura Enlace' : (TYPE_LABEL[card.cardType ?? ''] ?? '');
-  for (const name of ['CARD-TYPE', 'CARD-TYPE copia 2'])
+  for (const name of ['CARD-TYPE', 'CARD-TYPE copia', 'CARD-TYPE copia 2'])
     for (const n of byName.get(name) ?? []) setText(n, typeLabel);
+  // With the gold border its own label (inside the gold tab) is the only one shown.
+  if (card.goldBorder)
+    walk(spec.layers, (n, p) => {
+      if (
+        /^CARD-TYPE( copia 2)?$/.test(n.name) &&
+        !p.includes('GOLD BORDER') &&
+        first('GOLD BORDER')
+      )
+        n.visible = false;
+    });
 
   const ed = first('EDITION');
   setText(ed, `${cardCode(card)} ${card.rarity || ''}`.trim(), onPrimary);

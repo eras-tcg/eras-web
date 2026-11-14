@@ -135,6 +135,9 @@ import { ColorLut, convertCanvas } from './render/color-lut';
                 [zones]="zones()"
                 [(form)]="form"
                 [classes]="classes()"
+                [noCost]="noCost()"
+                [noStrength]="noStrength()"
+                (toggled)="toggleValue($event)"
                 (effectZone)="editEffects($event)"
               />
             }
@@ -221,6 +224,9 @@ import { ColorLut, convertCanvas } from './render/color-lut';
             @if (form().colors.length === 2) {
               <button erasChip (click)="swapColors()">Invertir colores</button>
             }
+            <button erasChip [selected]="goldBorder()" (click)="goldBorder.set(!goldBorder())">
+              Borde dorado
+            </button>
           </eras-stack>
           <span class="label">Marco</span>
           <eras-stack direction="row" [gap]="1" wrap>
@@ -391,6 +397,10 @@ export class CardEditorPage {
   protected readonly sizes = signal('');
   /** Inherit (HER) frame chosen before the card has inherit effects. */
   private readonly her = signal(false);
+  /** Cost / strength left out of the card (saved as empty values). */
+  protected readonly noCost = signal(false);
+  protected readonly noStrength = signal(false);
+  protected readonly goldBorder = signal(false);
   protected readonly zones = signal<Zone[]>([]);
   protected readonly effectZone = signal<Zone | null>(null);
   protected readonly kinds = Object.keys(CARD_KINDS) as CardKind[];
@@ -507,6 +517,9 @@ export class CardEditorPage {
     if (!templates || !pieces || css === null || !lut) return;
     const draft = {
       ...draftFromForm(this.form(), this.her()),
+      noCost: this.noCost(),
+      noStrength: this.noStrength(),
+      goldBorder: this.goldBorder(),
       frameStyle: this.style(),
       art: this.art(),
     };
@@ -547,9 +560,18 @@ export class CardEditorPage {
     this.effectZone.set(null);
     this.form.set(metaFormFor(hit.card));
     this.her.set(false);
+    this.noCost.set(this.form().cost === null);
+    this.noStrength.set(this.form().cardType === 'creature' && this.form().strength === null);
     this.metaId.set(hit.card.meta?.id ?? null);
     this.errors.set([]);
     this.fb.clear();
+  }
+
+  protected toggleValue(which: 'cost' | 'strength'): void {
+    const flag = which === 'cost' ? this.noCost : this.noStrength;
+    flag.set(!flag());
+    // A value left out is saved empty.
+    if (flag()) this.form.update((f) => ({ ...f, [which]: null }));
   }
 
   protected setKind(kind: CardKind): void {
@@ -622,6 +644,9 @@ export class CardEditorPage {
   protected newCard(): void {
     this.effectZone.set(null);
     this.her.set(false);
+    this.noCost.set(false);
+    this.noStrength.set(false);
+    this.goldBorder.set(false);
     this.form.set(blankMeta(this.form().edition));
     this.metaId.set(null);
     this.query.set('');

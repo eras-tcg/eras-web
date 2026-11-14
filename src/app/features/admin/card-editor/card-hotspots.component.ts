@@ -42,7 +42,8 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
         class="zone"
         [class.add]="z.key === 'specialAdd'"
         [class.remove]="z.key === 'specialRemove'"
-        [class.starter]="z.key === 'starter'"
+        [class.starter]="z.key === 'starter' || isOffToggle(z.key)"
+        [class.switch]="isOnToggle(z.key)"
         [class.on]="z.key === 'starter' && form().starter"
         [class.active]="active() === z.key"
         [style.left.%]="(z.rect[0] / W) * 100"
@@ -57,6 +58,10 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
           <span>Añadir invocación especial</span>
         } @else if (z.key === 'starter' && !form().starter) {
           <span class="proposal">Iniciador</span>
+        } @else if (isOffToggle(z.key)) {
+          <span class="proposal">{{ z.key === 'costToggle' ? 'Coste' : 'Fuerza' }}</span>
+        } @else if (isOnToggle(z.key)) {
+          <span aria-hidden="true">×</span>
         } @else if (z.key === 'specialRemove') {
           <span aria-hidden="true">🗑</span>
         }
@@ -233,6 +238,19 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
     .zone.starter:hover .proposal {
       opacity: 0.85;
     }
+    .zone.switch {
+      border-color: var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: var(--font-size-sm);
+      line-height: 1;
+      opacity: 0;
+    }
+    .zone.switch:hover,
+    :host(:hover) .zone.switch {
+      opacity: 1;
+    }
     .zone.add {
       border-color: var(--color-primary);
       background: color-mix(in srgb, var(--color-surface) 80%, transparent);
@@ -319,6 +337,11 @@ export class CardHotspotsComponent {
   readonly form = model.required<MetaForm>();
   /** Known classes, for the suggestions. */
   readonly classes = input<string[]>([]);
+  /** Cost / strength left out (they live in the page, not in the metadata form). */
+  readonly noCost = input(false);
+  readonly noStrength = input(false);
+  /** A cost or strength switch was clicked. */
+  readonly toggled = output<'cost' | 'strength'>();
   /** A click on an effect box (its editor lives in the page). */
   readonly effectZone = output<Zone>();
 
@@ -334,6 +357,8 @@ export class CardHotspotsComponent {
     name: 'Nombre',
     classes: 'Clases',
     starter: 'Iniciador',
+    costToggle: 'Mostrar u ocultar el coste',
+    strengthToggle: 'Mostrar u ocultar la fuerza',
     code: 'Código, rareza y regulación',
     specialAdd: 'Añadir invocación especial',
     specialCost: 'Coste especial',
@@ -363,6 +388,18 @@ export class CardHotspotsComponent {
     });
   }
 
+  protected isOffToggle(key: ZoneKey): boolean {
+    return (
+      (key === 'costToggle' && this.noCost()) || (key === 'strengthToggle' && this.noStrength())
+    );
+  }
+
+  protected isOnToggle(key: ZoneKey): boolean {
+    return (
+      (key === 'costToggle' && !this.noCost()) || (key === 'strengthToggle' && !this.noStrength())
+    );
+  }
+
   protected kindOf(key: ZoneKey): 'number' | 'text' | 'code' | 'kind' | 'classes' | null {
     if (NUMBER_KEYS.includes(key)) return 'number';
     if (key === 'code') return 'code';
@@ -377,6 +414,11 @@ export class CardHotspotsComponent {
     if (key === 'effects' || key === 'inheritEffects' || key === 'formationEffects') {
       this.active.set(null);
       this.effectZone.emit(zone);
+      return;
+    }
+    if (key === 'costToggle' || key === 'strengthToggle') {
+      this.toggled.emit(key === 'costToggle' ? 'cost' : 'strength');
+      this.active.set(null);
       return;
     }
     if (key === 'starter') {

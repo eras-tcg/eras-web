@@ -1,4 +1,5 @@
-import { ArtPlacement, CardSpec, Gradient, Paint, SpecNode } from './spec.model';
+import { bevelMaps } from './bevel';
+import { ArtPlacement, Bevel, CardSpec, Gradient, Paint, SpecNode } from './spec.model';
 
 const NS = 'http://www.w3.org/2000/svg';
 const BIG = { x: -50, y: -50, width: 900, height: 1200 };
@@ -25,6 +26,7 @@ export function svgEl(name: string, attrs: Attrs, parent?: Element): SVGElement 
 /** Renders a spec as an SVG element. Layers are bottom to top; invisible layers are skipped. */
 export class SvgRenderer {
   private uid = 0;
+  private readonly bevels: { g: SVGElement; bevel: Bevel; bbox: number[] }[] = [];
   readonly svg: SVGSVGElement;
   readonly defs: SVGElement;
 
@@ -57,6 +59,90 @@ export class SvgRenderer {
       else if (typeof n.raster === 'string') this.drawRaster(n, g);
       else if (n.paths) this.drawShape(n, g);
       else if (n.text) this.drawText(n, g);
+      if (n.fx?.bevel && !n.children) {
+        // A text's PSD box fits the prototype's text, not the new one: take the whole card width.
+        const bbox = n.text ? [0, n.bbox[1], this.spec.width, n.bbox[3]] : n.bbox;
+        this.bevels.push({ g, bevel: n.fx.bevel, bbox });
+      }
+    }
+  }
+
+  /**
+   * Adds the bevels: each beveled layer is rasterized alone, its highlight and shadow computed from that alpha and
+   * laid over it as images blended like Photoshop (screen / multiply). Runs after render(), before exporting.
+   */
+  async bake(): Promise<void> {
+    const pad = 3;
+    const light = this.spec.light ?? { angle: 120, altitude: 30 };
+    await Promise.all(
+      this.bevels.map(async ({ g, bevel, bbox }) => {
+        const x0 = Math.floor(Math.max(0, bbox[0] - pad));
+        const y0 = Math.floor(Math.max(0, bbox[1] - pad));
+        const w = Math.ceil(Math.min(this.spec.width, bbox[2] + pad)) - x0;
+        const h = Math.ceil(Math.min(this.spec.height, bbox[3] + pad)) - y0;
+        if (w <= 0 || h <= 0) return;
+        const scale = 4;
+        const fine = await this.layerAlpha(g, x0, y0, w, h, scale);
+        const own = !bevel.useGlobal;
+        const maps = bevelMaps(fine, w, h, {
+          size: bevel.size,
+          depth: bevel.depth ?? 100,
+          angle: own ? bevel.angle : light.angle,
+          altitude: own ? (bevel.altitude ?? 30) : light.altitude,
+        }, scale);
+        const alpha = maps.alpha;
+        const layer = (values: Float32Array, color: string, opacity: number, blend: string) => {
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          const ctx = c.getContext('2d')!;
+          const img = ctx.createImageData(w, h);
+          const [r, gg, b] = hexRgb(color);
+          for (let i = 0; i < w * h; i++) {
+            img.data[i * 4] = r;
+            img.data[i * 4 + 1] = gg;
+            img.data[i * 4 + 2] = b;
+            img.data[i * 4 + 3] = Math.round(255 * values[i] * opacity * alpha[i]);
+          }
+          ctx.putImageData(img, 0, 0);
+          svgEl('image', { href: c.toDataURL('image/png'), x: x0, y: y0, width: w, height: h, style: `mix-blend-mode:${blend}` }, g);
+        };
+        layer(maps.hi, bevel.hi || '#ffffff', bevel.hiOpacity, 'screen');
+        layer(maps.sh, bevel.sh || '#000000', bevel.shOpacity, 'multiply');
+      }),
+    );
+  }
+
+  /** Alpha (0..1) of one layer group alone, over a region of the card, drawn `scale` times larger. */
+  private async layerAlpha(g: SVGElement, x0: number, y0: number, w: number, h: number, scale: number): Promise<Float32Array> {
+    const NSX = 'http://www.w3.org/2000/svg';
+    const solo = document.createElementNS(NSX, 'svg');
+    solo.setAttribute('xmlns', NSX);
+    solo.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
+    solo.setAttribute('width', String(w * scale));
+    solo.setAttribute('height', String(h * scale));
+    solo.appendChild(this.defs.cloneNode(true));
+    const copy = g.cloneNode(true) as SVGElement;
+    copy.removeAttribute('opacity');
+    solo.appendChild(copy);
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(solo)], { type: 'image/svg+xml' }));
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      const W = w * scale;
+      const H = h * scale;
+      const c = document.createElement('canvas');
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext('2d', { willReadFrequently: true })!;
+      ctx.drawImage(img, 0, 0, W, H);
+      const data = ctx.getImageData(0, 0, W, H).data;
+      const out = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) out[i] = data[i * 4 + 3] / 255;
+      return out;
+    } finally {
+      URL.revokeObjectURL(url);
     }
   }
 
@@ -149,34 +235,6 @@ export class SvgRenderer {
     if (fx.colorOverlay?.color) area({ fill: fx.colorOverlay.color, 'fill-opacity': fx.colorOverlay.opacity }, g);
     if (fx.gradientOverlay?.gradient) area({ fill: this.gradient(fx.gradientOverlay.gradient, n.bbox), 'fill-opacity': fx.gradientOverlay.opacity }, g);
     for (const s of strokes) stroke(s, g);
-    if (fx.bevel && (n.fill || strokes.length)) {
-      const holder = svgEl('g', { filter: `url(#${this.bevelFilter(fx.bevel)})` }, g);
-      if (n.fill) area({ fill: '#000' }, holder);
-      for (const s of strokes) stroke({ ...s, paint: '#000', op: 1 }, holder);
-    }
-  }
-
-  /** Inner bevel approximation: highlight and shadow along the inside edge, light from the bevel angle. */
-  private bevelFilter(b: NonNullable<SpecNode['fx']>['bevel'] & object): string {
-    const fid = this.id('b');
-    const f = svgEl('filter', { id: fid, x: '-10%', y: '-10%', width: '120%', height: '120%' }, this.defs);
-    const size = Math.max(1, b.size);
-    const a = (b.angle * Math.PI) / 180;
-    const ox = Math.cos(a) * size * 0.6;
-    const oy = -Math.sin(a) * size * 0.6;
-    svgEl('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: size / 2, result: 'blur' }, f);
-    const edge = (name: string, dx: number, dy: number, color: string, opacity: number) => {
-      svgEl('feOffset', { in: 'blur', dx, dy, result: `${name}Off` }, f);
-      svgEl('feComposite', { in: 'SourceAlpha', in2: `${name}Off`, operator: 'out', result: `${name}Edge` }, f);
-      svgEl('feFlood', { 'flood-color': color, 'flood-opacity': opacity, result: `${name}C` }, f);
-      svgEl('feComposite', { in: `${name}C`, in2: `${name}Edge`, operator: 'in', result: name }, f);
-    };
-    edge('hi', -ox, -oy, b.hi || '#fff', b.hiOpacity);
-    edge('sh', ox, oy, b.sh || '#000', b.shOpacity);
-    const m = svgEl('feMerge', {}, f);
-    svgEl('feMergeNode', { in: 'hi' }, m);
-    svgEl('feMergeNode', { in: 'sh' }, m);
-    return fid;
   }
 
   private drawText(n: SpecNode, parent: Element): void {
@@ -191,9 +249,10 @@ export class SvgRenderer {
     let x = tx;
     let y = ty;
     if (t.box) {
+      // The box starts at the text's origin; Photoshop keeps an unused offset in its left/top values.
       const [l, , r] = t.box;
-      x = tx + (anchor === 'middle' ? ((l + r) / 2) * xx : anchor === 'end' ? r * xx : l * xx);
-      y = ty + size * 0.75;
+      x = tx + (anchor === 'middle' ? ((r - l) / 2) * xx : anchor === 'end' ? (r - l) * xx : 0);
+      y = ty + size * 0.73;
     }
     const fx = n.fx ?? {};
     const te = svgEl('text', {
@@ -201,11 +260,18 @@ export class SvgRenderer {
       'text-anchor': anchor, 'letter-spacing': run?.tracking ? (run.tracking / 1000) * size : null,
       stroke: fx.stroke?.color ?? null, 'stroke-width': fx.stroke ? fx.stroke.size * (/OutF|InsF/.test(fx.stroke.pos) ? 2 : 1) : null,
       'paint-order': fx.stroke ? 'stroke' : null, 'stroke-linejoin': fx.stroke ? 'round' : null,
+      // Horizontal scale of the PSD text (width over height), anchored at the text's x.
+      transform: Math.abs(xx / yy - 1) > 0.005 ? `translate(${x} 0) scale(${xx / yy} 1) translate(${-x} 0)` : null,
     }, parent);
     lines.forEach((ln, i) => {
       svgEl('tspan', { x, dy: i ? lead : 0 }, te).textContent = ln;
     });
   }
+}
+
+function hexRgb(hex: string): [number, number, number] {
+  const v = parseInt(hex.slice(1), 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
 }
 
 function alphaAt(g: Gradient, t: number): number {

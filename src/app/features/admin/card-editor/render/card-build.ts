@@ -71,6 +71,8 @@ export const PALETTE: Record<string, Swatch> = {
 };
 
 const KIND_GROUP: Record<string, string> = { materialization: 'Materialization', promotion: 'Promotion', ritual: 'Sacrifice', evolution: 'Evolve' };
+/** The special summon box takes the color of its kind, not the card's. */
+const KIND_COLOR: Record<string, string> = { materialization: 'B', promotion: 'R', ritual: 'P', evolution: 'G' };
 const KIND_LABEL: Record<string, string> = { materialization: 'Materialización', promotion: 'Ascenso', ritual: 'Ritual', evolution: 'Evolución' };
 const TYPE_LABEL: Record<string, string> = { creature: 'Criatura', utility: 'Utilidad', structure: 'Estructura' };
 const STYLE_GROUP: Record<FrameStyle, string> = { standard: 'NONFULLART', semi: 'SEMI-FULLART', full: 'FULLART' };
@@ -221,7 +223,7 @@ function slotBox(text: TextSpec, bbox: number[]): EffectSlot['box'] {
   const [xx, , , yy, tx, ty] = text.transform;
   if (text.box) {
     const [l, t, r, b] = text.box;
-    return { x: tx + l * xx, y: ty, w: (r - l) * xx, h: (b - t) * yy };
+    return { x: tx, y: ty, w: (r - l) * xx, h: (b - t) * yy };
   }
   return { x: bbox[0], y: bbox[1], w: 660, h: 260 };
 }
@@ -250,7 +252,9 @@ export function buildCard(card: CardDraft, templates: Record<string, CardSpec>, 
 
   // Colors.
   walk(spec.layers, (n) => {
-    if (n.children && (n.name === 'COLOR OBJECTS' || n.name === 'Alt Summon' || n.name === 'REQ')) selectColorGroup(n, cols);
+    if (!n.children) return;
+    if (n.name === 'COLOR OBJECTS') selectColorGroup(n, cols);
+    else if (n.name === 'Alt Summon' || n.name === 'REQ') selectColorGroup(n, kind && KIND_COLOR[kind] ? [KIND_COLOR[kind]] : cols);
   });
   if (style !== 'standard') {
     walk(spec.layers, (n, p) => {

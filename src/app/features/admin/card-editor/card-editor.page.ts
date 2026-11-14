@@ -155,6 +155,8 @@ export class CardEditorPage {
     return this.ctx.measureText(text).width;
   };
   private lastSvg: SVGSVGElement | null = null;
+  /** Bevels of the last preview, computed after it is shown. */
+  private baking: Promise<void> = Promise.resolve();
   private dragFrom: { x: number; y: number; ax: number; ay: number } | null = null;
 
   constructor() {
@@ -205,6 +207,7 @@ export class CardEditorPage {
     this.sizes.set(layouts.map((l) => `${String(l.pt).replace('.', ',')} pt${l.fits ? '' : ' (no cabe)'}`).join(' · '));
     host.replaceChildren(r.svg);
     this.lastSvg = r.svg;
+    this.baking = r.bake();
   }
 
   // ── Card ──────────────────────────────────────────────────────────────
@@ -292,6 +295,7 @@ export class CardEditorPage {
 
   private async canvas(): Promise<HTMLCanvasElement> {
     if (!this.lastSvg) throw new Error('Sin vista previa');
+    await this.baking;
     return svgToCanvas(this.lastSvg);
   }
 

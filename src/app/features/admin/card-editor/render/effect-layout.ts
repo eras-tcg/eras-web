@@ -257,7 +257,8 @@ function drawSlot(r: SvgRenderer, slot: EffectSlot, tokens: Token[], color: stri
   const px = lay.px;
   let y = slot.box.y;
   lay.lines.forEach((line, i) => {
-    const baseline = y + px * 0.92;
+    // Photoshop's first baseline in a text box sits about 0.715 em below the box top (Arial).
+    const baseline = y + px * 0.715;
     for (const { tok, x } of line) {
       const X = slot.box.x + x;
       if (tok.t === 'piece') drawPiece(r, g, tok, X, baseline, px, color !== '#000000', pieces, measure);

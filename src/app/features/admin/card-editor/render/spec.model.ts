@@ -41,7 +41,12 @@ export interface FxStroke {
 
 export interface Bevel {
   size: number;
+  /** Depth in percent. */
+  depth?: number;
   angle: number;
+  altitude?: number;
+  /** Uses the document's global light instead of its own angle and altitude. */
+  useGlobal?: boolean;
   hi: string | null;
   hiOpacity: number;
   sh: string | null;
@@ -105,6 +110,8 @@ export interface SpecNode {
 export interface CardSpec {
   width: number;
   height: number;
+  /** Photoshop's global light, used by the bevels that follow it. */
+  light?: { angle: number; altitude: number };
   layers: SpecNode[];
 }
 

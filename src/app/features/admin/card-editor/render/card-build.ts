@@ -381,6 +381,29 @@ function widestNode(nodes: SpecNode[], name: string): SpecNode | null {
   return best;
 }
 
+/**
+ * The link's level badge: a circle flattened at top and bottom (the prototype's own badge shape, grown by `grow`
+ * px), centered where the link puts its level.
+ */
+function flatLevel(grow: number): { d: string; op: number }[] {
+  const cx = 59.5;
+  const cy = 988;
+  const r = 50.5 + grow;
+  const top = cy - 33.2 - grow;
+  const bottom = cy + 34.2 + grow;
+  const k = 0.5523 * r;
+  const circle =
+    `M${cx} ${cy - r}C${cx + k} ${cy - r} ${cx + r} ${cy - k} ${cx + r} ${cy}` +
+    `C${cx + r} ${cy + k} ${cx + k} ${cy + r} ${cx} ${cy + r}` +
+    `C${cx - k} ${cy + r} ${cx - r} ${cy + k} ${cx - r} ${cy}` +
+    `C${cx - r} ${cy - k} ${cx - k} ${cy - r} ${cx} ${cy - r}Z`;
+  return [
+    { d: circle, op: 1 },
+    { d: rectPath(cx - r - 2, cy - r - 2, cx + r + 2, top), op: 2 },
+    { d: rectPath(cx - r - 2, bottom, cx + r + 2, cy + r + 2), op: 2 },
+  ];
+}
+
 /** Moves every x y pair of an absolute path (M, L, C). */
 function mapPoints(d: string, fn: (x: number, y: number) => [number, number]): string {
   const nums = d.match(/-?\d+(?:\.\d+)?/g) ?? [];
@@ -689,8 +712,33 @@ export function buildCard(
     }
   }
 
-  // Gold border on link cards: the prototype carries the plain creature's one. Its card type tab is 31 px wider
-  // on each side and its level circle sits 17.5 px lower, so the border's points follow them.
+  // Link cards: their card type tab is 31 px wider on each side than the plain creature's and their level badge is
+  // a circle flattened at top and bottom, 17.5 px lower. The prototype's standard frame tab and gold border were
+  // left at the creature's size; they follow the link's here.
+  if (card.enlace) {
+    const tabPoint = (x: number, y: number): [number, number] =>
+      y < 52 && x >= 270 && x < 372
+        ? [x - 31, y]
+        : y < 52 && x >= 372 && x <= 475
+          ? [x + 30, y]
+          : [x, y];
+    walk(spec.layers, (n, p) => {
+      // Standard frame tab (the semi one already has the link's width).
+      if (
+        /^CARDTYPE[BLR]$/.test(n.name) &&
+        n.bbox[1] >= 20 &&
+        p.includes('NONFULLART') &&
+        n.paths
+      ) {
+        n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, tabPoint) }));
+        const [a] = tabPoint(n.bbox[0], n.bbox[1]);
+        const [c] = tabPoint(n.bbox[2], n.bbox[3]);
+        n.bbox = [a, n.bbox[1], c, n.bbox[3]];
+      }
+      // Level badge background of the standard frame: flat at top and bottom.
+      if (n.name === 'LEVEL BACKGROUND' && p.includes('NONFULLART')) n.paths = flatLevel(0);
+    });
+  }
   if (card.enlace && card.goldBorder) {
     const gold = first('GOLD BORDER');
     const linkPoint = (x: number, y: number): [number, number] => {
@@ -702,18 +750,78 @@ export function buildCard(
       if (y > 1005 && x <= 85) return [100, y];
       return [x, y];
     };
+    // Where an arrow is, the side line breaks in a V: it turns before the arrow and runs back along its edge (5 px
+    // away from it, or from its black back in full art) to the effect box.
+    const box =
+      widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
+    const vees: { cuts: [number, number]; bands: string[]; side: 'left' | 'right' }[] = [];
+    walk(spec.layers, (n) => {
+      if ((n.name !== 'LA' && n.name !== 'RA') || !n.visible || !box) return;
+      const left = n.name === 'LA';
+      const [x0, y0, x1, y1] = n.bbox;
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+      const r = (x1 - x0) / 2;
+      // Distance from the card's edge, mirrored for the right side.
+      const tipIn = left
+        ? cx - r * (style === 'full' ? 1.3 : 1)
+        : 744 - (cx + r * (style === 'full' ? 1.3 : 1));
+      const boxIn = left ? box.bbox[0] : 744 - box.bbox[2];
+      const g = 5 * Math.SQRT2;
+      const w = 4 * Math.SQRT2;
+      const at = (x: number, off: number) => cy - (x - tipIn) - off;
+      const X = (x: number) => (left ? x : 744 - x);
+      const band = (sign: 1 | -1) => {
+        const Y = (y: number) => (sign === 1 ? y : 2 * cy - y);
+        const pts = [
+          [6, at(6, g)],
+          [boxIn, at(boxIn, g)],
+          [boxIn, at(boxIn, g + w)],
+          [6, at(6, g + w)],
+        ].map(([x, y]) => `${X(x)} ${Y(y)}`);
+        return `M${pts[0]}L${pts[1]}L${pts[2]}L${pts[3]}Z`;
+      };
+      vees.push({
+        cuts: [at(6, g), 2 * cy - at(6, g)],
+        bands: [band(1), band(-1)],
+        side: left ? 'left' : 'right',
+      });
+    });
     if (gold?.children)
       walk(gold.children, (n) => {
         if (n.children) return;
         if (n.name === 'Elipse 9') {
-          n.paths = n.paths?.map((sp) => ({
-            ...sp,
-            d: mapPoints(sp.d, (x, y) => [x - 1, y + 17.5]),
-          }));
-          n.bbox = [n.bbox[0] - 1, n.bbox[1] + 17.5, n.bbox[2] - 1, n.bbox[3] + 17.5];
+          // The level badge is flattened at top and bottom: the ring follows it.
+          n.paths = flatLevel(0);
+          n.bbox = [9, 937, 111, 1038];
           return;
         }
-        if (n.paths) n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, linkPoint) }));
+        // Over the art the label needs no black box.
+        if (n.name === 'Rectángulo 34' && style === 'full') n.visible = false;
+        if (n.paths) {
+          n.paths = n.paths.flatMap((sp) => {
+            const d = mapPoints(sp.d, linkPoint);
+            const nums = (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+            const xs = nums.filter((_, i) => i % 2 === 0);
+            const ys = nums.filter((_, i) => i % 2 === 1);
+            const [minX, maxX, minY, maxY] = [
+              Math.min(...xs),
+              Math.max(...xs),
+              Math.min(...ys),
+              Math.max(...ys),
+            ];
+            const v = vees.find(
+              (e) => (e.side === 'left' ? maxX <= 12 : minX >= 732) && maxY - minY > 300,
+            );
+            if (!v) return [{ ...sp, d }];
+            // Side line split around the V, plus the V's two bands (only on the gold outline itself).
+            const pieces = [
+              { ...sp, d: rectPath(minX, minY, maxX, v.cuts[0] + 1) },
+              { ...sp, d: rectPath(minX, v.cuts[1] - 1, maxX, maxY) },
+            ];
+            return n.stroke ? [...pieces, ...v.bands.map((b) => ({ d: b, op: 1 }))] : pieces;
+          });
+        }
         if (n.text) {
           // "Criatura Enlace" is nearly as wide as the tab: a little smaller so the gold sides clear it.
           n.text.transform[4] = 372;

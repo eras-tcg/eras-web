@@ -1,8 +1,23 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
-import { MetaForm, blankMeta, metaFormFor, toMetaPayload, validateMeta } from '@data/cards/meta-rules';
+import {
+  MetaForm,
+  blankMeta,
+  metaFormFor,
+  toMetaPayload,
+  validateMeta,
+} from '@data/cards/meta-rules';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -17,14 +32,32 @@ import { draftFromForm, exportName } from './card-editor-rules';
 import { FRAME_STYLE_LABELS, FrameStyle, buildCard } from './render/card-build';
 import { FontSlot, loadCardFonts, saveFontFile } from './render/card-fonts';
 import { drawEffects } from './render/effect-layout';
-import { canvasToCmyk, canvasToPng, cmykPdf, cmykTiff, download, svgToCanvas } from './render/print-export';
+import {
+  canvasToCmyk,
+  canvasToPng,
+  cmykPdf,
+  cmykTiff,
+  download,
+  svgToCanvas,
+} from './render/print-export';
 import { ArtPlacement, CardSpec, PieceTable } from './render/spec.model';
 import { SvgRenderer } from './render/svg-render';
+import { ColorLut, convertCanvas } from './render/color-lut';
 
 /** Card editor (manage_cards): the card's metadata, its art and frame, a live preview and print exports. */
 @Component({
   selector: 'eras-card-editor-page',
-  imports: [PageComponent, SplitComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, ChipComponent, MetaFieldsComponent],
+  imports: [
+    PageComponent,
+    SplitComponent,
+    StackComponent,
+    SectionHeaderComponent,
+    FormFieldComponent,
+    AlertComponent,
+    ButtonComponent,
+    ChipComponent,
+    MetaFieldsComponent,
+  ],
   template: `
     <eras-page title="Editor de cartas" width="wide">
       @if (fb.feedback(); as f) {
@@ -32,10 +65,14 @@ import { SvgRenderer } from './render/svg-render';
       }
       @if (missingFonts().length) {
         <eras-alert tone="info">
-          Faltan fuentes de la carta en este equipo: {{ missingNames() }}. Elige sus archivos (quedan solo en este navegador).
+          Faltan fuentes de la carta en este equipo: {{ missingNames() }}. Elige sus archivos
+          (quedan solo en este navegador).
           <eras-stack direction="row" [gap]="2" wrap>
             @for (slot of missingFonts(); track slot.key) {
-              <label class="font-pick">{{ slot.label }} <input type="file" accept=".ttf,.otf" (change)="pickFont(slot, $event)" /></label>
+              <label class="font-pick"
+                >{{ slot.label }}
+                <input type="file" accept=".ttf,.otf" (change)="pickFont(slot, $event)"
+              /></label>
             }
           </eras-stack>
         </eras-alert>
@@ -44,7 +81,15 @@ import { SvgRenderer } from './render/svg-render';
       <eras-split aside="26rem">
         <div split-aside class="preview-pane">
           <eras-stack [gap]="3">
-            <div #preview class="preview" [class.dragging]="dragging()" (pointerdown)="dragStart($event)" (pointermove)="dragMove($event)" (pointerup)="dragEnd()" (pointercancel)="dragEnd()"></div>
+            <div
+              #preview
+              class="preview"
+              [class.dragging]="dragging()"
+              (pointerdown)="dragStart($event)"
+              (pointermove)="dragMove($event)"
+              (pointerup)="dragEnd()"
+              (pointercancel)="dragEnd()"
+            ></div>
             @if (sizes().length) {
               <span class="note">Texto de efecto: {{ sizes() }}</span>
             }
@@ -52,7 +97,9 @@ import { SvgRenderer } from './render/svg-render';
             <eras-section-header title="Arte y marco" />
             <eras-stack direction="row" [gap]="1" wrap>
               @for (s of styles; track s) {
-                <button erasChip [selected]="style() === s" (click)="style.set(s)">{{ styleLabels[s] }}</button>
+                <button erasChip [selected]="style() === s" (click)="style.set(s)">
+                  {{ styleLabels[s] }}
+                </button>
               }
             </eras-stack>
             <eras-form-field label="Imagen">
@@ -60,20 +107,55 @@ import { SvgRenderer } from './render/svg-render';
             </eras-form-field>
             @if (art(); as a) {
               <eras-form-field label="Zoom">
-                <input type="range" min="1" max="4" step="0.01" [value]="a.scale" (input)="zoom($any($event.target).valueAsNumber)" />
+                <input
+                  type="range"
+                  min="1"
+                  max="4"
+                  step="0.01"
+                  [value]="a.scale"
+                  (input)="zoom($any($event.target).valueAsNumber)"
+                />
               </eras-form-field>
               <span class="note">Arrastra la vista previa para mover el arte.</span>
               <eras-stack direction="row" [gap]="2">
-                <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">Centrar</button>
-                <button erasButton variant="ghost" size="sm" type="button" (click)="art.set(null)">Quitar arte</button>
+                <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
+                  Centrar
+                </button>
+                <button erasButton variant="ghost" size="sm" type="button" (click)="art.set(null)">
+                  Quitar arte
+                </button>
               </eras-stack>
             }
 
             <eras-section-header title="Exportar" />
             <eras-stack direction="row" [gap]="2" wrap>
-              <button erasButton variant="secondary" type="button" [disabled]="!ready() || exporting()" (click)="exportPng()">PNG</button>
-              <button erasButton variant="secondary" type="button" [disabled]="!ready() || exporting()" (click)="exportTiff()">TIFF CMYK</button>
-              <button erasButton variant="secondary" type="button" [disabled]="!ready() || exporting()" (click)="exportPdf()">PDF CMYK</button>
+              <button
+                erasButton
+                variant="secondary"
+                type="button"
+                [disabled]="!ready() || exporting()"
+                (click)="exportPng()"
+              >
+                PNG
+              </button>
+              <button
+                erasButton
+                variant="secondary"
+                type="button"
+                [disabled]="!ready() || exporting()"
+                (click)="exportTiff()"
+              >
+                TIFF CMYK
+              </button>
+              <button
+                erasButton
+                variant="secondary"
+                type="button"
+                [disabled]="!ready() || exporting()"
+                (click)="exportPdf()"
+              >
+                PDF CMYK
+              </button>
             </eras-stack>
           </eras-stack>
         </div>
@@ -81,15 +163,32 @@ import { SvgRenderer } from './render/svg-render';
         <eras-stack [gap]="4">
           <eras-stack direction="row" [gap]="2" align="end" wrap>
             <eras-form-field label="Abrir carta">
-              <input type="search" list="card-editor-cards" placeholder="Nombre…" [value]="query()" (change)="open($any($event.target).value)" (input)="query.set($any($event.target).value)" />
+              <input
+                type="search"
+                list="card-editor-cards"
+                placeholder="Nombre…"
+                [value]="query()"
+                (change)="open($any($event.target).value)"
+                (input)="query.set($any($event.target).value)"
+              />
               <datalist id="card-editor-cards">
                 @for (c of matches(); track c.key) {
                   <option [value]="c.key">{{ c.label }}</option>
                 }
               </datalist>
             </eras-form-field>
-            <button erasButton variant="ghost" type="button" (click)="newCard()">Carta nueva</button>
-            <button erasButton type="button" [loading]="saving()" [disabled]="saving()" (click)="save()">Guardar metadatos</button>
+            <button erasButton variant="ghost" type="button" (click)="newCard()">
+              Carta nueva
+            </button>
+            <button
+              erasButton
+              type="button"
+              [loading]="saving()"
+              [disabled]="saving()"
+              (click)="save()"
+            >
+              Guardar metadatos
+            </button>
           </eras-stack>
           @for (e of errors(); track e) {
             <eras-alert tone="danger">{{ e }}</eras-alert>
@@ -100,12 +199,37 @@ import { SvgRenderer } from './render/svg-render';
     </eras-page>
   `,
   styles: `
-    .preview-pane { position: sticky; top: var(--space-4); }
-    .preview { width: 100%; aspect-ratio: 744 / 1039; border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface-muted); cursor: grab; touch-action: none; }
-    .preview.dragging { cursor: grabbing; }
-    .preview ::ng-deep svg { width: 100%; height: 100%; display: block; }
-    .note { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-    .font-pick { display: inline-flex; gap: var(--space-2); align-items: center; }
+    .preview-pane {
+      position: sticky;
+      top: var(--space-4);
+    }
+    .preview {
+      width: 100%;
+      aspect-ratio: 744 / 1039;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--color-surface-muted);
+      cursor: grab;
+      touch-action: none;
+    }
+    .preview.dragging {
+      cursor: grabbing;
+    }
+    .preview ::ng-deep svg,
+    .preview ::ng-deep canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .note {
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
+    .font-pick {
+      display: inline-flex;
+      gap: var(--space-2);
+      align-items: center;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -132,15 +256,28 @@ export class CardEditorPage {
   private readonly templates = signal<Record<string, CardSpec> | null>(null);
   private readonly pieces = signal<PieceTable | null>(null);
   private readonly fontCss = signal<string | null>(null);
+  private readonly lut = signal<ColorLut | null>(null);
+  /** Increases with every redraw, so a slow preview never replaces a newer one. */
+  private generation = 0;
   protected readonly missingFonts = signal<FontSlot[]>([]);
-  protected readonly missingNames = computed(() => this.missingFonts().map((s) => s.label).join(', '));
-  protected readonly ready = computed(() => !!this.templates() && !!this.pieces() && this.fontCss() !== null);
+  protected readonly missingNames = computed(() =>
+    this.missingFonts()
+      .map((s) => s.label)
+      .join(', '),
+  );
+  protected readonly ready = computed(
+    () => !!this.templates() && !!this.pieces() && this.fontCss() !== null,
+  );
 
   private readonly openable = computed(() =>
     this.store
       .cards()
       .filter((c) => c.meta)
-      .map((c) => ({ key: `${c.meta!.cardName} · ${c.edition}-${c.color_identity}${String(c.number ?? '').padStart(2, '0')}`, label: c.meta!.cardName ?? '', card: c })),
+      .map((c) => ({
+        key: `${c.meta!.cardName} · ${c.edition}-${c.color_identity}${String(c.number ?? '').padStart(2, '0')}`,
+        label: c.meta!.cardName ?? '',
+        card: c,
+      })),
   );
   protected readonly matches = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -167,10 +304,12 @@ export class CardEditorPage {
 
   private async loadAssets(): Promise<void> {
     try {
-      const [templates, pieces] = await Promise.all([
+      const [templates, pieces, lut] = await Promise.all([
         fetch('/card-maker/templates.json').then((r) => r.json()),
         fetch('/card-maker/pieces.json').then((r) => r.json()),
+        fetch('/card-maker/color-lut.bin').then((r) => r.arrayBuffer()),
       ]);
+      this.lut.set(new ColorLut(new Uint8Array(lut)));
       this.templates.set(templates);
       this.pieces.set(pieces);
       await this.loadFonts();
@@ -198,16 +337,35 @@ export class CardEditorPage {
     const pieces = this.pieces();
     const css = this.fontCss();
     const host = this.preview().nativeElement;
-    if (!templates || !pieces || css === null) return;
+    const lut = this.lut();
+    if (!templates || !pieces || css === null || !lut) return;
     const draft = { ...draftFromForm(this.form()), frameStyle: this.style(), art: this.art() };
     const built = buildCard(draft, templates, this.measure);
     const r = new SvgRenderer(built, css);
     r.render();
-    const layouts = drawEffects(r, built, pieces, this.store.ref()?.keywordEffects ?? {}, this.measure);
-    this.sizes.set(layouts.map((l) => `${String(l.pt).replace('.', ',')} pt${l.fits ? '' : ' (no cabe)'}`).join(' · '));
-    host.replaceChildren(r.svg);
+    const layouts = drawEffects(
+      r,
+      built,
+      pieces,
+      this.store.ref()?.keywordEffects ?? {},
+      this.measure,
+    );
+    this.sizes.set(
+      layouts
+        .map((l) => `${String(l.pt).replace('.', ',')} pt${l.fits ? '' : ' (no cabe)'}`)
+        .join(' · '),
+    );
     this.lastSvg = r.svg;
     this.baking = r.bake();
+    // The preview shows the screen colors (as Photoshop's Save for Web), drawn once the bevels are ready.
+    const gen = ++this.generation;
+    void this.baking
+      .then(() => svgToCanvas(r.svg))
+      .then((canvas) => {
+        if (gen === this.generation)
+          host.replaceChildren(convertCanvas(canvas, (px) => lut.forward(px)));
+      })
+      .catch((e) => this.fb.fail(e, 'No se pudo dibujar la carta'));
   }
 
   // ── Card ──────────────────────────────────────────────────────────────
@@ -236,7 +394,9 @@ export class CardEditorPage {
     try {
       const payload = toMetaPayload(this.form());
       const id = this.metaId();
-      const saved = await firstValueFrom(id ? this.api.updateMeta(id, payload) : this.api.createMeta(payload));
+      const saved = await firstValueFrom(
+        id ? this.api.updateMeta(id, payload) : this.api.createMeta(payload),
+      );
       if (saved?.id) this.metaId.set(saved.id);
       this.fb.ok('Metadatos guardados');
       void this.store.load(true);
@@ -254,10 +414,25 @@ export class CardEditorPage {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const src = String(reader.result);
       const img = new Image();
-      img.onload = () => this.art.set({ src, width: img.naturalWidth, height: img.naturalHeight, scale: 1, x: 0, y: 0 });
-      img.src = src;
+      img.onload = () => {
+        // The art comes in screen sRGB: take it to the card's design space, as Photoshop does when it enters the CMYK file.
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        c.getContext('2d')!.drawImage(img, 0, 0);
+        const lut = this.lut();
+        if (lut) convertCanvas(c, (px) => lut.inverse(px));
+        this.art.set({
+          src: c.toDataURL('image/jpeg', 0.95),
+          width: c.width,
+          height: c.height,
+          scale: 1,
+          x: 0,
+          y: 0,
+        });
+      };
+      img.src = String(reader.result);
     };
     reader.readAsDataURL(file);
   }
@@ -283,7 +458,9 @@ export class CardEditorPage {
     // Screen pixels → card pixels.
     const k = 744 / this.preview().nativeElement.clientWidth;
     const { x, y, ax, ay } = this.dragFrom;
-    this.art.update((a) => (a ? { ...a, x: ax + (e.clientX - x) * k, y: ay + (e.clientY - y) * k } : a));
+    this.art.update((a) =>
+      a ? { ...a, x: ax + (e.clientX - x) * k, y: ay + (e.clientY - y) * k } : a,
+    );
   }
 
   protected dragEnd(): void {
@@ -311,14 +488,28 @@ export class CardEditorPage {
   }
 
   protected exportPng(): Promise<void> {
-    return this.exporting$(async () => download(await canvasToPng(await this.canvas()), `${exportName(this.form())}.png`));
+    // PNG in screen colors (Save for Web); the CMYK files keep the design colors.
+    const lut = this.lut();
+    return this.exporting$(async () =>
+      download(
+        await canvasToPng(convertCanvas(await this.canvas(), (px) => lut?.forward(px))),
+        `${exportName(this.form())}.png`,
+      ),
+    );
   }
 
   protected exportTiff(): Promise<void> {
-    return this.exporting$(async () => download(cmykTiff(canvasToCmyk(await this.canvas())), `${exportName(this.form())} CMYK.tif`));
+    return this.exporting$(async () =>
+      download(cmykTiff(canvasToCmyk(await this.canvas())), `${exportName(this.form())} CMYK.tif`),
+    );
   }
 
   protected exportPdf(): Promise<void> {
-    return this.exporting$(async () => download(await cmykPdf([canvasToCmyk(await this.canvas())]), `${exportName(this.form())} CMYK.pdf`));
+    return this.exporting$(async () =>
+      download(
+        await cmykPdf([canvasToCmyk(await this.canvas())]),
+        `${exportName(this.form())} CMYK.pdf`,
+      ),
+    );
   }
 }

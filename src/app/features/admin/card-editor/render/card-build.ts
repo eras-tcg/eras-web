@@ -765,7 +765,7 @@ export function buildCard(
       return [x, y];
     };
     // Where an arrow is, the side line breaks in a V around it: on each side of the arrow's tip a gold triangle
-    // whose edges are the side line, the black notch's edge (the semi frame's notch, a diamond of radius 57 on the
+    // whose edges are the side line, the black notch's edge 5 px in (the semi frame's notch, a diamond of radius 57 on the
     // card's edge) and the arrow's edge 5 px away (from its black back in full art). The triangles sit inside the
     // black of the standard and semi frames, and their corners end in points.
     const box =
@@ -803,11 +803,11 @@ export function buildCard(
         return { d: `M${pts.map(([u, y]) => `${X(u)} ${Y(y)}`).join('L')}Z`, op: 1 };
       };
       const half = (flip: boolean): Shape[] => [
-        tri(6, 1, 5, flip),
-        { ...tri(10, 5, 9, flip), op: 2 },
+        tri(6, 5, 5, flip),
+        { ...tri(10, 9, 9, flip), op: 2 },
       ];
       vees.push({
-        cuts: [notch(6, 1), 2 * cy - notch(6, 1)],
+        cuts: [notch(10, 5), 2 * cy - notch(10, 5)],
         shapes: [...half(false), ...half(true)],
         side: left ? 'left' : 'right',
       });

@@ -578,54 +578,96 @@ export function buildCard(
         : [...n.bbox];
     });
     const semi = first('SEMI-FULLART');
-    if (style === 'semi' && semi?.children) {
-      // The semi margin leaves room for the notch: close it with a straight edge where there is no arrow.
-      for (const side of ['left', 'right'] as const) {
-        const g = gaps[side];
-        if (!g || has(side)) continue;
-        const [x0, x1] = side === 'left' ? [0, 18] : [726, 744];
-        semi.children.push(rectNode(`EDGE ${side}`, x0, g[1], x1, g[3]));
-      }
-    }
-    if (style === 'full') {
-      // Measured on a full art link card exported by Photoshop (T1-R07): the colored diamond shows up to the effect
-      // box's border; behind it a black triangle with the same bevel, its tip 0.3 of the diamond's half-width
-      // further out and its base on the box's border (45° sides).
-      const box =
-        widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
-      const shown: SpecNode[] = [];
-      walk(spec.layers, (n) => {
-        if ((n.name === 'LA' || n.name === 'RA') && n.visible && n.paths) shown.push(n);
-      });
-      for (const n of shown) {
-        const holder = parentOf(spec.layers, n);
-        if (!holder) continue;
-        const left = n.name === 'LA';
+    const box =
+      widestNode(spec.layers, 'LINK BACK EFFECT') ?? widestNode(spec.layers, 'LINK EFFECT');
+    const arrowsShown: SpecNode[] = [];
+    walk(spec.layers, (n) => {
+      if ((n.name === 'LA' || n.name === 'RA') && n.visible && n.paths) arrowsShown.push(n);
+    });
+    const geometry = (n: SpecNode) => {
+      const left = n.name === 'LA';
+      const [x0, y0, x1, y1] = n.bbox;
+      const cx = (x0 + x1) / 2;
+      return {
+        left,
+        cx,
+        cy: (y0 + y1) / 2,
+        r: (x1 - x0) / 2,
+        dir: left ? -1 : 1,
+        edge: box ? (left ? box.bbox[0] : box.bbox[2]) : cx,
+      };
+    };
+    if (style !== 'standard') {
+      // Over the art the colored diamond shows only up to the effect box's border.
+      for (const n of arrowsShown) {
+        const g = geometry(n);
         const [x0, y0, x1, y1] = n.bbox;
-        const cx = (x0 + x1) / 2;
-        const cy = (y0 + y1) / 2;
-        const r = (x1 - x0) / 2;
-        const dir = left ? -1 : 1;
-        const edge = box ? (left ? box.bbox[0] : box.bbox[2]) : cx;
-        // Colored diamond cut at the box border.
         n.paths = [
           ...n.paths!,
           {
-            d: rectPath(left ? edge : edge - 2 * r, y0 - 10, left ? edge + 2 * r : edge, y1 + 10),
+            d: rectPath(
+              g.left ? g.edge : g.edge - 4 * g.r,
+              y0 - 10,
+              g.left ? g.edge + 4 * g.r : g.edge,
+              y1 + 10,
+            ),
             op: 2,
           },
         ];
-        n.shapeBox = left ? [x0, y0, edge, y1] : [edge, y0, x1, y1];
-        const tip = cx + dir * r * 1.3;
-        const h = Math.abs(tip - edge);
+        n.shapeBox = g.left ? [x0, y0, g.edge, y1] : [g.edge, y0, x1, y1];
+      }
+    }
+    if (style === 'semi' && semi?.children) {
+      for (const side of ['left', 'right'] as const) {
+        const arrow = arrowsShown.find((n) => (n.name === 'LA') === (side === 'left'));
+        const [x0, x1] = side === 'left' ? [0, 18] : [726, 744];
+        if (!arrow) {
+          // The semi margin leaves room for the notch: close it with a straight edge where there is no arrow.
+          const g = gaps[side];
+          if (g) semi.children.push(rectNode(`EDGE ${side}`, x0, g[1], x1, g[3]));
+          continue;
+        }
+        // The notch, measured on a semi full art link card exported by Photoshop (T1-R06): a black diamond centered
+        // on the card's edge, reaching the effect box, with the colored arrow on it.
+        const g = geometry(arrow);
+        const cxEdge = side === 'left' ? 0 : 744;
+        const R = 57;
+        const notch = rectNode(`NOTCH ${side}`, cxEdge - R, g.cy - R, cxEdge + R, g.cy + R);
+        notch.paths = [
+          {
+            d: `M${cxEdge - R} ${g.cy}L${cxEdge} ${g.cy - R}L${cxEdge + R} ${g.cy}L${cxEdge} ${g.cy + R}Z`,
+            op: 1,
+          },
+          {
+            d: rectPath(
+              side === 'left' ? g.edge : g.edge - 2 * R,
+              g.cy - R - 2,
+              side === 'left' ? g.edge + 2 * R : g.edge,
+              g.cy + R + 2,
+            ),
+            op: 2,
+          },
+        ];
+        semi.children.push(notch);
+      }
+    }
+    if (style === 'full') {
+      // Measured on a full art link card exported by Photoshop (T1-R07): behind each colored arrow a black triangle
+      // with the same bevel, its tip 0.3 of the diamond's half-width further out and its base on the box's border.
+      for (const n of arrowsShown) {
+        const holder = parentOf(spec.layers, n);
+        if (!holder) continue;
+        const g = geometry(n);
+        const tip = g.cx + g.dir * g.r * 1.3;
+        const h = Math.abs(tip - g.edge);
         const back: SpecNode = {
           ...clone(n),
           name: `${n.name} BACK`,
           fill: '#000000',
           stroke: undefined,
           shapeBox: undefined,
-          paths: [{ d: `M${tip} ${cy}L${edge} ${cy - h}L${edge} ${cy + h}Z`, op: 1 }],
-          bbox: [Math.min(tip, edge), cy - h, Math.max(tip, edge), cy + h],
+          paths: [{ d: `M${tip} ${g.cy}L${g.edge} ${g.cy - h}L${g.edge} ${g.cy + h}Z`, op: 1 }],
+          bbox: [Math.min(tip, g.edge), g.cy - h, Math.max(tip, g.edge), g.cy + h],
         };
         holder.splice(holder.indexOf(n), 0, back);
       }

@@ -274,18 +274,11 @@ export class SvgRenderer {
     const dx = Math.cos(a);
     const dy = -Math.sin(a);
     const reach = (Math.abs(dx) * (x1 - x0) + Math.abs(dy) * (y1 - y0)) / 2;
-    let half = reach * (g.scale / 100);
-    let mx = cx;
-    let my = cy;
-    // A shortened gradient (the 20% band where two colors meet) is drawn by Photoshop a little shorter and off center,
-    // with eased ends; fitted on the prototypes' own composites.
-    const short = g.scale < 100 && !/Rdl/.test(g.type);
-    if (short) {
-      const shift = -0.08 * reach * (g.scale / 100) * 2;
-      mx += dx * shift;
-      my += dy * shift;
-      half *= 0.86;
-    }
+    const half = reach * (g.scale / 100);
+    const mx = cx;
+    const my = cy;
+    // Photoshop's gradients have smoothness 100%: eased stops (fitted on the designer's exports).
+    const eased = !/Rdl/.test(g.type);
     let p1 = [mx - dx * half, my - dy * half];
     let p2 = [mx + dx * half, my + dy * half];
     if (g.reverse) [p1, p2] = [p2, p1];
@@ -300,7 +293,7 @@ export class SvgRenderer {
           { id: gid, gradientUnits: 'userSpaceOnUse', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
           this.defs,
         );
-    const stops = short ? easedStops(g) : g.stops.map((s) => ({ at: s.at, color: s.color }));
+    const stops = eased ? easedStops(g) : g.stops.map((s) => ({ at: s.at, color: s.color }));
     for (const s of stops)
       svgEl(
         'stop',
@@ -464,8 +457,8 @@ export class SvgRenderer {
   }
 }
 
-/** Stops resampled along Photoshop's smooth gradient curve (30% smoothstep over linear). */
-export function easedStops(g: Gradient, steps = 12): { at: number; color: string }[] {
+/** Stops resampled along Photoshop's smooth gradient curve (half linear, half smoothstep). */
+export function easedStops(g: Gradient, steps = 48): { at: number; color: string }[] {
   const colorAt = (t: number): string => {
     const st = g.stops;
     if (t <= st[0].at) return st[0].color;
@@ -491,7 +484,7 @@ export function easedStops(g: Gradient, steps = 12): { at: number; color: string
   const out: { at: number; color: string }[] = [];
   for (let k = 0; k <= steps; k++) {
     const t = k / steps;
-    const eased = 0.7 * t + 0.3 * t * t * (3 - 2 * t);
+    const eased = 0.5 * t + 0.5 * t * t * (3 - 2 * t);
     out.push({ at: t, color: colorAt(eased) });
   }
   return out;

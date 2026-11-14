@@ -95,7 +95,7 @@ async function stored(): Promise<Record<string, ArrayBuffer>> {
 }
 
 /** Keeps a font file the admin picked for a slot. */
-export async function saveFontFile(key: string, file: File): Promise<void> {
+export async function saveFontFile(key: string, file: Blob): Promise<void> {
   const data = await file.arrayBuffer();
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
@@ -142,4 +142,35 @@ export async function loadCardFonts(): Promise<LoadedFonts> {
     );
   }
   return { css: rules.join(''), missing };
+}
+
+interface LocalFontData {
+  postscriptName: string;
+  fullName: string;
+  blob(): Promise<Blob>;
+}
+
+/** Whether the browser can hand over installed fonts (Local Font Access API, Chromium). */
+export function canCopyInstalledFonts(): boolean {
+  return typeof window !== 'undefined' && 'queryLocalFonts' in window;
+}
+
+/**
+ * Copies the installed files of the given slots into this browser, for browsers that hide installed fonts from
+ * pages (Brave, Opera with tracking protection) but can share them after the admin allows it. Returns the slots found.
+ */
+export async function copyInstalledFonts(slots: FontSlot[]): Promise<FontSlot[]> {
+  const query = (window as unknown as { queryLocalFonts: () => Promise<LocalFontData[]> })
+    .queryLocalFonts;
+  const fonts = await query();
+  const found: FontSlot[] = [];
+  for (const slot of slots) {
+    const hit = fonts.find(
+      (f) => slot.locals.includes(f.postscriptName) || slot.locals.includes(f.fullName),
+    );
+    if (!hit) continue;
+    await saveFontFile(slot.key, await hit.blob());
+    found.push(slot);
+  }
+  return found;
 }

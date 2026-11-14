@@ -30,7 +30,13 @@ import { MetaFieldsComponent } from '../../cards/meta-form/meta-fields.component
 import { feedbackState } from '../admin-feedback';
 import { draftFromForm, exportName } from './card-editor-rules';
 import { FRAME_STYLE_LABELS, FrameStyle, buildCard } from './render/card-build';
-import { FontSlot, loadCardFonts, saveFontFile } from './render/card-fonts';
+import {
+  FontSlot,
+  canCopyInstalledFonts,
+  copyInstalledFonts,
+  loadCardFonts,
+  saveFontFile,
+} from './render/card-fonts';
 import { drawEffects } from './render/effect-layout';
 import {
   canvasToCmyk,
@@ -68,6 +74,17 @@ import { ColorLut, convertCanvas } from './render/color-lut';
           Faltan fuentes de la carta en este equipo: {{ missingNames() }}. Elige sus archivos
           (quedan solo en este navegador).
           <eras-stack direction="row" [gap]="2" wrap>
+            @if (canCopyFonts) {
+              <button
+                erasButton
+                variant="secondary"
+                size="sm"
+                type="button"
+                (click)="useInstalledFonts()"
+              >
+                Usar fuentes instaladas
+              </button>
+            }
             @for (slot of missingFonts(); track slot.key) {
               <label class="font-pick"
                 >{{ slot.label }}
@@ -322,6 +339,19 @@ export class CardEditorPage {
     const fonts = await loadCardFonts();
     this.missingFonts.set(fonts.missing);
     this.fontCss.set(fonts.css);
+  }
+
+  protected readonly canCopyFonts = canCopyInstalledFonts();
+
+  /** Takes the installed font files through the browser's font access permission. */
+  protected async useInstalledFonts(): Promise<void> {
+    try {
+      const found = await copyInstalledFonts(this.missingFonts());
+      if (!found.length) this.fb.fail(null, 'El navegador no entregó las fuentes instaladas');
+      await this.loadFonts();
+    } catch (e) {
+      this.fb.fail(e, 'El navegador no dio acceso a las fuentes instaladas');
+    }
   }
 
   protected async pickFont(slot: FontSlot, event: Event): Promise<void> {

@@ -419,8 +419,8 @@ const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v
  * - Plain creatures, utilities and structures join the right side line to the name bar with a straight diagonal:
  *   it becomes a curve.
  * - Link cards: the name bar ends in a round cap like the inherit cards' one, 114 px lower; the inherit
- *   prototype's gold curve around that cap goes there and, as on inherit cards, the side line then drops to the
- *   card's edge: no bottom line nor bottom corner.
+ *   prototype's joint from the side line goes there, then a gold band around the cap (4 px from it all along)
+ *   that runs on as the bottom line to the level ring.
  * - Inherit cards: their gold outline is a picture that still carries the plain creature's bottom line, which
  *   crosses the inherit effect box; it is cut out.
  */
@@ -474,11 +474,7 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
   const her = templates['CRIATURA HER - PROTOTIPO'];
   const pieces: SpecNode[] = [];
   walk(her?.layers ?? [], (n) => {
-    if (
-      /^(Elipse 11( copia)?|Rectángulo 35( copia)?|Rectángulo 33 copia 1[34])$/.test(n.name) &&
-      n.paths &&
-      n.fill
-    )
+    if (/^Rectángulo 33 copia 14$/.test(n.name) && n.paths && n.fill)
       pieces.push({
         ...clone(n),
         visible: true,
@@ -487,6 +483,62 @@ function fixGold(layers: SpecNode[], link: boolean, templates: Record<string, Ca
       });
   });
   g.children.push(...pieces);
+  // Around the name bar's round cap (center 703,988, radii 28 x 33) a gold band 4 px wide, 4 px away from it all
+  // along; at the bottom it runs on as the bottom line, under the name, to the level ring, which it meets with a
+  // short diagonal.
+  const [cx, cy, rx, ry] = [703, 988, 28, 33];
+  const ring = (k: number, t: number): [number, number] => [
+    cx + (rx + k) * Math.cos(t),
+    cy + (ry + k) * Math.sin(t),
+  ];
+  // Starts where the joint from the side line arrives.
+  const t0 = Math.asin((957 - cy) / (ry + 6));
+  const steps = 24;
+  const outer: [number, number][] = [];
+  const inner: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + ((Math.PI / 2 - t0) * i) / steps;
+    outer.push(ring(8, t));
+    inner.push(ring(4, t));
+  }
+  const yIn = cy + ry + 4;
+  const yOut = cy + ry + 8;
+  const pts = [
+    ...outer,
+    [104, yOut],
+    [96, yOut - 6],
+    [99, yIn - 6],
+    [104, yIn],
+    ...inner.reverse(),
+  ];
+  const capBand: SpecNode = {
+    name: 'GOLD CAP',
+    kind: 'shape',
+    visible: true,
+    opacity: 1,
+    bbox: [94, 940, 744, yOut + 1],
+    fill: '#ffee13',
+    fx: {
+      bevel: {
+        size: 2,
+        depth: 100,
+        angle: 120,
+        altitude: 30,
+        useGlobal: true,
+        hi: '#ffffff',
+        hiOpacity: 0.75,
+        sh: '#000000',
+        shOpacity: 0.75,
+      },
+    },
+    paths: [
+      {
+        d: `M${pts.map(([x, y]) => `${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100}`).join('L')}Z`,
+        op: 1,
+      },
+    ],
+  };
+  g.children.push(capBand);
 }
 
 /** Moves every x y pair of an absolute path (M, L, C). */
@@ -909,6 +961,7 @@ export function buildCard(
     if (gold?.children)
       walk(gold.children, (n) => {
         if (n.children) return;
+        if (n.name === 'GOLD CAP') return;
         if (n.name === 'Elipse 9') {
           // The level badge is flattened at top and bottom: the ring follows it.
           n.paths = flatLevel(0);

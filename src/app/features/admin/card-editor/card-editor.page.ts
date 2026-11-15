@@ -16,6 +16,8 @@ import { EditionsStore } from '@data/editions/editions.store';
 import { AppScreen } from '@core/pwa/app-screen';
 import { CardsStore } from '@data/cards/cards.store';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dialog/choice-dialog.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardMeta } from '@data/cards/card.model';
@@ -577,7 +579,10 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)' },
+  host: {
+    '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)',
+    '(window:beforeunload)': 'warnBeforeLeaving($event)',
+  },
 })
 export class CardEditorPage {
   /** `?card=<metadata id>`: opens that card (from an edition's slot). */
@@ -592,6 +597,9 @@ export class CardEditorPage {
   private readonly document = inject(DOCUMENT);
   /** Where "back" leads (the screen tree's parent of the editor). */
   private readonly editions = inject(EditionsStore);
+  private readonly modal = inject(ModalService);
+  /** The card as last opened or saved (form and design): leaving with something else asks first. */
+  private savedKey = '';
   /** "Back": the edition of the card open (its slots), or the editions when it has none. */
   protected readonly back = computed(() => {
     const id = this.form().edition.trim().toUpperCase();
@@ -688,6 +696,7 @@ export class CardEditorPage {
   private dragFrom: { x: number; y: number; ax: number; ay: number } | null = null;
 
   constructor() {
+    this.markSaved();
     void this.store.load();
     void this.editions.load();
     void this.loadAssets();
@@ -821,6 +830,41 @@ export class CardEditorPage {
     this.removeArt();
     this.artChanged = false;
     this.fb.clear();
+    this.markSaved();
+  }
+
+  private stateKey(): string {
+    return JSON.stringify({ form: this.form(), design: this.design() });
+  }
+
+  private markSaved(): void {
+    this.savedKey = this.stateKey();
+  }
+
+  /** Something changed since the card was opened or saved. */
+  private dirty(): boolean {
+    return this.artChanged || this.stateKey() !== this.savedKey;
+  }
+
+  /** Used by the route's canDeactivate guard: with unsaved changes it asks whether to save or leave them. */
+  async confirmLeave(): Promise<boolean> {
+    if (!this.dirty()) return true;
+    const data: ChoiceDialogData = {
+      title: 'Hay cambios sin guardar',
+      options: [
+        { value: 'save', label: 'Guardar y salir' },
+        { value: 'discard', label: 'Salir sin guardar' },
+      ],
+    };
+    const choice = await firstValueFrom(this.modal.open<string | null>(ChoiceDialogComponent, { data }).closed);
+    if (choice === 'discard') return true;
+    if (choice !== 'save') return false;
+    await this.save();
+    return !this.dirty();
+  }
+
+  protected warnBeforeLeaving(event: BeforeUnloadEvent): void {
+    if (this.dirty()) event.preventDefault();
   }
 
   private async openCard(m: CardMeta): Promise<void> {
@@ -836,11 +880,13 @@ export class CardEditorPage {
     this.noStrength.set(
       m.design ? design.noStrength : form.cardType === 'creature' && form.strength === null,
     );
+    this.markSaved();
     if (!m.artKey) return;
     try {
       const blob = await firstValueFrom(this.api.art(m.id));
       if (this.metaId() !== m.id) return;
-      this.loadArt(await dataUrl(blob), design.art ?? { scale: 1, x: 0, y: 0 });
+      // Its art as saved is not a change
+      this.loadArt(await dataUrl(blob), design.art ?? { scale: 1, x: 0, y: 0 }, () => this.markSaved());
     } catch (e) {
       this.fb.fail(e, 'No se pudo cargar el arte de la carta');
     }
@@ -931,6 +977,7 @@ export class CardEditorPage {
         this.artFile = null;
       }
       await this.saveRender(saved.id);
+      this.markSaved();
       this.fb.ok('Carta guardada');
       void this.store.load(true);
     } catch (e) {
@@ -999,7 +1046,7 @@ export class CardEditorPage {
   }
 
   /** Shows an art (as a data URL) with its framing. */
-  private loadArt(src: string, place: { scale: number; x: number; y: number }): void {
+  private loadArt(src: string, place: { scale: number; x: number; y: number }, loaded?: () => void): void {
     const img = new Image();
     img.onload = () => {
       // The art comes in screen sRGB: take it to the card's design space, as Photoshop does when it enters the CMYK file.
@@ -1016,6 +1063,7 @@ export class CardEditorPage {
         height: c.height,
         ...place,
       });
+      loaded?.();
     };
     img.src = src;
   }

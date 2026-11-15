@@ -191,6 +191,7 @@ export const routes: Routes = [
         path: 'card-editor',
         title: 'Editor de cartas · ERAS',
         canMatch: [permissionGuard('manage_cards')],
+        canDeactivate: [(page: { confirmLeave?: () => Promise<boolean> }) => page.confirmLeave?.() ?? true],
         loadComponent: () => import('@features/admin/card-editor/card-editor.page').then((m) => m.CardEditorPage),
       },
       {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '@data/cards/card.model';
-import { editionSlots, metaEditionId, slotsFilled } from './edition-slots';
+import { editionMetrics, editionSlots, metaEditionId, slotsFilled } from './edition-slots';
 
 const meta = (over: Partial<CardMeta>): CardMeta => ({ id: 'm', cardName: 'X', edition: 'ST2', colorIdentity: 'G', cardNumber: 1, ...over }) as CardMeta;
 
@@ -28,5 +28,18 @@ describe('edition slots', () => {
   it('reads sub-editions as their own edition', () => {
     expect(metaEditionId({ edition: 'E1', subEdition: '1' })).toBe('E1.1');
     expect(metaEditionId({ edition: 'E1', subEdition: null })).toBe('E1');
+  });
+
+  it('counts the cards by rarity, level and type', () => {
+    const m = editionMetrics([
+      meta({ rarity: 'R', level: 2, cardType: 'creature' }),
+      meta({ rarity: 'C', level: 1, cardType: 'creature' }),
+      meta({ rarity: 'C', level: null, cardType: 'utility' }),
+      meta({ rarity: null, level: 1, cardType: 'creature' }),
+    ]);
+    expect(m.total).toBe(4);
+    expect(m.rarity.map((r) => [r.label, r.value])).toEqual([['C', 2], ['UC', 0], ['R', 1], ['SR', 0], ['SEC', 0], ['Sin rareza', 1]]);
+    expect(m.level.map((r) => [r.label, r.value])).toEqual([['Nivel 1', 2], ['Nivel 2', 1], ['Sin nivel', 1]]);
+    expect(m.type.map((r) => [r.label, r.value])).toEqual([['Criatura', 3], ['Utilidad', 1]]);
   });
 });

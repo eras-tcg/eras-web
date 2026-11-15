@@ -10,7 +10,8 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { Edition } from '@data/editions/edition.model';
-import { EditionSlot, editionSlots, slotsFilled } from '@data/editions/edition-slots';
+import { EditionSlot, editionMetrics, editionSlots, slotsFilled } from '@data/editions/edition-slots';
+import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
@@ -53,6 +54,11 @@ interface EditionForm {
   ],
   template: `
     <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
+      @if (edition()) {
+        <button page-actions erasButton variant="ghost" type="button" (click)="showMetrics()">
+          Métricas
+        </button>
+      }
       @if (canEditEditions() && !form()) {
         <button page-actions erasButton variant="secondary" type="button" (click)="startForm()">
           {{ edition() ? 'Editar edición' : 'Nueva edición' }}
@@ -437,6 +443,15 @@ export class CardEditionsPage {
         };
         return { slot: s, card };
       });
+  }
+
+  /** The edition's card counts (rarity, level, type) in a dialog. */
+  protected showMetrics(): void {
+    const e = this.edition();
+    if (!e) return;
+    const metas = this.groups().flatMap((g) => g.slots.filter((s) => s.meta).map((s) => s.meta!));
+    const data: EditionMetricsData = { title: `Métricas · ${e.editionName || e.editionId}`, metrics: editionMetrics(metas) };
+    this.modal.open(EditionMetricsDialogComponent, { data });
   }
 
   /** A card's detail, read only, as in Cards (←/→ go through the edition's cards). */

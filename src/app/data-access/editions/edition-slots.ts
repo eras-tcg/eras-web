@@ -1,4 +1,4 @@
-import { CardMeta, CatalogCard } from '@data/cards/card.model';
+import { CARD_RARITIES, CARD_TYPE_LABELS, CardMeta, CatalogCard } from '@data/cards/card.model';
 import { Edition } from './edition.model';
 
 /** One place of an edition: its code and the card in it, if any (its metadata and, when it has one, its image). */
@@ -55,4 +55,40 @@ export function editionSlots(
 export function slotsFilled(groups: readonly { slots: readonly EditionSlot[] }[]): { filled: number; total: number } {
   const all = groups.flatMap((g) => g.slots);
   return { filled: all.filter((s) => s.meta).length, total: all.length };
+}
+
+/** One count of a metric: its key, what it reads and how many cards. */
+export interface MetricCount {
+  key: string;
+  label: string;
+  value: number;
+}
+
+/** How many of the edition's cards there are by rarity, by level and by card type (each in its usual order). */
+export function editionMetrics(metas: readonly CardMeta[]): {
+  total: number;
+  rarity: MetricCount[];
+  level: MetricCount[];
+  type: MetricCount[];
+} {
+  const count = (keyOf: (m: CardMeta) => string) => {
+    const out = new Map<string, number>();
+    for (const m of metas) out.set(keyOf(m), (out.get(keyOf(m)) ?? 0) + 1);
+    return out;
+  };
+  const rarities = count((m) => m.rarity || '');
+  const rarityKeys = [...CARD_RARITIES, ...[...rarities.keys()].filter((k) => !(CARD_RARITIES as readonly string[]).includes(k))];
+  const levels = count((m) => (m.level == null ? '' : String(m.level)));
+  const levelKeys = [...levels.keys()].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : Number(a) - Number(b)));
+  const types = count((m) => m.cardType || 'creature');
+  const typeOrder = Object.keys(CARD_TYPE_LABELS);
+  const typeKeys = [...types.keys()].sort((a, b) => typeOrder.indexOf(a) - typeOrder.indexOf(b));
+  return {
+    total: metas.length,
+    rarity: rarityKeys
+      .filter((k) => rarities.has(k) || k !== '')
+      .map((k) => ({ key: k || 'none', label: k || 'Sin rareza', value: rarities.get(k) ?? 0 })),
+    level: levelKeys.map((k) => ({ key: k || 'none', label: k ? `Nivel ${k}` : 'Sin nivel', value: levels.get(k) ?? 0 })),
+    type: typeKeys.map((k) => ({ key: k, label: CARD_TYPE_LABELS[k] ?? k, value: types.get(k) ?? 0 })),
+  };
 }

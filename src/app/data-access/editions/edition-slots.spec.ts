@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '@data/cards/card.model';
-import { editionMetrics, editionSlots, metaEditionId, slotsFilled } from './edition-slots';
+import { deckSize, editionMetrics, editionSlots, metaEditionId, slotsFilled } from './edition-slots';
 
 const meta = (over: Partial<CardMeta>): CardMeta => ({ id: 'm', cardName: 'X', edition: 'ST2', colorIdentity: 'G', cardNumber: 1, ...over }) as CardMeta;
 
@@ -41,5 +41,14 @@ describe('edition slots', () => {
     expect(m.rarity.map((r) => [r.label, r.value])).toEqual([['C', 2], ['UC', 0], ['R', 1], ['SR', 0], ['SEC', 0], ['Sin rareza', 1]]);
     expect(m.level.map((r) => [r.label, r.value])).toEqual([['Nivel 1', 2], ['Nivel 2', 1], ['Sin nivel', 1]]);
     expect(m.type.map((r) => [r.label, r.value])).toEqual([['Criatura', 3], ['Utilidad', 1]]);
+  });
+
+  it('adds up a structure deck from its cards copies', () => {
+    const groups = editionSlots({ editionId: 'ST2', colors: ['G'], cardsPerColor: 3 }, [
+      meta({ id: 'a', cardNumber: 1, deckCopies: 3 }),
+      meta({ id: 'b', cardNumber: 2, deckCopies: 1 }),
+      meta({ id: 'c', cardNumber: 3 }),
+    ]);
+    expect(deckSize(groups)).toBe(4);
   });
 });

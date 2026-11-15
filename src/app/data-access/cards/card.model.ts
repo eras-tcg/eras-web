@@ -77,6 +77,8 @@ export interface CardMeta {
   artType?: string | null;
   /** The finished card drawn by the editor (a cache), served by `/api/cards/{id}/render`; null until saved there. */
   renderKey?: string | null;
+  /** In a structure deck (ST…): how many copies of this card the deck brings. */
+  deckCopies?: number | null;
 }
 
 /**

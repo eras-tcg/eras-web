@@ -8,6 +8,8 @@ import { editionMetrics } from '@data/editions/edition-slots';
 export interface EditionMetricsData {
   title: string;
   metrics: ReturnType<typeof editionMetrics>;
+  /** A structure deck's size (its cards' copies); null for other editions. */
+  deck: number | null;
 }
 
 /** An edition's card counts by rarity, level and card type. Open with ModalService. */
@@ -15,7 +17,7 @@ export interface EditionMetricsData {
   selector: 'eras-edition-metrics-dialog',
   imports: [ModalComponent, StackComponent, BarListComponent],
   template: `
-    <eras-modal [title]="data.title" [subtitle]="data.metrics.total + ' cartas'" (closed)="ref.close()">
+    <eras-modal [title]="data.title" [subtitle]="data.metrics.total + ' cartas' + (data.deck !== null ? ' · mazo de ' + data.deck : '')" (closed)="ref.close()">
       <eras-stack [gap]="4">
         <eras-bar-list title="Rareza" [items]="data.metrics.rarity" [total]="data.metrics.total" />
         <eras-bar-list title="Nivel" [items]="data.metrics.level" [total]="data.metrics.total" />

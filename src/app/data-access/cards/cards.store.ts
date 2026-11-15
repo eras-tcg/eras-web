@@ -51,6 +51,11 @@ export class CardsStore {
     return (card.meta && this.unprogrammed()[card.meta.id]) || null;
   }
 
+  /** One card's metadata as saved elsewhere (admin), without loading the whole catalog again. */
+  replaceMeta(meta: CardMeta): void {
+    this.meta.update((list) => list.map((m) => (m.id === meta.id ? meta : m)));
+  }
+
   /** After reference data changes elsewhere (admin), so filters and keyword texts update. */
   setRef(ref: CardRefData): void {
     this.ref.set(ref);

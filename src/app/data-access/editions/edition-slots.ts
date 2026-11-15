@@ -92,3 +92,8 @@ export function editionMetrics(metas: readonly CardMeta[]): {
     type: typeKeys.map((k) => ({ key: k, label: CARD_TYPE_LABELS[k] ?? k, value: types.get(k) ?? 0 })),
   };
 }
+
+/** A structure deck's size: the copies its cards bring (a card without a number counts none). */
+export function deckSize(groups: readonly { slots: readonly EditionSlot[] }[]): number {
+  return groups.flatMap((g) => g.slots).reduce((sum, s) => sum + (s.meta?.deckCopies ?? 0), 0);
+}

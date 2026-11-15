@@ -18,6 +18,11 @@ export class CardsAdminApi {
     return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), meta);
   }
 
+  /** A structure card's copies in its deck (only that field changes). */
+  setDeckCopies(id: string, copies: number): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { deckCopies: copies });
+  }
+
   deleteMeta(id: string): Observable<unknown> {
     return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
   }

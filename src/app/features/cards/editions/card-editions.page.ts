@@ -10,7 +10,8 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { Edition } from '@data/editions/edition.model';
-import { EditionSlot, editionMetrics, editionSlots, slotsFilled } from '@data/editions/edition-slots';
+import { EditionSlot, deckSize, editionMetrics, editionSlots, slotsFilled } from '@data/editions/edition-slots';
+import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -130,6 +131,9 @@ interface EditionForm {
       @if (edition(); as e) {
         <p class="meta">
           {{ e.editionId }} · {{ filled().filled }} de {{ filled().total }} cartas
+          @if (structure()) {
+            · mazo de {{ deck() }} cartas
+          }
           @if (e.editionDescription) {
             · {{ e.editionDescription }}
           }
@@ -153,6 +157,31 @@ interface EditionForm {
                       <span class="code">{{ s.code }}</span>
                     }
                   </button>
+                  @if (structure()) {
+                    <div class="copies">
+                      @if (canEditCards()) {
+                        <button
+                          type="button"
+                          [attr.aria-label]="'Una copia menos de ' + s.meta.cardName"
+                          [disabled]="!(s.meta.deckCopies ?? 0) || savingCopies() === s.meta.id"
+                          (click)="setCopies(s, (s.meta.deckCopies ?? 0) - 1)"
+                        >
+                          −
+                        </button>
+                      }
+                      <span>× {{ s.meta.deckCopies ?? 0 }}</span>
+                      @if (canEditCards()) {
+                        <button
+                          type="button"
+                          [attr.aria-label]="'Una copia más de ' + s.meta.cardName"
+                          [disabled]="savingCopies() === s.meta.id"
+                          (click)="setCopies(s, (s.meta.deckCopies ?? 0) + 1)"
+                        >
+                          +
+                        </button>
+                      }
+                    </div>
+                  }
                   @if (canEditCards()) {
                     <button
                       type="button"
@@ -227,6 +256,27 @@ interface EditionForm {
     }
     .slot-wrap {
       position: relative;
+    }
+    .copies {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--space-2);
+      margin-block-start: var(--space-1);
+      font-size: var(--font-size-sm);
+    }
+    .copies button {
+      inline-size: 1.75rem;
+      block-size: 1.75rem;
+      border: var(--border-width) solid var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+    }
+    .copies button:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
     .slot-wrap .slot {
       inline-size: 100%;
@@ -325,6 +375,10 @@ export class CardEditionsPage {
     return e ? editionSlots(e, this.cards.metaList(), this.cards.cards()) : [];
   });
   protected readonly filled = computed(() => slotsFilled(this.groups()));
+  /** A structure deck (ST…): its cards bring a number of copies each. */
+  protected readonly structure = computed(() => isStructure(this.edition()?.editionId ?? ''));
+  protected readonly deck = computed(() => deckSize(this.groups()));
+  protected readonly savingCopies = signal<string | null>(null);
   protected readonly list = computed(() =>
     this.editions.catalogEditions().map((edition) => ({
       edition,
@@ -445,12 +499,31 @@ export class CardEditionsPage {
       });
   }
 
+  /** Saves how many copies of a structure card the deck brings. */
+  protected async setCopies(s: EditionSlot, copies: number): Promise<void> {
+    const m = s.meta;
+    if (!m || copies < 0) return;
+    this.savingCopies.set(m.id);
+    this.error.set(null);
+    try {
+      this.cards.replaceMeta(await firstValueFrom(this.adminApi.setDeckCopies(m.id, copies)));
+    } catch {
+      this.error.set('No se pudieron guardar las copias');
+    } finally {
+      this.savingCopies.set(null);
+    }
+  }
+
   /** The edition's card counts (rarity, level, type) in a dialog. */
   protected showMetrics(): void {
     const e = this.edition();
     if (!e) return;
     const metas = this.groups().flatMap((g) => g.slots.filter((s) => s.meta).map((s) => s.meta!));
-    const data: EditionMetricsData = { title: `Métricas · ${e.editionName || e.editionId}`, metrics: editionMetrics(metas) };
+    const data: EditionMetricsData = {
+      title: `Métricas · ${e.editionName || e.editionId}`,
+      metrics: editionMetrics(metas),
+      deck: this.structure() ? this.deck() : null,
+    };
     this.modal.open(EditionMetricsDialogComponent, { data });
   }
 

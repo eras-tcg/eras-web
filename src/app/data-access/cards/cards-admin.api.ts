@@ -52,6 +52,21 @@ export class CardsAdminApi {
     return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`));
   }
 
+  /** The card's illustration (the art alone, kept as it came): answers the card. */
+  setArt(metaId: string, file: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`), file, {
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+  }
+
+  removeArt(metaId: string): Observable<CardMeta> {
+    return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`));
+  }
+
+  art(metaId: string): Observable<Blob> {
+    return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`), { responseType: 'blob' });
+  }
+
   deleteImage(id: string): Observable<unknown> {
     return this.http.delete(this.api.url(`/api/drive/cards/db/${encodeURIComponent(id)}`), { responseType: 'text' });
   }

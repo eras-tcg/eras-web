@@ -70,6 +70,11 @@ export interface CardMeta {
    * card: they have no image record of their own, so no list or search shows them as other cards.
    */
   altArts?: AltArt[] | null;
+  /** How the card editor draws it (frame, gold border, inherit frame, art framing); null before the editor. */
+  design?: Record<string, unknown> | null;
+  /** Its illustration alone, served by the cards' API (`/api/cards/{id}/art`); null without one. */
+  artKey?: string | null;
+  artType?: string | null;
 }
 
 /**

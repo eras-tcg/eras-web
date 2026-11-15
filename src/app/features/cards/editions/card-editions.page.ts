@@ -4,6 +4,8 @@ import { EditModeService } from '@core/auth/edit-mode.service';
 import { CARD_COLORS, COLOR_LABELS } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
+import { CardsAdminApi } from '@data/cards/cards-admin.api';
+import { firstValueFrom } from 'rxjs';
 import { Edition } from '@data/editions/edition.model';
 import { EditionSlot, editionSlots, slotsFilled } from '@data/editions/edition-slots';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -135,12 +137,12 @@ interface EditionForm {
                   [attr.aria-label]="s.meta ? s.code + ' ' + s.meta.cardName : 'Crear ' + s.code"
                   (click)="openSlot(s)"
                 >
-                  @if (s.card && imageUrl(s.card); as src) {
+                  @if (slotImage(s); as src) {
                     <img [src]="src" alt="" loading="lazy" />
                   } @else {
                     <span class="name">{{ s.meta?.cardName || '' }}</span>
+                    <span class="code">{{ s.code }}</span>
                   }
-                  <span class="code">{{ s.code }}</span>
                 </button>
               }
             }
@@ -243,10 +245,13 @@ export class CardEditionsPage {
   private readonly cards = inject(CardsStore);
   private readonly editMode = inject(EditModeService);
   private readonly router = inject(Router);
+  private readonly adminApi = inject(CardsAdminApi);
+  /** The editor's finished images already fetched (they need the session), by card id and render. */
+  private readonly renders = signal<Record<string, string>>({});
+  private readonly asked = new Set<string>();
 
   protected readonly colors = CARD_COLORS;
   protected readonly colorLabels = COLOR_LABELS;
-  protected readonly imageUrl = cardImageUrl;
   protected readonly canEditCards = computed(() => this.editMode.allows('manage_cards'));
   protected readonly canEditEditions = computed(() => this.editMode.allows('manage_editions'));
 
@@ -273,6 +278,19 @@ export class CardEditionsPage {
   constructor() {
     void this.editions.load();
     void this.cards.load();
+    // The editor's finished images of the cards without a Drive image, fetched with the session
+    effect(() => {
+      for (const g of this.groups())
+        for (const s of g.slots) {
+          const m = s.meta;
+          const key = m?.renderKey ? `${m.id}|${m.renderKey}` : null;
+          if (!m || !key || (s.card && cardImageUrl(s.card)) || this.asked.has(key)) continue;
+          this.asked.add(key);
+          void firstValueFrom(this.adminApi.render(m.id))
+            .then((blob) => this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })))
+            .catch(() => undefined);
+        }
+    });
     // Another edition: the form of the last one closes
     effect(() => {
       this.editionId();
@@ -338,6 +356,14 @@ export class CardEditionsPage {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** The slot's picture: its Drive image, else the editor's finished image. */
+  protected slotImage(s: EditionSlot): string | null {
+    const drive = s.card ? cardImageUrl(s.card) : null;
+    if (drive) return drive;
+    const m = s.meta;
+    return m?.renderKey ? (this.renders()[`${m.id}|${m.renderKey}`] ?? null) : null;
   }
 
   /** A filled slot opens its card in the editor; an empty one opens the editor on a new card with that code. */

@@ -75,6 +75,8 @@ export interface CardMeta {
   /** Its illustration alone, served by the cards' API (`/api/cards/{id}/art`); null without one. */
   artKey?: string | null;
   artType?: string | null;
+  /** The finished card drawn by the editor (a cache), served by `/api/cards/{id}/render`; null until saved there. */
+  renderKey?: string | null;
 }
 
 /**

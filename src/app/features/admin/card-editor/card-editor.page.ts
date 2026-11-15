@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { parentScreen } from '@core/navigation/screens';
+import { EditionsStore } from '@data/editions/editions.store';
 import { AppScreen } from '@core/pwa/app-screen';
 import { CardsStore } from '@data/cards/cards.store';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -86,7 +86,7 @@ import { ColorLut, convertCanvas } from './render/color-lut';
   ],
   template: `
     <div class="top">
-      @if (back; as b) {
+      @if (back(); as b) {
         <a class="round" [routerLink]="b.route" [attr.aria-label]="'Volver a ' + b.label">
           <eras-icon name="chevron-left" />
         </a>
@@ -591,7 +591,17 @@ export class CardEditorPage {
   private readonly viewport = viewChild.required<ElementRef<HTMLElement>>('viewport');
   private readonly document = inject(DOCUMENT);
   /** Where "back" leads (the screen tree's parent of the editor). */
-  protected readonly back = parentScreen('/card-editor');
+  private readonly editions = inject(EditionsStore);
+  /** "Back": the edition of the card open (its slots), or the editions when it has none. */
+  protected readonly back = computed(() => {
+    const id = this.form().edition.trim().toUpperCase();
+    const e = id ? this.editions.catalogEditions().find((x) => x.editionId.toUpperCase() === id) : null;
+    return e
+      ? { route: `/cards/editions/${e.editionId}`, label: e.editionName || e.editionId }
+      : { route: '/cards/editions', label: 'Ediciones' };
+  });
+  /** The last preview drawn (screen colors): what is saved as the card's finished image. */
+  private lastPreview: Promise<HTMLCanvasElement> | null = null;
   protected readonly fullscreenToggle = inject(AppScreen).fullscreenToggle;
   protected readonly fullscreen = signal(!!this.document.fullscreenElement);
   /** The card is being dragged around inside its viewport (seen closer, not framing the art). */
@@ -679,6 +689,7 @@ export class CardEditorPage {
 
   constructor() {
     void this.store.load();
+    void this.editions.load();
     void this.loadAssets();
     // A card or a slot asked for in the address, once the cards are loaded
     let handled = '';
@@ -779,11 +790,13 @@ export class CardEditorPage {
     const baking = r.bake();
     // The preview shows the screen colors (as Photoshop's Save for Web), drawn once the bevels are ready.
     const gen = ++this.generation;
-    void baking
+    const shown = baking
       .then(() => svgToCanvasFine(r.svg))
+      .then((canvas) => convertCanvas(canvas, (px) => lut.forward(px)));
+    this.lastPreview = shown;
+    void shown
       .then((canvas) => {
-        if (gen === this.generation)
-          host.replaceChildren(convertCanvas(canvas, (px) => lut.forward(px)));
+        if (gen === this.generation) host.replaceChildren(canvas);
       })
       .catch((e) => this.fb.fail(e, 'No se pudo dibujar la carta'));
   }
@@ -884,6 +897,15 @@ export class CardEditorPage {
     };
   }
 
+  /** The finished card (the preview as drawn now) as the card's cached image. */
+  private async saveRender(id: string): Promise<void> {
+    const shown = this.lastPreview;
+    if (!shown) return;
+    const canvas = await shown;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    if (blob) await firstValueFrom(this.api.setRender(id, blob));
+  }
+
   /** Saves the card's document (a new card is created), then its art if it changed. */
   protected async save(): Promise<void> {
     if (this.saving()) return;
@@ -908,6 +930,7 @@ export class CardEditorPage {
         this.artChanged = false;
         this.artFile = null;
       }
+      await this.saveRender(saved.id);
       this.fb.ok('Carta guardada');
       void this.store.load(true);
     } catch (e) {

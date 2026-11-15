@@ -63,6 +63,17 @@ export class CardsAdminApi {
     return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`));
   }
 
+  /** The finished card drawn by the editor (a cache of the document and its art): answers the card. */
+  setRender(metaId: string, image: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), image, {
+      headers: { 'Content-Type': image.type || 'image/jpeg' },
+    });
+  }
+
+  render(metaId: string): Observable<Blob> {
+    return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), { responseType: 'blob' });
+  }
+
   art(metaId: string): Observable<Blob> {
     return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`), { responseType: 'blob' });
   }

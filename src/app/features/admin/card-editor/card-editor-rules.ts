@@ -1,5 +1,5 @@
 import { MetaForm } from '@data/cards/meta-rules';
-import { CardDraft, cardCode } from './render/card-build';
+import { CardDraft, FrameStyle, cardCode } from './render/card-build';
 
 /** The card the editor draws from the metadata form. */
 export function draftFromForm(f: MetaForm, her = false): CardDraft {
@@ -48,8 +48,14 @@ export function withoutInherit(f: MetaForm): MetaForm {
 export function toggleCardColor(f: MetaForm, c: string): MetaForm {
   const colors = f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c];
   if (!colors.length) return f;
-  // The code's color letters follow the card's colors.
-  return { ...f, colors, colorIdentity: colors.join('') };
+  // The code's color letter is the first color's (bicolor cards: "R" for red-white).
+  return { ...f, colors, colorIdentity: colors[0] };
+}
+
+/** Swaps the two colors of a bicolor card (its code letter follows the first). */
+export function swapCardColors(f: MetaForm): MetaForm {
+  const colors = [...f.colors].reverse();
+  return { ...f, colors, colorIdentity: colors[0] ?? f.colorIdentity };
 }
 
 /** The colors the editor shows for a form: its own, else its code's letters, else white. */
@@ -93,4 +99,41 @@ export function defaultSummonKind(f: MetaForm): string {
     ({ R: 'promotion', P: 'ritual', G: 'evolution' } as Record<string, string>)[c] ??
     'materialization'
   );
+}
+
+/** What a draft keeps besides the metadata: frame, extras and the art's framing. */
+export interface DraftDesign {
+  frameStyle: FrameStyle;
+  goldBorder: boolean;
+  /** Inherit frame chosen before the card has inherit effects. */
+  her: boolean;
+  noCost: boolean;
+  noStrength: boolean;
+  /** The art's zoom and offset (card pixels); null without art. */
+  art: { scale: number; x: number; y: number } | null;
+}
+
+const FRAMES: FrameStyle[] = ['standard', 'semi', 'full'];
+
+/** A saved design read back, with defaults for anything missing or unknown. */
+export function readDesign(raw: Record<string, unknown> | null | undefined): DraftDesign {
+  const d = raw ?? {};
+  const art = d['art'] as Record<string, unknown> | null | undefined;
+  const num = (v: unknown, def: number) => (typeof v === 'number' && Number.isFinite(v) ? v : def);
+  return {
+    frameStyle: FRAMES.includes(d['frameStyle'] as FrameStyle)
+      ? (d['frameStyle'] as FrameStyle)
+      : 'standard',
+    goldBorder: d['goldBorder'] === true,
+    her: d['her'] === true,
+    noCost: d['noCost'] === true,
+    noStrength: d['noStrength'] === true,
+    art: art ? { scale: num(art['scale'], 1), x: num(art['x'], 0), y: num(art['y'], 0) } : null,
+  };
+}
+
+/** Edition and number of a new card typed as "E5-03", "E5 3" or "E1.1-R07" (its color comes from its colors). */
+export function parseNewCode(raw: string): { edition: string; cardNumber: number } | null {
+  const m = /^\s*([A-Za-z]+\d*(?:\.\d+)?)\s*[-\s]\s*[BGPRW]?\s*(\d{1,3})\s*$/i.exec(raw);
+  return m && Number(m[2]) > 0 ? { edition: m[1].toUpperCase(), cardNumber: Number(m[2]) } : null;
 }

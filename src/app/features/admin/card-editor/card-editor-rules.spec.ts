@@ -4,6 +4,9 @@ import {
   cardColorsOf,
   classMatches,
   defaultSummonKind,
+  parseNewCode,
+  readDesign,
+  swapCardColors,
   toggleCardColor,
   withCardType,
   withLink,
@@ -26,8 +29,9 @@ describe('card-editor-rules', () => {
     const f = { ...blankMeta(''), colors: ['W'] };
     expect(toggleCardColor(f, 'W')).toBe(f);
     const two = toggleCardColor(f, 'R');
-    expect([two.colors, two.colorIdentity]).toEqual([['W', 'R'], 'WR']);
-    expect(cardColorsOf({ ...blankMeta(''), colorIdentity: 'BR' })).toEqual(['B', 'R']);
+    expect([two.colors, two.colorIdentity]).toEqual([['W', 'R'], 'W']);
+    expect(swapCardColors(two).colorIdentity).toBe('R');
+    expect(cardColorsOf({ ...blankMeta(''), colorIdentity: 'B' })).toEqual(['B']);
     expect(cardColorsOf({ ...blankMeta(''), colorIdentity: '' })).toEqual(['W']);
   });
 
@@ -51,5 +55,26 @@ describe('card-editor-rules', () => {
     expect(defaultSummonKind({ ...blankMeta(''), colors: [], colorIdentity: 'W' })).toBe(
       'materialization',
     );
+  });
+
+  it('reads a saved design with defaults', () => {
+    expect(readDesign(null)).toEqual({
+      frameStyle: 'standard',
+      goldBorder: false,
+      her: false,
+      noCost: false,
+      noStrength: false,
+      art: null,
+    });
+    const d = readDesign({ frameStyle: 'full', goldBorder: true, art: { scale: 1.5, x: 'a' } });
+    expect([d.frameStyle, d.goldBorder, d.art]).toEqual(['full', true, { scale: 1.5, x: 0, y: 0 }]);
+    expect(readDesign({ frameStyle: 'raro' }).frameStyle).toBe('standard');
+  });
+
+  it('reads the code of a new card', () => {
+    expect(parseNewCode(' e5-03 ')).toEqual({ edition: 'E5', cardNumber: 3 });
+    expect(parseNewCode('E1.1 R07')).toEqual({ edition: 'E1.1', cardNumber: 7 });
+    expect(parseNewCode('E5')).toBeNull();
+    expect(parseNewCode('E5-00')).toBeNull();
   });
 });

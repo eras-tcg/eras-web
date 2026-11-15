@@ -115,6 +115,19 @@ export function metaFormFor(card: CatalogCard): MetaForm {
   };
 }
 
+/** The form of a card's metadata alone (a card editor draft): the inverse of toMetaPayload. */
+export function formFromMeta(m: Omit<CardMeta, 'id'>): MetaForm {
+  return {
+    ...blankMeta(),
+    ...gameFields(m as CardMeta),
+    cardName: m.cardName ?? '',
+    edition: m.subEdition ? `${m.edition}.${m.subEdition}` : (m.edition ?? ''),
+    colorIdentity: m.colorIdentity ?? null,
+    cardNumber: m.cardNumber ?? null,
+    colors: m.colors?.length ? [...m.colors] : m.colorIdentity ? [m.colorIdentity] : [],
+  };
+}
+
 /** Validation errors; empty when the form can be saved. */
 export function validateMeta(f: MetaForm): string[] {
   const errors: string[] = [];

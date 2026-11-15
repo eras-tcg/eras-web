@@ -9,7 +9,16 @@ import {
   viewChild,
 } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
-import { MetaForm, blankMeta, metaFormFor } from '@data/cards/meta-rules';
+import { firstValueFrom } from 'rxjs';
+import { CardDraft, CardDraftsApi } from '@data/cards/card-drafts.api';
+import {
+  MetaForm,
+  blankMeta,
+  formFromMeta,
+  metaFormFor,
+  toMetaPayload,
+} from '@data/cards/meta-rules';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -26,14 +35,18 @@ import { feedbackState } from '../admin-feedback';
 import {
   CARD_TYPES,
   CardType,
+  DraftDesign,
   cardColorsOf,
   draftFromForm,
+  parseNewCode,
+  readDesign,
+  swapCardColors,
   toggleCardColor,
   withCardType,
   withLink,
   withoutInherit,
 } from './card-editor-rules';
-import { FRAME_STYLE_LABELS, FrameStyle, buildCard } from './render/card-build';
+import { FRAME_STYLE_LABELS, FrameStyle, buildCard, cardCode } from './render/card-build';
 import {
   FontSlot,
   canCopyInstalledFonts,
@@ -47,7 +60,7 @@ import { ArtPlacement, CardSpec, PieceTable } from './render/spec.model';
 import { SvgRenderer } from './render/svg-render';
 import { ColorLut, convertCanvas } from './render/color-lut';
 
-/** Card editor (manage_cards): the card's metadata, its art and frame, and a live preview. */
+/** Card editor (manage_cards): the card's metadata, its art and frame, and a live preview, saved as drafts. */
 @Component({
   selector: 'eras-card-editor-page',
   imports: [
@@ -162,6 +175,21 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               }
             </datalist>
           </eras-form-field>
+          <eras-stack direction="row" [gap]="2" wrap>
+            <button erasButton variant="ghost" type="button" (click)="newCard()">
+              Carta nueva
+            </button>
+            <button
+              erasButton
+              type="button"
+              [loading]="saving()"
+              [disabled]="saving()"
+              (click)="save()"
+            >
+              Guardar
+            </button>
+          </eras-stack>
+
           <eras-section-header title="Estructura" />
           <eras-form-field label="Tipo de carta">
             <select (change)="setType($any($event.target).value)">
@@ -326,6 +354,8 @@ import { ColorLut, convertCanvas } from './render/color-lut';
 })
 export class CardEditorPage {
   protected readonly store = inject(CardsStore);
+  private readonly drafts = inject(CardDraftsApi);
+  private readonly modal = inject(ModalService);
   protected readonly fb = feedbackState();
   private readonly preview = viewChild.required<ElementRef<HTMLElement>>('preview');
 
@@ -337,6 +367,14 @@ export class CardEditorPage {
   protected readonly art = signal<ArtPlacement | null>(null);
   protected readonly query = signal('');
   protected readonly dragging = signal(false);
+  protected readonly saving = signal(false);
+  /** Drafts saved so far; the one being edited, and the published card it changes. */
+  private readonly draftList = signal<CardDraft[]>([]);
+  private readonly draftId = signal<string | null>(null);
+  private readonly metaId = signal<string | null>(null);
+  /** The art changed since the last save: a new file to upload, or removed. */
+  private artFile: Blob | null = null;
+  private artChanged = false;
   protected readonly sizes = signal('');
   /** Inherit (HER) frame chosen before the card has inherit effects. */
   private readonly her = signal(false);
@@ -376,16 +414,29 @@ export class CardEditorPage {
       .join(', '),
   );
 
-  private readonly openable = computed(() =>
-    this.store
+  /** Cards that can be opened: published ones (their draft, if they have one) and drafts of new cards. */
+  private readonly openable = computed(() => {
+    const drafts = this.draftList();
+    const byMeta = new Map(drafts.filter((d) => d.metaId).map((d) => [d.metaId!, d]));
+    const draftKey = (d: CardDraft) => {
+      const form = formFromMeta(d.meta);
+      return `${form.cardName || 'Sin nombre'} · ${cardCode(draftFromForm(form))} · borrador`;
+    };
+    const published = this.store
       .cards()
       .filter((c) => c.meta)
-      .map((c) => ({
-        key: `${c.meta!.cardName} · ${c.edition}-${c.color_identity}${String(c.number ?? '').padStart(2, '0')}`,
-        label: c.meta!.cardName ?? '',
-        card: c,
-      })),
-  );
+      .map((c) => {
+        const draft = byMeta.get(c.meta!.id);
+        const key = draft
+          ? draftKey(draft)
+          : `${c.meta!.cardName} · ${c.edition}-${c.color_identity}${String(c.number ?? '').padStart(2, '0')}`;
+        return { key, label: c.meta!.cardName ?? '', card: c, draft };
+      });
+    const fresh = drafts
+      .filter((d) => !d.metaId)
+      .map((d) => ({ key: draftKey(d), label: d.meta.cardName ?? '', card: null, draft: d }));
+    return [...fresh, ...published];
+  });
   protected readonly matches = computed(() => {
     const q = this.query().trim().toLowerCase();
     return this.openable()
@@ -402,6 +453,7 @@ export class CardEditorPage {
 
   constructor() {
     void this.store.load();
+    void this.loadDrafts();
     void this.loadAssets();
     effect(() => this.draw());
   }
@@ -494,16 +546,63 @@ export class CardEditorPage {
 
   // ── Card ──────────────────────────────────────────────────────────────
 
+  private async loadDrafts(): Promise<void> {
+    try {
+      this.draftList.set(await firstValueFrom(this.drafts.list()));
+    } catch (e) {
+      this.fb.fail(e, 'No se pudieron cargar los borradores');
+    }
+  }
+
   protected open(key: string): void {
     const hit = this.openable().find((m) => m.key === key);
     if (!hit) return;
+    if (hit.draft) {
+      void this.openDraft(hit.draft);
+      return;
+    }
+    const form = metaFormFor(hit.card!);
+    this.reset({ ...form, colors: cardColorsOf(form) });
+    this.metaId.set(hit.card!.meta?.id ?? null);
+    this.noCost.set(form.cost === null);
+    this.noStrength.set(form.cardType === 'creature' && form.strength === null);
+  }
+
+  /** Clears the editor for another card. */
+  private reset(form: MetaForm): void {
     this.effectZone.set(null);
-    const form = metaFormFor(hit.card);
-    this.form.set({ ...form, colors: cardColorsOf(form) });
+    this.form.set(form);
+    this.draftId.set(null);
+    this.metaId.set(null);
     this.her.set(false);
-    this.noCost.set(this.form().cost === null);
-    this.noStrength.set(this.form().cardType === 'creature' && this.form().strength === null);
+    this.noCost.set(false);
+    this.noStrength.set(false);
+    this.goldBorder.set(false);
+    this.style.set('standard');
+    this.removeArt();
+    this.artChanged = false;
     this.fb.clear();
+  }
+
+  private async openDraft(d: CardDraft): Promise<void> {
+    const form = formFromMeta(d.meta);
+    this.reset({ ...form, colors: cardColorsOf(form) });
+    this.draftId.set(d.id);
+    this.metaId.set(d.metaId);
+    const design = readDesign(d.design);
+    this.style.set(design.frameStyle);
+    this.goldBorder.set(design.goldBorder);
+    this.her.set(design.her);
+    this.noCost.set(design.noCost);
+    this.noStrength.set(design.noStrength);
+    if (!d.artKey) return;
+    try {
+      const blob = await firstValueFrom(this.drafts.art(d.id));
+      if (this.draftId() !== d.id) return;
+      this.loadArt(await dataUrl(blob), design.art ?? { scale: 1, x: 0, y: 0 });
+    } catch (e) {
+      this.fb.fail(e, 'No se pudo cargar el arte del borrador');
+    }
   }
 
   protected toggleValue(which: 'cost' | 'strength'): void {
@@ -535,10 +634,75 @@ export class CardEditorPage {
   }
 
   protected swapColors(): void {
-    this.form.update((f) => {
-      const colors = [...f.colors].reverse();
-      return { ...f, colors, colorIdentity: colors.join('') || f.colorIdentity };
+    this.form.update(swapCardColors);
+  }
+
+  // ── Saving ────────────────────────────────────────────────────────────
+
+  /** A new card: asks its code (edition and number), then saves it as a draft. */
+  protected async newCard(): Promise<void> {
+    const code = await this.askCode();
+    if (!code) return;
+    this.reset({ ...blankMeta(), colors: ['W'], ...code });
+    await this.save();
+  }
+
+  private async askCode(): Promise<{ edition: string; cardNumber: number } | null> {
+    const raw = await this.modal.prompt({
+      title: 'Carta nueva',
+      label: 'Edición y número (ej. E5-03)',
+      confirmLabel: 'Crear',
     });
+    if (raw === undefined) return null;
+    const code = parseNewCode(raw);
+    if (!code) this.fb.fail(null, 'Escribe la edición y el número, por ejemplo E5-03');
+    return code;
+  }
+
+  private design(): DraftDesign {
+    const a = this.art();
+    return {
+      frameStyle: this.style(),
+      goldBorder: this.goldBorder(),
+      her: this.her(),
+      noCost: this.noCost(),
+      noStrength: this.noStrength(),
+      art: a ? { scale: a.scale, x: a.x, y: a.y } : null,
+    };
+  }
+
+  /** Saves the card as a draft (a card without a code asks for one first), then its art if it changed. */
+  protected async save(): Promise<void> {
+    if (this.saving()) return;
+    if (!this.draftId() && !this.metaId() && !this.form().cardNumber) {
+      const code = await this.askCode();
+      if (!code) return;
+      this.form.update((f) => ({ ...f, ...code }));
+    }
+    this.saving.set(true);
+    try {
+      const meta = toMetaPayload(this.form());
+      const design = { ...this.design() };
+      const id = this.draftId();
+      let draft = await firstValueFrom(
+        id ? this.drafts.update(id, meta, design) : this.drafts.create(this.metaId(), meta, design),
+      );
+      this.draftId.set(draft.id);
+      if (this.artChanged) {
+        draft = await firstValueFrom(
+          this.artFile ? this.drafts.setArt(draft.id, this.artFile) : this.drafts.removeArt(draft.id),
+        );
+        this.artChanged = false;
+        this.artFile = null;
+      }
+      const saved = draft;
+      this.draftList.update((list) => [...list.filter((d) => d.id !== saved.id), saved]);
+      this.fb.ok('Borrador guardado');
+    } catch (e) {
+      this.fb.fail(e, 'No se pudo guardar el borrador');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   protected toggleArrow(a: string): void {
@@ -589,33 +753,36 @@ export class CardEditorPage {
 
   // ── Art ───────────────────────────────────────────────────────────────
 
-  protected pickArt(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
+  protected async pickArt(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        // The art comes in screen sRGB: take it to the card's design space, as Photoshop does when it enters the CMYK file.
-        const c = document.createElement('canvas');
-        c.width = img.naturalWidth;
-        c.height = img.naturalHeight;
-        c.getContext('2d')!.drawImage(img, 0, 0);
-        const lut = this.lut();
-        this.artScreen.set(String(reader.result));
-        if (lut) convertCanvas(c, (px) => lut.inverse(px));
-        this.art.set({
-          src: c.toDataURL('image/jpeg', 0.95),
-          width: c.width,
-          height: c.height,
-          scale: 1,
-          x: 0,
-          y: 0,
-        });
-      };
-      img.src = String(reader.result);
+    input.value = '';
+    this.artFile = file;
+    this.artChanged = true;
+    this.loadArt(await dataUrl(file), { scale: 1, x: 0, y: 0 });
+  }
+
+  /** Shows an art (as a data URL) with its framing. */
+  private loadArt(src: string, place: { scale: number; x: number; y: number }): void {
+    const img = new Image();
+    img.onload = () => {
+      // The art comes in screen sRGB: take it to the card's design space, as Photoshop does when it enters the CMYK file.
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext('2d')!.drawImage(img, 0, 0);
+      const lut = this.lut();
+      this.artScreen.set(src);
+      if (lut) convertCanvas(c, (px) => lut.inverse(px));
+      this.art.set({
+        src: c.toDataURL('image/jpeg', 0.95),
+        width: c.width,
+        height: c.height,
+        ...place,
+      });
     };
-    reader.readAsDataURL(file);
+    img.src = src;
   }
 
   /** Zoom range: below 1 the art can fit the standard frame's window, smaller than the card. */
@@ -649,6 +816,8 @@ export class CardEditorPage {
   });
 
   protected removeArt(): void {
+    if (this.art()) this.artChanged = true;
+    this.artFile = null;
     this.art.set(null);
     this.artScreen.set(null);
     this.framing.set(false);
@@ -712,4 +881,14 @@ export class CardEditorPage {
     this.dragging.set(false);
     this.commitArt();
   }
+}
+
+/** A file's contents as a data URL. */
+function dataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }

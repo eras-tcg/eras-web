@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
-import { CARD_COLORS, COLOR_LABELS } from '@data/cards/card.model';
+import { CARD_COLORS, COLOR_LABELS, CatalogCard } from '@data/cards/card.model';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { openCardDetailDialog } from '../card-detail-dialog/card-detail-dialog.component';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
@@ -46,6 +49,7 @@ interface EditionForm {
     AlertComponent,
     ButtonComponent,
     ChipComponent,
+    IconComponent,
   ],
   template: `
     <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
@@ -128,21 +132,40 @@ interface EditionForm {
           <eras-section-header [title]="colorLabels[g.color] || g.color" />
           <eras-grid minColumn="9rem" [gap]="3">
             @for (s of g.slots; track s.code) {
-              @if (s.meta || canEditCards()) {
+              @if (s.meta) {
+                <div class="slot-wrap">
+                  <button
+                    type="button"
+                    class="slot"
+                    [attr.aria-label]="s.code + ' ' + s.meta.cardName"
+                    (click)="showCard(s)"
+                  >
+                    @if (slotImage(s); as src) {
+                      <img [src]="src" alt="" loading="lazy" />
+                    } @else {
+                      <span class="name">{{ s.meta.cardName }}</span>
+                      <span class="code">{{ s.code }}</span>
+                    }
+                  </button>
+                  @if (canEditCards()) {
+                    <button
+                      type="button"
+                      class="edit"
+                      [attr.aria-label]="'Editar ' + s.meta.cardName"
+                      (click)="openEditor(s)"
+                    >
+                      <eras-icon name="edit" />
+                    </button>
+                  }
+                </div>
+              } @else if (canEditCards()) {
                 <button
                   type="button"
-                  class="slot"
-                  [class.empty]="!s.meta"
-                  [disabled]="!canEditCards()"
-                  [attr.aria-label]="s.meta ? s.code + ' ' + s.meta.cardName : 'Crear ' + s.code"
-                  (click)="openSlot(s)"
+                  class="slot empty"
+                  [attr.aria-label]="'Crear ' + s.code"
+                  (click)="openEditor(s)"
                 >
-                  @if (slotImage(s); as src) {
-                    <img [src]="src" alt="" loading="lazy" />
-                  } @else {
-                    <span class="name">{{ s.meta?.cardName || '' }}</span>
-                    <span class="code">{{ s.code }}</span>
-                  }
+                  <span class="code">{{ s.code }}</span>
                 </button>
               }
             }
@@ -196,6 +219,33 @@ interface EditionForm {
     .tile .title {
       font-weight: var(--font-weight-bold, 700);
     }
+    .slot-wrap {
+      position: relative;
+    }
+    .slot-wrap .slot {
+      inline-size: 100%;
+    }
+    .edit {
+      position: absolute;
+      inset-block-end: 6%;
+      inset-inline-end: 7%;
+      display: grid;
+      place-items: center;
+      inline-size: 2rem;
+      block-size: 2rem;
+      border: var(--border-width) solid var(--color-border);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+      color: var(--color-text);
+      cursor: pointer;
+    }
+    .edit:hover {
+      background: var(--color-surface);
+    }
+    .edit eras-icon {
+      inline-size: 1rem;
+      block-size: 1rem;
+    }
     .slot {
       position: relative;
       display: grid;
@@ -246,6 +296,7 @@ export class CardEditionsPage {
   private readonly editMode = inject(EditModeService);
   private readonly router = inject(Router);
   private readonly adminApi = inject(CardsAdminApi);
+  private readonly modal = inject(ModalService);
   /** The editor's finished images already fetched (they need the session), by card id and render. */
   private readonly renders = signal<Record<string, string>>({});
   private readonly asked = new Set<string>();
@@ -366,8 +417,37 @@ export class CardEditionsPage {
     return m?.renderKey ? (this.renders()[`${m.id}|${m.renderKey}`] ?? null) : null;
   }
 
-  /** A filled slot opens its card in the editor; an empty one opens the editor on a new card with that code. */
-  protected openSlot(s: EditionSlot): void {
+  /** The edition's cards as the catalog shows them in detail (a card made in the editor shows its finished image). */
+  private detailCards(): { slot: EditionSlot; card: CatalogCard }[] {
+    return this.groups()
+      .flatMap((g) => g.slots)
+      .filter((s) => s.meta)
+      .map((s) => {
+        const m = s.meta!;
+        const card: CatalogCard = s.card ?? {
+          id: m.id,
+          name: m.cardName ?? null,
+          edition: m.edition ?? '',
+          sub_edition: m.subEdition ?? null,
+          number: m.cardNumber ?? null,
+          color_identity: m.colorIdentity ?? null,
+          image_url: this.slotImage(s),
+          time_stamp: null,
+          meta: m,
+        };
+        return { slot: s, card };
+      });
+  }
+
+  /** A card's detail, read only, as in Cards (←/→ go through the edition's cards). */
+  protected showCard(s: EditionSlot): void {
+    const all = this.detailCards();
+    const index = all.findIndex((x) => x.slot.code === s.code);
+    openCardDetailDialog(this.modal, all.map((x) => x.card), Math.max(0, index));
+  }
+
+  /** The editor: a filled slot's card, or a new card with an empty slot's code. */
+  protected openEditor(s: EditionSlot): void {
     if (!this.canEditCards()) return;
     void this.router.navigate(['/card-editor'], {
       queryParams: s.meta ? { card: s.meta.id } : { slot: s.code },

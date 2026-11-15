@@ -1,4 +1,5 @@
 <eras-page title="Cartas" width="wide" fill>
+  <a page-actions erasButton variant="ghost" routerLink="/cards/editions">Ediciones</a>
   <button page-actions erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
     <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
   </button>

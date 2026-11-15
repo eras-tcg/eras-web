@@ -56,6 +56,16 @@ export const routes: Routes = [
         loadComponent: () => import('@features/cards/cards.page').then((m) => m.CardsPage),
       },
       {
+        path: 'cards/editions',
+        title: 'Ediciones · ERAS',
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
+      {
+        path: 'cards/editions/:editionId',
+        title: 'Ediciones · ERAS',
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
+      {
         path: 'editions',
         title: 'Tienda · ERAS',
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),

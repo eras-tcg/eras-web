@@ -37,6 +37,9 @@ export interface Edition {
   releaseDate?: string | null;
   packTypes?: PackType[] | null;
   boxConfig?: BoxConfig | null;
+  /** Its slots: the colors it has and how many cards each ("G" × 18 → G01–G18); null before slots existed. */
+  colors?: string[] | null;
+  cardsPerColor?: number | null;
 }
 
 /** Body of POST /api/drive/editions (create or update by editionId). */
@@ -50,4 +53,7 @@ export interface EditionSaveRequest {
   releaseDate: string;
   packTypes: PackType[];
   boxConfig: BoxConfig;
+  /** Left out (the shop's form): the server keeps the edition's slots. */
+  colors?: string[];
+  cardsPerColor?: number;
 }

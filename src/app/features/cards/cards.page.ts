@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
@@ -34,6 +34,7 @@ const PAGE_SIZE = 40;
 @Component({
   selector: 'eras-cards-page',
   imports: [
+    RouterLink,
     PageComponent,
     SplitComponent,
     GridComponent,

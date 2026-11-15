@@ -213,3 +213,9 @@ export function columnRun(
   while (y1 < height && ok(y1)) y1++;
   return [y0, y1];
 }
+
+/** Edition, color and number of a slot's code: "ST2-G05", "E1.1-B12". */
+export function parseSlotCode(code: string): { edition: string; color: string; number: number } | null {
+  const m = /^\s*([A-Za-z]+\d+(?:\.\d+)?)-([BGPRW])(\d{1,3})\s*$/i.exec(code);
+  return m ? { edition: m[1].toUpperCase(), color: m[2].toUpperCase(), number: Number(m[3]) } : null;
+}

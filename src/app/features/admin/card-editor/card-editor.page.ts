@@ -5,6 +5,8 @@ import {
   computed,
   effect,
   inject,
+  input,
+  untracked,
   signal,
   viewChild,
 } from '@angular/core';
@@ -44,6 +46,7 @@ import {
   draftFromForm,
   columnRun,
   fitArt,
+  parseSlotCode,
   readDesign,
   regionBox,
   swapCardColors,
@@ -577,6 +580,10 @@ import { ColorLut, convertCanvas } from './render/color-lut';
   host: { '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)' },
 })
 export class CardEditorPage {
+  /** `?card=<metadata id>`: opens that card (from an edition's slot). */
+  readonly card = input<string>();
+  /** `?slot=ST2-G05`: a new card with that code (an edition's empty slot). */
+  readonly slot = input<string>();
   protected readonly store = inject(CardsStore);
   private readonly api = inject(CardsAdminApi);
   protected readonly fb = feedbackState();
@@ -673,6 +680,25 @@ export class CardEditorPage {
   constructor() {
     void this.store.load();
     void this.loadAssets();
+    // A card or a slot asked for in the address, once the cards are loaded
+    let handled = '';
+    effect(() => {
+      const card = this.card();
+      const code = this.slot();
+      const metas = this.store.metaList();
+      const key = `${card ?? ''}|${code ?? ''}`;
+      if (key === handled || key === '|') return;
+      if (card) {
+        const m = metas.find((x) => x.id === card);
+        if (!m) return;
+        handled = key;
+        untracked(() => void this.openCard(m));
+      } else if (code) {
+        const slot = parseSlotCode(code);
+        handled = key;
+        if (slot) untracked(() => this.reset({ ...blankMeta(slot.edition), colors: [slot.color], colorIdentity: slot.color, cardNumber: slot.number }));
+      }
+    });
     effect(() => this.draw());
   }
 

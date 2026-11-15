@@ -6,6 +6,7 @@ import {
   defaultSummonKind,
   columnRun,
   fitArt,
+  parseSlotCode,
   regionBox,
   readDesign,
   swapCardColors,
@@ -93,5 +94,11 @@ describe('card-editor-rules', () => {
     const win = fitArt({ width: 1000, height: 1000 }, [24, 24, 720, 560]);
     expect(win.scale).toBeCloseTo(696 / 1039);
     expect([win.x, win.y]).toEqual([0, 292 - 519.5]);
+  });
+
+  it('reads a slot code', () => {
+    expect(parseSlotCode('ST2-G05')).toEqual({ edition: 'ST2', color: 'G', number: 5 });
+    expect(parseSlotCode('e1.1-b12')).toEqual({ edition: 'E1.1', color: 'B', number: 12 });
+    expect(parseSlotCode('ST2')).toBeNull();
   });
 });

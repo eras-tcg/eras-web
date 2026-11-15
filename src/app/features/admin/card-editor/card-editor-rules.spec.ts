@@ -4,6 +4,7 @@ import {
   cardColorsOf,
   classMatches,
   defaultSummonKind,
+  columnRun,
   fitArt,
   regionBox,
   readDesign,
@@ -82,6 +83,7 @@ describe('card-editor-rules', () => {
     const magenta = (r: number, g: number, b: number) => r > 200 && g < 60 && b > 200;
     expect(regionBox(data, w, h, [2, 1], magenta)).toEqual([1, 1, 4, 3]);
     expect(regionBox(data, w, h, [0, 0], magenta)).toBeNull();
+    expect(columnRun(data, w, h, [2, 1], magenta)).toEqual([1, 3]);
   });
 
   it('fits an art to cover a window, centered on it', () => {

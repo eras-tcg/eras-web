@@ -193,3 +193,23 @@ export function fitArt(
     y: (y0 + y1) / 2 - card.height / 2,
   };
 }
+
+/** The run [y0, y1) of matching pixels through `seed` along its column (where the art is seen unbroken there). */
+export function columnRun(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  seed: [number, number],
+  match: (r: number, g: number, b: number) => boolean,
+): [number, number] {
+  const [x, y] = seed;
+  const ok = (yy: number) => {
+    const i = (yy * width + x) * 4;
+    return match(data[i], data[i + 1], data[i + 2]);
+  };
+  let y0 = y;
+  let y1 = y;
+  while (y0 > 0 && ok(y0 - 1)) y0--;
+  while (y1 < height && ok(y1)) y1++;
+  return [y0, y1];
+}

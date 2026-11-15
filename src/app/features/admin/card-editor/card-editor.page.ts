@@ -8,7 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { parentScreen } from '@core/navigation/screens';
+import { AppScreen } from '@core/pwa/app-screen';
 import { CardsStore } from '@data/cards/cards.store';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardMeta } from '@data/cards/card.model';
@@ -21,7 +26,6 @@ import {
 } from '@data/cards/meta-rules';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
-import { PageComponent } from '@ui/layout/page/page.component';
 import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -38,6 +42,7 @@ import {
   DraftDesign,
   cardColorsOf,
   draftFromForm,
+  columnRun,
   fitArt,
   readDesign,
   regionBox,
@@ -65,7 +70,8 @@ import { ColorLut, convertCanvas } from './render/color-lut';
 @Component({
   selector: 'eras-card-editor-page',
   imports: [
-    PageComponent,
+    RouterLink,
+    IconComponent,
     StackComponent,
     SectionHeaderComponent,
     FormFieldComponent,
@@ -76,325 +82,441 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     EffectEditorComponent,
   ],
   template: `
-    <eras-page title="Editor de cartas" width="wide">
-      @if (fb.feedback(); as f) {
-        <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+    <div class="top">
+      @if (back; as b) {
+        <a class="round" [routerLink]="b.route" [attr.aria-label]="'Volver a ' + b.label">
+          <eras-icon name="chevron-left" />
+        </a>
       }
-      @if (missingFonts().length) {
-        <eras-alert tone="info">
-          Faltan fuentes de la carta en este equipo: {{ missingNames() }}. Elige sus archivos
-          (quedan solo en este navegador).
-          <eras-stack direction="row" [gap]="2" wrap>
-            @if (canCopyFonts) {
-              <button
-                erasButton
-                variant="secondary"
-                size="sm"
-                type="button"
-                (click)="useInstalledFonts()"
-              >
-                Usar fuentes instaladas
-              </button>
-            }
-            @for (slot of missingFonts(); track slot.key) {
-              <label class="font-pick"
-                >{{ slot.label }}
-                <input type="file" accept=".ttf,.otf" (change)="pickFont(slot, $event)"
-              /></label>
-            }
-          </eras-stack>
-        </eras-alert>
+      <h1 class="sr-only">Editor de cartas</h1>
+      @if (fullscreenToggle) {
+        <button
+          type="button"
+          class="round"
+          role="switch"
+          [attr.aria-checked]="fullscreen()"
+          [attr.aria-label]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+          (click)="toggleFullscreen()"
+        >
+          <eras-icon [name]="fullscreen() ? 'minimize' : 'maximize'" />
+        </button>
       }
+    </div>
 
-      <div class="layout">
-        <div class="card-pane" [class.zoomed]="viewZoom() > 1">
-          <div
-            class="card-wrap"
-            [class.framing]="framing()"
-            [style.inline-size]="'calc(min(100%, 34rem) * ' + viewZoom() + ')'"
-          >
-            @if ((framing() || pendingArt()) && ghost(); as g) {
-              <img
-                class="ghost"
-                [class.live]="!!pendingArt()"
-                alt=""
-                [src]="g.src"
-                [style.left.%]="g.left"
-                [style.top.%]="g.top"
-                [style.width.%]="g.width"
-                [style.height.%]="g.height"
-              />
-            }
-            <div
-              #preview
-              class="preview"
-              [class.dragging]="dragging()"
-              (pointerdown)="dragStart($event)"
-              (pointermove)="dragMove($event)"
-              (pointerup)="dragEnd()"
-              (pointercancel)="dragEnd()"
-              (wheel)="wheelZoom($event)"
-            ></div>
-            @if (!framing()) {
-              <eras-card-hotspots
-                [zones]="zones()"
-                [(form)]="form"
-                [classes]="classes()"
-                [noCost]="noCost()"
-                [noStrength]="noStrength()"
-                (toggled)="toggleValue($event)"
-                (effectZone)="editEffects($event)"
-              />
-            }
-            @if (effectZone(); as z) {
-              @if (catalog(); as cat) {
-                <eras-effect-editor
-                  [zone]="z"
-                  [lines]="effectLines()"
-                  [catalog]="cat"
-                  [pieces]="pieces()!"
-                  (changed)="applyEffects($event)"
-                  (closed)="closeEffects($event)"
-                />
-              }
-            }
-          </div>
-        </div>
-        <div class="under-card">
-          <label class="view-zoom"
-            >Vista
-            <input
-              type="range"
-              min="1"
-              max="4"
-              step="0.25"
-              [value]="viewZoom()"
-              (input)="viewZoom.set($any($event.target).valueAsNumber)"
-            />
-            {{ viewZoom() * 100 }} %
-          </label>
-          @if (sizes().length) {
-            <span class="note">Texto de efecto: {{ sizes() }}</span>
-          }
-        </div>
-
-        <eras-stack [gap]="3" class="panel">
-          <eras-form-field label="Abrir carta">
-            <input
-              type="search"
-              list="card-editor-cards"
-              placeholder="Nombre…"
-              [value]="query()"
-              (change)="open($any($event.target).value)"
-              (input)="query.set($any($event.target).value)"
-            />
-            <datalist id="card-editor-cards">
-              @for (c of matches(); track c.key) {
-                <option [value]="c.key">{{ c.label }}</option>
-              }
-            </datalist>
-          </eras-form-field>
-          <eras-stack direction="row" [gap]="2" wrap>
-            <button erasButton variant="ghost" type="button" (click)="newCard()">
-              Carta nueva
-            </button>
-            <button
-              erasButton
-              type="button"
-              [loading]="saving()"
-              [disabled]="saving()"
-              (click)="save()"
-            >
-              Guardar
-            </button>
-          </eras-stack>
-
-          <eras-section-header title="Estructura" />
-          <eras-form-field label="Tipo de carta">
-            <select (change)="setType($any($event.target).value)">
-              @for (t of types; track t) {
-                <option [value]="t" [selected]="t === form().cardType">{{ typeLabels[t] }}</option>
-              }
-            </select>
-          </eras-form-field>
-          <span class="label">Colores</span>
-          <eras-stack direction="row" [gap]="1" wrap>
-            @for (c of colors; track c) {
-              <button erasChip [selected]="form().colors.includes(c)" (click)="toggleColor(c)">
-                {{ colorLabels[c] }}
-              </button>
-            }
-            @if (form().colors.length === 2) {
-              <button erasChip (click)="swapColors()">Invertir colores</button>
-            }
-          </eras-stack>
-          <span class="label">Marco</span>
-          <eras-stack direction="row" [gap]="1" wrap>
-            @for (s of styles; track s) {
-              <button erasChip [selected]="style() === s" (click)="style.set(s)">
-                {{ styleLabels[s] }}
-              </button>
-            }
-          </eras-stack>
-
-          <eras-section-header title="Extras" />
-          <eras-stack direction="row" [gap]="1" wrap>
-            <button erasChip [selected]="goldBorder()" (click)="goldBorder.set(!goldBorder())">
-              Borde dorado
-            </button>
-            @if (!form().enlace) {
-              <button erasChip [selected]="inherit()" (click)="toggleInherit()">Heredable</button>
-            }
-            @if (form().cardType === 'creature') {
-              <button erasChip [selected]="form().enlace" (click)="toggleLink()">Enlace</button>
-            }
-          </eras-stack>
-          @if (form().enlace) {
-            <eras-stack direction="row" [gap]="1" wrap>
-              @for (a of arrowOptions; track a.key) {
-                <button
-                  erasChip
-                  [selected]="form().arrows.includes(a.key)"
-                  (click)="toggleArrow(a.key)"
-                >
-                  {{ a.label }}
-                </button>
-              }
-            </eras-stack>
-          }
-
-          <eras-section-header title="Arte" />
-          <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
-          @if (art(); as a) {
+    <div class="layout">
+      <div class="stage" [class.with-art]="!!art()">
+        @if (art(); as a) {
+          <div class="stage-top">
             <button erasChip [selected]="framing()" (click)="toggleFraming()">
               Encuadrar arte
             </button>
-            <eras-form-field label="Zoom">
-              <input
-                type="range"
-                [min]="minZoom"
-                [max]="maxZoom"
-                step="0.01"
-                [value]="a.scale"
-                (input)="previewZoom($any($event.target).valueAsNumber)"
-                (change)="commitArt()"
-              />
-            </eras-form-field>
-            <eras-form-field label="Horizontal">
-              <input
-                type="range"
-                min="-744"
-                max="744"
-                step="1"
-                [value]="a.x"
-                (input)="previewMove('x', $any($event.target).valueAsNumber)"
-                (change)="commitArt()"
-              />
-            </eras-form-field>
-            <eras-form-field label="Vertical">
-              <input
-                type="range"
-                min="-1039"
-                max="1039"
-                step="1"
-                [value]="a.y"
-                (input)="previewMove('y', $any($event.target).valueAsNumber)"
-                (change)="commitArt()"
-              />
-            </eras-form-field>
-            <eras-stack direction="row" [gap]="1">
-              @for (n of nudges; track n.label) {
+          </div>
+          <input
+            class="slider vertical"
+            type="range"
+            aria-label="Posición vertical del arte"
+            min="-1039"
+            max="1039"
+            step="1"
+            [value]="a.y"
+            (input)="previewMove('y', $any($event.target).valueAsNumber)"
+            (change)="commitArt()"
+          />
+          <input
+            class="slider zoom"
+            type="range"
+            aria-label="Zoom del arte"
+            [min]="minZoom"
+            [max]="maxZoom"
+            step="0.01"
+            [value]="a.scale"
+            (input)="previewZoom($any($event.target).valueAsNumber)"
+            (change)="commitArt()"
+          />
+          <input
+            class="slider horizontal"
+            type="range"
+            aria-label="Posición horizontal del arte"
+            min="-744"
+            max="744"
+            step="1"
+            [value]="a.x"
+            (input)="previewMove('x', $any($event.target).valueAsNumber)"
+            (change)="commitArt()"
+          />
+        }
+        <div
+          #viewport
+          class="viewport"
+          [class.panning]="panning()"
+          (pointerdown)="panStart($event)"
+          (pointermove)="panMove($event)"
+          (pointerup)="panEnd()"
+          (pointercancel)="panEnd()"
+          [style.--zoom]="viewZoom()"
+        >
+          <div class="viewport-inner">
+            <div class="card-wrap" [class.framing]="framing()">
+            @if ((framing() || pendingArt()) && ghost(); as g) {
+                  <img
+                    class="ghost"
+                    [class.live]="!!pendingArt()"
+                    alt=""
+                    [src]="g.src"
+                    [style.left.%]="g.left"
+                    [style.top.%]="g.top"
+                    [style.width.%]="g.width"
+                    [style.height.%]="g.height"
+                  />
+                }
+                <div
+                  #preview
+                  class="preview"
+                  [class.dragging]="dragging()"
+                  (pointerdown)="dragStart($event)"
+                  (pointermove)="dragMove($event)"
+                  (pointerup)="dragEnd()"
+                  (pointercancel)="dragEnd()"
+                  (wheel)="wheelZoom($event)"
+                ></div>
+                @if (!framing()) {
+                  <eras-card-hotspots
+                    [zones]="zones()"
+                    [(form)]="form"
+                    [classes]="classes()"
+                    [noCost]="noCost()"
+                    [noStrength]="noStrength()"
+                    (toggled)="toggleValue($event)"
+                    (effectZone)="editEffects($event)"
+                  />
+                }
+                @if (effectZone(); as z) {
+                  @if (catalog(); as cat) {
+                    <eras-effect-editor
+                      [zone]="z"
+                      [lines]="effectLines()"
+                      [catalog]="cat"
+                      [pieces]="pieces()!"
+                      (changed)="applyEffects($event)"
+                      (closed)="closeEffects($event)"
+                    />
+                  }
+                }
+                @if (art() && !effectZone() && artCenter(); as c) {
+                  <div class="cross" [style.left.%]="c.left" [style.top.%]="c.top">
+                    @for (n of nudges; track n.label) {
+                      <button
+                        type="button"
+                        [class]="'cross-' + n.at"
+                        [attr.aria-label]="n.label"
+                        (click)="n.at === 'mid' ? centerArt() : nudgeArt(n.dx, n.dy)"
+                      >
+                        {{ n.icon }}
+                      </button>
+                    }
+                  </div>
+                }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <eras-stack [gap]="3" class="panel">
+        @if (fb.feedback(); as f) {
+          <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>
+        }
+        @if (missingFonts().length) {
+          <eras-alert tone="info">
+            Faltan fuentes de la carta en este equipo: {{ missingNames() }}. Elige sus archivos
+            (quedan solo en este navegador).
+            <eras-stack direction="row" [gap]="2" wrap>
+              @if (canCopyFonts) {
                 <button
                   erasButton
                   variant="secondary"
                   size="sm"
                   type="button"
-                  [attr.aria-label]="n.label"
-                  (click)="nudgeArt(n.dx, n.dy)"
+                  (click)="useInstalledFonts()"
                 >
-                  {{ n.icon }}
+                  Usar fuentes instaladas
                 </button>
               }
+              @for (slot of missingFonts(); track slot.key) {
+                <label class="font-pick"
+                  >{{ slot.label }}
+                  <input type="file" accept=".ttf,.otf" (change)="pickFont(slot, $event)"
+                /></label>
+              }
             </eras-stack>
-            <eras-stack direction="row" [gap]="2" wrap>
-              <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
-                Centrar
-              </button>
-              <button
-                erasButton
-                variant="ghost"
-                size="sm"
-                type="button"
-                [loading]="fitting()"
-                [disabled]="fitting()"
-                (click)="fitArtToFrame()"
-              >
-                Ajustar
-              </button>
-              <button erasButton variant="ghost" size="sm" type="button" (click)="removeArt()">
-                Quitar arte
-              </button>
-            </eras-stack>
+          </eras-alert>
+        }
+        <eras-form-field label="Abrir carta">
+          <input
+            type="search"
+            list="card-editor-cards"
+            placeholder="Nombre…"
+            [value]="query()"
+            (change)="open($any($event.target).value)"
+            (input)="query.set($any($event.target).value)"
+          />
+          <datalist id="card-editor-cards">
+            @for (c of matches(); track c.key) {
+              <option [value]="c.key">{{ c.label }}</option>
+            }
+          </datalist>
+        </eras-form-field>
+        <eras-stack direction="row" [gap]="2" wrap>
+          <button erasButton variant="ghost" type="button" (click)="newCard()">
+            Carta nueva
+          </button>
+          <button
+            erasButton
+            type="button"
+            [loading]="saving()"
+            [disabled]="saving()"
+            (click)="save()"
+          >
+            Guardar
+          </button>
+        </eras-stack>
+
+        <eras-section-header title="Estructura" />
+        <eras-form-field label="Tipo de carta">
+          <select (change)="setType($any($event.target).value)">
+            @for (t of types; track t) {
+              <option [value]="t" [selected]="t === form().cardType">{{ typeLabels[t] }}</option>
+            }
+          </select>
+        </eras-form-field>
+        <span class="label">Colores</span>
+        <eras-stack direction="row" [gap]="1" wrap>
+          @for (c of colors; track c) {
+            <button erasChip [selected]="form().colors.includes(c)" (click)="toggleColor(c)">
+              {{ colorLabels[c] }}
+            </button>
+          }
+          @if (form().colors.length === 2) {
+            <button erasChip (click)="swapColors()">Invertir colores</button>
           }
         </eras-stack>
-      </div>
-    </eras-page>
+        <span class="label">Marco</span>
+        <eras-stack direction="row" [gap]="1" wrap>
+          @for (s of styles; track s) {
+            <button erasChip [selected]="style() === s" (click)="style.set(s)">
+              {{ styleLabels[s] }}
+            </button>
+          }
+        </eras-stack>
+
+        <eras-section-header title="Extras" />
+        <eras-stack direction="row" [gap]="1" wrap>
+          <button erasChip [selected]="goldBorder()" (click)="goldBorder.set(!goldBorder())">
+            Borde dorado
+          </button>
+          @if (!form().enlace) {
+            <button erasChip [selected]="inherit()" (click)="toggleInherit()">Heredable</button>
+          }
+          @if (form().cardType === 'creature') {
+            <button erasChip [selected]="form().enlace" (click)="toggleLink()">Enlace</button>
+          }
+        </eras-stack>
+        @if (form().enlace) {
+          <eras-stack direction="row" [gap]="1" wrap>
+            @for (a of arrowOptions; track a.key) {
+              <button
+                erasChip
+                [selected]="form().arrows.includes(a.key)"
+                (click)="toggleArrow(a.key)"
+              >
+                {{ a.label }}
+              </button>
+            }
+          </eras-stack>
+        }
+
+        <eras-section-header title="Arte" />
+        <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
+        @if (art()) {
+          <eras-stack direction="row" [gap]="2" wrap>
+            <button
+              erasButton
+              variant="ghost"
+              size="sm"
+              type="button"
+              [loading]="fitting()"
+              [disabled]="fitting()"
+              (click)="fitArtToFrame()"
+            >
+              Ajustar
+            </button>
+            <button erasButton variant="ghost" size="sm" type="button" (click)="removeArt()">
+              Quitar arte
+            </button>
+          </eras-stack>
+        }
+
+        <eras-section-header title="Vista" />
+        <label class="view-zoom"
+          >Acercar
+          <input
+            type="range"
+            min="1"
+            max="4"
+            step="0.25"
+            [value]="viewZoom()"
+            (input)="viewZoom.set($any($event.target).valueAsNumber)"
+          />
+          {{ viewZoom() * 100 }} %
+        </label>
+        @if (sizes().length) {
+          <span class="note">Texto de efecto: {{ sizes() }}</span>
+        }
+      </eras-stack>
+    </div>
   `,
   styles: `
+    /* The whole window, without page scroll: the card on the left, the options on the right. */
+    :host {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4) var(--space-3);
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .round {
+      display: grid;
+      place-items: center;
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
+      border: var(--border-width) solid var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      cursor: pointer;
+    }
+    .round:hover {
+      color: var(--color-text);
+    }
+    .round eras-icon {
+      inline-size: 1.2rem;
+      block-size: 1.2rem;
+    }
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 22rem;
-      grid-template-areas: 'card panel' 'under panel';
       gap: var(--space-5);
-      align-items: start;
-    }
-    @media (max-width: 56rem) {
-      .layout {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-areas: 'card' 'under' 'panel';
-      }
-    }
-    .card-pane {
-      display: grid;
-      justify-items: center;
-      gap: var(--space-2);
-    }
-    .card-pane {
-      overflow: hidden;
-      padding: var(--space-6);
-    }
-    .card-pane.zoomed {
-      overflow: auto;
-      justify-items: safe center;
-      max-block-size: 85vh;
-    }
-    .card-wrap {
-      position: relative;
-      flex: none;
-    }
-    .under-card {
-      display: grid;
-      justify-items: center;
-      gap: var(--space-2);
-    }
-    .view-zoom {
-      display: inline-flex;
-      gap: var(--space-2);
-      align-items: center;
-      color: var(--color-text-muted);
-      font-size: var(--font-size-sm);
-    }
-    .card-pane {
-      grid-area: card;
-    }
-    .under-card {
-      grid-area: under;
+      min-block-size: 0;
     }
     .panel {
-      grid-area: panel;
-      grid-row: span 2;
-      position: sticky;
-      top: var(--space-4);
+      overflow: auto;
+      min-block-size: 0;
+      padding-inline-end: var(--space-1);
+    }
+    /* The card's area: its controls on the edges (outside the scroll), the card in the viewport between them. */
+    .stage {
+      display: grid;
+      grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+      grid-template-rows: auto minmax(0, 1fr) 2rem;
+      grid-template-areas: 'top top top' 'v view zoom' '. h .';
+      gap: var(--space-2);
+      min-block-size: 0;
+    }
+    .stage-top {
+      grid-area: top;
+      justify-self: center;
+    }
+    .slider {
+      margin: 0;
+    }
+    .slider.vertical {
+      grid-area: v;
+      writing-mode: vertical-lr;
+      /* Physical sizes: in vertical writing the logical ones swap. */
+      height: 100%;
+      width: 1.5rem;
+      justify-self: center;
+    }
+    .slider.zoom {
+      grid-area: zoom;
+      writing-mode: vertical-lr;
+      direction: rtl;
+      height: 60%;
+      width: 1.5rem;
+      justify-self: center;
+      align-self: center;
+    }
+    .slider.horizontal {
+      grid-area: h;
+      inline-size: 100%;
+      align-self: center;
+    }
+    .viewport {
+      grid-area: view;
+      container-type: size;
+      overflow: auto;
+      min-block-size: 0;
+    }
+    .viewport.panning {
+      cursor: grabbing;
+    }
+    .viewport-inner {
+      display: grid;
+      place-items: safe center;
+      min-inline-size: 100%;
+      min-block-size: 100%;
+      inline-size: max-content;
+    }
+    /* The card fits the viewport at 100 %, and grows from there. */
+    .card-wrap {
+      position: relative;
+      inline-size: calc(min(100cqi, 100cqb * 744 / 1039) * var(--zoom, 1));
+    }
+    .slider {
+      margin: 0;
+    }
+    .cross {
+      position: absolute;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(3, 2rem);
+      grid-template-rows: repeat(3, 2rem);
+      grid-template-areas: '. up .' 'left mid right' '. down .';
+      transform: translate(-50%, -50%);
+    }
+    .cross button {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full, 999px);
+      background: color-mix(in srgb, var(--color-surface) 75%, transparent);
+      color: var(--color-text);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+    }
+    .cross button:hover {
+      background: var(--color-surface);
+    }
+    .cross-up {
+      grid-area: up;
+    }
+    .cross-left {
+      grid-area: left;
+    }
+    .cross-mid {
+      grid-area: mid;
+    }
+    .cross-right {
+      grid-area: right;
+    }
+    .cross-down {
+      grid-area: down;
     }
     .label {
       font-size: var(--font-size-sm);
@@ -444,12 +566,23 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:fullscreenchange)': 'fullscreen.set(!!document.fullscreenElement)' },
 })
 export class CardEditorPage {
   protected readonly store = inject(CardsStore);
   private readonly api = inject(CardsAdminApi);
   protected readonly fb = feedbackState();
   private readonly preview = viewChild.required<ElementRef<HTMLElement>>('preview');
+  private readonly viewport = viewChild.required<ElementRef<HTMLElement>>('viewport');
+  private readonly document = inject(DOCUMENT);
+  /** Where "back" leads (the screen tree's parent of the editor). */
+  protected readonly back = parentScreen('/card-editor');
+  protected readonly fullscreenToggle = inject(AppScreen).fullscreenToggle;
+  protected readonly fullscreen = signal(!!this.document.fullscreenElement);
+  /** The card is being dragged around inside its viewport (seen closer, not framing the art). */
+  protected readonly panning = signal(false);
+  private panFrom: { x: number; y: number; left: number; top: number } | null = null;
+  private panPointer = 0;
 
   protected readonly styles: FrameStyle[] = ['standard', 'semi', 'full'];
   protected readonly styleLabels = FRAME_STYLE_LABELS;
@@ -908,10 +1041,11 @@ export class CardEditorPage {
   protected readonly fitting = signal(false);
   /** Small moves of the art, in card pixels. */
   protected readonly nudges = [
-    { icon: '←', label: 'Mover el arte a la izquierda', dx: -2, dy: 0 },
-    { icon: '→', label: 'Mover el arte a la derecha', dx: 2, dy: 0 },
-    { icon: '↑', label: 'Mover el arte hacia arriba', dx: 0, dy: -2 },
-    { icon: '↓', label: 'Mover el arte hacia abajo', dx: 0, dy: 2 },
+    { at: 'up', icon: '↑', label: 'Mover el arte hacia arriba', dx: 0, dy: -2 },
+    { at: 'left', icon: '←', label: 'Mover el arte a la izquierda', dx: -2, dy: 0 },
+    { at: 'mid', icon: '•', label: 'Centrar el arte', dx: 0, dy: 0 },
+    { at: 'right', icon: '→', label: 'Mover el arte a la derecha', dx: 2, dy: 0 },
+    { at: 'down', icon: '↓', label: 'Mover el arte hacia abajo', dx: 0, dy: 2 },
   ];
 
   protected previewMove(axis: 'x' | 'y', value: number): void {
@@ -923,18 +1057,67 @@ export class CardEditorPage {
     this.art.update((a) => (a ? { ...a, x: a.x + dx, y: a.y + dy } : a));
   }
 
+  /** The art's window of the frame drawn now ([x0, y0, x1, y1] in card pixels), once found. */
+  private readonly artWindow = signal<{ key: string; box: Box; clear: [number, number] } | null>(null);
+  /** Where the cross of moves goes: the middle of the art's window, in % of the card. */
+  protected readonly artCenter = computed(() => {
+    const w = this.artWindow();
+    if (!w || w.key !== this.frameKey()) return null;
+    // Across, the window's middle; down, the middle of the art seen unbroken there (above the boxes in semi and full).
+    const [x0, , x1] = w.box;
+    const [c0, c1] = w.clear;
+    return { left: ((x0 + x1) / 2 / 744) * 100, top: ((c0 + c1) / 2 / 1039) * 100 };
+  });
+  /** What decides the art's window: the frame and everything that changes its shape. */
+  private readonly frameKey = computed(() => {
+    const f = this.form();
+    return [f.cardType, f.enlace, this.her() || f.inheritEffects.length > 0, this.style(), this.noCost(),
+      this.noStrength(), this.goldBorder()].join('|');
+  });
+
+  private readonly findWindow = effect(() => {
+    const key = this.frameKey();
+    if (!this.art() || !this.templates() || this.fontCss() === null) return;
+    if (this.artWindow()?.key === key) return;
+    void this.measureWindow(key);
+  });
+
+  private async measureWindow(key: string): Promise<Box> {
+    const known = this.artWindow();
+    if (known?.key === key) return known.box;
+    const found = await this.probeWindow();
+    if (key === this.frameKey()) this.artWindow.set({ key, ...found });
+    return found.box;
+  }
+
   /**
-   * Sizes the art to the space this card's frame leaves for it: the card is drawn with a plain magenta art and the
-   * region of that color seen from the art's middle gives the window (the standard frame's opening; nearly the whole
-   * card in semi and full art), which the art then covers, centered.
+   * Sizes the art to the space this card's frame leaves for it (the window found by probeWindow), covering it,
+   * centered.
    */
   protected async fitArtToFrame(): Promise<void> {
     const a = this.art();
-    const templates = this.templates();
-    const css = this.fontCss();
-    if (!a || !templates || css === null) return;
+    if (!a) return;
     this.fitting.set(true);
     try {
+      const box = await this.measureWindow(this.frameKey());
+      const fit = fitArt(a, box);
+      this.art.set({ ...a, ...fit, scale: this.clampZoom(fit.scale) });
+    } catch (e) {
+      this.fb.fail(e, 'No se pudo ajustar el arte');
+    } finally {
+      this.fitting.set(false);
+    }
+  }
+
+  /**
+   * The card is drawn with a plain magenta art and the region of that color seen from the art's middle gives the
+   * window: the standard frame's opening, nearly the whole card in semi and full art.
+   */
+  private async probeWindow(): Promise<{ box: Box; clear: [number, number] }> {
+    const templates = this.templates();
+    const css = this.fontCss();
+    if (!templates || css === null) throw new Error('Plantillas sin cargar');
+    {
       const probe = document.createElement('canvas');
       probe.width = probe.height = 1;
       const pc = probe.getContext('2d')!;
@@ -955,19 +1138,56 @@ export class CardEditorPage {
       const data = canvas.getContext('2d')!.getImageData(0, 0, width, height).data;
       const magenta = (red: number, g: number, b: number) => red > 200 && g < 70 && b > 200;
       // Seed: the art's middle, above the name bar of every frame.
-      const box = regionBox(data, width, height, [Math.round(width / 2), Math.round(height * 0.3)], magenta);
+      const seed: [number, number] = [Math.round(width / 2), Math.round(height * 0.3)];
+      const box = regionBox(data, width, height, seed, magenta);
       if (!box) throw new Error('No se encontró el espacio del arte');
+      const [c0, c1] = columnRun(data, width, height, seed, magenta);
       const k = 744 / width;
-      const fit = fitArt(a, [box[0] * k, box[1] * k, box[2] * k, box[3] * k]);
-      this.art.set({ ...a, ...fit, scale: this.clampZoom(fit.scale) });
-    } catch (e) {
-      this.fb.fail(e, 'No se pudo ajustar el arte');
-    } finally {
-      this.fitting.set(false);
+      return { box: [box[0] * k, box[1] * k, box[2] * k, box[3] * k], clear: [c0 * k, c1 * k] };
     }
   }
 
+  protected async toggleFullscreen(): Promise<void> {
+    try {
+      if (this.document.fullscreenElement) await this.document.exitFullscreen();
+      else await this.document.documentElement.requestFullscreen();
+    } catch {
+      // The browser refused it (no user gesture, not allowed): nothing changes
+    }
+  }
+
+  /**
+   * Seen closer (and not framing the art), dragging anywhere on the card moves it inside its viewport. The drag starts
+   * only once the pointer has moved a little, so clicks on the card's parts still reach them.
+   */
+  protected panStart(e: PointerEvent): void {
+    if (this.viewZoom() <= 1 || this.framing() || e.button !== 0) return;
+    const v = this.viewport().nativeElement;
+    this.panFrom = { x: e.clientX, y: e.clientY, left: v.scrollLeft, top: v.scrollTop };
+    this.panPointer = e.pointerId;
+  }
+
+  protected panMove(e: PointerEvent): void {
+    const from = this.panFrom;
+    if (!from) return;
+    const v = this.viewport().nativeElement;
+    if (!this.panning()) {
+      if (Math.hypot(e.clientX - from.x, e.clientY - from.y) < 4) return;
+      v.setPointerCapture(this.panPointer);
+      this.panning.set(true);
+    }
+    v.scrollLeft = from.left - (e.clientX - from.x);
+    v.scrollTop = from.top - (e.clientY - from.y);
+  }
+
+  protected panEnd(): void {
+    this.panFrom = null;
+    this.panning.set(false);
+  }
+
+  /** Framing (or with the card at its normal size), dragging the card moves the art. */
   protected dragStart(e: PointerEvent): void {
+    if (this.viewZoom() > 1 && !this.framing()) return;
     const a = this.art();
     if (!a) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -1001,3 +1221,6 @@ function dataUrl(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
+/** A box on the card: [x0, y0, x1, y1] in card pixels. */
+type Box = [number, number, number, number];

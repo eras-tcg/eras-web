@@ -145,6 +145,18 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               (input)="previewMove('x', $any($event.target).valueAsNumber)"
               (change)="commitArt()"
             />
+            <button
+              erasButton
+              class="fit"
+              variant="secondary"
+              size="sm"
+              type="button"
+              [loading]="fitting()"
+              [disabled]="fitting()"
+              (click)="fitArtToFrame()"
+            >
+              Ajustar
+            </button>
           }
         }
         <div
@@ -340,17 +352,6 @@ import { ColorLut, convertCanvas } from './render/color-lut';
         <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
         @if (art()) {
           <eras-stack direction="row" [gap]="2" wrap>
-            <button
-              erasButton
-              variant="ghost"
-              size="sm"
-              type="button"
-              [loading]="fitting()"
-              [disabled]="fitting()"
-              (click)="fitArtToFrame()"
-            >
-              Ajustar
-            </button>
             <button erasButton variant="ghost" size="sm" type="button" (click)="removeArt()">
               Quitar arte
             </button>
@@ -426,9 +427,9 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     /* The card's area: its controls on the edges (outside the scroll), the card in the viewport between them. */
     .stage {
       display: grid;
-      grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+      grid-template-columns: 2.5rem minmax(0, 1fr) minmax(2.5rem, auto);
       grid-template-rows: auto minmax(0, 1fr) 2rem;
-      grid-template-areas: 'top top top' 'v view zoom' '. h .';
+      grid-template-areas: 'top top top' 'v view zoom' '. h fit';
       gap: var(--space-2);
       min-block-size: 0;
     }
@@ -454,6 +455,11 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       height: 60%;
       width: 1.5rem;
       justify-self: center;
+      align-self: center;
+    }
+    .fit {
+      grid-area: fit;
+      justify-self: end;
       align-self: center;
     }
     .slider.horizontal {

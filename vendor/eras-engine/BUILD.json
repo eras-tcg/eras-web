@@ -1,8 +1,8 @@
 {
-  "commit": "aea0384cef2250ff3807da20bea1d5cefb81dca3",
+  "commit": "c337fa4a14313e88db9ecbf6ff7891ea6fbee40c",
   "dirty": false,
-  "subject": "wip(deckboxes): a deck is in one deckbox at most (work in progress, not run here)",
-  "copiedAt": "2026-11-12T00:00:18.543Z",
+  "subject": "Structure decks ST1–ST4 become ST5–ST8: card folders, starter deck names, test fixtures and golden hashes",
+  "copiedAt": "2026-11-15T03:57:40.452Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

@@ -18,11 +18,12 @@ export type Token =
   | { t: 'break' }
   | { t: 'ultimate' }
   | { t: 'ultimateEnd' }
-  | { t: 'piece'; kind: PieceKind; label: string };
+  | { t: 'piece'; kind: PieceKind; label: string; style?: string };
 
-const USAGE: Record<string, { piece?: string; after?: string; ultimate?: boolean }> = {
+const USAGE: Record<string, { piece?: string; style?: string; after?: string; ultimate?: boolean }> = {
   'once per turn': { piece: 'una vez por turno' },
-  'once per turn between copies': { piece: 'una vez por turno', after: 'entre copias' },
+  // Between copies the piece is the yellow one (SIMBOLOS' EXTRAS), the plain one is white
+  'once per turn between copies': { piece: 'una vez por turno', style: 'una vez por turno entre copias', after: 'entre copias' },
   'ultimate effect': { ultimate: true },
 };
 
@@ -106,7 +107,7 @@ export class EffectTokens {
       .map((s) => s.trim())
       .filter(Boolean)
       .map((label) => ({ t: 'piece', kind: 'timing', label }) as Token);
-    if (usage?.piece) head.push({ t: 'piece', kind: 'condition', label: usage.piece });
+    if (usage?.piece) head.push({ t: 'piece', kind: 'condition', label: usage.piece, style: usage.style });
     head.forEach((p, i) => {
       // Consecutive momentos touch (Turno Aliado + En Mano), as in the printed cards.
       const joined = p.t === 'piece' && p.kind === 'timing' && i > 0;
@@ -375,7 +376,6 @@ function drawSlot(
           X,
           baseline,
           px,
-          color !== '#000000',
           pieces,
           measure,
           under ? px * TUCK : 0,
@@ -404,11 +404,16 @@ function drawSlot(
   return lay;
 }
 
-function pieceStyle(pieces: PieceTable, kind: PieceKind, label: string): PieceStyle | null {
+function pieceStyle(pieces: PieceTable, kind: PieceKind, label: string, style?: string): PieceStyle | null {
   const table = { timing: pieces.timings, condition: pieces.conditions, keyword: pieces.keywords }[
     kind
   ];
-  return table[pieceKey(label)] ?? table[pieceKey(label.replace(/\s*\d+$/, ''))] ?? null;
+  return (
+    (style ? table[pieceKey(style)] : undefined) ??
+    table[pieceKey(label)] ??
+    table[pieceKey(label.replace(/\s*\d+$/, ''))] ??
+    null
+  );
 }
 
 function drawPiece(
@@ -418,7 +423,6 @@ function drawPiece(
   x: number,
   baseline: number,
   px: number,
-  dark: boolean,
   pieces: PieceTable,
   measure: Measure,
   tuck = 0,
@@ -426,7 +430,7 @@ function drawPiece(
   const m = pieceMetrics(tok.kind, tok.label, px, measure);
   const h = m.h;
   const w = m.w + tuck;
-  let st: PieceStyle = pieceStyle(pieces, tok.kind, tok.label) ?? {
+  const st: PieceStyle = pieceStyle(pieces, tok.kind, tok.label, tok.style) ?? {
     label: tok.label,
     fill: [
       [0, '#555555'],
@@ -436,9 +440,6 @@ function drawPiece(
     textStroke: null,
     textStrokeSize: null,
   };
-  // Over the art (semi / full art) the usage-limit piece has yellow text.
-  if (dark && tok.kind === 'condition' && pieceKey(tok.label) === 'una vez por turno')
-    st = { ...st, text: '#f9f713' };
   const y = baseline - px * 0.78 - (h - px) / 2 + px * 0.04;
   const grad = r.id('pg');
   const lg = svgEl(

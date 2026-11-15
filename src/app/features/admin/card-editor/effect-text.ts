@@ -32,7 +32,8 @@ const hasParam = (key: string) => /\{[^}]+\}|\bX$/.test(key);
 
 /** Labels the editor recognizes, from the symbol sheet and the keyword reference. */
 export function pieceCatalog(pieces: PieceTable, keywordKeys: string[]): PieceCatalog {
-  const conditions = Object.values(pieces.conditions).map((p) => p.label);
+  // Two pieces read "una vez por turno" (plain and between copies): the label once
+  const conditions = [...new Set(Object.values(pieces.conditions).map((p) => p.label))];
   const isCondition = new Set(conditions.map(foldChars));
   return {
     timings: Object.values(pieces.timings).map((p) => p.label),

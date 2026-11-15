@@ -4,6 +4,8 @@ import {
   cardColorsOf,
   classMatches,
   defaultSummonKind,
+  fitArt,
+  regionBox,
   readDesign,
   swapCardColors,
   toggleCardColor,
@@ -68,5 +70,26 @@ describe('card-editor-rules', () => {
     const d = readDesign({ frameStyle: 'full', goldBorder: true, art: { scale: 1.5, x: 'a' } });
     expect([d.frameStyle, d.goldBorder, d.art]).toEqual(['full', true, { scale: 1.5, x: 0, y: 0 }]);
     expect(readDesign({ frameStyle: 'raro' }).frameStyle).toBe('standard');
+  });
+
+  it('finds the box of the region a flood fill reaches', () => {
+    // 6 x 4: a 3 x 2 block of "art" at (1,1), a lone art pixel at (5,3) apart from it
+    const w = 6;
+    const h = 4;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const paint = (x: number, y: number) => data.set([255, 0, 255, 255], (y * w + x) * 4);
+    for (const [x, y] of [[1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [5, 3]]) paint(x, y);
+    const magenta = (r: number, g: number, b: number) => r > 200 && g < 60 && b > 200;
+    expect(regionBox(data, w, h, [2, 1], magenta)).toEqual([1, 1, 4, 3]);
+    expect(regionBox(data, w, h, [0, 0], magenta)).toBeNull();
+  });
+
+  it('fits an art to cover a window, centered on it', () => {
+    // A square art covers the card (744 x 1039) at zoom 1 with side 1039
+    const whole = fitArt({ width: 1000, height: 1000 }, [0, 0, 744, 1039]);
+    expect(whole).toEqual({ scale: 1, x: 0, y: 0 });
+    const win = fitArt({ width: 1000, height: 1000 }, [24, 24, 720, 560]);
+    expect(win.scale).toBeCloseTo(696 / 1039);
+    expect([win.x, win.y]).toEqual([0, 292 - 519.5]);
   });
 });

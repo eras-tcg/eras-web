@@ -38,7 +38,9 @@ import {
   DraftDesign,
   cardColorsOf,
   draftFromForm,
+  fitArt,
   readDesign,
+  regionBox,
   swapCardColors,
   toggleCardColor,
   withCardType,
@@ -105,8 +107,12 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       }
 
       <div class="layout">
-        <div class="card-pane">
-          <div class="card-wrap" [class.framing]="framing()">
+        <div class="card-pane" [class.zoomed]="viewZoom() > 1">
+          <div
+            class="card-wrap"
+            [class.framing]="framing()"
+            [style.inline-size]="'calc(min(100%, 34rem) * ' + viewZoom() + ')'"
+          >
             @if ((framing() || pendingArt()) && ghost(); as g) {
               <img
                 class="ghost"
@@ -153,6 +159,20 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               }
             }
           </div>
+        </div>
+        <div class="under-card">
+          <label class="view-zoom"
+            >Vista
+            <input
+              type="range"
+              min="1"
+              max="4"
+              step="0.25"
+              [value]="viewZoom()"
+              (input)="viewZoom.set($any($event.target).valueAsNumber)"
+            />
+            {{ viewZoom() * 100 }} %
+          </label>
           @if (sizes().length) {
             <span class="note">Texto de efecto: {{ sizes() }}</span>
           }
@@ -260,9 +280,56 @@ import { ColorLut, convertCanvas } from './render/color-lut';
                 (change)="commitArt()"
               />
             </eras-form-field>
-            <eras-stack direction="row" [gap]="2">
+            <eras-form-field label="Horizontal">
+              <input
+                type="range"
+                min="-744"
+                max="744"
+                step="1"
+                [value]="a.x"
+                (input)="previewMove('x', $any($event.target).valueAsNumber)"
+                (change)="commitArt()"
+              />
+            </eras-form-field>
+            <eras-form-field label="Vertical">
+              <input
+                type="range"
+                min="-1039"
+                max="1039"
+                step="1"
+                [value]="a.y"
+                (input)="previewMove('y', $any($event.target).valueAsNumber)"
+                (change)="commitArt()"
+              />
+            </eras-form-field>
+            <eras-stack direction="row" [gap]="1">
+              @for (n of nudges; track n.label) {
+                <button
+                  erasButton
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  [attr.aria-label]="n.label"
+                  (click)="nudgeArt(n.dx, n.dy)"
+                >
+                  {{ n.icon }}
+                </button>
+              }
+            </eras-stack>
+            <eras-stack direction="row" [gap]="2" wrap>
               <button erasButton variant="ghost" size="sm" type="button" (click)="centerArt()">
                 Centrar
+              </button>
+              <button
+                erasButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                [loading]="fitting()"
+                [disabled]="fitting()"
+                (click)="fitArtToFrame()"
+              >
+                Ajustar
               </button>
               <button erasButton variant="ghost" size="sm" type="button" (click)="removeArt()">
                 Quitar arte
@@ -277,12 +344,14 @@ import { ColorLut, convertCanvas } from './render/color-lut';
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 22rem;
+      grid-template-areas: 'card panel' 'under panel';
       gap: var(--space-5);
       align-items: start;
     }
     @media (max-width: 56rem) {
       .layout {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'card' 'under' 'panel';
       }
     }
     .card-pane {
@@ -294,11 +363,36 @@ import { ColorLut, convertCanvas } from './render/color-lut';
       overflow: hidden;
       padding: var(--space-6);
     }
+    .card-pane.zoomed {
+      overflow: auto;
+      justify-items: safe center;
+      max-block-size: 85vh;
+    }
     .card-wrap {
       position: relative;
-      inline-size: min(100%, 34rem);
+      flex: none;
+    }
+    .under-card {
+      display: grid;
+      justify-items: center;
+      gap: var(--space-2);
+    }
+    .view-zoom {
+      display: inline-flex;
+      gap: var(--space-2);
+      align-items: center;
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
+    .card-pane {
+      grid-area: card;
+    }
+    .under-card {
+      grid-area: under;
     }
     .panel {
+      grid-area: panel;
+      grid-row: span 2;
       position: sticky;
       top: var(--space-4);
     }
@@ -807,6 +901,70 @@ export class CardEditorPage {
 
   protected centerArt(): void {
     this.art.update((a) => (a ? { ...a, x: 0, y: 0 } : a));
+  }
+
+  /** How much closer the card is seen (1: as it fits the pane). */
+  protected readonly viewZoom = signal(1);
+  protected readonly fitting = signal(false);
+  /** Small moves of the art, in card pixels. */
+  protected readonly nudges = [
+    { icon: '←', label: 'Mover el arte a la izquierda', dx: -2, dy: 0 },
+    { icon: '→', label: 'Mover el arte a la derecha', dx: 2, dy: 0 },
+    { icon: '↑', label: 'Mover el arte hacia arriba', dx: 0, dy: -2 },
+    { icon: '↓', label: 'Mover el arte hacia abajo', dx: 0, dy: 2 },
+  ];
+
+  protected previewMove(axis: 'x' | 'y', value: number): void {
+    const a = this.pendingArt() ?? this.art();
+    if (a) this.pendingArt.set({ ...a, [axis]: value });
+  }
+
+  protected nudgeArt(dx: number, dy: number): void {
+    this.art.update((a) => (a ? { ...a, x: a.x + dx, y: a.y + dy } : a));
+  }
+
+  /**
+   * Sizes the art to the space this card's frame leaves for it: the card is drawn with a plain magenta art and the
+   * region of that color seen from the art's middle gives the window (the standard frame's opening; nearly the whole
+   * card in semi and full art), which the art then covers, centered.
+   */
+  protected async fitArtToFrame(): Promise<void> {
+    const a = this.art();
+    const templates = this.templates();
+    const css = this.fontCss();
+    if (!a || !templates || css === null) return;
+    this.fitting.set(true);
+    try {
+      const probe = document.createElement('canvas');
+      probe.width = probe.height = 1;
+      const pc = probe.getContext('2d')!;
+      pc.fillStyle = '#ff00ff';
+      pc.fillRect(0, 0, 1, 1);
+      const draft = {
+        ...draftFromForm(this.form(), this.her()),
+        noCost: this.noCost(),
+        noStrength: this.noStrength(),
+        goldBorder: this.goldBorder(),
+        frameStyle: this.style(),
+        art: { src: probe.toDataURL(), width: 1, height: 1, scale: 1, x: 0, y: 0 },
+      };
+      const r = new SvgRenderer(buildCard(draft, templates, this.measure), css);
+      r.render();
+      const canvas = await svgToCanvasFine(r.svg, 1);
+      const { width, height } = canvas;
+      const data = canvas.getContext('2d')!.getImageData(0, 0, width, height).data;
+      const magenta = (red: number, g: number, b: number) => red > 200 && g < 70 && b > 200;
+      // Seed: the art's middle, above the name bar of every frame.
+      const box = regionBox(data, width, height, [Math.round(width / 2), Math.round(height * 0.3)], magenta);
+      if (!box) throw new Error('No se encontró el espacio del arte');
+      const k = 744 / width;
+      const fit = fitArt(a, [box[0] * k, box[1] * k, box[2] * k, box[3] * k]);
+      this.art.set({ ...a, ...fit, scale: this.clampZoom(fit.scale) });
+    } catch (e) {
+      this.fb.fail(e, 'No se pudo ajustar el arte');
+    } finally {
+      this.fitting.set(false);
+    }
   }
 
   protected dragStart(e: PointerEvent): void {

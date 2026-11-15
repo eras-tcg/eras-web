@@ -131,3 +131,65 @@ export function readDesign(raw: Record<string, unknown> | null | undefined): Dra
     art: art ? { scale: num(art['scale'], 1), x: num(art['x'], 0), y: num(art['y'], 0) } : null,
   };
 }
+
+/**
+ * Bounding box [x0, y0, x1, y1) of the region of pixels that `match` reaches from `seed` (4-connected flood fill), in
+ * an RGBA buffer of `width` × `height`; null when the seed itself does not match.
+ */
+export function regionBox(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  seed: [number, number],
+  match: (r: number, g: number, b: number) => boolean,
+): [number, number, number, number] | null {
+  const ok = (i: number) => match(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+  const start = seed[1] * width + seed[0];
+  if (!ok(start)) return null;
+  const seen = new Uint8Array(width * height);
+  const stack = [start];
+  seen[start] = 1;
+  let [x0, y0, x1, y1] = [width, height, 0, 0];
+  while (stack.length) {
+    const i = stack.pop()!;
+    const x = i % width;
+    const y = (i - x) / width;
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x + 1);
+    y1 = Math.max(y1, y + 1);
+    for (const [nx, ny] of [
+      [x - 1, y],
+      [x + 1, y],
+      [x, y - 1],
+      [x, y + 1],
+    ]) {
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      const j = ny * width + nx;
+      if (!seen[j] && ok(j)) {
+        seen[j] = 1;
+        stack.push(j);
+      }
+    }
+  }
+  return [x0, y0, x1, y1];
+}
+
+/**
+ * Zoom and offset that make an art cover a window of the card exactly (the smallest size with no gap), centered on
+ * it. The art is drawn covering the whole card at zoom 1 and moved by (x, y) from the card's center.
+ */
+export function fitArt(
+  art: { width: number; height: number },
+  win: [number, number, number, number],
+  card = { width: 744, height: 1039 },
+): { scale: number; x: number; y: number } {
+  const base = Math.max(card.width / art.width, card.height / art.height);
+  const [x0, y0, x1, y1] = win;
+  const scale = Math.max((x1 - x0) / (art.width * base), (y1 - y0) / (art.height * base));
+  return {
+    scale,
+    x: (x0 + x1) / 2 - card.width / 2,
+    y: (y0 + y1) / 2 - card.height / 2,
+  };
+}

@@ -111,39 +111,41 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               Encuadrar arte
             </button>
           </div>
-          <input
-            class="slider vertical"
-            type="range"
-            aria-label="Posición vertical del arte"
-            min="-1039"
-            max="1039"
-            step="1"
-            [value]="a.y"
-            (input)="previewMove('y', $any($event.target).valueAsNumber)"
-            (change)="commitArt()"
-          />
-          <input
-            class="slider zoom"
-            type="range"
-            aria-label="Zoom del arte"
-            [min]="minZoom"
-            [max]="maxZoom"
-            step="0.01"
-            [value]="a.scale"
-            (input)="previewZoom($any($event.target).valueAsNumber)"
-            (change)="commitArt()"
-          />
-          <input
-            class="slider horizontal"
-            type="range"
-            aria-label="Posición horizontal del arte"
-            min="-744"
-            max="744"
-            step="1"
-            [value]="a.x"
-            (input)="previewMove('x', $any($event.target).valueAsNumber)"
-            (change)="commitArt()"
-          />
+          @if (framing()) {
+            <input
+              class="slider vertical"
+              type="range"
+              aria-label="Posición vertical del arte"
+              min="-1039"
+              max="1039"
+              step="1"
+              [value]="a.y"
+              (input)="previewMove('y', $any($event.target).valueAsNumber)"
+              (change)="commitArt()"
+            />
+            <input
+              class="slider zoom"
+              type="range"
+              aria-label="Zoom del arte"
+              [min]="minZoom"
+              [max]="maxZoom"
+              step="0.01"
+              [value]="a.scale"
+              (input)="previewZoom($any($event.target).valueAsNumber)"
+              (change)="commitArt()"
+            />
+            <input
+              class="slider horizontal"
+              type="range"
+              aria-label="Posición horizontal del arte"
+              min="-744"
+              max="744"
+              step="1"
+              [value]="a.x"
+              (input)="previewMove('x', $any($event.target).valueAsNumber)"
+              (change)="commitArt()"
+            />
+          }
         }
         <div
           #viewport
@@ -202,7 +204,7 @@ import { ColorLut, convertCanvas } from './render/color-lut';
                     />
                   }
                 }
-                @if (art() && !effectZone() && artCenter(); as c) {
+                @if (framing() && artCenter(); as c) {
                   <div class="cross" [style.left.%]="c.left" [style.top.%]="c.top">
                     @for (n of nudges; track n.label) {
                       <button

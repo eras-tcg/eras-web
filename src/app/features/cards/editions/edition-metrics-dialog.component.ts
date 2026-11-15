@@ -20,6 +20,9 @@ export interface EditionMetricsData {
     <eras-modal [title]="data.title" [subtitle]="data.metrics.total + ' cartas' + (data.deck !== null ? ' · mazo de ' + data.deck : '')" (closed)="ref.close()">
       <eras-stack [gap]="4">
         <eras-bar-list title="Rareza" [items]="data.metrics.rarity" [total]="data.metrics.total" />
+        @if (data.deck !== null) {
+          <eras-bar-list title="Rareza en el mazo (por copias)" [items]="data.metrics.rarityInDeck" [total]="data.deck" />
+        }
         <eras-bar-list title="Nivel" [items]="data.metrics.level" [total]="data.metrics.total" />
         <eras-bar-list title="Tipo de carta" [items]="data.metrics.type" [total]="data.metrics.total" />
       </eras-stack>

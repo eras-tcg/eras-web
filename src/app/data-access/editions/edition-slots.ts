@@ -64,19 +64,24 @@ export interface MetricCount {
   value: number;
 }
 
-/** How many of the edition's cards there are by rarity, by level and by card type (each in its usual order). */
+/**
+ * How many of the edition's cards there are by rarity, by level and by card type (each in its usual order), and, for a
+ * structure deck, its rarities counting each card's copies in the deck.
+ */
 export function editionMetrics(metas: readonly CardMeta[]): {
   total: number;
   rarity: MetricCount[];
+  rarityInDeck: MetricCount[];
   level: MetricCount[];
   type: MetricCount[];
 } {
-  const count = (keyOf: (m: CardMeta) => string) => {
+  const count = (keyOf: (m: CardMeta) => string, weight: (m: CardMeta) => number = () => 1) => {
     const out = new Map<string, number>();
-    for (const m of metas) out.set(keyOf(m), (out.get(keyOf(m)) ?? 0) + 1);
+    for (const m of metas) out.set(keyOf(m), (out.get(keyOf(m)) ?? 0) + weight(m));
     return out;
   };
   const rarities = count((m) => m.rarity || '');
+  const inDeck = count((m) => m.rarity || '', (m) => m.deckCopies ?? 0);
   const rarityKeys = [...CARD_RARITIES, ...[...rarities.keys()].filter((k) => !(CARD_RARITIES as readonly string[]).includes(k))];
   const levels = count((m) => (m.level == null ? '' : String(m.level)));
   const levelKeys = [...levels.keys()].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : Number(a) - Number(b)));
@@ -88,6 +93,9 @@ export function editionMetrics(metas: readonly CardMeta[]): {
     rarity: rarityKeys
       .filter((k) => rarities.has(k) || k !== '')
       .map((k) => ({ key: k || 'none', label: k || 'Sin rareza', value: rarities.get(k) ?? 0 })),
+    rarityInDeck: rarityKeys
+      .filter((k) => rarities.has(k) || k !== '')
+      .map((k) => ({ key: k || 'none', label: k || 'Sin rareza', value: inDeck.get(k) ?? 0 })),
     level: levelKeys.map((k) => ({ key: k || 'none', label: k ? `Nivel ${k}` : 'Sin nivel', value: levels.get(k) ?? 0 })),
     type: typeKeys.map((k) => ({ key: k, label: CARD_TYPE_LABELS[k] ?? k, value: types.get(k) ?? 0 })),
   };

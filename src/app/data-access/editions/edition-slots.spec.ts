@@ -43,6 +43,16 @@ describe('edition slots', () => {
     expect(m.type.map((r) => [r.label, r.value])).toEqual([['Criatura', 3], ['Utilidad', 1]]);
   });
 
+  it('counts the rarities of a structure deck by the copies of each card', () => {
+    const m = editionMetrics([
+      meta({ rarity: 'C', deckCopies: 3 }),
+      meta({ rarity: 'C', deckCopies: 2 }),
+      meta({ rarity: 'SR', deckCopies: 1 }),
+      meta({ rarity: 'R' }),
+    ]);
+    expect(m.rarityInDeck.filter((r) => r.value).map((r) => [r.label, r.value])).toEqual([['C', 5], ['SR', 1]]);
+  });
+
   it('adds up a structure deck from its cards copies', () => {
     const groups = editionSlots({ editionId: 'ST2', colors: ['G'], cardsPerColor: 3 }, [
       meta({ id: 'a', cardNumber: 1, deckCopies: 3 }),

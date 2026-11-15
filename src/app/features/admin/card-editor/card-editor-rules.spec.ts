@@ -4,7 +4,6 @@ import {
   cardColorsOf,
   classMatches,
   defaultSummonKind,
-  parseNewCode,
   readDesign,
   swapCardColors,
   toggleCardColor,
@@ -69,12 +68,5 @@ describe('card-editor-rules', () => {
     const d = readDesign({ frameStyle: 'full', goldBorder: true, art: { scale: 1.5, x: 'a' } });
     expect([d.frameStyle, d.goldBorder, d.art]).toEqual(['full', true, { scale: 1.5, x: 0, y: 0 }]);
     expect(readDesign({ frameStyle: 'raro' }).frameStyle).toBe('standard');
-  });
-
-  it('reads the code of a new card', () => {
-    expect(parseNewCode(' e5-03 ')).toEqual({ edition: 'E5', cardNumber: 3 });
-    expect(parseNewCode('E1.1 R07')).toEqual({ edition: 'E1.1', cardNumber: 7 });
-    expect(parseNewCode('E5')).toBeNull();
-    expect(parseNewCode('E5-00')).toBeNull();
   });
 });

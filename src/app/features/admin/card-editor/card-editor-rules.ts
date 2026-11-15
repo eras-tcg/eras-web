@@ -131,9 +131,3 @@ export function readDesign(raw: Record<string, unknown> | null | undefined): Dra
     art: art ? { scale: num(art['scale'], 1), x: num(art['x'], 0), y: num(art['y'], 0) } : null,
   };
 }
-
-/** Edition and number of a new card typed as "E5-03", "E5 3" or "E1.1-R07" (its color comes from its colors). */
-export function parseNewCode(raw: string): { edition: string; cardNumber: number } | null {
-  const m = /^\s*([A-Za-z]+\d*(?:\.\d+)?)\s*[-\s]\s*[BGPRW]?\s*(\d{1,3})\s*$/i.exec(raw);
-  return m && Number(m[2]) > 0 ? { edition: m[1].toUpperCase(), cardNumber: Number(m[2]) } : null;
-}

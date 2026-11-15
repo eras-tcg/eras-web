@@ -19,7 +19,6 @@ import {
   toMetaPayload,
   validateMeta,
 } from '@data/cards/meta-rules';
-import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -39,7 +38,6 @@ import {
   DraftDesign,
   cardColorsOf,
   draftFromForm,
-  parseNewCode,
   readDesign,
   swapCardColors,
   toggleCardColor,
@@ -356,7 +354,6 @@ import { ColorLut, convertCanvas } from './render/color-lut';
 export class CardEditorPage {
   protected readonly store = inject(CardsStore);
   private readonly api = inject(CardsAdminApi);
-  private readonly modal = inject(ModalService);
   protected readonly fb = feedbackState();
   private readonly preview = viewChild.required<ElementRef<HTMLElement>>('preview');
 
@@ -609,30 +606,9 @@ export class CardEditorPage {
 
   // ── Saving ────────────────────────────────────────────────────────────
 
-  /** A new card: asks its code (edition and number); it is created in the system when saved. */
-  protected async newCard(): Promise<void> {
-    const code = await this.askCode();
-    if (code) this.reset({ ...blankMeta(), colors: ['W'], ...code });
-  }
-
-  private async askCode(): Promise<{ edition: string; cardNumber: number } | null> {
-    const raw = await this.modal.prompt({
-      title: 'Carta nueva',
-      label: 'Edición y número (ej. E5-03)',
-      confirmLabel: 'Crear',
-    });
-    if (raw === undefined) return null;
-    const code = parseNewCode(raw);
-    if (!code) {
-      this.fb.fail(null, 'Escribe la edición y el número, por ejemplo E5-03');
-      return null;
-    }
-    const taken = this.openable().find((o) => {
-      const f = formFromMeta(o.meta);
-      return f.edition === code.edition && f.cardNumber === code.cardNumber && f.colorIdentity === 'W';
-    });
-    if (taken) this.fb.fail(null, `Ese código ya lo tiene ${taken.key}; cambia el color o el número`);
-    return code;
+  /** A new card: a blank canvas (white creature); its code and name are written on the card. */
+  protected newCard(): void {
+    this.reset({ ...blankMeta(), colors: ['W'] });
   }
 
   private design(): DraftDesign {
@@ -647,15 +623,11 @@ export class CardEditorPage {
     };
   }
 
-  /** Saves the card's document (a new card is created; one without code asks for it), then its art if it changed. */
+  /** Saves the card's document (a new card is created), then its art if it changed. */
   protected async save(): Promise<void> {
     if (this.saving()) return;
-    if (!this.metaId() && !this.form().cardNumber) {
-      const code = await this.askCode();
-      if (!code) return;
-      this.form.update((f) => ({ ...f, ...code }));
-    }
     const errors = validateMeta(this.form());
+    if (!this.form().cardNumber) errors.push('Falta el número de la carta.');
     if (errors.length) {
       this.fb.fail(null, errors.join(' '));
       return;

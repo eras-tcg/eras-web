@@ -260,7 +260,16 @@ export class SvgRenderer {
     }
     svgEl(
       'image',
-      { href: n.raster, x: x0, y: y0, width: x1 - x0, height: y1 - y0, 'clip-path': clip },
+      {
+        href: n.raster,
+        x: x0,
+        y: y0,
+        width: x1 - x0,
+        height: y1 - y0,
+        'clip-path': clip,
+        // A PSD layer's own pixels, at the card's size: drawn as they are, not smoothed when drawn finer
+        'image-rendering': 'pixelated',
+      },
       g,
     );
   }

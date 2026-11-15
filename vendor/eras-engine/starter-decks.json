@@ -1,4 +1,4 @@
-{"format":"eras-starter-decks/1","decks":{"deck-st1":{"deckName":"ST1","metadata":[
+{"format":"eras-starter-decks/1","decks":{"deck-st1":{"deckName":"ST5","metadata":[
  {
   "cardName": "Fhalid",
   "cardType": "creature",
@@ -9,7 +9,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 7,
   "regulation": "A",
@@ -36,7 +36,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 10,
   "regulation": "A",
@@ -83,7 +83,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 13,
   "regulation": "A",
@@ -137,7 +137,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 9,
   "regulation": "A",
@@ -179,7 +179,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 15,
   "regulation": "A",
@@ -222,7 +222,7 @@
   "level": 2,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 16,
   "regulation": "A",
@@ -262,7 +262,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 2,
   "regulation": "A",
@@ -311,7 +311,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 3,
   "regulation": "A",
@@ -370,7 +370,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 14,
   "regulation": "A",
@@ -427,7 +427,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 6,
   "regulation": "A",
@@ -470,7 +470,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 11,
   "regulation": "A",
@@ -514,7 +514,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 1,
   "regulation": "A",
@@ -559,7 +559,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 4,
   "regulation": "A",
@@ -624,7 +624,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 5,
   "regulation": "A",
@@ -683,7 +683,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 12,
   "regulation": "A",
@@ -728,7 +728,7 @@
   "level": 2,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 17,
   "regulation": "A",
@@ -784,7 +784,7 @@
   "level": 4,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 18,
   "regulation": "A",
@@ -829,7 +829,7 @@
   "cardClasses": [
    "ente"
   ],
-  "edition": "ST1",
+  "edition": "ST5",
   "colorIdentity": "B",
   "cardNumber": 8,
   "regulation": "A",
@@ -875,7 +875,7 @@
   ],
   "id": "69b35556b45d6126806bbbea"
  }
-]},"deck-st2":{"deckName":"ST2","metadata":[
+]},"deck-st2":{"deckName":"ST6","metadata":[
  {
   "cardName": "Wyphound",
   "cardType": "creature",
@@ -887,7 +887,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 2,
   "regulation": "A",
@@ -946,7 +946,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 15,
   "regulation": "A",
@@ -1004,7 +1004,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 7,
   "regulation": "A",
@@ -1048,7 +1048,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 8,
   "regulation": "A",
@@ -1107,7 +1107,7 @@
   "level": 2,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 16,
   "regulation": "A",
@@ -1153,7 +1153,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 14,
   "regulation": "A",
@@ -1226,7 +1226,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 17,
   "regulation": "A",
@@ -1286,7 +1286,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 5,
   "regulation": "A",
@@ -1354,7 +1354,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 6,
   "regulation": "A",
@@ -1417,7 +1417,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 10,
   "regulation": "A",
@@ -1481,7 +1481,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 9,
   "regulation": "A",
@@ -1540,7 +1540,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 13,
   "regulation": "A",
@@ -1598,7 +1598,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 4,
   "regulation": "A",
@@ -1677,7 +1677,7 @@
    "dragón",
    "hada"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 1,
   "regulation": "A",
@@ -1751,7 +1751,7 @@
    "dragón",
    "wyverno"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 11,
   "regulation": "A",
@@ -1809,7 +1809,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 12,
   "regulation": "A",
@@ -1852,7 +1852,7 @@
   "level": 4,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 18,
   "regulation": "A",
@@ -1903,7 +1903,7 @@
   "cardClasses": [
    "dragón"
   ],
-  "edition": "ST2",
+  "edition": "ST6",
   "colorIdentity": "G",
   "cardNumber": 3,
   "regulation": "A",
@@ -1948,7 +1948,7 @@
   ],
   "id": "69bb232a6cdb8c5e49c20971"
  }
-]},"deck-st3":{"deckName":"ST3","metadata":[
+]},"deck-st3":{"deckName":"ST7","metadata":[
  {
   "id": "69b39d39b1f266700290ecdf",
   "cardName": "Slicker",
@@ -1960,7 +1960,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 5,
@@ -2006,7 +2006,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 10,
@@ -2055,7 +2055,7 @@
   "level": 1,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 17,
@@ -2118,7 +2118,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 15,
@@ -2173,7 +2173,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 2,
@@ -2226,7 +2226,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 6,
@@ -2279,7 +2279,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 14,
@@ -2330,7 +2330,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 1,
@@ -2405,7 +2405,7 @@
   "level": 3,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 18,
@@ -2468,7 +2468,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 12,
@@ -2514,7 +2514,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 4,
@@ -2547,7 +2547,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 9,
@@ -2593,7 +2593,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 3,
@@ -2644,7 +2644,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 11,
@@ -2702,7 +2702,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 13,
@@ -2763,7 +2763,7 @@
   "level": 2,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 16,
@@ -2817,7 +2817,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 7,
@@ -2863,7 +2863,7 @@
   "cardClasses": [
    "bestia"
   ],
-  "edition": "ST3",
+  "edition": "ST7",
   "subEdition": null,
   "colorIdentity": "P",
   "cardNumber": 8,
@@ -2896,7 +2896,7 @@
    "P"
   ]
  }
-]},"deck-st4":{"deckName":"ST4","metadata":[
+]},"deck-st4":{"deckName":"ST8","metadata":[
  {
   "cardName": "Peón De Línea Frontal",
   "cardType": "creature",
@@ -2908,7 +2908,7 @@
    "caballero",
    "armada"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 2,
   "regulation": "A",
@@ -2936,7 +2936,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 9,
   "regulation": "A",
@@ -2978,7 +2978,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 15,
   "regulation": "A",
@@ -3036,7 +3036,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 4,
   "regulation": "A",
@@ -3095,7 +3095,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 8,
   "regulation": "A",
@@ -3135,7 +3135,7 @@
   "level": 2,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 16,
   "regulation": "A",
@@ -3182,7 +3182,7 @@
    "caballero",
    "mercenario"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 1,
   "regulation": "A",
@@ -3243,7 +3243,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 14,
   "regulation": "A",
@@ -3290,7 +3290,7 @@
   "level": 4,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 18,
   "regulation": "A",
@@ -3352,7 +3352,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 6,
   "regulation": "A",
@@ -3391,7 +3391,7 @@
   "level": 1,
   "starter": false,
   "cardClasses": [],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 17,
   "regulation": "A",
@@ -3445,7 +3445,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 3,
   "regulation": "A",
@@ -3487,7 +3487,7 @@
    "caballero",
    "retador"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 10,
   "regulation": "A",
@@ -3531,7 +3531,7 @@
    "caballero",
    "armada"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 5,
   "regulation": "A",
@@ -3573,7 +3573,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 11,
   "regulation": "A",
@@ -3616,7 +3616,7 @@
    "caballero",
    "retador"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 7,
   "regulation": "A",
@@ -3648,7 +3648,7 @@
    "caballero",
    "armada"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 12,
   "regulation": "A",
@@ -3695,7 +3695,7 @@
   "cardClasses": [
    "caballero"
   ],
-  "edition": "ST4",
+  "edition": "ST8",
   "colorIdentity": "R",
   "cardNumber": 13,
   "regulation": "A",

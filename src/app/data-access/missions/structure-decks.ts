@@ -3,7 +3,7 @@ import { Deck } from '@data/decks/deck.model';
 
 /**
  * How each structure deck plays, for the player choosing their first one: a tagline, its philosophy in a few
- * sentences and its style in tags. Drafted from the vault's evaluation of each Structure (04 Cartas/STn/Inicio STn);
+ * sentences and its style in tags. Drafted from the vault's evaluation of each Structure (04 Cartas/STn/Inicio STn; ST5–ST8 were ST1–ST4 until those were remade);
  * the designer may rewrite them freely.
  */
 export interface StructureStyle {
@@ -15,28 +15,28 @@ export interface StructureStyle {
 }
 
 const STYLES: Record<string, StructureStyle> = {
-  ST1: {
+  ST5: {
     color: 'Azul',
     tagline: 'Domina el tiempo, controla la mesa.',
     philosophy:
       'Un mazo de control y paciencia. Los Entes reducen la fuerza enemiga hasta destruirla, recuperan cartas desde los Tributos y se materializan en formas superiores usando a sus aliados como material. Cada decisión sobre qué gastar define tus próximos turnos: premia al que planifica.',
     tags: ['Control', 'Recursos', 'Materialización'],
   },
-  ST2: {
+  ST6: {
     color: 'Verde',
     tagline: 'Crece, hereda y arrasa.',
     philosophy:
       'Un mazo de poder puro. Tus Dragones evolucionan nivel a nivel heredando las habilidades de sus formas anteriores y destruyen enemigos al atacar, antes de que puedan bloquear. Concentra todo en un gran dragón y deja que su fuego decida la partida.',
     tags: ['Fuerza', 'Evolución', 'Destrucción'],
   },
-  ST3: {
+  ST7: {
     color: 'Violeta',
     tagline: 'Toda pérdida alimenta la cacería.',
     philosophy:
       'Un mazo de sacrificio y presión. Las Bestias entregan a sus aliados para robar, invocar y volver a atacar; destruyen por nivel sin importar la fuerza del rival y encadenan cacerías que nunca dan respiro. Aquí cada caída es un recurso.',
     tags: ['Sacrificio', 'Cacería', 'Presión'],
   },
-  ST4: {
+  ST8: {
     color: 'Rojo',
     tagline: 'Primero en cargar, último en caer.',
     philosophy:

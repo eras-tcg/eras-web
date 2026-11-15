@@ -1,8 +1,8 @@
 {
-  "commit": "cc4fae62749635c4bf8513e0c13eb0c120a70f3b",
+  "commit": "a08956d0858fb2c8dbbc4bacd2d99842ce11e5ed",
   "dirty": false,
-  "subject": "fix(cards): Trampa Vegetal chooses which of the enemies that entered together to exhaust",
-  "copiedAt": "2026-11-14T01:20:37.294Z",
+  "subject": "Structure decks ST1–ST4 become ST5–ST8: card folders, starter deck names, test fixtures and golden hashes",
+  "copiedAt": "2026-11-15T03:35:07.264Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

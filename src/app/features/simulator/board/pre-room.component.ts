@@ -287,7 +287,7 @@ export class PreRoomComponent {
     loadStarterDecks()
       .then((file) => this.starterNames.set(new Set(Object.values(file.decks).map((d) => d.deckName))))
       // Without the file: the names they have always had
-      .catch(() => this.starterNames.set(new Set(['ST1', 'ST2', 'ST3', 'ST4'])));
+      .catch(() => this.starterNames.set(new Set(['ST5', 'ST6', 'ST7', 'ST8'])));
   }
 
   /** The starter chosen by a player, from their deck list (of the rival's, the server sends only that card). */

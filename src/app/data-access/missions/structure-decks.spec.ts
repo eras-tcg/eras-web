@@ -7,9 +7,11 @@ const card = (id: string): CatalogCard => ({ id, name: id, edition: 'ST1', meta:
 
 describe('structure decks', () => {
   it('tells how each of the four structure decks plays', () => {
-    for (const id of ['ST1', 'ST2', 'ST3', 'ST4']) expect(structureStyle(id)?.philosophy.length).toBeGreaterThan(50);
-    expect(structureStyle('st2')?.color).toBe('Verde');
+    for (const id of ['ST5', 'ST6', 'ST7', 'ST8']) expect(structureStyle(id)?.philosophy.length).toBeGreaterThan(50);
+    expect(structureStyle('st6')?.color).toBe('Verde');
     expect(structureStyle('E1')).toBeNull();
+    // ST1–ST4 are being remade: no style until they are written
+    expect(structureStyle('ST1')).toBeNull();
   });
 
   it('shows the lore only when it is not a placeholder', () => {

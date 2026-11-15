@@ -18,33 +18,45 @@ export function exportName(f: MetaForm): string {
   return `${cardCode(draftFromForm(f))} ${name}`.trim();
 }
 
-/** The seven card kinds the editor offers (type, inherit frame, link). */
-export const CARD_KINDS = {
+/** Card types the editor makes. */
+export const CARD_TYPES = {
   creature: 'Criatura',
-  'creature-her': 'Criatura con heredado',
-  link: 'Criatura enlace',
   utility: 'Utilidad',
-  'utility-her': 'Utilidad con heredado',
   structure: 'Estructura',
-  'structure-her': 'Estructura con heredado',
 } as const;
-export type CardKind = keyof typeof CARD_KINDS;
+export type CardType = keyof typeof CARD_TYPES;
 
-/** Kind of a card from its form and the inherit flag. */
-export function cardKindOf(f: MetaForm, her: boolean): CardKind {
-  if (f.enlace) return 'link';
-  const base = (f.cardType || 'creature') as 'creature' | 'utility' | 'structure';
-  return her ? (`${base}-her` as CardKind) : base;
+/** Changes the card type; only creatures can be link cards. */
+export function withCardType(f: MetaForm, cardType: CardType): MetaForm {
+  const link = cardType === 'creature' && f.enlace;
+  return { ...f, cardType, enlace: link, arrows: link ? f.arrows : [] };
 }
 
-/** Form and inherit flag for a chosen kind. */
-export function applyCardKind(f: MetaForm, kind: CardKind): { form: MetaForm; her: boolean } {
-  const link = kind === 'link';
-  const cardType = link ? 'creature' : kind.replace('-her', '');
-  return {
-    form: { ...f, cardType, enlace: link, arrows: link ? f.arrows : [] },
-    her: kind.endsWith('-her'),
-  };
+/** Turns the link frame on or off; a link card has no inherit frame. */
+export function withLink(f: MetaForm, on: boolean): MetaForm {
+  return on
+    ? { ...f, cardType: 'creature', enlace: true, inheritEffects: [], inheritKeywordEffects: [] }
+    : { ...f, enlace: false, arrows: [] };
+}
+
+/** Turns the inherit frame off: its effects go with it. */
+export function withoutInherit(f: MetaForm): MetaForm {
+  return { ...f, inheritEffects: [], inheritKeywordEffects: [] };
+}
+
+/** Toggles a color; a card always keeps at least one. */
+export function toggleCardColor(f: MetaForm, c: string): MetaForm {
+  const colors = f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c];
+  if (!colors.length) return f;
+  // The code's color letters follow the card's colors.
+  return { ...f, colors, colorIdentity: colors.join('') };
+}
+
+/** The colors the editor shows for a form: its own, else its code's letters, else white. */
+export function cardColorsOf(f: MetaForm): string[] {
+  if (f.colors.length) return f.colors;
+  const fromCode = (f.colorIdentity || '').split('').filter((c) => /[BGPRW]/.test(c));
+  return fromCode.length ? fromCode : ['W'];
 }
 
 /** Writes a typed code ("E1-B15", "E1.1-P04") into edition, color identity and number. */

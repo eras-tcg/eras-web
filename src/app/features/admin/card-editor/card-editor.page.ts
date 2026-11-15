@@ -8,16 +8,8 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
-import {
-  MetaForm,
-  blankMeta,
-  metaFormFor,
-  toMetaPayload,
-  validateMeta,
-} from '@data/cards/meta-rules';
+import { MetaForm, blankMeta, metaFormFor } from '@data/cards/meta-rules';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { PageComponent } from '@ui/layout/page/page.component';
@@ -32,12 +24,14 @@ import { Line, effectsToLines, linesToEffects, pieceCatalog } from './effect-tex
 import { Zone, cardZones } from './render/card-zones';
 import { feedbackState } from '../admin-feedback';
 import {
-  CARD_KINDS,
-  CardKind,
-  applyCardKind,
-  cardKindOf,
+  CARD_TYPES,
+  CardType,
+  cardColorsOf,
   draftFromForm,
-  exportName,
+  toggleCardColor,
+  withCardType,
+  withLink,
+  withoutInherit,
 } from './card-editor-rules';
 import { FRAME_STYLE_LABELS, FrameStyle, buildCard } from './render/card-build';
 import {
@@ -48,19 +42,12 @@ import {
   saveFontFile,
 } from './render/card-fonts';
 import { drawEffects } from './render/effect-layout';
-import {
-  canvasToCmyk,
-  canvasToPng,
-  cmykPdf,
-  cmykTiff,
-  download,
-  svgToCanvasFine,
-} from './render/print-export';
+import { svgToCanvasFine } from './render/print-export';
 import { ArtPlacement, CardSpec, PieceTable } from './render/spec.model';
 import { SvgRenderer } from './render/svg-render';
 import { ColorLut, convertCanvas } from './render/color-lut';
 
-/** Card editor (manage_cards): the card's metadata, its art and frame, a live preview and print exports. */
+/** Card editor (manage_cards): the card's metadata, its art and frame, and a live preview. */
 @Component({
   selector: 'eras-card-editor-page',
   imports: [
@@ -175,32 +162,46 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               }
             </datalist>
           </eras-form-field>
-          <eras-stack direction="row" [gap]="2" wrap>
-            <button erasButton variant="ghost" type="button" (click)="newCard()">
-              Carta nueva
-            </button>
-            <button
-              erasButton
-              type="button"
-              [loading]="saving()"
-              [disabled]="saving()"
-              (click)="save()"
-            >
-              Guardar metadatos
-            </button>
-          </eras-stack>
-          @for (e of errors(); track e) {
-            <eras-alert tone="danger">{{ e }}</eras-alert>
-          }
-
           <eras-section-header title="Estructura" />
           <eras-form-field label="Tipo de carta">
-            <select (change)="setKind($any($event.target).value)">
-              @for (k of kinds; track k) {
-                <option [value]="k" [selected]="k === kind()">{{ kindLabels[k] }}</option>
+            <select (change)="setType($any($event.target).value)">
+              @for (t of types; track t) {
+                <option [value]="t" [selected]="t === form().cardType">{{ typeLabels[t] }}</option>
               }
             </select>
           </eras-form-field>
+          <span class="label">Colores</span>
+          <eras-stack direction="row" [gap]="1" wrap>
+            @for (c of colors; track c) {
+              <button erasChip [selected]="form().colors.includes(c)" (click)="toggleColor(c)">
+                {{ colorLabels[c] }}
+              </button>
+            }
+            @if (form().colors.length === 2) {
+              <button erasChip (click)="swapColors()">Invertir colores</button>
+            }
+          </eras-stack>
+          <span class="label">Marco</span>
+          <eras-stack direction="row" [gap]="1" wrap>
+            @for (s of styles; track s) {
+              <button erasChip [selected]="style() === s" (click)="style.set(s)">
+                {{ styleLabels[s] }}
+              </button>
+            }
+          </eras-stack>
+
+          <eras-section-header title="Extras" />
+          <eras-stack direction="row" [gap]="1" wrap>
+            <button erasChip [selected]="goldBorder()" (click)="goldBorder.set(!goldBorder())">
+              Borde dorado
+            </button>
+            @if (!form().enlace) {
+              <button erasChip [selected]="inherit()" (click)="toggleInherit()">Heredable</button>
+            }
+            @if (form().cardType === 'creature') {
+              <button erasChip [selected]="form().enlace" (click)="toggleLink()">Enlace</button>
+            }
+          </eras-stack>
           @if (form().enlace) {
             <eras-stack direction="row" [gap]="1" wrap>
               @for (a of arrowOptions; track a.key) {
@@ -214,28 +215,6 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               }
             </eras-stack>
           }
-          <span class="label">Colores</span>
-          <eras-stack direction="row" [gap]="1" wrap>
-            @for (c of colors; track c) {
-              <button erasChip [selected]="form().colors.includes(c)" (click)="toggleColor(c)">
-                {{ colorLabels[c] }}
-              </button>
-            }
-            @if (form().colors.length === 2) {
-              <button erasChip (click)="swapColors()">Invertir colores</button>
-            }
-            <button erasChip [selected]="goldBorder()" (click)="goldBorder.set(!goldBorder())">
-              Borde dorado
-            </button>
-          </eras-stack>
-          <span class="label">Marco</span>
-          <eras-stack direction="row" [gap]="1" wrap>
-            @for (s of styles; track s) {
-              <button erasChip [selected]="style() === s" (click)="style.set(s)">
-                {{ styleLabels[s] }}
-              </button>
-            }
-          </eras-stack>
 
           <eras-section-header title="Arte" />
           <input type="file" accept="image/*" aria-label="Imagen" (change)="pickArt($event)" />
@@ -263,37 +242,6 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               </button>
             </eras-stack>
           }
-
-          <eras-section-header title="Exportar" />
-          <eras-stack direction="row" [gap]="2" wrap>
-            <button
-              erasButton
-              variant="secondary"
-              type="button"
-              [disabled]="!ready() || exporting()"
-              (click)="exportPng()"
-            >
-              PNG
-            </button>
-            <button
-              erasButton
-              variant="secondary"
-              type="button"
-              [disabled]="!ready() || exporting()"
-              (click)="exportTiff()"
-            >
-              TIFF CMYK
-            </button>
-            <button
-              erasButton
-              variant="secondary"
-              type="button"
-              [disabled]="!ready() || exporting()"
-              (click)="exportPdf()"
-            >
-              PDF CMYK
-            </button>
-          </eras-stack>
         </eras-stack>
       </div>
     </eras-page>
@@ -378,21 +326,16 @@ import { ColorLut, convertCanvas } from './render/color-lut';
 })
 export class CardEditorPage {
   protected readonly store = inject(CardsStore);
-  private readonly api = inject(CardsAdminApi);
   protected readonly fb = feedbackState();
   private readonly preview = viewChild.required<ElementRef<HTMLElement>>('preview');
 
   protected readonly styles: FrameStyle[] = ['standard', 'semi', 'full'];
   protected readonly styleLabels = FRAME_STYLE_LABELS;
 
-  protected readonly form = signal<MetaForm>(blankMeta());
-  private readonly metaId = signal<string | null>(null);
+  protected readonly form = signal<MetaForm>({ ...blankMeta(), colors: ['W'] });
   protected readonly style = signal<FrameStyle>('standard');
   protected readonly art = signal<ArtPlacement | null>(null);
   protected readonly query = signal('');
-  protected readonly saving = signal(false);
-  protected readonly exporting = signal(false);
-  protected readonly errors = signal<string[]>([]);
   protected readonly dragging = signal(false);
   protected readonly sizes = signal('');
   /** Inherit (HER) frame chosen before the card has inherit effects. */
@@ -403,10 +346,14 @@ export class CardEditorPage {
   protected readonly goldBorder = signal(false);
   protected readonly zones = signal<Zone[]>([]);
   protected readonly effectZone = signal<Zone | null>(null);
-  protected readonly kinds = Object.keys(CARD_KINDS) as CardKind[];
-  protected readonly kindLabels = CARD_KINDS;
-  protected readonly kind = computed(() =>
-    cardKindOf(this.form(), this.her() || this.form().inheritEffects.length > 0),
+  protected readonly types = Object.keys(CARD_TYPES) as CardType[];
+  protected readonly typeLabels = CARD_TYPES;
+  /** Inherit frame: chosen, or the card already has inherit effects. */
+  protected readonly inherit = computed(
+    () =>
+      this.her() ||
+      this.form().inheritEffects.length > 0 ||
+      this.form().inheritKeywordEffects.length > 0,
   );
   protected readonly colors = CARD_COLORS;
   protected readonly colorLabels = COLOR_LABELS;
@@ -427,9 +374,6 @@ export class CardEditorPage {
     this.missingFonts()
       .map((s) => s.label)
       .join(', '),
-  );
-  protected readonly ready = computed(
-    () => !!this.templates() && !!this.pieces() && this.fontCss() !== null,
   );
 
   private readonly openable = computed(() =>
@@ -454,9 +398,6 @@ export class CardEditorPage {
     this.ctx.font = font;
     return this.ctx.measureText(text).width;
   };
-  private lastSvg: SVGSVGElement | null = null;
-  /** Bevels of the last preview, computed after it is shown. */
-  private baking: Promise<void> = Promise.resolve();
   private dragFrom: { x: number; y: number; ax: number; ay: number } | null = null;
 
   constructor() {
@@ -539,11 +480,10 @@ export class CardEditorPage {
         .map((l) => `${String(l.pt).replace('.', ',')} pt${l.fits ? '' : ' (no cabe)'}`)
         .join(' · '),
     );
-    this.lastSvg = r.svg;
-    this.baking = r.bake();
+    const baking = r.bake();
     // The preview shows the screen colors (as Photoshop's Save for Web), drawn once the bevels are ready.
     const gen = ++this.generation;
-    void this.baking
+    void baking
       .then(() => svgToCanvasFine(r.svg))
       .then((canvas) => {
         if (gen === this.generation)
@@ -558,12 +498,11 @@ export class CardEditorPage {
     const hit = this.openable().find((m) => m.key === key);
     if (!hit) return;
     this.effectZone.set(null);
-    this.form.set(metaFormFor(hit.card));
+    const form = metaFormFor(hit.card);
+    this.form.set({ ...form, colors: cardColorsOf(form) });
     this.her.set(false);
     this.noCost.set(this.form().cost === null);
     this.noStrength.set(this.form().cardType === 'creature' && this.form().strength === null);
-    this.metaId.set(hit.card.meta?.id ?? null);
-    this.errors.set([]);
     this.fb.clear();
   }
 
@@ -574,18 +513,25 @@ export class CardEditorPage {
     if (flag()) this.form.update((f) => ({ ...f, [which]: null }));
   }
 
-  protected setKind(kind: CardKind): void {
-    const next = applyCardKind(this.form(), kind);
-    this.form.set(next.form);
-    this.her.set(next.her);
+  protected setType(t: CardType): void {
+    this.form.update((f) => withCardType(f, t));
+  }
+
+  protected toggleInherit(): void {
+    if (this.inherit()) {
+      this.her.set(false);
+      this.form.update(withoutInherit);
+    } else this.her.set(true);
+  }
+
+  protected toggleLink(): void {
+    const on = !this.form().enlace;
+    if (on) this.her.set(false);
+    this.form.update((f) => withLink(f, on));
   }
 
   protected toggleColor(c: string): void {
-    this.form.update((f) => {
-      const colors = f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c];
-      // The code's color letters follow the card's colors.
-      return { ...f, colors, colorIdentity: colors.join('') || f.colorIdentity };
-    });
+    this.form.update((f) => toggleCardColor(f, c));
   }
 
   protected swapColors(): void {
@@ -639,39 +585,6 @@ export class CardEditorPage {
   protected closeEffects(lines: Line[]): void {
     this.applyEffects(lines);
     this.effectZone.set(null);
-  }
-
-  protected newCard(): void {
-    this.effectZone.set(null);
-    this.her.set(false);
-    this.noCost.set(false);
-    this.noStrength.set(false);
-    this.goldBorder.set(false);
-    this.form.set(blankMeta(this.form().edition));
-    this.metaId.set(null);
-    this.query.set('');
-    this.removeArt();
-  }
-
-  protected async save(): Promise<void> {
-    const errors = validateMeta(this.form());
-    this.errors.set(errors);
-    if (errors.length) return;
-    this.saving.set(true);
-    try {
-      const payload = toMetaPayload(this.form());
-      const id = this.metaId();
-      const saved = await firstValueFrom(
-        id ? this.api.updateMeta(id, payload) : this.api.createMeta(payload),
-      );
-      if (saved?.id) this.metaId.set(saved.id);
-      this.fb.ok('Metadatos guardados');
-      void this.store.load(true);
-    } catch (e) {
-      this.fb.fail(e, 'No se pudieron guardar los metadatos');
-    } finally {
-      this.saving.set(false);
-    }
   }
 
   // ── Art ───────────────────────────────────────────────────────────────
@@ -798,50 +711,5 @@ export class CardEditorPage {
     this.dragFrom = null;
     this.dragging.set(false);
     this.commitArt();
-  }
-
-  // ── Exports ───────────────────────────────────────────────────────────
-
-  private async canvas(): Promise<HTMLCanvasElement> {
-    if (!this.lastSvg) throw new Error('Sin vista previa');
-    await this.baking;
-    return svgToCanvasFine(this.lastSvg);
-  }
-
-  private async exporting$(run: () => Promise<void>): Promise<void> {
-    this.exporting.set(true);
-    try {
-      await run();
-    } catch (e) {
-      this.fb.fail(e, 'No se pudo exportar la carta');
-    } finally {
-      this.exporting.set(false);
-    }
-  }
-
-  protected exportPng(): Promise<void> {
-    // PNG in screen colors (Save for Web); the CMYK files keep the design colors.
-    const lut = this.lut();
-    return this.exporting$(async () =>
-      download(
-        await canvasToPng(convertCanvas(await this.canvas(), (px) => lut?.forward(px))),
-        `${exportName(this.form())}.png`,
-      ),
-    );
-  }
-
-  protected exportTiff(): Promise<void> {
-    return this.exporting$(async () =>
-      download(cmykTiff(canvasToCmyk(await this.canvas())), `${exportName(this.form())} CMYK.tif`),
-    );
-  }
-
-  protected exportPdf(): Promise<void> {
-    return this.exporting$(async () =>
-      download(
-        await cmykPdf([canvasToCmyk(await this.canvas())]),
-        `${exportName(this.form())} CMYK.pdf`,
-      ),
-    );
   }
 }

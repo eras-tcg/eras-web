@@ -144,19 +144,31 @@ interface EditionForm {
             @for (s of g.slots; track s.code) {
               @if (s.meta) {
                 <div class="slot-wrap">
-                  <button
-                    type="button"
-                    class="slot"
-                    [attr.aria-label]="s.code + ' ' + s.meta.cardName"
-                    (click)="showCard(s)"
-                  >
-                    @if (slotImage(s); as src) {
-                      <img [src]="src" alt="" loading="lazy" />
-                    } @else {
-                      <span class="name">{{ s.meta.cardName }}</span>
-                      <span class="code">{{ s.code }}</span>
+                  <div class="slot-card">
+                    <button
+                      type="button"
+                      class="slot"
+                      [attr.aria-label]="s.code + ' ' + s.meta.cardName"
+                      (click)="showCard(s)"
+                    >
+                      @if (slotImage(s); as src) {
+                        <img [src]="src" alt="" loading="lazy" />
+                      } @else {
+                        <span class="name">{{ s.meta.cardName }}</span>
+                        <span class="code">{{ s.code }}</span>
+                      }
+                    </button>
+                    @if (canEditCards()) {
+                      <button
+                        type="button"
+                        class="edit"
+                        [attr.aria-label]="'Editar ' + s.meta.cardName"
+                        (click)="openEditor(s)"
+                      >
+                        <eras-icon name="edit" />
+                      </button>
                     }
-                  </button>
+                  </div>
                   @if (structure()) {
                     <div class="copies">
                       @if (canEditCards()) {
@@ -181,16 +193,6 @@ interface EditionForm {
                         </button>
                       }
                     </div>
-                  }
-                  @if (canEditCards()) {
-                    <button
-                      type="button"
-                      class="edit"
-                      [attr.aria-label]="'Editar ' + s.meta.cardName"
-                      (click)="openEditor(s)"
-                    >
-                      <eras-icon name="edit" />
-                    </button>
                   }
                 </div>
               } @else if (canEditCards()) {
@@ -254,7 +256,7 @@ interface EditionForm {
     .tile .title {
       font-weight: var(--font-weight-bold, 700);
     }
-    .slot-wrap {
+    .slot-card {
       position: relative;
     }
     .copies {
@@ -278,7 +280,7 @@ interface EditionForm {
       opacity: 0.4;
       cursor: default;
     }
-    .slot-wrap .slot {
+    .slot-card .slot {
       inline-size: 100%;
     }
     .edit {

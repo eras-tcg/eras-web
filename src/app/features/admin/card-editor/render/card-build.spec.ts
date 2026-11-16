@@ -5,6 +5,8 @@ import {
   rolePaint,
   roleOf,
   roman,
+  squeezeToFit,
+  textSpan,
   templateFor,
   wrapText,
 } from './card-build';
@@ -79,5 +81,32 @@ describe('card-build', () => {
     expect(sideOf([650, 700], bar, true)).toBe('color');
     expect(sideOf([300, 700], bar, false)).toBe('both');
     expect(sideOf([100, 390], bar, true)).toBe('white');
+  });
+
+  it('compresses a name longer than its room horizontally only, keeping its center', () => {
+    // 10 units of measure per character at size 10.
+    const measure = (text: string) => text.length * 10;
+    const node = (text: string) =>
+      ({
+        name: 'NAME',
+        visible: true,
+        bbox: [0, 0, 0, 0],
+        text: {
+          text,
+          justify: 'center',
+          transform: [1, 0, 0, 1, 100, 50],
+          box: [0, 0, 200, 20],
+          runs: [{ text, size: 10 }],
+        },
+      }) as never;
+    const short = node('abcd');
+    squeezeToFit(short, 150, measure);
+    expect((short as { text: { transform: number[] } }).text.transform).toEqual([1, 0, 0, 1, 100, 50]);
+    const long = node('abcdefghijklmnop');
+    squeezeToFit(long, 150, measure);
+    const [a, b] = textSpan(long, measure);
+    expect((a + b) / 2).toBeCloseTo(200);
+    expect(b - a).toBeCloseTo(100);
+    expect((long as { text: { transform: number[] } }).text.transform[3]).toBe(1);
   });
 });

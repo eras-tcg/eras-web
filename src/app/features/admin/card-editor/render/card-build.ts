@@ -604,6 +604,30 @@ function setText(n: SpecNode | undefined, text: string, color?: string | null): 
   n.visible = text !== '';
 }
 
+/** Where the name's room starts: right of the level circle. Its room is as wide on each side of its center. */
+const NAME_LEFT = 122;
+
+/**
+ * A centered one-line text longer than its room is compressed horizontally only (its height stays): its room is
+ * centered where the text is and starts at `left`.
+ */
+export function squeezeToFit(n: SpecNode | undefined, left: number, measure: Measure): void {
+  if (!n?.text || !n.visible) return;
+  const t = n.text;
+  const [a, b] = textSpan(n, measure);
+  const center = (a + b) / 2;
+  const room = 2 * (center - left);
+  if (room <= 0 || b - a <= room) return;
+  const [xx, , , , tx] = t.transform;
+  const k = room / (b - a);
+  const half = t.box ? (t.box[2] - t.box[0]) / 2 : 0;
+  // The center is tx + half the box scaled by xx: keep it where it was.
+  const m = [...t.transform];
+  m[0] = xx * k;
+  m[4] = tx + half * xx - half * m[0];
+  t.transform = m;
+}
+
 function parentOf(nodes: SpecNode[], target: SpecNode): SpecNode[] | null {
   if (nodes.includes(target)) return nodes;
   for (const n of nodes) {
@@ -1293,6 +1317,7 @@ export function buildCard(
   // Texts.
   const onPrimary = white ? '#000000' : '#ffffff';
   setText(first('NAME'), card.cardName || '', onPrimary);
+  squeezeToFit(first('NAME'), NAME_LEFT, measure);
   setText(first('COST'), String(card.cost ?? ''));
   setText(first('STRENGHT'), card.cardType === 'creature' ? String(card.strength ?? '') : '');
   setText(first('LEVEL'), roman(card.level));

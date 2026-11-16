@@ -1233,31 +1233,36 @@ export function buildCard(
     }
   }
 
-  // Utilities and structures: their icons (gear, tower) come from the family's prototype, moved to the body's name
-  // bar (the inherit body's sits higher).
-  if (familyTpl && !first('UTILITY')) {
-    const find = (layers: SpecNode[], name: string) => {
+  // A part this body's prototype lacks, taken from another prototype and moved to this body's type bar (the inherit
+  // body's sits higher): the class label (TYPE) is where both line up.
+  const borrow = (from: CardSpec, name: string): void => {
+    const find = (layers: SpecNode[], key: string) => {
       let hit: SpecNode | null = null;
       walk(layers, (n) => {
-        if (!hit && n.name === name) hit = n;
+        if (!hit && n.name === key) hit = n;
       });
       return hit as SpecNode | null;
     };
-    const dy = (first('TYPE')?.bbox[1] ?? 0) - (find(familyTpl.layers, 'TYPE')?.bbox[1] ?? 0);
-    const home = parentOf(spec.layers, first('TYPE')!) ?? spec.layers;
-    for (const name of ['UTILITY', 'STRUCTURE']) {
-      const src = find(familyTpl.layers, name);
-      if (!src) continue;
-      const copy = clone(src);
-      walk([copy], (n) => {
-        n.bbox = [n.bbox[0], n.bbox[1] + dy, n.bbox[2], n.bbox[3] + dy];
-        if (n.paths)
-          n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + dy]) }));
-        byName.set(n.name, [...(byName.get(n.name) ?? []), n]);
-      });
-      home.push(copy);
-    }
-  }
+    const src = find(from.layers, name);
+    const type = first('TYPE');
+    if (!src || !type) return;
+    const dy = type.bbox[1] - (find(from.layers, 'TYPE')?.bbox[1] ?? type.bbox[1]);
+    const copy = clone(src);
+    walk([copy], (n) => {
+      n.bbox = [n.bbox[0], n.bbox[1] + dy, n.bbox[2], n.bbox[3] + dy];
+      if (n.paths)
+        n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + dy]) }));
+      if (n.text) n.text = { ...n.text, transform: n.text.transform.map((v, i) => (i === 5 ? v + dy : v)) };
+      byName.set(n.name, [...(byName.get(n.name) ?? []), n]);
+    });
+    (parentOf(spec.layers, type) ?? spec.layers).push(copy);
+  };
+  // Utilities and structures: their icons (gear, tower) come from the family's prototype.
+  if (familyTpl && !first('UTILITY')) for (const name of ['UTILITY', 'STRUCTURE']) borrow(familyTpl, name);
+  // The inherit creature's prototype has no starter tag: the plain creature's.
+  const plainCreature = templates['CRIATURA - PROTOTIPO'];
+  if ((card.cardType || 'creature') === 'creature' && !first('INICIADOR') && plainCreature)
+    borrow(plainCreature, 'INICIADOR');
 
   // Starter tag, structure / utility icon.
   const ini = first('INICIADOR');

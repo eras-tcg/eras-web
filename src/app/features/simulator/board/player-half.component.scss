@@ -556,6 +556,18 @@ eras-player-plate {
     color: var(--color-danger);
   }
 
+  // On / Auto / Off: its text, as big as the button allows
+  &.mode-toggle b {
+    font-size: min(var(--font-size-sm), 22cqh);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  &.auto {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
   &.on {
     border-color: var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));

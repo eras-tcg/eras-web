@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRender
 import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, PlayerState, ZoneName } from '@data/simulator/simulator.model';
+import { CardSlot, OptionalMode, PlayerState, ZoneName } from '@data/simulator/simulator.model';
 import { drawnFrontRow, formationPlaces, pointsSide } from '@data/simulator/formations';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
@@ -73,6 +73,15 @@ export class PlayerHalfComponent {
   protected readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
 
   protected readonly game = inject(GameStore);
+  /** The optional effects button: its text and what each mode does. */
+  protected readonly optionalModeLabel: Record<OptionalMode, string> = { on: 'On', auto: 'Auto', off: 'Off' };
+  protected readonly optionalModeTitle: Record<OptionalMode, string> = {
+    on: 'Opcionales: On. Se te ofrecen todos los efectos opcionales. Clic para pasar a Auto.',
+    auto:
+      'Opcionales: Auto. Las cartas que reducen costes se ofrecen solo mientras el coste pueda bajar, y el En Juego de una ' +
+      'estructura o utilidad se activa sin preguntar si no hay otros efectos. Clic para pasar a Off.',
+    off: 'Opcionales: Off. Los efectos opcionales que se activan solos pierden su momento sin preguntarte (los En Juego sí se ofrecen). Clic para pasar a On.',
+  };
   protected readonly drag = inject(BoardDrag);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly modal = inject(ModalService);

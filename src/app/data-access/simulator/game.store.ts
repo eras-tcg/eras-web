@@ -7,9 +7,10 @@ import { LOCAL_ROOM_ID, LocalMatchConfig } from './engine-protocol';
 import { GameTransport, TransportEvents } from './game-transport';
 import { GameTransports } from './game-transports';
 import { applyLocalMove } from './game-rules';
+import { optionalModePreference } from './optional-mode';
 import { GameNotices } from './game-notices';
 import { rulesView } from './legal-actions';
-import { BotLevel, CardSlot, DummyCard, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
+import { BotLevel, CardSlot, DummyCard, GameState, OptionalMode, PlayerState, PostGameChoice, ZoneName, optionalModeOf } from './simulator.model';
 import { Prelude, UpdateQueue, isTimeJump } from './update-queue';
 
 /** The bot's seat in a room against it. */
@@ -128,15 +129,18 @@ export class GameStore {
   }
 
   /**
-   * "Efectos opcionales apagados": the engine does not offer my optional triggered effects ("En Juego" ones still).
-   * Remembered on the device and set on the server in every game I enter.
+   * My optional effects: On (all offered), Auto (offered, but cost reducers only while the cost can go down and a lone
+   * "En Juego" chained without confirming) or Off (my optional triggered effects are not offered; "En Juego" ones still).
+   * Remembered as a preference (Auto until the player chooses) and set on the server in every game I enter.
    */
-  readonly optionalOff = persistedFlag('eras-sim-optional-off');
+  readonly optionalMode = optionalModePreference();
   /** The room and value last sent, so a slow echo does not send it again. */
   private optionalSent: string | null = null;
 
-  toggleOptionalOff(): void {
-    this.optionalOff.set(!this.optionalOff());
+  /** On → Auto → Off → On. */
+  cycleOptionalMode(): void {
+    const next: Record<OptionalMode, OptionalMode> = { on: 'auto', auto: 'off', off: 'on' };
+    this.optionalMode.set(next[this.optionalMode()]);
   }
 
   /**
@@ -153,12 +157,12 @@ export class GameStore {
     // The server keeps it per game: what the device remembers is sent when they differ
     effect(() => {
       const mine = this.myState();
-      const want = this.optionalOff();
-      if (!mine || !!mine.skipOptional === want) return;
+      const want = this.optionalMode();
+      if (!mine || optionalModeOf(mine) === want) return;
       const key = `${this.roomId()}|${mine.userId}|${want}`;
       if (this.optionalSent === key) return;
       this.optionalSent = key;
-      untracked(() => this.send('SET_SKIP_OPTIONAL', { value: want }));
+      untracked(() => this.send('SET_SKIP_OPTIONAL', { value: want === 'off', auto: want === 'auto' }));
     });
   }
   /** For one action: the side it is done as (a test room's other side, from its zones' dialogs). */

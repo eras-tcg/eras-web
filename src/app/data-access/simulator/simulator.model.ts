@@ -103,6 +103,8 @@ export interface PlayerState {
   resourceCount: number;
   /** The engine does not offer their optional triggered effects ("En Juego" ones still). */
   skipOptional?: boolean;
+  /** "Auto": cost reducers asked only while the cost can go down; a lone "En Juego" chained without confirming. */
+  autoOptional?: boolean;
   hand: CardSlot[];
   deck: CardSlot[];
   originalDeck: CardSlot[];
@@ -118,6 +120,14 @@ export type RoomStatus = 'WAITING' | 'SELECTING_STARTER' | 'MULLIGAN' | 'IN_PROG
 export type PostGameChoice = 'new_game' | 'change_deck' | 'exit';
 /** How well the server's bot plays: 'easy', 'normal', 'hard', or the id of a named model to try (the server lists them). */
 export type BotLevel = string;
+
+/** The player's optional effects: all offered, offered with the automatic rules of "Auto", or not offered. */
+export type OptionalMode = 'on' | 'auto' | 'off';
+
+/** The mode the server has for that player. */
+export function optionalModeOf(player: Pick<PlayerState, 'skipOptional' | 'autoOptional'>): OptionalMode {
+  return player.skipOptional ? 'off' : player.autoOptional ? 'auto' : 'on';
+}
 
 /** One of the bot's choices the server offers in the pre-room. */
 export interface BotChoice {

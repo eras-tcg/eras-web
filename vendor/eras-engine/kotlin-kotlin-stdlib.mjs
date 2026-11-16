@@ -652,6 +652,31 @@ function toBooleanArray(_this__u8e3s4) {
   }
   return result;
 }
+function toList_0(_this__u8e3s4) {
+  if (isInterface(_this__u8e3s4, Collection)) {
+    var tmp;
+    switch (_this__u8e3s4.k()) {
+      case 0:
+        tmp = emptyList();
+        break;
+      case 1:
+        var tmp_0;
+        if (isInterface(_this__u8e3s4, KtList)) {
+          tmp_0 = _this__u8e3s4.l(0);
+        } else {
+          tmp_0 = _this__u8e3s4.h().j();
+        }
+
+        tmp = listOf(tmp_0);
+        break;
+      default:
+        tmp = toMutableList(_this__u8e3s4);
+        break;
+    }
+    return tmp;
+  }
+  return optimizeReadOnlyList(toMutableList_0(_this__u8e3s4));
+}
 function maxWith(_this__u8e3s4, comparator) {
   var iterator = _this__u8e3s4.h();
   if (!iterator.i())
@@ -676,7 +701,7 @@ function sorted(_this__u8e3s4) {
     return asList(this_0);
   }
   // Inline function 'kotlin.apply' call
-  var this_1 = toMutableList(_this__u8e3s4);
+  var this_1 = toMutableList_0(_this__u8e3s4);
   sort_1(this_1);
   return this_1;
 }
@@ -712,7 +737,7 @@ function sortedWith(_this__u8e3s4, comparator) {
     return asList(this_0);
   }
   // Inline function 'kotlin.apply' call
-  var this_1 = toMutableList(_this__u8e3s4);
+  var this_1 = toMutableList_0(_this__u8e3s4);
   sortWith_0(this_1, comparator);
   return this_1;
 }
@@ -825,6 +850,24 @@ function plus(_this__u8e3s4, elements) {
 function getOrNull_0(_this__u8e3s4, index) {
   return (0 <= index ? index < _this__u8e3s4.k() : false) ? _this__u8e3s4.l(index) : null;
 }
+function max(_this__u8e3s4) {
+  var iterator = _this__u8e3s4.h();
+  if (!iterator.i())
+    throw NoSuchElementException_init_$Create$();
+  var max = iterator.j();
+  while (iterator.i()) {
+    var e = iterator.j();
+    if (compareTo(max, e) < 0)
+      max = e;
+  }
+  return max;
+}
+function plus_0(_this__u8e3s4, element) {
+  var result = ArrayList_init_$Create$_0(_this__u8e3s4.k() + 1 | 0);
+  result.r(_this__u8e3s4);
+  result.f(element);
+  return result;
+}
 function indexOf_5(_this__u8e3s4, element) {
   return _this__u8e3s4.s(element);
 }
@@ -847,31 +890,6 @@ function toDoubleArray(_this__u8e3s4) {
   }
   return result;
 }
-function toList_0(_this__u8e3s4) {
-  if (isInterface(_this__u8e3s4, Collection)) {
-    var tmp;
-    switch (_this__u8e3s4.k()) {
-      case 0:
-        tmp = emptyList();
-        break;
-      case 1:
-        var tmp_0;
-        if (isInterface(_this__u8e3s4, KtList)) {
-          tmp_0 = _this__u8e3s4.l(0);
-        } else {
-          tmp_0 = _this__u8e3s4.h().j();
-        }
-
-        tmp = listOf(tmp_0);
-        break;
-      default:
-        tmp = toMutableList_0(_this__u8e3s4);
-        break;
-    }
-    return tmp;
-  }
-  return optimizeReadOnlyList(toMutableList(_this__u8e3s4));
-}
 function toCollection_0(_this__u8e3s4, destination) {
   var _iterator__ex2g4s = _this__u8e3s4.h();
   while (_iterator__ex2g4s.i()) {
@@ -881,8 +899,11 @@ function toCollection_0(_this__u8e3s4, destination) {
   return destination;
 }
 function toMutableList(_this__u8e3s4) {
+  return ArrayList_init_$Create$_1(_this__u8e3s4);
+}
+function toMutableList_0(_this__u8e3s4) {
   if (isInterface(_this__u8e3s4, Collection))
-    return toMutableList_0(_this__u8e3s4);
+    return toMutableList(_this__u8e3s4);
   return toCollection_0(_this__u8e3s4, ArrayList_init_$Create$());
 }
 function indexOf_6(_this__u8e3s4, element) {
@@ -922,9 +943,6 @@ function toMutableSet(_this__u8e3s4) {
     tmp = toCollection_0(_this__u8e3s4, LinkedHashSet_init_$Create$());
   }
   return tmp;
-}
-function toMutableList_0(_this__u8e3s4) {
-  return ArrayList_init_$Create$_1(_this__u8e3s4);
 }
 function single_0(_this__u8e3s4) {
   if (isInterface(_this__u8e3s4, KtList))
@@ -1031,7 +1049,7 @@ function toIntExactOrNull(_this__u8e3s4) {
 function flatMap(_this__u8e3s4, transform) {
   return new FlatteningSequence(_this__u8e3s4, transform, Sequence$iterator$ref());
 }
-function plus_0(_this__u8e3s4, elements) {
+function plus_1(_this__u8e3s4, elements) {
   return flatten(sequenceOf_0([_this__u8e3s4, elements]));
 }
 function asIterable(_this__u8e3s4) {
@@ -1209,7 +1227,7 @@ function toString_0(_this__u8e3s4) {
   var tmp1_elvis_lhs = _this__u8e3s4 == null ? null : toString_1(_this__u8e3s4);
   return tmp1_elvis_lhs == null ? 'null' : tmp1_elvis_lhs;
 }
-function plus_1(_this__u8e3s4, other) {
+function plus_2(_this__u8e3s4, other) {
   var tmp = _this__u8e3s4 == null ? 'null' : _this__u8e3s4;
   var tmp2_elvis_lhs = other == null ? null : toString_1(other);
   return tmp + (tmp2_elvis_lhs == null ? 'null' : tmp2_elvis_lhs);
@@ -3186,15 +3204,15 @@ function arrayCopy(source, destination, destinationOffset, startIndex, endIndex)
 function collectionToArray(collection) {
   return collectionToArrayCommonImpl(collection);
 }
-function sortWith_0(_this__u8e3s4, comparator) {
-  collectionsSort(_this__u8e3s4, comparator);
-}
 function listOf(element) {
   // Inline function 'kotlin.arrayOf' call
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [element];
   return new ArrayList(tmp$ret$0);
+}
+function sortWith_0(_this__u8e3s4, comparator) {
+  collectionsSort(_this__u8e3s4, comparator);
 }
 function setOf(element) {
   return hashSetOf([element]);
@@ -13474,9 +13492,11 @@ export {
   mapOf_0 as mapOf1xd03cq9cnmy8,
   maxWithOrNull as maxWithOrNullsohvqg0i6v8s,
   maxWith as maxWith39zjrwhhgo7y0,
+  max as max2o8z1isrnjymo,
   minWithOrNull as minWithOrNull30i4uakvje35v,
   min as minjeab1ybpajdx,
   plus as plus310ted5e4i90h,
+  plus_0 as plus20p0vtfmu0596,
   removeAll_0 as removeAll3cm9rh0qak2y6,
   removeAll as removeAll3o43e67jmwdpc,
   removeLast as removeLast3759euu1xvfa3,
@@ -13585,7 +13605,7 @@ export {
   KMutableProperty1 as KMutableProperty11e8g1gb0ecb9j,
   KProperty1 as KProperty1ca4yb4wlo496,
   flatMap as flatMapgxtanzi5fvh9,
-  plus_0 as plus2l6bq32n2wlna,
+  plus_1 as plus2l6bq32n2wlna,
   sequenceOf as sequenceOfdrc6uefhtiet,
   StringBuilder as StringBuildermazzzhj6kkai,
   concatToString as concatToString2syawgu50khxi,
@@ -13662,7 +13682,7 @@ export {
   lazy as lazy1261dae0bgscp,
   lazy_0 as lazy2hsh8ze7j6ikd,
   noWhenBranchMatchedException as noWhenBranchMatchedException2a6r7ubxgky5j,
-  plus_1 as plus17rl43at52ays,
+  plus_2 as plus17rl43at52ays,
   toRawBits as toRawBits3bthuu8natj5y,
   toString_0 as toString30pk9tzaqopn,
   to as to2cs3ny02qtbcb,

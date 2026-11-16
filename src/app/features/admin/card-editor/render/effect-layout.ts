@@ -217,6 +217,8 @@ export function pieceMetrics(
 /** Greedy line breaking at one size; pieces never break. */
 /** Extra left body of an interlocked momento, in em. */
 const TUCK = 0.44;
+/** How far, in em, an interlocked momento starts before the end of the previous one's tip. */
+const JOIN = 0.74;
 
 export function layoutAt(
   tokens: Token[],
@@ -271,7 +273,7 @@ export function layoutAt(
       tok.t === 'piece'
         ? pieceMetrics(tok.kind, tok.label, px, measure).w + (under ? px * TUCK : 0)
         : measure(tok.text, effectFont(px, tok.italic));
-    const gap = under ? -px * 0.74 : pendingSpace && x > 0 ? space : 0;
+    const gap = under ? -px * JOIN : pendingSpace && x > 0 ? space : 0;
     if (x > 0 && x + gap + w > width && !(tok.t === 'word' && tok.glue)) {
       lines.push([]);
       x = 0;
@@ -449,7 +451,12 @@ function drawPiece(
   );
   for (const [at, c] of cmykStops(st.fill)) svgEl('stop', { offset: at, 'stop-color': c }, lg);
   const paint = `url(#${grad})`;
-  if (tok.kind === 'timing') {
+  if (tok.kind === 'timing' && tuck) {
+    // Interlocked: a flat left side from the base of the previous momento's tip, its body running under that tip.
+    const left = x + px * JOIN - h / 2;
+    const d = `M${left} ${y}L${x + w - h / 2} ${y}L${x + w} ${y + h / 2}L${x + w - h / 2} ${y + h}L${left} ${y + h}Z`;
+    svgEl('path', { d, fill: paint }, g);
+  } else if (tok.kind === 'timing') {
     const d = `M${x} ${y + h / 2}L${x + h / 2} ${y}L${x + w - h / 2} ${y}L${x + w} ${y + h / 2}L${x + w - h / 2} ${y + h}L${x + h / 2} ${y + h}Z`;
     svgEl('path', { d, fill: paint }, g);
   } else if (tok.kind === 'condition') {

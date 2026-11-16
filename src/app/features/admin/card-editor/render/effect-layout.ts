@@ -215,8 +215,9 @@ export function pieceMetrics(
 }
 
 /** Greedy line breaking at one size; pieces never break. */
-/** Extra left body of an interlocked momento, in em. */
+/** Extra left body of an interlocked momento, in em, less one space: its text sits a space closer to the tip. */
 const TUCK = 0.44;
+const tuckOf = (px: number, measure: Measure) => px * TUCK - measure(' ', effectFont(px));
 /** How far, in em, an interlocked momento starts before the end of the previous one's tip. */
 const JOIN = 0.74;
 
@@ -271,10 +272,11 @@ export function layoutAt(
       prev.tok.kind === 'timing';
     const w =
       tok.t === 'piece'
-        ? pieceMetrics(tok.kind, tok.label, px, measure).w + (under ? px * TUCK : 0)
+        ? pieceMetrics(tok.kind, tok.label, px, measure).w + (under ? tuckOf(px, measure) : 0)
         : measure(tok.text, effectFont(px, tok.italic));
     const gap = under ? -px * JOIN : pendingSpace && x > 0 ? space : 0;
-    if (x > 0 && x + gap + w > width && !(tok.t === 'word' && tok.glue)) {
+    // Half a pixel of slack: a line that fits but for rounding stays whole.
+    if (x > 0 && x + gap + w > width + 0.5 && !(tok.t === 'word' && tok.glue)) {
       lines.push([]);
       x = 0;
     } else x += gap;
@@ -380,7 +382,7 @@ function drawSlot(
           px,
           pieces,
           measure,
-          under ? px * TUCK : 0,
+          under ? tuckOf(px, measure) : 0,
         );
         lastPiece = pg;
       } else if (tok.t === 'ultimate') drawUltimate(g, slot.box, y, px, measure);

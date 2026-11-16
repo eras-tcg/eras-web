@@ -3,9 +3,9 @@
     <eras-stack [gap]="4">
       @if (!data.only) {
         <div class="info">
-          <div class="showcase">
+          <div class="showcase" [style.--materials]="s.materials.length">
             <!-- The card with its Materiales peeking out behind it, and its Recursos under it, as on the table -->
-            <div class="art" [style.--materials]="s.materials.length">
+            <div class="art">
               @for (m of s.materials; track m.instanceId; let i = $index) {
                 <!-- Held pressed: the card in detail -->
                 <div class="material" [style.--i]="i" [erasHoldPeek]="!m.faceDown || game.seeAll()" (peek)="openDetail(m)">

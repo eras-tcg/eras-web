@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { CdkMenuTrigger } from '@angular/cdk/menu';
+import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { EditModeService } from '@core/auth/edit-mode.service';
-import { CARD_COLORS, COLOR_LABELS, CatalogCard } from '@data/cards/card.model';
+import { CARD_COLORS, CARD_RARITIES, COLOR_LABELS, CatalogCard } from '@data/cards/card.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { openCardDetailDialog } from '../card-detail-dialog/card-detail-dialog.component';
@@ -16,6 +18,7 @@ import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-met
 import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
 import { EditionTileComponent } from './edition-tile.component';
 import { CardMoveData, CardMoveDialogComponent } from './card-move-dialog.component';
+import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
@@ -61,6 +64,9 @@ interface EditionForm {
     ButtonComponent,
     ChipComponent,
     IconComponent,
+    CdkMenuTrigger,
+    MenuComponent,
+    MenuItemDirective,
     EditionTileComponent,
   ],
   template: `
@@ -183,6 +189,25 @@ interface EditionForm {
               @if (s.meta) {
                 <div class="slot-wrap">
                   <div class="slot-card">
+                    <!-- Its rarity on a tab over the card's top edge, in the shop's rarity colors; changed from here in edit mode -->
+                    @if (canEditCards()) {
+                      <button
+                        type="button"
+                        class="rarity-tab"
+                        [style.--rarity]="rarityColor(s.meta.rarity)"
+                        [attr.aria-label]="'Rareza de ' + s.meta.cardName + ': ' + (s.meta.rarity || 'sin rareza')"
+                        title="Cambiar rareza"
+                        [disabled]="savingRarity() === s.meta.id"
+                        [cdkMenuTriggerFor]="rarityMenu"
+                        [cdkMenuTriggerData]="{ $implicit: s }"
+                      >
+                        {{ s.meta.rarity || '—' }}
+                      </button>
+                    } @else if (s.meta.rarity) {
+                      <span class="rarity-tab" [style.--rarity]="rarityColor(s.meta.rarity)" [attr.aria-label]="'Rareza ' + s.meta.rarity">
+                        {{ s.meta.rarity }}
+                      </span>
+                    }
                     <button
                       type="button"
                       class="slot"
@@ -278,6 +303,15 @@ interface EditionForm {
         } @empty {
           <p class="meta">Esta edición todavía no tiene colores ni cartas.</p>
         }
+        <ng-template #rarityMenu let-s>
+          <eras-menu aria-label="Rareza">
+            @for (r of rarities; track r) {
+              <button erasMenuItem (triggered)="setRarity(s, r)">
+                <span class="rarity-dot" [style.--rarity]="rarityColor(r)"></span>{{ r }}
+              </button>
+            }
+          </eras-menu>
+        </ng-template>
       } @else if (!editionId()) {
         <eras-grid minColumn="min(12rem, 40vw, 36dvh)" [gap]="4">
           @for (e of list(); track e.edition.editionId) {
@@ -334,6 +368,38 @@ interface EditionForm {
     }
     .slot-card {
       position: relative;
+    }
+    .rarity-tab {
+      position: absolute;
+      z-index: 1;
+      inset-block-start: -0.6rem;
+      inset-inline-end: 8%;
+      min-inline-size: 2.25rem;
+      padding: 0.15rem var(--space-2);
+      border: 2px solid var(--color-surface);
+      border-radius: var(--radius-sm);
+      background: var(--rarity);
+      color: var(--color-on-rarity);
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-bold);
+      text-align: center;
+      line-height: 1.2;
+      box-shadow: var(--shadow-sm);
+    }
+    button.rarity-tab {
+      cursor: pointer;
+    }
+    button.rarity-tab:hover {
+      filter: brightness(1.1);
+    }
+    .rarity-dot {
+      display: inline-block;
+      inline-size: 0.75rem;
+      block-size: 0.75rem;
+      margin-inline-end: var(--space-2);
+      border-radius: 50%;
+      background: var(--rarity);
     }
     .per-color {
       display: flex;
@@ -469,6 +535,7 @@ export class CardEditionsPage {
   private readonly router = inject(Router);
   private readonly adminApi = inject(CardsAdminApi);
   private readonly modal = inject(ModalService);
+  private readonly renderer = inject(CardRenderService);
   /** The editor's finished images already fetched (they need the session), by card id and render. */
   private readonly renders = signal<Record<string, string>>({});
   private readonly asked = new Set<string>();
@@ -661,6 +728,31 @@ export class CardEditionsPage {
   }
 
   /** Saves how many copies of a structure card the deck brings. */
+  protected readonly rarities = CARD_RARITIES;
+  protected readonly savingRarity = signal<string | null>(null);
+
+  /** A rarity's color in the shop's palette (no rarity: the border's). */
+  protected rarityColor(rarity: string | null | undefined): string {
+    return rarity ? `var(--color-rarity-${rarity.toLowerCase()})` : 'var(--color-border)';
+  }
+
+  /** Saves a card's rarity from its tab (only that field); its finished image, which prints it, is drawn again. */
+  protected async setRarity(s: EditionSlot, rarity: string): Promise<void> {
+    const m = s.meta;
+    if (!m || m.rarity === rarity) return;
+    this.savingRarity.set(m.id);
+    this.error.set(null);
+    try {
+      const saved = await firstValueFrom(this.adminApi.setRarity(m.id, rarity));
+      this.cards.replaceMeta(saved);
+      if (saved.artKey && saved.design) this.cards.replaceMeta(await this.renderer.refresh(saved));
+    } catch {
+      this.error.set('No se pudo guardar la rareza');
+    } finally {
+      this.savingRarity.set(null);
+    }
+  }
+
   protected async setCopies(s: EditionSlot, copies: number): Promise<void> {
     const m = s.meta;
     if (!m || copies < 0) return;

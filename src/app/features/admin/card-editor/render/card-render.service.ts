@@ -41,10 +41,10 @@ export class CardRenderService {
     return (await this.load()).missingFonts;
   }
 
-  /** Draws the card and saves it as its finished image. */
-  async refresh(meta: CardMeta): Promise<void> {
+  /** Draws the card and saves it as its finished image; answers the card as it is now (its new render key). */
+  async refresh(meta: CardMeta): Promise<CardMeta> {
     const blob = await this.draw(meta);
-    await firstValueFrom(this.api.setRender(meta.id, blob));
+    return firstValueFrom(this.api.setRender(meta.id, blob));
   }
 
   /** The card drawn as a JPEG, as the editor saves it. */

@@ -221,17 +221,18 @@ interface EditionForm {
           <p class="meta">Esta edición todavía no tiene colores ni cartas.</p>
         }
       } @else if (!editionId()) {
-        <eras-grid minColumn="14rem" [gap]="3">
+        <eras-grid minColumn="min(12rem, 40vw, 36dvh)" [gap]="4">
           @for (e of list(); track e.edition.editionId) {
-            <a class="tile" [routerLink]="['/cards/editions', e.edition.editionId]">
-              <span class="art">
-                @if (e.edition.editionImage) {
-                  <img [src]="e.edition.editionImage" alt="" loading="lazy" />
-                }
+            <a
+              class="tile"
+              [routerLink]="['/cards/editions', e.edition.editionId]"
+              [style.background-image]="e.edition.editionImage ? 'url(' + e.edition.editionImage + ')' : null"
+            >
+              <span class="tile-info">
+                <span class="code">{{ e.edition.editionId }}</span>
+                <span class="title">{{ e.edition.editionName || e.edition.editionId }}</span>
+                <span class="count">{{ e.filled.filled }} / {{ e.filled.total }}</span>
               </span>
-              <span class="code">{{ e.edition.editionId }}</span>
-              <span class="title">{{ e.edition.editionName || e.edition.editionId }}</span>
-              <span class="count">{{ e.filled.filled }} / {{ e.filled.total }}</span>
             </a>
           }
         </eras-grid>
@@ -262,39 +263,62 @@ interface EditionForm {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
     }
+    /* As the shop's edition tiles: card-shaped, the cover behind, the text over a scrim at the bottom */
     .tile {
-      display: grid;
-      gap: var(--space-1);
-      padding: var(--space-4);
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
-      color: var(--color-text);
-      text-decoration: none;
-    }
-    .tile .art {
-      display: block;
-      aspect-ratio: 16 / 9;
-      margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-2);
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      aspect-ratio: 744 / 1039;
       overflow: hidden;
-      border-radius: var(--radius-md) var(--radius-md) 0 0;
-      background: var(--color-surface-muted);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-muted) center / cover;
+      box-shadow: var(--shadow-sm);
+      color: var(--color-hub-text);
+      text-decoration: none;
+      transition:
+        transform var(--duration-fast) var(--easing-standard),
+        border-color var(--duration-fast) var(--easing-standard),
+        box-shadow var(--duration-fast) var(--easing-standard);
     }
-    .tile .art img {
-      inline-size: 100%;
-      block-size: 100%;
-      object-fit: cover;
-    }
-    .tile:hover {
+    .tile:hover,
+    .tile:focus-visible {
       border-color: var(--color-hub-accent);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-3px);
     }
-    .tile .code,
-    .tile .count {
-      color: var(--color-text-muted);
-      font-size: var(--font-size-sm);
+    .tile::before {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 92%, transparent) 0%, transparent 55%);
+      content: '';
+    }
+    .tile-info {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      inline-size: 100%;
+      padding: var(--space-3);
+    }
+    .tile .code {
+      color: var(--color-hub-accent);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.08em;
     }
     .tile .title {
-      font-weight: var(--font-weight-bold, 700);
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-md);
+      line-height: 1.15;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      hyphens: auto;
+      overflow-wrap: break-word;
+    }
+    .tile .count {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-bold);
     }
     .slot-card {
       position: relative;

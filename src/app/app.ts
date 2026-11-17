@@ -1,5 +1,5 @@
 import { PreferenceSync } from '@core/preferences/preference-sync';
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, effect, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { RotateOverlayComponent } from '@core/layout/rotate-overlay.component';
@@ -10,7 +10,6 @@ import { ServerAccess } from '@core/server/server-access';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
 import { WarmupScreenComponent } from '@core/server/warmup-screen.component';
 import { ThemeService } from '@core/theme/theme.service';
-import { SyncReportService } from '@features/admin/sync-report/sync-report.service';
 
 @Component({
   selector: 'eras-root',
@@ -63,7 +62,7 @@ export class App {
   protected readonly screen = inject(AppScreen);
   private readonly access = inject(ServerAccess);
   private readonly auth = inject(AuthService);
-  private readonly syncReport = inject(SyncReportService);
+  private readonly injector = inject(Injector);
   /** The player's preferences kept with their account (read on signing in, saved as they change). */
   private readonly preferences = inject(PreferenceSync);
 
@@ -76,7 +75,15 @@ export class App {
     inject(NativeApp).start();
     // Once the backend is up, and again when an admin signs in: what it found in Drive as it woke up
     effect(() => {
-      if (this.access.allowed() && this.warmup.ready() && this.auth.user()) void this.syncReport.check();
+      // Loaded only then (an admin's tool, out of the first download)
+      if (this.access.allowed() && this.warmup.ready() && this.auth.user()) void this.checkSyncReport();
     });
+  }
+
+  /** The admins' Drive report: its code is downloaded only for someone who may see it. */
+  private async checkSyncReport(): Promise<void> {
+    if (!this.auth.can('manage_cards')) return;
+    const { SyncReportService } = await import('@features/admin/sync-report/sync-report.service');
+    await this.injector.get(SyncReportService).check();
   }
 }

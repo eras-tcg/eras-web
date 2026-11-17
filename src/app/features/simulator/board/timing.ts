@@ -24,6 +24,8 @@ export const TIMING = {
   draw: 550,
   drawStagger: 120,
   move: 520,
+  /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
+  slide: 450,
   summon: 600,
   burst: 750,
   /** The life lost turning face up on its pile. */
@@ -60,8 +62,8 @@ export function timingVars(): Record<string, string> {
 /** The board's layers over the table (tokens `--z-sim-*`), for the elements its code creates. */
 export const LAYER = {
   parkedLife: 'var(--z-sim-parked)',
-  /** A field card gliding to its new line, over its neighbors. */
-  raised: 'var(--z-sim-raised)',
+  /** A field card's place while its sprite animates in it: over its neighbours in the row (it does not move). */
+  fieldLifted: 'var(--z-sim-field-lifted)',
   spotlight: 'var(--z-sim-spotlight)',
   charge: 'var(--z-sim-charge)',
   fx: 'var(--z-sim-fx)',

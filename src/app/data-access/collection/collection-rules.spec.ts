@@ -52,6 +52,12 @@ describe('collection rules', () => {
     expect(missingCopies([{ card: card('a'), count: 3 }, { card: card('b'), count: 4 }, { card: card('z'), count: 1 }], collection)).toBe(2);
   });
 
+  it('never counts a card in testing as lacking (it is not owned nor crafted)', () => {
+    const testing = { id: 't', edition: 'T1' } as CatalogCard;
+    expect(missingCopies([{ card: testing, count: 3 }], collection)).toBe(0);
+    expect(missingCards([{ card: testing, count: 3 }], collection)).toEqual([]);
+  });
+
   it('keeps the finest copies and counts the rest as extra', () => {
     expect(extrasOf({ plain: 5, prism: 1 })).toEqual({ plain: 2 });
     expect(extrasOf({ foil: 6 })).toEqual({ foil: 2 });

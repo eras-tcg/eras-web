@@ -19,44 +19,10 @@
   padding-block-end: var(--space-1);
 }
 
-.cards > .slot {
-  flex: none;
-}
-
-// The cards of one zone, boxed and named
-.zone-box {
+// One card of the choice (and its hold-to-peek), in the row or in a zone's box
+.slot {
+  position: relative;
   display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2) var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
-}
-
-.zone-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--color-text-muted);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.zone-name eras-icon {
-  inline-size: 0.85rem;
-  block-size: 0.85rem;
-}
-
-.zone-cards {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.zone-cards > .slot {
   flex: none;
 }
 
@@ -66,29 +32,7 @@
   background: color-mix(in srgb, var(--color-primary) 22%, transparent);
   color: var(--color-primary);
 }
-.slot { display: flex; }
-.pick {
-  --game-card-width: 7rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
-.pick:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-primary) 60%, transparent); }
-.pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
-.pick.locked { opacity: 0.4; cursor: not-allowed; }
-.slot { position: relative; }
-/* The eye floats at the card's upper right corner: the card in detail, with its Materiales and Recursos */
-.peek-btn { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; z-index: 2; opacity: 0.85; }
-.peek-btn:hover, .peek-btn:focus-visible { opacity: 1; }
-.pick.static, .pick.static:disabled { opacity: 1; cursor: default; }
-.pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.pick { --game-card-width: 7rem; }
 .tag {
   display: inline-flex;
   align-items: center;
@@ -97,30 +41,7 @@
   font-size: var(--font-size-xs);
   text-align: center;
 }
-// Chosen: a mark over the card's middle (a check, or the link it takes); the order of cards looked at, the same
-.pick { position: relative; }
-.chosen-mark {
-  position: absolute;
-  inset-block-start: 45%;
-  inset-inline-start: 50%;
-  display: grid;
-  place-items: center;
-  inline-size: 2rem;
-  block-size: 2rem;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  background: var(--color-success);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
-  color: #fff;
-  font: 700 1rem/1 var(--font-family-display);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-.chosen-mark eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
 .count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
-// Sending the rest: a numbered card (its place in the order), framed and marked in the primary color
-.pick.numbered { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
-.chosen-mark.order { background: var(--color-primary); }
 
 eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
 @keyframes new-card {
@@ -213,11 +134,6 @@ eras-sheet.with-panel {
   }
 }
 
-// A disabled button swallows the mouse: the card can still be held to see it in detail
-.pick:disabled {
-  pointer-events: none;
-}
-
 // Phones in landscape: a small sheet (the table stays in sight): smaller cards and effects
 @media (orientation: landscape) and (max-height: 30rem) {
   eras-sheet.with-panel {
@@ -230,23 +146,6 @@ eras-sheet.with-panel {
 
   .cards {
     min-block-size: 0;
-  }
-
-  // The zone's name stands up at the box's side: no line of its own over the cards
-  .zone-box {
-    flex-direction: row;
-    padding: var(--space-1);
-  }
-
-  .zone-name {
-    font-size: 0.6rem;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-  }
-
-  // The name reads upwards; its icon stays upright
-  .zone-name eras-icon {
-    transform: rotate(180deg);
   }
 
   .tag:empty {

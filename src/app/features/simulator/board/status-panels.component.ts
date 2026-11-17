@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, output, signal, untracked } from '@angular/core';
 import { siteOrigin } from '@core/http/api-config';
 import { GameStore } from '@data/simulator/game.store';
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -11,7 +12,7 @@ import { CardPeekComponent } from './card-peek.component';
 /** Phase-gated panels over the board: starter choice (older rooms) and mulligan. The pre-room has its own view; the post-game is the end screen (eras-match-banner). */
 @Component({
   selector: 'eras-status-panels',
-  imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent, CardPeekComponent],
+  imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent, CardPeekComponent, PickCardComponent],
   template: `
     <!-- A side played by a bot (or a replay) has nothing to choose here -->
     @switch (game.sideByBot() ? null : game.status()) {
@@ -25,7 +26,7 @@ import { CardPeekComponent } from './card-peek.component';
               <div class="cards">
                 @for (c of starters(); track c.instanceId) {
                   <div class="slot">
-                    <button type="button" class="pick" [attr.aria-label]="'Elegir ' + c.cardName" (click)="game.selectStarter(c.instanceId)">
+                    <button erasPickCard type="button" class="pick" [attr.aria-label]="'Elegir ' + c.cardName" (click)="game.selectStarter(c.instanceId)">
                       <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
                     </button>
                     <eras-card-peek [card]="c" [mine]="true" />
@@ -49,7 +50,7 @@ import { CardPeekComponent } from './card-peek.component';
               <div class="cards">
                 @for (c of topFive(); track c.instanceId) {
                   <div class="slot">
-                    <button type="button" class="pick" [class.chosen]="toBottom().has(c.instanceId)" [attr.aria-pressed]="toBottom().has(c.instanceId)" [attr.aria-label]="c.cardName" (click)="toggle(c.instanceId)">
+                    <button erasPickCard type="button" class="pick" tone="danger" [chosen]="toBottom().has(c.instanceId)" [attr.aria-label]="c.cardName" (click)="toggle(c.instanceId)">
                       <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
                       <span class="tag">{{ toBottom().has(c.instanceId) ? 'Al fondo' : '' }}</span>
                     </button>
@@ -86,21 +87,8 @@ import { CardPeekComponent } from './card-peek.component';
     /* The cards to pick, centered, with the eye at their corner, as in the other choices */
     .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3) var(--space-2); }
     .slot { position: relative; display: flex; }
-    .pick {
-      --game-card-width: 7rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1);
-      border: 2px solid transparent;
-      border-radius: var(--radius-md);
-      background: none;
-      color: inherit;
-      cursor: pointer;
-    }
-    .pick:hover { border-color: color-mix(in srgb, var(--color-primary) 60%, transparent); }
-    .pick.chosen { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+    .pick { --game-card-width: 7rem; }
+    /* Sent to the bottom: faded under the danger frame */
     .pick.chosen eras-game-card { opacity: 0.6; }
     .tag { min-block-size: 1.2em; color: var(--color-danger); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
     /* The mulligan reads as the sheets: title and subtitle, the cards, the count and the button at the foot */

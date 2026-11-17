@@ -18,13 +18,30 @@ export class CardsAdminApi {
     return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), meta);
   }
 
-  deleteMeta(id: string): Observable<unknown> {
-    return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
+  /** A card's rarity (only that field changes). */
+  setRarity(id: string, rarity: string): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { rarity });
   }
 
-  /** Renames the image record (the card name shown everywhere). */
-  renameImage(id: string, name: string): Observable<unknown> {
-    return this.http.patch(this.api.url(`/api/drive/cards/db/${encodeURIComponent(id)}/name`), { name });
+  /** A structure card's copies in its deck (only that field changes). */
+  setDeckCopies(id: string, copies: number): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { deckCopies: copies });
+  }
+
+  /** Moves cards to other slots all at once (each card's images move with it); answers the cards as they are now. */
+  moveSlots(
+    moves: readonly { id: string; edition: string; subEdition: string | null; cardNumber: number }[],
+  ): Observable<CardMeta[]> {
+    return this.http.put<CardMeta[]>(this.api.url('/api/cards/slots'), moves);
+  }
+
+  /** A reprint of the card in an empty slot (a card of its own, with its own copy of the art). */
+  reprint(id: string, slot: { edition: string; subEdition: string | null; cardNumber: number }): Observable<CardMeta> {
+    return this.http.post<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}/reprint`), slot);
+  }
+
+  deleteMeta(id: string): Observable<unknown> {
+    return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
   }
 
   /** Adds an alternative art from an image file, with its own odds (null: the shop's): answers the metadata after it. */
@@ -50,6 +67,32 @@ export class CardsAdminApi {
   /** The card loses that alternative art (copies already pulled with it show the usual one). */
   removeAltArt(metaId: string, artId: string): Observable<CardMeta> {
     return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/alt-arts/${encodeURIComponent(artId)}`));
+  }
+
+  /** The card's illustration (the art alone, kept as it came): answers the card. */
+  setArt(metaId: string, file: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`), file, {
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+  }
+
+  removeArt(metaId: string): Observable<CardMeta> {
+    return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`));
+  }
+
+  /** The finished card drawn by the editor (a cache of the document and its art): answers the card. */
+  setRender(metaId: string, image: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), image, {
+      headers: { 'Content-Type': image.type || 'image/jpeg' },
+    });
+  }
+
+  render(metaId: string): Observable<Blob> {
+    return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), { responseType: 'blob' });
+  }
+
+  art(metaId: string): Observable<Blob> {
+    return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/art`), { responseType: 'blob' });
   }
 
   deleteImage(id: string): Observable<unknown> {

@@ -1,15 +1,16 @@
-import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
+import { CardSlot } from '@data/simulator/simulator.model';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { CardPeekComponent } from '../card-peek.component';
+import { SendDestination, destinationOf } from '../send-destinations';
+import { chooseSendTo, destinationOptions } from './send-to-dialog.component';
 
 export interface DeckPeekData {
   position: 'top' | 'bottom';
@@ -22,7 +23,7 @@ export interface DeckPeekData {
  */
 @Component({
   selector: 'eras-deck-peek-dialog',
-  imports: [CardPeekComponent, SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CdkMenuTrigger, MenuComponent, MenuItemDirective],
+  imports: [CardPeekComponent, SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent],
   template: `
     <eras-sheet [title]="(data.position === 'top' ? 'Tope' : 'Fondo') + ' del mazo'" [subtitle]="cards().length + ' cartas, en orden'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -36,19 +37,9 @@ export interface DeckPeekData {
               <eras-card-peek [card]="c" [mine]="true" />
               <eras-stack direction="row" [gap]="1">
                 <button erasButton variant="ghost" size="sm" type="button" aria-label="Mover antes" [disabled]="i === 0" (click)="shift(i, -1)">◀</button>
-                <button erasButton variant="secondary" size="sm" type="button" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Sacar ' + (c.cardName ?? 'carta')">Sacar…</button>
+                <button erasButton variant="secondary" size="sm" type="button" [attr.aria-label]="'Sacar ' + (c.cardName ?? 'carta')" (click)="send(c)">Sacar…</button>
                 <button erasButton variant="ghost" size="sm" type="button" aria-label="Mover después" [disabled]="i === cards().length - 1" (click)="shift(i, 1)">▶</button>
               </eras-stack>
-              <ng-template #actions>
-                <eras-menu>
-                  <button erasMenuItem (triggered)="take(c, 'hand')">A la mano</button>
-                  <button erasMenuItem (triggered)="reveal(c)">Revelar y a la mano</button>
-                  <button erasMenuItem (triggered)="take(c, 'field')">Al campo</button>
-                  <button erasMenuItem (triggered)="take(c, 'tributeZone', undefined, false)">A tributos</button>
-                  <button erasMenuItem (triggered)="take(c, 'discardPile', undefined, false)">Al descarte</button>
-                  <button erasMenuItem (triggered)="take(c, 'lifeStack', 'top', true)">A las vidas (boca abajo)</button>
-                </eras-menu>
-              </ng-template>
             </li>
           }
         </ol>
@@ -72,6 +63,7 @@ export class DeckPeekDialogComponent {
   protected readonly data = inject<DeckPeekData>(DIALOG_DATA);
   protected readonly ref = inject(DialogRef);
   private readonly game = inject(GameStore);
+  private readonly modal = inject(ModalService);
 
   // Snapshot taken when opened: the order is the player's working copy until it is put back
   private readonly deck = this.game.myState()?.deck ?? [];
@@ -89,8 +81,25 @@ export class DeckPeekDialogComponent {
     });
   }
 
-  protected take(c: CardSlot, to: ZoneName, toPosition?: 'top' | 'bottom', faceDown?: boolean): void {
-    this.game.moveCard(c.instanceId, 'deck', to, { toPosition, faceDown });
+  /** "Sacar…": the board's destinations (not the deck: the rest is put back below), or reveal it to the hand. */
+  protected async send(c: CardSlot): Promise<void> {
+    const id = await chooseSendTo(this.modal, {
+      title: 'Sacar…',
+      subtitle: c.cardName ?? undefined,
+      groups: [
+        { label: 'Zona', options: destinationOptions('deck') },
+        { label: 'Carta', options: [{ id: 'reveal', label: 'Revelar y a la mano', icon: 'eye' }] },
+      ],
+    });
+    if (id === 'reveal') return this.reveal(c);
+    const to = id ? destinationOf(id) : null;
+    if (to) this.take(c, to);
+  }
+
+  protected take(c: CardSlot, to: SendDestination): void {
+    // Out of the deck face up into the Tributos and the Descarte (face down into the lives)
+    const faceDown = to.faceDown || (to.zone === 'tributeZone' || to.zone === 'discardPile' ? false : undefined);
+    this.game.moveCard(c.instanceId, 'deck', to.zone, { toPosition: to.position ?? undefined, faceDown });
     this.cards.update((list) => list.filter((x) => x.instanceId !== c.instanceId));
   }
 

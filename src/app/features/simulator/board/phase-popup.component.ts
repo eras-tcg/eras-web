@@ -28,7 +28,7 @@ interface PhasePopup {
       position: fixed;
       inset-block-start: 40%;
       inset-inline-start: 50%;
-      z-index: 30;
+      z-index: var(--z-sim-popup);
       display: grid;
       justify-items: center;
       gap: var(--space-1);

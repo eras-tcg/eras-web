@@ -13,6 +13,7 @@ import { DECK_NAME_MAX, MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText
 import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { DecksStore } from '@data/decks/decks.store';
+import { isTestEdition } from '@data/editions/edition-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
@@ -36,7 +37,7 @@ import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-de
 import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '@features/cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '@features/cards/card-detail-dialog/card-detail-dialog.component';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
 import { cardDetailView } from '../../cards/card-detail-view';
 import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
@@ -116,8 +117,14 @@ export class DeckBuilderPage {
   // ── Collection ────────────────────────────────────────────────────────
   /** Copies the deck needs that the player does not own (signed in only). */
   protected readonly missing = computed(() => (this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0));
+  /** A card in testing: outside the economy (always available, never crafted or broken). */
+  protected testCard(card: CatalogCard): boolean {
+    return isTestEdition(card.edition);
+  }
+
   protected owns(card: CatalogCard): boolean {
-    return !this.signedIn() || this.collection.owned(card.id) > 0;
+    // A card in testing is never owned: a tester uses it as if it were (it plays in the test room)
+    return !this.signedIn() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;
   }
   /** The finest finish the player owns of a card (null when none). */
   protected best(card: CatalogCard): Finish | null {
@@ -142,7 +149,7 @@ export class DeckBuilderPage {
 
   /** A deck's copies of a card the player does not have. */
   protected lacking(entry: DeckEntry): number {
-    return this.signedIn() ? Math.max(0, entry.count - this.collection.owned(entry.card.id)) : 0;
+    return this.signedIn() && !isTestEdition(entry.card.edition) ? Math.max(0, entry.count - this.collection.owned(entry.card.id)) : 0;
   }
 
   // ── Messages ──────────────────────────────────────────────────────────
@@ -282,8 +289,7 @@ export class DeckBuilderPage {
   /** Shows a card on the left, as the copy picked (`finish`) or, without one, its finest owned. */
   /** The card's detail dialog, as in the catalog (with the player's collection when signed in). */
   protected openDetail(card: CatalogCard): void {
-    const data: CardDetailDialogData = { cards: [card], index: 0, collection: this.signedIn() };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, [card], 0, { collection: this.signedIn() });
   }
 
   protected select(card: CatalogCard | null, finish?: Finish | null): void {
@@ -328,7 +334,7 @@ export class DeckBuilderPage {
       filters: this.filters,
       view: this.view,
       options: this.cards.options(),
-      editions: this.editions.editions(),
+      editions: this.editions.catalogEditions(),
     };
     this.modal.open(BuilderFiltersDialogComponent, { data });
   }

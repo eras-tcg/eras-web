@@ -56,6 +56,16 @@ export const routes: Routes = [
         loadComponent: () => import('@features/cards/cards.page').then((m) => m.CardsPage),
       },
       {
+        path: 'cards/editions',
+        title: 'Ediciones · ERAS',
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
+      {
+        path: 'cards/editions/:editionId',
+        title: 'Ediciones · ERAS',
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
+      {
         path: 'editions',
         title: 'Tienda · ERAS',
         loadComponent: () => import('@features/editions/editions.page').then((m) => m.EditionsPage),
@@ -176,6 +186,13 @@ export const routes: Routes = [
         title: 'Cómo jugar · ERAS',
         canMatch: [authGuard],
         loadComponent: () => import('@features/ruling/ruling.page').then((m) => m.RulingPage),
+      },
+      {
+        path: 'card-editor',
+        title: 'Editor de cartas · ERAS',
+        canMatch: [permissionGuard('manage_cards')],
+        canDeactivate: [(page: { confirmLeave?: () => Promise<boolean> }) => page.confirmLeave?.() ?? true],
+        loadComponent: () => import('@features/admin/card-editor/card-editor.page').then((m) => m.CardEditorPage),
       },
       {
         path: 'card-meta',

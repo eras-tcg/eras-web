@@ -1,8 +1,8 @@
 {
-  "commit": "c337fa4a14313e88db9ecbf6ff7891ea6fbee40c",
+  "commit": "6bbcfc7f2c6811b5443cf5e752e0d218c5877f98",
   "dirty": false,
-  "subject": "Structure decks ST1–ST4 become ST5–ST8: card folders, starter deck names, test fixtures and golden hashes",
-  "copiedAt": "2026-11-15T03:57:40.452Z",
+  "subject": "Simulator: \"Opcionales en Auto\" for the player's optional effects",
+  "copiedAt": "2026-11-16T16:42:50.078Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

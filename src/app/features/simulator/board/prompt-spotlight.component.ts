@@ -18,7 +18,8 @@ const ZONES: ZoneName[] = ['hand', 'tributeZone', 'discardPile', 'lifeStack', 'd
  * backdrop, at the same place, so it is not darkened: it is the visual reference of what the choice is about.
  * A card that is not on the field lights up its pile (Tributos, Descarte…). The chain panel is drawn again too: it
  * is the reference of the effect. The overlays live in the browser's top layer (popovers), where no z-index
- * reaches, so the copies go inside the choice's overlay, between its backdrop and the choice itself.
+ * reaches, so the copies go inside the choice's own overlay, between its backdrop and the choice itself: a modal opened
+ * over the choice (a card's detail) covers them as it covers the choice.
  */
 @Component({
   selector: 'eras-prompt-spotlight',
@@ -105,9 +106,8 @@ export class PromptSpotlightComponent {
   private drawnKey = '';
 
   private draw(ids: string[]): void {
-    // Inside the last overlay (the choice), right before its pane: above its backdrop, below the choice
-    const wrappers = this.overlays.getContainerElement().querySelectorAll(':scope > .cdk-global-overlay-wrapper');
-    const pane = wrappers.item(wrappers.length - 1)?.querySelector(':scope > .cdk-overlay-pane');
+    // Inside the choice's overlay (not a modal opened over it), right before its pane: above its backdrop, below the choice
+    const pane = this.choicePane();
     if (!ids.length || !pane?.parentElement) {
       this.layer.replaceChildren();
       this.drawnKey = '';
@@ -220,6 +220,15 @@ export class PromptSpotlightComponent {
     });
     frame.append(copy);
     return frame;
+  }
+
+  /** The pane of the open choice's sheet (the engine's choice), else of the last sheet open; null when none. */
+  private choicePane(): Element | null {
+    const container = this.overlays.getContainerElement();
+    const choice = container.querySelector('eras-effect-prompt-dialog')?.closest('.cdk-overlay-pane');
+    if (choice) return choice;
+    const sheets = [...container.querySelectorAll(':scope > .cdk-global-overlay-wrapper')].filter((w) => w.querySelector(':scope > .eras-sheet-backdrop'));
+    return sheets.at(-1)?.querySelector(':scope > .cdk-overlay-pane') ?? null;
   }
 
   /** The card on the field, or the pile it is in. */

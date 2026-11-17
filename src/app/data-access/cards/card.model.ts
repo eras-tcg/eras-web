@@ -54,6 +54,12 @@ export interface CardMeta {
   inheritEffects?: CardEffect[] | null;
   keywordEffects?: KeywordEffect[] | null;
   inheritKeywordEffects?: KeywordEffect[] | null;
+  /** Criatura Enlace: the link effect it gives the neighbours it points to. */
+  formationEffects?: CardEffect[] | null;
+  formationKeywordEffects?: KeywordEffect[] | null;
+  /** Criatura Enlace: the category and its printed arrows ("left", "right"). */
+  enlace?: boolean | null;
+  arrows?: string[] | null;
   specialCost?: number | null;
   specialSummonKind?: string | null;
   requirement?: string | null;
@@ -64,6 +70,15 @@ export interface CardMeta {
    * card: they have no image record of their own, so no list or search shows them as other cards.
    */
   altArts?: AltArt[] | null;
+  /** How the card editor draws it (frame, gold border, inherit frame, art framing); null before the editor. */
+  design?: Record<string, unknown> | null;
+  /** Its illustration alone, served by the cards' API (`/api/cards/{id}/art`); null without one. */
+  artKey?: string | null;
+  artType?: string | null;
+  /** The finished card drawn by the editor (a cache), served by `/api/cards/{id}/render`; null until saved there. */
+  renderKey?: string | null;
+  /** In a structure deck (ST…): how many copies of this card the deck brings. */
+  deckCopies?: number | null;
 }
 
 /**

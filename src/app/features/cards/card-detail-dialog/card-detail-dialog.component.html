@@ -39,18 +39,13 @@
         @if (actionError(); as message) {
           <eras-alert tone="danger">{{ message }}</eras-alert>
         }
-        <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="editMeta()">
-          <eras-icon name="edit" /> {{ card().meta ? 'Editar metadatos' : 'Crear metadatos' }}
+        <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="openEditor()">
+          <eras-icon name="edit" /> Abrir en el editor
         </button>
         @if (card().meta) {
           <!-- The alternative arts: very rare versions of this card a pack may give (never cards of their own) -->
           <section class="alt-arts" aria-label="Artes alternativos">
             <h3 class="alt-title">Artes alternativos</h3>
-            <p class="alt-help">
-              Versiones muy raras de esta carta que pueden salir en sobres y cajas (no en structure decks). Cada una tiene su nombre, que se ve en la tienda y en el
-              catálogo como una rareza propia, y su probabilidad por cada copia de la carta que sale; vacía, usa la de la tienda
-              ({{ shopOdds.odds() ? toPercent(shopOdds.odds()!.alt) + ' %' : '…' }}).
-            </p>
             @for (art of arts(); track art.id; let i = $index) {
               <div class="alt-art">
                 <img class="alt-preview" [src]="art.url" [alt]="altArtName(art, i)" />
@@ -88,14 +83,7 @@
             </button>
           </section>
         }
-        <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="rename()">Renombrar</button>
-        @if (card().meta) {
-          <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="remove('meta')">Eliminar metadatos</button>
-        }
-        <button erasButton variant="ghost" size="sm" type="button" [disabled]="busy()" (click)="remove('image')">Eliminar imagen</button>
-        @if (card().meta) {
-          <button erasButton variant="danger" size="sm" type="button" [disabled]="busy()" (click)="remove('both')">Eliminar todo</button>
-        }
+        <button erasButton variant="danger" size="sm" type="button" [disabled]="busy()" (click)="remove()">Eliminar carta</button>
       </ng-container>
     </ng-container>
 

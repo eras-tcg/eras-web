@@ -18,7 +18,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 
 /**
  * The "Elige tu structure deck" step: the covers of the structure decks not owned yet; one opens its philosophy, its
@@ -185,8 +185,7 @@ export class StructurePickerDialogComponent {
 
   protected openCard(card: CatalogCard): void {
     const cards = this.list().map((e) => e.card);
-    const data: CardDetailDialogData = { cards, index: cards.indexOf(card) };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, cards, cards.indexOf(card));
   }
 
   protected async choose(edition: Edition): Promise<void> {

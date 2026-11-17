@@ -8,21 +8,38 @@
   // The loading screen: over the dialogs too (the CDK overlay sits at 1000)
   --z-loading: 1100;
 
-  // The simulator's layers over its table, low to high: a life waiting on its pile; the combat shown big; a choice's
-  // card drawn again over its backdrop; notices; a card revealed from a hand; the attacker's charge, signs and
-  // arrows, "+N" floats; what a pile showed before, cards flying, a card breaking; buttons over a choice
+  // The simulator board's layers, low to high. One scale for the whole board: use these, not loose numbers.
+  // 1. The table and its zones, the field cards, then the hands (local to the player's half; a field card's place
+  //    rises over its neighbours while its sprite animates in it: --z-sim-field-lifted, within its row).
+  // 2. What sits over the table: the players' plates and status panels; the sidebar, the notices and the game menu; the phase
+  //    choices; a life waiting on its pile; the combat shown big.
+  // 3. Animated card sprites and flights, over everything on the table: a card revealed from a hand, the attacker's
+  //    charge, signs and arrows, "+N" floats, what a pile showed before, cards flying, a card breaking, a card dragged.
+  // 4. The table's alerts (and the chain's button) at its top.
+  // All below --z-overlay (the CDK overlay container, for browsers without popovers). Sheets (choices), then modals
+  // (dialogs) live in the browser's top layer (CDK overlays are popovers), above every z-index here, in the order they
+  // open. The card a choice is about (the spotlit card, --z-sim-spotlight) is drawn inside that choice's own overlay,
+  // between its backdrop and its sheet, so a modal opened later covers it.
+  --z-sim-field-lifted: 50;
+  --z-sim-hud: 10;
+  --z-sim-sidebar-backdrop: 19;
+  --z-sim-sidebar: 20;
+  --z-sim-notices: 20;
+  --z-sim-menu: 21;
+  --z-sim-popup: 30;
   --z-sim-parked: 30;
-  --z-sim-raised: 30;
   --z-sim-combat-reveal: 35;
+  --z-sim-hand-reveal: 940;
+  --z-sim-charge: 944;
+  --z-sim-fx: 945;
+  --z-sim-float: 946;
+  --z-sim-pile-under: 949;
+  --z-sim-flight: 950;
+  --z-sim-shatter: 951;
+  --z-sim-drag: 960;
+  --z-sim-toast: 990;
   --z-sim-spotlight: var(--z-overlay);
-  --z-sim-toast: calc(var(--z-overlay) + 1);
-  --z-sim-hand-reveal: 1040;
-  --z-sim-charge: 1044;
-  --z-sim-fx: 1045;
-  --z-sim-float: 1046;
-  --z-sim-pile-under: 1049;
-  --z-sim-flight: 1050;
-  --z-sim-shatter: 1051;
+  // "Gira el teléfono": over everything, the dialogs included (they are hidden meanwhile)
   --z-sim-over-sheet: 1100;
 }
 

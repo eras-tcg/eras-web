@@ -17,7 +17,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { dealFromCenter } from './opening/deal-from-center';
 import { BOOM_AT } from './opening/pack-break.component';
 import { fitItemWidth } from './fit-grid';
@@ -233,8 +233,7 @@ export class BoosterResultPage {
 
   /** A card that came out, in detail with its foil (it alone: no arrows to other cards or printings). */
   protected openCard(card: CatalogCard, foil: FoilKind | null): void {
-    const data: CardDetailDialogData = { cards: [card], index: 0, copy: { foil } };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, [card], 0, { copy: { foil } });
   }
 
   /** A click on a card of the pack once it is all shown: that card in detail (not the next pack). */

@@ -5,6 +5,7 @@ import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZONE_LABELS, ZoneName } from '@data/simulator/simulator.model';
 import { legalActions, specialKindLabel } from '@data/simulator/legal-actions';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -13,8 +14,8 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
-import { firstValueFrom } from 'rxjs';
-import { SendToData, SendToDialogComponent, SendToOption } from './send-to-dialog.component';
+import { SendToData, SendToOption, chooseSendTo, destinationOptions } from './send-to-dialog.component';
+import { SendDestination, destinationOf } from '../send-destinations';
 import { CardPeekComponent } from '../card-peek.component';
 
 export interface ZoneDialogData {
@@ -24,19 +25,10 @@ export interface ZoneDialogData {
   readonly?: boolean;
 }
 
-const DESTINATIONS: { zone: ZoneName; label: string }[] = [
-  { zone: 'hand', label: 'A la mano' },
-  { zone: 'field', label: 'Al campo' },
-  { zone: 'tributeZone', label: 'A tributos' },
-  { zone: 'discardPile', label: 'Al descarte' },
-  { zone: 'lifeStack', label: 'A las vidas' },
-  { zone: 'deck', label: 'Al tope del mazo' },
-];
-
 /** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
 @Component({
   selector: 'eras-zone-dialog',
-  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent],
+  imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent, PickCardComponent],
   template: `
     <eras-modal size="xl" [title]="title()" [subtitle]="cards().length | plural: 'carta'" (closed)="ref.close()">
       @if (cards().length === 0) {
@@ -55,11 +47,11 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
           @for (c of cards(); track c.instanceId; let i = $index) {
             <li>
               <button
+                erasPickCard
                 type="button"
                 class="pick"
-                [class.chosen]="selected().has(c.instanceId)"
-                [class.static]="!canAct()"
-                [attr.aria-pressed]="canAct() ? selected().has(c.instanceId) : null"
+                [chosen]="selected().has(c.instanceId)"
+                [viewOnly]="!canAct()"
                 [attr.aria-label]="label(c, i)"
                 (click)="canAct() && toggle(c.instanceId)"
               >
@@ -88,8 +80,8 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
               @if (actionsOf(c).includes('ritual')) {
                 <button erasButton size="sm" type="button" (click)="special(c)">{{ kindLabel(c) }}</button>
               }
-              @for (e of effectsOf(c); track e.scriptId) {
-                <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">{{ e.label }}</button>
+              @for (e of effectsOf(c); track e.scriptId; let n = $index, many = $count) {
+                <button erasButton variant="secondary" size="sm" type="button" [title]="e.text" (click)="activate(c, e.scriptId)">Activar efecto{{ many > 1 ? ' ' + (n + 1) : '' }}</button>
               }
 
             </li>
@@ -110,25 +102,6 @@ const DESTINATIONS: { zone: ZoneName; label: string }[] = [
       list-style: none;
     }
     li { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-    .pick {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1);
-      border: 2px solid transparent;
-      border-radius: var(--radius-md);
-      background: none;
-      color: inherit;
-      cursor: pointer;
-    }
-    .pick:hover:not(.static) { background: var(--color-surface-muted); }
-    .pick.static { cursor: default; }
-    // Selected: the same glow as the choices of an effect
-    .pick.chosen { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
-    .pick.chosen eras-game-card { box-shadow: 0 0 0 2px var(--color-success), 0 0 14px 3px color-mix(in srgb, var(--color-success) 60%, transparent); }
-    .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .position { color: var(--color-text-muted); font-size: var(--font-size-xs); }
     .send {
       position: absolute;
@@ -162,7 +135,6 @@ export class ZoneDialogComponent {
   protected readonly peeked = signal(new Set<string>());
   protected readonly cards = computed<CardSlot[]>(() => (this.data.opponent ? this.game.opponentState() : this.game.myState())?.[this.data.zone] ?? []);
   protected readonly title = computed(() => `${ZONE_LABELS[this.data.zone]}${this.data.opponent ? ' del rival' : ''}`);
-  protected readonly destinations = computed(() => DESTINATIONS.filter((d) => d.zone !== this.data.zone));
   /** My zone, or in a test room either side's (the other side's actions are done as that side). */
   /** Moving cards by hand: in a test room, or for the site's editors (the server refuses it to anyone else online). */
   protected readonly editable = computed(() => this.game.editorMode() && (!this.data.opponent || this.game.editorRoom()));
@@ -208,15 +180,8 @@ export class ZoneDialogComponent {
     return `${i + 1}`;
   }
 
-  private async choose(data: SendToData): Promise<string | undefined> {
-    return firstValueFrom(this.modal.open<string, SendToData>(SendToDialogComponent, { data }).closed);
-  }
-
-  private zones(): SendToOption[] {
-    return [
-      ...this.destinations().map((d) => ({ id: `to:${d.zone}`, label: d.label })),
-      ...(this.data.zone === 'deck' ? [] : [{ id: 'to:deck-bottom', label: 'Al fondo del mazo' }]),
-    ];
+  private choose(data: SendToData): Promise<string | undefined> {
+    return chooseSendTo(this.modal, data);
   }
 
   /** "Enviar a…" for one card: its destinations, then what else can be done with it here. */
@@ -236,7 +201,7 @@ export class ZoneDialogComponent {
       title: 'Enviar a…',
       subtitle: this.isHidden(c) ? 'Carta oculta' : (c.cardName ?? undefined),
       groups: [
-        { label: 'Zona', options: this.editable() ? this.zones() : [] },
+        { label: 'Zona', options: this.editable() ? destinationOptions(this.data.zone) : [] },
         { label: 'Orden en ' + ZONE_LABELS[this.data.zone].toLowerCase(), options: order },
         { label: 'Carta', options: this.editable() ? [...other, { id: 'remove', label: 'Eliminar del juego', danger: true }] : other },
       ],
@@ -244,11 +209,11 @@ export class ZoneDialogComponent {
     if (!id) return;
     if (id === 'remove') return this.remove(c);
     if (id === 'peek') return this.peek(c);
+    const to = destinationOf(id);
     this.asOwner(() => {
-      if (id.startsWith('to:')) {
-        const to = id.slice(3);
-        if (to === 'deck-bottom') this.game.bulkToDeckBottom(this.data.zone, [c.instanceId], false);
-        else this.move(c, to as ZoneName);
+      if (to) {
+        if (to.zone === 'deck' && to.position === 'bottom') this.game.bulkToDeckBottom(this.data.zone, [c.instanceId], false);
+        else this.move(c, to);
       } else if (id === 'flip') this.game.flipCard(c.instanceId, this.data.zone);
       else if (id === 'up') this.reorder(i, -1);
       else if (id === 'down') this.reorder(i, 1);
@@ -269,7 +234,8 @@ export class ZoneDialogComponent {
       title: 'Enviar selección a…',
       subtitle: `${n} ${n === 1 ? 'carta' : 'cartas'}`,
       groups: [
-        { label: 'Zona', options: this.destinations().map((d) => ({ id: `to:${d.zone}`, label: d.label })) },
+        // The deck's bottom has its own group: in this order or shuffled
+        { label: 'Zona', options: destinationOptions(this.data.zone).filter((o) => o.id !== 'to:deck-bottom') },
         {
           label: 'Fondo del mazo',
           options: [
@@ -280,10 +246,11 @@ export class ZoneDialogComponent {
       ],
     });
     if (!id) return;
+    const to = destinationOf(id);
     this.asOwner(() => {
       if (id === 'bottom') this.bulkBottom(false);
       else if (id === 'bottom-random') this.bulkBottom(true);
-      else this.bulkMove(id.slice(3) as ZoneName);
+      else if (to) this.bulkMove(to);
     });
   }
 
@@ -332,15 +299,19 @@ export class ZoneDialogComponent {
     this.selected.set(this.selected().size === this.cards().length ? new Set() : new Set(this.cards().map((c) => c.instanceId)));
   }
 
-  protected move(c: CardSlot, to: ZoneName): void {
-    // Cards sent to the lives go face down, like when they are dealt
-    this.game.moveCard(c.instanceId, this.data.zone, to, { targetPlayerId: this.targetPlayer(), toPosition: to === 'deck' ? 'top' : undefined, faceDown: to === 'lifeStack' ? true : undefined });
+  protected move(c: CardSlot, to: SendDestination): void {
+    this.game.moveCard(c.instanceId, this.data.zone, to.zone, { targetPlayerId: this.targetPlayer(), ...this.placement(to) });
   }
 
-  protected bulkMove(to: ZoneName): void {
+  protected bulkMove(to: SendDestination): void {
     const ids = this.cards().filter((c) => this.selected().has(c.instanceId)).map((c) => c.instanceId);
-    this.game.bulkMove(ids, this.data.zone, to, { targetPlayerId: this.targetPlayer(), toPosition: to === 'deck' ? 'top' : undefined, faceDown: to === 'lifeStack' ? true : undefined });
+    this.game.bulkMove(ids, this.data.zone, to.zone, { targetPlayerId: this.targetPlayer(), ...this.placement(to) });
     this.selected.set(new Set());
+  }
+
+  /** The deck's top, face down for the lives (as before: no position for the other zones). */
+  private placement(to: SendDestination): { toPosition?: 'top' | 'bottom'; faceDown?: boolean } {
+    return { toPosition: to.zone === 'deck' ? (to.position ?? 'top') : undefined, faceDown: to.faceDown || undefined };
   }
 
   protected bulkBottom(random: boolean): void {

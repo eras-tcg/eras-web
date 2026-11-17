@@ -17,4 +17,11 @@ export class EditionsApi {
   save(request: EditionSaveRequest): Observable<Edition> {
     return this.http.post<Edition>(this.api.url('/api/drive/editions'), request);
   }
+
+  /** The edition's cover: the image file is the body. */
+  setImage(editionId: string, file: Blob): Observable<Edition> {
+    return this.http.put<Edition>(this.api.url(`/api/drive/editions/${encodeURIComponent(editionId)}/image`), file, {
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+  }
 }

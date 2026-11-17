@@ -1,7 +1,7 @@
 import { pileOf } from '@data/simulator/game-rules';
 import { GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { centerOf, fieldCard, fieldPlace, pile, tableCard } from './board-dom';
+import { centerOf, fieldCard, fieldPlace, fieldSprite, liftPlace, pile, tableCard } from './board-dom';
 import { FxDraw } from './fx-draw';
 import { overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
@@ -47,7 +47,8 @@ export class CombatFx {
 
   /**
    * The attacker charges: a copy of it leaves its place, strikes what it hits (`targetId`, or the lives of
-   * `attackerOwner`'s rival) and comes back; the real card waits hidden. The target shakes with a red flash at the blow.
+   * `attackerOwner`'s rival) and comes back; the real card's sprite waits hidden (its place, with its share of an Enlace
+   * band and its link mark, stays as it is). The target's sprite shakes with a red flash at the blow, over its neighbours.
    */
   charge(attackerId: string, targetId: string | null, attackerOwner: string | null, state: GameState): Promise<void> {
     const rects = this.measure(state);
@@ -58,8 +59,9 @@ export class CombatFx {
     const to = target ? centerOf(target) : targetId ? rects.get(targetId) : undefined;
     if (!to) return Promise.resolve();
     // "Mesa en perspectiva": it charges on the leaning table, in the plane's own pixels
-    const real = fieldPlace(this.document, attackerId);
-    const over = overlayFor(this.document, real, LAYER.charge, !real);
+    const place = fieldPlace(this.document, attackerId);
+    const real = fieldSprite(this.document, attackerId);
+    const over = overlayFor(this.document, place, LAYER.charge, !place);
     const from = over.at(seen.x, seen.y);
     const hit = over.at(to.x, to.y);
     // It stops a little short of the target's center, as it hits
@@ -97,7 +99,9 @@ export class CombatFx {
     // The blow lands on the target: it shakes as it is drawn (an exhausted blocker stays turned)
     const own = target ? this.document.defaultView?.getComputedStyle(target).transform : null;
     const base = own && own !== 'none' ? `${own} ` : '';
-    target?.animate(
+    // Over its neighbours while it shakes (its place does not move)
+    const lowered = targetId && target ? liftPlace(fieldPlace(this.document, targetId)) : null;
+    const shake = target?.animate(
       [
         { transform: `${base}translateX(0)`, filter: 'none' },
         { transform: `${base}translateX(-7px)`, filter: `brightness(1.6) drop-shadow(0 0 16px ${RIVAL})` },
@@ -107,6 +111,10 @@ export class CombatFx {
       ],
       { duration: TIMING.charge * 0.475, delay: TIMING.charge * 0.42, easing: 'ease-out' },
     );
+    if (shake && lowered) {
+      shake.onfinish = lowered;
+      shake.oncancel = lowered;
+    } else lowered?.();
     return new Promise((landed) => {
       const done = () => {
         copy.remove();

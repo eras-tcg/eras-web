@@ -11,7 +11,7 @@ import { GridComponent } from '@ui/layout/grid/grid.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 
 /** The cards this edition can bring, one after another, rarest first. A card opens its detail on top (no page change). */
 @Component({
@@ -53,7 +53,6 @@ export class EditionCardsDialogComponent {
   }
 
   protected open(card: CatalogCard): void {
-    const data: CardDetailDialogData = { cards: this.cards(), index: this.cards().indexOf(card) };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, this.cards(), this.cards().indexOf(card));
   }
 }

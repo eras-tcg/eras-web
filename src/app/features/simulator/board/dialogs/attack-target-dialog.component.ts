@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CardSlot } from '@data/simulator/simulator.model';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { CardPeekComponent } from '../card-peek.component';
 
@@ -11,14 +12,23 @@ export interface AttackTargetData {
   opponentName: string;
   /** Enemy creatures that can be attacked: exhausted ones, or active ones it can face (Enfrentar). */
   creatures: readonly CardSlot[];
+  /** Under the title; none: that it exhausts when declaring the attack. */
+  subtitle?: string;
+  /** A button that closes without attacking (as cancelling does), e.g. "No atacar". */
+  skipLabel?: string;
 }
 
 /** The rival, or one of their creatures it can attack. Closes with the creature id, null for the rival, undefined if cancelled. */
 @Component({
   selector: 'eras-attack-target-dialog',
-  imports: [SheetComponent, GameCardComponent, IconComponent, CardPeekComponent],
+  imports: [SheetComponent, GameCardComponent, IconComponent, CardPeekComponent, ButtonComponent],
   template: `
-    <eras-sheet size="lg" [title]="'Atacar con ' + (data.attacker.cardName ?? 'tu criatura')" subtitle="Se agota al declarar el ataque. Elige el objetivo." (closed)="ref.close()">
+    <eras-sheet
+      size="lg"
+      [title]="'Atacar con ' + (data.attacker.cardName ?? 'tu criatura')"
+      [subtitle]="data.subtitle ?? 'Se agota al declarar el ataque. Elige el objetivo.'"
+      (closed)="ref.close()"
+    >
       <div class="targets" role="group" aria-label="Objetivos del ataque">
         <button type="button" class="target rival" (click)="ref.close(null)">
           <eras-icon name="user" />
@@ -28,8 +38,18 @@ export interface AttackTargetData {
         @for (c of data.creatures; track c.instanceId) {
           <!-- As it is on the board: exhausted, or active (Enfrentar) -->
           <div class="slot">
-            <button type="button" class="target" [attr.aria-label]="'Atacar a ' + (c.cardName ?? 'la criatura')" (click)="ref.close(c.instanceId)">
-              <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" [tapped]="!!c.tapped" />
+            <button
+              type="button"
+              class="target"
+              [attr.aria-label]="'Atacar a ' + (c.cardName ?? 'la criatura')"
+              (click)="ref.close(c.instanceId)"
+            >
+              <eras-game-card
+                [imageUrl]="c.imageUrl"
+                [foil]="c.finish ?? null"
+                [name]="c.cardName ?? null"
+                [tapped]="!!c.tapped"
+              />
               <small>{{ c.tapped ? 'Agotada' : 'Activa' }}</small>
             </button>
             <!-- Held pressed: the creature in detail -->
@@ -37,10 +57,22 @@ export interface AttackTargetData {
           </div>
         }
       </div>
+      @if (data.skipLabel) {
+        <ng-container sheet-footer>
+          <button erasButton variant="ghost" type="button" (click)="ref.close()">
+            {{ data.skipLabel }}
+          </button>
+        </ng-container>
+      }
     </eras-sheet>
   `,
   styles: `
-    .targets { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
+    .targets {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-3);
+    }
     .target {
       --game-card-width: 6.5rem;
       display: flex;
@@ -57,11 +89,24 @@ export interface AttackTargetData {
       font-size: var(--font-size-sm);
       cursor: pointer;
     }
-    .target:hover { border-color: var(--color-danger); }
-    .target:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-    .rival eras-icon { inline-size: 2.5rem; block-size: 2.5rem; }
-    .slot { position: relative; display: flex; }
-    small { color: var(--color-text-muted); }
+    .target:hover {
+      border-color: var(--color-danger);
+    }
+    .target:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+    .rival eras-icon {
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
+    }
+    .slot {
+      position: relative;
+      display: flex;
+    }
+    small {
+      color: var(--color-text-muted);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

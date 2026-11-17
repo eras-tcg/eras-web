@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
@@ -8,6 +8,7 @@ import { CatalogCard } from '@data/cards/card.model';
 import { altArtsOf, cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { AltCopy, bestAlt, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
+import { isTestEdition } from '@data/editions/edition-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
 import { EditionsStore } from '@data/editions/editions.store';
@@ -23,7 +24,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
-import { CardDetailDialogComponent, CardDetailDialogData } from './card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from './card-detail-dialog/card-detail-dialog.component';
 import { CardFiltersPanelComponent } from './card-filters-panel/card-filters-panel.component';
 import { CardView, DEFAULT_VIEW } from './card-view';
 
@@ -33,6 +34,7 @@ const PAGE_SIZE = 40;
 @Component({
   selector: 'eras-cards-page',
   imports: [
+    RouterLink,
     PageComponent,
     SplitComponent,
     GridComponent,
@@ -144,7 +146,9 @@ export class CardsPage {
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */
   protected owned(card: CatalogCard): Finish | null {
-    return bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card)?.finish ?? null;
+    const finish = bestFinishAmong(this.collection.collection(), this.idsOf(card)) ?? this.ownedAlt(card)?.finish ?? null;
+    // A card in testing is outside the collection: always available, as a plain copy
+    return finish ?? (isTestEdition(card.edition) ? 'plain' : null);
   }
 
   /** The player's finest copy of a card with one of its alternative arts (shown instead), null when none. */
@@ -178,7 +182,6 @@ export class CardsPage {
 
   protected open(card: CatalogCard): void {
     const cards = this.displayed();
-    const data: CardDetailDialogData = { cards, index: cards.indexOf(card), collection: this.showCollection() };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, cards, cards.indexOf(card), { collection: this.showCollection() });
   }
 }

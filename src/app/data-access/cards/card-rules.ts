@@ -4,7 +4,7 @@ const metaKey = (edition: string | null | undefined, number: number | null | und
   `${edition ?? ''}|${number ?? ''}|${sub ?? ''}|${color ?? ''}`;
 
 /** The code at the start of an image's file name: "E1_3-B10-…" is edition E1, sub-edition 3, blue, number 10. */
-const FILE_CODE = /^((?:ST|E)\d+)(?:_(\d+))?-([BGPRW])(\d+)-/i;
+const FILE_CODE = /^((?:ST|E|T)\d+)(?:_(\d+))?-([BGPRW])(\d+)-/i;
 
 /**
  * False for a record whose file name says another place than the record does (edition, sub-edition, color or

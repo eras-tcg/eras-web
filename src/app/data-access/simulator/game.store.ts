@@ -7,9 +7,10 @@ import { LOCAL_ROOM_ID, LocalMatchConfig } from './engine-protocol';
 import { GameTransport, TransportEvents } from './game-transport';
 import { GameTransports } from './game-transports';
 import { applyLocalMove } from './game-rules';
+import { optionalModePreference } from './optional-mode';
 import { GameNotices } from './game-notices';
 import { rulesView } from './legal-actions';
-import { BotLevel, CardSlot, DummyCard, GameState, PlayerState, PostGameChoice, ZoneName } from './simulator.model';
+import { BotLevel, CardSlot, DummyCard, GameState, OptionalMode, PlayerState, PostGameChoice, ZoneName, optionalModeOf } from './simulator.model';
 import { Prelude, UpdateQueue, isTimeJump } from './update-queue';
 
 /** The bot's seat in a room against it. */
@@ -91,11 +92,23 @@ export class GameStore {
   readonly ownRoom = computed(() => this.editorRoom() || this.botRoom());
   private readonly siteEditMode = inject(EditModeService);
   /**
-   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
-   * attachments, strength…). On in a test room (also without the connection: its games count for nothing) and while
-   * the site's edit mode (the navigation bar's switch) is on, never in an offline game against the bot.
+   * "Acciones de prueba" off: in a test room the board takes the gestures and menus of a regular game (no free moves
+   * between zones, no creature-on-creature dialog, no manual actions). Only the client masks them: the room stays a test
+   * room. Remembered on the device and with the account.
    */
-  readonly editorMode = computed(() => this.editorRoom() || (!this.local() && this.siteEditMode.active()));
+  readonly testActionsOff = persistedFlag('eras-sim-test-actions-off');
+
+  toggleTestActions(): void {
+    this.testActionsOff.set(!this.testActionsOff());
+  }
+
+  /**
+   * Editor mode: the manual actions outside the rules (moving cards between zones, lives, drawing, gems,
+   * attachments, strength…). The one gate of those actions: on in a test room (also without the connection: its games
+   * count for nothing) unless its "Acciones de prueba" are off, and elsewhere while the site's edit mode (the
+   * navigation bar's switch) is on, never in an offline game against the bot.
+   */
+  readonly editorMode = computed(() => (this.editorRoom() ? !this.testActionsOff() : !this.local() && this.siteEditMode.active()));
   /** Test room: the side being played (my own by default). */
   readonly seat = signal<string | null>(null);
   /** Test room: the side played follows whoever must act (a choice, else the turn). */
@@ -106,23 +119,28 @@ export class GameStore {
    */
   private readonly revealChoice = signal<boolean | null>(null);
   readonly revealHidden = computed(() => this.revealChoice() ?? (this.editorRoom() || this.replayRoom()));
+  /** "Mostrar cartas ocultas" can be chosen: a test room (with or without its test actions) or the editor mode. */
+  readonly canRevealHidden = computed(() => this.editorRoom() || this.editorMode());
   /** Every hidden card in view: a test room (by choice) or a replay (the game is over). */
-  readonly seeAll = computed(() => this.replayRoom() || (this.editorMode() && this.revealHidden()));
+  readonly seeAll = computed(() => this.replayRoom() || (this.canRevealHidden() && this.revealHidden()));
 
   toggleRevealHidden(): void {
     this.revealChoice.set(!this.revealHidden());
   }
 
   /**
-   * "Efectos opcionales apagados": the engine does not offer my optional triggered effects ("En Juego" ones still).
-   * Remembered on the device and set on the server in every game I enter.
+   * My optional effects: On (all offered), Auto (offered, but cost reducers only while the cost can go down and a lone
+   * "En Juego" chained without confirming) or Off (my optional triggered effects are not offered; "En Juego" ones still).
+   * Remembered as a preference (Auto until the player chooses) and set on the server in every game I enter.
    */
-  readonly optionalOff = persistedFlag('eras-sim-optional-off');
+  readonly optionalMode = optionalModePreference();
   /** The room and value last sent, so a slow echo does not send it again. */
   private optionalSent: string | null = null;
 
-  toggleOptionalOff(): void {
-    this.optionalOff.set(!this.optionalOff());
+  /** On → Auto → Off → On. */
+  cycleOptionalMode(): void {
+    const next: Record<OptionalMode, OptionalMode> = { on: 'auto', auto: 'off', off: 'on' };
+    this.optionalMode.set(next[this.optionalMode()]);
   }
 
   /**
@@ -139,12 +157,12 @@ export class GameStore {
     // The server keeps it per game: what the device remembers is sent when they differ
     effect(() => {
       const mine = this.myState();
-      const want = this.optionalOff();
-      if (!mine || !!mine.skipOptional === want) return;
+      const want = this.optionalMode();
+      if (!mine || optionalModeOf(mine) === want) return;
       const key = `${this.roomId()}|${mine.userId}|${want}`;
       if (this.optionalSent === key) return;
       this.optionalSent = key;
-      untracked(() => this.send('SET_SKIP_OPTIONAL', { value: want }));
+      untracked(() => this.send('SET_SKIP_OPTIONAL', { value: want === 'off', auto: want === 'auto' }));
     });
   }
   /** For one action: the side it is done as (a test room's other side, from its zones' dialogs). */
@@ -420,6 +438,14 @@ export class GameStore {
   /** Activates a slow effect (listed in `state.activatable`). */
   activateEffect(instanceId: string, scriptId: string | null = null): void {
     this.send('ACTIVATE_EFFECT', { instanceId, scriptId });
+  }
+
+  /**
+   * Enlace, in your main phase: the creature links with `targetId` (joins its formation, or both form one), taking a place
+   * next to it; without a target the engine opens the link sheet (FORMATION_ENTRY) to choose where and with whom.
+   */
+  formationJoin(instanceId: string, targetId: string | null = null): void {
+    this.send('FORMATION_JOIN', { instanceId, targetId });
   }
 
   /** Sacrifices one of your cards on the field: destroyed, to your Tributos. */

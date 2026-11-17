@@ -34,6 +34,8 @@ const ICONS = {
   cards: 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
   'chevron-left': 'M15 18l-6-6 6-6',
   'chevron-right': 'M9 18l6-6-6-6',
+  // Enlace: two creatures pointing to each other
+  'link-both': 'M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4',
   filter: 'M3 5h18l-7 8v6l-4 2v-8L3 5z',
   'sort-asc': 'M4 6h7M4 12h5M4 18h3M17 20V4m0 0-3 3m3-3 3 3',
   'sort-desc': 'M4 6h3M4 12h5M4 18h7M17 4v16m0 0-3-3m3 3 3-3',

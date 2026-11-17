@@ -8,6 +8,8 @@ const HOME: ScreenLink = { route: '/home', label: 'Inicio' };
 const PLAY: ScreenLink = { route: '/play', label: 'Jugar' };
 const SOCIAL: ScreenLink = { route: '/social', label: 'Social' };
 const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
+const CARDS: ScreenLink = { route: '/cards', label: 'Cartas' };
+const CARD_EDITIONS: ScreenLink = { route: '/cards/editions', label: 'Ediciones' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 const PROFILE: ScreenLink = { route: '/profile', label: 'Mi perfil' };
@@ -25,6 +27,8 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:simulator(?:\/[^/]+)?|ruling)$/, PLAY],
   [/^\/(?:public-decks|tierlist)$/, SOCIAL],
   [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
+  [/^\/cards\/editions\/[^/]+$/, CARD_EDITIONS],
+  [/^\/cards\/editions$/, CARDS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [ADMIN_SCREENS, ADMIN],
   [/^\/profile\/history$/, PROFILE],

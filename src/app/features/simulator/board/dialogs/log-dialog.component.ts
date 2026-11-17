@@ -35,6 +35,8 @@ const KINDS: Record<string, { icon: string; name: string }> = {
   UNTAP: { icon: 'refresh', name: 'Reactiva' },
   TAP: { icon: 'refresh', name: 'Agota' },
   MOVE: { icon: 'chevron-up', name: 'Movimiento' },
+  FORMATION: { icon: 'link', name: 'Formación' },
+  POSITION_SWAP: { icon: 'swap', name: 'Cambio de posición' },
   LOOK_TOP: { icon: 'eye', name: 'Mira' },
   COMBAT_STEP: { icon: 'clock', name: 'Paso del combate' },
   ATTACK_ENDED: { icon: 'clock', name: 'Fin del combate' },

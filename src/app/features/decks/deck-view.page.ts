@@ -22,7 +22,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { chooseDeckBox } from './deckbox-picker-dialog.component';
 import { FROM_PUBLIC_DECKS, deckBuilderQuery } from './deck-links';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-dialog/proxy-print-dialog.component';
@@ -183,8 +183,7 @@ export class DeckViewPage {
 
   protected openCard(cardId: string): void {
     const flat = this.groups().flatMap((g) => g.entries.map((e) => e.card));
-    const data: CardDetailDialogData = { cards: flat, index: flat.findIndex((c) => c.id === cardId) };
-    this.modal.open(CardDetailDialogComponent, { data });
+    openCardDetailDialog(this.modal, flat, flat.findIndex((c) => c.id === cardId));
   }
 
   protected openProxies(): void {

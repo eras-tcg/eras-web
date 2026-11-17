@@ -91,6 +91,20 @@ describe('effect-layout', () => {
     );
   });
 
+  it('keeps a condition that brings its colon and writes "1 vez"', () => {
+    const t = tokens.effect({
+      instance: 'En Invocación',
+      effectBlocks: [
+        { activationCondition: '', cost: '', resolution: 'roba 1 carta.' },
+        { activationCondition: 'Luego:', cost: '', resolution: 'tributa 1 carta.' },
+      ],
+    });
+    expect(text(t)).toBe('<En Invocación> roba 1 carta. Luego: tributa 1 carta.');
+    const ref = { Letalidad: { displayText: 'hace daño {n} veces más.' } };
+    expect(keywordReminder('Letalidad {n}', 1, ref)).toBe('hace daño 1 vez más.');
+    expect(keywordReminder('Letalidad {n}', 2, ref)).toBe('hace daño 2 veces más.');
+  });
+
   it('writes conditions, costs and usage limits', () => {
     const t = tokens.effect({
       instance: 'Turno Aliado>En Mano',

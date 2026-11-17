@@ -38,7 +38,10 @@ export const pieceKey = (s: string) =>
     .trim();
 
 const fill = (text: string, value: string | number | null | undefined) =>
-  value == null || value === '' ? text : text.replace(/\{[^}]+\}/g, String(value));
+  value == null || value === ''
+    ? text
+    : // "{n} veces" with 1 reads "1 vez"
+      text.replace(/\{[^}]+\}/g, String(value)).replace(/\b1 veces\b/g, '1 vez');
 
 /** Reminder text of a keyword: the reference's display text, or its effect written out. */
 export function keywordReminder(
@@ -129,13 +132,14 @@ export class EffectTokens {
           out.push({ t: 'piece', kind: 'condition', label: cond });
         else {
           found.push(...rich(cond, out));
-          append(out, ':');
+          // "Luego:" already carries its colon
+          if (!/[:;,]$/.test(cond)) append(out, ':');
         }
       }
       if (b.cost) {
         out.push({ t: 'space' });
         found.push(...rich(b.cost, out));
-        append(out, ';');
+        if (!/[:;,]$/.test(b.cost.trim())) append(out, ';');
       }
       if (b.resolution) {
         out.push({ t: 'space' });

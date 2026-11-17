@@ -25,7 +25,6 @@ import { SectionHeaderComponent } from '@ui/layout/section-header/section-header
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ChipComponent } from '@ui/primitives/chip/chip.component';
-import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 
 /** What the edition form edits. */
 interface EditionForm {
@@ -63,7 +62,6 @@ interface EditionForm {
     ChipComponent,
     IconComponent,
     EditionTileComponent,
-    BadgeComponent,
   ],
   template: `
     <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
@@ -198,8 +196,11 @@ interface EditionForm {
                         <span class="code">{{ s.code }}</span>
                       }
                     </button>
-                    @if (reprints().get(s.meta.id); as origin) {
-                      <eras-badge class="reprint-mark" color="var(--color-info)" [title]="'Reimpresión de ' + origin">Reimpresión</eras-badge>
+                    @if (!canEditCards() && reprints().get(s.meta.id); as origin) {
+                      <!-- A reprint: the reprint icon lit in the corner (Mover's place in edit mode) -->
+                      <span class="edit reprint-mark lit" role="img" [attr.aria-label]="'Reimpresión de ' + origin" [title]="'Reimpresión de ' + origin">
+                        <eras-icon name="layers" />
+                      </span>
                     }
                     @if (canEditCards()) {
                       <button
@@ -222,8 +223,9 @@ interface EditionForm {
                       <button
                         type="button"
                         class="edit reprint"
+                        [class.lit]="reprints().has(s.meta.id)"
                         [attr.aria-label]="'Reimprimir ' + s.meta.cardName + ' en otra edición'"
-                        title="Reimprimir en otra edición"
+                        [title]="reprints().get(s.meta.id) ? 'Reimpresión de ' + reprints().get(s.meta.id) + ' · Reimprimir en otra edición' : 'Reimprimir en otra edición'"
                         (click)="moveCard(s, 'reprint')"
                       >
                         <eras-icon name="layers" />
@@ -418,15 +420,16 @@ interface EditionForm {
     .slot:disabled {
       cursor: default;
     }
-    /* A reprint: a label over the card's top edge, its first printing in the tooltip */
+    /* A reprint: its reprint icon lit (the button in edit mode, the mark in the bottom corner out of it) */
     .reprint-mark {
-      position: absolute;
-      inset-block-start: 8%;
-      inset-inline-start: 50%;
-      translate: -50% 0;
-      box-shadow: var(--shadow-sm);
-      /* Solid over the art (the badge alone is see-through) */
-      background: var(--color-surface);
+      inset-inline-end: auto;
+      inset-inline-start: 7%;
+      cursor: default;
+    }
+    .edit.lit {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-on-primary);
     }
     .slot.placeholder {
       cursor: default;

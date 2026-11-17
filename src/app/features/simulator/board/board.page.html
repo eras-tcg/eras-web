@@ -79,7 +79,7 @@
       <!-- Sala de pruebas: the side played, the bots and the time line -->
       <eras-test-room-controls />
     }
-    @if (game.editorMode()) {
+    @if (game.canRevealHidden()) {
       <button type="button" erasSidebarItem icon="eye" [on]="game.revealHidden()" (click)="game.toggleRevealHidden()">
         Mostrar cartas ocultas (manos, vidas, mazo)
       </button>
@@ -90,7 +90,7 @@
           Cambiar perspectiva
         </button>
       }
-      @if (game.editorRoom()) {
+      @if (game.editorRoom() && game.editorMode()) {
         <button type="button" erasSidebarItem icon="square-plus" (click)="dialogs.dummyCard()">Crear carta</button>
       }
     }

@@ -4,9 +4,12 @@
 }
 <!-- The subtitle only guides what an effect's text asks to do; the rules' choices (Ascenso, special summons, chaining,
      blocking…) say it in their title and buttons -->
-<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="!prompt.effects?.length && cardsShown()" [title]="prompt.title" [subtitle]="subtitle()">
-  <div class="body" [class.fit]="!prompt.effects?.length && cardsShown()">
-  @if (prompt.effects?.length) {
+<eras-sheet [class.with-panel]="!!panel()" [size]="withSource ? 'xl' : 'lg'" [closable]="false" [fit]="fit()" [title]="prompt.title" [subtitle]="subtitle()">
+  <div class="body" [class.fit]="fit()">
+  @if (entry) {
+    <!-- Enlace: the Línea frontal, its formations boxed; the entering creature is dragged to its place -->
+    <eras-formation-entry [prompt]="prompt" [formations]="formations()" [disabled]="sending()" [choice]="entryChoice()" (choiceChange)="chooseEntry($event)" />
+  } @else if (prompt.effects?.length) {
     <ul class="offered" aria-label="Efectos que se pueden encadenar">
       @for (e of prompt.effects; track $index) {
         <li>
@@ -44,28 +47,25 @@
     <!-- An effect already in the chain shows its text there, above this sheet -->
     <blockquote class="effect-text">{{ prompt.effectText }}</blockquote>
   }
-  @if (!prompt.effects?.length && cardsShown()) {
+  @if (!entry && !prompt.effects?.length && cardsShown()) {
   @if (levelSum !== null) {
     <p class="hint">Niveles elegidos: {{ chosenLevels() }} de {{ prompt.maxLevelSum }}.</p>
   }
-  @if (orderText(); as text) {
-    <!-- Sending the rest: what number 1 means -->
-    <p class="hint">{{ text }}</p>
-  }
   <!-- One row, scrolled sideways; the cards boxed by the zone they come from -->
-  <div class="cards" role="group" [attr.aria-label]="prompt.title">
+  <div class="cards" erasWheelScrollX role="group" [attr.aria-label]="prompt.title">
     <ng-template #slotTpl let-c>
       <div class="slot">
         <!-- Sending the rest, a tap numbers the card; else it picks it -->
         <button
+          erasPickCard
           type="button"
           class="pick"
-          [class.static]="prompt.kind === 'CONFIRM'"
-          [class.chosen]="chosen().has(c.instanceId)"
-          [class.numbered]="numberOf(c) > 0"
-          [class.locked]="step() === 'pick' && !selectable(c)"
+          [viewOnly]="prompt.kind === 'CONFIRM'"
+          [chosen]="chosen().has(c.instanceId)"
+          [mark]="chainNumber(c.instanceId)"
+          [order]="numberOf(c)"
+          [dimmed]="step() === 'pick' && !selectable(c)"
           [disabled]="sending() || prompt.kind === 'CONFIRM' || (step() === 'pick' && !selectable(c))"
-          [attr.aria-pressed]="step() === 'rest' ? numberOf(c) > 0 : chosen().has(c.instanceId)"
           [attr.aria-label]="
             (c.cardName ?? 'Carta') +
             (step() === 'rest'
@@ -80,18 +80,7 @@
           } @else {
             <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [class.new-card]="game.newInHand().has(c.instanceId)" />
           }
-          <!-- Chosen: the green frame and a mark over the card (its link number when it chains); nothing under it -->
-          @if (chosen().has(c.instanceId)) {
-            <span class="chosen-mark">
-              @if (chainNumber(c.instanceId); as n) {
-                {{ n }}
-              } @else {
-                <eras-icon name="check" />
-              }
-            </span>
-          } @else if (numberOf(c); as n) {
-            <span class="chosen-mark order">{{ n }}</span>
-          }
+          <!-- Chosen: the green frame and a check over the card (its link number when it chains); nothing under it -->
           @if (!chosen().has(c.instanceId) && valid.has(c.instanceId) && prompt.cardLabels?.[c.instanceId]; as effectLabel) {
             <span class="tag">{{ effectLabel }}</span>
           }
@@ -108,14 +97,11 @@
       }
     } @else {
       @for (g of groups(); track g.zone) {
-        <section class="zone-box" [attr.aria-label]="g.zone">
-          <span class="zone-name"><eras-icon [name]="zoneIcon(g.zone)" /> {{ g.zone }}</span>
-          <div class="zone-cards">
-            @for (c of g.cards; track c.instanceId) {
-              <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
-            }
-          </div>
-        </section>
+        <eras-zone-box [label]="g.zone" [icon]="zoneIcon(g.zone)">
+          @for (c of g.cards; track c.instanceId) {
+            <ng-container *ngTemplateOutlet="slotTpl; context: { $implicit: c }" />
+          }
+        </eras-zone-box>
       }
     }
   </div>
@@ -129,7 +115,6 @@
           <button erasButton variant="ghost" type="button" [disabled]="sending()" (click)="back()">Volver</button>
         }
         @if (needsOrder()) {
-          <button erasButton variant="ghost" type="button" [disabled]="!restOrder().length || sending()" (click)="restOrder.set([])">Reiniciar orden</button>
           <span class="count">{{ restOrder().length }} de {{ restCount() }}</span>
         }
         @if (orderOnly) {

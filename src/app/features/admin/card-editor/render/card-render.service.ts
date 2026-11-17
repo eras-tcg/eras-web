@@ -1,0 +1,117 @@
+import { Injectable, inject } from '@angular/core';
+import { CardMeta } from '@data/cards/card.model';
+import { CardsAdminApi } from '@data/cards/cards-admin.api';
+import { CardsStore } from '@data/cards/cards.store';
+import { formFromMeta } from '@data/cards/meta-rules';
+import { firstValueFrom } from 'rxjs';
+import { draftFromForm, readDesign } from '../card-editor-rules';
+import { buildCard } from './card-build';
+import { loadCardFonts } from './card-fonts';
+import { ColorLut, convertCanvas } from './color-lut';
+import { drawEffects } from './effect-layout';
+import { svgToCanvasFine } from './print-export';
+import { ArtPlacement, CardSpec, PieceTable } from './spec.model';
+import { SvgRenderer } from './svg-render';
+
+interface Assets {
+  templates: Record<string, CardSpec>;
+  pieces: PieceTable;
+  lut: ColorLut;
+  css: string;
+  missingFonts: string[];
+}
+
+/**
+ * Draws a saved card as the card editor does (its metadata, design and art, in screen colors) and stores it as the
+ * card's finished image, without opening the editor: used when a card changes slot, so its image shows the new code.
+ */
+@Injectable({ providedIn: 'root' })
+export class CardRenderService {
+  private readonly api = inject(CardsAdminApi);
+  private readonly cards = inject(CardsStore);
+  private assets: Promise<Assets> | null = null;
+  private readonly ctx = document.createElement('canvas').getContext('2d')!;
+  private readonly measure = (text: string, font: string) => {
+    this.ctx.font = font;
+    return this.ctx.measureText(text).width;
+  };
+
+  /** The fonts the card needs and this device lacks (drawn without them, the image would be wrong). */
+  async missingFonts(): Promise<string[]> {
+    return (await this.load()).missingFonts;
+  }
+
+  /** Draws the card and saves it as its finished image; answers the card as it is now (its new render key). */
+  async refresh(meta: CardMeta): Promise<CardMeta> {
+    const blob = await this.draw(meta);
+    return firstValueFrom(this.api.setRender(meta.id, blob));
+  }
+
+  /** The card drawn as a JPEG, as the editor saves it. */
+  async draw(meta: CardMeta): Promise<Blob> {
+    const { templates, pieces, lut, css } = await this.load();
+    const form = formFromMeta(meta);
+    const design = readDesign(meta.design);
+    const art = meta.artKey ? await this.art(meta.id, lut, design.art ?? { scale: 1, x: 0, y: 0 }) : null;
+    const draft = {
+      ...draftFromForm(form, design.her),
+      // Cards made before the editor: cost and strength left out are the empty ones
+      noCost: meta.design ? design.noCost : form.cost === null,
+      noStrength: meta.design ? design.noStrength : form.cardType === 'creature' && form.strength === null,
+      goldBorder: design.goldBorder,
+      frameStyle: design.frameStyle,
+      art,
+    };
+    const built = buildCard(draft, templates, this.measure);
+    const r = new SvgRenderer(built, css);
+    r.render();
+    drawEffects(r, built, pieces, this.cards.ref()?.keywordEffects ?? {}, this.measure);
+    await r.bake();
+    const canvas = convertCanvas(await svgToCanvasFine(r.svg), (px) => lut.forward(px));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    if (!blob) throw new Error('No se pudo dibujar la carta');
+    return blob;
+  }
+
+  /** The card's art in the design's color space, placed as saved (the editor does the same when it opens a card). */
+  private async art(id: string, lut: ColorLut, place: { scale: number; x: number; y: number }): Promise<ArtPlacement> {
+    const blob = await firstValueFrom(this.api.art(id));
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('No se pudo leer el arte de la carta'));
+        img.src = url;
+      });
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext('2d')!.drawImage(img, 0, 0);
+      convertCanvas(c, (px) => lut.inverse(px));
+      return { src: c.toDataURL('image/jpeg', 0.95), width: c.width, height: c.height, ...place };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  private load(): Promise<Assets> {
+    this.assets ??= (async () => {
+      const [templates, pieces, lut, fonts] = await Promise.all([
+        fetch('/card-maker/templates.json').then((r) => r.json()),
+        fetch('/card-maker/pieces.json').then((r) => r.json()),
+        fetch('/card-maker/color-lut.bin').then((r) => r.arrayBuffer()),
+        loadCardFonts(),
+      ]);
+      return {
+        templates,
+        pieces,
+        lut: new ColorLut(new Uint8Array(lut)),
+        css: fonts.css,
+        missingFonts: fonts.missing.map((s) => s.label),
+      };
+    })();
+    this.assets.catch(() => (this.assets = null));
+    return this.assets;
+  }
+}

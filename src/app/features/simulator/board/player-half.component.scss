@@ -45,7 +45,7 @@
 // The players' plates: a little off the table's edge, towards the middle line, and over everything on the table
 eras-player-plate {
   position: relative;
-  z-index: 10;
+  z-index: var(--z-sim-hud);
   margin-block-end: var(--space-4);
   transition: opacity var(--duration-fast) var(--easing-standard);
 }
@@ -271,7 +271,60 @@ eras-player-plate {
 .placed {
   --game-card-width: min(var(--field-card-max, calc(9 * var(--bu, 1rem))), calc((100cqh - 1.4rem) * 63 / 88));
 
+  position: relative;
   flex: none;
+}
+
+// Enlace: the members of a formation share one band behind them, from the first to the last (it fills the gaps between them)
+.placed.formed {
+  isolation: isolate;
+}
+
+.placed.formed::before {
+  position: absolute;
+  inset-block: -0.3rem;
+  inset-inline: calc(var(--space-2) / -2);
+  z-index: -1;
+  border-block: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.placed.formed-start::before {
+  inset-inline-start: -0.3rem;
+  border-inline-start: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
+}
+
+.placed.formed-end::before {
+  inset-inline-end: -0.3rem;
+  border-inline-end: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
+}
+
+// Enlace: an arrow on the card's edge toward its neighbour; lit while it points to it (active), dim otherwise
+// A card carrying a link mark stands over the cards to its right (z-index set by its place in the row), so the mark, in the gap
+// over the next card's edge, is never under them
+// Enlace: one mark in the gap between two creatures, who points to whom
+.link-mark {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(100% + var(--space-2) / 2);
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  inline-size: 1.2rem;
+  block-size: 1.2rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 0.8rem;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .placed.near {
@@ -280,15 +333,6 @@ eras-player-plate {
   border-radius: var(--radius-sm);
 }
 
-.interact-hint {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: var(--space-2);
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  text-align: center;
-}
 
 // The hand lies at the edge of the table: its cards go past it (the board clips them), so only their upper half
 // (the art) shows. The rival's hangs from the top edge.
@@ -510,6 +554,18 @@ eras-player-plate {
   &.off {
     border-color: var(--color-danger);
     color: var(--color-danger);
+  }
+
+  // On / Auto / Off: its text, as big as the button allows
+  &.mode-toggle b {
+    font-size: min(var(--font-size-sm), 22cqh);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  &.auto {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   &.on {

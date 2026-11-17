@@ -119,7 +119,7 @@ export class SimCardComponent {
       !this.touchOnly &&
       !this.opponent() &&
       !this.lookOnly() &&
-      ((this.zone() === 'hand' && this.canPlay()) || this.game.editorMode() || this.canAttack()),
+      ((this.zone() === 'hand' && this.canPlay()) || this.game.editorMode() || this.canAttack() || this.canLink()),
   );
   /** One of your creatures that can attack now: dragged onto a target, it attacks. */
   protected readonly canAttack = computed(() => this.zone() === 'field' && this.actions().includes('attack'));
@@ -153,6 +153,10 @@ export class SimCardComponent {
   protected readonly lookOnly = inject(SheetState).lowered;
   protected readonly actions = computed<LegalAction[]>(() =>
     this.opponent() || this.lookOnly() ? [] : legalActions(this.game.rules(), this.slot()),
+  );
+  /** Enlace, in my main phase: a creature of the Línea frontal that can link now; dragged onto my front line, the link sheet opens. */
+  protected readonly canLink = computed(
+    () => !this.opponent() && !this.lookOnly() && this.zone() === 'field' && !!this.game.rules().formationJoins[this.slot().instanceId],
   );
   protected readonly targetPlayer = computed(() => (this.opponent() ? (this.game.opponentState()?.userId ?? null) : null));
   protected readonly isFront = computed(() => inFrontLine(this.slot()));
@@ -316,7 +320,7 @@ export class SimCardComponent {
     const ghost = card.cloneNode(true) as HTMLElement;
     Object.assign(ghost.style, {
       position: 'fixed',
-      zIndex: '1000',
+      zIndex: 'var(--z-sim-drag)',
       width: `${rect.width}px`,
       height: `${rect.height}px`,
       margin: '0',

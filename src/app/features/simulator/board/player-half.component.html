@@ -70,9 +70,24 @@
       </span>
       <!-- The line's cards: a crowded line slides sideways with the arrows (or the wheel) -->
       <div class="line-cards" erasLineScroll #row="erasLineScroll">
-        @for (s of rows()[line]; track s.instanceId) {
-          <div class="placed" [attr.data-instance-id]="s.instanceId" [class.near]="nearby()?.instanceId === s.instanceId">
+        @for (s of rows()[line]; track s.instanceId; let i = $index, count = $count) {
+          @let place = line === 'front' ? formation().get(s.instanceId) : undefined;
+          <div
+            class="placed"
+            [style.z-index]="line === 'front' && linkMarks().has(s.instanceId) ? 5 + count - i : null"
+            [attr.data-instance-id]="s.instanceId"
+            [class.near]="nearby()?.instanceId === s.instanceId"
+            [class.formed]="!!place"
+            [class.formed-start]="place?.start"
+            [class.formed-end]="place?.end"
+          >
             <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+            <!-- Enlace: who points to whom between it and the creature to its right -->
+            @if (line === 'front' ? linkMarks().get(s.instanceId) : null; as dir) {
+              <span class="link-mark" aria-hidden="true">
+                <eras-icon [name]="dir === 'both' ? 'link-both' : dir === 'right' ? 'chevron-right' : 'chevron-left'" />
+              </span>
+            }
           </div>
         }
       </div>
@@ -106,11 +121,8 @@
       }
     </div>
   }
-  @if (p.field.length === 0 && (opponent() || touchOnly)) {
-    <span class="hint">{{ opponent() ? 'Campo del rival' : 'Toca una carta de tu mano para jugarla' }}</span>
-  }
-  @if (nearby() && !opponent()) {
-    <span class="interact-hint">Suelta para interactuar con {{ nearby()!.cardName || 'la criatura' }}</span>
+  @if (p.field.length === 0 && opponent()) {
+    <span class="hint">Campo del rival</span>
   }
 </div>
 
@@ -232,17 +244,18 @@
   @if (!opponent() && game.status() === 'IN_PROGRESS') {
     <!-- The zone under the deck is kept for the game's switches -->
     <div class="pile-controls">
-      <!-- Optional triggered effects: offered (as the rules say) or let go without asking -->
+      <!-- Optional effects: On (all offered), Auto (cost reducers while they lower it, lone En Juego at once) or Off -->
+      @let mode = game.optionalMode();
       <button
         type="button"
-        class="optional-toggle"
-        [class.off]="game.optionalOff()"
-        [attr.aria-pressed]="game.optionalOff()"
-        [title]="game.optionalOff() ? 'Los efectos opcionales que se activan solos pierden su momento sin preguntarte (los En Juego sí se ofrecen). Clic para volver a ofrecerlos.' : 'Clic para que el simulador no te ofrezca los efectos opcionales que se activan solos (se recuerda en este dispositivo).'"
-        (click)="game.toggleOptionalOff()"
+        class="optional-toggle mode-toggle"
+        [class.off]="mode === 'off'"
+        [class.auto]="mode === 'auto'"
+        [attr.aria-label]="'Efectos opcionales: ' + optionalModeLabel[mode]"
+        [title]="optionalModeTitle[mode]"
+        (click)="game.cycleOptionalMode()"
       >
-        <eras-icon name="zap" />
-        <span>{{ game.optionalOff() ? 'Opcionales apagados' : 'Opcionales activos' }}</span>
+        <b>{{ optionalModeLabel[mode] }}</b>
       </button>
       <!-- More about the cards and zones in sight: cost, type, classes and level; how many cards each zone holds -->
       <button

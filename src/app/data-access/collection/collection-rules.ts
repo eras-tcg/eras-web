@@ -2,6 +2,7 @@ import { MAX_COPIES } from '../decks/deck-rules';
 import { CatalogCard } from '../cards/card.model';
 import { cardImageUrl } from '../cards/card-rules';
 import { Deck, DeckEntry } from '../decks/deck.model';
+import { isTestEdition } from '../editions/edition-rules';
 import { Collection, Finish, OwnedCopies } from './collection.model';
 
 /** Plainest first. */
@@ -87,7 +88,7 @@ export function deckCopies(copies: OwnedCopies | undefined, count: number, arts:
 
 /** Copies a deck needs that the collection lacks, in all (each printing counts by itself). */
 export function missingCopies(entries: readonly DeckEntry[], collection: Collection | null): number {
-  return entries.reduce((sum, e) => sum + Math.max(0, e.count - ownedCount(collection, e.card.id)), 0);
+  return entries.filter((e) => !isTestEdition(e.card.edition)).reduce((sum, e) => sum + Math.max(0, e.count - ownedCount(collection, e.card.id)), 0);
 }
 
 /** The extra copies of a card (beyond MAX_COPIES), by finish: the finest are kept, so the plain ones go first. */
@@ -220,7 +221,11 @@ export interface MissingCard {
 
 /** The copies a deck needs that the collection lacks, card by card. */
 export function missingCards(entries: readonly DeckEntry[], collection: Collection | null): MissingCard[] {
-  return entries.map((e) => ({ card: e.card, count: e.count - ownedCount(collection, e.card.id) })).filter((m) => m.count > 0);
+  // Cards in testing are never owned nor crafted: a tester plays them in the test room
+  return entries
+    .filter((e) => !isTestEdition(e.card.edition))
+    .map((e) => ({ card: e.card, count: e.count - ownedCount(collection, e.card.id) }))
+    .filter((m) => m.count > 0);
 }
 
 /** What crafting a deck's missing cards takes, by rarity: copies, fragments needed and fragments owned. */

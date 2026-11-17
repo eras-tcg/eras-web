@@ -89,6 +89,9 @@ function roman(n: number): string {
     // The rival's card, as across a real table: the card turns round; its badges go to their places on the turned card
     // (below), their text still upright
     :host(.upside-down) :is(img, .shine, .face, .back) { transform: rotate(180deg); }
+    // Exhausted, the rival's card shows its art sideways the other way: its badges' text turns with it
+    :host(.upside-down.tapped) { --badge-turn: 180deg; }
+    .strength, .badge { rotate: var(--badge-turn, 0deg); }
     :host(.targeted) { box-shadow: 0 0 0 3px var(--color-danger), 0 0 14px var(--color-danger); }
     :host(.source) { box-shadow: 0 0 0 3px var(--color-primary); }
     :host(.selectable) { cursor: crosshair; }
@@ -167,7 +170,7 @@ function roman(n: number): string {
     .info-cost, .info-type, .info-classes, .info-level { position: absolute; pointer-events: none; }
     /* Cost, level and strength share one size; each is centered on its printed place */
     :host(.with-info) { --info-size: max(1.35rem, 21cqi); --info-font: max(0.75rem, 11.5cqi); }
-    .info-cost, .info-level { transform: translate(-50%, -50%); }
+    .info-cost, .info-level { transform: translate(-50%, -50%) rotate(var(--badge-turn, 0deg)); }
     /* Over the printed cost hexagon */
     .info-cost {
       inset-block-start: 6.6%;
@@ -195,7 +198,7 @@ function roman(n: number): string {
       border-radius: 50%;
       background: rgb(12 12 20 / 90%);
       color: #f4f4f6;
-      transform: translate(-50%, -25%);
+      transform: translate(-50%, -25%) rotate(var(--badge-turn, 0deg));
     }
     .info-type eras-icon { inline-size: 68%; block-size: 68%; }
     /* The classes, one badge above the other at the middle of the card */
@@ -206,7 +209,7 @@ function roman(n: number): string {
       flex-direction: column;
       align-items: center;
       gap: 0.25em;
-      transform: translateY(-50%);
+      transform: translateY(-50%) rotate(var(--badge-turn, 0deg));
     }
     .info-class {
       max-inline-size: 100%;
@@ -242,7 +245,7 @@ function roman(n: number): string {
     :host(.upside-down) .materials { inset-inline: auto -0.3rem; }
     :host(.upside-down) .info-cost { inset-block-start: 93.4%; inset-inline-start: 92.5%; }
     :host(.upside-down) .info-level { inset-block-start: 7%; inset-inline-start: 93.5%; }
-    :host(.upside-down) .info-type { inset-block-start: 100%; transform: translate(-50%, -75%); }
+    :host(.upside-down) .info-type { inset-block-start: 100%; transform: translate(-50%, -75%) rotate(var(--badge-turn, 0deg)); }
     /* The strength as big as the cost and the level; it only grows to fit the arrow of a change */
     :host(.with-info) .strength {
       display: grid;

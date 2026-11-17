@@ -46,7 +46,8 @@
 /* The eye floats at the card's upper right corner */
 .peek-btn { position: absolute; inset-block-start: 0.4rem; inset-inline-end: 0.4rem; z-index: 3; opacity: 0.85; }
 .peek-btn:hover, .peek-btn:focus-visible { opacity: 1; }
-.resource-row { display: flex; align-items: center; gap: var(--space-1); margin-inline-end: calc(-1.6rem - var(--space-1)); }
+// Right under the card: the same room on the right as the card leaves for its Materiales peeking out
+.resource-row { display: flex; align-items: center; gap: var(--space-1); padding-inline-end: calc(var(--materials, 0) * 1.1rem); }
 // A Recurso shows the strip of its card from its name bar down (its heritable effect): 80%–100% of the card
 // height (ratio 63:88); without a heritable effect only the name bar (80%–87.5%)
 .resource {
@@ -62,20 +63,6 @@
 .resource img { display: block; inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
 .resource span { display: block; padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .effects { display: grid; gap: var(--space-3); min-inline-size: 0; }
-.facts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.fact {
-  display: grid;
-  gap: 1px;
-  min-inline-size: 4.5rem;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-muted);
-}
-.fact small { color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.06em; }
-.fact strong { font-size: var(--font-size-lg); }
-.fact.changed { border-color: var(--color-primary); }
-.fact.changed strong { color: var(--color-primary); }
 .unprogrammed {
   display: flex;
   align-items: center;
@@ -105,13 +92,8 @@
 }
 .panel h4 eras-icon { inline-size: 1rem; block-size: 1rem; color: var(--color-primary); }
 .panel p { margin: 0; line-height: 1.5; }
-.effect { display: grid; gap: var(--space-1); padding-block-start: var(--space-2); border-block-start: 1px dashed var(--color-border); }
+.effect { padding-block-start: var(--space-2); border-block-start: 1px dashed var(--color-border); }
 .panel h4 + .effect { padding-block-start: 0; border-block-start: none; }
-.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.chip { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
-.chip.moment { background: color-mix(in srgb, var(--color-sim-moment) 22%, transparent); color: color-mix(in srgb, var(--color-sim-moment) 80%, var(--color-text)); }
-.chip.tag { background: color-mix(in srgb, var(--color-sim-effect) 20%, transparent); color: color-mix(in srgb, var(--color-sim-effect) 80%, var(--color-text)); }
-.chip.source { background: color-mix(in srgb, var(--color-card-g) 20%, transparent); color: color-mix(in srgb, var(--color-card-g) 80%, var(--color-text)); }
 .materials { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .link {
   display: inline-flex;
@@ -139,6 +121,5 @@
   .info { grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); }
   .showcase { --game-card-width: calc(55 * var(--app-vh, 1vh) * 63 / 88); padding: var(--space-2); }
   .effects { gap: var(--space-2); }
-  .fact { min-inline-size: 3.5rem; padding: 2px var(--space-2); }
-  .fact strong { font-size: var(--font-size-md); }
+  eras-card-facts { --card-fact-min: 3.5rem; --card-fact-padding: 2px var(--space-2); --card-fact-value-size: var(--font-size-md); }
 }

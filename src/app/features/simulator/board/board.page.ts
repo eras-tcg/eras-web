@@ -1,10 +1,25 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { ConnectedPosition } from '@angular/cdk/overlay';
 import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { CardsStore } from '@data/cards/cards.store';
-import { sharedIndexForValue, sharedValueForIndex, isMatchActive } from '@data/simulator/game-rules';
+import {
+  sharedIndexForValue,
+  sharedValueForIndex,
+  isMatchActive,
+} from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ChainListComponent } from './chain-list.component';
 import { SharedBarComponent } from '@ui/domain/game-counters/shared-bar.component';
@@ -36,6 +51,8 @@ import { ChainLinkRevealComponent } from './chain-link-reveal.component';
 import { BoardFxComponent } from './board-fx.component';
 import { MatchBannerComponent } from './match-banner.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
+import { EffectPrompt } from '@data/simulator/simulator.model';
+import { ascendAttackAnswer, ascendAttackCreatures } from './ascend-attack-rules';
 import { PreRoomComponent } from './pre-room.component';
 import { SidebarItemComponent } from './sidebar-item.component';
 import { touchContextMenu } from './board-touch';
@@ -76,7 +93,14 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     MenuComponent,
     MenuItemDirective,
   ],
-  providers: [BoardDrag, BoardDialogs, BoardEffects, BoardAnimations, BoardChoreography, BoardScreen],
+  providers: [
+    BoardDrag,
+    BoardDialogs,
+    BoardEffects,
+    BoardAnimations,
+    BoardChoreography,
+    BoardScreen,
+  ],
   templateUrl: './board.page.html',
   // The phone layouts (upright: turn it; landscape: compact) and the arcane table's style apart, within the size
   // budget of a stylesheet
@@ -112,7 +136,9 @@ export class BoardPage {
   /** There is something over the table to look through: a sheet from the bottom (a choice…) or a chain. */
   /** The chain's list, opened from its button over the table. */
   protected readonly chainOpen = signal(false);
-  protected readonly canSeeThrough = computed(() => this.sheet.open() > 0 || !!this.game.state()?.chain?.length);
+  protected readonly canSeeThrough = computed(
+    () => this.sheet.open() > 0 || !!this.game.state()?.chain?.length,
+  );
   private readonly document = inject(DOCUMENT);
   protected readonly dialogs = inject(BoardDialogs);
   private readonly cards = inject(CardsStore);
@@ -130,21 +156,33 @@ export class BoardPage {
    * The game menu ends in Rendirse while a game is in course (online, Modo solo, ranked); the Sala de pruebas, a
    * replay or a game already over end in Salir.
    */
-  protected readonly canSurrender = computed(() => this.playing() && !this.game.editorRoom() && !this.game.replayRoom());
+  protected readonly canSurrender = computed(
+    () => this.playing() && !this.game.editorRoom() && !this.game.replayRoom(),
+  );
   /** The game menu opens under its round button (top left of the table). */
   protected readonly gameMenuPosition: ConnectedPosition[] = [
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
     { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 8 },
   ];
   /** Inside a game (after the pre-room): the options sidebar and the hidden navigation bar apply. */
-  protected readonly inGame = computed(() => !!this.game.status() && this.game.status() !== 'WAITING');
-  protected readonly sharedIndex = computed(() => sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()));
+  protected readonly inGame = computed(
+    () => !!this.game.status() && this.game.status() !== 'WAITING',
+  );
+  protected readonly sharedIndex = computed(() =>
+    sharedIndexForValue(this.game.state()?.sharedCounter ?? 0, this.game.isFirstPlayer()),
+  );
   protected readonly opponentLeft = computed(() => this.game.opponentState()?.connected === false);
   /** The owner of the room is the rival (if they stay away, the room passes to me). */
-  protected readonly rivalOwns = computed(() => !!this.game.state()?.hostId && this.game.state()?.hostId === this.game.opponentState()?.userId);
+  protected readonly rivalOwns = computed(
+    () =>
+      !!this.game.state()?.hostId &&
+      this.game.state()?.hostId === this.game.opponentState()?.userId,
+  );
   protected readonly dismissedLeft = signal(false);
   /** Sala de pruebas and replays: the other side, to look at the table from it. */
-  protected readonly otherSide = computed(() => this.game.sides().find((p) => p.userId !== this.game.myState()?.userId) ?? null);
+  protected readonly otherSide = computed(
+    () => this.game.sides().find((p) => p.userId !== this.game.myState()?.userId) ?? null,
+  );
   private leaving = false;
 
   constructor() {
@@ -159,13 +197,24 @@ export class BoardPage {
     // In a game: a phone held upright hides the choices too (they are in the top layer), behind "Gira el teléfono"
     effect(() => this.document.body.classList.toggle('eras-in-game', this.inGame()));
     // "Estilo de la mesa: arcano": the whole room (menus, dialogs and sheets too) in stone and gold while a game is on
-    effect(() => this.document.body.classList.toggle('eras-arcane', this.inGame() && this.prefs.arcane()));
+    effect(() =>
+      this.document.body.classList.toggle('eras-arcane', this.inGame() && this.prefs.arcane()),
+    );
     // A chain is shown above the choices (they leave it room)
     // The chain's list open (from its button): the choices leave it room at the top
     effect(() => this.document.body.classList.toggle('eras-chain-open', this.chainOpen()));
     // Only with a sheet at the bottom do the alerts and the chain have to keep above it
     effect(() => this.document.body.classList.toggle('eras-sheet-open', this.sheet.open() > 0));
-    destroyRef.onDestroy(() => this.document.body.classList.remove('eras-in-game', 'eras-arcane', 'eras-acting-me', 'eras-acting-rival', 'eras-chain-open', 'eras-sheet-open'));
+    destroyRef.onDestroy(() =>
+      this.document.body.classList.remove(
+        'eras-in-game',
+        'eras-arcane',
+        'eras-acting-me',
+        'eras-acting-rival',
+        'eras-chain-open',
+        'eras-sheet-open',
+      ),
+    );
     // While something plays, the next updates wait: each one is seen after the animation before it
     effect(() => this.game.holdUpdates.set(!this.animations.idle()));
     destroyRef.onDestroy(() => this.game.holdUpdates.set(false));
@@ -180,7 +229,8 @@ export class BoardPage {
     effect(() => {
       const room = this.roomId();
       untracked(() => {
-        if (this.game.roomId() !== room || !this.game.connected()) void this.router.navigate(['/simulator', room], { replaceUrl: true });
+        if (this.game.roomId() !== room || !this.game.connected())
+          void this.router.navigate(['/simulator', room], { replaceUrl: true });
       });
     });
 
@@ -212,6 +262,7 @@ export class BoardPage {
           // A short wait lets the animations of this very update start first
           setTimeout(() => {
             if (open || !this.animations.idle() || this.game.myPrompt()?.id !== prompt.id) return;
+            if (this.askAscendAttack(prompt, (close) => (open = { id: prompt.id, close }))) return;
             const ref = this.dialogs.effectPrompt({ prompt });
             open = { id: prompt.id, close: () => ref.close() };
           }, 80);
@@ -254,14 +305,22 @@ export class BoardPage {
   protected readonly engineNotice = computed(() => {
     const effect = this.game.resolving();
     // The chain itself is listed by <eras-chain-list>; while it is being built nothing resolves yet
-    if (effect?.resolutionId) return `Resolviendo Cadena ${effect.link}: ${effect.sourceName} · ${effect.label}`;
+    if (effect?.resolutionId)
+      return `Resolviendo Cadena ${effect.link}: ${effect.sourceName} · ${effect.label}`;
     const prompt = this.game.state()?.prompt;
     if (prompt) return prompt.title;
     const combat = this.game.state()?.combat;
     if (!combat) return null;
     const all = Object.values(this.game.state()?.players ?? {}).flatMap((p) => p.field);
-    const name = (id: string | null) => all.find((c) => c.instanceId === id)?.cardName ?? 'una criatura';
-    const steps = { ATTACK: 'ataque', BLOCK: 'bloqueo', CLASH: 'enfrentamiento', DAMAGE: 'daño directo', END: 'final' } as const;
+    const name = (id: string | null) =>
+      all.find((c) => c.instanceId === id)?.cardName ?? 'una criatura';
+    const steps = {
+      ATTACK: 'ataque',
+      BLOCK: 'bloqueo',
+      CLASH: 'enfrentamiento',
+      DAMAGE: 'daño directo',
+      END: 'final',
+    } as const;
     return `Combate (${steps[combat.step]}): ${name(combat.attackerId)} ataca a ${combat.targetId ? name(combat.targetId) : 'su rival'}`;
   });
 
@@ -278,12 +337,47 @@ export class BoardPage {
   }
 
   protected async surrender(): Promise<void> {
-    if (await this.modal.confirm({ title: 'Rendirse', message: '¿Seguro que quieres rendirte?', confirmLabel: 'Rendirse', danger: true })) this.game.surrender();
+    if (
+      await this.modal.confirm({
+        title: 'Rendirse',
+        message: '¿Seguro que quieres rendirte?',
+        confirmLabel: 'Rendirse',
+        danger: true,
+      })
+    )
+      this.game.surrender();
   }
 
   /** Out of the board: Modo solo and the Sala de pruebas go back to "Jugar" (where they started), an online room to the rooms. */
   protected async exit(): Promise<void> {
     await this.router.navigateByUrl(this.backTo());
+  }
+
+  /**
+   * "cuando esta carta fuera a ser ascendida: puede declarar ataque" (Príncipe Charles): the regular attack chooser (the rival or an
+   * enemy creature it can attack) instead of a list of cards; "No atacar" or cancelling ascends it without attacking. The engine reads
+   * the summoner itself as the rival. False when the choice is another one.
+   */
+  private askAscendAttack(prompt: EffectPrompt, opened: (close: () => void) => void): boolean {
+    if (prompt.purpose !== 'ASCEND_ATTACK' || !prompt.summonerId) return false;
+    const attacker = this.game.myState()?.field.find((c) => c.instanceId === prompt.summonerId);
+    if (!attacker) return false;
+    const creatures = ascendAttackCreatures(prompt, attacker.instanceId);
+    const { ref, target } = this.dialogs.attackChoice({
+      attacker,
+      opponentName: this.game.opponentState()?.username ?? 'Rival',
+      creatures,
+      subtitle:
+        'Va a ser ascendida: antes puede declarar ataque. Elige el objetivo, o no ataques para ascenderla ya.',
+      skipLabel: 'No atacar',
+    });
+    opened(() => ref.close());
+    void target.then((t) => {
+      // Closed by the board (the engine moved on): nothing to answer
+      if (this.game.myPrompt()?.id !== prompt.id) return;
+      this.game.resolvePrompt(prompt.id, ascendAttackAnswer(t, attacker.instanceId));
+    });
+    return true;
   }
 
   /** Where leaving the board goes: a replay to the profile (its history), Modo solo and the Sala de pruebas to "Jugar". */
@@ -326,11 +420,19 @@ export class BoardPage {
     if (!this.leaving && playing && this.game.ownRoom()) {
       const title = this.game.botRoom() ? 'Salir del modo solo' : 'Salir de la sala de pruebas';
       // A ranked game left before its end is lost (and counts for the rank)
-      const message = this.game.rankedRoom() ? 'Pierdes la partida ranked y cuenta para tu rango.' : 'La partida se cierra.';
-      const ok = await this.modal.confirm({ title, message, confirmLabel: 'Salir', danger: this.game.rankedRoom() });
+      const message = this.game.rankedRoom()
+        ? 'Pierdes la partida ranked y cuenta para tu rango.'
+        : 'La partida se cierra.';
+      const ok = await this.modal.confirm({
+        title,
+        message,
+        confirmLabel: 'Salir',
+        danger: this.game.rankedRoom(),
+      });
       if (!ok) return false;
     }
-    if ((!playing || this.game.ownRoom()) && !this.game.removed() && this.game.myState()) this.game.leaveRoom();
+    if ((!playing || this.game.ownRoom()) && !this.game.removed() && this.game.myState())
+      this.game.leaveRoom();
     // Going back to the lobby of the same room keeps the connection (it reconnects there)
     this.game.disconnect();
     return true;

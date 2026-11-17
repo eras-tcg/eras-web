@@ -1,3 +1,6 @@
+import { WheelScrollXDirective } from '@ui/primitives/wheel-scroll/wheel-scroll.directive';
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
+import { ZoneBoxComponent } from '@ui/domain/zone-box/zone-box.component';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
@@ -15,7 +18,8 @@ import { SheetComponent } from '@ui/surfaces/sheet/sheet.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { IconName } from '@ui/primitives/icon/icon.component';
 import { EffectCardPanelComponent } from '../effect-card-panel.component';
-import { OrderEnd, orderComplete, orderHint, toggleInOrder } from '../card-order';
+import { OrderEnd, orderComplete, toggleInOrder } from '../card-order';
+import { FormationEntryComponent } from './formation-entry.component';
 
 export interface EffectPromptData {
   prompt: EffectPrompt;
@@ -33,7 +37,7 @@ export interface EffectPromptData {
  */
 @Component({
   selector: 'eras-effect-prompt-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent],
+  imports: [WheelScrollXDirective, SheetComponent, GameCardComponent, StackComponent, ButtonComponent, IconComponent, CardWithSourceComponent, IconButtonComponent, EffectCardPanelComponent, NgTemplateOutlet, CardPeekComponent, FormationEntryComponent, PickCardComponent, ZoneBoxComponent],
   templateUrl: './effect-prompt-dialog.component.html',
   styleUrl: './effect-prompt-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +64,18 @@ export class EffectPromptDialogComponent {
     const own = this.panel()?.slot?.instanceId;
     return !(this.prompt.kind === 'CONFIRM' && own && this.prompt.cards.every((c) => c.instanceId === own));
   });
+
+  /**
+   * Enlace: where a creature that entered the Línea frontal goes and whether it links; its options are not cards but positions
+   * ("pos:i", "pos:i:id"), chosen by dragging it in its row (FormationEntryComponent).
+   */
+  protected readonly entry = this.prompt.purpose === 'FORMATION_ENTRY';
+  /** Enlace: the player's formations now, boxed in the row. */
+  protected readonly formations = computed(() => this.game.state()?.players[this.prompt.playerId]?.formations ?? []);
+  /** Enlace: the position chosen, null to leave it where it is. */
+  protected readonly entryChoice = computed(() => [...this.chosen()][0] ?? null);
+  /** The sheet fits a row of cards (none for chaining choices). */
+  protected readonly fit = computed(() => !this.prompt.effects?.length && this.cardsShown());
 
   /** A choice with its card beside it, or with effects to chain, takes the wide sheet. */
   protected readonly withSource = !!this.prompt.sourceImageUrl || !!this.prompt.effects?.length;
@@ -88,7 +104,6 @@ export class EffectPromptDialogComponent {
   protected readonly needsOrder = computed(() => this.ordering && this.rest().length > 1);
   private readonly orderReady = computed(() => !this.needsOrder() || orderComplete(this.restOrder(), this.rest()));
   /** Sending the rest: what number 1 means. */
-  protected readonly orderText = computed(() => (this.step() === 'rest' && this.needsOrder() ? orderHint(this.orderOnly ? null : this.restEnd) : null));
   /**
    * Under the title: what an effect's text asks to do (the rules' own choices say it in their title and buttons); sending
    * the rest, where it goes.
@@ -105,7 +120,7 @@ export class EffectPromptDialogComponent {
     if (this.step() === 'rest') return this.prompt.cards.filter((c) => !this.chosen().has(c.instanceId));
     return this.showAll() || this.showsEverything ? this.prompt.cards : this.prompt.cards.filter((c) => this.valid.has(c.instanceId));
   });
-  protected readonly hiddenCount = computed(() => (this.showsEverything ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
+  protected readonly hiddenCount = computed(() => (this.showsEverything || this.entry ? 0 : this.prompt.cards.filter((c) => !this.valid.has(c.instanceId)).length));
   /**
    * Cards that must be chosen ("incluida esta carta"): they start chosen and stay so. Instead of the damage ("tributa
    * esta carta más 2 [retador]"), one of them is chosen first, and choosing none takes the damage.
@@ -119,7 +134,9 @@ export class EffectPromptDialogComponent {
     const n = this.chosen().size;
     if (this.prompt.exactOrNone && n > 0 && n !== this.prompt.max) return false;
     if (this.oneRequiredFirst && n > 0 && !this.requiredChosen()) return false;
-    return !this.sending() && n >= this.prompt.min && n <= this.prompt.max;
+    // A special summon or a Ritual can always be given up ("No invocar")
+    const givenUp = n === 0 && (this.prompt.purpose === 'SPECIAL' || this.prompt.purpose === 'RITUAL');
+    return !this.sending() && (givenUp || (n >= this.prompt.min && n <= this.prompt.max));
   });
 
   /** Sending the rest: every card numbered (one alone needs none). */
@@ -134,8 +151,10 @@ export class EffectPromptDialogComponent {
     if (this.prompt.purpose === 'ORDER') return 'Encadenar';
     if (this.prompt.purpose === 'REPLACE') return this.chosen().size > 0 ? 'Usar en su lugar' : 'No evitarlo';
     if (this.prompt.purpose === 'OPTIONAL') return this.chosen().size > 0 ? 'Encadenar' : 'No encadenar más';
+    if (this.prompt.purpose === 'FORMATION_ENTRY') return this.chosen().size > 0 ? (this.prompt.chosenLabel ?? 'Confirmar') : 'Dejarla donde está';
     // A search: its rest is sent next (with nothing left to order, it goes with this answer)
     if (this.ordering && this.needsOrder()) return 'Continuar';
+    if (this.chosen().size === 0 && this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.chosen().size > 0 || this.prompt.min > 0) return 'Confirmar';
     if (this.prompt.purpose === 'RITUAL') return 'No invocar';
     if (this.prompt.purpose === 'PRIORITY') return 'Pasar';
@@ -258,6 +277,11 @@ export class EffectPromptDialogComponent {
     return this.cardOf(id);
   }
 
+  /** Enlace: one position (and link) at most, or none (it stays where it is). */
+  protected chooseEntry(id: string | null): void {
+    this.chosen.set(id ? new Set([id]) : new Set());
+  }
+
   protected toggle(id: string): void {
     if (this.prompt.effects?.length ? !this.prompt.effects.some((e) => this.effectKey(e) === id) : !this.selectableId(id)) return;
     if (this.required.has(id) && !this.oneRequiredFirst) return;
@@ -329,7 +353,7 @@ export class EffectPromptDialogComponent {
   protected send(end: OrderEnd): void {
     if (this.sending()) return;
     this.sending.set(true);
-    const rest = this.needsOrder() ? this.restOrder() : this.rest();
+    const rest = this.entry ? [] : this.needsOrder() ? this.restOrder() : this.rest();
     const chosen = this.orderOnly ? (end === 'top' ? this.prompt.validIds.slice(0, 1) : []) : [...this.chosen()];
     this.game.resolvePrompt(this.prompt.id, chosen, rest);
   }

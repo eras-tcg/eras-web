@@ -29,7 +29,7 @@
             <span>{{ draft.countOf(card.id) }} en el mazo</span>
             <button erasButton size="sm" type="button" aria-label="Añadir una copia" [disabled]="!draft.canAdd(card)" (click)="add(card)">+1</button>
           </eras-stack>
-          @if (signedIn() && card.meta) {
+          @if (signedIn() && card.meta && !testCard(card)) {
             <eras-collection-panel ngProjectAs="[detail-under-image]" [card]="card" />
           }
         </eras-card-detail>
@@ -172,7 +172,7 @@
           <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
             @for (entry of group.entries; track entry.card.id) {
               @for (copy of copies(entry); track $index) {
-                <div class="copy" [class.lacking]="copy.finish === null" [attr.title]="copy.finish === null ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
+                <div class="copy" [class.lacking]="copy.finish === null && !testCard(entry.card)" [attr.title]="copy.finish === null && !testCard(entry.card) ? 'No tienes esta copia' : null" (contextmenu)="contextRemove($event, entry.card)">
                   <eras-card-thumb
                     [name]="entry.card.name ?? ''"
                     [imageUrl]="altImageUrl(entry.card, copy.art)"

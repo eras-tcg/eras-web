@@ -3,7 +3,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZONES } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { CardDetailDialogComponent, CardDetailDialogData } from '../../cards/card-detail-dialog/card-detail-dialog.component';
+import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { CardInfoData, CardInfoDialogComponent } from './dialogs/card-info-dialog.component';
 import { holdToPeek } from './hold-peek';
 
@@ -63,8 +63,11 @@ export function openCardDetail(game: GameStore, cards: CardsStore, modal: ModalS
       return;
     }
   }
-  const catalog = cards.cards().find((x) => x.id === c.cardId);
-  if (!catalog) return;
-  const data: CardDetailDialogData = { cards: [catalog], index: 0 };
-  modal.open(CardDetailDialogComponent, { data });
+  openCatalogCard(cards, modal, c.cardId);
+}
+
+/** Opens a card of the game as in the cards catalog (nothing when the catalog does not have it). */
+export function openCatalogCard(cards: CardsStore, modal: ModalService, cardId: string | null | undefined): void {
+  const catalog = cards.cards().find((x) => x.id === cardId);
+  if (catalog) openCardDetailDialog(modal, [catalog]);
 }

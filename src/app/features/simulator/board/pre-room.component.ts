@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { CardsStore } from '@data/cards/cards.store';
 import { coverFinish, ownedCount, shineOf } from '@data/collection/collection-rules';
+import { isTestEdition } from '@data/editions/edition-rules';
 import { CollectionStore } from '@data/collection/collection.store';
 import { Deck } from '@data/decks/deck.model';
 import { DeckBox } from '@data/decks/deckbox.model';
@@ -161,7 +162,10 @@ export class PreRoomComponent {
       const needed = new Map<string, number>();
       for (const id of deck.cards) needed.set(id, (needed.get(id) ?? 0) + 1);
       if (forBot || !checkCollection) continue;
-      const lacking = [...needed].reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
+      // Cards in testing are outside the collection: never lacking
+      const lacking = [...needed]
+        .filter(([id]) => !isTestEdition(byId.get(id)?.edition))
+        .reduce((sum, [id, n]) => sum + Math.max(0, n - ownedCount(collection, id)), 0);
       if (lacking > 0) result.set(deck.id, `Te ${lacking === 1 ? 'falta 1 carta' : 'faltan ' + lacking + ' cartas'} de tu colección`);
     }
     return result;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, DriveCard } from './card.model';
-import { assignImage, blankMeta, keywordToken, metaForImage, metaFormFor, metaWithoutImage, toMetaPayload, validateMeta } from './meta-rules';
+import { assignImage, blankMeta, formFromMeta, keywordToken, metaForImage, metaFormFor, metaWithoutImage, toMetaPayload, validateMeta } from './meta-rules';
 
 const image = (over: Partial<DriveCard> = {}): DriveCard => ({
   id: 'img1',
@@ -44,6 +44,13 @@ describe('metaFormFor', () => {
   it('edits existing metadata with the edition of the image', () => {
     const f = metaFormFor({ ...image({ edition: 'ST1', sub_edition: '' }), meta });
     expect(f).toMatchObject({ cardName: 'eisten', edition: 'ST1', cost: 1, colors: ['B'] });
+  });
+});
+
+describe('formFromMeta', () => {
+  it('reads back what toMetaPayload sends', () => {
+    const form = { ...blankMeta('E1.2'), cardName: 'Ariel', colorIdentity: 'R', cardNumber: 4, colors: ['R', 'W'], enlace: true, arrows: ['left'] };
+    expect(formFromMeta(toMetaPayload(form))).toEqual(form);
   });
 });
 

@@ -14,13 +14,3 @@ export function orderComplete(order: readonly string[], ids: readonly string[]):
   return ids.length > 0 && order.length === ids.length && ids.every((id) => order.includes(id));
 }
 
-/**
- * What number 1 means (null: the player picks the end with the button that sends them). The engine puts the cards in
- * the order given with the first one highest: on top, the first is the next card drawn; at the bottom, the last one is
- * the deck's very last card.
- */
-export function orderHint(end: OrderEnd | null): string {
-  if (end === 'top') return 'Toca las cartas en orden. La 1 queda en el tope de tu mazo: es la próxima que robas.';
-  if (end === 'bottom') return 'Toca las cartas en orden. La 1 queda más arriba y la última, en el fondo de tu mazo.';
-  return 'Toca las cartas en orden: la 1 queda más arriba de las que envías.';
-}

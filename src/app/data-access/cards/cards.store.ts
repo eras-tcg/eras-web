@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AuthService } from '@core/auth/auth.service';
 import { ServerAccess } from '@core/server/server-access';
@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
 import { filterOptions, mergeCards } from './card-rules';
 import { CardsApi } from './cards.api';
+import { SharedLoad } from '../shared/shared-load';
 
 /**
  * Whole card catalog (images + metadata + reference data), loaded once and shared. The installed app before connecting
@@ -21,6 +22,17 @@ export class CardsStore {
   private readonly images = signal<DriveCard[]>([]);
   private readonly meta = signal<CardMeta[]>([]);
   private loaded = false;
+  private readonly loader = new SharedLoad(() => this.fetch(), () => this.loaded);
+
+  constructor() {
+    // The catalog depends on who asks (cards in testing need a permission): another user reads it again
+    let user: string | null | undefined;
+    effect(() => {
+      const now = this.auth.user()?.id ?? null;
+      if (user !== undefined && now !== user && this.loaded) void this.load(true);
+      user = now;
+    });
+  }
 
   readonly ref = signal<CardRefData | null>(null);
   /** What the simulator does not run yet, by metadata id (cards fully programmed are not here). */
@@ -39,6 +51,11 @@ export class CardsStore {
     return (card.meta && this.unprogrammed()[card.meta.id]) || null;
   }
 
+  /** One card's metadata as saved elsewhere (admin), without loading the whole catalog again. */
+  replaceMeta(meta: CardMeta): void {
+    this.meta.update((list) => list.map((m) => (m.id === meta.id ? meta : m)));
+  }
+
   /** After reference data changes elsewhere (admin), so filters and keyword texts update. */
   setRef(ref: CardRefData): void {
     this.ref.set(ref);
@@ -47,16 +64,8 @@ export class CardsStore {
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
     if (!this.access.allowed()) return this.loadKept();
-    if (!force && this.loaded) return Promise.resolve();
-    if (!force && this.pending) return this.pending;
-    const pending = this.fetch().finally(() => {
-      if (this.pending === pending) this.pending = null;
-    });
-    this.pending = pending;
-    return pending;
+    return this.loader.run(force);
   }
-
-  private pending: Promise<void> | null = null;
 
   /** Not connected: the cards kept on the device with the player's decks (not marked as loaded). */
   private async loadKept(): Promise<void> {

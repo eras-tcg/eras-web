@@ -1,0 +1,453 @@
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { CardMeta, CatalogCard, COLOR_LABELS } from '@data/cards/card.model';
+import { cardImageUrl } from '@data/cards/card-rules';
+import { CardsAdminApi } from '@data/cards/cards-admin.api';
+import { CardsStore } from '@data/cards/cards.store';
+import { EditionSlot, editionSlots } from '@data/editions/edition-slots';
+import { EditionsStore } from '@data/editions/editions.store';
+import { AlertComponent } from '@ui/feedback/alert/alert.component';
+import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { firstValueFrom } from 'rxjs';
+import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
+import { MoveChain, chainMetas, finalMoves, placeInSlot, slotCode, splitEdition } from './card-move-rules';
+
+export interface CardMoveData {
+  /** The card picked up. */
+  card: CardMeta;
+  /** "reprint": a copy of the card goes to an empty slot and the card stays where it is. Default "move". */
+  mode?: 'move' | 'reprint';
+}
+
+/**
+ * Moves a card to another slot of its color, in any edition. Choosing a slot with a card asks whether to take that
+ * card out; if so, it is the next one to place, and the chain goes on until a card lands in an empty slot. Nothing is
+ * saved until then (all the moves at once); the card being moved is always shown at the top.
+ * In "reprint" mode the card stays in its slot and its copy goes to the empty slot chosen (taken slots cannot be
+ * chosen); the copy's finished image is drawn with its own code.
+ */
+@Component({
+  selector: 'eras-card-move-dialog',
+  imports: [ModalComponent, ButtonComponent, AlertComponent],
+  template: `
+    <eras-modal [title]="reprint ? 'Reimprimir carta' : 'Mover carta'" size="full" (closed)="ref.close()">
+      <div class="layout">
+        <aside class="hand" aria-live="polite">
+          @if (chain().hand; as h) {
+            <span class="label">{{ reprint ? 'Reimprimiendo' : 'Moviendo' }}</span>
+            <div class="card-img">
+              @if (imageOf(h); as src) {
+                <img [src]="src" alt="" />
+              } @else {
+                <span class="name">{{ h.cardName }}</span>
+              }
+            </div>
+            <strong>{{ h.cardName }}</strong>
+            <span class="from">{{ reprint ? 'Está en' : 'Estaba en' }} {{ originalCode(h) }}</span>
+          }
+          @if (chain().moves.length) {
+            <ol class="moves">
+              @for (m of chain().moves; track $index) {
+                <li>{{ nameOf(m.id) }} → {{ code(m.edition, m.subEdition, colorOf(m.id), m.cardNumber) }}</li>
+              }
+            </ol>
+          }
+        </aside>
+        <section class="pick">
+          <label class="field">
+            <span>Edición</span>
+            <select (change)="editionId.set($any($event.target).value)">
+              @for (e of editions(); track e.editionId) {
+                <option [value]="e.editionId" [selected]="e.editionId === editionId()">{{ e.editionId }}{{ e.editionName ? ' · ' + e.editionName : '' }}</option>
+              }
+            </select>
+          </label>
+          @if (error(); as e) {
+            <eras-alert tone="danger">{{ e }}</eras-alert>
+          }
+          <p class="hint">{{ colorLabel() }} · {{ editionId() }}</p>
+          <div class="grid">
+            @for (s of slots(); track s.code) {
+              <button
+                type="button"
+                class="slot"
+                [class.empty]="!s.meta"
+                [class.origin]="s.code === handOrigin()"
+                [disabled]="saving() || (reprint && !!s.meta)"
+                [attr.aria-label]="
+                  s.code + (s.meta ? ' ' + s.meta.cardName : ' vacío') + (s.code === handOrigin() ? ', donde estaba la carta que mueves' : '')
+                "
+                (click)="choose(s)"
+              >
+                @if (s.meta) {
+                  @if (imageOf(s.meta, s.card); as src) {
+                    <img [src]="src" alt="" loading="lazy" />
+                  } @else {
+                    <span class="name">{{ s.meta.cardName }}</span>
+                  }
+                } @else if (s.code === handOrigin() && chain().hand; as h) {
+                  @if (imageOf(h); as src) {
+                    <img class="ghost" [src]="src" alt="" />
+                  }
+                }
+                <span class="code">{{ s.code }}</span>
+              </button>
+            }
+          </div>
+        </section>
+      </div>
+      <div modal-footer class="footer">
+        @if (progress(); as p) {
+          <span class="progress" role="status">{{ p }}</span>
+        }
+        @if (done()) {
+          <button erasButton type="button" (click)="ref.close(true)">Cerrar</button>
+        } @else {
+          <button erasButton variant="ghost" type="button" [disabled]="saving()" (click)="ref.close()">
+            {{ chain().moves.length ? 'Cancelar y no mover nada' : 'Cancelar' }}
+          </button>
+        }
+      </div>
+    </eras-modal>
+  `,
+  styles: `
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(10rem, 14rem) 1fr;
+      gap: var(--space-5);
+      min-height: 0;
+    }
+    .hand {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 1;
+      background: var(--color-surface);
+    }
+    /* Narrow: the card being moved stays on top as a small picture beside its name */
+    @media (max-width: 720px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+      }
+      .hand {
+        display: grid;
+        grid-template-columns: 4.5rem 1fr;
+        column-gap: var(--space-3);
+        align-items: center;
+        padding-block-end: var(--space-2);
+        border-block-end: 1px solid var(--color-border);
+      }
+      .hand .card-img {
+        grid-row: span 3;
+      }
+      .hand .label,
+      .hand strong,
+      .hand .from,
+      .hand .moves {
+        grid-column: 2;
+      }
+    }
+    .label {
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+    }
+    .card-img {
+      aspect-ratio: 744 / 1039;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--color-surface-muted);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 0 2px var(--color-primary);
+    }
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .from {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+    .moves {
+      margin: 0;
+      padding-left: var(--space-4);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+    .pick {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      max-width: 28rem;
+    }
+    .field select {
+      font: inherit;
+      padding: var(--space-2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+    }
+    .hint {
+      margin: 0;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+      gap: var(--space-2);
+      max-height: 60dvh;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .slot {
+      position: relative;
+      aspect-ratio: 744 / 1039;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-muted);
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--color-text);
+    }
+    .slot.empty {
+      border-style: dashed;
+      background: transparent;
+    }
+    /* Where the card in hand was: its slot outlined, and the card faded in it while the slot stays empty */
+    .slot.origin {
+      border: 2px dashed var(--color-primary);
+    }
+    .slot .ghost {
+      opacity: 0.35;
+    }
+    .slot:hover {
+      box-shadow: 0 0 0 2px var(--color-primary);
+    }
+    .slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .slot .name {
+      padding: var(--space-1);
+      font-size: var(--font-size-sm);
+      text-align: center;
+    }
+    .slot .code {
+      position: absolute;
+      bottom: 0;
+      inset-inline: 0;
+      font-size: var(--font-size-xs);
+      background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+      text-align: center;
+    }
+    .footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .progress {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CardMoveDialogComponent {
+  protected readonly data = inject<CardMoveData>(DIALOG_DATA);
+  protected readonly ref = inject<DialogRef<boolean>>(DialogRef);
+  private readonly cards = inject(CardsStore);
+  private readonly editionsStore = inject(EditionsStore);
+  private readonly api = inject(CardsAdminApi);
+
+  /** The cards as they were when the dialog opened (what the moves are compared with). */
+  private readonly original = this.cards.metaList();
+  protected readonly reprint = this.data.mode === 'reprint';
+  protected readonly chain = signal<MoveChain>({ moves: [], hand: this.data.card });
+  protected readonly editionId = signal(
+    `${this.data.card.edition ?? ''}${this.data.card.subEdition ? '.' + this.data.card.subEdition : ''}`,
+  );
+  protected readonly saving = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly progress = signal<string | null>(null);
+  /** The moves are saved (only some images failed): the dialog only closes. */
+  protected readonly done = signal(false);
+  private readonly renderer = inject(CardRenderService);
+  private readonly modal = inject(ModalService);
+  /** The editor's finished images, fetched with the session, by card id and render. */
+  private readonly renders = signal<Record<string, string>>({});
+  private readonly asked = new Set<string>();
+
+  private readonly color = (this.data.card.colorIdentity ?? '').toUpperCase();
+  protected readonly colorLabel = computed(() => COLOR_LABELS[this.color] ?? this.color);
+  protected readonly editions = computed(() => this.editionsStore.catalogEditions());
+  /** The chosen edition's slots of the card's color, with the chain's moves applied. */
+  protected readonly slots = computed(() => {
+    const e = this.editions().find((x) => x.editionId === this.editionId());
+    if (!e) return [];
+    // A reprint leaves the card where it is: the slots as they are
+    const metas = this.reprint ? this.original : chainMetas(this.original, this.chain());
+    const groups = editionSlots(e, metas, this.cards.cards());
+    return groups.find((g) => g.color === this.color)?.slots ?? [];
+  });
+
+  constructor() {
+    effect(() => {
+      const metas = [...this.slots().map((s) => s.meta), this.chain().hand];
+      for (const m of metas) {
+        const key = m?.renderKey ? `${m.id}|${m.renderKey}` : null;
+        if (!m || !key || this.asked.has(key)) continue;
+        this.asked.add(key);
+        void firstValueFrom(this.api.render(m.id))
+          .then((blob) => this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })))
+          .catch(() => undefined);
+      }
+    });
+  }
+
+  protected code = slotCode;
+
+  /** The slot the card in hand left (its code as the dialog opened). */
+  protected readonly handOrigin = computed(() => {
+    const h = this.chain().hand;
+    return h ? this.originalCode(h) : null;
+  });
+
+  protected nameOf(id: string): string {
+    return this.original.find((m) => m.id === id)?.cardName ?? id;
+  }
+
+  protected colorOf(id: string): string {
+    return this.original.find((m) => m.id === id)?.colorIdentity ?? this.color;
+  }
+
+  protected originalCode(m: CardMeta): string {
+    const o = this.original.find((x) => x.id === m.id) ?? m;
+    return slotCode(o.edition ?? '', o.subEdition, o.colorIdentity ?? '', o.cardNumber ?? 0);
+  }
+
+  private driveImage(m: CardMeta, card?: CatalogCard | null): string | null {
+    const c = card ?? this.cards.cards().find((x) => x.meta?.id === m.id) ?? null;
+    return c ? cardImageUrl(c) : null;
+  }
+
+  /** The editor's finished image when the card has one (it shows its current code), else Drive's. */
+  protected imageOf(m: CardMeta, card?: CatalogCard | null): string | null {
+    const render: string | undefined = m.renderKey ? this.renders()[`${m.id}|${m.renderKey}`] : undefined;
+    return render ?? this.driveImage(m, card);
+  }
+
+  /** An empty slot ends the chain; one with a card asks (a small dialog over this one) whether to take it out. */
+  protected async choose(s: EditionSlot): Promise<void> {
+    this.error.set(null);
+    if (this.reprint) {
+      if (!s.meta) void this.reprintTo(s);
+      return;
+    }
+    const occupant = s.meta;
+    if (occupant) {
+      const take = await this.modal.confirm({
+        title: 'Sacar carta',
+        message: `${s.code} tiene a ${occupant.cardName}. ¿La sacas para ubicarla después?`,
+        confirmLabel: 'Sí, sácala',
+      });
+      if (take) this.chain.update((c) => placeInSlot(c, this.editionId(), s.number, occupant));
+      return;
+    }
+    this.chain.update((c) => placeInSlot(c, this.editionId(), s.number, null));
+    void this.save();
+  }
+
+  /** The card's copy goes to the empty slot; its finished image is drawn with the new code. */
+  private async reprintTo(s: EditionSlot): Promise<void> {
+    const { edition, subEdition } = splitEdition(this.editionId());
+    this.saving.set(true);
+    let copy: CardMeta;
+    try {
+      copy = await firstValueFrom(this.api.reprint(this.data.card.id, { edition, subEdition, cardNumber: s.number }));
+    } catch (e) {
+      const msg = (e as { error?: { message?: string } })?.error?.message;
+      this.error.set(msg ?? 'No se pudo reimprimir la carta.');
+      this.saving.set(false);
+      return;
+    }
+    let drawn = true;
+    if (copy.artKey && copy.design) {
+      this.progress.set('Dibujando la carta…');
+      drawn = await this.renderer.refresh(copy).then(
+        () => true,
+        () => false,
+      );
+      this.progress.set(null);
+    }
+    await this.cards.load(true);
+    this.saving.set(false);
+    if (!drawn) {
+      this.done.set(true);
+      this.error.set(`Se reimprimió en ${s.code}, pero no se pudo dibujar su imagen. Ábrela en el editor y guárdala.`);
+      return;
+    }
+    this.ref.close(true);
+  }
+
+  private async save(): Promise<void> {
+    const moves = finalMoves(this.chain(), this.original);
+    if (!moves.length) {
+      this.ref.close(false);
+      return;
+    }
+    this.saving.set(true);
+    let moved: CardMeta[];
+    try {
+      moved = await firstValueFrom(this.api.moveSlots(moves));
+    } catch (e) {
+      const msg = (e as { error?: { message?: string } })?.error?.message;
+      this.error.set(msg ?? 'No se pudieron mover las cartas. No se guardó nada.');
+      // The last card back in hand, so another slot can be chosen
+      this.chain.update((c) => ({ moves: c.moves.slice(0, -1), hand: this.original.find((m) => m.id === c.moves.at(-1)?.id) ?? c.hand }));
+      this.saving.set(false);
+      return;
+    }
+    // Their finished images drawn again, so they show the new code (cards with design and art)
+    const failed: string[] = [];
+    const drawable = moved.filter((m) => m.artKey && m.design);
+    for (const [i, m] of drawable.entries()) {
+      this.progress.set(`Actualizando imágenes ${i + 1} de ${drawable.length}…`);
+      try {
+        await this.renderer.refresh(m);
+      } catch {
+        failed.push(m.cardName ?? m.id);
+      }
+    }
+    this.progress.set(null);
+    await this.cards.load(true);
+    this.saving.set(false);
+    if (failed.length) {
+      this.done.set(true);
+      this.error.set(`Las cartas se movieron, pero no se pudo actualizar la imagen de: ${failed.join(', ')}.`);
+      return;
+    }
+    this.ref.close(true);
+  }
+}

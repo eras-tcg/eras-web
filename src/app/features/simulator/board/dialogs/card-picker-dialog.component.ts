@@ -1,6 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CardSlot } from '@data/simulator/simulator.model';
+import { PickCardComponent } from '@ui/domain/pick-card/pick-card.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
@@ -25,7 +26,7 @@ export interface CardPickerData {
 /** Choose cards for an effect. Closes with the chosen instance ids (undefined when cancelled). */
 @Component({
   selector: 'eras-card-picker-dialog',
-  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CardPeekComponent],
+  imports: [SheetComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, CardPeekComponent, PickCardComponent],
   template: `
     <eras-sheet size="lg" [title]="data.title" [subtitle]="subtitle()" (closed)="ref.close()">
       @if (data.matches && hiddenCount() > 0) {
@@ -42,19 +43,19 @@ export interface CardPickerData {
         <div class="cards" role="group" [attr.aria-label]="data.title">
           @for (c of visible(); track c.instanceId) {
             <div class="slot">
-            <button
-              type="button"
-              class="pick"
-              [class.chosen]="chosen().has(c.instanceId)"
-              [class.outside]="data.matches && !data.matches(c)"
-              [attr.aria-pressed]="chosen().has(c.instanceId)"
-              [attr.aria-label]="c.cardName ?? 'Carta'"
-              (click)="toggle(c.instanceId)"
-            >
-              <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
-              <span class="name">{{ c.cardName }}</span>
-            </button>
-            <eras-card-peek [card]="c" />
+              <button
+                erasPickCard
+                type="button"
+                class="pick"
+                [chosen]="chosen().has(c.instanceId)"
+                [dimmed]="!!data.matches && !data.matches(c)"
+                [attr.aria-label]="c.cardName ?? 'Carta'"
+                (click)="toggle(c.instanceId)"
+              >
+                <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName ?? null" />
+                <span class="name">{{ c.cardName }}</span>
+              </button>
+              <eras-card-peek [card]="c" />
             </div>
           }
         </div>
@@ -75,23 +76,7 @@ export interface CardPickerData {
       justify-content: center;
       gap: var(--space-3);
     }
-    .pick {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1);
-      border: 2px solid transparent;
-      border-radius: var(--radius-md);
-      background: none;
-      color: inherit;
-      cursor: pointer;
-      --game-card-width: 5rem;
-    }
-    .pick:hover { background: var(--color-surface-muted); }
-    .pick.chosen { border-color: var(--color-primary); background: var(--color-surface-muted); }
-    .pick.outside { opacity: 0.5; }
-    .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .pick { --game-card-width: 5rem; }
     .name {
       max-inline-size: 100%;
       overflow: hidden;

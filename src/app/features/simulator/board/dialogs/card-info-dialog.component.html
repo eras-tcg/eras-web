@@ -3,9 +3,9 @@
     <eras-stack [gap]="4">
       @if (!data.only) {
         <div class="info">
-          <div class="showcase">
+          <div class="showcase" [style.--materials]="s.materials.length">
             <!-- The card with its Materiales peeking out behind it, and its Recursos under it, as on the table -->
-            <div class="art" [style.--materials]="s.materials.length">
+            <div class="art">
               @for (m of s.materials; track m.instanceId; let i = $index) {
                 <!-- Held pressed: the card in detail -->
                 <div class="material" [style.--i]="i" [erasHoldPeek]="!m.faceDown || game.seeAll()" (peek)="openDetail(m)">
@@ -31,11 +31,7 @@
           </div>
           <div class="effects">
             @if (facts().length) {
-              <div class="facts">
-                @for (f of facts(); track f.label) {
-                  <span class="fact" [class.changed]="f.changed"><small>{{ f.label }}</small><strong>{{ f.value }}</strong></span>
-                }
-              </div>
+              <eras-card-facts [facts]="facts()" />
             }
             @if (s.unprogrammed) {
               <p class="unprogrammed" role="note"><eras-icon name="alert" /> Sin programar en el simulador: {{ s.unprogrammed }}. Se juega a mano.</p>
@@ -59,40 +55,33 @@
             }
             <section class="panel">
               <h4><eras-icon name="zap" /> Efectos</h4>
-              @for (line of ownLines(); track $index) {
-                <div class="effect">
-                  @if (line.moment || line.tags.length) {
-                    <div class="chips">
-                      @if (line.moment) {
-                        <span class="chip moment">{{ line.moment }}</span>
-                      }
-                      @for (t of line.tags; track $index) {
-                        <span class="chip tag">{{ t }}</span>
-                      }
-                    </div>
-                  }
-                  <p>{{ line.text }}</p>
-                </div>
+              @for (line of own(); track $index) {
+                <eras-effect-line class="effect" [moment]="line.moment" [tags]="line.tags" [text]="line.text" />
               } @empty {
                 <p class="muted">Sin efectos.</p>
               }
             </section>
-            @if (inheritedLines().length) {
+            @if (ownLink().length) {
+              <section class="panel">
+                <h4><eras-icon name="link" /> Efecto de enlace</h4>
+                @for (line of ownLink(); track $index) {
+                  <eras-effect-line class="effect" [moment]="line.moment" [tags]="line.tags" [text]="line.text" />
+                }
+              </section>
+            }
+            @if (inherited().length) {
               <section class="panel">
                 <h4><eras-icon name="layers" /> Efectos de sus recursos</h4>
-                @for (e of inheritedLines(); track $index) {
-                  <div class="effect">
-                    <div class="chips">
-                      <span class="chip source">{{ e.source }}</span>
-                      @if (e.line.moment) {
-                        <span class="chip moment">{{ e.line.moment }}</span>
-                      }
-                      @for (t of e.line.tags; track $index) {
-                        <span class="chip tag">{{ t }}</span>
-                      }
-                    </div>
-                    <p>{{ e.line.text }}</p>
-                  </div>
+                @for (e of inherited(); track $index) {
+                  <eras-effect-line class="effect" [source]="e.source" [moment]="e.line.moment" [tags]="e.line.tags" [text]="e.line.text" />
+                }
+              </section>
+            }
+            @if (grants().length) {
+              <section class="panel" aria-label="Recibe por enlace">
+                <h4><eras-icon name="link" /> Recibe por enlace</h4>
+                @for (e of grants(); track $index) {
+                  <eras-effect-line class="effect" [source]="e.source" [moment]="e.line.moment" [tags]="e.line.tags" [text]="e.line.text" />
                 }
               </section>
             }
@@ -123,31 +112,10 @@
               <eras-game-card small [imageUrl]="a.imageUrl" [foil]="a.finish ?? null" [name]="a.cardName ?? null" [hidden]="a.faceDown" [attr.aria-label]="a.cardName" />
               @if (!data.readonly) {
                 <!-- "Enviar a…": on the card's lower right corner -->
-                <button type="button" class="send" [cdkMenuTriggerFor]="actions" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'">
+                <button type="button" class="send" [attr.aria-label]="'Enviar ' + (a.cardName ?? 'el anexo') + ' a…'" (click)="sendAttachment(s, a, type, i)">
                   <eras-icon name="external" />
                 </button>
               }
-              <ng-template #actions>
-                <eras-menu>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'hand')">A la mano</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'discardPile')">Al descarte</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'tributeZone')">A tributos</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'deck', 'bottom')">Al fondo del mazo</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'lifeStack', 'top', true)">A las vidas (boca abajo)</button>
-                  <button erasMenuItem (triggered)="moveOut(a, type, 'field')">Al campo</button>
-                  <hr />
-                  <button erasMenuItem (triggered)="game.swapWithMain(a.instanceId, type, s.instanceId, targetPlayer())">Intercambiar con la principal</button>
-                  <button erasMenuItem (triggered)="game.reclassifyAttachment(a.instanceId, type, s.instanceId, targetPlayer())">
-                    Pasar a {{ type === 'materials' ? 'recursos' : 'materiales' }}
-                  </button>
-                  @if (i > 0) {
-                    <button erasMenuItem (triggered)="reorder(s, type, i, -1)">Subir</button>
-                  }
-                  @if (i < s[type].length - 1) {
-                    <button erasMenuItem (triggered)="reorder(s, type, i, 1)">Bajar</button>
-                  }
-                </eras-menu>
-              </ng-template>
             </div>
           }
         </eras-stack>

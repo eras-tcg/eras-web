@@ -1,8 +1,8 @@
 {
-  "commit": "c337fa4a14313e88db9ecbf6ff7891ea6fbee40c",
+  "commit": "6478519323551b8ff7c24b639e5a89a737dda174",
   "dirty": false,
-  "subject": "Structure decks ST1–ST4 become ST5–ST8: card folders, starter deck names, test fixtures and golden hashes",
-  "copiedAt": "2026-11-15T03:57:40.452Z",
+  "subject": "Merge branch 'feat/mover-cartas' into release/2026-11-17",
+  "copiedAt": "2026-11-17T23:04:20.236Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

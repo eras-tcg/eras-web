@@ -105,6 +105,12 @@ describe('effect-layout', () => {
     expect(keywordReminder('Letalidad {n}', 2, ref)).toBe('hace daño 2 veces más.');
   });
 
+  it('drops the bound of a keyword printed without its value', () => {
+    expect(keywordReminder('Provocar {nivel}', null, ref)).toBe(
+      'al entrar al paso de bloqueo: puedes elegir 1 enemigo; debe declarar bloqueo si puede.',
+    );
+  });
+
   it('writes conditions, costs and usage limits', () => {
     const t = tokens.effect({
       instance: 'Turno Aliado>En Mano',

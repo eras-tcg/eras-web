@@ -39,7 +39,8 @@ export const pieceKey = (s: string) =>
 
 const fill = (text: string, value: string | number | null | undefined) =>
   value == null || value === ''
-    ? text
+    ? // Without a value the bound goes away: "elige 1 enemigo nivel {nivel} o menor" reads "elige 1 enemigo"
+      text.replace(/\s+\S+\s+\{[^}]+\}\s+o\s+(menor|mayor)/g, '')
     : // "{n} veces" with 1 reads "1 vez"
       text.replace(/\{[^}]+\}/g, String(value)).replace(/\b1 veces\b/g, '1 vez');
 

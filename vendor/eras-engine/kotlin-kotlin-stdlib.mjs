@@ -1079,6 +1079,12 @@ function asIterable$$inlined$Iterable$1($this_asIterable) {
 protoOf(asIterable$$inlined$Iterable$1).h = function () {
   return this.a1_1.h();
 };
+function last_0(_this__u8e3s4) {
+  // Inline function 'kotlin.text.isEmpty' call
+  if (charSequenceLength(_this__u8e3s4) === 0)
+    throw NoSuchElementException_init_$Create$_0('Char sequence is empty.');
+  return charSequenceGet(_this__u8e3s4, get_lastIndex_3(_this__u8e3s4));
+}
 function single_2(_this__u8e3s4) {
   var tmp;
   switch (charSequenceLength(_this__u8e3s4)) {
@@ -9555,6 +9561,10 @@ function substringBefore_0(_this__u8e3s4, delimiter, missingDelimiterValue) {
   var index = indexOf_7(_this__u8e3s4, delimiter);
   return index === -1 ? missingDelimiterValue : substring(_this__u8e3s4, 0, index);
 }
+function contains_8(_this__u8e3s4, char, ignoreCase) {
+  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
+  return indexOf_7(_this__u8e3s4, char, VOID, ignoreCase) >= 0;
+}
 function substringAfterLast(_this__u8e3s4, delimiter, missingDelimiterValue) {
   missingDelimiterValue = missingDelimiterValue === VOID ? _this__u8e3s4 : missingDelimiterValue;
   var index = lastIndexOf(_this__u8e3s4, delimiter);
@@ -9565,10 +9575,6 @@ function removePrefix(_this__u8e3s4, prefix) {
     return substring_0(_this__u8e3s4, charSequenceLength(prefix));
   }
   return _this__u8e3s4;
-}
-function contains_8(_this__u8e3s4, char, ignoreCase) {
-  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
-  return indexOf_7(_this__u8e3s4, char, VOID, ignoreCase) >= 0;
 }
 function get_lastIndex_3(_this__u8e3s4) {
   return charSequenceLength(_this__u8e3s4) - 1 | 0;
@@ -13619,6 +13625,7 @@ export {
   isBlank as isBlank1dvkhjjvox3p0,
   isWhitespace as isWhitespace25occ8z1ed1s9,
   lastIndexOf_0 as lastIndexOf2d52xhix5ymjr,
+  last_0 as last2n4gf5az1lkn4,
   padEnd as padEnd2jv3jyj2267cs,
   padStart as padStart36w1507hs626a,
   removePrefix as removePrefix279df90bhrqqg,

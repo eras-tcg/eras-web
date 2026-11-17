@@ -10,7 +10,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { CoverFrame, Edition } from '@data/editions/edition.model';
-import { EditionSlot, deckSize, editionMetrics, editionSlots, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
+import { EditionSlot, deckSize, editionMetrics, editionSlots, reprintOrigins, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
 import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
@@ -25,6 +25,7 @@ import { SectionHeaderComponent } from '@ui/layout/section-header/section-header
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ChipComponent } from '@ui/primitives/chip/chip.component';
+import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 
 /** What the edition form edits. */
 interface EditionForm {
@@ -62,6 +63,7 @@ interface EditionForm {
     ChipComponent,
     IconComponent,
     EditionTileComponent,
+    BadgeComponent,
   ],
   template: `
     <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
@@ -196,6 +198,9 @@ interface EditionForm {
                         <span class="code">{{ s.code }}</span>
                       }
                     </button>
+                    @if (reprints().get(s.meta.id); as origin) {
+                      <eras-badge class="reprint-mark" color="var(--color-info)" [title]="'Reimpresión de ' + origin">Reimpresión</eras-badge>
+                    }
                     @if (canEditCards()) {
                       <button
                         type="button"
@@ -413,6 +418,16 @@ interface EditionForm {
     .slot:disabled {
       cursor: default;
     }
+    /* A reprint: a label over the card's top edge, its first printing in the tooltip */
+    .reprint-mark {
+      position: absolute;
+      inset-block-start: 8%;
+      inset-inline-start: 50%;
+      translate: -50% 0;
+      box-shadow: var(--shadow-sm);
+      /* Solid over the art (the badge alone is see-through) */
+      background: var(--color-surface);
+    }
     .slot.placeholder {
       cursor: default;
     }
@@ -480,6 +495,8 @@ export class CardEditionsPage {
     return e ? editionSlots(e, this.cards.metaList(), this.cards.cards()) : [];
   });
   protected readonly filled = computed(() => slotsFilled(this.groups()));
+  /** The cards printed before under the same name: the code of their first printing. */
+  protected readonly reprints = computed(() => reprintOrigins(this.cards.metaList(), this.editions.releaseDates()));
   /** A structure deck (ST…): its cards bring a number of copies each. */
   protected readonly structure = computed(() => isStructure(this.edition()?.editionId ?? ''));
   protected readonly deck = computed(() => deckSize(this.groups()));

@@ -123,3 +123,55 @@ export function editionMetrics(metas: readonly CardMeta[]): {
 export function deckSize(groups: readonly { slots: readonly EditionSlot[] }[]): number {
   return groups.flatMap((g) => g.slots).reduce((sum, s) => sum + (s.meta?.deckCopies ?? 0), 0);
 }
+
+/**
+ * Where an edition sits among the others when telling an original from its reprints: structure decks first (each
+ * chain starts in one: ST1–4 are reprinted in E1, ST5–8 in E2), then E1, E1.1 … E2, E2.1 …
+ */
+export function editionRank(editionId: string): number[] {
+  const m = /^([A-Z]+)(\d+)(?:\.(\d+))?$/i.exec(editionId);
+  if (!m) return [9, 0, 0];
+  return [m[1].toUpperCase() === 'ST' ? 0 : 1, Number(m[2]), Number(m[3] ?? 0)];
+}
+
+const sameName = (name: string | null | undefined) =>
+  (name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[-\s]+/g, ' ')
+    .trim();
+
+/**
+ * The reprints among the cards: for each card printed earlier under the same name (accents, case and hyphens aside),
+ * the code of its first printing. The first printing itself is not a reprint. Earlier is by the editions' release dates;
+ * an edition without one goes after the dated ones, by editionRank.
+ */
+export function reprintOrigins(
+  metas: readonly CardMeta[],
+  releaseDates: ReadonlyMap<string, string> = new Map(),
+): Map<string, string> {
+  const byName = new Map<string, CardMeta[]>();
+  for (const m of metas) {
+    const key = sameName(m.cardName);
+    if (!key || !m.edition || m.cardNumber == null) continue;
+    byName.set(key, [...(byName.get(key) ?? []), m]);
+  }
+  const dateOf = (m: CardMeta) => releaseDates.get(metaEditionId(m)) || '\uffff';
+  const before = (a: CardMeta, b: CardMeta) => {
+    const byDate = dateOf(a).localeCompare(dateOf(b));
+    if (byDate !== 0) return byDate;
+    const ra = editionRank(metaEditionId(a));
+    const rb = editionRank(metaEditionId(b));
+    for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] - rb[i];
+    return 0;
+  };
+  const out = new Map<string, string>();
+  for (const printings of byName.values()) {
+    if (printings.length < 2) continue;
+    const first = [...printings].sort(before)[0];
+    const code = `${metaEditionId(first)}-${(first.colorIdentity ?? '').toUpperCase()}${String(first.cardNumber).padStart(2, '0')}`;
+    for (const m of printings) if (m !== first && before(m, first) !== 0) out.set(m.id, code);
+  }
+  return out;
+}

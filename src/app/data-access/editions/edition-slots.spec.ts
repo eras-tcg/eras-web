@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '@data/cards/card.model';
-import { deckSize, editionMetrics, editionSlots, metaEditionId, slotsFilled, slotsForColor } from './edition-slots';
+import { deckSize, editionMetrics, editionRank, editionSlots, metaEditionId, reprintOrigins, slotsFilled, slotsForColor } from './edition-slots';
 
 const meta = (over: Partial<CardMeta>): CardMeta => ({ id: 'm', cardName: 'X', edition: 'ST2', colorIdentity: 'G', cardNumber: 1, ...over }) as CardMeta;
 
@@ -74,5 +74,39 @@ describe('edition slots', () => {
       meta({ id: 'c', cardNumber: 3 }),
     ]);
     expect(deckSize(groups)).toBe(4);
+  });
+});
+
+describe('reprints', () => {
+  it('orders structure decks first, then editions by number and sub-edition', () => {
+    expect(editionRank('ST7')).toEqual([0, 7, 0]);
+    expect(editionRank('E1.3')).toEqual([1, 1, 3]);
+    expect(editionRank('E2')).toEqual([1, 2, 0]);
+  });
+
+  it('marks every later printing with its first one, names alike but for accents, case and hyphens', () => {
+    const st = meta({ id: 'st', cardName: 'Eliséo', edition: 'ST1', colorIdentity: 'B', cardNumber: 1 });
+    const e1 = meta({ id: 'e1', cardName: 'Eliseo', edition: 'E1', subEdition: null, colorIdentity: 'B', cardNumber: 2 });
+    const e2 = meta({ id: 'e2', cardName: 'SAR-2', edition: 'E2', subEdition: '1', colorIdentity: 'B', cardNumber: 9 });
+    const e3 = meta({ id: 'e3', cardName: 'SAR 2', edition: 'E3', colorIdentity: 'B', cardNumber: 4 });
+    const lone = meta({ id: 'lone', cardName: 'Ephos', edition: 'E1', colorIdentity: 'B', cardNumber: 3 });
+    const origins = reprintOrigins([e1, st, e2, e3, lone]);
+    expect(origins.get('e1')).toBe('ST1-B01');
+    expect(origins.get('e3')).toBe('E2.1-B09');
+    expect(origins.has('st')).toBe(false);
+    expect(origins.has('e2')).toBe(false);
+    expect(origins.has('lone')).toBe(false);
+  });
+
+  it('goes by release date when the editions have one', () => {
+    const old = meta({ id: 'old', cardName: 'Jhav', edition: 'E2', colorIdentity: 'B', cardNumber: 1 });
+    const st = meta({ id: 'st', cardName: 'Jhav', edition: 'ST5', colorIdentity: 'B', cardNumber: 2 });
+    const dates = new Map([
+      ['ST5', '2026-03-11'],
+      ['E2', '2026-04-11'],
+    ]);
+    expect(reprintOrigins([old, st], dates).get('old')).toBe('ST5-B02');
+    // E2 dated before ST5: E2 is the first printing
+    expect(reprintOrigins([old, st], new Map([['E2', '2025-01-01'], ['ST5', '2026-03-11']])).get('st')).toBe('E2-B01');
   });
 });

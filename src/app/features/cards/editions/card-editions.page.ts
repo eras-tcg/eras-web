@@ -195,7 +195,8 @@ interface EditionForm {
         @for (g of groups(); track g.color) {
           <eras-section-header [title]="colorLabels[g.color] || g.color" />
           <eras-grid minColumn="9rem" [gap]="3">
-            @for (s of g.slots; track s.code) {
+            <!-- By slot and card: a slot whose card changed (a move) is drawn anew, its menus pointing to the new card -->
+            @for (s of g.slots; track s.code + '|' + (s.meta?.id ?? '')) {
               @if (s.meta) {
                 <div class="slot-wrap">
                   <div class="slot-card">

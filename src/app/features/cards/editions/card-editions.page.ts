@@ -12,7 +12,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { CoverFrame, Edition } from '@data/editions/edition.model';
-import { EditionSlot, deckSize, editionMetrics, editionSlots, reprintOrigins, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
+import { EditionSlot, deckSize, editionSlots, reprintOrigins, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
 import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
@@ -810,8 +810,8 @@ export class CardEditionsPage {
     const metas = this.groups().flatMap((g) => g.slots.filter((s) => s.meta).map((s) => s.meta!));
     const data: EditionMetricsData = {
       title: `Métricas · ${e.editionName || e.editionId}`,
-      metrics: editionMetrics(metas),
-      deck: this.structure() ? this.deck() : null,
+      metas,
+      structure: this.structure(),
     };
     this.modal.open(EditionMetricsDialogComponent, { data });
   }

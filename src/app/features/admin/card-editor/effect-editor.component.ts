@@ -4,11 +4,13 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  inject,
   input,
   output,
   viewChild,
 } from '@angular/core';
 import { Line, PieceCatalog, Seg, splitPieces } from './effect-text';
+import { fitInView } from './fit-in-view';
 import { Zone } from './render/card-zones';
 import { pieceKey } from './render/effect-layout';
 import { PieceTable } from './render/spec.model';
@@ -100,12 +102,18 @@ export class EffectEditorComponent implements AfterViewInit, OnDestroy {
   protected readonly H = H;
   private readonly box = viewChild.required<ElementRef<HTMLDivElement>>('box');
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private observer: ResizeObserver | null = null;
 
   ngAfterViewInit(): void {
     const lines = this.lines().length ? this.lines() : [[]];
     this.render(lines);
+    // Kept inside the visible part of the card's viewport (an effect box at the card's foot): it moves, no scroll
+    const host = this.host.nativeElement;
+    this.observer = new ResizeObserver(() => fitInView(host));
+    this.observer.observe(host);
     const el = this.box().nativeElement;
-    el.focus();
+    el.focus({ preventScroll: true });
     // Caret at the end of the text.
     const sel = window.getSelection();
     sel?.selectAllChildren(el);
@@ -113,6 +121,7 @@ export class EffectEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.observer?.disconnect();
     if (this.timer) clearTimeout(this.timer);
   }
 

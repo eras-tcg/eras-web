@@ -9,6 +9,7 @@ import {
   parseSlotCode,
   regionBox,
   readDesign,
+  visibleBox,
   swapCardColors,
   toggleCardColor,
   withCardType,
@@ -85,6 +86,23 @@ describe('card-editor-rules', () => {
     expect(regionBox(data, w, h, [2, 1], magenta)).toEqual([1, 1, 4, 3]);
     expect(regionBox(data, w, h, [0, 0], magenta)).toBeNull();
     expect(columnRun(data, w, h, [2, 1], magenta)).toEqual([1, 3]);
+  });
+
+  it('finds where the art shows, behind translucent boxes too', () => {
+    // 4 x 4: the art shows bare at (1,1), faintly (a translucent box) at (2,3); nothing else changes
+    const w = 4;
+    const h = 4;
+    const magenta = new Uint8ClampedArray(w * h * 4).fill(10);
+    const green = new Uint8ClampedArray(w * h * 4).fill(10);
+    magenta.set([255, 0, 255, 255], (1 * w + 1) * 4);
+    green.set([0, 255, 0, 255], (1 * w + 1) * 4);
+    magenta.set([150, 40, 150, 255], (3 * w + 2) * 4);
+    green.set([40, 150, 40, 255], (3 * w + 2) * 4);
+    // a faint leak through an opaque-looking box at (0,3): not art space
+    magenta.set([40, 10, 40, 255], (3 * w + 0) * 4);
+    green.set([10, 40, 10, 255], (3 * w + 0) * 4);
+    expect(visibleBox(magenta, green, w, h)).toEqual([1, 1, 3, 4]);
+    expect(visibleBox(magenta, magenta, w, h)).toBeNull();
   });
 
   it('fits an art to cover a window, centered on it', () => {

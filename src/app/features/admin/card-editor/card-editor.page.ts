@@ -52,7 +52,7 @@ import {
   fitArt,
   parseSlotCode,
   readDesign,
-  regionBox,
+  visibleBox,
   swapCardColors,
   toggleCardColor,
   withCardType,
@@ -1274,11 +1274,12 @@ export class CardEditorPage {
     const templates = this.templates();
     const css = this.fontCss();
     if (!templates || css === null) throw new Error('Plantillas sin cargar');
-    {
+    // The card drawn with a plain art of one color
+    const drawn = async (color: string) => {
       const probe = document.createElement('canvas');
       probe.width = probe.height = 1;
       const pc = probe.getContext('2d')!;
-      pc.fillStyle = '#ff00ff';
+      pc.fillStyle = color;
       pc.fillRect(0, 0, 1, 1);
       const draft = {
         ...draftFromForm(this.form(), this.her()),
@@ -1291,17 +1292,20 @@ export class CardEditorPage {
       const r = new SvgRenderer(buildCard(draft, templates, this.measure), css);
       r.render();
       const canvas = await svgToCanvasFine(r.svg, 1);
-      const { width, height } = canvas;
-      const data = canvas.getContext('2d')!.getImageData(0, 0, width, height).data;
-      const magenta = (red: number, g: number, b: number) => red > 200 && g < 70 && b > 200;
-      // Seed: the art's middle, above the name bar of every frame.
-      const seed: [number, number] = [Math.round(width / 2), Math.round(height * 0.3)];
-      const box = regionBox(data, width, height, seed, magenta);
-      if (!box) throw new Error('No se encontró el espacio del arte');
-      const [c0, c1] = columnRun(data, width, height, seed, magenta);
-      const k = 744 / width;
-      return { box: [box[0] * k, box[1] * k, box[2] * k, box[3] * k], clear: [c0 * k, c1 * k] };
-    }
+      return { width: canvas.width, height: canvas.height, data: canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data };
+    };
+    const magentaCard = await drawn('#ff00ff');
+    const greenCard = await drawn('#00ff00');
+    const { width, height, data } = magentaCard;
+    // The window: wherever the art shows, behind the translucent boxes too (semi and full art), not only bare
+    const box = visibleBox(data, greenCard.data, width, height);
+    if (!box) throw new Error('No se encontró el espacio del arte');
+    // Down, the art seen bare and unbroken through the art's middle (above the boxes): where the cross centers it
+    const magenta = (red: number, g: number, b: number) => red > 200 && g < 70 && b > 200;
+    const seed: [number, number] = [Math.round(width / 2), Math.round(height * 0.3)];
+    const [c0, c1] = columnRun(data, width, height, seed, magenta);
+    const k = 744 / width;
+    return { box: [box[0] * k, box[1] * k, box[2] * k, box[3] * k], clear: [c0 * k, c1 * k] };
   }
 
   protected async toggleFullscreen(): Promise<void> {

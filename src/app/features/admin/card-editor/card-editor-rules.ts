@@ -194,6 +194,39 @@ export function fitArt(
   };
 }
 
+/**
+ * Where the art shows at all: the card drawn twice with two plain arts of different colors, the box around every pixel
+ * that changes between them (behind a translucent box too, not only where the art is seen bare). Null if none does.
+ */
+export function visibleBox(
+  a: Uint8ClampedArray,
+  b: Uint8ClampedArray,
+  width: number,
+  height: number,
+): [number, number, number, number] | null {
+  const rows = new Array<number>(height).fill(0);
+  const cols = new Array<number>(width).fill(0);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const d =
+        Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+      // A translucent box lets ~200 of the 765 through; the standard frame's boxes leak far less (not art space)
+      if (d < 200) continue;
+      rows[y]++;
+      cols[x]++;
+    }
+  // A row or column counts with 2 % of its pixels showing art: a few antialiased specks at a frame's edge do not
+  const span = (counts: number[], min: number): [number, number] => {
+    const first = counts.findIndex((n) => n >= min);
+    const last = counts.length - [...counts].reverse().findIndex((n) => n >= min);
+    return [first, first < 0 ? -1 : last];
+  };
+  const [y0, y1] = span(rows, Math.max(1, width * 0.02));
+  const [x0, x1] = span(cols, Math.max(1, height * 0.02));
+  return y0 >= 0 && x0 >= 0 ? [x0, y0, x1, y1] : null;
+}
+
 /** The run [y0, y1) of matching pixels through `seed` along its column (where the art is seen unbroken there). */
 export function columnRun(
   data: Uint8ClampedArray,
@@ -215,7 +248,11 @@ export function columnRun(
 }
 
 /** Edition, color and number of a slot's code: "ST2-G05", "E1.1-B12". */
-export function parseSlotCode(code: string): { edition: string; color: string; number: number } | null {
+export function parseSlotCode(
+  code: string,
+): { edition: string; color: string; number: number } | null {
   const m = /^\s*([A-Za-z]+\d+(?:\.\d+)?)-([BGPRW])(\d{1,3})\s*$/i.exec(code);
-  return m ? { edition: m[1].toUpperCase(), color: m[2].toUpperCase(), number: Number(m[3]) } : null;
+  return m
+    ? { edition: m[1].toUpperCase(), color: m[2].toUpperCase(), number: Number(m[3]) }
+    : null;
 }

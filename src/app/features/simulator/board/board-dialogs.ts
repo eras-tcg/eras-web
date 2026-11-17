@@ -2,13 +2,26 @@ import { Injectable, Injector, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { AttackTargetData, AttackTargetDialogComponent } from './dialogs/attack-target-dialog.component';
-import { AttachmentType, CardInfoData, CardInfoDialogComponent } from './dialogs/card-info-dialog.component';
-import { CreatureInteractionData, CreatureInteractionDialogComponent } from './dialogs/creature-interaction-dialog.component';
+import {
+  AttackTargetData,
+  AttackTargetDialogComponent,
+} from './dialogs/attack-target-dialog.component';
+import {
+  AttachmentType,
+  CardInfoData,
+  CardInfoDialogComponent,
+} from './dialogs/card-info-dialog.component';
+import {
+  CreatureInteractionData,
+  CreatureInteractionDialogComponent,
+} from './dialogs/creature-interaction-dialog.component';
 import { DeckPeekData, DeckPeekDialogComponent } from './dialogs/deck-peek-dialog.component';
 import { DecklistDialogComponent } from './dialogs/decklist-dialog.component';
 import { DummyCardDialogComponent } from './dialogs/dummy-card-dialog.component';
-import { EffectPromptData, EffectPromptDialogComponent } from './dialogs/effect-prompt-dialog.component';
+import {
+  EffectPromptData,
+  EffectPromptDialogComponent,
+} from './dialogs/effect-prompt-dialog.component';
 import { EffectsDialogComponent, EffectsDialogData } from './dialogs/effects-dialog.component';
 import { GamePreferencesDialogComponent } from './dialogs/game-preferences-dialog.component';
 import { LogDialogComponent } from './dialogs/log-dialog.component';
@@ -26,7 +39,12 @@ export class BoardDialogs {
   private readonly injector = inject(Injector);
 
   cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
-    const data: CardInfoData = { instanceId: slot.instanceId, zone, opponent, readonly: this.sheet.lowered() || !this.game.editorMode() };
+    const data: CardInfoData = {
+      instanceId: slot.instanceId,
+      zone,
+      opponent,
+      readonly: this.sheet.lowered() || !this.game.editorMode(),
+    };
     this.modal.open(CardInfoDialogComponent, { data });
   }
 
@@ -36,7 +54,11 @@ export class BoardDialogs {
   }
 
   zone(zone: ZoneName, opponent: boolean): void {
-    const data: ZoneDialogData = { zone, opponent, readonly: this.sheet.lowered() || !this.game.editorMode() };
+    const data: ZoneDialogData = {
+      zone,
+      opponent,
+      readonly: this.sheet.lowered() || !this.game.editorMode(),
+    };
     this.modal.open(ZoneDialogComponent, { data });
   }
 
@@ -47,13 +69,27 @@ export class BoardDialogs {
 
   /** Target of an attack: an exhausted enemy creature id, null for the rival, undefined when cancelled. */
   attackTarget(data: AttackTargetData): Promise<string | null | undefined> {
-    const ref = this.modal.sheet<string | null, AttackTargetData>(AttackTargetDialogComponent, { data });
+    const ref = this.modal.sheet<string | null, AttackTargetData>(AttackTargetDialogComponent, {
+      data,
+    });
     return firstValueFrom(ref.closed);
+  }
+
+  /** The attack chooser for a rules-engine choice of attack: its ref (the board closes it when the engine moves on) and its answer. */
+  attackChoice(data: AttackTargetData) {
+    const ref = this.modal.sheet<string | null, AttackTargetData>(AttackTargetDialogComponent, {
+      data,
+    });
+    return { ref, target: firstValueFrom(ref.closed) };
   }
 
   /** Rules-engine choice; it cannot be dismissed (the board closes it when the engine moves on). */
   effectPrompt(data: EffectPromptData) {
-    return this.modal.sheet(EffectPromptDialogComponent, { data, disableClose: true, injector: this.injector });
+    return this.modal.sheet(EffectPromptDialogComponent, {
+      data,
+      disableClose: true,
+      injector: this.injector,
+    });
   }
 
   /** Assisted effects of one of your cards. */

@@ -372,6 +372,8 @@ export type PromptPurpose =
   | 'DAMAGE_TRIBUTE'
   /** "cuando esta carta fuera a ser ascendida: gana …" (Espada De Los Leones Dorados), shown to be activated. */
   | 'ASCEND_GAIN'
+  /** "cuando esta carta fuera a ser ascendida: puede declarar ataque": the summoner (the rival), an enemy creature, or none. */
+  | 'ASCEND_ATTACK'
   /**
    * Enlace: a creature that entered the Línea frontal (subjectId) takes a position and may join a formation. validIds are options
    * ("pos:<i>" or "pos:<i>:<id>"), not cards; cardLabels says each one.

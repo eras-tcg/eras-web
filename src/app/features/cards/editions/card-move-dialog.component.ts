@@ -70,8 +70,11 @@ export interface CardMoveData {
                 type="button"
                 class="slot"
                 [class.empty]="!s.meta"
+                [class.origin]="s.code === handOrigin()"
                 [disabled]="saving()"
-                [attr.aria-label]="s.code + (s.meta ? ' ' + s.meta.cardName : ' vacío')"
+                [attr.aria-label]="
+                  s.code + (s.meta ? ' ' + s.meta.cardName : ' vacío') + (s.code === handOrigin() ? ', donde estaba la carta que mueves' : '')
+                "
                 (click)="choose(s)"
               >
                 @if (s.meta) {
@@ -79,6 +82,10 @@ export interface CardMoveData {
                     <img [src]="src" alt="" loading="lazy" />
                   } @else {
                     <span class="name">{{ s.meta.cardName }}</span>
+                  }
+                } @else if (s.code === handOrigin() && chain().hand; as h) {
+                  @if (imageOf(h); as src) {
+                    <img class="ghost" [src]="src" alt="" />
                   }
                 }
                 <span class="code">{{ s.code }}</span>
@@ -222,6 +229,13 @@ export interface CardMoveData {
       border-style: dashed;
       background: transparent;
     }
+    /* Where the card in hand was: its slot outlined, and the card faded in it while the slot stays empty */
+    .slot.origin {
+      border: 2px dashed var(--color-primary);
+    }
+    .slot .ghost {
+      opacity: 0.35;
+    }
     .slot:hover {
       box-shadow: 0 0 0 2px var(--color-primary);
     }
@@ -306,6 +320,12 @@ export class CardMoveDialogComponent {
   }
 
   protected code = slotCode;
+
+  /** The slot the card in hand left (its code as the dialog opened). */
+  protected readonly handOrigin = computed(() => {
+    const h = this.chain().hand;
+    return h ? this.originalCode(h) : null;
+  });
 
   protected nameOf(id: string): string {
     return this.original.find((m) => m.id === id)?.cardName ?? id;

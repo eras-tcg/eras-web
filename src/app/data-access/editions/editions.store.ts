@@ -85,4 +85,14 @@ export class EditionsStore {
     }
     await this.load(true);
   }
+
+  /** Sets an edition's cover and reloads the list. Throws a readable message on failure. */
+  async setImage(editionId: string, file: Blob): Promise<void> {
+    try {
+      await firstValueFrom(this.api.setImage(editionId, file));
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, 'No se pudo guardar la portada'), { cause: e });
+    }
+    await this.load(true);
+  }
 }

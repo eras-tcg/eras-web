@@ -31,6 +31,8 @@ interface EditionForm {
   cardsPerColor: number;
   editionDescription: string;
   releaseDate: string;
+  /** A new cover chosen, saved with the edition. */
+  cover: File | null;
 }
 
 /**
@@ -112,6 +114,14 @@ interface EditionForm {
               (input)="patch({ editionDescription: $any($event.target).value })"
             ></textarea>
           </eras-form-field>
+          <span class="label">Portada</span>
+          <div class="cover">
+            @if (coverPreview(); as src) {
+              <img [src]="src" alt="" />
+            }
+            <input #coverFile type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="pickCover($event)" />
+            <button erasButton variant="secondary" type="button" (click)="coverFile.click()">Elegir imagen</button>
+          </div>
           <eras-form-field label="Fecha de lanzamiento">
             <input
               type="date"
@@ -229,6 +239,18 @@ interface EditionForm {
     .form {
       max-inline-size: 32rem;
       margin-block-end: var(--space-5);
+    }
+    .cover {
+      display: grid;
+      gap: var(--space-2);
+      justify-items: start;
+    }
+    .cover img {
+      inline-size: 100%;
+      max-block-size: 14rem;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      border: var(--border-width) solid var(--color-border);
     }
     .label,
     .meta {
@@ -365,6 +387,13 @@ export class CardEditionsPage {
   protected readonly canEditEditions = computed(() => this.editMode.allows('manage_editions'));
 
   protected readonly form = signal<EditionForm | null>(null);
+  /** The cover shown in the form: the one chosen, else the edition's. */
+  protected readonly coverPreview = computed(() => {
+    const f = this.form();
+    if (!f) return null;
+    return f.cover ? this.coverUrl() : (this.edition()?.editionImage ?? null) || null;
+  });
+  private readonly coverUrl = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -421,7 +450,19 @@ export class CardEditionsPage {
       cardsPerColor: e?.cardsPerColor ?? 18,
       editionDescription: e?.editionDescription ?? '',
       releaseDate: e?.releaseDate ?? '',
+      cover: null,
     });
+  }
+
+  protected pickCover(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+    const old = this.coverUrl();
+    if (old) URL.revokeObjectURL(old);
+    this.coverUrl.set(URL.createObjectURL(file));
+    this.patch({ cover: file });
   }
 
   protected patch(change: Partial<EditionForm>): void {
@@ -462,6 +503,7 @@ export class CardEditionsPage {
         colors: f.colors,
         cardsPerColor: f.cardsPerColor,
       });
+      if (f.cover) await this.editions.setImage(f.editionId, f.cover);
       this.form.set(null);
       if (!existing) void this.router.navigate(['/cards/editions', f.editionId]);
     } catch (e) {

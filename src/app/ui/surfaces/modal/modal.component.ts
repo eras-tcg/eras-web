@@ -39,8 +39,8 @@ import { IconComponent } from '../../primitives/icon/icon.component';
 export class ModalComponent {
   readonly title = input.required<string>();
   readonly subtitle = input<string | null>(null);
-  /** Width: md (forms, confirmations), lg and xl (big forms, tables). */
-  readonly size = input<'md' | 'lg' | 'xl'>('md');
+  /** Width: md (forms, confirmations), lg and xl (big forms, tables), full (as wide as the screen allows). */
+  readonly size = input<'md' | 'lg' | 'xl' | 'full'>('md');
   /** False for choices that must be answered (open the dialog with disableClose too). */
   readonly closable = input(true, { transform: booleanAttribute });
   readonly closed = output<void>();

@@ -655,7 +655,7 @@ export class CardEditionsPage {
   /** Moves the slot's card to another slot of its color (a chain of moves when the chosen slot has a card). */
   protected moveCard(s: EditionSlot): void {
     if (!this.canEditCards() || !s.meta) return;
-    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta } });
+    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta }, maxWidth: '96vw' });
   }
 
   /** The editor: a filled slot's card, or a new card with an empty slot's code. */

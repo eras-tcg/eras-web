@@ -9,6 +9,7 @@ import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
 import { MoveChain, chainMetas, finalMoves, placeInSlot, slotCode } from './card-move-rules';
@@ -27,7 +28,7 @@ export interface CardMoveData {
   selector: 'eras-card-move-dialog',
   imports: [ModalComponent, ButtonComponent, AlertComponent],
   template: `
-    <eras-modal title="Mover carta" size="xl" (closed)="ref.close()">
+    <eras-modal title="Mover carta" size="full" (closed)="ref.close()">
       <div class="layout">
         <aside class="hand" aria-live="polite">
           @if (chain().hand; as h) {
@@ -59,15 +60,6 @@ export interface CardMoveData {
               }
             </select>
           </label>
-          @if (asking(); as a) {
-            <eras-alert tone="info">
-              {{ a.code }} tiene a <strong>{{ a.slot.meta?.cardName }}</strong>. ¿La sacas para ubicarla después?
-              <div class="ask">
-                <button erasButton size="sm" type="button" (click)="takeOut()">Sí, sácala</button>
-                <button erasButton size="sm" variant="ghost" type="button" (click)="asking.set(null)">No</button>
-              </div>
-            </eras-alert>
-          }
           @if (error(); as e) {
             <eras-alert tone="danger">{{ e }}</eras-alert>
           }
@@ -78,7 +70,6 @@ export interface CardMoveData {
                 type="button"
                 class="slot"
                 [class.empty]="!s.meta"
-                [class.asked]="asking()?.code === s.code"
                 [disabled]="saving()"
                 [attr.aria-label]="s.code + (s.meta ? ' ' + s.meta.cardName : ' vacío')"
                 (click)="choose(s)"
@@ -201,11 +192,6 @@ export interface CardMoveData {
       background: var(--color-surface);
       color: var(--color-text);
     }
-    .ask {
-      display: flex;
-      gap: var(--space-2);
-      margin-top: var(--space-2);
-    }
     .hint {
       margin: 0;
       font-size: var(--font-size-sm);
@@ -236,8 +222,7 @@ export interface CardMoveData {
       border-style: dashed;
       background: transparent;
     }
-    .slot:hover,
-    .slot.asked {
+    .slot:hover {
       box-shadow: 0 0 0 2px var(--color-primary);
     }
     .slot img {
@@ -284,13 +269,13 @@ export class CardMoveDialogComponent {
   protected readonly editionId = signal(
     `${this.data.card.edition ?? ''}${this.data.card.subEdition ? '.' + this.data.card.subEdition : ''}`,
   );
-  protected readonly asking = signal<{ code: string; slot: EditionSlot } | null>(null);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly progress = signal<string | null>(null);
   /** The moves are saved (only some images failed): the dialog only closes. */
   protected readonly done = signal(false);
   private readonly renderer = inject(CardRenderService);
+  private readonly modal = inject(ModalService);
   /** The editor's finished images, fetched with the session, by card id and render. */
   private readonly renders = signal<Record<string, string>>({});
   private readonly asked = new Set<string>();
@@ -346,23 +331,21 @@ export class CardMoveDialogComponent {
     return render ?? this.driveImage(m, card);
   }
 
-  protected choose(s: EditionSlot): void {
+  /** An empty slot ends the chain; one with a card asks (a small dialog over this one) whether to take it out. */
+  protected async choose(s: EditionSlot): Promise<void> {
     this.error.set(null);
-    if (s.meta) {
-      this.asking.set({ code: s.code, slot: s });
+    const occupant = s.meta;
+    if (occupant) {
+      const take = await this.modal.confirm({
+        title: 'Sacar carta',
+        message: `${s.code} tiene a ${occupant.cardName}. ¿La sacas para ubicarla después?`,
+        confirmLabel: 'Sí, sácala',
+      });
+      if (take) this.chain.update((c) => placeInSlot(c, this.editionId(), s.number, occupant));
       return;
     }
-    this.asking.set(null);
     this.chain.update((c) => placeInSlot(c, this.editionId(), s.number, null));
     void this.save();
-  }
-
-  protected takeOut(): void {
-    const a = this.asking();
-    if (!a?.slot.meta) return;
-    const occupant = a.slot.meta;
-    this.asking.set(null);
-    this.chain.update((c) => placeInSlot(c, this.editionId(), a.slot.number, occupant));
   }
 
   private async save(): Promise<void> {

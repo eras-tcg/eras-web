@@ -22,6 +22,10 @@
   --modal-width: 64rem;
 }
 
+:host(.size-full) {
+  --modal-width: 96rem;
+}
+
 .header {
   display: flex;
   align-items: flex-start;

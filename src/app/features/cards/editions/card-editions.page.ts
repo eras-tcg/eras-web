@@ -260,6 +260,11 @@ interface EditionForm {
                 >
                   <span class="code">{{ s.code }}</span>
                 </button>
+              } @else {
+                <!-- Out of edit mode the empty slot still holds its place in the grid -->
+                <div class="slot empty placeholder" role="img" [attr.aria-label]="s.code + ' vacío'">
+                  <span class="code">{{ s.code }}</span>
+                </div>
               }
             }
           </eras-grid>
@@ -406,6 +411,9 @@ interface EditionForm {
       cursor: pointer;
     }
     .slot:disabled {
+      cursor: default;
+    }
+    .slot.placeholder {
       cursor: default;
     }
     .slot.empty {

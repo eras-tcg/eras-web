@@ -26,17 +26,18 @@ export function cardDetailView(card: CatalogCard, ref: CardRefData | null, unpro
     if (value !== null && value !== undefined && value !== '') facts.push({ label, value: String(value), wide });
   };
   if (meta) {
+    // In rows of four: the printed numbers, then the card's traits, then its special summon; the requirement below
     add('Tipo de carta', meta.cardType ? (CARD_TYPE_LABELS[meta.cardType] ?? meta.cardType) : null);
     add('Coste', meta.cost);
     add('Fuerza', meta.strength);
     add('Nivel', meta.level);
-    add('Iniciador', meta.starter ? 'Sí' : null);
     add('Clases', meta.cardClasses?.join(', '));
-    add('Regulación', meta.regulation);
-    add('Coste especial', meta.specialCost);
-    add('Invocación especial', meta.specialSummonKind ? (SPECIAL_SUMMON_LABELS[meta.specialSummonKind] ?? meta.specialSummonKind) : null);
     add('Rareza', meta.rarity);
+    add('Regulación', meta.regulation);
     add('Colores', meta.colors?.map((c) => COLOR_LABELS[c] ?? c).join(', '));
+    add('Invocación especial', meta.specialSummonKind ? (SPECIAL_SUMMON_LABELS[meta.specialSummonKind] ?? meta.specialSummonKind) : null);
+    add('Coste especial', meta.specialCost);
+    add('Iniciador', meta.starter ? 'Sí' : null);
     add('Requerimiento', meta.requirement, true);
   }
   const groups: CardTextGroup[] = meta

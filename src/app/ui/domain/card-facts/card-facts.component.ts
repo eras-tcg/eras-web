@@ -14,6 +14,8 @@ export interface CardFact {
  * A card's facts at a glance: one box each, its label small over its value. `compact` for narrow places (the side
  * panel of a choice). Sizes are the parent's to tune: `--card-fact-min` (narrowest box), `--card-fact-grow` (1: the
  * boxes share the row), `--card-fact-padding`, `--card-fact-value-size`, `--card-facts-gap`.
+ * `columns` lays the boxes on an even grid of that many columns (fewer when the boxes would get narrower than
+ * `--card-fact-min`); without it they flow and share each row.
  *
  * <eras-card-facts [facts]="[{ label: 'Nivel', value: '2' }, { label: 'Fuerza', value: '5', changed: true }]" />
  */
@@ -50,15 +52,35 @@ export interface CardFact {
       background: var(--color-surface-muted);
     }
     .fact.wide { flex-basis: 100%; }
+    :host(.grid) dl {
+      display: grid;
+      grid-template-columns: repeat(
+        auto-fill,
+        minmax(
+          max(
+            var(--card-fact-min, 4.5rem),
+            calc((100% - (var(--card-facts-columns) - 1) * var(--card-facts-gap, var(--space-2))) / var(--card-facts-columns))
+          ),
+          1fr
+        )
+      );
+    }
+    :host(.grid) .fact.wide { grid-column: 1 / -1; }
     dt { color: var(--color-text-muted); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase; }
     dd { margin: 0; font-size: var(--card-fact-value-size, var(--font-size-lg)); font-weight: var(--font-weight-bold); }
     .fact.changed { border-color: var(--color-primary); }
     .fact.changed dd { color: var(--color-primary); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.compact]': 'compact()' },
+  host: {
+    '[class.compact]': 'compact()',
+    '[class.grid]': 'columns() != null',
+    '[style.--card-facts-columns]': 'columns()',
+  },
 })
 export class CardFactsComponent {
+  /** An even grid of this many columns (null: the boxes flow and share each row). */
+  readonly columns = input<number | null>(null);
   readonly facts = input<readonly CardFact[]>([]);
   readonly compact = input(false, { transform: booleanAttribute });
 }

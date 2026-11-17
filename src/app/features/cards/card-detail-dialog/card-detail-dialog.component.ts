@@ -1,15 +1,15 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
-import { altArtName, altArtsOf, nameVariants, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, fullEditionId, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
 import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, nearestFinish, shineOf } from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
-import { metaForImage, metaFormFor } from '@data/cards/meta-rules';
 import { FoilKind } from '@data/editions/booster-rules';
 import { EditionsStore } from '@data/editions/editions.store';
 import { fromPercent, toPercent } from '@data/shop/shop-rules';
@@ -23,8 +23,6 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { cardDetailView } from '../card-detail-view';
-import { MetaFormData, MetaFormDialogComponent } from '../meta-form/meta-form-dialog.component';
-import { cardImageUrl } from '@data/cards/card-rules';
 
 export interface CardDetailDialogData {
   /** The grid as currently filtered and sorted; prev/next walk through it. */
@@ -70,6 +68,7 @@ export class CardDetailDialogComponent {
   private readonly editions = inject(EditionsStore);
   private readonly admin = inject(CardsAdminApi);
   private readonly modal = inject(ModalService);
+  private readonly router = inject(Router);
   private readonly collection = inject(CollectionStore);
   protected readonly shopOdds = inject(ShopOddsStore);
 
@@ -148,24 +147,12 @@ export class CardDetailDialogComponent {
   // ── Administration (manage_cards) ─────────────────────────────────────
   // The grid behind is a snapshot, so after any change the dialog closes and the catalog reloads.
 
-  protected async editMeta(): Promise<void> {
+  /** The card in the card editor (an image without metadata opens there as a new card at its code). */
+  protected openEditor(): void {
     const card = this.card();
-    const data: MetaFormData = {
-      form: card.meta ? metaFormFor(card) : metaForImage(card, this.store.metaList()),
-      metaId: card.meta?.id ?? null,
-      imageUrl: cardImageUrl(card),
-      ref: this.store.ref(),
-    };
+    const code = `${fullEditionId(card)}-${card.color_identity ?? ''}${String(card.number ?? 0).padStart(2, '0')}`;
     this.ref.close();
-    const saved = await firstValueFrom(this.modal.open<boolean>(MetaFormDialogComponent, { data, width: 'min(64rem, 96vw)' }).closed);
-    if (saved) void this.store.load(true);
-  }
-
-  protected async rename(): Promise<void> {
-    const card = this.card();
-    const name = await this.modal.prompt({ title: 'Renombrar carta', label: 'Nombre de la imagen', value: card.name ?? '', confirmLabel: 'Renombrar' });
-    if (!name || name === card.name) return;
-    await this.run(() => firstValueFrom(this.admin.renameImage(card.id, name)), 'No se pudo renombrar');
+    void this.router.navigate(['/card-editor'], { queryParams: card.meta ? { card: card.meta.id } : { slot: code } });
   }
 
   // ── Alternative arts (manage_cards) ──────────────────────────────────
@@ -243,15 +230,20 @@ export class CardDetailDialogComponent {
     this.pickedArt.set(value === '' ? null : value);
   }
 
-  protected async remove(what: 'meta' | 'image' | 'both'): Promise<void> {
+  /** Deletes the whole card: its image and its metadata. */
+  protected async remove(): Promise<void> {
     const card = this.card();
-    const text = { meta: 'los metadatos', image: 'la imagen', both: 'la imagen y los metadatos' }[what];
-    const ok = await this.modal.confirm({ title: 'Eliminar', message: `¿Eliminar ${text} de "${card.name}"? No se puede deshacer.`, confirmLabel: 'Eliminar', danger: true });
+    const ok = await this.modal.confirm({
+      title: 'Eliminar carta',
+      message: `¿Eliminar "${card.name}"? No se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
     if (!ok) return;
     const metaId = card.meta?.id;
     await this.run(async () => {
-      if (what !== 'meta') await firstValueFrom(this.admin.deleteImage(card.id));
-      if (what !== 'image' && metaId) await firstValueFrom(this.admin.deleteMeta(metaId));
+      await firstValueFrom(this.admin.deleteImage(card.id));
+      if (metaId) await firstValueFrom(this.admin.deleteMeta(metaId));
     }, 'No se pudo eliminar');
   }
 

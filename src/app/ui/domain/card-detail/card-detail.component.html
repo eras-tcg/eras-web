@@ -46,7 +46,7 @@
     }
 
     @if (facts().length) {
-      <eras-card-facts class="facts" [facts]="facts()" />
+      <eras-card-facts class="facts" [facts]="facts()" [columns]="4" />
     }
 
     @for (group of textGroups(); track group.title) {

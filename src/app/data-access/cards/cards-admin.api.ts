@@ -39,11 +39,6 @@ export class CardsAdminApi {
     return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
   }
 
-  /** Renames the image record (the card name shown everywhere). */
-  renameImage(id: string, name: string): Observable<unknown> {
-    return this.http.patch(this.api.url(`/api/drive/cards/db/${encodeURIComponent(id)}/name`), { name });
-  }
-
   /** Adds an alternative art from an image file, with its own odds (null: the shop's): answers the metadata after it. */
   addAltArt(metaId: string, file: File, odds: number | null): Observable<CardMeta> {
     const query = odds === null ? '' : `?odds=${odds}`;

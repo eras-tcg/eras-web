@@ -379,9 +379,11 @@ interface EditionForm {
       inset-inline-end: auto;
       inset-inline-start: 7%;
     }
+    /* Reprint sits right above Mover */
     .edit.reprint {
       inset-inline-end: auto;
-      inset-inline-start: calc(7% + 2.5rem);
+      inset-inline-start: 7%;
+      inset-block-end: calc(6% + 2.5rem);
     }
     .edit:hover {
       background: var(--color-surface);

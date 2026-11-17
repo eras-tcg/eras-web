@@ -1,4 +1,5 @@
 import { CARD_RARITIES, CARD_TYPE_LABELS, CardMeta, CatalogCard } from '@data/cards/card.model';
+import { isStructure } from '@data/shop/shop-rules';
 import { Edition } from './edition.model';
 
 /** One place of an edition: its code and the card in it, if any (its metadata and, when it has one, its image). */
@@ -18,13 +19,30 @@ export function metaEditionId(m: Pick<CardMeta, 'edition' | 'subEdition'>): stri
   return m.subEdition ? `${m.edition}.${m.subEdition}` : (m.edition ?? '');
 }
 
+/** White cards an edition other than a structure deck has when it does not say: always 5. */
+export const WHITE_SLOTS = 5;
+
 /**
- * An edition's slots by color: the colors and count it declares (colors × cards per color), widened by the cards it
+ * How many cards of a color an edition has: its own count, else 5 white in an edition other than a structure deck,
+ * else the cards per color.
+ */
+export function slotsForColor(
+  edition: Pick<Edition, 'editionId' | 'cardsPerColor' | 'cardsByColor'>,
+  color: string,
+): number {
+  const own = edition.cardsByColor?.[color.toUpperCase()];
+  if (own != null) return own;
+  if (color.toUpperCase() === 'W' && !isStructure(edition.editionId)) return WHITE_SLOTS;
+  return edition.cardsPerColor ?? 0;
+}
+
+/**
+ * An edition's slots by color: the colors and count it declares (slotsForColor), widened by the cards it
  * already has (a color or number beyond them still shows). Each slot carries its card when there is one: the
  * metadata by code, and the catalog card (with the image) of that metadata.
  */
 export function editionSlots(
-  edition: Pick<Edition, 'editionId' | 'colors' | 'cardsPerColor'>,
+  edition: Pick<Edition, 'editionId' | 'colors' | 'cardsPerColor' | 'cardsByColor'>,
   metas: readonly CardMeta[],
   catalog: readonly CatalogCard[] = [],
 ): { color: string; slots: EditionSlot[] }[] {
@@ -35,7 +53,7 @@ export function editionSlots(
   const order = [...colors].sort((a, b) => COLOR_ORDER.indexOf(a) - COLOR_ORDER.indexOf(b));
   return order.map((color) => {
     const here = mine.filter((m) => m.colorIdentity!.toUpperCase() === color);
-    const count = Math.max(edition.cardsPerColor ?? 0, ...here.map((m) => m.cardNumber!), 0);
+    const count = Math.max(slotsForColor(edition, color), ...here.map((m) => m.cardNumber!), 0);
     const slots: EditionSlot[] = [];
     for (let n = 1; n <= count; n++) {
       const meta = here.find((m) => m.cardNumber === n) ?? null;

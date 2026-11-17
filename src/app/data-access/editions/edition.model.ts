@@ -50,6 +50,8 @@ export interface Edition {
   /** Its slots: the colors it has and how many cards each ("G" × 18 → G01–G18); null before slots existed. */
   colors?: string[] | null;
   cardsPerColor?: number | null;
+  /** A color with its own count (E1: 25 of each color but 5 white); the rest use cardsPerColor. */
+  cardsByColor?: Record<string, number> | null;
   coverFrame?: CoverFrame | null;
 }
 
@@ -67,6 +69,7 @@ export interface EditionSaveRequest {
   /** Left out (the shop's form): the server keeps the edition's slots. */
   colors?: string[];
   cardsPerColor?: number;
+  cardsByColor?: Record<string, number>;
   /** Left out: the server keeps the cover's framing. */
   coverFrame?: CoverFrame;
 }

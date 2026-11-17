@@ -10,6 +10,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { firstValueFrom } from 'rxjs';
+import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
 import { MoveChain, chainMetas, finalMoves, placeInSlot, slotCode } from './card-move-rules';
 
 export interface CardMoveData {
@@ -96,9 +97,16 @@ export interface CardMoveData {
         </section>
       </div>
       <div modal-footer class="footer">
-        <button erasButton variant="ghost" type="button" [disabled]="saving()" (click)="ref.close()">
-          {{ chain().moves.length ? 'Cancelar y no mover nada' : 'Cancelar' }}
-        </button>
+        @if (progress(); as p) {
+          <span class="progress" role="status">{{ p }}</span>
+        }
+        @if (done()) {
+          <button erasButton type="button" (click)="ref.close(true)">Cerrar</button>
+        } @else {
+          <button erasButton variant="ghost" type="button" [disabled]="saving()" (click)="ref.close()">
+            {{ chain().moves.length ? 'Cancelar y no mover nada' : 'Cancelar' }}
+          </button>
+        }
       </div>
     </eras-modal>
   `,
@@ -253,6 +261,12 @@ export interface CardMoveData {
     .footer {
       display: flex;
       justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .progress {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -273,6 +287,10 @@ export class CardMoveDialogComponent {
   protected readonly asking = signal<{ code: string; slot: EditionSlot } | null>(null);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly progress = signal<string | null>(null);
+  /** The moves are saved (only some images failed): the dialog only closes. */
+  protected readonly done = signal(false);
+  private readonly renderer = inject(CardRenderService);
   /** The editor's finished images, fetched with the session, by card id and render. */
   private readonly renders = signal<Record<string, string>>({});
   private readonly asked = new Set<string>();
@@ -293,7 +311,7 @@ export class CardMoveDialogComponent {
       const metas = [...this.slots().map((s) => s.meta), this.chain().hand];
       for (const m of metas) {
         const key = m?.renderKey ? `${m.id}|${m.renderKey}` : null;
-        if (!m || !key || this.driveImage(m) || this.asked.has(key)) continue;
+        if (!m || !key || this.asked.has(key)) continue;
         this.asked.add(key);
         void firstValueFrom(this.api.render(m.id))
           .then((blob) => this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })))
@@ -322,8 +340,10 @@ export class CardMoveDialogComponent {
     return c ? cardImageUrl(c) : null;
   }
 
+  /** The editor's finished image when the card has one (it shows its current code), else Drive's. */
   protected imageOf(m: CardMeta, card?: CatalogCard | null): string | null {
-    return this.driveImage(m, card) ?? (m.renderKey ? (this.renders()[`${m.id}|${m.renderKey}`] ?? null) : null);
+    const render: string | undefined = m.renderKey ? this.renders()[`${m.id}|${m.renderKey}`] : undefined;
+    return render ?? this.driveImage(m, card);
   }
 
   protected choose(s: EditionSlot): void {
@@ -352,17 +372,36 @@ export class CardMoveDialogComponent {
       return;
     }
     this.saving.set(true);
+    let moved: CardMeta[];
     try {
-      await firstValueFrom(this.api.moveSlots(moves));
-      await this.cards.load(true);
-      this.ref.close(true);
+      moved = await firstValueFrom(this.api.moveSlots(moves));
     } catch (e) {
       const msg = (e as { error?: { message?: string } })?.error?.message;
       this.error.set(msg ?? 'No se pudieron mover las cartas. No se guardó nada.');
       // The last card back in hand, so another slot can be chosen
       this.chain.update((c) => ({ moves: c.moves.slice(0, -1), hand: this.original.find((m) => m.id === c.moves.at(-1)?.id) ?? c.hand }));
-    } finally {
       this.saving.set(false);
+      return;
     }
+    // Their finished images drawn again, so they show the new code (cards with design and art)
+    const failed: string[] = [];
+    const drawable = moved.filter((m) => m.artKey && m.design);
+    for (const [i, m] of drawable.entries()) {
+      this.progress.set(`Actualizando imágenes ${i + 1} de ${drawable.length}…`);
+      try {
+        await this.renderer.refresh(m);
+      } catch {
+        failed.push(m.cardName ?? m.id);
+      }
+    }
+    this.progress.set(null);
+    await this.cards.load(true);
+    this.saving.set(false);
+    if (failed.length) {
+      this.done.set(true);
+      this.error.set(`Las cartas se movieron, pero no se pudo actualizar la imagen de: ${failed.join(', ')}.`);
+      return;
+    }
+    this.ref.close(true);
   }
 }

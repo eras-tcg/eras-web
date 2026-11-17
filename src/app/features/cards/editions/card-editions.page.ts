@@ -10,7 +10,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { CoverFrame, Edition } from '@data/editions/edition.model';
-import { EditionSlot, deckSize, editionMetrics, editionSlots, slotsFilled } from '@data/editions/edition-slots';
+import { EditionSlot, deckSize, editionMetrics, editionSlots, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
 import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
@@ -32,6 +32,8 @@ interface EditionForm {
   editionName: string;
   colors: string[];
   cardsPerColor: number;
+  /** Colors with their own count (white has 5 outside structure decks unless set). */
+  cardsByColor: Record<string, number>;
   editionDescription: string;
   releaseDate: string;
   /** A new cover chosen, saved with the edition. */
@@ -113,6 +115,24 @@ interface EditionForm {
               (input)="patch({ cardsPerColor: $any($event.target).valueAsNumber || 0 })"
             />
           </eras-form-field>
+          @if (f.colors.length) {
+            <span class="label">Cartas de cada color</span>
+            <div class="per-color">
+              @for (c of colors; track c) {
+                @if (f.colors.includes(c)) {
+                  <label>
+                    <span>{{ colorLabels[c] }}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      [value]="colorCount(f, c)"
+                      (input)="setColorCount(c, $any($event.target).valueAsNumber)"
+                    />
+                  </label>
+                }
+              }
+            </div>
+          }
           <eras-form-field label="Descripción">
             <textarea
               rows="3"
@@ -294,6 +314,20 @@ interface EditionForm {
     .slot-card {
       position: relative;
     }
+    .per-color {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+    .per-color label {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      font-size: var(--font-size-sm);
+    }
+    .per-color input {
+      inline-size: 5rem;
+    }
     .copies {
       display: flex;
       justify-content: center;
@@ -437,13 +471,13 @@ export class CardEditionsPage {
   constructor() {
     void this.editions.load();
     void this.cards.load();
-    // The editor's finished images of the cards without a Drive image, fetched with the session
+    // The editor's finished images (they show the card's current code), fetched with the session
     effect(() => {
       for (const g of this.groups())
         for (const s of g.slots) {
           const m = s.meta;
           const key = m?.renderKey ? `${m.id}|${m.renderKey}` : null;
-          if (!m || !key || (s.card && cardImageUrl(s.card)) || this.asked.has(key)) continue;
+          if (!m || !key || this.asked.has(key)) continue;
           this.asked.add(key);
           void firstValueFrom(this.adminApi.render(m.id))
             .then((blob) => this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })))
@@ -465,6 +499,7 @@ export class CardEditionsPage {
       editionName: e?.editionName ?? '',
       colors: [...(e?.colors ?? [])],
       cardsPerColor: e?.cardsPerColor ?? 18,
+      cardsByColor: { ...(e?.cardsByColor ?? {}) },
       editionDescription: e?.editionDescription ?? '',
       releaseDate: e?.releaseDate ?? '',
       cover: null,
@@ -474,6 +509,16 @@ export class CardEditionsPage {
 
   protected patch(change: Partial<EditionForm>): void {
     this.form.update((f) => (f ? { ...f, ...change } : f));
+  }
+
+  /** Cards of a color in the form: its own count, else the edition's rule (5 white outside structure decks). */
+  protected colorCount(f: EditionForm, color: string): number {
+    return slotsForColor({ editionId: f.editionId, cardsPerColor: f.cardsPerColor, cardsByColor: f.cardsByColor }, color);
+  }
+
+  protected setColorCount(color: string, count: number): void {
+    if (!Number.isFinite(count) || count < 0) return;
+    this.form.update((f) => (f ? { ...f, cardsByColor: { ...f.cardsByColor, [color]: count } } : f));
   }
 
   protected toggleColor(c: string): void {
@@ -521,7 +566,7 @@ export class CardEditionsPage {
       await this.editions.save({
         editionId: f.editionId,
         editionName: f.editionName.trim(),
-        numberOfCards: f.colors.length * f.cardsPerColor,
+        numberOfCards: f.colors.reduce((n, c) => n + this.colorCount(f, c), 0),
         editionDescription: f.editionDescription.trim(),
         // Empty keeps the image it has
         editionImage: '',
@@ -530,6 +575,7 @@ export class CardEditionsPage {
         boxConfig: existing?.boxConfig ?? { totalPacks: 0, entries: [] },
         colors: f.colors,
         cardsPerColor: f.cardsPerColor,
+        cardsByColor: Object.fromEntries(f.colors.filter((c) => c in f.cardsByColor).map((c) => [c, f.cardsByColor[c]])),
         ...(f.coverFrame ? { coverFrame: f.coverFrame } : {}),
       });
       if (f.cover) await this.editions.setImage(f.editionId, f.cover);
@@ -542,12 +588,11 @@ export class CardEditionsPage {
     }
   }
 
-  /** The slot's picture: its Drive image, else the editor's finished image. */
+  /** The slot's picture: the editor's finished image when the card has one (it shows its current code), else Drive's. */
   protected slotImage(s: EditionSlot): string | null {
-    const drive = s.card ? cardImageUrl(s.card) : null;
-    if (drive) return drive;
     const m = s.meta;
-    return m?.renderKey ? (this.renders()[`${m.id}|${m.renderKey}`] ?? null) : null;
+    const render = m?.renderKey ? (this.renders()[`${m.id}|${m.renderKey}`] ?? null) : null;
+    return render ?? (s.card ? cardImageUrl(s.card) : null);
   }
 
   /** The edition's cards as the catalog shows them in detail (a card made in the editor shows its finished image). */

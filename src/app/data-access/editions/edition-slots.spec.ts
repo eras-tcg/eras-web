@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '@data/cards/card.model';
-import { deckSize, editionMetrics, editionSlots, metaEditionId, slotsFilled } from './edition-slots';
+import { deckSize, editionMetrics, editionSlots, metaEditionId, slotsFilled, slotsForColor } from './edition-slots';
 
 const meta = (over: Partial<CardMeta>): CardMeta => ({ id: 'm', cardName: 'X', edition: 'ST2', colorIdentity: 'G', cardNumber: 1, ...over }) as CardMeta;
 
@@ -23,6 +23,20 @@ describe('edition slots', () => {
     expect(slotsFilled(groups)).toEqual({ filled: 2, total: 7 });
     // Without declared slots: only what it has
     expect(editionSlots({ editionId: 'ST2' }, metas).map((g) => g.slots.length)).toEqual([1, 5]);
+  });
+
+  it('gives each color its own count, and 5 white outside structure decks', () => {
+    const e = { editionId: 'E1', colors: ['B', 'W'], cardsPerColor: 25 };
+    expect(slotsForColor(e, 'B')).toBe(25);
+    expect(slotsForColor(e, 'W')).toBe(5);
+    expect(slotsForColor({ ...e, cardsByColor: { W: 4, B: 20 } }, 'W')).toBe(4);
+    expect(slotsForColor({ ...e, cardsByColor: { B: 20 } }, 'b')).toBe(20);
+    expect(slotsForColor({ editionId: 'ST2', cardsPerColor: 17 }, 'W')).toBe(17);
+    const groups = editionSlots(e, []);
+    expect(groups.map((g) => [g.color, g.slots.length])).toEqual([
+      ['B', 25],
+      ['W', 5],
+    ]);
   });
 
   it('reads sub-editions as their own edition', () => {

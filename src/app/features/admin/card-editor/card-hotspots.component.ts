@@ -73,6 +73,7 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
       <div
         #pop
         class="editor"
+        [class.wide]="z.key === 'requirement'"
         [class.above]="z.rect[1] > H * 0.6"
         [style.left.%]="z.rect[0] > W * 0.55 ? null : (z.rect[0] / W) * 100"
         [style.right.%]="z.rect[0] > W * 0.55 ? 100 - (z.rect[2] / W) * 100 : null"
@@ -94,15 +95,28 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
             />
           }
           @case ('text') {
-            <input
-              #field
-              type="text"
-              [attr.aria-label]="labels[z.key]"
-              [value]="textValue(z.key)"
-              (keydown.enter)="commitText(z.key, $any($event.target).value)"
-              (keydown.escape)="close()"
-              (blur)="commitText(z.key, $any($event.target).value)"
-            />
+            @if (z.key === 'requirement') {
+              <!-- A requirement can take two lines on the card: room to read it whole while typing (Enter saves) -->
+              <textarea
+                #field
+                rows="3"
+                [attr.aria-label]="labels[z.key]"
+                [value]="textValue(z.key)"
+                (keydown.enter)="$event.preventDefault(); commitText(z.key, $any($event.target).value)"
+                (keydown.escape)="close()"
+                (blur)="commitText(z.key, $any($event.target).value)"
+              ></textarea>
+            } @else {
+              <input
+                #field
+                type="text"
+                [attr.aria-label]="labels[z.key]"
+                [value]="textValue(z.key)"
+                (keydown.enter)="commitText(z.key, $any($event.target).value)"
+                (keydown.escape)="close()"
+                (blur)="commitText(z.key, $any($event.target).value)"
+              />
+            }
           }
           @case ('code') {
             <div class="code-menu">
@@ -276,8 +290,18 @@ const TEXT_FIELD: Record<TextKey, keyof MetaForm> = {
       background: var(--color-surface);
       box-shadow: var(--shadow-md);
     }
-    .editor input {
+    .editor input,
+    .editor textarea {
       inline-size: 100%;
+    }
+    .editor.wide {
+      min-inline-size: min(26rem, 90vw);
+      max-inline-size: min(32rem, 90vw);
+    }
+    .editor textarea {
+      resize: vertical;
+      font: inherit;
+      line-height: 1.4;
     }
     .options {
       display: flex;
@@ -380,7 +404,7 @@ export class CardHotspotsComponent {
   protected readonly suggestions = computed(() =>
     classMatches(this.classQuery(), this.classes(), this.form().cardClasses),
   );
-  private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
+  private readonly field = viewChild<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('field');
   private readonly pop = viewChild<ElementRef<HTMLElement>>('pop');
 
   constructor() {

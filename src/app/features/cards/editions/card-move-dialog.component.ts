@@ -12,27 +12,31 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
-import { MoveChain, chainMetas, finalMoves, placeInSlot, slotCode } from './card-move-rules';
+import { MoveChain, chainMetas, finalMoves, placeInSlot, slotCode, splitEdition } from './card-move-rules';
 
 export interface CardMoveData {
   /** The card picked up. */
   card: CardMeta;
+  /** "reprint": a copy of the card goes to an empty slot and the card stays where it is. Default "move". */
+  mode?: 'move' | 'reprint';
 }
 
 /**
  * Moves a card to another slot of its color, in any edition. Choosing a slot with a card asks whether to take that
  * card out; if so, it is the next one to place, and the chain goes on until a card lands in an empty slot. Nothing is
  * saved until then (all the moves at once); the card being moved is always shown at the top.
+ * In "reprint" mode the card stays in its slot and its copy goes to the empty slot chosen (taken slots cannot be
+ * chosen); the copy's finished image is drawn with its own code.
  */
 @Component({
   selector: 'eras-card-move-dialog',
   imports: [ModalComponent, ButtonComponent, AlertComponent],
   template: `
-    <eras-modal title="Mover carta" size="full" (closed)="ref.close()">
+    <eras-modal [title]="reprint ? 'Reimprimir carta' : 'Mover carta'" size="full" (closed)="ref.close()">
       <div class="layout">
         <aside class="hand" aria-live="polite">
           @if (chain().hand; as h) {
-            <span class="label">Moviendo</span>
+            <span class="label">{{ reprint ? 'Reimprimiendo' : 'Moviendo' }}</span>
             <div class="card-img">
               @if (imageOf(h); as src) {
                 <img [src]="src" alt="" />
@@ -41,7 +45,7 @@ export interface CardMoveData {
               }
             </div>
             <strong>{{ h.cardName }}</strong>
-            <span class="from">Estaba en {{ originalCode(h) }}</span>
+            <span class="from">{{ reprint ? 'Está en' : 'Estaba en' }} {{ originalCode(h) }}</span>
           }
           @if (chain().moves.length) {
             <ol class="moves">
@@ -71,7 +75,7 @@ export interface CardMoveData {
                 class="slot"
                 [class.empty]="!s.meta"
                 [class.origin]="s.code === handOrigin()"
-                [disabled]="saving()"
+                [disabled]="saving() || (reprint && !!s.meta)"
                 [attr.aria-label]="
                   s.code + (s.meta ? ' ' + s.meta.cardName : ' vacío') + (s.code === handOrigin() ? ', donde estaba la carta que mueves' : '')
                 "
@@ -279,6 +283,7 @@ export class CardMoveDialogComponent {
 
   /** The cards as they were when the dialog opened (what the moves are compared with). */
   private readonly original = this.cards.metaList();
+  protected readonly reprint = this.data.mode === 'reprint';
   protected readonly chain = signal<MoveChain>({ moves: [], hand: this.data.card });
   protected readonly editionId = signal(
     `${this.data.card.edition ?? ''}${this.data.card.subEdition ? '.' + this.data.card.subEdition : ''}`,
@@ -301,7 +306,9 @@ export class CardMoveDialogComponent {
   protected readonly slots = computed(() => {
     const e = this.editions().find((x) => x.editionId === this.editionId());
     if (!e) return [];
-    const groups = editionSlots(e, chainMetas(this.original, this.chain()), this.cards.cards());
+    // A reprint leaves the card where it is: the slots as they are
+    const metas = this.reprint ? this.original : chainMetas(this.original, this.chain());
+    const groups = editionSlots(e, metas, this.cards.cards());
     return groups.find((g) => g.color === this.color)?.slots ?? [];
   });
 
@@ -354,6 +361,10 @@ export class CardMoveDialogComponent {
   /** An empty slot ends the chain; one with a card asks (a small dialog over this one) whether to take it out. */
   protected async choose(s: EditionSlot): Promise<void> {
     this.error.set(null);
+    if (this.reprint) {
+      if (!s.meta) void this.reprintTo(s);
+      return;
+    }
     const occupant = s.meta;
     if (occupant) {
       const take = await this.modal.confirm({
@@ -366,6 +377,38 @@ export class CardMoveDialogComponent {
     }
     this.chain.update((c) => placeInSlot(c, this.editionId(), s.number, null));
     void this.save();
+  }
+
+  /** The card's copy goes to the empty slot; its finished image is drawn with the new code. */
+  private async reprintTo(s: EditionSlot): Promise<void> {
+    const { edition, subEdition } = splitEdition(this.editionId());
+    this.saving.set(true);
+    let copy: CardMeta;
+    try {
+      copy = await firstValueFrom(this.api.reprint(this.data.card.id, { edition, subEdition, cardNumber: s.number }));
+    } catch (e) {
+      const msg = (e as { error?: { message?: string } })?.error?.message;
+      this.error.set(msg ?? 'No se pudo reimprimir la carta.');
+      this.saving.set(false);
+      return;
+    }
+    let drawn = true;
+    if (copy.artKey && copy.design) {
+      this.progress.set('Dibujando la carta…');
+      drawn = await this.renderer.refresh(copy).then(
+        () => true,
+        () => false,
+      );
+      this.progress.set(null);
+    }
+    await this.cards.load(true);
+    this.saving.set(false);
+    if (!drawn) {
+      this.done.set(true);
+      this.error.set(`Se reimprimió en ${s.code}, pero no se pudo dibujar su imagen. Ábrela en el editor y guárdala.`);
+      return;
+    }
+    this.ref.close(true);
   }
 
   private async save(): Promise<void> {

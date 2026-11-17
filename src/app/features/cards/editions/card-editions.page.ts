@@ -214,6 +214,15 @@ interface EditionForm {
                       >
                         <eras-icon name="swap" />
                       </button>
+                      <button
+                        type="button"
+                        class="edit reprint"
+                        [attr.aria-label]="'Reimprimir ' + s.meta.cardName + ' en otra edición'"
+                        title="Reimprimir en otra edición"
+                        (click)="moveCard(s, 'reprint')"
+                      >
+                        <eras-icon name="layers" />
+                      </button>
                     }
                   </div>
                   @if (structure()) {
@@ -369,6 +378,10 @@ interface EditionForm {
     .edit.move {
       inset-inline-end: auto;
       inset-inline-start: 7%;
+    }
+    .edit.reprint {
+      inset-inline-end: auto;
+      inset-inline-start: calc(7% + 2.5rem);
     }
     .edit:hover {
       background: var(--color-surface);
@@ -652,10 +665,13 @@ export class CardEditionsPage {
     openCardDetailDialog(this.modal, all.map((x) => x.card), Math.max(0, index));
   }
 
-  /** Moves the slot's card to another slot of its color (a chain of moves when the chosen slot has a card). */
-  protected moveCard(s: EditionSlot): void {
+  /**
+   * Moves the slot's card to another slot of its color (a chain of moves when the chosen slot has a card), or
+   * reprints it in an empty one.
+   */
+  protected moveCard(s: EditionSlot, mode: 'move' | 'reprint' = 'move'): void {
     if (!this.canEditCards() || !s.meta) return;
-    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta }, maxWidth: '96vw' });
+    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta, mode }, maxWidth: '96vw' });
   }
 
   /** The editor: a filled slot's card, or a new card with an empty slot's code. */

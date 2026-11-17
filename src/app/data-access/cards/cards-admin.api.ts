@@ -30,6 +30,11 @@ export class CardsAdminApi {
     return this.http.put<CardMeta[]>(this.api.url('/api/cards/slots'), moves);
   }
 
+  /** A reprint of the card in an empty slot (a card of its own, with its own copy of the art). */
+  reprint(id: string, slot: { edition: string; subEdition: string | null; cardNumber: number }): Observable<CardMeta> {
+    return this.http.post<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}/reprint`), slot);
+  }
+
   deleteMeta(id: string): Observable<unknown> {
     return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
   }

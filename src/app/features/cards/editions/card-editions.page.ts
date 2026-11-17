@@ -749,17 +749,23 @@ export class CardEditionsPage {
       .filter((s) => s.meta)
       .map((s) => {
         const m = s.meta!;
-        const card: CatalogCard = s.card ?? {
+        const base: CatalogCard = s.card ?? {
           id: m.id,
           name: m.cardName ?? null,
           edition: m.edition ?? '',
           sub_edition: m.subEdition ?? null,
           number: m.cardNumber ?? null,
           color_identity: m.colorIdentity ?? null,
-          image_url: this.slotImage(s),
+          image_url: null,
           time_stamp: null,
           meta: m,
         };
+        // The picture and data the slot shows: the editor's latest render (already current: no version added), not an
+        // older image of the card
+        const render = this.slotImage(s);
+        const card: CatalogCard = render
+          ? { ...base, name: m.cardName ?? base.name, meta: m, image_url: render, time_stamp: null }
+          : { ...base, name: m.cardName ?? base.name, meta: m };
         return { slot: s, card };
       });
   }

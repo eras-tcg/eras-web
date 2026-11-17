@@ -27,6 +27,16 @@ export interface BoxConfig {
   entries: BoxEntry[];
 }
 
+/**
+ * How an edition's cover sits in its card-shaped tile (the image is not cut): the point kept in view, in % of the
+ * image (50, 50 = its middle), and how much it is enlarged (1 = it just covers the tile).
+ */
+export interface CoverFrame {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 /** Edition as returned by GET /api/drive/editions */
 export interface Edition {
   editionId: string;
@@ -40,6 +50,7 @@ export interface Edition {
   /** Its slots: the colors it has and how many cards each ("G" × 18 → G01–G18); null before slots existed. */
   colors?: string[] | null;
   cardsPerColor?: number | null;
+  coverFrame?: CoverFrame | null;
 }
 
 /** Body of POST /api/drive/editions (create or update by editionId). */
@@ -56,4 +67,6 @@ export interface EditionSaveRequest {
   /** Left out (the shop's form): the server keeps the edition's slots. */
   colors?: string[];
   cardsPerColor?: number;
+  /** Left out: the server keeps the cover's framing. */
+  coverFrame?: CoverFrame;
 }

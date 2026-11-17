@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BoxEntry, Edition } from './edition.model';
-import { canSimulateBox, canSimulatePack, compareEditionIds, isTestEdition, pickRandomPackFromBox, validateBoxConfig } from './edition-rules';
+import { canSimulateBox, canSimulatePack, compareEditionIds, coverFrameStyle, isTestEdition, pickRandomPackFromBox, validateBoxConfig } from './edition-rules';
 
 const entry = (packTypeName: string, mode: BoxEntry['mode'], quantity = 0, probOptions: BoxEntry['probOptions'] = []): BoxEntry => ({
   packTypeName,
@@ -92,5 +92,12 @@ describe('canSimulatePack / canSimulateBox', () => {
     expect(canSimulatePack(withPacks)).toBe(true);
     expect(canSimulateBox(withPacks)).toBe(false);
     expect(canSimulateBox({ ...withPacks, boxConfig: { totalPacks: 1, entries: [entry('N', 'FLEX')] } })).toBe(true);
+  });
+});
+
+describe('coverFrameStyle', () => {
+  it('centers a cover without framing and grows a framed one around its point', () => {
+    expect(coverFrameStyle(null)).toEqual({ position: '50% 50%', transform: null });
+    expect(coverFrameStyle({ x: 20, y: 70, zoom: 1.5 })).toEqual({ position: '20% 70%', transform: 'scale(1.5)' });
   });
 });

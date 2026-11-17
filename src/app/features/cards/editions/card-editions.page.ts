@@ -9,10 +9,12 @@ import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
-import { Edition } from '@data/editions/edition.model';
+import { CoverFrame, Edition } from '@data/editions/edition.model';
 import { EditionSlot, deckSize, editionMetrics, editionSlots, slotsFilled } from '@data/editions/edition-slots';
 import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
+import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
+import { EditionTileComponent } from './edition-tile.component';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
@@ -33,6 +35,8 @@ interface EditionForm {
   releaseDate: string;
   /** A new cover chosen, saved with the edition. */
   cover: File | null;
+  /** How the cover sits in its tile; null: as it is. */
+  coverFrame: CoverFrame | null;
 }
 
 /**
@@ -54,6 +58,7 @@ interface EditionForm {
     ButtonComponent,
     ChipComponent,
     IconComponent,
+    EditionTileComponent,
   ],
   template: `
     <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
@@ -116,11 +121,13 @@ interface EditionForm {
           </eras-form-field>
           <span class="label">Portada</span>
           <div class="cover">
-            @if (coverPreview(); as src) {
-              <img [src]="src" alt="" />
-            }
-            <input #coverFile type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="pickCover($event)" />
-            <button erasButton variant="secondary" type="button" (click)="coverFile.click()">Elegir imagen</button>
+            <eras-edition-tile
+              [image]="coverPreview()"
+              [frame]="f.coverFrame ?? edition()?.coverFrame"
+              [code]="f.editionId || '—'"
+              [name]="f.editionName"
+            />
+            <button erasButton variant="secondary" type="button" (click)="editCover()">Editar portada</button>
           </div>
           <eras-form-field label="Fecha de lanzamiento">
             <input
@@ -223,16 +230,14 @@ interface EditionForm {
       } @else if (!editionId()) {
         <eras-grid minColumn="min(12rem, 40vw, 36dvh)" [gap]="4">
           @for (e of list(); track e.edition.editionId) {
-            <a
-              class="tile"
-              [routerLink]="['/cards/editions', e.edition.editionId]"
-              [style.background-image]="e.edition.editionImage ? 'url(' + e.edition.editionImage + ')' : null"
-            >
-              <span class="tile-info">
-                <span class="code">{{ e.edition.editionId }}</span>
-                <span class="title">{{ e.edition.editionName || e.edition.editionId }}</span>
-                <span class="count">{{ e.filled.filled }} / {{ e.filled.total }}</span>
-              </span>
+            <a class="tile" [routerLink]="['/cards/editions', e.edition.editionId]">
+              <eras-edition-tile
+                [image]="e.edition.editionImage"
+                [frame]="e.edition.coverFrame"
+                [code]="e.edition.editionId"
+                [name]="e.edition.editionName"
+                [detail]="e.filled.filled + ' / ' + e.filled.total"
+              />
             </a>
           }
         </eras-grid>
@@ -251,74 +256,30 @@ interface EditionForm {
       gap: var(--space-2);
       justify-items: start;
     }
-    .cover img {
-      inline-size: 100%;
-      max-block-size: 14rem;
-      object-fit: cover;
-      border-radius: var(--radius-md);
-      border: var(--border-width) solid var(--color-border);
+    .cover eras-edition-tile {
+      inline-size: 12rem;
     }
     .label,
     .meta {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
     }
-    /* As the shop's edition tiles: card-shaped, the cover behind, the text over a scrim at the bottom */
+    /* The tile lifts on hover, as in the shop */
     .tile {
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      aspect-ratio: 744 / 1039;
-      overflow: hidden;
-      border: 2px solid var(--color-border);
+      display: block;
       border-radius: var(--radius-lg);
-      background: var(--color-surface-muted) center / cover;
-      box-shadow: var(--shadow-sm);
-      color: var(--color-hub-text);
+      color: inherit;
       text-decoration: none;
-      transition:
-        transform var(--duration-fast) var(--easing-standard),
-        border-color var(--duration-fast) var(--easing-standard),
-        box-shadow var(--duration-fast) var(--easing-standard);
+      transition: transform var(--duration-fast) var(--easing-standard);
     }
     .tile:hover,
     .tile:focus-visible {
-      border-color: var(--color-hub-accent);
-      box-shadow: var(--shadow-lg);
       transform: translateY(-3px);
     }
-    .tile::before {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(0deg, color-mix(in srgb, var(--color-hub-scrim) 92%, transparent) 0%, transparent 55%);
-      content: '';
-    }
-    .tile-info {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-      inline-size: 100%;
-      padding: var(--space-3);
-    }
-    .tile .code {
-      color: var(--color-hub-accent);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-bold);
-      letter-spacing: 0.08em;
-    }
-    .tile .title {
-      font-family: var(--font-family-display);
-      font-size: var(--font-size-md);
-      line-height: 1.15;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      hyphens: auto;
-      overflow-wrap: break-word;
-    }
-    .tile .count {
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-bold);
+    .tile:hover eras-edition-tile,
+    .tile:focus-visible eras-edition-tile {
+      border-color: var(--color-hub-accent);
+      box-shadow: var(--shadow-lg);
     }
     .slot-card {
       position: relative;
@@ -493,18 +454,8 @@ export class CardEditionsPage {
       editionDescription: e?.editionDescription ?? '',
       releaseDate: e?.releaseDate ?? '',
       cover: null,
+      coverFrame: null,
     });
-  }
-
-  protected pickCover(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    if (!file) return;
-    const old = this.coverUrl();
-    if (old) URL.revokeObjectURL(old);
-    this.coverUrl.set(URL.createObjectURL(file));
-    this.patch({ cover: file });
   }
 
   protected patch(change: Partial<EditionForm>): void {
@@ -515,6 +466,27 @@ export class CardEditionsPage {
     this.form.update((f) =>
       f ? { ...f, colors: f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c] } : f,
     );
+  }
+
+  /** The cover editor: the image chosen and how it sits stay in the form until it is saved. */
+  protected async editCover(): Promise<void> {
+    const f = this.form();
+    if (!f) return;
+    const data: EditionCoverData = {
+      code: f.editionId || '—',
+      name: f.editionName,
+      image: this.coverPreview(),
+      frame: f.coverFrame ?? this.edition()?.coverFrame ?? null,
+    };
+    const ref = this.modal.open<EditionCoverResult, EditionCoverData>(EditionCoverDialogComponent, { data });
+    const result = await firstValueFrom(ref.closed);
+    if (!result) return;
+    if (result.file) {
+      const old = this.coverUrl();
+      if (old) URL.revokeObjectURL(old);
+      this.coverUrl.set(URL.createObjectURL(result.file));
+    }
+    this.patch({ cover: result.file ?? f.cover, coverFrame: result.frame });
   }
 
   protected async saveForm(): Promise<void> {
@@ -544,6 +516,7 @@ export class CardEditionsPage {
         boxConfig: existing?.boxConfig ?? { totalPacks: 0, entries: [] },
         colors: f.colors,
         cardsPerColor: f.cardsPerColor,
+        ...(f.coverFrame ? { coverFrame: f.coverFrame } : {}),
       });
       if (f.cover) await this.editions.setImage(f.editionId, f.cover);
       this.form.set(null);

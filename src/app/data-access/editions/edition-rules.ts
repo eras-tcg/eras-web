@@ -1,4 +1,4 @@
-import { BoxConfig, BoxEntry, Edition } from './edition.model';
+import { BoxConfig, BoxEntry, Edition, CoverFrame } from './edition.model';
 
 /**
  * A testing edition ("T1", "T1.2"): cards with no edition yet. The backend shows them only to players with the
@@ -105,4 +105,13 @@ export function canSimulatePack(edition: Edition): boolean {
 
 export function canSimulateBox(edition: Edition): boolean {
   return canSimulatePack(edition) && (edition.boxConfig?.entries?.length ?? 0) > 0;
+}
+
+/** The cover as it sits: centered and just covering when it has no framing. */
+export const DEFAULT_COVER_FRAME: CoverFrame = { x: 50, y: 50, zoom: 1 };
+
+/** CSS that places a cover in its tile: the framed point stays in view and the image grows around it. */
+export function coverFrameStyle(frame: CoverFrame | null | undefined): { position: string; transform: string | null } {
+  const f = frame ?? DEFAULT_COVER_FRAME;
+  return { position: `${f.x}% ${f.y}%`, transform: f.zoom !== 1 ? `scale(${f.zoom})` : null };
 }

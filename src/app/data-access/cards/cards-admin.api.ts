@@ -23,6 +23,13 @@ export class CardsAdminApi {
     return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { deckCopies: copies });
   }
 
+  /** Moves cards to other slots all at once (each card's images move with it); answers the cards as they are now. */
+  moveSlots(
+    moves: readonly { id: string; edition: string; subEdition: string | null; cardNumber: number }[],
+  ): Observable<CardMeta[]> {
+    return this.http.put<CardMeta[]>(this.api.url('/api/cards/slots'), moves);
+  }
+
   deleteMeta(id: string): Observable<unknown> {
     return this.http.delete(this.api.url(`/api/cards/${encodeURIComponent(id)}`), { responseType: 'text' });
   }

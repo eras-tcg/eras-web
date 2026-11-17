@@ -15,6 +15,7 @@ import { isStructure } from '@data/shop/shop-rules';
 import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
 import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
 import { EditionTileComponent } from './edition-tile.component';
+import { CardMoveData, CardMoveDialogComponent } from './card-move-dialog.component';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
@@ -184,6 +185,15 @@ interface EditionForm {
                       >
                         <eras-icon name="edit" />
                       </button>
+                      <button
+                        type="button"
+                        class="edit move"
+                        [attr.aria-label]="'Mover ' + s.meta.cardName + ' a otro lugar'"
+                        title="Mover a otro lugar"
+                        (click)="moveCard(s)"
+                      >
+                        <eras-icon name="swap" />
+                      </button>
                     }
                   </div>
                   @if (structure()) {
@@ -321,6 +331,10 @@ interface EditionForm {
       background: color-mix(in srgb, var(--color-surface) 85%, transparent);
       color: var(--color-text);
       cursor: pointer;
+    }
+    .edit.move {
+      inset-inline-end: auto;
+      inset-inline-start: 7%;
     }
     .edit:hover {
       background: var(--color-surface);
@@ -591,6 +605,12 @@ export class CardEditionsPage {
     const all = this.detailCards();
     const index = all.findIndex((x) => x.slot.code === s.code);
     openCardDetailDialog(this.modal, all.map((x) => x.card), Math.max(0, index));
+  }
+
+  /** Moves the slot's card to another slot of its color (a chain of moves when the chosen slot has a card). */
+  protected moveCard(s: EditionSlot): void {
+    if (!this.canEditCards() || !s.meta) return;
+    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta } });
   }
 
   /** The editor: a filled slot's card, or a new card with an empty slot's code. */

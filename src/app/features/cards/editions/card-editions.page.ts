@@ -195,6 +195,7 @@ interface EditionForm {
                         type="button"
                         class="rarity-tab"
                         [style.--rarity]="rarityColor(s.meta.rarity)"
+                        [attr.data-rarity]="s.meta.rarity"
                         [attr.aria-label]="'Rareza de ' + s.meta.cardName + ': ' + (s.meta.rarity || 'sin rareza')"
                         title="Cambiar rareza"
                         [disabled]="savingRarity() === s.meta.id"
@@ -204,7 +205,7 @@ interface EditionForm {
                         {{ s.meta.rarity || '—' }}
                       </button>
                     } @else if (s.meta.rarity) {
-                      <span class="rarity-tab" [style.--rarity]="rarityColor(s.meta.rarity)" [attr.aria-label]="'Rareza ' + s.meta.rarity">
+                      <span class="rarity-tab" [style.--rarity]="rarityColor(s.meta.rarity)" [attr.data-rarity]="s.meta.rarity" [attr.aria-label]="'Rareza ' + s.meta.rarity">
                         {{ s.meta.rarity }}
                       </span>
                     }
@@ -375,26 +376,43 @@ interface EditionForm {
       --rarity-tab-height: 1.5rem;
       margin-block-start: var(--rarity-tab-height);
     }
-    /* The rarity tab sits on the card's top edge, all of it above the card, its left side cut on a slant */
+    /*
+     * The rarity tab: flush with the card's right edge, square at its top-right corner, coming down over the card past
+     * its rounded corner (no gap shows there) with its label above the card; the left side cut on a slant. Its color is
+     * the shop's rarity color as a gradient with a sheen (SEC: the foil's rainbow).
+     */
     .rarity-tab {
+      --corner: var(--radius-md);
       position: absolute;
       z-index: 1;
-      inset-block-end: 100%;
-      inset-inline-end: 8%;
+      inset-block-end: calc(100% - var(--corner) - 2px);
+      inset-inline-end: 0;
       display: grid;
-      place-items: center;
-      min-inline-size: 2.75rem;
-      block-size: var(--rarity-tab-height, 1.5rem);
-      padding: 0 var(--space-2) 0 calc(var(--space-2) + 0.6rem);
+      place-items: start center;
+      min-inline-size: 3rem;
+      block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
+      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0 calc(var(--space-2) + 0.7rem);
       border: 0;
-      border-start-end-radius: var(--radius-sm);
-      background: var(--rarity);
+      background:
+        linear-gradient(115deg, transparent 30%, var(--color-rarity-shine) 46%, transparent 62%),
+        linear-gradient(
+          160deg,
+          color-mix(in srgb, var(--rarity) 55%, var(--color-rarity-shine)) 0%,
+          var(--rarity) 45%,
+          color-mix(in srgb, var(--rarity) 65%, var(--color-rarity-shade)) 100%
+        );
       color: var(--color-on-rarity);
-      clip-path: polygon(0.75rem 0, 100% 0, 100% 100%, 0 100%);
+      clip-path: polygon(0.8rem 0, 100% 0, 100% 100%, 0 100%);
       font-family: var(--font-family-display);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-bold);
       line-height: 1;
+      text-shadow: 0 1px 0 var(--color-rarity-shine);
+    }
+    .rarity-tab[data-rarity='SEC'] {
+      background:
+        linear-gradient(115deg, transparent 30%, var(--color-rarity-shine) 46%, transparent 62%),
+        linear-gradient(120deg, var(--color-rarity-sec), var(--color-rarity-r) 35%, var(--color-rarity-uc) 65%, var(--color-rarity-sr));
     }
     button.rarity-tab {
       cursor: pointer;

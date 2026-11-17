@@ -26,9 +26,8 @@
   --color-rarity-sr: #f59e0b;
   --color-rarity-sec: #f472b6;
   /** Text over a rarity color (the rarity tabs of the editions). */
-  --color-on-rarity: #111827;
-  /** Light and shade blended into a rarity color (the rarity tabs' gradient and sheen). */
-  --color-rarity-shine: rgb(255 255 255 / 60%);
+  --color-on-rarity: #fff;
+  /** Shade blended into a rarity color (the rarity tabs' gradient) and under their text. */
   --color-rarity-shade: rgb(0 0 0 / 45%);
 
   --color-card-b: #3b82f6;

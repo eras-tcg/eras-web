@@ -379,12 +379,13 @@ interface EditionForm {
     /*
      * The rarity tab: flush with the card's right edge, square at its top-right corner, coming down over the card past
      * its rounded corner (no gap shows there) with its label above the card; the left side cut on a slant. Its color is
-     * the shop's rarity color as a gradient with a sheen (SEC: the foil's rainbow).
+     * the shop's rarity color as an intense gradient into a deeper neighbouring hue.
      */
     .rarity-tab {
       --corner: var(--radius-md);
       position: absolute;
-      z-index: 1;
+      /* Behind the card: the part that comes down past its corner is hidden under it */
+      z-index: 0;
       inset-block-end: calc(100% - var(--corner) - 2px);
       inset-inline-end: 0;
       display: grid;
@@ -393,27 +394,20 @@ interface EditionForm {
       block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
       padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0 calc(var(--space-2) + 0.7rem);
       border: 0;
-      background:
-        linear-gradient(115deg, transparent 30%, var(--color-rarity-shine) 46%, transparent 62%),
-        linear-gradient(
-          160deg,
-          color-mix(in srgb, var(--rarity) 55%, var(--color-rarity-shine)) 0%,
-          var(--rarity) 45%,
-          color-mix(in srgb, var(--rarity) 65%, var(--color-rarity-shade)) 100%
-        );
+      background: linear-gradient(135deg, var(--rarity-from) 20%, var(--rarity-to));
       color: var(--color-on-rarity);
       clip-path: polygon(0.8rem 0, 100% 0, 100% 100%, 0 100%);
       font-family: var(--font-family-display);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-bold);
       line-height: 1;
-      text-shadow: 0 1px 0 var(--color-rarity-shine);
+      text-shadow: 0 1px 2px var(--color-rarity-shade);
     }
-    .rarity-tab[data-rarity='SEC'] {
-      background:
-        linear-gradient(115deg, transparent 30%, var(--color-rarity-shine) 46%, transparent 62%),
-        linear-gradient(120deg, var(--color-rarity-sec), var(--color-rarity-r) 35%, var(--color-rarity-uc) 65%, var(--color-rarity-sr));
-    }
+    .rarity-tab { --rarity-from: var(--rarity); --rarity-to: color-mix(in srgb, var(--rarity) 60%, var(--color-rarity-shade)); }
+    .rarity-tab[data-rarity='UC'] { --rarity-to: color-mix(in srgb, var(--color-rarity-uc) 45%, var(--color-rarity-r)); }
+    .rarity-tab[data-rarity='R'] { --rarity-from: var(--color-rarity-r); --rarity-to: color-mix(in srgb, var(--color-rarity-r) 45%, var(--color-rarity-sec)); }
+    .rarity-tab[data-rarity='SR'] { --rarity-to: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-rarity-sec)); }
+    .rarity-tab[data-rarity='SEC'] { --rarity-to: color-mix(in srgb, var(--color-rarity-sec) 40%, var(--color-rarity-r)); }
     button.rarity-tab {
       cursor: pointer;
     }
@@ -464,10 +458,13 @@ interface EditionForm {
       cursor: default;
     }
     .slot-card .slot {
+      position: relative;
+      z-index: 1;
       inline-size: 100%;
     }
     .edit {
       position: absolute;
+      z-index: 2;
       inset-block-end: 6%;
       inset-inline-end: 7%;
       display: grid;

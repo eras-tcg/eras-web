@@ -13,6 +13,8 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EditionsStore } from '@data/editions/editions.store';
+import { otherPrintings, printingPayload } from '@data/editions/edition-slots';
+import { CardRenderService } from './render/card-render.service';
 import { AppScreen } from '@core/pwa/app-screen';
 import { CardsStore } from '@data/cards/cards.store';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -598,6 +600,7 @@ export class CardEditorPage {
   /** Where "back" leads (the screen tree's parent of the editor). */
   private readonly editions = inject(EditionsStore);
   private readonly modal = inject(ModalService);
+  private readonly renderer = inject(CardRenderService);
   /** The card as last opened or saved (form and design): leaving with something else asks first. */
   private savedKey = '';
   /** "Back": the edition of the card open (its slots), or the editions when it has none. */
@@ -965,26 +968,55 @@ export class CardEditorPage {
     try {
       const body = { ...toMetaPayload(this.form()), design: { ...this.design() } };
       const id = this.metaId();
+      // Its other printings (reprints), by the name it had before this save
+      const before = id ? this.store.metaList().find((m) => m.id === id) : null;
+      const printings = before ? otherPrintings(before.cardName, id, this.store.metaList()) : [];
+      const art = this.artChanged ? { file: this.artFile } : null;
       const saved = await firstValueFrom(
         id ? this.api.updateMeta(id, body) : this.api.createMeta(body),
       );
       this.metaId.set(saved.id);
-      if (this.artChanged) {
-        await firstValueFrom(
-          this.artFile ? this.api.setArt(saved.id, this.artFile) : this.api.removeArt(saved.id),
-        );
+      if (art) {
+        await firstValueFrom(art.file ? this.api.setArt(saved.id, art.file) : this.api.removeArt(saved.id));
         this.artChanged = false;
         this.artFile = null;
       }
       await this.saveRender(saved.id);
       this.markSaved();
-      this.fb.ok('Carta guardada');
+      const synced = printings.length ? await this.syncPrintings(printings, body, art) : 0;
+      this.fb.ok(synced ? `Carta guardada y aplicada a ${synced} ${synced === 1 ? 'reimpresión' : 'reimpresiones'}` : 'Carta guardada');
       void this.store.load(true);
     } catch (e) {
       this.fb.fail(e, 'No se pudo guardar la carta');
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /**
+   * Asks whether the change goes to the card's reprints too; if so each takes the card (and the art, when it changed)
+   * keeping its own slot, rarity and regulation, and its finished image is drawn again with its code. Answers how many.
+   */
+  private async syncPrintings(
+    printings: CardMeta[],
+    body: Omit<CardMeta, 'id'>,
+    art: { file: Blob | null } | null,
+  ): Promise<number> {
+    const codes = printings
+      .map((p) => `${p.edition}${p.subEdition ? '.' + p.subEdition : ''}-${p.colorIdentity}${String(p.cardNumber).padStart(2, '0')}`)
+      .join(', ');
+    const apply = await this.modal.confirm({
+      title: 'Reimpresiones',
+      message: `Esta carta también está en ${codes}. ¿Aplicar los cambios a ${printings.length === 1 ? 'esa impresión' : 'esas impresiones'}?`,
+      confirmLabel: 'Aplicar',
+    });
+    if (!apply) return 0;
+    for (const p of printings) {
+      let meta = await firstValueFrom(this.api.updateMeta(p.id, printingPayload(body, p)));
+      if (art) meta = await firstValueFrom(art.file ? this.api.setArt(p.id, art.file) : this.api.removeArt(p.id));
+      if (meta.artKey && meta.design) await this.renderer.refresh(meta);
+    }
+    return printings.length;
   }
 
   protected toggleArrow(a: string): void {

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CatalogCard } from '@data/cards/card.model';
-import { deckSize, editionMetrics, editionRank, editionSlots, metaEditionId, reprintOrigins, slotsFilled, slotsForColor } from './edition-slots';
+import {
+  deckSize,
+  editionMetrics,
+  editionRank,
+  editionSlots,
+  metaEditionId,
+  otherPrintings,
+  printingPayload,
+  reprintOrigins,
+  slotsFilled,
+  slotsForColor,
+} from './edition-slots';
 
 const meta = (over: Partial<CardMeta>): CardMeta => ({ id: 'm', cardName: 'X', edition: 'ST2', colorIdentity: 'G', cardNumber: 1, ...over }) as CardMeta;
 
@@ -108,5 +119,30 @@ describe('reprints', () => {
     expect(reprintOrigins([old, st], dates).get('old')).toBe('ST5-B02');
     // E2 dated before ST5: E2 is the first printing
     expect(reprintOrigins([old, st], new Map([['E2', '2025-01-01'], ['ST5', '2026-03-11']])).get('st')).toBe('E2-B01');
+  });
+});
+
+describe('printings', () => {
+  const st = meta({ id: 'st', cardName: 'Eliséo', edition: 'ST1', colorIdentity: 'B', cardNumber: 1, rarity: 'C', regulation: 'A' });
+  const e1 = meta({ id: 'e1', cardName: 'Eliseo', edition: 'E1', subEdition: '1', colorIdentity: 'B', cardNumber: 2, rarity: 'R', regulation: 'B' });
+  const other = meta({ id: 'x', cardName: 'Ephos', edition: 'E1', colorIdentity: 'B', cardNumber: 3 });
+
+  it('finds the other printings by name', () => {
+    expect(otherPrintings('Eliséo', 'st', [st, e1, other]).map((m) => m.id)).toEqual(['e1']);
+    expect(otherPrintings('Ephos', 'x', [st, e1, other])).toEqual([]);
+  });
+
+  it('gives a printing the edited card but its own slot, rarity and regulation', () => {
+    const edited = { cardName: 'Eliséo', strength: 4, edition: 'ST1', subEdition: null, cardNumber: 1, rarity: 'C', regulation: 'A' };
+    expect(printingPayload(edited, e1)).toEqual({
+      cardName: 'Eliséo',
+      strength: 4,
+      edition: 'E1',
+      subEdition: '1',
+      cardNumber: 2,
+      colorIdentity: 'B',
+      rarity: 'R',
+      regulation: 'B',
+    });
   });
 });

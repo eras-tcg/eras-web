@@ -175,3 +175,26 @@ export function reprintOrigins(
   }
   return out;
 }
+
+/** The card's other printings: the cards with its name (accents, case and hyphens aside) in other slots. */
+export function otherPrintings(name: string | null | undefined, id: string | null, metas: readonly CardMeta[]): CardMeta[] {
+  const key = sameName(name);
+  if (!key) return [];
+  return metas.filter((m) => m.id !== id && sameName(m.cardName) === key && m.edition && m.cardNumber != null);
+}
+
+/**
+ * What another printing takes when its card is edited: the whole card (text, numbers, design) but what belongs to
+ * that printing: its slot (edition, sub-edition, number, color), its rarity and its regulation.
+ */
+export function printingPayload<T extends Partial<CardMeta>>(edited: T, printing: CardMeta): T {
+  return {
+    ...edited,
+    edition: printing.edition,
+    subEdition: printing.subEdition ?? '',
+    cardNumber: printing.cardNumber,
+    colorIdentity: printing.colorIdentity,
+    rarity: printing.rarity ?? null,
+    regulation: printing.regulation ?? null,
+  };
+}

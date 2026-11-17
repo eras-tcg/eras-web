@@ -37,6 +37,8 @@ interface EditionForm {
   cardsPerColor: number;
   /** Colors with their own count (white has 5 outside structure decks unless set). */
   cardsByColor: Record<string, number>;
+  /** The regulation a new card of the edition starts with. */
+  regulation: string;
   editionDescription: string;
   releaseDate: string;
   /** A new cover chosen, saved with the edition. */
@@ -139,6 +141,14 @@ interface EditionForm {
               }
             </div>
           }
+          <eras-form-field label="Regulación">
+            <input
+              type="text"
+              maxlength="3"
+              [value]="f.regulation"
+              (input)="patch({ regulation: $any($event.target).value })"
+            />
+          </eras-form-field>
           <eras-form-field label="Descripción">
             <textarea
               rows="3"
@@ -634,6 +644,7 @@ export class CardEditionsPage {
       colors: [...(e?.colors ?? [])],
       cardsPerColor: e?.cardsPerColor ?? 18,
       cardsByColor: { ...(e?.cardsByColor ?? {}) },
+      regulation: e?.regulation ?? '',
       editionDescription: e?.editionDescription ?? '',
       releaseDate: e?.releaseDate ?? '',
       cover: null,
@@ -710,6 +721,7 @@ export class CardEditionsPage {
         colors: f.colors,
         cardsPerColor: f.cardsPerColor,
         cardsByColor: Object.fromEntries(f.colors.filter((c) => c in f.cardsByColor).map((c) => [c, f.cardsByColor[c]])),
+        regulation: f.regulation.trim().toUpperCase(),
         ...(f.coverFrame ? { coverFrame: f.coverFrame } : {}),
       });
       if (f.cover) await this.editions.setImage(f.editionId, f.cover);

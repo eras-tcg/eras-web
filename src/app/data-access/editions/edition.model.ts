@@ -52,6 +52,8 @@ export interface Edition {
   cardsPerColor?: number | null;
   /** A color with its own count (E1: 25 of each color but 5 white); the rest use cardsPerColor. */
   cardsByColor?: Record<string, number> | null;
+  /** The regulation its cards print (A…): a new card of the edition starts with it. */
+  regulation?: string | null;
   coverFrame?: CoverFrame | null;
 }
 
@@ -70,6 +72,7 @@ export interface EditionSaveRequest {
   colors?: string[];
   cardsPerColor?: number;
   cardsByColor?: Record<string, number>;
+  regulation?: string;
   /** Left out: the server keeps the cover's framing. */
   coverFrame?: CoverFrame;
 }

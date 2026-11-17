@@ -717,9 +717,16 @@ export class CardEditorPage {
         handled = key;
         untracked(() => void this.openCard(m));
       } else if (code) {
+        // A new card in an empty slot starts with its edition's regulation (once the editions are loaded)
+        const editions = this.editions.catalogEditions();
+        if (!editions.length) return;
         const slot = parseSlotCode(code);
         handled = key;
-        if (slot) untracked(() => this.reset({ ...blankMeta(slot.edition), colors: [slot.color], colorIdentity: slot.color, cardNumber: slot.number }));
+        const regulation = editions.find((e) => e.editionId.toUpperCase() === slot?.edition)?.regulation ?? '';
+        if (slot)
+          untracked(() =>
+            this.reset({ ...blankMeta(slot.edition), regulation, colors: [slot.color], colorIdentity: slot.color, cardNumber: slot.number }),
+          );
       }
     });
     effect(() => this.draw());

@@ -224,6 +224,11 @@ interface EditionForm {
         <eras-grid minColumn="14rem" [gap]="3">
           @for (e of list(); track e.edition.editionId) {
             <a class="tile" [routerLink]="['/cards/editions', e.edition.editionId]">
+              <span class="art">
+                @if (e.edition.editionImage) {
+                  <img [src]="e.edition.editionImage" alt="" loading="lazy" />
+                }
+              </span>
               <span class="code">{{ e.edition.editionId }}</span>
               <span class="title">{{ e.edition.editionName || e.edition.editionId }}</span>
               <span class="count">{{ e.filled.filled }} / {{ e.filled.total }}</span>
@@ -266,6 +271,19 @@ interface EditionForm {
       background: var(--color-surface);
       color: var(--color-text);
       text-decoration: none;
+    }
+    .tile .art {
+      display: block;
+      aspect-ratio: 16 / 9;
+      margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-2);
+      overflow: hidden;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      background: var(--color-surface-muted);
+    }
+    .tile .art img {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
     }
     .tile:hover {
       border-color: var(--color-hub-accent);

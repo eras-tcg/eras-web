@@ -369,23 +369,32 @@ interface EditionForm {
     .slot-card {
       position: relative;
     }
+    /* Every slot leaves room above it for the rarity tab, so cards and empty slots stay in line */
+    .slot-wrap,
+    .slot.empty {
+      --rarity-tab-height: 1.5rem;
+      margin-block-start: var(--rarity-tab-height);
+    }
+    /* The rarity tab sits on the card's top edge, all of it above the card, its left side cut on a slant */
     .rarity-tab {
       position: absolute;
       z-index: 1;
-      inset-block-start: -0.6rem;
+      inset-block-end: 100%;
       inset-inline-end: 8%;
-      min-inline-size: 2.25rem;
-      padding: 0.15rem var(--space-2);
-      border: 2px solid var(--color-surface);
-      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      min-inline-size: 2.75rem;
+      block-size: var(--rarity-tab-height, 1.5rem);
+      padding: 0 var(--space-2) 0 calc(var(--space-2) + 0.6rem);
+      border: 0;
+      border-start-end-radius: var(--radius-sm);
       background: var(--rarity);
       color: var(--color-on-rarity);
+      clip-path: polygon(0.75rem 0, 100% 0, 100% 100%, 0 100%);
       font-family: var(--font-family-display);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-bold);
-      text-align: center;
-      line-height: 1.2;
-      box-shadow: var(--shadow-sm);
+      line-height: 1;
     }
     button.rarity-tab {
       cursor: pointer;

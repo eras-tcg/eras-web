@@ -134,11 +134,11 @@ import { ColorLut, convertCanvas } from './render/color-lut';
               class="slider zoom"
               type="range"
               aria-label="Zoom del arte"
-              [min]="minZoom"
-              [max]="maxZoom"
-              step="0.01"
-              [value]="a.scale"
-              (input)="previewZoom($any($event.target).valueAsNumber)"
+              min="0"
+              max="1"
+              step="0.001"
+              [value]="zoomToSlider(a.scale)"
+              (input)="previewZoom(sliderToZoom($any($event.target).valueAsNumber))"
               (change)="commitArt()"
             />
             <input
@@ -1081,7 +1081,8 @@ export class CardEditorPage {
     input.value = '';
     this.artFile = file;
     this.artChanged = true;
-    this.loadArt(await dataUrl(file), { scale: 1, x: 0, y: 0 });
+    // A new image starts fitted to the frame's window (as Ajustar does)
+    this.loadArt(await dataUrl(file), { scale: 1, x: 0, y: 0 }, () => void this.fitArtToFrame());
   }
 
   /** Shows an art (as a data URL) with its framing. */
@@ -1148,6 +1149,18 @@ export class CardEditorPage {
   protected toggleFraming(): void {
     this.effectZone.set(null);
     this.framing.update((v) => !v);
+  }
+
+  /**
+   * The zoom slider goes on a log scale: every stretch of it multiplies the zoom by the same ratio, so it grows evenly
+   * and slowly (a linear one jumps from small to big). 0 is minZoom, 1 is maxZoom.
+   */
+  protected sliderToZoom(t: number): number {
+    return this.minZoom * Math.pow(this.maxZoom / this.minZoom, t);
+  }
+
+  protected zoomToSlider(scale: number): number {
+    return Math.log(this.clampZoom(scale) / this.minZoom) / Math.log(this.maxZoom / this.minZoom);
   }
 
   private clampZoom(scale: number): number {

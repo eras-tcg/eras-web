@@ -11,7 +11,8 @@ export function rarityColor(rarity: string | null | undefined): string {
  * its rounded corner with its label above the card; the left side cut on a slant.
  *
  * The parent is positioned and leaves room above the card (`margin-block-start: var(--rarity-tab-height)`, 1.5rem by
- * default); the card itself is positioned with `z-index: 1`, so the tab's lower part hides under it.
+ * default); the card itself is positioned with `z-index: 1`, so the tab's lower part hides under it. Smaller: `--rarity-tab-height`,
+ * `--rarity-tab-font`, `--rarity-tab-min` (width) and `--rarity-tab-slant` on a parent.
  */
 @Component({
   selector: 'span[erasRarityTab], button[erasRarityTab]',
@@ -31,16 +32,16 @@ export function rarityColor(rarity: string | null | undefined): string {
       inset-inline-end: 0;
       display: grid;
       place-items: start center;
-      min-inline-size: 3rem;
+      min-inline-size: var(--rarity-tab-min, 3rem);
       block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
       padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0
-        calc(var(--space-2) + 0.7rem);
+        calc(var(--space-2) + var(--rarity-tab-slant, 0.8rem) - 0.1rem);
       border: 0;
       background: linear-gradient(135deg, var(--rarity-from) 20%, var(--rarity-to));
       color: var(--color-on-rarity);
-      clip-path: polygon(0.8rem 0, 100% 0, 100% 100%, 0 100%);
+      clip-path: polygon(var(--rarity-tab-slant, 0.8rem) 0, 100% 0, 100% 100%, 0 100%);
       font-family: var(--font-family-display);
-      font-size: var(--font-size-sm);
+      font-size: var(--rarity-tab-font, var(--font-size-sm));
       font-weight: var(--font-weight-bold);
       line-height: 1;
       text-shadow: 0 1px 2px var(--color-rarity-shade);

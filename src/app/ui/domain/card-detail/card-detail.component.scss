@@ -110,17 +110,26 @@
   inset-block-start: 0;
 }
 
+// Room above the image for its rarity tab; the image over the tab's lower part
+.image.with-rarity {
+  margin-block-start: var(--rarity-tab-height, 1.5rem);
+}
+
+.art {
+  z-index: 1;
+}
+
 // A click opens it bigger: it says so
-.image.zoomable {
+.art.zoomable {
   cursor: zoom-in;
   transition: transform var(--duration-fast) var(--easing-standard);
 }
 
-.image.zoomable:hover {
+.art.zoomable:hover {
   transform: scale(1.015);
 }
 
-.image.zoomable:focus-visible {
+.art.zoomable:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }

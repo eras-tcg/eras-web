@@ -1,15 +1,52 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
-import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
+import {
+  CardFilters,
+  EMPTY_FILTERS,
+  filterCards,
+  hasActiveFilters,
+  sortCards,
+} from '@data/cards/card-filters';
 import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
-import { altArtsOf, cardImageUrl, collapseByName, fullEditionId, withAltArt } from '@data/cards/card-rules';
+import {
+  altArtsOf,
+  cardImageUrl,
+  collapseByName,
+  fullEditionId,
+  withAltArt,
+} from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
-import { AltCopy, DeckCopy, bestAlt, bestFinish, deckCopies, missingCards, missingCopies, ownedFinishes, shineOf } from '@data/collection/collection-rules';
+import {
+  AltCopy,
+  DeckCopy,
+  bestAlt,
+  bestFinish,
+  deckCopies,
+  missingCards,
+  missingCopies,
+  ownedFinishes,
+  shineOf,
+} from '@data/collection/collection-rules';
 import { Finish } from '@data/collection/collection.model';
 import { CollectionStore } from '@data/collection/collection.store';
-import { DECK_NAME_MAX, MAX_CARDS, exportDeckText, idsFromEntries, parseDeckText } from '@data/decks/deck-rules';
+import {
+  DECK_NAME_MAX,
+  MAX_CARDS,
+  exportDeckText,
+  idsFromEntries,
+  parseDeckText,
+} from '@data/decks/deck-rules';
 import { Deck, DeckEntry } from '@data/decks/deck.model';
 import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { DecksStore } from '@data/decks/decks.store';
@@ -32,8 +69,16 @@ import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggl
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { CraftMissingData, CraftMissingDialogComponent } from './craft-missing-dialog.component';
 import { chooseDeckBox } from '../deckbox-picker-dialog.component';
-import { DeckOption, DeckOptionsData, DeckOptionsDialogComponent } from './deck-options-dialog.component';
-import { LeaveChoice, LeaveDeckData, LeaveDeckDialogComponent } from './leave-deck-dialog.component';
+import {
+  DeckOption,
+  DeckOptionsData,
+  DeckOptionsDialogComponent,
+} from './deck-options-dialog.component';
+import {
+  LeaveChoice,
+  LeaveDeckData,
+  LeaveDeckDialogComponent,
+} from './leave-deck-dialog.component';
 import { firstValueFrom } from 'rxjs';
 import { DropzoneComponent } from '@ui/surfaces/dropzone/dropzone.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -41,8 +86,14 @@ import { openCardDetailDialog } from '@features/cards/card-detail-dialog/card-de
 import { InViewDirective } from '@ui/utilities/in-view.directive';
 import { cardDetailView } from '../../cards/card-detail-view';
 import { CardView, DEFAULT_VIEW } from '../../cards/card-view';
-import { ProxyPrintDialogComponent, ProxyPrintDialogData } from '../proxy-print-dialog/proxy-print-dialog.component';
-import { BuilderFiltersData, BuilderFiltersDialogComponent } from './builder-filters-dialog.component';
+import {
+  ProxyPrintDialogComponent,
+  ProxyPrintDialogData,
+} from '../proxy-print-dialog/proxy-print-dialog.component';
+import {
+  BuilderFiltersData,
+  BuilderFiltersDialogComponent,
+} from './builder-filters-dialog.component';
 import { CollectionPanelComponent } from './collection-panel.component';
 import { FragmentsBarComponent } from './fragments-bar.component';
 import { DeckDraft } from './deck-draft';
@@ -111,15 +162,24 @@ export class DeckBuilderPage {
   protected badge(card: CatalogCard): string | null {
     return this.showUnprogrammed() && this.cards.unprogrammedOf(card) ? 'Sin programar' : null;
   }
-  protected readonly canSave = computed(() => this.auth.user() !== null && this.auth.can('manage_decks'));
+  protected readonly canSave = computed(
+    () => this.auth.user() !== null && this.auth.can('manage_decks'),
+  );
   protected readonly signedIn = computed(() => this.auth.user() !== null);
 
   // ── Collection ────────────────────────────────────────────────────────
   /** Copies the deck needs that the player does not own (signed in only). */
-  protected readonly missing = computed(() => (this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0));
+  protected readonly missing = computed(() =>
+    this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0,
+  );
   /** A card in testing: outside the economy (always available, never crafted or broken). */
   protected testCard(card: CatalogCard): boolean {
     return isTestEdition(card.edition);
+  }
+
+  /** The rarity on a card's tab: its metadata's (C when it has none, as crafting counts it); none without metadata. */
+  protected rarityOf(card: CatalogCard): string {
+    return card.meta ? card.meta.rarity || 'C' : '';
   }
 
   protected owns(card: CatalogCard): boolean {
@@ -137,7 +197,11 @@ export class DeckBuilderPage {
   }
   /** Each of the deck's copies of a card: its finish and art (the alternative arts first; null for one they lack). */
   protected copies(entry: DeckEntry): DeckCopy[] {
-    return deckCopies(this.collection.collection()?.cards[entry.card.id], entry.count, altArtsOf(entry.card).map((a) => a.id));
+    return deckCopies(
+      this.collection.collection()?.cards[entry.card.id],
+      entry.count,
+      altArtsOf(entry.card).map((a) => a.id),
+    );
   }
   protected altImageUrl(card: CatalogCard, art: string | null): string | null {
     return cardImageUrl(withAltArt(card, art));
@@ -149,7 +213,9 @@ export class DeckBuilderPage {
 
   /** A deck's copies of a card the player does not have. */
   protected lacking(entry: DeckEntry): number {
-    return this.signedIn() && !isTestEdition(entry.card.edition) ? Math.max(0, entry.count - this.collection.owned(entry.card.id)) : 0;
+    return this.signedIn() && !isTestEdition(entry.card.edition)
+      ? Math.max(0, entry.count - this.collection.owned(entry.card.id))
+      : 0;
   }
 
   // ── Messages ──────────────────────────────────────────────────────────
@@ -174,11 +240,17 @@ export class DeckBuilderPage {
   /** "Mostrar todas las…": printings, finishes (signed in) and the cards not programmed yet, each on or off. */
   protected readonly showOptions = computed<ToggleOption[]>(() => [
     { value: 'printings', label: 'Todas las impresiones', text: 'Impresiones' },
-    ...(this.signedIn() ? [{ value: 'finishes', label: 'Todas las rarezas (acabados que tienes)', text: 'Rarezas' }] : []),
+    ...(this.signedIn()
+      ? [{ value: 'finishes', label: 'Todas las rarezas (acabados que tienes)', text: 'Rarezas' }]
+      : []),
     { value: 'unprogrammed', label: 'Marcar las cartas sin programar', text: 'Sin programar' },
   ]);
   protected readonly shown = computed(() =>
-    [!this.view().collapse && 'printings', this.allFinishes() && 'finishes', this.showUnprogrammed() && 'unprogrammed'].filter((v): v is string => !!v),
+    [
+      !this.view().collapse && 'printings',
+      this.allFinishes() && 'finishes',
+      this.showUnprogrammed() && 'unprogrammed',
+    ].filter((v): v is string => !!v),
   );
   protected toggleShown(value: string): void {
     if (value === 'printings') this.view.set({ ...this.view(), collapse: !this.view().collapse });
@@ -190,15 +262,22 @@ export class DeckBuilderPage {
   protected readonly allFinishes = signal(false);
   /** Only the cards the player has, or only the ones they lack ('' for all). */
   protected readonly ownership = signal<'' | 'owned' | 'missing'>('');
-  protected readonly filtersActive = computed(() => hasActiveFilters(this.filters()) || !!this.query() || !!this.ownership());
+  protected readonly filtersActive = computed(
+    () => hasActiveFilters(this.filters()) || !!this.query() || !!this.ownership(),
+  );
 
   private readonly results = computed(() => {
     const q = this.query().trim().toLowerCase();
     const base = filterCards(this.cards.cards(), this.filters(), false).filter(
-      (c) => !q || (c.name ?? '').toLowerCase().includes(q) || fullEditionId(c).toLowerCase().includes(q),
+      (c) =>
+        !q ||
+        (c.name ?? '').toLowerCase().includes(q) ||
+        fullEditionId(c).toLowerCase().includes(q),
     );
     const sorted = sortCards(base, this.view().sort, this.view().direction);
-    const shown = this.view().collapse ? this.preferOwned(collapseByName(sorted, this.editions.releaseDates()), sorted) : sorted;
+    const shown = this.view().collapse
+      ? this.preferOwned(collapseByName(sorted, this.editions.releaseDates()), sorted)
+      : sorted;
     const ownership = this.ownership();
     return ownership ? shown.filter((c) => this.owns(c) === (ownership === 'owned')) : shown;
   });
@@ -206,7 +285,8 @@ export class DeckBuilderPage {
   private readonly items = computed(() =>
     this.results().flatMap((card) => {
       const finishes = ownedFinishes(this.collection.collection()?.cards[card.id]);
-      if (this.allFinishes() && finishes.length > 1) return finishes.map((finish) => ({ card, finish, key: `${card.id}|${finish}` }));
+      if (this.allFinishes() && finishes.length > 1)
+        return finishes.map((finish) => ({ card, finish, key: `${card.id}|${finish}` }));
       return [{ card, finish: finishes[0] ?? null, key: card.id }];
     }),
   );
@@ -229,9 +309,12 @@ export class DeckBuilderPage {
 
   /** A phone in landscape (read once, like the other screens): the deck's column is short, so the metrics start closed. */
   private readonly phoneLandscape =
-    typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
+    typeof window !== 'undefined' &&
+    window.matchMedia('(orientation: landscape) and (max-height: 30rem)').matches;
   /** The metrics at the bottom of the deck, open or compact (remembered on the device, except on phones in landscape). */
-  protected readonly showMetrics = this.phoneLandscape ? signal(false) : persistedFlag('eras-deck-builder-metrics-open', true);
+  protected readonly showMetrics = this.phoneLandscape
+    ? signal(false)
+    : persistedFlag('eras-deck-builder-metrics-open', true);
   /** The search's quick filters unfolded (they fold only on phones in landscape, to leave room for the cards). */
   protected readonly searchOptionsOpen = signal(false);
   protected readonly dragOver = signal(false);
@@ -268,7 +351,11 @@ export class DeckBuilderPage {
     });
   }
 
-  private async loadDeck(id: string, copy: boolean, catalog: readonly CatalogCard[]): Promise<void> {
+  private async loadDeck(
+    id: string,
+    copy: boolean,
+    catalog: readonly CatalogCard[],
+  ): Promise<void> {
     this.loadError.set(null);
     let deck: Deck;
     try {
@@ -346,14 +433,19 @@ export class DeckBuilderPage {
   }
 
   /** One printing per name, as collapsed, but one the player owns when they have any of that name. */
-  private preferOwned(collapsed: readonly CatalogCard[], all: readonly CatalogCard[]): CatalogCard[] {
+  private preferOwned(
+    collapsed: readonly CatalogCard[],
+    all: readonly CatalogCard[],
+  ): CatalogCard[] {
     if (!this.signedIn()) return [...collapsed];
     const owned = new Map<string, CatalogCard>();
     for (const c of all) {
       const name = (c.name ?? '').toLowerCase();
       if (name && !owned.has(name) && this.collection.owned(c.id) > 0) owned.set(name, c);
     }
-    return collapsed.map((c) => (this.collection.owned(c.id) > 0 ? c : (owned.get((c.name ?? '').toLowerCase()) ?? c)));
+    return collapsed.map((c) =>
+      this.collection.owned(c.id) > 0 ? c : (owned.get((c.name ?? '').toLowerCase()) ?? c),
+    );
   }
 
   /** Breaks every copy beyond the 4 a deck can use, keeping the finest, after asking. */
@@ -380,7 +472,9 @@ export class DeckBuilderPage {
       // Only a saved deck of the player's own (someone else's deck is edited as an unsaved copy)
       deckbox: this.canSave() && this.draft.id() !== null,
     };
-    const choice = await firstValueFrom(this.modal.open<DeckOption, DeckOptionsData>(DeckOptionsDialogComponent, { data }).closed);
+    const choice = await firstValueFrom(
+      this.modal.open<DeckOption, DeckOptionsData>(DeckOptionsDialogComponent, { data }).closed,
+    );
     if (choice?.action === 'import') await this.importList(choice.file);
     if (choice?.action === 'export') this.exportList();
     if (choice?.action === 'proxies') this.openProxies();
@@ -404,17 +498,24 @@ export class DeckBuilderPage {
 
   /** What crafting the deck's missing cards costs, and crafting them all when the fragments are enough. */
   private craftMissing(): void {
-    const data: CraftMissingData = { missing: missingCards(this.draft.entries(), this.collection.collection()) };
+    const data: CraftMissingData = {
+      missing: missingCards(this.draft.entries(), this.collection.collection()),
+    };
     this.modal.open(CraftMissingDialogComponent, { data });
   }
 
   protected openProxies(): void {
-    const data: ProxyPrintDialogData = { deckName: this.draft.name(), cardIds: idsFromEntries(this.draft.entries()) };
+    const data: ProxyPrintDialogData = {
+      deckName: this.draft.name(),
+      cardIds: idsFromEntries(this.draft.entries()),
+    };
     this.modal.open(ProxyPrintDialogComponent, { data });
   }
 
   protected exportList(): void {
-    const blob = new Blob([exportDeckText(this.draft.name(), this.draft.entries())], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([exportDeckText(this.draft.name(), this.draft.entries())], {
+      type: 'text/plain;charset=utf-8',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -434,7 +535,10 @@ export class DeckBuilderPage {
     }
     const result = parseDeckText(await file.text(), this.cards.cards());
     if (result.entries.length === 0) {
-      this.importWarnings.set(['No se encontró ninguna carta del archivo. ¿Es una lista exportada desde ERAS?', ...result.warnings]);
+      this.importWarnings.set([
+        'No se encontró ninguna carta del archivo. ¿Es una lista exportada desde ERAS?',
+        ...result.warnings,
+      ]);
       return;
     }
     this.draft.replace(result.entries, result.name ?? file.name.replace(/\.txt$/i, ''));
@@ -480,7 +584,9 @@ export class DeckBuilderPage {
   async confirmLeave(): Promise<boolean> {
     if (!this.draft.dirty() || this.draft.total() === 0) return true;
     const data: LeaveDeckData = { canSave: this.canSave() };
-    const choice = await firstValueFrom(this.modal.open<LeaveChoice, LeaveDeckData>(LeaveDeckDialogComponent, { data }).closed);
+    const choice = await firstValueFrom(
+      this.modal.open<LeaveChoice, LeaveDeckData>(LeaveDeckDialogComponent, { data }).closed,
+    );
     if (choice === 'discard') return true;
     if (choice !== 'save') return false;
     await this.save();
@@ -491,4 +597,3 @@ export class DeckBuilderPage {
     if (this.draft.dirty() && this.draft.total() > 0) event.preventDefault();
   }
 }
-

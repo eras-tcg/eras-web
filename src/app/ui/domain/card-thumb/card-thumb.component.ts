@@ -1,22 +1,54 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { CardImageComponent } from '../card-image/card-image.component';
+import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
 
-/** Clickable card in a grid; `count` shows "×N" in the corner, `dimmed` greys it out, `foil` makes it shine. */
+/**
+ * Clickable card in a grid; `count` shows "×N" in the corner, `dimmed` greys it out, `foil` makes it shine. `rarity`
+ * (a string, even empty) puts the rarity tab over its top edge and leaves room for it.
+ */
 @Component({
   selector: 'eras-card-thumb',
-  imports: [CardImageComponent],
+  imports: [CardImageComponent, RarityTabComponent],
+  host: { '[class.with-rarity]': 'rarity() !== null' },
   template: `
-    <button type="button" [attr.aria-label]="label()" [class.dimmed]="dimmed()" [class.active]="active()" (click)="selected.emit()">
-      <eras-card-image [src]="imageUrl()" [alt]="name()" [badge]="badge()" [badgeTone]="badgeTone()" [foil]="foil()" />
+    @if (rarity()) {
+      <span [erasRarityTab]="rarity()" [attr.aria-label]="'Rareza ' + rarity()"></span>
+    }
+    <button
+      type="button"
+      [attr.aria-label]="label()"
+      [class.dimmed]="dimmed()"
+      [class.active]="active()"
+      (click)="selected.emit()"
+    >
+      <eras-card-image
+        [src]="imageUrl()"
+        [alt]="name()"
+        [badge]="badge()"
+        [badgeTone]="badgeTone()"
+        [foil]="foil()"
+      />
       @if (count() > 1 || (showSingleCount() && count() === 1)) {
         <span class="count">×{{ count() }}</span>
       }
     </button>
   `,
   styles: `
-    :host { display: block; }
+    /* It lifts on hover with its rarity tab */
+    :host {
+      position: relative;
+      display: block;
+      transition: transform var(--duration-fast) var(--easing-standard);
+    }
+    :host(:hover) {
+      transform: translateY(-2px);
+    }
+    :host(.with-rarity) {
+      margin-block-start: var(--rarity-tab-height, 1.5rem);
+    }
     button {
       position: relative;
+      z-index: 1;
       display: block;
       inline-size: 100%;
       padding: 0;
@@ -24,11 +56,15 @@ import { CardImageComponent } from '../card-image/card-image.component';
       border-radius: var(--radius-md);
       background: none;
       cursor: pointer;
-      transition: transform var(--duration-fast) var(--easing-standard), opacity var(--duration-fast) var(--easing-standard);
+      transition: opacity var(--duration-fast) var(--easing-standard);
     }
-    button:hover { transform: translateY(-2px); }
-    button.active { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-    button.dimmed { opacity: 0.4; }
+    button.active {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+    button.dimmed {
+      opacity: 0.4;
+    }
     .count {
       position: absolute;
       inset-block-start: var(--space-2);
@@ -54,6 +90,8 @@ export class CardThumbComponent {
   readonly dimmed = input(false, { transform: booleanAttribute });
   readonly active = input(false, { transform: booleanAttribute });
   readonly foil = input<'foil' | 'prism' | null>(null);
+  /** The card's rarity for its tab; null: no tab (an empty string: room for it, no tab). */
+  readonly rarity = input<string | null>(null);
   readonly selected = output<void>();
 
   protected label(): string {

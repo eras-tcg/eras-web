@@ -16,6 +16,7 @@ import { EditModeService } from '@core/auth/edit-mode.service';
 import { CARD_COLORS, CARD_RARITIES, COLOR_LABELS, CatalogCard } from '@data/cards/card.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { RarityTabComponent, rarityColor } from '@ui/domain/rarity-tab/rarity-tab.component';
 import { openCardDetailDialog } from '../card-detail-dialog/card-detail-dialog.component';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
@@ -80,6 +81,7 @@ interface EditionForm {
 @Component({
   selector: 'eras-card-editions-page',
   imports: [
+    RarityTabComponent,
     RouterLink,
     PageComponent,
     GridComponent,
@@ -238,9 +240,7 @@ interface EditionForm {
                     @if (canEditCards()) {
                       <button
                         type="button"
-                        class="rarity-tab"
-                        [style.--rarity]="rarityColor(s.meta.rarity)"
-                        [attr.data-rarity]="s.meta.rarity"
+                        [erasRarityTab]="s.meta.rarity"
                         [attr.aria-label]="
                           'Rareza de ' + s.meta.cardName + ': ' + (s.meta.rarity || 'sin rareza')
                         "
@@ -248,18 +248,12 @@ interface EditionForm {
                         [disabled]="savingRarity() === s.meta.id"
                         [cdkMenuTriggerFor]="rarityMenu"
                         [cdkMenuTriggerData]="{ $implicit: s }"
-                      >
-                        {{ s.meta.rarity || '—' }}
-                      </button>
+                      ></button>
                     } @else if (s.meta.rarity) {
                       <span
-                        class="rarity-tab"
-                        [style.--rarity]="rarityColor(s.meta.rarity)"
-                        [attr.data-rarity]="s.meta.rarity"
+                        [erasRarityTab]="s.meta.rarity"
                         [attr.aria-label]="'Rareza ' + s.meta.rarity"
-                      >
-                        {{ s.meta.rarity }}
-                      </span>
+                      ></span>
                     }
                     <button
                       type="button"
@@ -442,57 +436,6 @@ interface EditionForm {
     .slot.empty {
       --rarity-tab-height: 1.5rem;
       margin-block-start: var(--rarity-tab-height);
-    }
-    /*
-     * The rarity tab: flush with the card's right edge, square at its top-right corner, coming down over the card past
-     * its rounded corner (no gap shows there) with its label above the card; the left side cut on a slant. Its color is
-     * the shop's rarity color as an intense gradient into a deeper neighbouring hue.
-     */
-    .rarity-tab {
-      --corner: var(--radius-md);
-      position: absolute;
-      /* Behind the card: the part that comes down past its corner is hidden under it */
-      z-index: 0;
-      inset-block-end: calc(100% - var(--corner) - 2px);
-      inset-inline-end: 0;
-      display: grid;
-      place-items: start center;
-      min-inline-size: 3rem;
-      block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
-      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0
-        calc(var(--space-2) + 0.7rem);
-      border: 0;
-      background: linear-gradient(135deg, var(--rarity-from) 20%, var(--rarity-to));
-      color: var(--color-on-rarity);
-      clip-path: polygon(0.8rem 0, 100% 0, 100% 100%, 0 100%);
-      font-family: var(--font-family-display);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-bold);
-      line-height: 1;
-      text-shadow: 0 1px 2px var(--color-rarity-shade);
-    }
-    .rarity-tab {
-      --rarity-from: var(--rarity);
-      --rarity-to: color-mix(in srgb, var(--rarity) 60%, var(--color-rarity-shade));
-    }
-    .rarity-tab[data-rarity='UC'] {
-      --rarity-to: color-mix(in srgb, var(--color-rarity-uc) 45%, var(--color-rarity-r));
-    }
-    .rarity-tab[data-rarity='R'] {
-      --rarity-from: var(--color-rarity-r);
-      --rarity-to: color-mix(in srgb, var(--color-rarity-r) 45%, var(--color-rarity-sec));
-    }
-    .rarity-tab[data-rarity='SR'] {
-      --rarity-to: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-rarity-sec));
-    }
-    .rarity-tab[data-rarity='SEC'] {
-      --rarity-to: color-mix(in srgb, var(--color-rarity-sec) 40%, var(--color-rarity-r));
-    }
-    button.rarity-tab {
-      cursor: pointer;
-    }
-    button.rarity-tab:hover {
-      filter: brightness(1.1);
     }
     .rarity-dot {
       display: inline-block;
@@ -876,10 +819,7 @@ export class CardEditionsPage {
   protected readonly rarities = CARD_RARITIES;
   protected readonly savingRarity = signal<string | null>(null);
 
-  /** A rarity's color in the shop's palette (no rarity: the border's). */
-  protected rarityColor(rarity: string | null | undefined): string {
-    return rarity ? `var(--color-rarity-${rarity.toLowerCase()})` : 'var(--color-border)';
-  }
+  protected readonly rarityColor = rarityColor;
 
   /** Saves a card's rarity from its tab (only that field); its finished image, which prints it, is drawn again. */
   protected async setRarity(s: EditionSlot, rarity: string): Promise<void> {
@@ -951,7 +891,8 @@ export class CardEditionsPage {
     // Moved within this edition: the page goes to the card's new slot (a reprint: to the new copy)
     void firstValueFrom(ref.closed).then((ok) => {
       if (!ok) return;
-      const target = mode === 'reprint' ? this.reprintIn(s.meta?.cardName ?? undefined, before) : id;
+      const target =
+        mode === 'reprint' ? this.reprintIn(s.meta?.cardName ?? undefined, before) : id;
       if (target) this.reveal(target);
     });
   }

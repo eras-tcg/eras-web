@@ -15,7 +15,7 @@ const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 const PROFILE: ScreenLink = { route: '/profile', label: 'Mi perfil' };
 
 /** Administration's tools (not /admin itself, which hangs from the home). */
-const ADMIN_SCREENS = /^\/(?:users-manager|activity-log|roles|permissions|updates-manager|card-ref|games-manager|card-meta)$/;
+const ADMIN_SCREENS = /^\/(?:users-manager|activity-log|roles|permissions|card-ref|games-manager|card-meta)$/;
 
 /**
  * Where each screen sits in the hub's tree (there is no navigation bar: every screen goes back to its parent).

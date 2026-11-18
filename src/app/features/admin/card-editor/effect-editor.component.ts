@@ -35,6 +35,7 @@ const H = 1039;
       spellcheck="false"
       (input)="typed()"
       (keydown.escape)="done()"
+      (keydown.backspace)="unpiece($event)"
     ></div>
     <button type="button" class="done" (click)="done()">Listo</button>
   `,
@@ -146,6 +147,37 @@ export class EffectEditorComponent implements AfterViewInit, OnDestroy {
     }
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => this.changed.emit(this.read()), 250);
+  }
+
+  /**
+   * Backspace right after a keyword piece (or after the spaces typed behind it) turns it back into its word, in lower
+   * case: a keyword needs its capital, so it stays a word ("reactivar" esta carta). The next backspace deletes letters.
+   */
+  protected unpiece(event: Event): void {
+    if (!window.getSelection()?.isCollapsed) return;
+    const caret = this.caret();
+    const lines = this.read();
+    const line = caret ? lines[caret.line] : undefined;
+    if (!caret || !line) return;
+    let at = 0;
+    for (let i = 0; i < line.length && at < caret.offset; i++) {
+      const s = line[i];
+      const end = at + (s.t === 'text' ? s.text.length : 1);
+      at = end;
+      if (s.t !== 'piece' || s.kind !== 'keyword' || end > caret.offset) continue;
+      const next = line[i + 1];
+      const gap = caret.offset - end;
+      const spaces = next?.t === 'text' ? next.text.slice(0, gap) : '';
+      if (gap && (spaces.length !== gap || spaces.trim())) continue;
+      event.preventDefault();
+      line[i] = { t: 'text', text: s.label.charAt(0).toLowerCase() + s.label.slice(1) };
+      if (gap && next?.t === 'text') line[i + 1] = { t: 'text', text: next.text.slice(gap) };
+      this.render(lines.map((l) => l.filter((x) => !(x.t === 'text' && !x.text))));
+      this.setCaret(caret.line, end - 1 + s.label.length);
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.changed.emit(this.read()), 250);
+      return;
+    }
   }
 
   protected done(): void {

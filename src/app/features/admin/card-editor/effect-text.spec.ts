@@ -49,9 +49,14 @@ describe('effect-text', () => {
     expect(show(splitPieces([{ t: 'text', text: 'en manos ' }], cat))).toBe('en manos ');
   });
 
-  it('takes keywords inside the text in any case, printed with their capital', () => {
-    const l = splitPieces([{ t: 'text', text: 'en invocacion gana celeridad y Valor.' }], cat);
+  it('takes keywords inside the text only when written with their capital', () => {
+    const l = splitPieces([{ t: 'text', text: 'en invocacion gana Celeridad y Valor.' }], cat);
     expect(show(l)).toBe('<En Invocación> gana <Celeridad> y <Valor>.');
+    // In lower case it is a plain word ("reactivar esta carta"), also as the whole line
+    expect(
+      show(splitPieces([{ t: 'text', text: 'en invocacion gana celeridad y valor.' }], cat, true)),
+    ).toBe('<En Invocación> gana celeridad y valor.');
+    expect(show(splitPieces([{ t: 'text', text: 'celeridad' }], cat, true))).toBe('celeridad');
   });
 
   it('joins a condition typed in parts into the longer one', () => {
@@ -79,12 +84,12 @@ describe('effect-text', () => {
   it('picks the keyword form by its value and reads [[Key:value]] as typed', () => {
     const keyOf = (text: string) =>
       splitPieces([{ t: 'text', text }], cat, true).find((s) => s.t === 'piece')!;
-    expect(keyOf('furia 2')).toMatchObject({ label: 'Furia', key: 'Furia {gemas}' });
-    expect(keyOf('furia')).toMatchObject({ label: 'Furia', key: 'Furia' });
-    expect(keyOf('protección [Dragón]')).toMatchObject({ key: 'Protección {condición}' });
+    expect(keyOf('Furia 2')).toMatchObject({ label: 'Furia', key: 'Furia {gemas}' });
+    expect(keyOf('Furia')).toMatchObject({ label: 'Furia', key: 'Furia' });
+    expect(keyOf('Protección [Dragón]')).toMatchObject({ key: 'Protección {condición}' });
     const l = splitPieces([{ t: 'text', text: 'gana [[Furia {gemas}: 1]] hoy' }], cat, true);
     expect(show(l)).toBe('gana <Furia> 1 hoy');
-    expect(linesToEffects([splitPieces([{ t: 'text', text: 'furia 2' }], cat, true)])).toEqual({
+    expect(linesToEffects([splitPieces([{ t: 'text', text: 'Furia 2' }], cat, true)])).toEqual({
       effects: [],
       keywords: [{ keyword: 'Furia {gemas}', number: '2' }],
     });
@@ -95,7 +100,7 @@ describe('effect-text', () => {
       [
         {
           t: 'text',
-          text: 'en invocacion una vez por turno entre copias: gana celeridad y furia 1.',
+          text: 'en invocacion una vez por turno entre copias: gana Celeridad y Furia 1.',
         },
       ],
       cat,
@@ -137,7 +142,7 @@ describe('effect-text', () => {
 
   it('converts lines to effects and keywords', () => {
     const lines = [
-      splitPieces([{ t: 'text', text: 'provocar 4' }], cat, true),
+      splitPieces([{ t: 'text', text: 'Provocar 4' }], cat, true),
       splitPieces([{ t: 'text', text: 'en invocacion por efecto gana Celeridad.' }], cat, true),
       splitPieces(
         [

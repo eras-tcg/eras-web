@@ -167,6 +167,9 @@ function labelAt(
     if (!folded.startsWith(f, pos)) continue;
     const after = text[pos + f.length];
     if (isLetter(text[pos - 1]) || isLetter(after)) continue;
+    // A keyword is written with its capital ("Reactivar"); in lower case it is a plain word ("reactivar" esta carta)
+    if (seg.t === 'piece' && seg.kind === 'keyword' && text[pos] === text[pos].toLowerCase())
+      continue;
     if (after === undefined && !final) continue;
     return { start: pos, end: pos + f.length, seg };
   }
@@ -175,7 +178,8 @@ function labelAt(
 
 /**
  * Turns typed labels into pieces. At the start of a line (before any plain words): momentos, condiciones, efecto
- * definitivo and keywords. Elsewhere only keywords ("gana Celeridad", "gana celeridad"). A label is replaced once a
+ * definitivo and keywords. Elsewhere only keywords ("gana Celeridad"). A keyword needs its capital: "gana celeridad" and
+ * "reactivar esta carta" stay words. A label is replaced once a
  * space or punctuation follows it, or at the end when `final`. "entre copias" after "una vez por turno" stays text and
  * keeps the head open (its colon or comma is the author's: a colon when no other condition follows).
  */

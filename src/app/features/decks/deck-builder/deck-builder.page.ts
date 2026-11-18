@@ -18,7 +18,7 @@ import {
   hasActiveFilters,
   sortCards,
 } from '@data/cards/card-filters';
-import { CARD_TYPE_LABELS, CatalogCard } from '@data/cards/card.model';
+import { CatalogCard } from '@data/cards/card.model';
 import {
   altArtsOf,
   cardImageUrl,
@@ -28,9 +28,7 @@ import {
 } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import {
-  AltCopy,
   DeckCopy,
-  bestAlt,
   bestFinish,
   deckCopies,
   missingCards,
@@ -58,7 +56,6 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { WorkbenchComponent } from '@ui/layout/workbench/workbench.component';
@@ -115,7 +112,6 @@ const DRAG_TYPE = 'application/x-eras-card';
     WorkbenchComponent,
     StackComponent,
     GridComponent,
-    SectionHeaderComponent,
     CardThumbComponent,
     CardDetailComponent,
     DeckMetricsComponent,
@@ -156,7 +152,6 @@ export class DeckBuilderPage {
 
   protected readonly maxCards = MAX_CARDS;
   protected readonly nameMax = DECK_NAME_MAX;
-  protected readonly typeLabels = CARD_TYPE_LABELS;
   protected readonly imageUrl = cardImageUrl;
 
   protected badge(card: CatalogCard): string | null {
@@ -190,11 +185,6 @@ export class DeckBuilderPage {
   protected best(card: CatalogCard): Finish | null {
     return bestFinish(this.collection.collection()?.cards[card.id]);
   }
-  /** The player's finest copy of a card with one of its alternative arts (the deck plays them first), null when none. */
-  protected alt(card: CatalogCard): AltCopy | null {
-    const arts = altArtsOf(card).map((a) => a.id);
-    return arts.length ? bestAlt(this.collection.collection()?.cards[card.id], arts) : null;
-  }
   /** Each of the deck's copies of a card: its finish and art (the alternative arts first; null for one they lack). */
   protected copies(entry: DeckEntry): DeckCopy[] {
     return deckCopies(
@@ -208,15 +198,8 @@ export class DeckBuilderPage {
   }
   protected readonly altArt = withAltArt;
   protected readonly shineOf = shineOf;
-  /** The deck's copies of a card together (one card, ×N) or each by itself, smaller (remembered on the device). */
-  protected readonly groupCopies = persistedFlag('eras-deck-builder-group-copies', true);
-
-  /** A deck's copies of a card the player does not have. */
-  protected lacking(entry: DeckEntry): number {
-    return this.signedIn() && !isTestEdition(entry.card.edition)
-      ? Math.max(0, entry.count - this.collection.owned(entry.card.id))
-      : 0;
-  }
+  /** The deck's cards in its order (by type, as the groups go), all together in one grid. */
+  protected readonly entries = computed(() => this.draft.groups().flatMap((g) => g.entries));
 
   // ── Messages ──────────────────────────────────────────────────────────
   protected readonly loadError = signal<string | null>(null);

@@ -9,12 +9,15 @@ import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
 @Component({
   selector: 'eras-card-thumb',
   imports: [CardImageComponent, RarityTabComponent],
-  host: { '[class.with-rarity]': 'rarity() !== null' },
+  host: {
+    '[class.with-rarity]': 'rarity() !== null && !rarityOver()',
+    '[class.rarity-over]': '!!rarity() && rarityOver()',
+  },
   template: `
     @if (rarity()) {
       <span
         [erasRarityTab]="rarity()"
-        [flipped]="rarityFlipped()"
+        [over]="rarityOver()"
         [attr.aria-label]="'Rareza ' + rarity()"
       ></span>
     }
@@ -80,6 +83,10 @@ import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-bold);
     }
+    /* Under a rarity tab on the card */
+    :host(.rarity-over) .count {
+      inset-block-start: calc(var(--rarity-tab-height, 1.5rem) + var(--space-1));
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -96,8 +103,8 @@ export class CardThumbComponent {
   readonly foil = input<'foil' | 'prism' | null>(null);
   /** The card's rarity for its tab; null: no tab (an empty string: room for it, no tab). */
   readonly rarity = input<string | null>(null);
-  /** The rarity tab mirrored top to bottom. */
-  readonly rarityFlipped = input(false, { transform: booleanAttribute });
+  /** The rarity tab over the card, inside its top-right corner (no room left above it). */
+  readonly rarityOver = input(false, { transform: booleanAttribute });
   readonly selected = output<void>();
 
   protected label(): string {

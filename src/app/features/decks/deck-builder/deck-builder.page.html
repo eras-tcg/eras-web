@@ -232,7 +232,7 @@
                       <eras-card-thumb
                         [name]="entry.card.name ?? ''"
                         [rarity]="rarityOf(entry.card)"
-                        rarityFlipped
+                        rarityOver
                         [imageUrl]="altImageUrl(entry.card, alt(entry.card)?.art ?? null)"
                         [badge]="badge(entry.card)"
                         badgeTone="info"
@@ -304,7 +304,7 @@
                         <eras-card-thumb
                           [name]="entry.card.name ?? ''"
                           [rarity]="rarityOf(entry.card)"
-                          rarityFlipped
+                          rarityOver
                           [imageUrl]="altImageUrl(entry.card, copy.art)"
                           [foil]="shineOf(copy.finish)"
                           [active]="selected()?.id === entry.card.id"
@@ -435,7 +435,7 @@
                 <eras-card-thumb
                   [name]="card.name ?? ''"
                   [rarity]="rarityOf(card)"
-                  rarityFlipped
+                  rarityOver
                   [imageUrl]="imageUrl(card)"
                   [badge]="badge(card)"
                   badgeTone="info"

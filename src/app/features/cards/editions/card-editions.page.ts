@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { MenuComponent, MenuItemDirective } from '@ui/surfaces/menu/menu.component';
@@ -12,10 +22,24 @@ import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
 import { CoverFrame, Edition } from '@data/editions/edition.model';
-import { EditionSlot, deckSize, editionSlots, reprintOrigins, slotsFilled, slotsForColor } from '@data/editions/edition-slots';
+import {
+  EditionSlot,
+  deckSize,
+  editionSlots,
+  reprintOrigins,
+  slotsFilled,
+  slotsForColor,
+} from '@data/editions/edition-slots';
 import { isStructure } from '@data/shop/shop-rules';
-import { EditionMetricsDialogComponent, EditionMetricsData } from './edition-metrics-dialog.component';
-import { EditionCoverData, EditionCoverDialogComponent, EditionCoverResult } from './edition-cover-dialog.component';
+import {
+  EditionMetricsDialogComponent,
+  EditionMetricsData,
+} from './edition-metrics-dialog.component';
+import {
+  EditionCoverData,
+  EditionCoverDialogComponent,
+  EditionCoverResult,
+} from './edition-cover-dialog.component';
 import { EditionTileComponent } from './edition-tile.component';
 import { CardMoveData, CardMoveDialogComponent } from './card-move-dialog.component';
 import { CardRenderService } from '../../admin/card-editor/render/card-render.service';
@@ -164,7 +188,9 @@ interface EditionForm {
               [code]="f.editionId || '—'"
               [name]="f.editionName"
             />
-            <button erasButton variant="secondary" type="button" (click)="editCover()">Editar portada</button>
+            <button erasButton variant="secondary" type="button" (click)="editCover()">
+              Editar portada
+            </button>
           </div>
           <eras-form-field label="Fecha de lanzamiento">
             <input
@@ -174,10 +200,18 @@ interface EditionForm {
             />
           </eras-form-field>
           <eras-stack direction="row" [gap]="2">
-            <button erasButton type="button" [loading]="saving()" [disabled]="saving()" (click)="saveForm()">
+            <button
+              erasButton
+              type="button"
+              [loading]="saving()"
+              [disabled]="saving()"
+              (click)="saveForm()"
+            >
               Guardar
             </button>
-            <button erasButton variant="ghost" type="button" (click)="form.set(null)">Cancelar</button>
+            <button erasButton variant="ghost" type="button" (click)="form.set(null)">
+              Cancelar
+            </button>
           </eras-stack>
         </eras-stack>
       }
@@ -198,7 +232,7 @@ interface EditionForm {
             <!-- By slot and card: a slot whose card changed (a move) is drawn anew, its menus pointing to the new card -->
             @for (s of g.slots; track s.code + '|' + (s.meta?.id ?? '')) {
               @if (s.meta) {
-                <div class="slot-wrap">
+                <div class="slot-wrap" [attr.data-card]="s.meta.id">
                   <div class="slot-card">
                     <!-- Its rarity on a tab over the card's top edge, in the shop's rarity colors; changed from here in edit mode -->
                     @if (canEditCards()) {
@@ -207,7 +241,9 @@ interface EditionForm {
                         class="rarity-tab"
                         [style.--rarity]="rarityColor(s.meta.rarity)"
                         [attr.data-rarity]="s.meta.rarity"
-                        [attr.aria-label]="'Rareza de ' + s.meta.cardName + ': ' + (s.meta.rarity || 'sin rareza')"
+                        [attr.aria-label]="
+                          'Rareza de ' + s.meta.cardName + ': ' + (s.meta.rarity || 'sin rareza')
+                        "
                         title="Cambiar rareza"
                         [disabled]="savingRarity() === s.meta.id"
                         [cdkMenuTriggerFor]="rarityMenu"
@@ -216,7 +252,12 @@ interface EditionForm {
                         {{ s.meta.rarity || '—' }}
                       </button>
                     } @else if (s.meta.rarity) {
-                      <span class="rarity-tab" [style.--rarity]="rarityColor(s.meta.rarity)" [attr.data-rarity]="s.meta.rarity" [attr.aria-label]="'Rareza ' + s.meta.rarity">
+                      <span
+                        class="rarity-tab"
+                        [style.--rarity]="rarityColor(s.meta.rarity)"
+                        [attr.data-rarity]="s.meta.rarity"
+                        [attr.aria-label]="'Rareza ' + s.meta.rarity"
+                      >
                         {{ s.meta.rarity }}
                       </span>
                     }
@@ -235,7 +276,12 @@ interface EditionForm {
                     </button>
                     @if (!canEditCards() && reprints().get(s.meta.id); as origin) {
                       <!-- A reprint: the reprint icon lit in the corner (Mover's place in edit mode) -->
-                      <span class="edit reprint-mark lit" role="img" [attr.aria-label]="'Reimpresión de ' + origin" [title]="'Reimpresión de ' + origin">
+                      <span
+                        class="edit reprint-mark lit"
+                        role="img"
+                        [attr.aria-label]="'Reimpresión de ' + origin"
+                        [title]="'Reimpresión de ' + origin"
+                      >
                         <eras-icon name="layers" />
                       </span>
                     }
@@ -262,7 +308,13 @@ interface EditionForm {
                         class="edit reprint"
                         [class.lit]="reprints().has(s.meta.id)"
                         [attr.aria-label]="'Reimprimir ' + s.meta.cardName + ' en otra edición'"
-                        [title]="reprints().get(s.meta.id) ? 'Reimpresión de ' + reprints().get(s.meta.id) + ' · Reimprimir en otra edición' : 'Reimprimir en otra edición'"
+                        [title]="
+                          reprints().get(s.meta.id)
+                            ? 'Reimpresión de ' +
+                              reprints().get(s.meta.id) +
+                              ' · Reimprimir en otra edición'
+                            : 'Reimprimir en otra edición'
+                        "
                         (click)="moveCard(s, 'reprint')"
                       >
                         <eras-icon name="layers" />
@@ -306,7 +358,11 @@ interface EditionForm {
                 </button>
               } @else {
                 <!-- Out of edit mode the empty slot still holds its place in the grid -->
-                <div class="slot empty placeholder" role="img" [attr.aria-label]="s.code + ' vacío'">
+                <div
+                  class="slot empty placeholder"
+                  role="img"
+                  [attr.aria-label]="s.code + ' vacío'"
+                >
                   <span class="code">{{ s.code }}</span>
                 </div>
               }
@@ -403,7 +459,8 @@ interface EditionForm {
       place-items: start center;
       min-inline-size: 3rem;
       block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
-      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0 calc(var(--space-2) + 0.7rem);
+      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0
+        calc(var(--space-2) + 0.7rem);
       border: 0;
       background: linear-gradient(135deg, var(--rarity-from) 20%, var(--rarity-to));
       color: var(--color-on-rarity);
@@ -414,11 +471,23 @@ interface EditionForm {
       line-height: 1;
       text-shadow: 0 1px 2px var(--color-rarity-shade);
     }
-    .rarity-tab { --rarity-from: var(--rarity); --rarity-to: color-mix(in srgb, var(--rarity) 60%, var(--color-rarity-shade)); }
-    .rarity-tab[data-rarity='UC'] { --rarity-to: color-mix(in srgb, var(--color-rarity-uc) 45%, var(--color-rarity-r)); }
-    .rarity-tab[data-rarity='R'] { --rarity-from: var(--color-rarity-r); --rarity-to: color-mix(in srgb, var(--color-rarity-r) 45%, var(--color-rarity-sec)); }
-    .rarity-tab[data-rarity='SR'] { --rarity-to: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-rarity-sec)); }
-    .rarity-tab[data-rarity='SEC'] { --rarity-to: color-mix(in srgb, var(--color-rarity-sec) 40%, var(--color-rarity-r)); }
+    .rarity-tab {
+      --rarity-from: var(--rarity);
+      --rarity-to: color-mix(in srgb, var(--rarity) 60%, var(--color-rarity-shade));
+    }
+    .rarity-tab[data-rarity='UC'] {
+      --rarity-to: color-mix(in srgb, var(--color-rarity-uc) 45%, var(--color-rarity-r));
+    }
+    .rarity-tab[data-rarity='R'] {
+      --rarity-from: var(--color-rarity-r);
+      --rarity-to: color-mix(in srgb, var(--color-rarity-r) 45%, var(--color-rarity-sec));
+    }
+    .rarity-tab[data-rarity='SR'] {
+      --rarity-to: color-mix(in srgb, var(--color-rarity-sr) 55%, var(--color-rarity-sec));
+    }
+    .rarity-tab[data-rarity='SEC'] {
+      --rarity-to: color-mix(in srgb, var(--color-rarity-sec) 40%, var(--color-rarity-r));
+    }
     button.rarity-tab {
       cursor: pointer;
     }
@@ -563,6 +632,8 @@ interface EditionForm {
 export class CardEditionsPage {
   /** `/cards/editions/:editionId` (bound by the router); absent on the list. */
   readonly editionId = input<string>();
+  /** `?card=<id>`: back from the editor, the page goes to that card's slot. */
+  readonly card = input<string>();
 
   protected readonly editions = inject(EditionsStore);
   private readonly cards = inject(CardsStore);
@@ -571,6 +642,9 @@ export class CardEditionsPage {
   private readonly adminApi = inject(CardsAdminApi);
   private readonly modal = inject(ModalService);
   private readonly renderer = inject(CardRenderService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  /** The card from `?card` already shown (once per card). */
+  private revealed: string | null = null;
   /** The editor's finished images already fetched (they need the session), by card id and render. */
   private readonly renders = signal<Record<string, string>>({});
   private readonly asked = new Set<string>();
@@ -593,7 +667,9 @@ export class CardEditionsPage {
 
   protected readonly edition = computed(() => {
     const id = this.editionId()?.toUpperCase();
-    return id ? (this.editions.catalogEditions().find((e) => e.editionId.toUpperCase() === id) ?? null) : null;
+    return id
+      ? (this.editions.catalogEditions().find((e) => e.editionId.toUpperCase() === id) ?? null)
+      : null;
   });
   protected readonly groups = computed(() => {
     const e = this.edition();
@@ -601,7 +677,9 @@ export class CardEditionsPage {
   });
   protected readonly filled = computed(() => slotsFilled(this.groups()));
   /** The cards printed before under the same name: the code of their first printing. */
-  protected readonly reprints = computed(() => reprintOrigins(this.cards.metaList(), this.editions.releaseDates()));
+  protected readonly reprints = computed(() =>
+    reprintOrigins(this.cards.metaList(), this.editions.releaseDates()),
+  );
   /** A structure deck (ST…): its cards bring a number of copies each. */
   protected readonly structure = computed(() => isStructure(this.edition()?.editionId ?? ''));
   protected readonly deck = computed(() => deckSize(this.groups()));
@@ -625,9 +703,19 @@ export class CardEditionsPage {
           if (!m || !key || this.asked.has(key)) continue;
           this.asked.add(key);
           void firstValueFrom(this.adminApi.render(m.id))
-            .then((blob) => this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })))
+            .then((blob) =>
+              this.renders.update((r) => ({ ...r, [key]: URL.createObjectURL(blob) })),
+            )
             .catch(() => undefined);
         }
+    });
+    // Back from the editor: once the edition's slots are drawn, the card edited shows in its place
+    effect(() => {
+      const id = this.card();
+      const here = !!id && this.groups().some((g) => g.slots.some((x) => x.meta?.id === id));
+      if (!id || !here || this.revealed === id) return;
+      this.revealed = id;
+      this.reveal(id);
     });
     // Another edition: the form of the last one closes
     effect(() => {
@@ -659,17 +747,27 @@ export class CardEditionsPage {
 
   /** Cards of a color in the form: its own count, else the edition's rule (5 white outside structure decks). */
   protected colorCount(f: EditionForm, color: string): number {
-    return slotsForColor({ editionId: f.editionId, cardsPerColor: f.cardsPerColor, cardsByColor: f.cardsByColor }, color);
+    return slotsForColor(
+      { editionId: f.editionId, cardsPerColor: f.cardsPerColor, cardsByColor: f.cardsByColor },
+      color,
+    );
   }
 
   protected setColorCount(color: string, count: number): void {
     if (!Number.isFinite(count) || count < 0) return;
-    this.form.update((f) => (f ? { ...f, cardsByColor: { ...f.cardsByColor, [color]: count } } : f));
+    this.form.update((f) =>
+      f ? { ...f, cardsByColor: { ...f.cardsByColor, [color]: count } } : f,
+    );
   }
 
   protected toggleColor(c: string): void {
     this.form.update((f) =>
-      f ? { ...f, colors: f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c] } : f,
+      f
+        ? {
+            ...f,
+            colors: f.colors.includes(c) ? f.colors.filter((x) => x !== c) : [...f.colors, c],
+          }
+        : f,
     );
   }
 
@@ -683,7 +781,9 @@ export class CardEditionsPage {
       image: this.coverPreview(),
       frame: f.coverFrame ?? this.edition()?.coverFrame ?? null,
     };
-    const ref = this.modal.open<EditionCoverResult, EditionCoverData>(EditionCoverDialogComponent, { data });
+    const ref = this.modal.open<EditionCoverResult, EditionCoverData>(EditionCoverDialogComponent, {
+      data,
+    });
     const result = await firstValueFrom(ref.closed);
     if (!result) return;
     if (result.file) {
@@ -721,7 +821,9 @@ export class CardEditionsPage {
         boxConfig: existing?.boxConfig ?? { totalPacks: 0, entries: [] },
         colors: f.colors,
         cardsPerColor: f.cardsPerColor,
-        cardsByColor: Object.fromEntries(f.colors.filter((c) => c in f.cardsByColor).map((c) => [c, f.cardsByColor[c]])),
+        cardsByColor: Object.fromEntries(
+          f.colors.filter((c) => c in f.cardsByColor).map((c) => [c, f.cardsByColor[c]]),
+        ),
         regulation: f.regulation.trim().toUpperCase(),
         ...(f.coverFrame ? { coverFrame: f.coverFrame } : {}),
       });
@@ -827,7 +929,11 @@ export class CardEditionsPage {
   protected showCard(s: EditionSlot): void {
     const all = this.detailCards();
     const index = all.findIndex((x) => x.slot.code === s.code);
-    openCardDetailDialog(this.modal, all.map((x) => x.card), Math.max(0, index));
+    openCardDetailDialog(
+      this.modal,
+      all.map((x) => x.card),
+      Math.max(0, index),
+    );
   }
 
   /**
@@ -836,7 +942,34 @@ export class CardEditionsPage {
    */
   protected moveCard(s: EditionSlot, mode: 'move' | 'reprint' = 'move'): void {
     if (!this.canEditCards() || !s.meta) return;
-    this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, { data: { card: s.meta, mode }, maxWidth: '96vw' });
+    const id = s.meta.id;
+    const before = new Set(this.groups().flatMap((g) => g.slots.map((x) => x.meta?.id)));
+    const ref = this.modal.open<boolean, CardMoveData>(CardMoveDialogComponent, {
+      data: { card: s.meta, mode },
+      maxWidth: '96vw',
+    });
+    // Moved within this edition: the page goes to the card's new slot (a reprint: to the new copy)
+    void firstValueFrom(ref.closed).then((ok) => {
+      if (!ok) return;
+      const target = mode === 'reprint' ? this.reprintIn(s.meta?.cardName ?? undefined, before) : id;
+      if (target) this.reveal(target);
+    });
+  }
+
+  /** A reprint just made in this edition: the card of that name not among the slots before (if any). */
+  private reprintIn(name: string | undefined, before: Set<string | undefined>): string | null {
+    for (const g of this.groups())
+      for (const x of g.slots)
+        if (x.meta && x.meta.cardName === name && !before.has(x.meta.id)) return x.meta.id;
+    return null;
+  }
+
+  /** Scrolls the card's slot into the middle of the screen, once it is drawn. */
+  private reveal(id: string): void {
+    setTimeout(() => {
+      const el = this.host.nativeElement.querySelector(`[data-card="${CSS.escape(id)}"]`);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
   }
 
   /** The editor: a filled slot's card, or a new card with an empty slot's code. */

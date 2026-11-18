@@ -12,7 +12,11 @@ import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
   host: { '[class.with-rarity]': 'rarity() !== null' },
   template: `
     @if (rarity()) {
-      <span [erasRarityTab]="rarity()" [attr.aria-label]="'Rareza ' + rarity()"></span>
+      <span
+        [erasRarityTab]="rarity()"
+        [flipped]="rarityFlipped()"
+        [attr.aria-label]="'Rareza ' + rarity()"
+      ></span>
     }
     <button
       type="button"
@@ -92,6 +96,8 @@ export class CardThumbComponent {
   readonly foil = input<'foil' | 'prism' | null>(null);
   /** The card's rarity for its tab; null: no tab (an empty string: room for it, no tab). */
   readonly rarity = input<string | null>(null);
+  /** The rarity tab mirrored top to bottom. */
+  readonly rarityFlipped = input(false, { transform: booleanAttribute });
   readonly selected = output<void>();
 
   protected label(): string {

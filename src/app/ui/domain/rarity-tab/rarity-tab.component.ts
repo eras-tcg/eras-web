@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 
 /** A rarity's color in the shop's palette (no rarity: the border's). */
 export function rarityColor(rarity: string | null | undefined): string {
@@ -8,7 +8,7 @@ export function rarityColor(rarity: string | null | undefined): string {
 /**
  * A card's rarity on a tab over its top edge, in the shop's rarity colors (on a `span`, or a `button` when it can be
  * changed). It is flush with the card's right edge, square at its top-right corner, coming down behind the card past
- * its rounded corner with its label above the card; the left side cut on a slant.
+ * its rounded corner with its label above the card; the left side cut on a slant (`flipped`: mirrored top to bottom).
  *
  * The parent is positioned and leaves room above the card (`margin-block-start: var(--rarity-tab-height)`, 1.5rem by
  * default); the card itself is positioned with `z-index: 1`, so the tab's lower part hides under it. Smaller: `--rarity-tab-height`,
@@ -20,6 +20,7 @@ export function rarityColor(rarity: string | null | undefined): string {
   host: {
     '[attr.data-rarity]': 'erasRarityTab() || null',
     '[style.--rarity]': 'color()',
+    '[class.flipped]': 'flipped()',
   },
   styles: `
     :host {
@@ -46,6 +47,9 @@ export function rarityColor(rarity: string | null | undefined): string {
       line-height: 1;
       text-shadow: 0 1px 2px var(--color-rarity-shade);
     }
+    :host(.flipped) {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, var(--rarity-tab-slant, 0.8rem) 100%);
+    }
     :host([data-rarity='UC']) {
       --rarity-to: color-mix(in srgb, var(--color-rarity-uc) 45%, var(--color-rarity-r));
     }
@@ -71,6 +75,8 @@ export function rarityColor(rarity: string | null | undefined): string {
 export class RarityTabComponent {
   /** The rarity (C, UC, R, SR, SEC); none shows a dash. */
   readonly erasRarityTab = input<string | null | undefined>(null);
+  /** Mirrored top to bottom: its slanted side leans the other way. */
+  readonly flipped = input(false, { transform: booleanAttribute });
   protected color(): string {
     return rarityColor(this.erasRarityTab());
   }

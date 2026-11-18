@@ -1,8 +1,8 @@
 {
-  "commit": "6478519323551b8ff7c24b639e5a89a737dda174",
+  "commit": "08e305aba250565f7a0a34aacca8473b7ee3f805",
   "dirty": false,
-  "subject": "Merge branch 'feat/mover-cartas' into release/2026-11-17",
-  "copiedAt": "2026-11-17T23:04:20.236Z",
+  "subject": "Engine: a card that evolved since it tributed counts as the creature it became (Llamarada's 'dicho aliado')",
+  "copiedAt": "2026-11-18T05:25:36.617Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

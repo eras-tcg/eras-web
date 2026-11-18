@@ -3,8 +3,8 @@ import { ButtonComponent } from '../../primitives/button/button.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
 import { CardFact, CardFactsComponent } from '../card-facts/card-facts.component';
 import { CardImageComponent } from '../card-image/card-image.component';
+import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
 import { ColorPipComponent } from '../color-pip/color-pip.component';
-
 
 export interface CardTextSegment {
   kind: 'text' | 'keyword' | 'note';
@@ -29,7 +29,14 @@ export interface CardTextGroup {
  */
 @Component({
   selector: 'eras-card-detail',
-  imports: [ButtonComponent, IconComponent, CardImageComponent, ColorPipComponent, CardFactsComponent],
+  imports: [
+    ButtonComponent,
+    IconComponent,
+    CardImageComponent,
+    RarityTabComponent,
+    ColorPipComponent,
+    CardFactsComponent,
+  ],
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +62,8 @@ export class CardDetailComponent {
   readonly imageUrl = input<string | null>(null);
   /** A foil copy shines over its image: holographic (foil) or starlight (prism). */
   readonly foil = input<'foil' | 'prism' | null>(null);
+  /** The card's rarity, on a tab over the image's top edge; null: no tab. */
+  readonly rarity = input<string | null>(null);
   readonly facts = input<CardFact[]>([]);
   readonly textGroups = input<CardTextGroup[]>([]);
   readonly notice = input<string | null>(null);

@@ -18,7 +18,10 @@ import { CardRenderService } from './render/card-render.service';
 import { AppScreen } from '@core/pwa/app-screen';
 import { CardsStore } from '@data/cards/cards.store';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dialog/choice-dialog.component';
+import {
+  ChoiceDialogComponent,
+  ChoiceDialogData,
+} from '@ui/surfaces/choice-dialog/choice-dialog.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
@@ -91,7 +94,12 @@ import { ColorLut, convertCanvas } from './render/color-lut';
   template: `
     <div class="top">
       @if (back(); as b) {
-        <a class="round" [routerLink]="b.route" [attr.aria-label]="'Volver a ' + b.label">
+        <a
+          class="round"
+          [routerLink]="b.route"
+          [queryParams]="b.query"
+          [attr.aria-label]="'Volver a ' + b.label"
+        >
           <eras-icon name="chevron-left" />
         </a>
       }
@@ -178,65 +186,65 @@ import { ColorLut, convertCanvas } from './render/color-lut';
         >
           <div class="viewport-inner">
             <div class="card-wrap" [class.framing]="framing()">
-            @if ((framing() || pendingArt()) && ghost(); as g) {
-                  <img
-                    class="ghost"
-                    [class.live]="!!pendingArt()"
-                    alt=""
-                    [src]="g.src"
-                    [style.left.%]="g.left"
-                    [style.top.%]="g.top"
-                    [style.width.%]="g.width"
-                    [style.height.%]="g.height"
+              @if ((framing() || pendingArt()) && ghost(); as g) {
+                <img
+                  class="ghost"
+                  [class.live]="!!pendingArt()"
+                  alt=""
+                  [src]="g.src"
+                  [style.left.%]="g.left"
+                  [style.top.%]="g.top"
+                  [style.width.%]="g.width"
+                  [style.height.%]="g.height"
+                />
+              }
+              <div
+                #preview
+                class="preview"
+                [class.dragging]="dragging()"
+                (pointerdown)="dragStart($event)"
+                (pointermove)="dragMove($event)"
+                (pointerup)="dragEnd()"
+                (pointercancel)="dragEnd()"
+                (wheel)="wheelZoom($event)"
+              ></div>
+              @if (!framing()) {
+                <eras-card-hotspots
+                  [zones]="zones()"
+                  [(form)]="form"
+                  [classes]="classes()"
+                  [noCost]="noCost()"
+                  [noStrength]="noStrength()"
+                  (toggled)="toggleValue($event)"
+                  (effectZone)="editEffects($event)"
+                />
+              }
+              @if (effectZone(); as z) {
+                @if (catalog(); as cat) {
+                  <eras-effect-editor
+                    [zone]="z"
+                    [lines]="effectLines()"
+                    [catalog]="cat"
+                    [pieces]="pieces()!"
+                    (changed)="applyEffects($event)"
+                    (closed)="closeEffects($event)"
                   />
                 }
-                <div
-                  #preview
-                  class="preview"
-                  [class.dragging]="dragging()"
-                  (pointerdown)="dragStart($event)"
-                  (pointermove)="dragMove($event)"
-                  (pointerup)="dragEnd()"
-                  (pointercancel)="dragEnd()"
-                  (wheel)="wheelZoom($event)"
-                ></div>
-                @if (!framing()) {
-                  <eras-card-hotspots
-                    [zones]="zones()"
-                    [(form)]="form"
-                    [classes]="classes()"
-                    [noCost]="noCost()"
-                    [noStrength]="noStrength()"
-                    (toggled)="toggleValue($event)"
-                    (effectZone)="editEffects($event)"
-                  />
-                }
-                @if (effectZone(); as z) {
-                  @if (catalog(); as cat) {
-                    <eras-effect-editor
-                      [zone]="z"
-                      [lines]="effectLines()"
-                      [catalog]="cat"
-                      [pieces]="pieces()!"
-                      (changed)="applyEffects($event)"
-                      (closed)="closeEffects($event)"
-                    />
+              }
+              @if (framing() && artCenter(); as c) {
+                <div class="cross" [style.left.%]="c.left" [style.top.%]="c.top">
+                  @for (n of nudges; track n.label) {
+                    <button
+                      type="button"
+                      [class]="'cross-' + n.at"
+                      [attr.aria-label]="n.label"
+                      (click)="n.at === 'mid' ? centerArt() : nudgeArt(n.dx, n.dy)"
+                    >
+                      {{ n.icon }}
+                    </button>
                   }
-                }
-                @if (framing() && artCenter(); as c) {
-                  <div class="cross" [style.left.%]="c.left" [style.top.%]="c.top">
-                    @for (n of nudges; track n.label) {
-                      <button
-                        type="button"
-                        [class]="'cross-' + n.at"
-                        [attr.aria-label]="n.label"
-                        (click)="n.at === 'mid' ? centerArt() : nudgeArt(n.dx, n.dy)"
-                      >
-                        {{ n.icon }}
-                      </button>
-                    }
-                  </div>
-                }
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -287,9 +295,7 @@ import { ColorLut, convertCanvas } from './render/color-lut';
           </datalist>
         </eras-form-field>
         <eras-stack direction="row" [gap]="2" wrap>
-          <button erasButton variant="ghost" type="button" (click)="newCard()">
-            Carta nueva
-          </button>
+          <button erasButton variant="ghost" type="button" (click)="newCard()">Carta nueva</button>
           <button
             erasButton
             type="button"
@@ -603,13 +609,19 @@ export class CardEditorPage {
   private readonly renderer = inject(CardRenderService);
   /** The card as last opened or saved (form and design): leaving with something else asks first. */
   private savedKey = '';
-  /** "Back": the edition of the card open (its slots), or the editions when it has none. */
+  /** "Back": the edition of the card open (its slots, scrolled to the card), or the editions when it has none. */
   protected readonly back = computed(() => {
     const id = this.form().edition.trim().toUpperCase();
-    const e = id ? this.editions.catalogEditions().find((x) => x.editionId.toUpperCase() === id) : null;
+    const e = id
+      ? this.editions.catalogEditions().find((x) => x.editionId.toUpperCase() === id)
+      : null;
     return e
-      ? { route: `/cards/editions/${e.editionId}`, label: e.editionName || e.editionId }
-      : { route: '/cards/editions', label: 'Ediciones' };
+      ? {
+          route: `/cards/editions/${e.editionId}`,
+          label: e.editionName || e.editionId,
+          query: this.metaId() ? { card: this.metaId() } : null,
+        }
+      : { route: '/cards/editions', label: 'Ediciones', query: null };
   });
   /** The last preview drawn (screen colors): what is saved as the card's finished image. */
   private lastPreview: Promise<HTMLCanvasElement> | null = null;
@@ -722,10 +734,17 @@ export class CardEditorPage {
         if (!editions.length) return;
         const slot = parseSlotCode(code);
         handled = key;
-        const regulation = editions.find((e) => e.editionId.toUpperCase() === slot?.edition)?.regulation ?? '';
+        const regulation =
+          editions.find((e) => e.editionId.toUpperCase() === slot?.edition)?.regulation ?? '';
         if (slot)
           untracked(() =>
-            this.reset({ ...blankMeta(slot.edition), regulation, colors: [slot.color], colorIdentity: slot.color, cardNumber: slot.number }),
+            this.reset({
+              ...blankMeta(slot.edition),
+              regulation,
+              colors: [slot.color],
+              colorIdentity: slot.color,
+              cardNumber: slot.number,
+            }),
           );
       }
     });
@@ -866,7 +885,9 @@ export class CardEditorPage {
         { value: 'discard', label: 'Salir sin guardar' },
       ],
     };
-    const choice = await firstValueFrom(this.modal.open<string | null>(ChoiceDialogComponent, { data }).closed);
+    const choice = await firstValueFrom(
+      this.modal.open<string | null>(ChoiceDialogComponent, { data }).closed,
+    );
     if (choice === 'discard') return true;
     if (choice !== 'save') return false;
     await this.save();
@@ -896,7 +917,9 @@ export class CardEditorPage {
       const blob = await firstValueFrom(this.api.art(m.id));
       if (this.metaId() !== m.id) return;
       // Its art as saved is not a change
-      this.loadArt(await dataUrl(blob), design.art ?? { scale: 1, x: 0, y: 0 }, () => this.markSaved());
+      this.loadArt(await dataUrl(blob), design.art ?? { scale: 1, x: 0, y: 0 }, () =>
+        this.markSaved(),
+      );
     } catch (e) {
       this.fb.fail(e, 'No se pudo cargar el arte de la carta');
     }
@@ -958,7 +981,9 @@ export class CardEditorPage {
     const shown = this.lastPreview;
     if (!shown) return;
     const canvas = await shown;
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.9),
+    );
     if (blob) await firstValueFrom(this.api.setRender(id, blob));
   }
 
@@ -984,14 +1009,20 @@ export class CardEditorPage {
       );
       this.metaId.set(saved.id);
       if (art) {
-        await firstValueFrom(art.file ? this.api.setArt(saved.id, art.file) : this.api.removeArt(saved.id));
+        await firstValueFrom(
+          art.file ? this.api.setArt(saved.id, art.file) : this.api.removeArt(saved.id),
+        );
         this.artChanged = false;
         this.artFile = null;
       }
       await this.saveRender(saved.id);
       this.markSaved();
       const synced = printings.length ? await this.syncPrintings(printings, body, art) : 0;
-      this.fb.ok(synced ? `Carta guardada y aplicada a ${synced} ${synced === 1 ? 'reimpresión' : 'reimpresiones'}` : 'Carta guardada');
+      this.fb.ok(
+        synced
+          ? `Carta guardada y aplicada a ${synced} ${synced === 1 ? 'reimpresión' : 'reimpresiones'}`
+          : 'Carta guardada',
+      );
       void this.store.load(true);
     } catch (e) {
       this.fb.fail(e, 'No se pudo guardar la carta');
@@ -1010,7 +1041,10 @@ export class CardEditorPage {
     art: { file: Blob | null } | null,
   ): Promise<number> {
     const codes = printings
-      .map((p) => `${p.edition}${p.subEdition ? '.' + p.subEdition : ''}-${p.colorIdentity}${String(p.cardNumber).padStart(2, '0')}`)
+      .map(
+        (p) =>
+          `${p.edition}${p.subEdition ? '.' + p.subEdition : ''}-${p.colorIdentity}${String(p.cardNumber).padStart(2, '0')}`,
+      )
       .join(', ');
     const apply = await this.modal.confirm({
       title: 'Reimpresiones',
@@ -1020,7 +1054,10 @@ export class CardEditorPage {
     if (!apply) return 0;
     for (const p of printings) {
       let meta = await firstValueFrom(this.api.updateMeta(p.id, printingPayload(body, p)));
-      if (art) meta = await firstValueFrom(art.file ? this.api.setArt(p.id, art.file) : this.api.removeArt(p.id));
+      if (art)
+        meta = await firstValueFrom(
+          art.file ? this.api.setArt(p.id, art.file) : this.api.removeArt(p.id),
+        );
       if (meta.artKey && meta.design) await this.renderer.refresh(meta);
     }
     return printings.length;
@@ -1086,7 +1123,11 @@ export class CardEditorPage {
   }
 
   /** Shows an art (as a data URL) with its framing. */
-  private loadArt(src: string, place: { scale: number; x: number; y: number }, loaded?: () => void): void {
+  private loadArt(
+    src: string,
+    place: { scale: number; x: number; y: number },
+    loaded?: () => void,
+  ): void {
     const img = new Image();
     img.onload = () => {
       // The art comes in screen sRGB: take it to the card's design space, as Photoshop does when it enters the CMYK file.
@@ -1215,7 +1256,9 @@ export class CardEditorPage {
   }
 
   /** The art's window of the frame drawn now ([x0, y0, x1, y1] in card pixels), once found. */
-  private readonly artWindow = signal<{ key: string; box: Box; clear: [number, number] } | null>(null);
+  private readonly artWindow = signal<{ key: string; box: Box; clear: [number, number] } | null>(
+    null,
+  );
   /** Where the cross of moves goes: the middle of the art's window, in % of the card. */
   protected readonly artCenter = computed(() => {
     const w = this.artWindow();
@@ -1228,8 +1271,15 @@ export class CardEditorPage {
   /** What decides the art's window: the frame and everything that changes its shape. */
   private readonly frameKey = computed(() => {
     const f = this.form();
-    return [f.cardType, f.enlace, this.her() || f.inheritEffects.length > 0, this.style(), this.noCost(),
-      this.noStrength(), this.goldBorder()].join('|');
+    return [
+      f.cardType,
+      f.enlace,
+      this.her() || f.inheritEffects.length > 0,
+      this.style(),
+      this.noCost(),
+      this.noStrength(),
+      this.goldBorder(),
+    ].join('|');
   });
 
   private readonly findWindow = effect(() => {
@@ -1292,7 +1342,11 @@ export class CardEditorPage {
       const r = new SvgRenderer(buildCard(draft, templates, this.measure), css);
       r.render();
       const canvas = await svgToCanvasFine(r.svg, 1);
-      return { width: canvas.width, height: canvas.height, data: canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data };
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        data: canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data,
+      };
     };
     const magentaCard = await drawn('#ff00ff');
     const greenCard = await drawn('#00ff00');

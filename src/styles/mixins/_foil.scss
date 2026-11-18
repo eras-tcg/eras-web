@@ -41,12 +41,15 @@
 // light sweeping across, lighting up the dots along lines parallel and perpendicular to the grid, which slide as it
 // goes. Include each in a positioned pseudo-element over the card (they bring their own keyframes).
 // It scales with the card: every size is in $u, a pixel of a card 160px wide (the card must be a size container:
-// include `scaled` on it), so a bigger card shows the same pattern bigger, not more of it.
-$u: calc(100cqw / 160);
-$grid: url('/images/foil/starlight-grid.svg') 0 0 / calc(96 * #{$u}) calc(96 * #{$u});
+// include `scaled` on it), so a bigger card shows the same pattern bigger, not more of it. Never under 1px: on a
+// smaller card (a thumbnail) the 1px dots would fall between screen pixels. The tiles are a whole number of pixels:
+// a fractional tile leaves a seam with no shine where two tiles meet (a cross over a thumbnail).
+$u: max(calc(100cqw / 160), 1px);
+$tile: round(down, calc(96 * #{$u}), 1px);
+$grid: url('/images/foil/starlight-grid.svg') 0 0 / #{$tile} #{$tile};
 // Crosses of dots on the grid's rows and columns (every cell, fading from the middle), each flashing now and then
 // at its own pace (an animated SVG, a tile twice the grid's)
-$crosses: url('/images/foil/starlight-crosses.svg') 0 0 / calc(192 * #{$u}) calc(192 * #{$u});
+$crosses: url('/images/foil/starlight-crosses.svg') 0 0 / calc(2 * #{$tile}) calc(2 * #{$tile});
 
 // On the card itself: it becomes the container the pattern measures
 @mixin scaled {

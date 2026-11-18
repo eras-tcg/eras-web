@@ -1,8 +1,8 @@
 {
-  "commit": "08e305aba250565f7a0a34aacca8473b7ee3f805",
+  "commit": "ba1a7bbf8625ed74ad379d18389fbec3787da587",
   "dirty": false,
-  "subject": "Engine: a card that evolved since it tributed counts as the creature it became (Llamarada's 'dicho aliado')",
-  "copiedAt": "2026-11-18T05:25:36.617Z",
+  "subject": "Enfrentamiento de Guerra: the text says the strength lasts until the end of the turn (as programmed); test for it",
+  "copiedAt": "2026-11-18T06:02:02.610Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

@@ -63,9 +63,13 @@ export class TurnDraw {
       lean: BIG_DECK_LEAN,
       turn: 0,
     };
-    // Without the flights' drop shadow: a filter flattens the deck, and its side (3D) would vanish
+    // Only the pose: animating the flights' drop shadow (a filter, even 'none') flattens the deck, and its side (3D)
+    // would vanish
     const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false }).map(
-      (frame) => ({ ...frame, filter: 'none' }),
+      (frame) => ({
+        transform: frame['transform'],
+        ...(frame.offset != null ? { offset: frame.offset } : {}),
+      }),
     );
 
     // The whole screen, seen as the table (its perspective and eye), as the cards that fly
@@ -119,7 +123,7 @@ export class TurnDraw {
       top: '100%',
       height: `${thickness}px`,
       transformOrigin: '50% 0',
-      transform: 'rotateX(90deg)',
+      transform: 'rotateX(-90deg)',
       background: 'repeating-linear-gradient(to bottom, #0b0f14 0 3px, #1c2530 3px 4px)',
       borderRadius: `0 0 ${radius} ${radius}`,
       pointerEvents: 'none',

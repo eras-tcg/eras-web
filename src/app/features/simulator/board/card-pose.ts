@@ -39,7 +39,7 @@ export function stageOf(document: Document): Stage {
 }
 
 /** The turn and scale an element's own 2D transforms give it (3D ones, the table's lean, are the pose's lean). */
-function flatTurn(element: Element, stop: Element | null): { turn: number; scale: number } {
+export function flatTurn(element: Element, stop: Element | null): { turn: number; scale: number } {
   const view = element.ownerDocument.defaultView;
   let turn = 0;
   let scale = 1;

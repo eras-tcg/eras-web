@@ -22,6 +22,8 @@
   // between its backdrop and its sheet, so a modal opened later covers it.
   --z-sim-field-lifted: 50;
   --z-sim-hud: 10;
+  // A card clicked on the table, shown beside the board: over the table, its plates and hands
+  --z-sim-card-panel: 17;
   // Your turn's draw (the big deck, taking every click): over the table, its plates and hands; under the sidebar and the
   // game menu, which stay usable
   --z-sim-turn-draw: 18;

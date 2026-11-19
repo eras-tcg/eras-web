@@ -415,3 +415,20 @@
 .tilt-item {
   cursor: default;
 }
+
+// A card clicked on the table, beside the board (as the card of a choice is): over the table and the hands, under the
+// sidebar and the game menu
+.inspect {
+  --effect-panel-width: 17rem;
+
+  position: fixed;
+  inset-block-end: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: var(--z-sim-card-panel);
+  max-block-size: calc(100vh - 2 * var(--space-3));
+}
+
+// On a narrow screen there is no room beside the board: double click (or "Ver") opens it in a dialog
+@media (max-width: 64rem) {
+  .inspect { display: none; }
+}

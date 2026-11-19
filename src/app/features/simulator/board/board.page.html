@@ -196,6 +196,10 @@
   </div>
   }
 
+  @if (inspected(); as c) {
+    <!-- A card clicked on the table: beside the board, with its Materiales, Recursos and effects (clicks on it stay on it) -->
+    <eras-effect-card-panel class="inspect" [slot]="c" [name]="c.cardName ?? ''" (click)="$event.stopPropagation()" />
+  }
   <eras-card-flights />
   <!-- The card a choice is about stays bright above the choice's backdrop -->
   <eras-prompt-spotlight />

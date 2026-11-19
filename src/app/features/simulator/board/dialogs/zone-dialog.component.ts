@@ -27,8 +27,8 @@ export interface ZoneDialogData {
 }
 
 /**
- * Cards of a pile (tributes, discard, lives…): a click opens a card as holding it does (openCardDetail); move, flip, peek,
- * delete, reorder and bulk actions (Ctrl / ⌘ + click selects, and once a card is selected a click selects too).
+ * Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. With the test actions
+ * on a click selects cards; without them a click opens one as holding it does (openCardDetail).
  */
 @Component({
   selector: 'eras-zone-dialog',
@@ -57,7 +57,7 @@ export interface ZoneDialogData {
                 [chosen]="selected().has(c.instanceId)"
                 [viewOnly]="!canAct() && isHidden(c)"
                 [attr.aria-label]="label(c, i)"
-                (click)="pick($event, c)"
+                (click)="pick(c)"
               >
                 <eras-game-card
                   [imageUrl]="c.imageUrl" [foil]="c.finish ?? null"
@@ -291,13 +291,13 @@ export class ZoneDialogComponent {
     this.game.activateEffect(c.instanceId, scriptId);
   }
 
-  /** A click: selects while selecting (or with Ctrl / ⌘), else opens the card as holding it does (one that can be seen). */
-  protected pick(event: MouseEvent, c: CardSlot): void {
-    if (this.canAct() && (this.selected().size || event.ctrlKey || event.metaKey)) {
-      this.toggle(c.instanceId);
-      return;
-    }
-    if (!this.isHidden(c)) openCardDetail(this.game, this.catalog, this.modal, c);
+  /**
+   * A click: with the test actions on, selects (several, to send them together); else opens the card as holding it
+   * does (one that can be seen). Holding a card opens it in either case.
+   */
+  protected pick(c: CardSlot): void {
+    if (this.canAct()) this.toggle(c.instanceId);
+    else if (!this.isHidden(c)) openCardDetail(this.game, this.catalog, this.modal, c);
   }
 
   protected toggle(id: string): void {

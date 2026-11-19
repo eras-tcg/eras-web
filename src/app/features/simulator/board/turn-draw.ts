@@ -95,7 +95,23 @@ export class TurnDraw {
     });
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    Object.assign(copy.style, { display: 'block', width: '100%', height: '100%' });
+    // Lying back, its volume is a real side: the cards under the top one, as thick as on its zone (the pile's edge),
+    // black as the back's frame with a faint line between cards. The edge drawn on the zone (a shadow) would lie flat.
+    const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
+    Object.assign(copy.style, { display: 'block', width: '100%', height: '100%', boxShadow: 'none' });
+    const side = this.document.createElement('span');
+    Object.assign(side.style, {
+      position: 'absolute',
+      left: '0',
+      right: '0',
+      top: '100%',
+      height: `${depth}px`,
+      transformOrigin: '50% 0',
+      transform: 'rotateX(-90deg)',
+      background: 'repeating-linear-gradient(to bottom, #0b0f14 0 1px, #2a3441 1px 2px)',
+      borderRadius: `0 0 ${getComputedStyle(top).borderBottomLeftRadius} ${getComputedStyle(top).borderBottomRightRadius}`,
+      pointerEvents: 'none',
+    });
     // The glow, around the deck and its volume
     const glow = this.document.createElement('span');
     Object.assign(glow.style, {
@@ -106,7 +122,7 @@ export class TurnDraw {
       opacity: '0',
       pointerEvents: 'none',
     });
-    big.append(copy, glow);
+    big.append(side, copy, glow);
     screen.append(big);
     this.document.body.append(screen);
     // The real deck stays where it is; the one rising is its copy

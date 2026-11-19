@@ -13,7 +13,7 @@ export interface TurnDrawCard {
 /** How tall the deck stands at the middle of the screen, of the screen's height. */
 const BIG_DECK = 0.5;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
-const BIG_DECK_LEAN = 40;
+const BIG_DECK_LEAN = 62;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,

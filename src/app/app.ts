@@ -1,12 +1,10 @@
 import { PreferenceSync } from '@core/preferences/preference-sync';
-import { ChangeDetectionStrategy, Component, Injector, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AuthService } from '@core/auth/auth.service';
 import { RotateOverlayComponent } from '@core/layout/rotate-overlay.component';
 import { NativeApp } from '@core/native/native-app';
 import { AppScreen } from '@core/pwa/app-screen';
 import { ConnectionService } from '@core/server/connection.service';
-import { ServerAccess } from '@core/server/server-access';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
 import { WarmupScreenComponent } from '@core/server/warmup-screen.component';
 import { ThemeService } from '@core/theme/theme.service';
@@ -60,9 +58,6 @@ export class App {
   protected readonly warmup = inject(ServerWarmupService);
   protected readonly connection = inject(ConnectionService);
   protected readonly screen = inject(AppScreen);
-  private readonly access = inject(ServerAccess);
-  private readonly auth = inject(AuthService);
-  private readonly injector = inject(Injector);
   /** The player's preferences kept with their account (read on signing in, saved as they change). */
   private readonly preferences = inject(PreferenceSync);
 
@@ -73,17 +68,5 @@ export class App {
     this.screen.start();
     // The Android app (only there): back button, updates, the card pictures' worker
     inject(NativeApp).start();
-    // Once the backend is up, and again when an admin signs in: what it found in Drive as it woke up
-    effect(() => {
-      // Loaded only then (an admin's tool, out of the first download)
-      if (this.access.allowed() && this.warmup.ready() && this.auth.user()) void this.checkSyncReport();
-    });
-  }
-
-  /** The admins' Drive report: its code is downloaded only for someone who may see it. */
-  private async checkSyncReport(): Promise<void> {
-    if (!this.auth.can('manage_cards')) return;
-    const { SyncReportService } = await import('@features/admin/sync-report/sync-report.service');
-    await this.injector.get(SyncReportService).check();
   }
 }

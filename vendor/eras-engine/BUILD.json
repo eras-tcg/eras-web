@@ -1,8 +1,8 @@
 {
-  "commit": "c67d7f40526943e3da5eecc339b9af8dd5faa56e",
+  "commit": "30c5d05e84419f33f5a1efd3e9a7ec802279ba39",
   "dirty": false,
-  "subject": "Favor de la Naturaleza programmed; Última Línea De Defensa to its current text",
-  "copiedAt": "2026-11-19T15:54:10.025Z",
+  "subject": "Engine: \"dos veces por turno\" usage limit (per copy and between copies)",
+  "copiedAt": "2026-11-19T21:11:25.437Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

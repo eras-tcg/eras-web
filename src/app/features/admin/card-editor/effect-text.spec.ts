@@ -11,6 +11,7 @@ const cat: PieceCatalog = {
   timings: ['En Invocación', 'Turno Aliado', 'En Mano', 'Todos Los Turnos'],
   conditions: [
     'una vez por turno',
+    'dos veces por turno',
     'por efecto',
     'por efecto aliado',
     'por efecto o enfrentamiento',
@@ -166,6 +167,32 @@ describe('effect-text', () => {
       ussageLimit: 'once per turn between copies',
       effectBlocks: [{ activationCondition: 'si X', cost: 'tributa 1', resolution: 'roba 1.' }],
     });
+  });
+
+  it('keeps the colon of "entre copias" when the resolution has a colon of its own', () => {
+    const l = splitPieces(
+      [{ t: 'text', text: 'en mano una vez por turno entre copias: puedes robar 1. Si lo haces: roba 1.' }],
+      cat,
+      true,
+    );
+    const { effects } = linesToEffects([l]);
+    expect(effects[0].effectBlocks).toEqual([{ resolution: 'puedes robar 1. Si lo haces: roba 1.' }]);
+    expect(show(effectsToLines(effects, [], cat)[0])).toContain('entre copias: puedes robar 1.');
+  });
+
+  it('reads "dos veces por turno" as "una vez por turno", with or without "entre copias"', () => {
+    const effects = [
+      { instance: 'En Mano', ussageLimit: 'twice per turn', effectBlocks: [{ resolution: 'roba 1.' }] },
+      { instance: 'En Mano', ussageLimit: 'twice per turn between copies', effectBlocks: [{ resolution: 'roba 1.' }] },
+    ];
+    const lines = effectsToLines(effects, [], cat);
+    expect(lines.map(show)).toEqual([
+      '<En Mano> <dos veces por turno> roba 1.',
+      '<En Mano> <dos veces por turno> entre copias: roba 1.',
+    ]);
+    expect(linesToEffects(lines).effects).toEqual(effects);
+    const typed = splitPieces([{ t: 'text', text: 'en mano dos veces por turno entre copias: roba 1.' }], cat, true);
+    expect(linesToEffects([typed]).effects).toEqual([effects[1]]);
   });
 
   it('round-trips metadata through lines', () => {

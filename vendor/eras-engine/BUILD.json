@@ -1,8 +1,8 @@
 {
-  "commit": "b4e794a22d21c80fdf57e8e7d4676baa46d55e20",
+  "commit": "c03a759b5c7bf22993ba5bf845df6711ffbeeb25",
   "dirty": false,
-  "subject": "Cards: program the E1.2 cards without a file and follow the designer's edits",
-  "copiedAt": "2026-11-19T22:51:48.290Z",
+  "subject": "Sello de Contención: Definitive effect, until the end of the turn",
+  "copiedAt": "2026-11-19T23:35:52.561Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

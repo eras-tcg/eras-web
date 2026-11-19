@@ -99,33 +99,46 @@ export class TurnDraw {
     });
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    // Its volume: the edges of the cards under the top one (black as the back's frame, with faint lines: it is drawn big),
-    // as thick as the cards left in it make it, drawn longer as much as lying back shortens it (the pile's edge on its
-    // zone is thinner, and capped on small screens)
-    const depth = Math.round(
-      (left * CARD_THICKNESS * from.height) / Math.cos((BIG_DECK_LEAN * Math.PI) / 180),
-    );
-    const edges = Array.from(
-      { length: depth },
-      (_, i) => `0 ${i + 1}px 0 ${i % 3 === 2 ? '#1c2530' : '#0b0f14'}`,
-    );
+    // Its volume, a real side: the cards under the top one go down behind it (into the table), all as wide as it, as
+    // many as are left (black as the back's frame, a faint line every few cards). A shadow drawn on the card's plane
+    // (the pile's edge on its zone) would come towards you and widen as it goes down.
+    const radius = getComputedStyle(top).borderRadius;
     Object.assign(copy.style, {
       display: 'block',
       width: '100%',
       height: '100%',
-      boxShadow: [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', '),
+      boxShadow: 'none',
     });
-    // The glow, around the whole deck: the top card and the edges under it (the card's shadow, one pixel a step)
-    const glow = this.document.createElement('span');
-    Object.assign(glow.style, {
+    // Its height is not grown by the pose's scale (that scale is on the card's plane): drawn at the size it will have
+    const thickness = left * CARD_THICKNESS * from.height * scale;
+    const side = this.document.createElement('span');
+    Object.assign(side.style, {
       position: 'absolute',
-      inset: `0 0 ${-depth}px 0`,
-      borderRadius: getComputedStyle(top).borderRadius,
+      left: '0',
+      right: '0',
+      top: '100%',
+      height: `${thickness}px`,
+      transformOrigin: '50% 0',
+      transform: 'rotateX(90deg)',
+      background: 'repeating-linear-gradient(to bottom, #0b0f14 0 3px, #1c2530 3px 4px)',
+      borderRadius: `0 0 ${radius} ${radius}`,
+      pointerEvents: 'none',
+    });
+    // The glow, around the whole deck: the top card and its side
+    const glowStyle = {
+      position: 'absolute',
+      inset: '0',
+      borderRadius: 'inherit',
       boxShadow: '0 0 1.1rem 0.25rem var(--color-primary), 0 0 0.35rem 0.1rem var(--color-primary)',
       opacity: '0',
       pointerEvents: 'none',
-    });
-    big.append(copy, glow);
+    };
+    const glow = this.document.createElement('span');
+    Object.assign(glow.style, glowStyle, { borderRadius: radius });
+    const sideGlow = this.document.createElement('span');
+    Object.assign(sideGlow.style, glowStyle);
+    side.append(sideGlow);
+    big.append(side, copy, glow);
     screen.append(big);
     this.document.body.append(screen);
     // The real deck stays where it is; the one rising is its copy
@@ -137,21 +150,22 @@ export class TurnDraw {
       fill: 'forwards' as const,
     };
     big.animate(frames, settle);
-    let pulse: Animation | null = null;
+    let pulses: Animation[] = [];
     const shown = setTimeout(() => {
-      pulse = glow.animate([{ opacity: 0.35 }, { opacity: 1 }], {
-        duration: 900,
-        direction: 'alternate',
-        iterations: Infinity,
-        easing: 'ease-in-out',
-      });
+      pulses = [glow, sideGlow].map((g) =>
+        g.animate([{ opacity: 0.35 }, { opacity: 1 }], {
+          duration: 900,
+          direction: 'alternate',
+          iterations: Infinity,
+          easing: 'ease-in-out',
+        }),
+      );
       big.focus({ preventScroll: true });
     }, TIMING.flight);
 
     const take = () => {
       clearTimeout(shown);
-      pulse?.cancel();
-      glow.style.opacity = '0';
+      pulses.forEach((p) => p.cancel());
       big.style.pointerEvents = 'none';
       // The card leaves from the big deck's top, face down, and turns over on its way to your hand
       const seen = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };

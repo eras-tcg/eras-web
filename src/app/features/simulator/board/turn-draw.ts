@@ -14,8 +14,8 @@ export interface TurnDrawCard {
 const BIG_DECK = 0.6;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
 const BIG_DECK_LEAN = 45;
-/** How thick each card left in the deck is, of a card's height (a deck of 40 is about a sixth as thick as a card is tall). */
-const CARD_THICKNESS = 0.004;
+/** How thick each card left in the deck is, of a card's height (a deck of 40 is a bit over a quarter as thick as a card is tall). */
+const CARD_THICKNESS = 0.007;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,

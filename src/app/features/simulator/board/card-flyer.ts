@@ -47,6 +47,8 @@ export class CardFlyer {
 
   /** A copy of the card flies from where it was (`from`'s pose) to `target` (the card there, or the pile). */
   fly(from: Seen, target: Element, faceDown: boolean, options: FlightOptions = {}): void {
+    // A card landing in a hand waits hidden there until the copy lands (it is already drawn in its place)
+    if (!options.hide && target instanceof HTMLElement && target.matches('[data-hand-id] eras-game-card')) options = { ...options, hide: target };
     // It lands at the pose of the card there: the target itself, or the card shown on that pile (else the pile, at the
     // flying card's size)
     const toCard = target instanceof HTMLElement && target.matches('eras-game-card') ? target : target.querySelector<HTMLElement>('eras-game-card');

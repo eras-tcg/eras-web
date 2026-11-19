@@ -116,10 +116,18 @@ export interface KeywordEffectRef {
 /** List fields of the reference data editable as plain values. */
 export type RefListField = 'classes' | 'instances' | 'kinds' | 'tags';
 
-export const USAGE_LIMITS = ['once per turn', 'once per turn between copies', 'ultimate effect'] as const;
+export const USAGE_LIMITS = [
+  'once per turn',
+  'once per turn between copies',
+  'twice per turn',
+  'twice per turn between copies',
+  'ultimate effect',
+] as const;
 export const USAGE_LIMIT_LABELS: Record<string, string> = {
   'once per turn': 'Una vez por turno',
   'once per turn between copies': 'Una vez por turno entre copias',
+  'twice per turn': 'Dos veces por turno',
+  'twice per turn between copies': 'Dos veces por turno entre copias',
   'ultimate effect': 'Efecto definitivo',
 };
 

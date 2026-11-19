@@ -11,6 +11,8 @@ export function effectSummary(effect: CardEffect | null | undefined): string {
   if (effect.instance) text += `<${effect.instance}> `;
   if (effect.ussageLimit === 'once per turn') text += '[once per turn] ';
   if (effect.ussageLimit === 'once per turn between copies') text += '(1) ';
+  if (effect.ussageLimit === 'twice per turn') text += '[twice per turn] ';
+  if (effect.ussageLimit === 'twice per turn between copies') text += '(2) ';
   for (const block of effect.effectBlocks ?? []) {
     if (block.activationCondition) text += `${block.activationCondition}: `;
     if (block.cost) text += `${block.cost}; `;

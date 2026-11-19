@@ -14,6 +14,7 @@ import { Seen, TableMeasure } from './card-seen';
 import { LifeFlights } from './life-flights';
 import { TimelineCursor } from './timeline-cursor';
 import { TIMING } from './timing';
+import { TurnDraw } from './turn-draw';
 
 /** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
 interface Hop {
@@ -54,6 +55,7 @@ export class CardFlightsComponent {
   });
   private readonly motions = new CardMotions(this.document, this.animations, this.measure, (fn) => this.run(fn));
   private readonly lives = new LifeFlights(this.document, this.measure, this.flyer);
+  private readonly turnDraw = new TurnDraw(this.document, this.animations, this.measure, this.flyer);
   private readonly timeline = new TimelineCursor();
 
   /** Where each field card was drawn last time: it flies from there when it leaves the field. */
@@ -169,8 +171,10 @@ export class CardFlightsComponent {
   }
 
   /**
-   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, and those of
-   * a new DRAW event (an effect that looked at the top cards took them out of the deck before drawing).
+   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, those of a new DRAW
+   * event (an effect that looked at the top cards took them out of the deck before drawing), and those new in a hand that
+   * were nowhere before (a deck's cards reach the board as backs with ids of their own: the turn's draw has no event).
+   * Your own draw at the start of your turn waits for you to take it from your deck (TurnDraw).
    */
   private draws(state: GameState): void {
     const before = this.deckIds;
@@ -179,11 +183,24 @@ export class CardFlightsComponent {
     const events = this.timeline.fresh(state);
     if (!before) return;
     const drawnByEvent = new Set(events.filter((e) => e.type === 'DRAW' && e.cardInstanceId).map((e) => e.cardInstanceId));
+    const known = this.previous ? cardIds(this.previous) : null;
     const me = this.me();
+    const myTurnStarted = !!me && state.currentTurnUserId === me && this.previous?.currentTurnUserId !== me && !this.game.sideByBot();
     for (const p of players) {
       const deck = pile(this.document, p.userId, 'deck');
       if (!deck) continue;
-      const drawn = p.hand.filter((c) => (before.has(c.instanceId) || drawnByEvent.has(c.instanceId)) && !this.settled.has(c.instanceId));
+      const fromDeck = (id: string) => before.has(id) || drawnByEvent.has(id) || (!!known && !known.has(id));
+      const drawn = p.hand.filter((c) => fromDeck(c.instanceId) && !this.settled.has(c.instanceId));
+      if (p.userId === me && myTurnStarted && drawn.length && !this.animations.still()) {
+        const cards = drawn.flatMap((c) => {
+          const element = handCard(this.document, c.instanceId);
+          return element ? [{ element, imageUrl: c.imageUrl }] : [];
+        });
+        if (cards.length) {
+          this.turnDraw.play(deck, cards);
+          continue;
+        }
+      }
       drawn.forEach((c, i) => {
         const card = handCard(this.document, c.instanceId);
         const target = card ?? pile(this.document, p.userId, 'hand');
@@ -368,4 +385,14 @@ export class CardFlightsComponent {
     if (real) real.style.visibility = 'hidden';
     return new Promise((done) => setTimeout(done, TIMING.shatter));
   }
+}
+
+/** Every card of the state: on a field (with its Materiales and Recursos), in a hand or a pile. */
+function cardIds(state: GameState): Set<string> {
+  const ids = new Set<string>();
+  for (const p of Object.values(state.players ?? {})) {
+    for (const c of p.field) [c, ...c.materials, ...c.resources].forEach((a) => ids.add(a.instanceId));
+    for (const z of PILES) (p[z] as CardSlot[]).forEach((c) => ids.add(c.instanceId));
+  }
+  return ids;
 }

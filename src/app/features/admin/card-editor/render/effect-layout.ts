@@ -370,6 +370,8 @@ function drawSlot(
   const lay = layoutFit(tokens, slot.box.w, slot.box.h - (ultimate ? ULTIMATE_NOTE_ROOM : 0), measure);
   const px = lay.px;
   let y = slot.box.y;
+  // Inside an ultimate effect (between its heading and its closing bar) its momento is the ultimate's own, in purple
+  let inUltimate = false;
   lay.lines.forEach((line, i) => {
     // Photoshop's first baseline in a text box sits about 0.715 em below the box top (Arial).
     const baseline = y + px * 0.715;
@@ -390,10 +392,16 @@ function drawSlot(
           pieces,
           measure,
           under ? tuckOf(px, measure) : 0,
+          inUltimate && tok.kind === 'timing' ? ultimateTiming(tok.label) : null,
         );
         lastPiece = pg;
-      } else if (tok.t === 'ultimate') drawUltimate(r, g, slot.box, y, px, measure);
-      else if (tok.t === 'ultimateEnd') drawUltimateBar(r, g, slot.box, y + px * 0.3, px);
+      } else if (tok.t === 'ultimate') {
+        drawUltimate(r, g, slot.box, y, px, measure);
+        inUltimate = true;
+      } else if (tok.t === 'ultimateEnd') {
+        drawUltimateBar(r, g, slot.box, y + px * 0.3, px);
+        inUltimate = false;
+      }
       else if (tok.t === 'word') {
         svgEl(
           'text',
@@ -438,11 +446,12 @@ function drawPiece(
   pieces: PieceTable,
   measure: Measure,
   tuck = 0,
+  style: PieceStyle | null = null,
 ): void {
   const m = pieceMetrics(tok.kind, tok.label, px, measure);
   const h = m.h;
   const w = m.w + tuck;
-  const st: PieceStyle = pieceStyle(pieces, tok.kind, tok.label, tok.style) ?? {
+  const st: PieceStyle = style ?? pieceStyle(pieces, tok.kind, tok.label, tok.style) ?? {
     label: tok.label,
     fill: [
       [0, '#555555'],
@@ -524,6 +533,20 @@ const ULTIMATE_NOTE = '(Solo puedes activar 1 Efecto Definitivo por turno.)';
 const ULTIMATE_NOTE_PX = 20.83;
 /** The room the note takes at the bottom of the box (its line and a gap above it). */
 const ULTIMATE_NOTE_ROOM = 26;
+
+/** The momento of an ultimate effect (EXTRAS / EN JUEGO): flat in its purple, white letters outlined in black. */
+function ultimateTiming(label: string): PieceStyle {
+  return {
+    label,
+    fill: [
+      [0, ULTIMATE_PURPLE],
+      [1, ULTIMATE_PURPLE],
+    ],
+    text: '#ffffff',
+    textStroke: '#000000',
+    textStrokeSize: 1,
+  };
+}
 
 /** A beveled shape of the ultimate effect, in its own layer (each one is beveled alone, as in the PSD). */
 function ultimateShape(r: SvgRenderer, g: Element, d: string, bbox: number[], bevel: number): void {

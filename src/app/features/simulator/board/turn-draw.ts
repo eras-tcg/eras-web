@@ -97,28 +97,21 @@ export class TurnDraw {
     });
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    // Lying back, its volume is a real side: the cards under the top one, as thick as on its zone (the pile's edge),
-    // black as the back's frame with a faint line between cards. The edge drawn on the zone (a shadow) would lie flat.
+    // Its volume as on its zone (the edges of the cards under the top one, black as the back's frame with a faint line
+    // between cards), stretched as much as lying back shortens it: as thick as on the zone, at its size
     const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
+    const step = 1 / Math.cos((BIG_DECK_LEAN * Math.PI) / 180);
+    const edges = Array.from(
+      { length: depth },
+      (_, i) => `0 ${(i + 1) * step}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`,
+    );
     Object.assign(copy.style, {
       display: 'block',
       width: '100%',
       height: '100%',
-      boxShadow: 'none',
-    });
-    const side = this.document.createElement('span');
-    Object.assign(side.style, {
-      position: 'absolute',
-      left: '0',
-      right: '0',
-      top: '100%',
-      // The pose's scale grows the card on its plane only: its thickness grows here
-      height: `${depth * scale}px`,
-      transformOrigin: '50% 0',
-      transform: 'rotateX(-90deg)',
-      background: 'repeating-linear-gradient(to bottom, #0b0f14 0 1px, #2a3441 1px 2px)',
-      borderRadius: `0 0 ${getComputedStyle(top).borderBottomLeftRadius} ${getComputedStyle(top).borderBottomRightRadius}`,
-      pointerEvents: 'none',
+      boxShadow: [...edges, `0 ${(depth + 2) * step}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(
+        ', ',
+      ),
     });
     // The glow, around the deck and its volume
     const glow = this.document.createElement('span');
@@ -130,7 +123,7 @@ export class TurnDraw {
       opacity: '0',
       pointerEvents: 'none',
     });
-    big.append(side, copy, glow);
+    big.append(copy, glow);
     screen.append(big);
     this.document.body.append(screen);
     // The real deck stays where it is; the one rising is its copy

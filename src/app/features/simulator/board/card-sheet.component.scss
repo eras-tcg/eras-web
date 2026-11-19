@@ -1,20 +1,12 @@
 :host { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6); align-items: start; }
 // A side panel: the card on top, as wide as the panel, its effects under it
 :host(.column) { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
-:host(.column) .showcase {
-  --game-card-width: calc(var(--card-sheet-width, 16rem) - 2 * var(--space-3) - var(--materials, 0) * 1.1rem);
-  padding: var(--space-3);
-}
+:host(.column) .showcase { --game-card-width: calc(var(--card-sheet-width, 16rem) - var(--materials, 0) * 1.1rem); }
+// The card alone (no box around it), its Materiales behind and its Recursos under it
 .showcase {
   --game-card-width: 14rem;
   display: grid;
   justify-items: center;
-  padding: var(--space-4);
-  border-radius: var(--radius-lg, var(--radius-md));
-  background:
-    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 70%),
-    var(--color-surface-muted);
-  box-shadow: inset 0 0 0 1px var(--color-border);
 }
 /* Materiales: their right edge shows behind the card, one step each */
 .art { position: relative; padding-inline-end: calc(var(--materials, 0) * 1.1rem); }
@@ -114,7 +106,7 @@
    screen's height, so it shows whole without scrolling the dialog */
 @media (orientation: landscape) and (max-height: 30rem) {
   :host(:not(.column)) { grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); }
-  :host(:not(.column)) .showcase { --game-card-width: calc(55 * var(--app-vh, 1vh) * 63 / 88); padding: var(--space-2); }
+  :host(:not(.column)) .showcase { --game-card-width: calc(55 * var(--app-vh, 1vh) * 63 / 88); }
   .effects { gap: var(--space-2); }
   eras-card-facts { --card-fact-min: 3.5rem; --card-fact-padding: 2px var(--space-2); --card-fact-value-size: var(--font-size-md); }
 }

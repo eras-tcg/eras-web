@@ -18,8 +18,8 @@ const BIG_DECK_LEAN = 45;
 const CARD_RADIUS = 0.045;
 /** How far apart the cards of its volume are drawn, in pixels (at its big size). */
 const LAYER_STEP = 2;
-/** The card drawn shown face up over the deck before it goes to your hand: its height, of the screen's. */
-const REVEAL = 0.42;
+/** The card drawn shown face up (as big as the deck's cards), standing a little above the deck's middle: of its height. */
+const REVEAL_RISE = 0.08;
 /** How long the card drawn takes to rise off the deck and turn over, and how long it stays shown. */
 const REVEAL_MS = 650;
 const REVEAL_HOLD_MS = 350;
@@ -186,7 +186,7 @@ export class TurnDraw {
       // The card drawn rises off the deck's top, face down, and turns over above it, standing up to you
       const deckTop = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
       const shownCards = cards.map((c, i) => {
-        const place = this.revealPlace(view, cards.length, i, c.imageUrl);
+        const place = this.revealPlace(view, cards.length, i, c.imageUrl, width, height);
         this.flyer.fly({ ...deckTop, imageUrl: c.imageUrl }, place, false, {
           fromBack: true,
           duration: REVEAL_MS,
@@ -228,15 +228,15 @@ export class TurnDraw {
     });
   }
 
-  /** Where the `i`-th of `count` cards drawn is shown face up: standing over the deck, side by side. */
+  /** Where the `i`-th of `count` cards drawn is shown face up: standing over the deck, as big as its cards, side by side. */
   private revealPlace(
     view: Window,
     count: number,
     i: number,
     imageUrl: string | null,
+    width: number,
+    height: number,
   ): HTMLElement {
-    const height = view.innerHeight * REVEAL;
-    const width = (height * 63) / 88;
     const gap = width * 0.1;
     const left = view.innerWidth / 2 - (count * width + (count - 1) * gap) / 2 + i * (width + gap);
     const place = this.document.createElement('img');
@@ -245,7 +245,7 @@ export class TurnDraw {
     Object.assign(place.style, {
       position: 'fixed',
       left: `${left}px`,
-      top: `${view.innerHeight * 0.42 - height / 2}px`,
+      top: `${view.innerHeight / 2 - height / 2 - height * REVEAL_RISE}px`,
       width: `${width}px`,
       height: `${height}px`,
       borderRadius: `${width * CARD_RADIUS}px`,

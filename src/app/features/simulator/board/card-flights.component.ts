@@ -75,6 +75,11 @@ export class CardFlightsComponent {
   private deferring = false;
   /** The pile-to-pile moves of this update, by card, in order. */
   private hops = new Map<string, Hop[]>();
+  /**
+   * The pile each card of this update's moves left first, by the timeline: a card of a deck is sent as a back with an
+   * id of its own (StateMask), so the pile it was in is only known from the move.
+   */
+  private origins = new Map<string, ZoneName>();
   /** Each player still choosing their mulligan: the five cards shown to them (the top of their deck). */
   private mulliganTop = new Map<string, Set<string>>();
   /** Cards that do not fly in this update: what a mulligan settled (the hand kept, the starter, the lives). */
@@ -114,6 +119,7 @@ export class CardFlightsComponent {
         this.settled = this.mulliganSettled(state);
         const onField = new Set(Object.values(state.players ?? {}).flatMap((p) => p.field.map((c) => c.instanceId)));
         this.hops = this.hopsNow(state);
+        this.origins = this.originsNow(state);
         this.fieldLeaves(state, onField);
         this.lives.unpark(state, this.me());
         this.handLeaves(state, onField);
@@ -213,6 +219,22 @@ export class CardFlightsComponent {
     return hops;
   }
 
+  /** The first pile each card of this update's new timeline events left (to a pile, the field or under a creature). */
+  private originsNow(state: GameState): Map<string, ZoneName> {
+    const piles = new Set<string>(PILES);
+    const origins = new Map<string, ZoneName>();
+    for (const e of [...this.timeline.peek(state)].sort((a, b) => a.seq - b.seq)) {
+      if (e.cardInstanceId && piles.has(e.fromZone ?? '') && !origins.has(e.cardInstanceId)) origins.set(e.cardInstanceId, e.fromZone as ZoneName);
+    }
+    return origins;
+  }
+
+  /** The pile a card was in before this update ("<owner>:<zone>"): as drawn, else (a card of a deck) as its move says. */
+  private pileBefore(id: string, owner: string): string | undefined {
+    const zone = this.origins.get(id);
+    return this.pileOf.get(id) ?? (zone ? `${owner}:${zone}` : undefined);
+  }
+
   /**
    * Cards that left a hand for a pile (the mulligan, a tribute, a discard) fly from where they were in it. One that went
    * through another pile first ("colócala al tope de tu mazo", then tributed from there) stops there on its way.
@@ -252,7 +274,7 @@ export class CardFlightsComponent {
     for (const p of Object.values(state.players ?? {})) {
       for (const zone of PILES) {
         for (const c of p[zone] as CardSlot[]) {
-          const was = this.pileOf.get(c.instanceId);
+          const was = this.pileBefore(c.instanceId, p.userId);
           const now = `${p.userId}:${zone}`;
           if (!was || was === now || was.endsWith(':hand') || this.settled.has(c.instanceId) || this.lives.isParked(c.instanceId)) continue;
           if (zone === 'hand' && was.endsWith(':deck')) continue;
@@ -277,7 +299,7 @@ export class CardFlightsComponent {
         for (const a of [...host.materials, ...host.resources]) {
           now.add(a.instanceId);
           if (this.attached.has(a.instanceId) || !target || (!this.seen.size && !this.handSeen.size)) continue;
-          const from = this.handSeen.get(a.instanceId) ?? this.seen.get(a.instanceId) ?? this.measure.pile(this.pileOf.get(a.instanceId));
+          const from = this.handSeen.get(a.instanceId) ?? this.seen.get(a.instanceId) ?? this.measure.pile(this.pileBefore(a.instanceId, p.userId));
           if (from) this.flyer.fly({ ...from, imageUrl: a.imageUrl }, target, !!a.faceDown, { duration: TIMING.flight, under: true });
         }
       }
@@ -309,7 +331,7 @@ export class CardFlightsComponent {
         // New on the field: from its place in the hand, else from the pile it was in. Where it lands is measured
         // before it starts to travel (once it moves, its box is where it comes from)
         const landing = card.getBoundingClientRect();
-        const from = this.handSeen.get(c.instanceId) ?? this.measure.pile(this.pileOf.get(c.instanceId));
+        const from = this.handSeen.get(c.instanceId) ?? this.measure.pile(this.pileBefore(c.instanceId, p.userId));
         if (from) this.glide(sprite, card, c, from, TIMING.summon);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;

@@ -62,7 +62,9 @@ export class TurnDraw {
       turn: 0,
     };
     // Without the flights' drop shadow: a filter flattens the deck, and its side (3D) would vanish
-    const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false }).map((frame) => ({ ...frame, filter: 'none' }));
+    const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false }).map(
+      (frame) => ({ ...frame, filter: 'none' }),
+    );
 
     // The whole screen, seen as the table (its perspective and eye), as the cards that fly
     const screen = this.document.createElement('div');
@@ -74,19 +76,18 @@ export class TurnDraw {
       zIndex: LAYER.pileUnder,
       pointerEvents: 'none',
     });
-    // The deck as drawn on its zone (its volume is the card's shadow), at its own size
-    const big = this.document.createElement('button');
-    big.type = 'button';
+    // The deck at its own size, clicked (or Enter / Space) to draw. Not a <button>: it clips what goes past its box, the
+    // deck's side
+    const big = this.document.createElement('div');
+    big.setAttribute('role', 'button');
     big.setAttribute('aria-label', 'Robar');
+    big.tabIndex = 0;
     Object.assign(big.style, {
       position: 'absolute',
       left: '0px',
       top: '0px',
       width: `${from.width}px`,
       height: `${from.height}px`,
-      padding: '0',
-      border: '0',
-      background: 'none',
       // Its glow shows it is the one to click: no focus ring over the deck
       outline: 'none',
       transformOrigin: '50% 50%',
@@ -99,7 +100,12 @@ export class TurnDraw {
     // Lying back, its volume is a real side: the cards under the top one, as thick as on its zone (the pile's edge),
     // black as the back's frame with a faint line between cards. The edge drawn on the zone (a shadow) would lie flat.
     const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
-    Object.assign(copy.style, { display: 'block', width: '100%', height: '100%', boxShadow: 'none' });
+    Object.assign(copy.style, {
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      boxShadow: 'none',
+    });
     const side = this.document.createElement('span');
     Object.assign(side.style, {
       position: 'absolute',
@@ -147,34 +153,37 @@ export class TurnDraw {
       big.focus({ preventScroll: true });
     }, TIMING.flight);
 
-    big.addEventListener(
-      'click',
-      () => {
-        clearTimeout(shown);
-        pulse?.cancel();
-        glow.style.opacity = '0';
-        big.style.pointerEvents = 'none';
-        // The card leaves from the big deck's top, face down, and turns over on its way to your hand
-        const seen = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
-        cards.forEach((c, i) =>
-          this.flyer.fly({ ...seen, imageUrl: c.imageUrl }, c.element, false, {
-            fromBack: true,
-            delay: i * TIMING.drawStagger,
-            duration: TIMING.draw,
-            hide: c.element,
-          }),
-        );
-        // Then the deck goes back to its zone
-        const back = big.animate([...frames].reverse(), { ...settle, delay: TIMING.drawStagger });
-        back.finished
-          .catch(() => undefined)
-          .then(() => {
-            top.style.visibility = '';
-            screen.remove();
-            done();
-          });
-      },
-      { once: true },
-    );
+    const take = () => {
+      clearTimeout(shown);
+      pulse?.cancel();
+      glow.style.opacity = '0';
+      big.style.pointerEvents = 'none';
+      // The card leaves from the big deck's top, face down, and turns over on its way to your hand
+      const seen = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
+      cards.forEach((c, i) =>
+        this.flyer.fly({ ...seen, imageUrl: c.imageUrl }, c.element, false, {
+          fromBack: true,
+          delay: i * TIMING.drawStagger,
+          duration: TIMING.draw,
+          hide: c.element,
+        }),
+      );
+      // Then the deck goes back to its zone
+      const back = big.animate([...frames].reverse(), { ...settle, delay: TIMING.drawStagger });
+      back.finished
+        .catch(() => undefined)
+        .then(() => {
+          top.style.visibility = '';
+          screen.remove();
+          done();
+        });
+    };
+    big.addEventListener('click', take, { once: true });
+    big.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      big.removeEventListener('click', take);
+      if (big.style.pointerEvents !== 'none') take();
+    });
   }
 }

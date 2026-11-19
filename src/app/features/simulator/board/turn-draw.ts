@@ -84,6 +84,8 @@ export class TurnDraw {
       padding: '0',
       border: '0',
       background: 'none',
+      // Its glow shows it is the one to click: no focus ring over the deck
+      outline: 'none',
       transformOrigin: '50% 50%',
       transformStyle: 'preserve-3d',
       cursor: 'pointer',

@@ -1,8 +1,8 @@
 {
-  "commit": "ba1a7bbf8625ed74ad379d18389fbec3787da587",
+  "commit": "c67d7f40526943e3da5eecc339b9af8dd5faa56e",
   "dirty": false,
-  "subject": "Enfrentamiento de Guerra: the text says the strength lasts until the end of the turn (as programmed); test for it",
-  "copiedAt": "2026-11-18T06:02:02.610Z",
+  "subject": "Favor de la Naturaleza programmed; Última Línea De Defensa to its current text",
+  "copiedAt": "2026-11-19T15:54:10.025Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

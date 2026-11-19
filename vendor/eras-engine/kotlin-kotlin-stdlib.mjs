@@ -6700,6 +6700,14 @@ function endsWith(_this__u8e3s4, suffix, ignoreCase) {
   } else
     return regionMatches(_this__u8e3s4, _this__u8e3s4.length - suffix.length | 0, suffix, 0, suffix.length, ignoreCase);
 }
+function replace(_this__u8e3s4, oldValue, newValue, ignoreCase) {
+  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
+  var tmp2 = new RegExp(Companion_getInstance_4().ra(oldValue), ignoreCase ? 'gui' : 'gu');
+  // Inline function 'kotlin.text.nativeReplace' call
+  var replacement = Companion_getInstance_4().sa(newValue);
+  // Inline function 'kotlin.js.asDynamic' call
+  return _this__u8e3s4.replace(tmp2, replacement);
+}
 function repeat(_this__u8e3s4, n) {
   // Inline function 'kotlin.require' call
   if (!(n >= 0)) {
@@ -6745,14 +6753,6 @@ function startsWith_0(_this__u8e3s4, prefix, startIndex, ignoreCase) {
     return _this__u8e3s4.startsWith(prefix, startIndex);
   } else
     return regionMatches(_this__u8e3s4, startIndex, prefix, 0, prefix.length, ignoreCase);
-}
-function replace(_this__u8e3s4, oldValue, newValue, ignoreCase) {
-  ignoreCase = ignoreCase === VOID ? false : ignoreCase;
-  var tmp2 = new RegExp(Companion_getInstance_4().ra(oldValue), ignoreCase ? 'gui' : 'gu');
-  // Inline function 'kotlin.text.nativeReplace' call
-  var replacement = Companion_getInstance_4().sa(newValue);
-  // Inline function 'kotlin.js.asDynamic' call
-  return _this__u8e3s4.replace(tmp2, replacement);
 }
 function regionMatches(_this__u8e3s4, thisOffset, other, otherOffset, length, ignoreCase) {
   ignoreCase = ignoreCase === VOID ? false : ignoreCase;

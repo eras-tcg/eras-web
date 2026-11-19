@@ -51,15 +51,19 @@ export class TurnDraw {
     }
     const done = this.animations.begin();
     const stage = stageOf(this.document);
-    const from = poseOf(top);
-    const scale = (view.innerHeight * BIG_DECK) / from.height;
+    const zone = poseOf(top);
+    const scale = (view.innerHeight * BIG_DECK) / zone.height;
+    // Drawn at its big size (sharp), shrunk to the zone's size where it starts
+    const width = zone.width * scale;
+    const height = zone.height * scale;
+    const from: CardPose = { ...zone, width, height, scale: zone.scale / scale };
     const middle: CardPose = {
       x: view.innerWidth / 2 - stage.originX,
       y: view.innerHeight / 2 - stage.originY,
       z: 0,
-      width: from.width,
-      height: from.height,
-      scale,
+      width,
+      height,
+      scale: 1,
       lean: BIG_DECK_LEAN,
       turn: 0,
     };
@@ -92,8 +96,8 @@ export class TurnDraw {
       position: 'absolute',
       left: '0px',
       top: '0px',
-      width: `${from.width}px`,
-      height: `${from.height}px`,
+      width: `${width}px`,
+      height: `${height}px`,
       // Its glow shows it is the one to click: no focus ring over the deck
       outline: 'none',
       transformOrigin: '50% 50%',
@@ -106,15 +110,14 @@ export class TurnDraw {
     // Its volume, a real side: the cards under the top one go down behind it (into the table), all as wide as it, as
     // many as are left (black as the back's frame, a faint line every few cards). A shadow drawn on the card's plane
     // (the pile's edge on its zone) would come towards you and widen as it goes down.
-    const radius = getComputedStyle(top).borderRadius;
+    const radius = `${(parseFloat(getComputedStyle(top).borderTopLeftRadius) || 0) * scale}px`;
     Object.assign(copy.style, {
       display: 'block',
       width: '100%',
       height: '100%',
       boxShadow: 'none',
     });
-    // Its height is not grown by the pose's scale (that scale is on the card's plane): drawn at the size it will have
-    const thickness = left * CARD_THICKNESS * from.height * scale;
+    const thickness = left * CARD_THICKNESS * height;
     const side = this.document.createElement('span');
     Object.assign(side.style, {
       position: 'absolute',
@@ -133,7 +136,7 @@ export class TurnDraw {
       position: 'absolute',
       inset: '0',
       borderRadius: 'inherit',
-      boxShadow: '0 0 1.1rem 0.25rem var(--color-primary), 0 0 0.35rem 0.1rem var(--color-primary)',
+      boxShadow: '0 0 3rem 0.75rem var(--color-primary), 0 0 0.9rem 0.25rem var(--color-primary)',
       opacity: '0',
       pointerEvents: 'none',
     };

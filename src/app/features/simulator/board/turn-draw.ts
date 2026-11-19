@@ -14,16 +14,21 @@ export interface TurnDrawCard {
 const BIG_DECK = 0.6;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
 const BIG_DECK_LEAN = 45;
-/** How thick each card left in the deck is, of a card's height (a deck of 40 is a bit over a quarter as thick as a card is tall). */
-const CARD_THICKNESS = 0.007;
 /** A card's corner radius, of its width. */
 const CARD_RADIUS = 0.045;
+/** How far apart the cards of its volume are drawn, in pixels (at its big size). */
+const LAYER_STEP = 2;
+/** The card drawn shown face up over the deck before it goes to your hand: its height, of the screen's. */
+const REVEAL = 0.42;
+/** How long the card drawn takes to rise off the deck and turn over, and how long it stays shown. */
+const REVEAL_MS = 650;
+const REVEAL_HOLD_MS = 350;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,
- * with the volume it has there, and glows until you click it; then the card drawn flies from it to your hand and the
- * deck goes back to its zone. The server has drawn already: only the drawing waits (the card stays hidden in the hand,
- * the engine's next choices wait for it as for any animation).
+ * with the volume it has there, and glows until you click it; then the card drawn rises off it and turns over, and
+ * once it is shown it flies to your hand while the deck goes back to its zone. The server has drawn already: only the
+ * drawing waits (the card stays hidden in the hand, the engine's next choices wait for it as for any animation).
  */
 export class TurnDraw {
   constructor(
@@ -33,18 +38,18 @@ export class TurnDraw {
     private readonly flyer: CardFlyer,
   ) {}
 
-  /** Plays it for `cards` (drawn from `deck`, the deck pile, with `left` cards in it), once what plays now has ended. */
-  play(deck: HTMLElement, cards: TurnDrawCard[], left: number): void {
+  /** Plays it for `cards` (drawn from `deck`, the deck pile), once what plays now has ended. */
+  play(deck: HTMLElement, cards: TurnDrawCard[]): void {
     cards.forEach((c) => (c.element.style.visibility = 'hidden'));
     const done = this.animations.begin();
     // After what this update started (the turn's pop-up, a card breaking…), with the table as it is then
     queueMicrotask(() => {
       done();
-      this.animations.whenIdle(() => this.rise(deck, cards, left));
+      this.animations.whenIdle(() => this.rise(deck, cards));
     });
   }
 
-  private rise(deck: HTMLElement, cards: TurnDrawCard[], left: number): void {
+  private rise(deck: HTMLElement, cards: TurnDrawCard[]): void {
     const top = deck.querySelector<HTMLElement>('eras-game-card');
     const view = this.document.defaultView;
     if (!top || !view) {
@@ -69,11 +74,11 @@ export class TurnDraw {
       lean: BIG_DECK_LEAN,
       turn: 0,
     };
-    // Only the pose: animating the flights' drop shadow (a filter, even 'none') flattens the deck, and its side (3D)
-    // would vanish
+    // Only the pose (animating a filter, even 'none', flattens the deck and its volume), and scaled in depth too: its
+    // thickness shrinks and grows with it
     const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false }).map(
       (frame) => ({
-        transform: frame['transform'],
+        transform: String(frame['transform']).replace(/scale\(([^)]+)\)/, 'scale3d($1, $1, $1)'),
         ...(frame.offset != null ? { offset: frame.offset } : {}),
       }),
     );
@@ -88,8 +93,7 @@ export class TurnDraw {
       zIndex: LAYER.pileUnder,
       pointerEvents: 'none',
     });
-    // The deck at its own size, clicked (or Enter / Space) to draw. Not a <button>: it clips what goes past its box, the
-    // deck's side
+    // The deck at its own size, clicked (or Enter / Space) to draw. Not a <button>: it clips what goes past its box
     const big = this.document.createElement('div');
     big.setAttribute('role', 'button');
     big.setAttribute('aria-label', 'Robar');
@@ -107,13 +111,10 @@ export class TurnDraw {
       cursor: 'pointer',
       pointerEvents: 'auto',
     });
-    const copy = top.cloneNode(true) as HTMLElement;
-    copy.removeAttribute('hidden');
-    // Its volume, a real side: the cards under the top one go down behind it (into the table), all as wide as it, as
-    // many as are left (black as the back's frame, a faint line every few cards). A shadow drawn on the card's plane
-    // (the pile's edge on its zone) would come towards you and widen as it goes down.
     // Rounded as a card is at this size (the zone's card may be tiny, its corners at their smallest)
     const radius = `${width * CARD_RADIUS}px`;
+    const copy = top.cloneNode(true) as HTMLElement;
+    copy.removeAttribute('hidden');
     copy.querySelectorAll<HTMLElement>('*').forEach((e) => (e.style.borderRadius = radius));
     Object.assign(copy.style, {
       display: 'block',
@@ -122,35 +123,38 @@ export class TurnDraw {
       boxShadow: 'none',
       borderRadius: radius,
     });
-    const thickness = left * CARD_THICKNESS * height;
-    const side = this.document.createElement('span');
-    Object.assign(side.style, {
-      position: 'absolute',
-      left: '0',
-      right: '0',
-      top: '100%',
-      height: `${thickness}px`,
-      transformOrigin: '50% 0',
-      transform: 'rotateX(-90deg)',
-      background: 'repeating-linear-gradient(to bottom, #0b0f14 0 3px, #1c2530 3px 4px)',
-      borderRadius: `0 0 ${radius} ${radius}`,
-      pointerEvents: 'none',
+    // Its volume: the cards under the top one, stacked behind it (all as wide as it, with its rounded corners), as thick
+    // for its size as the pile's edge on its zone (black as the back's frame, a faint line every few cards)
+    const edge = parseFloat(top.style.getPropertyValue('--edge')) || 0;
+    const thickness = (edge / zone.height) * height;
+    const layers = Math.round(thickness / LAYER_STEP);
+    const under = Array.from({ length: layers }, (_, i) => {
+      const card = this.document.createElement('span');
+      Object.assign(card.style, {
+        position: 'absolute',
+        inset: '0',
+        borderRadius: radius,
+        background: i % 3 === 2 ? '#1c2530' : '#0b0f14',
+        transform: `translateZ(${-(i + 1) * (thickness / layers)}px)`,
+        pointerEvents: 'none',
+      });
+      return card;
     });
-    // The glow, around the whole deck: the top card and its side
-    const glowStyle = {
-      position: 'absolute',
-      inset: '0',
-      borderRadius: 'inherit',
-      boxShadow: '0 0 3rem 0.75rem var(--color-primary), 0 0 0.9rem 0.25rem var(--color-primary)',
-      opacity: '0',
-      pointerEvents: 'none',
-    };
-    const glow = this.document.createElement('span');
-    Object.assign(glow.style, glowStyle, { borderRadius: radius });
-    const sideGlow = this.document.createElement('span');
-    Object.assign(sideGlow.style, glowStyle);
-    side.append(sideGlow);
-    big.append(side, copy, glow);
+    // The glow, around the whole deck: its top card and its bottom one
+    const glows = [copy, under.at(-1) ?? copy].map((card) => {
+      const glow = this.document.createElement('span');
+      Object.assign(glow.style, {
+        position: 'absolute',
+        inset: '0',
+        borderRadius: radius,
+        boxShadow: '0 0 3rem 0.75rem var(--color-primary), 0 0 0.9rem 0.25rem var(--color-primary)',
+        opacity: '0',
+        pointerEvents: 'none',
+        transform: card.style.transform,
+      });
+      return glow;
+    });
+    big.append(...[...under].reverse(), copy, ...glows);
     screen.append(big);
     this.document.body.append(screen);
     // The real deck stays where it is; the one rising is its copy
@@ -164,7 +168,7 @@ export class TurnDraw {
     big.animate(frames, settle);
     let pulses: Animation[] = [];
     const shown = setTimeout(() => {
-      pulses = [glow, sideGlow].map((g) =>
+      pulses = glows.map((g) =>
         g.animate([{ opacity: 0.35 }, { opacity: 1 }], {
           duration: 900,
           direction: 'alternate',
@@ -179,25 +183,39 @@ export class TurnDraw {
       clearTimeout(shown);
       pulses.forEach((p) => p.cancel());
       big.style.pointerEvents = 'none';
-      // The card leaves from the big deck's top, face down, and turns over on its way to your hand
-      const seen = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
-      cards.forEach((c, i) =>
-        this.flyer.fly({ ...seen, imageUrl: c.imageUrl }, c.element, false, {
+      // The card drawn rises off the deck's top, face down, and turns over above it, standing up to you
+      const deckTop = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
+      const shownCards = cards.map((c, i) => {
+        const place = this.revealPlace(view, cards.length, i, c.imageUrl);
+        this.flyer.fly({ ...deckTop, imageUrl: c.imageUrl }, place, false, {
           fromBack: true,
-          delay: i * TIMING.drawStagger,
-          duration: TIMING.draw,
-          hide: c.element,
-        }),
-      );
-      // Then the deck goes back to its zone
-      const back = big.animate([...frames].reverse(), { ...settle, delay: TIMING.drawStagger });
-      back.finished
-        .catch(() => undefined)
-        .then(() => {
-          top.style.visibility = '';
-          screen.remove();
-          done();
+          duration: REVEAL_MS,
+          hide: place,
+          now: true,
         });
+        return { card: c, place };
+      });
+      // Once shown: it flies to your hand while the deck goes back to its zone
+      setTimeout(() => {
+        shownCards.forEach(({ card, place }, i) => {
+          const seen = this.measure.seenOf(place, { imageUrl: card.imageUrl });
+          this.flyer.fly(seen, card.element, false, {
+            delay: i * TIMING.drawStagger,
+            duration: TIMING.draw,
+            hide: card.element,
+            now: true,
+          });
+          place.remove();
+        });
+        big
+          .animate([...frames].reverse(), settle)
+          .finished.catch(() => undefined)
+          .then(() => {
+            top.style.visibility = '';
+            screen.remove();
+            done();
+          });
+      }, REVEAL_MS + REVEAL_HOLD_MS);
     };
     big.addEventListener('click', take, { once: true });
     big.addEventListener('keydown', (e) => {
@@ -206,5 +224,34 @@ export class TurnDraw {
       big.removeEventListener('click', take);
       if (big.style.pointerEvents !== 'none') take();
     });
+  }
+
+  /** Where the `i`-th of `count` cards drawn is shown face up: standing over the deck, side by side. */
+  private revealPlace(
+    view: Window,
+    count: number,
+    i: number,
+    imageUrl: string | null,
+  ): HTMLElement {
+    const height = view.innerHeight * REVEAL;
+    const width = (height * 63) / 88;
+    const gap = width * 0.1;
+    const left = view.innerWidth / 2 - (count * width + (count - 1) * gap) / 2 + i * (width + gap);
+    const place = this.document.createElement('img');
+    place.alt = '';
+    if (imageUrl) place.src = imageUrl;
+    Object.assign(place.style, {
+      position: 'fixed',
+      left: `${left}px`,
+      top: `${view.innerHeight * 0.42 - height / 2}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      borderRadius: `${width * CARD_RADIUS}px`,
+      objectFit: 'cover',
+      zIndex: LAYER.flight,
+      pointerEvents: 'none',
+    });
+    this.document.body.append(place);
+    return place;
   }
 }

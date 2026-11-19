@@ -14,6 +14,8 @@ export interface FlightOptions {
   hide?: HTMLElement | null;
   /** It lands under a creature (a Material or a Recurso). */
   under?: boolean;
+  /** It goes at once, whatever this update started (a flight a click starts, long after its update). */
+  now?: boolean;
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -70,7 +72,7 @@ export class CardFlyer {
       this.animations.hold(delay + duration);
       this.launch(inner, flight, frames, delay, duration, options.hide, landed);
     };
-    if (this.context.deferring()) {
+    if (this.context.deferring() && !options.now) {
       flight.style.visibility = 'hidden';
       this.animations.whenIdle(() => {
         flight.style.visibility = '';

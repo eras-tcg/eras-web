@@ -356,13 +356,25 @@ export class CardFlightsComponent {
         // New on the field: from its place in the hand, else from the pile it was in. Where it lands is measured
         // before it starts to travel (once it moves, its box is where it comes from)
         const landing = card.getBoundingClientRect();
-        const from = this.handSeen.get(c.instanceId) ?? this.measure.pile(this.pileBefore(c.instanceId, p.userId));
+        const from = this.handSeen.get(c.instanceId) ?? this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
         if (from) this.glide(sprite, card, c, from, TIMING.summon);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;
       }
     }
     return summoned;
+  }
+
+  /**
+   * Where a card left a pile from: the pile's top, with the card's face when it lay face up there (the Tributos, the
+   * Descarte), so it does not turn over on its way; a face-down card (the deck's, a life's) leaves showing its back.
+   */
+  private fromPile(card: CardSlot, key: string | undefined): Seen | null {
+    const from = this.measure.pile(key);
+    if (!from || !key) return from;
+    const [owner, zone] = key.split(':') as [string, ZoneName];
+    const was = (this.previous?.players?.[owner]?.[zone] as CardSlot[] | undefined)?.find((x) => x.instanceId === card.instanceId);
+    return was && !was.faceDown ? { ...from, imageUrl: card.imageUrl } : from;
   }
 
   /** A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands). */

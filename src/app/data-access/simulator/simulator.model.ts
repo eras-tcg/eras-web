@@ -368,6 +368,9 @@ export type PromptPurpose =
   /** A card about to leave the field: replace it ("en su lugar", Protección), and the hand card that pays it. */
   | 'REPLACE'
   | 'REPLACE_HAND'
+  /** The cost of a replacement: the material to discard, or the other ally to sacrifice, instead of the removal. */
+  | 'REPLACE_DISCARD'
+  | 'REPLACE_SACRIFICE'
   /** The cards tributed instead of receiving damage (Estoque De Los Guerreros Jurados): Estoque first. */
   | 'DAMAGE_TRIBUTE'
   /** "cuando esta carta fuera a ser ascendida: gana …" (Espada De Los Leones Dorados), shown to be activated. */

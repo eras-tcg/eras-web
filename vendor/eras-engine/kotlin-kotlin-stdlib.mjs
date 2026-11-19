@@ -9576,9 +9576,6 @@ function removePrefix(_this__u8e3s4, prefix) {
   }
   return _this__u8e3s4;
 }
-function get_lastIndex_3(_this__u8e3s4) {
-  return charSequenceLength(_this__u8e3s4) - 1 | 0;
-}
 function isBlank(_this__u8e3s4) {
   var tmp$ret$0;
   $l$block: {
@@ -9595,6 +9592,9 @@ function isBlank(_this__u8e3s4) {
     tmp$ret$0 = true;
   }
   return tmp$ret$0;
+}
+function get_lastIndex_3(_this__u8e3s4) {
+  return charSequenceLength(_this__u8e3s4) - 1 | 0;
 }
 function indexOfAny(_this__u8e3s4, chars, startIndex, ignoreCase) {
   startIndex = startIndex === VOID ? 0 : startIndex;

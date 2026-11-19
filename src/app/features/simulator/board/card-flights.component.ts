@@ -197,7 +197,7 @@ export class CardFlightsComponent {
           return element ? [{ element, imageUrl: c.imageUrl }] : [];
         });
         if (cards.length) {
-          this.turnDraw.play(deck, cards);
+          this.turnDraw.play(deck, cards, p.deck.length);
           continue;
         }
       }

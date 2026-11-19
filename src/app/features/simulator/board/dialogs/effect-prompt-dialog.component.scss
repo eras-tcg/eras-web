@@ -102,7 +102,8 @@ eras-game-card.new-card { animation: new-card 0.5s ease-in-out 8 alternate; }
   position: fixed;
   inset-block-end: var(--space-3);
   inset-inline-start: var(--effect-panel-gap);
-  max-block-size: calc(100vh - 2 * var(--space-3));
+  // Up to just under the game menu's button (top left of the board), as the board's own side panel (board.page.scss)
+  max-block-size: calc(100dvh - (var(--app-header-height, 0px) + var(--space-4) + 0.2rem + 2.5rem + var(--space-2)) - var(--space-3));
   transition: opacity var(--duration-fast, 120ms) ease, transform var(--duration-normal, 200ms) var(--easing-standard, ease-out);
 }
 

@@ -215,7 +215,8 @@ export class CardFlightsComponent {
 
   /**
    * The moves from pile to pile of this update (its new timeline events), by card. They play in turns, in the order they
-   * happened: a run of moves alike (the same kind, from and to the same zones, as the 2 cards of "tributa 2") is one turn.
+   * happened: a run of moves alike (the same kind, from and to the same zones, as the 2 cards of "tributa 2") is one turn,
+   * its cards leaving one after another.
    */
   private hopsNow(state: GameState): Map<string, Hop[]> {
     const piles = new Set<string>(PILES);
@@ -225,13 +226,20 @@ export class CardFlightsComponent {
         !!e.cardInstanceId && piles.has(e.fromZone ?? '') && piles.has(e.toZone ?? '') && e.fromZone !== e.toZone)
       .sort((a, b) => a.seq - b.seq);
     const hops = new Map<string, Hop[]>();
-    let turn = -1;
+    // A run's cards leave one after another (as a draw's), so each one is seen; the next run starts once its last has landed
+    let start = -TIMING.flight;
+    let at = 0;
+    let index = 0;
     let last = '';
     for (const e of events) {
       const key = `${e.type}|${e.playerId}|${e.fromZone}|${e.toZone}`;
-      if (key !== last) turn++;
+      if (key !== last) {
+        start = (last ? at : start) + TIMING.flight;
+        index = 0;
+      }
       last = key;
-      hops.set(e.cardInstanceId, [...(hops.get(e.cardInstanceId) ?? []), { from: e.fromZone, to: e.toZone, delay: turn * TIMING.flight }]);
+      at = start + index++ * TIMING.drawStagger;
+      hops.set(e.cardInstanceId, [...(hops.get(e.cardInstanceId) ?? []), { from: e.fromZone, to: e.toZone, delay: at }]);
     }
     return hops;
   }

@@ -72,12 +72,13 @@
   block-size: 1rem;
 }
 
-// The rarity tabs of the deck's and the search's cards, smaller than the detail's
+// The rarity tabs of the deck's and the search's cards: in proportion to each card (cqi: its width)
 eras-card-thumb {
-  --rarity-tab-height: 1rem;
-  --rarity-tab-font: 0.625rem;
-  --rarity-tab-min: 2rem;
-  --rarity-tab-slant: 0.5rem;
+  --rarity-tab-height: 15cqi;
+  --rarity-tab-font: 11cqi;
+  --rarity-tab-min: 38cqi;
+  --rarity-tab-pad: 7cqi;
+  --rarity-tab-slant: 8cqi;
 }
 
 // A card the player does not own (in the search) or not enough copies of (in the deck): in grey
@@ -315,4 +316,3 @@ eras-card-thumb {
     block-size: 0.8rem;
   }
 }
-

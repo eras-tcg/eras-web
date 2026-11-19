@@ -12,7 +12,7 @@ export function rarityColor(rarity: string | null | undefined): string {
  *
  * The parent is positioned and leaves room above the card (`margin-block-start: var(--rarity-tab-height)`, 1.5rem by
  * default); the card itself is positioned with `z-index: 1`, so the tab's lower part hides under it. Smaller: `--rarity-tab-height`,
- * `--rarity-tab-font`, `--rarity-tab-min` (width) and `--rarity-tab-slant` on a parent.
+ * `--rarity-tab-font`, `--rarity-tab-min` (width), `--rarity-tab-pad` and `--rarity-tab-slant` on a parent.
  */
 @Component({
   selector: 'span[erasRarityTab], button[erasRarityTab]',
@@ -35,8 +35,9 @@ export function rarityColor(rarity: string | null | undefined): string {
       place-items: start center;
       min-inline-size: var(--rarity-tab-min, 3rem);
       block-size: calc(var(--rarity-tab-height, 1.5rem) + var(--corner) + 2px);
-      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2) var(--space-2) 0
-        calc(var(--space-2) + var(--rarity-tab-slant, 0.8rem) - 0.1rem);
+      padding: calc((var(--rarity-tab-height, 1.5rem) - 1em) / 2)
+        var(--rarity-tab-pad, var(--space-2)) 0
+        calc(var(--rarity-tab-pad, var(--space-2)) + var(--rarity-tab-slant, 0.8rem) - 0.1rem);
       border: 0;
       background: linear-gradient(135deg, var(--rarity-from) 20%, var(--rarity-to));
       color: var(--color-on-rarity);

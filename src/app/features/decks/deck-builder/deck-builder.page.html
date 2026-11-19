@@ -127,20 +127,6 @@
             type="button"
             erasIconButton
             size="md"
-            [icon]="groupCopies() ? 'stack' : 'cards'"
-            [title]="
-              groupCopies()
-                ? 'Copias agrupadas (×N): clic para ver cada copia por separado'
-                : 'Cada copia por separado: clic para agruparlas'
-            "
-            aria-label="Agrupar las copias"
-            [attr.aria-pressed]="groupCopies()"
-            (click)="groupCopies.set(!groupCopies())"
-          ></button>
-          <button
-            type="button"
-            erasIconButton
-            size="md"
             icon="save"
             title="Guardar"
             aria-label="Guardar el mazo"
@@ -211,111 +197,73 @@
               description="Arrastra cartas aquí o haz clic derecho en una carta de la búsqueda."
             />
           } @else {
-            @for (group of draft.groups(); track group.type) {
-              <eras-section-header
-                [title]="(typeLabels[group.type] ?? group.type) + ' (' + group.count + ')'"
-              />
-              @if (groupCopies()) {
-                <eras-grid minColumn="var(--deck-column, 7.5rem)" [gap]="3">
-                  @for (entry of group.entries; track entry.card.id) {
-                    <!-- The buttons sit over the card, to save space -->
-                    <div
-                      class="entry"
-                      [class.lacking]="lacking(entry) > 0"
-                      [attr.title]="
-                        lacking(entry) > 0
-                          ? 'Te faltan ' + lacking(entry) + ' de tu colección'
-                          : null
-                      "
-                      (contextmenu)="contextRemove($event, entry.card)"
-                    >
-                      <eras-card-thumb
-                        [name]="entry.card.name ?? ''"
-                        [rarity]="rarityOf(entry.card)"
-                        rarityOver
-                        [imageUrl]="altImageUrl(entry.card, alt(entry.card)?.art ?? null)"
-                        [badge]="badge(entry.card)"
-                        badgeTone="info"
-                        [count]="entry.count"
-                        showSingleCount
-                        [foil]="shineOf(alt(entry.card)?.finish ?? best(entry.card))"
-                        [active]="selected()?.id === entry.card.id"
-                        (selected)="select(entry.card)"
-                      />
-                      <div class="entry-actions">
-                        <button
-                          type="button"
-                          class="minus"
-                          [attr.aria-label]="'Quitar una copia de ' + entry.card.name"
-                          title="Quitar una copia"
-                          (click)="remove(entry.card)"
-                        >
-                          −
-                        </button>
-                        <button
-                          type="button"
-                          class="plus"
-                          [attr.aria-label]="'Añadir una copia de ' + entry.card.name"
-                          title="Añadir una copia"
-                          [disabled]="!draft.canAdd(entry.card)"
-                          (click)="add(entry.card)"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          class="cover"
-                          [class.is-cover]="draft.isCover(entry.card)"
-                          [attr.aria-label]="
-                            draft.isCover(entry.card)
-                              ? 'Es la carta representativa del mazo'
-                              : 'Usar como carta representativa'
-                          "
-                          [title]="
-                            draft.isCover(entry.card)
-                              ? 'Carta representativa'
-                              : 'Usar como carta representativa'
-                          "
-                          [attr.aria-pressed]="draft.isCover(entry.card)"
-                          [disabled]="draft.isCover(entry.card)"
-                          (click)="draft.setCover(entry.card)"
-                        >
-                          <eras-icon name="image" />
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </eras-grid>
-              } @else {
-                <!-- Every copy by itself, smaller: each with its finish (the player's finest first), in grey when lacking -->
-                <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
-                  @for (entry of group.entries; track entry.card.id) {
-                    @for (copy of copies(entry); track $index) {
-                      <div
-                        class="copy"
-                        [class.lacking]="copy.finish === null && !testCard(entry.card)"
-                        [attr.title]="
-                          copy.finish === null && !testCard(entry.card)
-                            ? 'No tienes esta copia'
-                            : null
-                        "
-                        (contextmenu)="contextRemove($event, entry.card)"
+            <!-- Every copy by itself, all types together in the deck's order: each with its finish (the player's finest
+                 first), in grey when lacking; its buttons sit over it (− bottom left, + bottom right, cover top left) -->
+            <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
+              @for (entry of entries(); track entry.card.id) {
+                @for (copy of copies(entry); track $index) {
+                  <div
+                    class="entry"
+                    [class.lacking]="copy.finish === null && !testCard(entry.card)"
+                    [attr.title]="
+                      copy.finish === null && !testCard(entry.card) ? 'No tienes esta copia' : null
+                    "
+                    (contextmenu)="contextRemove($event, entry.card)"
+                  >
+                    <eras-card-thumb
+                      [name]="entry.card.name ?? ''"
+                      [rarity]="rarityOf(entry.card)"
+                      rarityOver
+                      [imageUrl]="altImageUrl(entry.card, copy.art)"
+                      [foil]="shineOf(copy.finish)"
+                      [active]="selected()?.id === entry.card.id"
+                      (selected)="select(altArt(entry.card, copy.art), copy.finish)"
+                    />
+                    <div class="entry-actions">
+                      <button
+                        type="button"
+                        class="minus"
+                        [attr.aria-label]="'Quitar una copia de ' + entry.card.name"
+                        title="Quitar una copia"
+                        (click)="remove(entry.card)"
                       >
-                        <eras-card-thumb
-                          [name]="entry.card.name ?? ''"
-                          [rarity]="rarityOf(entry.card)"
-                          rarityOver
-                          [imageUrl]="altImageUrl(entry.card, copy.art)"
-                          [foil]="shineOf(copy.finish)"
-                          [active]="selected()?.id === entry.card.id"
-                          (selected)="select(altArt(entry.card, copy.art), copy.finish)"
-                        />
-                      </div>
-                    }
-                  }
-                </eras-grid>
+                        −
+                      </button>
+                      <button
+                        type="button"
+                        class="plus"
+                        [attr.aria-label]="'Añadir una copia de ' + entry.card.name"
+                        title="Añadir una copia"
+                        [disabled]="!draft.canAdd(entry.card)"
+                        (click)="add(entry.card)"
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        class="cover"
+                        [class.is-cover]="draft.isCover(entry.card)"
+                        [attr.aria-label]="
+                          draft.isCover(entry.card)
+                            ? 'Es la carta representativa del mazo'
+                            : 'Usar como carta representativa'
+                        "
+                        [title]="
+                          draft.isCover(entry.card)
+                            ? 'Carta representativa'
+                            : 'Usar como carta representativa'
+                        "
+                        [attr.aria-pressed]="draft.isCover(entry.card)"
+                        [disabled]="draft.isCover(entry.card)"
+                        (click)="draft.setCover(entry.card)"
+                      >
+                        <eras-icon name="image" />
+                      </button>
+                    </div>
+                  </div>
+                }
               }
-            }
+            </eras-grid>
           }
         </eras-dropzone>
       </eras-stack>

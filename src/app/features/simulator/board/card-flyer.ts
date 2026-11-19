@@ -16,6 +16,8 @@ export interface FlightOptions {
   under?: boolean;
   /** It goes at once, whatever this update started (a flight a click starts, long after its update). */
   now?: boolean;
+  /** No shadow under it while it flies (its turning over stays in 3D). */
+  noShadow?: boolean;
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -57,7 +59,9 @@ export class CardFlyer {
     const slot = target as HTMLElement;
     const slotWidth = Math.min(slot.offsetWidth, (slot.offsetHeight * 63) / 88) || start.width;
     const end = toCard ? poseOf(toCard) : poseOf(slot, { width: slotWidth, height: (slotWidth * 88) / 63 });
-    const frames = poseFrames(stage, start, end, { fromBack: !!options.fromBack, toBack: faceDown }, options.under);
+    const posed = poseFrames(stage, start, end, { fromBack: !!options.fromBack, toBack: faceDown }, options.under);
+    // Without its shadow (a filter flattens the card: turning over slowly, its back would show its face mirrored)
+    const frames = options.noShadow ? posed.map(({ filter, ...frame }) => (void filter, frame)) : posed;
 
     const { flight, inner } = this.copyOf(from, stage, start);
     const landed = options.hide || options.under ? null : this.holdPile(target, toCard, stage);

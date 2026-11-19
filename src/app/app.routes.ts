@@ -158,12 +158,6 @@ export const routes: Routes = [
         loadComponent: () => import('@features/admin/permissions.page').then((m) => m.PermissionsPage),
       },
       {
-        path: 'updates-manager',
-        title: 'Gestionar cambios · ERAS',
-        canMatch: [permissionGuard('manage_cards')],
-        loadComponent: () => import('@features/admin/updates.page').then((m) => m.UpdatesPage),
-      },
-      {
         path: 'card-ref',
         title: 'Datos de referencia · ERAS',
         canMatch: [permissionGuard('manage_cards')],

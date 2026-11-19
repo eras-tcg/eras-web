@@ -1,8 +1,8 @@
 {
-  "commit": "ba1a7bbf8625ed74ad379d18389fbec3787da587",
+  "commit": "9b886319b4fb394dc9de50c0082b1c4baed5596a",
   "dirty": false,
-  "subject": "Enfrentamiento de Guerra: the text says the strength lasts until the end of the turn (as programmed); test for it",
-  "copiedAt": "2026-11-18T06:02:02.610Z",
+  "subject": "test: E11CardsTest tagged cards / e11 (test levels)",
+  "copiedAt": "2026-11-19T17:00:46.696Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

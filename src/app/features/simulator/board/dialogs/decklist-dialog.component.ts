@@ -9,7 +9,7 @@ import { CardPeekComponent } from '../card-peek.component';
 
 const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure: 2 };
 
-/** The deck you joined with: every card, as cards, in order (creatures by level, then utilities and structures), only to look at. */
+/** The deck you joined with: every card, as cards, in order (creatures by level, then utilities and structures), only to look at (a click opens one). */
 @Component({
   selector: 'eras-decklist-dialog',
   imports: [PluralPipe, ModalComponent, GameCardComponent, CardPeekComponent],
@@ -19,14 +19,14 @@ const TYPE_ORDER: Record<string, number> = { creature: 0, utility: 1, structure:
         @for (c of cards(); track c.instanceId) {
           <li>
             <eras-game-card [imageUrl]="c.imageUrl" [foil]="c.finish ?? null" [name]="c.cardName" [attr.aria-label]="c.cardName" />
-            <eras-card-peek [card]="c" [mine]="true" />
+            <eras-card-peek [card]="c" [mine]="true" openOnClick />
           </li>
         }
       </ol>
     </eras-modal>
   `,
   styles: `
-    li { position: relative; }
+    li { position: relative; cursor: pointer; }
     .cards {
       --game-card-width: 7.5rem;
       display: grid;

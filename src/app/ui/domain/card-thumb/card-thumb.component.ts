@@ -84,6 +84,10 @@ import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
       font-weight: var(--font-weight-bold);
     }
     /* Under a rarity tab on the card */
+    /* The card is the size reference of its tab (sizes in cqi scale with it) */
+    :host(.rarity-over) {
+      container-type: inline-size;
+    }
     :host(.rarity-over) .count {
       inset-block-start: calc(var(--rarity-tab-height, 1.5rem) + var(--space-1));
     }

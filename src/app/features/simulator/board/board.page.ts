@@ -51,6 +51,7 @@ import { ChainLinkRevealComponent } from './chain-link-reveal.component';
 import { BoardFxComponent } from './board-fx.component';
 import { MatchBannerComponent } from './match-banner.component';
 import { PromptSpotlightComponent } from './prompt-spotlight.component';
+import { EffectCardPanelComponent } from './effect-card-panel.component';
 import { EffectPrompt } from '@data/simulator/simulator.model';
 import { ascendAttackAnswer, ascendAttackCreatures } from './ascend-attack-rules';
 import { PreRoomComponent } from './pre-room.component';
@@ -72,6 +73,7 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     BoardFxComponent,
     MatchBannerComponent,
     PromptSpotlightComponent,
+    EffectCardPanelComponent,
     PreRoomComponent,
     ChainListComponent,
     PlayerHalfComponent,
@@ -136,6 +138,19 @@ export class BoardPage {
   /** There is something over the table to look through: a sheet from the bottom (a choice…) or a chain. */
   /** The chain's list, opened from its button over the table. */
   protected readonly chainOpen = signal(false);
+  /**
+   * A card clicked on the table (selected), shown beside the board with its Materiales, Recursos and effects; not while a
+   * choice of mine is open (it shows its own card there), nor a face-down card I may not see.
+   */
+  protected readonly inspected = computed(() => {
+    const id = this.game.selectedId();
+    if (!id || this.game.myPrompt()) return null;
+    for (const opponent of [false, true]) {
+      const slot = (opponent ? this.game.opponentState() : this.game.myState())?.field.find((c) => c.instanceId === id);
+      if (slot) return !slot.faceDown || !opponent || this.game.seeAll() ? slot : null;
+    }
+    return null;
+  });
   protected readonly canSeeThrough = computed(
     () => this.sheet.open() > 0 || !!this.game.state()?.chain?.length,
   );

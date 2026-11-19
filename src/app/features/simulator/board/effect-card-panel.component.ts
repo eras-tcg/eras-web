@@ -1,23 +1,29 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot } from '@data/simulator/simulator.model';
+import { CardSlot, ZONES, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
 import { holdToPeek } from './hold-peek';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
+import { CardSheetComponent } from './card-sheet.component';
 
 /**
- * Beside a choice, the card it is about: big, with its effects written out (`eras-effect-line`), and the effect that
- * asks lit up in the activating color (`--color-sim-effect-active`). The choice below then only says what to do and shows the cards to pick. Held pressed anywhere on the panel, the
- * card opens in detail, as any card listed in a choice.
+ * Beside the board, a card: on the table, as it is now (CardSheet: with its Materiales and Recursos, then every effect
+ * it has, its Recursos' too); else big from the catalog with its effects written out. The effect that asks is lit up
+ * in the activating color (`--color-sim-effect-active`), wherever it comes from. Beside a choice (the choice then only
+ * says what to do and shows the cards to pick), or for a card clicked on the table. Held pressed, the card opens in
+ * detail, as any card listed in a choice.
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [EffectLineComponent],
+  imports: [EffectLineComponent, CardSheetComponent],
   template: `
+    @if (onTable(); as t) {
+      <eras-card-sheet column [slot]="t.slot" [zone]="t.zone" [opponent]="t.opponent" [activeText]="activeText()" />
+    } @else {
     @if (imageUrl()) {
       <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
     }
@@ -32,6 +38,7 @@ import { effectLines, matchingLine } from './card-effect-lines';
     } @else if (fallbackText(); as text) {
       <!-- No card data (yet): the effect's own text -->
       <div class="effect active"><eras-effect-line [text]="text" /></div>
+    }
     }
   `,
   styles: `
@@ -50,6 +57,7 @@ import { effectLines, matchingLine } from './card-effect-lines';
       color: var(--color-text);
       scrollbar-width: thin;
     }
+    eras-card-sheet { --card-sheet-width: calc(var(--effect-panel-width, 18rem) - 2 * var(--space-3)); }
     .art {
       display: block;
       cursor: zoom-in;
@@ -89,6 +97,21 @@ export class EffectCardPanelComponent {
   readonly image = input<string | null | undefined>(null);
   /** The text of the effect that asks, lit up among the card's effects. */
   readonly activeText = input<string | null | undefined>(null);
+
+  /** The card where it is on the table now (live), with its zone and whose it is; null when it is not there. */
+  protected readonly onTable = computed<{ slot: CardSlot; zone: ZoneName; opponent: boolean } | null>(() => {
+    const id = this.slot()?.instanceId;
+    if (!id) return null;
+    for (const opponent of [false, true]) {
+      const player = opponent ? this.game.opponentState() : this.game.myState();
+      for (const zone of ZONES) {
+        if (zone === 'deck') continue;
+        const slot = player?.[zone].find((c) => c.instanceId === id);
+        if (slot) return { slot, zone, opponent };
+      }
+    }
+    return null;
+  });
 
   protected readonly catalog = computed(() => {
     const id = this.slot()?.cardId;

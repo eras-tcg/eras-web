@@ -85,6 +85,11 @@ export class SvgRenderer {
     }
   }
 
+  /** A bevel for a layer drawn outside the spec (an effect's piece), baked with the others; `bbox` in card units. */
+  addBevel(g: SVGElement, bevel: Bevel, bbox: number[]): void {
+    this.bevels.push({ g, bevel, bbox });
+  }
+
   /**
    * Adds the bevels: each beveled layer is rasterized alone, its highlight and shadow computed from that alpha and
    * laid over it as images blended like Photoshop (screen / multiply). Runs after render(), before exporting.

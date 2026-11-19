@@ -35,18 +35,21 @@
   }
 }
 
-// The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random:
-// public/images/foil/starlight-grid.svg, a 96px tile of 2px cells, 1px dots), over the whole card, in gold and rainbow.
-// glitter-dots: the dots, faint, everywhere. glitter-light: crosses of dots flashing here and there, and a band of
-// light sweeping across, lighting up the dots along lines parallel and perpendicular to the grid, which slide as it
-// goes. Include each in a positioned pseudo-element over the card (they bring their own keyframes).
-// It scales with the card: every size is in $u, a pixel of a card 160px wide (the card must be a size container:
-// include `scaled` on it), so a bigger card shows the same pattern bigger, not more of it.
+// The prismatic foil, like a starlight card: tiny square dots on a regular grid (each one there or not, at random),
+// over the whole card, in gold and rainbow. glitter-dots: the dots, faint, everywhere. glitter-light: crosses of dots
+// flashing here and there, and a band of light sweeping across, lighting up the dots along lines parallel and
+// perpendicular to the grid, which slide as it goes. Include each in a positioned pseudo-element over the card (they
+// bring their own keyframes).
+// The dots and crosses are drawn for a whole card 160 × 224 px (public/images/foil/starlight-grid-card.svg, 2px cells,
+// 1px dots; starlight-crosses-card.svg, an animated SVG) and stretched to the card: every card shows the same pattern,
+// only bigger or smaller, and nothing is tiled (tiles leave seams with no shine where they meet). On a small card the
+// dots are under a pixel and show softened. The other sizes are in $u, a pixel of that 160px card (the card must be a
+// size container: include `scaled` on it).
 $u: calc(100cqw / 160);
-$grid: url('/images/foil/starlight-grid.svg') 0 0 / calc(96 * #{$u}) calc(96 * #{$u});
+$grid: url('/images/foil/starlight-grid-card.svg') 0 0 / 100% 100% no-repeat;
 // Crosses of dots on the grid's rows and columns (every cell, fading from the middle), each flashing now and then
-// at its own pace (an animated SVG, a tile twice the grid's)
-$crosses: url('/images/foil/starlight-crosses.svg') 0 0 / calc(192 * #{$u}) calc(192 * #{$u});
+// at its own pace
+$crosses: url('/images/foil/starlight-crosses-card.svg') 0 0 / 100% 100% no-repeat;
 
 // On the card itself: it becomes the container the pattern measures
 @mixin scaled {

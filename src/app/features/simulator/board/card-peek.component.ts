@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, booleanAttribute, inject, input } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, ZONES } from '@data/simulator/simulator.model';
@@ -11,7 +11,8 @@ import { holdToPeek } from './hold-peek';
  * A card listed in a choice, a panel or a viewer opens in detail when it is held pressed (mouse, finger or pen): a
  * card on the table with what it has now (Materiales, Recursos, modifiers), any other as in the cards catalog. Placed
  * inside the card's box, it listens on that box; the click the release sends is swallowed, so holding does not pick
- * the card. Not for a face-down card the player may not see.
+ * the card. Not for a face-down card the player may not see. With `openOnClick` (a viewer only to look at cards), a click
+ * opens it too.
  */
 @Component({
   selector: 'eras-card-peek',
@@ -30,12 +31,20 @@ export class CardPeekComponent {
   readonly card = input<CardSlot | null>(null);
   /** A card of the player's own that they may look at even face down (their deck, their face-down Tributos). */
   readonly mine = input(false);
+  /** A click on its box opens it too (where clicking the card does nothing else). */
+  readonly openOnClick = input(false, { transform: booleanAttribute });
 
   constructor() {
     const destroy = inject(DestroyRef);
     afterNextRender(() => {
       const box = this.host.nativeElement.parentElement;
-      if (box) destroy.onDestroy(holdToPeek(box, () => this.peekable(), () => this.open()));
+      if (!box) return;
+      destroy.onDestroy(holdToPeek(box, () => this.peekable(), () => this.open()));
+      const click = () => {
+        if (this.openOnClick() && this.peekable()) this.open();
+      };
+      box.addEventListener('click', click);
+      destroy.onDestroy(() => box.removeEventListener('click', click));
     });
   }
 

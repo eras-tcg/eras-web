@@ -97,22 +97,9 @@ export class TurnDraw {
     });
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    // Its volume as on its zone (the edges of the cards under the top one, black as the back's frame with a faint line
-    // between cards), stretched as much as lying back shortens it: as thick as on the zone, at its size
-    const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
-    const step = 1 / Math.cos((BIG_DECK_LEAN * Math.PI) / 180);
-    const edges = Array.from(
-      { length: depth },
-      (_, i) => `0 ${(i + 1) * step}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`,
-    );
-    Object.assign(copy.style, {
-      display: 'block',
-      width: '100%',
-      height: '100%',
-      boxShadow: [...edges, `0 ${(depth + 2) * step}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(
-        ', ',
-      ),
-    });
+    // Its volume is the one drawn on its zone (the card's shadow: the edges of the cards under it, without gaps), lying
+    // back with it as the cards do on the table
+    Object.assign(copy.style, { display: 'block', width: '100%', height: '100%' });
     // The glow, around the deck and its volume
     const glow = this.document.createElement('span');
     Object.assign(glow.style, {

@@ -1,8 +1,12 @@
+import { isTestEdition } from '../editions/edition-rules';
 import { CatalogCard } from './card.model';
 
 export type ColorMatchMode = 'any' | 'identity';
 export type CardSortKey = 'number' | 'name' | 'cost' | 'level' | 'strength';
 export type SortDirection = 'asc' | 'desc';
+/** Which cards a search shows: the legal ones (not in testing), every card, or only the cards in testing. */
+export type CardPool = 'legal' | 'all' | 'test';
+export const CARD_POOL_LABELS: Record<CardPool, string> = { legal: 'Cartas legales', all: 'Todas las cartas', test: 'Cartas en test' };
 
 /** A numeric range; `null` bounds mean "no limit on this side". */
 export interface NumberRange {
@@ -30,6 +34,8 @@ export interface CardFilters {
   starterOnly: boolean;
   keywords: string[];
   tags: string[];
+  /** Cards in testing (editions T1, T2…) are left out unless asked for. */
+  pool: CardPool;
 }
 
 export const NO_RANGE: NumberRange = { min: null, max: null };
@@ -52,6 +58,7 @@ export const EMPTY_FILTERS: CardFilters = {
   starterOnly: false,
   keywords: [],
   tags: [],
+  pool: 'legal',
 };
 
 const isRangeSet = (r: NumberRange) => r.min !== null || r.max !== null;
@@ -59,6 +66,7 @@ const isRangeSet = (r: NumberRange) => r.min !== null || r.max !== null;
 export function hasActiveFilters(f: CardFilters): boolean {
   return (
     !!(f.name || f.type || f.specialSummon || f.requirement || f.edition || f.cardNumber || f.starterOnly) ||
+    f.pool !== 'legal' ||
     [f.colors, f.classes, f.rarities, f.keywords, f.tags].some((list) => list.length > 0) ||
     [f.cost, f.level, f.strength, f.specialCost].some(isRangeSet)
   );
@@ -86,6 +94,12 @@ function matchesEdition(card: CatalogCard, f: CardFilters): boolean {
     return card.edition === base && (card.sub_edition ?? '') === (sub ?? '');
   }
   return true;
+}
+
+/** The pool of cards searched; an edition chosen by name is shown whatever the pool. */
+function matchesPool(card: CatalogCard, f: CardFilters): boolean {
+  if (f.edition || f.pool === 'all') return true;
+  return isTestEdition(card.edition) === (f.pool === 'test');
 }
 
 function matchesColor(card: CatalogCard, f: CardFilters): boolean {
@@ -124,7 +138,7 @@ export function filterCards(cards: readonly CatalogCard[], f: CardFilters, inclu
   return cards.filter((card) => {
     const m = card.meta;
     if (!m && !includeWithoutMeta) return false;
-    if (!matchesEdition(card, f)) return false;
+    if (!matchesEdition(card, f) || !matchesPool(card, f)) return false;
     if (!matchesPattern(f.name, card.name ?? '')) return false;
     if (f.type && m?.cardType?.toLowerCase() !== f.type.toLowerCase()) return false;
     if (!matchesColor(card, f)) return false;

@@ -14,6 +14,8 @@ export interface TurnDrawCard {
 const BIG_DECK = 0.6;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
 const BIG_DECK_LEAN = 45;
+/** How thick each card left in the deck is, of a card's height (a deck of 40 is about a sixth as thick as a card is tall). */
+const CARD_THICKNESS = 0.004;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,
@@ -29,18 +31,18 @@ export class TurnDraw {
     private readonly flyer: CardFlyer,
   ) {}
 
-  /** Plays it for `cards` (drawn from `deck`, the deck pile), once what plays now has ended. */
-  play(deck: HTMLElement, cards: TurnDrawCard[]): void {
+  /** Plays it for `cards` (drawn from `deck`, the deck pile, with `left` cards in it), once what plays now has ended. */
+  play(deck: HTMLElement, cards: TurnDrawCard[], left: number): void {
     cards.forEach((c) => (c.element.style.visibility = 'hidden'));
     const done = this.animations.begin();
     // After what this update started (the turn's pop-up, a card breaking…), with the table as it is then
     queueMicrotask(() => {
       done();
-      this.animations.whenIdle(() => this.rise(deck, cards));
+      this.animations.whenIdle(() => this.rise(deck, cards, left));
     });
   }
 
-  private rise(deck: HTMLElement, cards: TurnDrawCard[]): void {
+  private rise(deck: HTMLElement, cards: TurnDrawCard[], left: number): void {
     const top = deck.querySelector<HTMLElement>('eras-game-card');
     const view = this.document.defaultView;
     if (!top || !view) {
@@ -97,11 +99,23 @@ export class TurnDraw {
     });
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    // Its volume is the one drawn on its zone (the card's shadow: the edges of the cards under it, without gaps), lying
-    // back with it as the cards do on the table
-    Object.assign(copy.style, { display: 'block', width: '100%', height: '100%' });
+    // Its volume: the edges of the cards under the top one (black as the back's frame, with faint lines: it is drawn big),
+    // as thick as the cards left in it make it, drawn longer as much as lying back shortens it (the pile's edge on its
+    // zone is thinner, and capped on small screens)
+    const depth = Math.round(
+      (left * CARD_THICKNESS * from.height) / Math.cos((BIG_DECK_LEAN * Math.PI) / 180),
+    );
+    const edges = Array.from(
+      { length: depth },
+      (_, i) => `0 ${i + 1}px 0 ${i % 3 === 2 ? '#1c2530' : '#0b0f14'}`,
+    );
+    Object.assign(copy.style, {
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      boxShadow: [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', '),
+    });
     // The glow, around the whole deck: the top card and the edges under it (the card's shadow, one pixel a step)
-    const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
     const glow = this.document.createElement('span');
     Object.assign(glow.style, {
       position: 'absolute',

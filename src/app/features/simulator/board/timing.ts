@@ -62,6 +62,8 @@ export function timingVars(): Record<string, string> {
 /** The board's layers over the table (tokens `--z-sim-*`), for the elements its code creates. */
 export const LAYER = {
   parkedLife: 'var(--z-sim-parked)',
+  /** Your turn's draw: under the sidebar and the game menu, over the rest of the board. */
+  turnDraw: 'var(--z-sim-turn-draw)',
   /** A field card's place while its sprite animates in it: over its neighbours in the row (it does not move). */
   fieldLifted: 'var(--z-sim-field-lifted)',
   spotlight: 'var(--z-sim-spotlight)',

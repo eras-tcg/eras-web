@@ -83,15 +83,17 @@ export class TurnDraw {
       }),
     );
 
-    // The whole screen, seen as the table (its perspective and eye), as the cards that fly
+    // The whole screen, seen as the table (its perspective and eye), as the cards that fly. It takes every click (one
+    // anywhere draws) and keeps the board under it out of reach until the deck is back; on the board's own layers, under
+    // its sidebar and game menu, which stay usable
     const screen = this.document.createElement('div');
     Object.assign(screen.style, {
       position: 'fixed',
       inset: '0',
       perspective: `${stage.distance}px`,
       perspectiveOrigin: `${stage.originX}px ${stage.originY}px`,
-      zIndex: LAYER.pileUnder,
-      pointerEvents: 'none',
+      zIndex: LAYER.turnDraw,
+      cursor: 'pointer',
     });
     // The deck at its own size, clicked (or Enter / Space) to draw. Not a <button>: it clips what goes past its box
     const big = this.document.createElement('div');
@@ -108,8 +110,6 @@ export class TurnDraw {
       outline: 'none',
       transformOrigin: '50% 50%',
       transformStyle: 'preserve-3d',
-      cursor: 'pointer',
-      pointerEvents: 'auto',
     });
     // Rounded as a card is at this size (the zone's card may be tiny, its corners at their smallest)
     const radius = `${width * CARD_RADIUS}px`;
@@ -156,7 +156,7 @@ export class TurnDraw {
     });
     big.append(...[...under].reverse(), copy, ...glows);
     screen.append(big);
-    this.document.body.append(screen);
+    (deck.closest('eras-board-page') ?? this.document.body).append(screen);
     // The real deck stays where it is; the one rising is its copy
     top.style.visibility = 'hidden';
 
@@ -167,7 +167,15 @@ export class TurnDraw {
     };
     big.animate(frames, settle);
     let pulses: Animation[] = [];
-    const shown = setTimeout(() => {
+    // Clicked before the deck is up: it draws as soon as it is
+    let ready = false;
+    let asked = false;
+    setTimeout(() => {
+      ready = true;
+      if (asked) {
+        take();
+        return;
+      }
       pulses = glows.map((g) =>
         g.animate([{ opacity: 0.35 }, { opacity: 1 }], {
           duration: 900,
@@ -179,10 +187,16 @@ export class TurnDraw {
       big.focus({ preventScroll: true });
     }, TIMING.flight);
 
+    let taken = false;
     const take = () => {
-      clearTimeout(shown);
+      if (taken) return;
+      if (!ready) {
+        asked = true;
+        return;
+      }
+      taken = true;
       pulses.forEach((p) => p.cancel());
-      big.style.pointerEvents = 'none';
+      screen.style.cursor = '';
       // The card drawn rises off the deck's top, face down, and turns over above it, standing up to you
       const deckTop = { ...this.measure.seenOf(copy, { imageUrl: null }), pose: middle };
       const shownCards = cards.map((c, i) => {
@@ -219,12 +233,16 @@ export class TurnDraw {
           });
       }, REVEAL_MS + REVEAL_HOLD_MS);
     };
-    big.addEventListener('click', take, { once: true });
+    // A click anywhere (the screen takes them all), or Enter / Space on the deck
+    screen.addEventListener('click', (e) => {
+      e.stopPropagation();
+      take();
+    });
+    screen.addEventListener('contextmenu', (e) => e.preventDefault());
     big.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
-      big.removeEventListener('click', take);
-      if (big.style.pointerEvents !== 'none') take();
+      take();
     });
   }
 

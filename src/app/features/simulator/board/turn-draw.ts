@@ -106,7 +106,8 @@ export class TurnDraw {
       left: '0',
       right: '0',
       top: '100%',
-      height: `${depth}px`,
+      // The pose's scale grows the card on its plane only: its thickness grows here
+      height: `${depth * scale}px`,
       transformOrigin: '50% 0',
       transform: 'rotateX(-90deg)',
       background: 'repeating-linear-gradient(to bottom, #0b0f14 0 1px, #2a3441 1px 2px)',

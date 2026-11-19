@@ -192,6 +192,7 @@ export class TurnDraw {
           duration: REVEAL_MS,
           hide: place,
           now: true,
+          noShadow: true,
         });
         return { card: c, place };
       });
@@ -204,6 +205,7 @@ export class TurnDraw {
             duration: TIMING.draw,
             hide: card.element,
             now: true,
+            noShadow: true,
           });
           place.remove();
         });

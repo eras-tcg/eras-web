@@ -36,6 +36,9 @@ type Pile = 'deck' | 'tributeZone' | 'discardPile' | 'lifeStack';
  * One player's side of the table. Own side: drop cards anywhere (field position, hand, piles),
  * deck and lives have their action menus. Opponent side (drawn upside down): drops become targets.
  */
+/** How much narrower each edge under a pile's top card is drawn (each side, in pixels) with the table fully leaning. */
+const PILE_EDGE_TAPER = 0.15;
+
 @Component({
   selector: 'eras-player-half',
   imports: [SimCardComponent, GameZoneComponent, GameCardComponent, ResourcePipsComponent, CdkContextMenuTrigger, MenuComponent, MenuItemDirective, IconButtonComponent, IconComponent, PlayerPlateComponent, ChainMarksComponent, LineScrollDirective],
@@ -102,11 +105,16 @@ export class PlayerHalfComponent {
 
   /**
    * A pile's thickness (deck, Tributos, Descarte): the edges of the cards under the top one, one pixel every 3 cards (at most 16, 6 on a
-   * phone in landscape), black as the back's frame with a faint line between cards, with its shadow on the table.
+   * phone in landscape), black as the back's frame with a faint line between cards, with its shadow on the table. Drawn on the
+   * leaning table ("Mesa en perspectiva"), an edge lower down is nearer you and would look wider: each one is a little narrower,
+   * as much as the table leans, so all the cards look as wide as the top one.
    */
   protected pileEdge(cards: number): string {
     const depth = this.pileDepth(cards);
-    const edges = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${i % 2 ? '#2a3441' : '#0b0f14'}`);
+    const edges = Array.from({ length: depth }, (_, i) => {
+      const narrower = (i + 1) * PILE_EDGE_TAPER * this.prefs.tilt();
+      return `0 ${i + 1 + narrower}px 0 ${-narrower}px ${i % 2 ? '#2a3441' : '#0b0f14'}`;
+    });
     return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');
   }
   /** A pile's edge under its top card, in pixels (one every 3 cards, at most 16 — 6 on a phone in landscape). */

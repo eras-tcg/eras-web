@@ -14,6 +14,7 @@ import { Seen, TableMeasure } from './card-seen';
 import { LifeFlights } from './life-flights';
 import { TimelineCursor } from './timeline-cursor';
 import { TIMING } from './timing';
+import { TurnDraw } from './turn-draw';
 
 /** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
 interface Hop {
@@ -54,6 +55,7 @@ export class CardFlightsComponent {
   });
   private readonly motions = new CardMotions(this.document, this.animations, this.measure, (fn) => this.run(fn));
   private readonly lives = new LifeFlights(this.document, this.measure, this.flyer);
+  private readonly turnDraw = new TurnDraw(this.document, this.animations, this.measure, this.flyer);
   private readonly timeline = new TimelineCursor();
 
   /** Where each field card was drawn last time: it flies from there when it leaves the field. */
@@ -75,6 +77,11 @@ export class CardFlightsComponent {
   private deferring = false;
   /** The pile-to-pile moves of this update, by card, in order. */
   private hops = new Map<string, Hop[]>();
+  /**
+   * The pile each card of this update's moves left first, by the timeline: a card of a deck is sent as a back with an
+   * id of its own (StateMask), so the pile it was in is only known from the move.
+   */
+  private origins = new Map<string, ZoneName>();
   /** Each player still choosing their mulligan: the five cards shown to them (the top of their deck). */
   private mulliganTop = new Map<string, Set<string>>();
   /** Cards that do not fly in this update: what a mulligan settled (the hand kept, the starter, the lives). */
@@ -114,6 +121,7 @@ export class CardFlightsComponent {
         this.settled = this.mulliganSettled(state);
         const onField = new Set(Object.values(state.players ?? {}).flatMap((p) => p.field.map((c) => c.instanceId)));
         this.hops = this.hopsNow(state);
+        this.origins = this.originsNow(state);
         this.fieldLeaves(state, onField);
         this.lives.unpark(state, this.me());
         this.handLeaves(state, onField);
@@ -163,8 +171,10 @@ export class CardFlightsComponent {
   }
 
   /**
-   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, and those of
-   * a new DRAW event (an effect that looked at the top cards took them out of the deck before drawing).
+   * Cards drawn fly from the deck to their place in the hand: those that were in the deck last time, those of a new DRAW
+   * event (an effect that looked at the top cards took them out of the deck before drawing), and those new in a hand that
+   * were nowhere before (a deck's cards reach the board as backs with ids of their own: the turn's draw has no event).
+   * Your own draw at the start of your turn waits for you to take it from your deck (TurnDraw).
    */
   private draws(state: GameState): void {
     const before = this.deckIds;
@@ -173,11 +183,24 @@ export class CardFlightsComponent {
     const events = this.timeline.fresh(state);
     if (!before) return;
     const drawnByEvent = new Set(events.filter((e) => e.type === 'DRAW' && e.cardInstanceId).map((e) => e.cardInstanceId));
+    const known = this.previous ? cardIds(this.previous) : null;
     const me = this.me();
+    const myTurnStarted = !!me && state.currentTurnUserId === me && this.previous?.currentTurnUserId !== me && !this.game.sideByBot();
     for (const p of players) {
       const deck = pile(this.document, p.userId, 'deck');
       if (!deck) continue;
-      const drawn = p.hand.filter((c) => (before.has(c.instanceId) || drawnByEvent.has(c.instanceId)) && !this.settled.has(c.instanceId));
+      const fromDeck = (id: string) => before.has(id) || drawnByEvent.has(id) || (!!known && !known.has(id));
+      const drawn = p.hand.filter((c) => fromDeck(c.instanceId) && !this.settled.has(c.instanceId));
+      if (p.userId === me && myTurnStarted && drawn.length && !this.animations.still()) {
+        const cards = drawn.flatMap((c) => {
+          const element = handCard(this.document, c.instanceId);
+          return element ? [{ element, imageUrl: c.imageUrl }] : [];
+        });
+        if (cards.length) {
+          this.turnDraw.play(deck, cards);
+          continue;
+        }
+      }
       drawn.forEach((c, i) => {
         const card = handCard(this.document, c.instanceId);
         const target = card ?? pile(this.document, p.userId, 'hand');
@@ -192,7 +215,8 @@ export class CardFlightsComponent {
 
   /**
    * The moves from pile to pile of this update (its new timeline events), by card. They play in turns, in the order they
-   * happened: a run of moves alike (the same kind, from and to the same zones, as the 2 cards of "tributa 2") is one turn.
+   * happened: a run of moves alike (the same kind, from and to the same zones, as the 2 cards of "tributa 2") is one turn,
+   * its cards leaving one after another.
    */
   private hopsNow(state: GameState): Map<string, Hop[]> {
     const piles = new Set<string>(PILES);
@@ -202,15 +226,38 @@ export class CardFlightsComponent {
         !!e.cardInstanceId && piles.has(e.fromZone ?? '') && piles.has(e.toZone ?? '') && e.fromZone !== e.toZone)
       .sort((a, b) => a.seq - b.seq);
     const hops = new Map<string, Hop[]>();
-    let turn = -1;
+    // A run's cards leave one after another (as a draw's), so each one is seen; the next run starts once its last has landed
+    let start = -TIMING.flight;
+    let at = 0;
+    let index = 0;
     let last = '';
     for (const e of events) {
       const key = `${e.type}|${e.playerId}|${e.fromZone}|${e.toZone}`;
-      if (key !== last) turn++;
+      if (key !== last) {
+        start = (last ? at : start) + TIMING.flight;
+        index = 0;
+      }
       last = key;
-      hops.set(e.cardInstanceId, [...(hops.get(e.cardInstanceId) ?? []), { from: e.fromZone, to: e.toZone, delay: turn * TIMING.flight }]);
+      at = start + index++ * TIMING.drawStagger;
+      hops.set(e.cardInstanceId, [...(hops.get(e.cardInstanceId) ?? []), { from: e.fromZone, to: e.toZone, delay: at }]);
     }
     return hops;
+  }
+
+  /** The first pile each card of this update's new timeline events left (to a pile, the field or under a creature). */
+  private originsNow(state: GameState): Map<string, ZoneName> {
+    const piles = new Set<string>(PILES);
+    const origins = new Map<string, ZoneName>();
+    for (const e of [...this.timeline.peek(state)].sort((a, b) => a.seq - b.seq)) {
+      if (e.cardInstanceId && piles.has(e.fromZone ?? '') && !origins.has(e.cardInstanceId)) origins.set(e.cardInstanceId, e.fromZone as ZoneName);
+    }
+    return origins;
+  }
+
+  /** The pile a card was in before this update ("<owner>:<zone>"): as drawn, else (a card of a deck) as its move says. */
+  private pileBefore(id: string, owner: string): string | undefined {
+    const zone = this.origins.get(id);
+    return this.pileOf.get(id) ?? (zone ? `${owner}:${zone}` : undefined);
   }
 
   /**
@@ -252,7 +299,7 @@ export class CardFlightsComponent {
     for (const p of Object.values(state.players ?? {})) {
       for (const zone of PILES) {
         for (const c of p[zone] as CardSlot[]) {
-          const was = this.pileOf.get(c.instanceId);
+          const was = this.pileBefore(c.instanceId, p.userId);
           const now = `${p.userId}:${zone}`;
           if (!was || was === now || was.endsWith(':hand') || this.settled.has(c.instanceId) || this.lives.isParked(c.instanceId)) continue;
           if (zone === 'hand' && was.endsWith(':deck')) continue;
@@ -277,7 +324,7 @@ export class CardFlightsComponent {
         for (const a of [...host.materials, ...host.resources]) {
           now.add(a.instanceId);
           if (this.attached.has(a.instanceId) || !target || (!this.seen.size && !this.handSeen.size)) continue;
-          const from = this.handSeen.get(a.instanceId) ?? this.seen.get(a.instanceId) ?? this.measure.pile(this.pileOf.get(a.instanceId));
+          const from = this.handSeen.get(a.instanceId) ?? this.seen.get(a.instanceId) ?? this.measure.pile(this.pileBefore(a.instanceId, p.userId));
           if (from) this.flyer.fly({ ...from, imageUrl: a.imageUrl }, target, !!a.faceDown, { duration: TIMING.flight, under: true });
         }
       }
@@ -309,13 +356,25 @@ export class CardFlightsComponent {
         // New on the field: from its place in the hand, else from the pile it was in. Where it lands is measured
         // before it starts to travel (once it moves, its box is where it comes from)
         const landing = card.getBoundingClientRect();
-        const from = this.handSeen.get(c.instanceId) ?? this.measure.pile(this.pileOf.get(c.instanceId));
+        const from = this.handSeen.get(c.instanceId) ?? this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
         if (from) this.glide(sprite, card, c, from, TIMING.summon);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;
       }
     }
     return summoned;
+  }
+
+  /**
+   * Where a card left a pile from: the pile's top, with the card's face when it lay face up there (the Tributos, the
+   * Descarte), so it does not turn over on its way; a face-down card (the deck's, a life's) leaves showing its back.
+   */
+  private fromPile(card: CardSlot, key: string | undefined): Seen | null {
+    const from = this.measure.pile(key);
+    if (!from || !key) return from;
+    const [owner, zone] = key.split(':') as [string, ZoneName];
+    const was = (this.previous?.players?.[owner]?.[zone] as CardSlot[] | undefined)?.find((x) => x.instanceId === card.instanceId);
+    return was && !was.faceDown ? { ...from, imageUrl: card.imageUrl } : from;
   }
 
   /** A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands). */
@@ -346,4 +405,14 @@ export class CardFlightsComponent {
     if (real) real.style.visibility = 'hidden';
     return new Promise((done) => setTimeout(done, TIMING.shatter));
   }
+}
+
+/** Every card of the state: on a field (with its Materiales and Recursos), in a hand or a pile. */
+function cardIds(state: GameState): Set<string> {
+  const ids = new Set<string>();
+  for (const p of Object.values(state.players ?? {})) {
+    for (const c of p.field) [c, ...c.materials, ...c.resources].forEach((a) => ids.add(a.instanceId));
+    for (const z of PILES) (p[z] as CardSlot[]).forEach((c) => ids.add(c.instanceId));
+  }
+  return ids;
 }

@@ -5,7 +5,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { pileOf } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ZoneName } from '@data/simulator/simulator.model';
-import { poseFrames, poseOf, stageOf } from './card-pose';
+import { flatTurn, poseFrames, poseOf, stageOf } from './card-pose';
 import { pile, tableCard } from './board-dom';
 import { tablePlane } from './table-plane';
 import { LAYER } from './timing';
@@ -155,9 +155,14 @@ export class PromptSpotlightComponent {
         this.layer.append(this.leaning(element, copy, width, height));
         continue;
       }
-      // Centered where the card is (its own transform, like exhausted, is kept by its classes)
+      // Centered where the card is, turned and sized as what holds it draws it (a hand's fan, the rival's hand turned round);
+      // its own transform, like exhausted, is kept by its classes
+      const held = flatTurn(element.parentElement ?? element, null);
       copy.style.left = `${rect.left + rect.width / 2 - width / 2}px`;
       copy.style.top = `${rect.top + rect.height / 2 - height / 2}px`;
+      copy.style.transformOrigin = '50% 50%';
+      if (held.turn || held.scale !== 1) copy.style.rotate = `${held.turn}deg`;
+      if (held.scale !== 1) copy.style.scale = String(held.scale);
       this.layer.append(copy);
     }
     // A copy is the card as it already is: its entry animations (a chain mark landing) are not played again

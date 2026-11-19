@@ -16,7 +16,8 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { PluralPipe } from '@ui/utilities/plural.pipe';
 import { SendToData, SendToOption, chooseSendTo, destinationOptions } from './send-to-dialog.component';
 import { SendDestination, destinationOf } from '../send-destinations';
-import { CardPeekComponent } from '../card-peek.component';
+import { CardPeekComponent, openCardDetail } from '../card-peek.component';
+import { CardsStore } from '@data/cards/cards.store';
 
 export interface ZoneDialogData {
   zone: ZoneName;
@@ -25,7 +26,10 @@ export interface ZoneDialogData {
   readonly?: boolean;
 }
 
-/** Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. */
+/**
+ * Cards of a pile (tributes, discard, lives…): move, flip, peek, delete, reorder and bulk actions. With the test actions
+ * on a click selects cards; without them a click opens one as holding it does (openCardDetail).
+ */
 @Component({
   selector: 'eras-zone-dialog',
   imports: [PluralPipe, ModalComponent, GameCardComponent, StackComponent, EmptyStateComponent, ButtonComponent, IconComponent, CardPeekComponent, PickCardComponent],
@@ -51,9 +55,9 @@ export interface ZoneDialogData {
                 type="button"
                 class="pick"
                 [chosen]="selected().has(c.instanceId)"
-                [viewOnly]="!canAct()"
+                [viewOnly]="!canAct() && isHidden(c)"
                 [attr.aria-label]="label(c, i)"
-                (click)="canAct() && toggle(c.instanceId)"
+                (click)="pick(c)"
               >
                 <eras-game-card
                   [imageUrl]="c.imageUrl" [foil]="c.finish ?? null"
@@ -130,6 +134,7 @@ export class ZoneDialogComponent {
   protected readonly ref = inject(DialogRef);
   protected readonly game = inject(GameStore);
   private readonly modal = inject(ModalService);
+  private readonly catalog = inject(CardsStore);
 
   protected readonly selected = signal(new Set<string>());
   protected readonly peeked = signal(new Set<string>());
@@ -284,6 +289,15 @@ export class ZoneDialogComponent {
   protected activate(c: CardSlot, scriptId: string): void {
     this.ref.close();
     this.game.activateEffect(c.instanceId, scriptId);
+  }
+
+  /**
+   * A click: with the test actions on, selects (several, to send them together); else opens the card as holding it
+   * does (one that can be seen). Holding a card opens it in either case.
+   */
+  protected pick(c: CardSlot): void {
+    if (this.canAct()) this.toggle(c.instanceId);
+    else if (!this.isHidden(c)) openCardDetail(this.game, this.catalog, this.modal, c);
   }
 
   protected toggle(id: string): void {

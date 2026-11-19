@@ -14,6 +14,8 @@ export interface FlightOptions {
   hide?: HTMLElement | null;
   /** It lands under a creature (a Material or a Recurso). */
   under?: boolean;
+  /** It goes at once, whatever this update started (a flight a click starts, long after its update). */
+  now?: boolean;
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -45,6 +47,8 @@ export class CardFlyer {
 
   /** A copy of the card flies from where it was (`from`'s pose) to `target` (the card there, or the pile). */
   fly(from: Seen, target: Element, faceDown: boolean, options: FlightOptions = {}): void {
+    // A card landing in a hand waits hidden there until the copy lands (it is already drawn in its place)
+    if (!options.hide && target instanceof HTMLElement && target.matches('[data-hand-id] eras-game-card')) options = { ...options, hide: target };
     // It lands at the pose of the card there: the target itself, or the card shown on that pile (else the pile, at the
     // flying card's size)
     const toCard = target instanceof HTMLElement && target.matches('eras-game-card') ? target : target.querySelector<HTMLElement>('eras-game-card');
@@ -55,7 +59,11 @@ export class CardFlyer {
     const slot = target as HTMLElement;
     const slotWidth = Math.min(slot.offsetWidth, (slot.offsetHeight * 63) / 88) || start.width;
     const end = toCard ? poseOf(toCard) : poseOf(slot, { width: slotWidth, height: (slotWidth * 88) / 63 });
-    const frames = poseFrames(stage, start, end, { fromBack: !!options.fromBack, toBack: faceDown }, options.under);
+    // Only the pose: the shadow is on its faces (a filter on the card flattens it, and its face would show through its back
+    // while it waits to leave or turns over)
+    const frames = poseFrames(stage, start, end, { fromBack: !!options.fromBack, toBack: faceDown }, options.under).map(
+      ({ filter, ...frame }) => (void filter, frame),
+    );
 
     const { flight, inner } = this.copyOf(from, stage, start);
     const landed = options.hide || options.under ? null : this.holdPile(target, toCard, stage);
@@ -70,7 +78,7 @@ export class CardFlyer {
       this.animations.hold(delay + duration);
       this.launch(inner, flight, frames, delay, duration, options.hide, landed);
     };
-    if (this.context.deferring()) {
+    if (this.context.deferring() && !options.now) {
       flight.style.visibility = 'hidden';
       this.animations.whenIdle(() => {
         flight.style.visibility = '';
@@ -176,6 +184,7 @@ export class CardFlyer {
         borderRadius: '6px',
         objectFit: 'cover',
         backfaceVisibility: 'hidden',
+        boxShadow: '0 6px 12px rgb(0 0 0 / 40%)',
       });
       if (back || !from.imageUrl) {
         el.style.background = 'var(--color-card-back)';

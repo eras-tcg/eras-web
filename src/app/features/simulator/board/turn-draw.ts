@@ -16,6 +16,8 @@ const BIG_DECK = 0.6;
 const BIG_DECK_LEAN = 45;
 /** How thick each card left in the deck is, of a card's height (a deck of 40 is a bit over a quarter as thick as a card is tall). */
 const CARD_THICKNESS = 0.007;
+/** A card's corner radius, of its width. */
+const CARD_RADIUS = 0.045;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,
@@ -110,12 +112,15 @@ export class TurnDraw {
     // Its volume, a real side: the cards under the top one go down behind it (into the table), all as wide as it, as
     // many as are left (black as the back's frame, a faint line every few cards). A shadow drawn on the card's plane
     // (the pile's edge on its zone) would come towards you and widen as it goes down.
-    const radius = `${(parseFloat(getComputedStyle(top).borderTopLeftRadius) || 0) * scale}px`;
+    // Rounded as a card is at this size (the zone's card may be tiny, its corners at their smallest)
+    const radius = `${width * CARD_RADIUS}px`;
+    copy.querySelectorAll<HTMLElement>('*').forEach((e) => (e.style.borderRadius = radius));
     Object.assign(copy.style, {
       display: 'block',
       width: '100%',
       height: '100%',
       boxShadow: 'none',
+      borderRadius: radius,
     });
     const thickness = left * CARD_THICKNESS * height;
     const side = this.document.createElement('span');

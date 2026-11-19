@@ -24,7 +24,7 @@ interface SheetLine {
 
 /**
  * A card of the game as it is now: the card with its Materiales peeking out behind it and its Recursos under it (as on the
- * table), then its numbers, what modifies it, its own effects, its link effect, the effects its Recursos give it, what it
+ * table), then its numbers (not in a side panel), what modifies it, its own effects, its link effect, the effects its Recursos give it, what it
  * receives by link and its Materiales. `activeText`: the effect that asks, lit up wherever it is (its own or a Recurso's).
  * Side by side in a dialog; `column` stacks it (a side panel). Held pressed, a card of it opens in detail.
  */
@@ -60,7 +60,8 @@ interface SheetLine {
       }
     </div>
     <div class="effects">
-      @if (facts().length) {
+      @if (facts().length && !column()) {
+        <!-- Its numbers: not in a side panel (its card shows them) -->
         <eras-card-facts [facts]="facts()" />
       }
       @if (s.unprogrammed) {

@@ -1,8 +1,8 @@
 {
-  "commit": "ba1a7bbf8625ed74ad379d18389fbec3787da587",
+  "commit": "51cd3e80184f49462b43186bc308f777d5539921",
   "dirty": false,
-  "subject": "Enfrentamiento de Guerra: the text says the strength lasts until the end of the turn (as programmed); test for it",
-  "copiedAt": "2026-11-18T06:02:02.610Z",
+  "subject": "E1.1 cards programmed: 23 new card files, Nuliber and Niobats to their current text",
+  "copiedAt": "2026-11-19T14:26:56.318Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

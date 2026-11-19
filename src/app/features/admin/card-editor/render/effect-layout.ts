@@ -24,6 +24,8 @@ const USAGE: Record<string, { piece?: string; style?: string; after?: string; ul
   'once per turn': { piece: 'una vez por turno' },
   // Between copies the piece is the yellow one (SIMBOLOS' EXTRAS), the plain one is white
   'once per turn between copies': { piece: 'una vez por turno', style: 'una vez por turno entre copias', after: 'entre copias' },
+  'twice per turn': { piece: 'dos veces por turno' },
+  'twice per turn between copies': { piece: 'dos veces por turno', style: 'dos veces por turno entre copias', after: 'entre copias' },
   'ultimate effect': { ultimate: true },
 };
 
@@ -63,7 +65,7 @@ export function keywordReminder(
   // The reference text carries the keyword's own heading ("<Todos Los Turnos> [una vez por turno]"): reminders print without it.
   text = text
     .replace(/<[^>]+>\s*/g, '')
-    .replace(/\[(una vez por turno|efecto definitivo)\]\s*/gi, '')
+    .replace(/\[(una vez por turno|dos veces por turno|efecto definitivo)\]\s*/gi, '')
     .trim();
   return text ? fill(text, value) : null;
 }

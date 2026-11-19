@@ -152,6 +152,8 @@ export interface EffectLine {
 const USAGE_LIMIT_TEXT: Record<string, string> = {
   'once per turn': '[una vez por turno]',
   'once per turn between copies': '[una vez por turno] entre copias,',
+  'twice per turn': '[dos veces por turno]',
+  'twice per turn between copies': '[dos veces por turno] entre copias,',
   'ultimate effect': '[efecto definitivo]',
 };
 

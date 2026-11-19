@@ -1,8 +1,8 @@
 {
-  "commit": "9b886319b4fb394dc9de50c0082b1c4baed5596a",
+  "commit": "30c5d05e84419f33f5a1efd3e9a7ec802279ba39",
   "dirty": false,
-  "subject": "test: E11CardsTest tagged cards / e11 (test levels)",
-  "copiedAt": "2026-11-19T17:00:46.696Z",
+  "subject": "Engine: \"dos veces por turno\" usage limit (per copy and between copies)",
+  "copiedAt": "2026-11-19T21:11:25.437Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

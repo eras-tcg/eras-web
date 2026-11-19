@@ -18,7 +18,13 @@ export interface PieceCatalog {
 }
 
 export const ULTIMATE_LABEL = 'Efecto Definitivo';
-const ONCE = 'una vez por turno';
+/** The usage limits written as a condition piece, by their label; "entre copias" after one makes its between-copies form. */
+const PER_TURN: Record<string, { limit: string; betweenCopies: string }> = {
+  'una vez por turno': { limit: 'once per turn', betweenCopies: 'once per turn between copies' },
+  'dos veces por turno': { limit: 'twice per turn', betweenCopies: 'twice per turn between copies' },
+};
+const perTurnLabel = (limit: string | null | undefined) =>
+  Object.keys(PER_TURN).find((l) => PER_TURN[l].limit === limit || PER_TURN[l].betweenCopies === limit);
 
 /** Same-length, accent-free, lowercase copy (positions stay aligned with the original). */
 export function foldChars(s: string): string {
@@ -32,7 +38,7 @@ const hasParam = (key: string) => /\{[^}]+\}|\bX$/.test(key);
 
 /** Labels the editor recognizes, from the symbol sheet and the keyword reference. */
 export function pieceCatalog(pieces: PieceTable, keywordKeys: string[]): PieceCatalog {
-  // Two pieces read "una vez por turno" (plain and between copies): the label once
+  // Two pieces read "una vez por turno" (plain and between copies), and two "dos veces por turno": the label once
   const conditions = [...new Set(Object.values(pieces.conditions).map((p) => p.label))];
   const isCondition = new Set(conditions.map(foldChars));
   return {
@@ -102,10 +108,11 @@ export function effectsToLines(
       sep();
       line.push({ t: 'piece', kind: 'timing', label });
     }
-    if (e.ussageLimit === 'once per turn' || e.ussageLimit === 'once per turn between copies') {
+    const perTurn = perTurnLabel(e.ussageLimit);
+    if (perTurn) {
       sep();
-      line.push({ t: 'piece', kind: 'condition', label: ONCE });
-      if (e.ussageLimit === 'once per turn between copies')
+      line.push({ t: 'piece', kind: 'condition', label: perTurn });
+      if (e.ussageLimit === PER_TURN[perTurn].betweenCopies)
         line.push({ t: 'text', text: ` entre copias${betweenCopiesMark(e)}` });
     }
     for (const b of e.effectBlocks ?? []) {
@@ -327,17 +334,20 @@ export function linesToEffects(lines: Line[]): {
       if (s.t !== 'piece') break;
       if (s.kind === 'ultimate') effect.ussageLimit = 'ultimate effect';
       else if (s.kind === 'timing') instance.push(s.label);
-      else if (s.kind === 'condition' && foldChars(s.label) === ONCE)
-        effect.ussageLimit = 'once per turn';
+      else if (s.kind === 'condition' && PER_TURN[foldChars(s.label)])
+        effect.ussageLimit = PER_TURN[foldChars(s.label)].limit;
       else break;
     }
     if (instance.length) effect.instance = instance.join('>');
     let body = line.slice(i);
-    // "entre copias" right after "una vez por turno".
-    if (effect.ussageLimit === 'once per turn' && body[0]?.t === 'text') {
-      const m = /^\s*entre copias\s*[,:]?/i.exec(body[0].text);
+    // "entre copias" right after "una vez por turno" (or "dos veces"); its colon closes the conditions (a later colon is not one).
+    let closed = false;
+    const perTurn = perTurnLabel(effect.ussageLimit);
+    if (perTurn && body[0]?.t === 'text') {
+      const m = /^\s*entre copias\s*([,:]?)/i.exec(body[0].text);
       if (m) {
-        effect.ussageLimit = 'once per turn between copies';
+        effect.ussageLimit = PER_TURN[perTurn].betweenCopies;
+        closed = m[1] === ':';
         body = [{ t: 'text', text: body[0].text.slice(m[0].length) }, ...body.slice(1)];
       }
     }
@@ -350,7 +360,7 @@ export function linesToEffects(lines: Line[]): {
       text = serialize(body.slice(body.indexOf(lead) + 1)).replace(/^[:,]\s*/, '');
     } else {
       text = serialize(body);
-      const colon = outside(text, ':');
+      const colon = closed ? -1 : outside(text, ':');
       if (colon >= 0) {
         block.activationCondition = text.slice(0, colon).trim();
         text = text.slice(colon + 1).trim();

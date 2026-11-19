@@ -108,6 +108,14 @@ describe('filterCards', () => {
     expect(ids(filterCards(cards, EMPTY_FILTERS, true))).toEqual(['a', 'b', 'c']);
   });
 
+  it('leaves the cards in testing out unless asked for', () => {
+    const withTest = [...cards, card({ id: 't', name: 'Bazael', edition: 'T1', number: 1 }, { cost: 2, cardType: 'creature' })];
+    expect(ids(filterCards(withTest, EMPTY_FILTERS, false))).toEqual(['a', 'b']);
+    expect(ids(filterCards(withTest, { ...EMPTY_FILTERS, pool: 'all' }, false))).toEqual(['a', 'b', 't']);
+    expect(ids(filterCards(withTest, { ...EMPTY_FILTERS, pool: 'test' }, false))).toEqual(['t']);
+    expect(hasActiveFilters({ ...EMPTY_FILTERS, pool: 'test' })).toBe(true);
+  });
+
   it('filters by edition, including sub-editions', () => {
     expect(ids(filterCards(cards, { ...EMPTY_FILTERS, edition: 'E1' }, true))).toEqual(['a']);
     expect(ids(filterCards(cards, { ...EMPTY_FILTERS, edition: 'E1.1' }, true))).toEqual(['c']);

@@ -30,6 +30,8 @@
     <input type="search" placeholder="Buscar por nombre…" [value]="f.name" (input)="setText('name', $event)" />
   </eras-form-field>
 
+  <eras-toggle-group label="Cartas" [options]="poolOptions" [selected]="[f.pool]" (toggled)="set('pool', $any($event))" />
+
   <eras-form-field label="Edición">
     <select (change)="setText('edition', $event)">
       <option value="">Todas</option>

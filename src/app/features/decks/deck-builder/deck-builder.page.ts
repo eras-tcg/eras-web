@@ -12,7 +12,9 @@ import { AuthService } from '@core/auth/auth.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import {
+  CARD_POOL_LABELS,
   CardFilters,
+  CardPool,
   EMPTY_FILTERS,
   filterCards,
   hasActiveFilters,
@@ -215,6 +217,7 @@ export class DeckBuilderPage {
   /** Marks, on the card itself, the cards the simulator does not run yet (in the deck and in the search). */
   protected readonly showUnprogrammed = persistedFlag('eras-deck-builder-mark-unprogrammed');
   protected readonly renderCount = signal(PAGE_SIZE);
+  protected readonly poolOptions: ToggleOption[] = (Object.keys(CARD_POOL_LABELS) as CardPool[]).map((value) => ({ value, label: CARD_POOL_LABELS[value] }));
   protected readonly ownershipOptions: ToggleOption[] = [
     { value: 'all', label: 'Todas' },
     { value: 'owned', label: 'Las que tengo', text: 'Tengo' },

@@ -61,7 +61,8 @@ export class TurnDraw {
       lean: BIG_DECK_LEAN,
       turn: 0,
     };
-    const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false });
+    // Without the flights' drop shadow: a filter flattens the deck, and its side (3D) would vanish
+    const frames = poseFrames(stage, from, middle, { fromBack: false, toBack: false }).map((frame) => ({ ...frame, filter: 'none' }));
 
     // The whole screen, seen as the table (its perspective and eye), as the cards that fly
     const screen = this.document.createElement('div');

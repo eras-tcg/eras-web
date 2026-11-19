@@ -91,7 +91,10 @@ export class TableMeasure {
       for (const zone of PILES) {
         const card = (p[zone] as CardSlot[]).find((c) => c.instanceId === id);
         if (!card) continue;
-        const element = (zone === 'lifeStack' ? lifeCard(this.document, p.userId, id) : null) ?? pile(this.document, p.userId, zone);
+        // A life, its own place in the lives; a card going to a hand, its own place there (the hand's first card would be
+        // its left end)
+        const own = zone === 'lifeStack' ? lifeCard(this.document, p.userId, id) : zone === 'hand' ? handCard(this.document, id) : null;
+        const element = own ?? pile(this.document, p.userId, zone);
         if (!element) return null;
         const hiddenHand = zone === 'hand' && p.userId !== me;
         return { element, faceDown: card.faceDown || hiddenHand || zone === 'deck' };

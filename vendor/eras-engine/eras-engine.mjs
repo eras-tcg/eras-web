@@ -16064,7 +16064,7 @@ function CardEffects() {
   this.k1v_1 = HashMap_init_$Create$_0();
   this.l1v_1 = HashMap_init_$Create$_0();
   this.m1v_1 = frozenMapOf_1('celeridad', EffectScript_init_$Create$('kw:celeridad', Moment_ON_SUMMON_getInstance(), false, 'Celeridad', 'Puede subir a tu l\xEDnea frontal.', frozenListOf([Compose_getInstance().v2k()])).y2k(Companion_instance_13.x2k(Companion_instance_13.w2k())), 'agrupar 1', EffectScript_init_$Create$('kw:agrupar', Moment_ON_ATTACK_getInstance(), false, 'Agrupar 1', 'Si esta carta declara ataque: puedes agotar 1 aliado para que esta carta, durante el ataque, gane su fuerza e inflija da\xF1o 1 vez extra en caso de hacerlo.', frozenListOf([new GroupUp(1)])));
-  this.n1v_1 = frozenSetOf(['Provocar', 'Enfrentar', 'Celeridad', 'Asalto', 'Furia', 'Reactivar', 'Letalidad', 'Imbloqueable', 'Perforante', 'Alcance', 'Protecci\xF3n', 'Agrupar']);
+  this.n1v_1 = frozenSetOf(['Provocar', 'Enfrentar', 'Celeridad', 'Asalto', 'Furia', 'Reactivar', 'Letalidad', 'Imbloqueable', 'Perforante', 'Alcance', 'Protecci\xF3n', 'Agrupar', 'Golpe r\xE1pido']);
   this.o1v_1 = Platform_instance.g1s('\\s*\\d+$');
   this.p1v_1 = Platform_instance.g1s('agrupar\\s*(\\d+)');
   this.q1v_1 = HashMap_init_$Create$_0();
@@ -19602,7 +19602,11 @@ protoOf(CombatRules).g2q = function (room, c, owner, defender, attacker) {
     var life = _destruct__k2r9zo.kd();
     var tribute = _destruct__k2r9zo.ld();
     var creature = 'creature' === life.m1c_1;
-    if (creature && !tribute && revealedNow) {
+    var quickStrike = !(EffectEngine_getInstance().d2q(attacker, 'Golpe r\xE1pido') == null);
+    if (creature && !tribute && revealedNow && quickStrike) {
+      EffectEngine_getInstance().j2c(room, EffectEngine_getInstance().f2c(attacker) + ' tiene Golpe r\xE1pido: ' + EffectEngine_getInstance().f2c(life) + ' no puede reforzar', null);
+    }
+    if (creature && !tribute && revealedNow && !quickStrike) {
       this.m2q(room, defender, life, PromptPurpose_REINFORCE_getInstance().s2o(), 'Reforzar', EffectEngine_getInstance().f2c(life) + ' tiene m\xE1s fuerza que el da\xF1o y va a tu mano. \xBFRefuerzas con ella? Se coloca bocarriba al fondo de tu pila de vidas.', 'Reforzar');
       return false;
     }

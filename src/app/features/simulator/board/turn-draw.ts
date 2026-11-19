@@ -11,9 +11,9 @@ export interface TurnDrawCard {
 }
 
 /** How tall the deck stands at the middle of the screen, of the screen's height. */
-const BIG_DECK = 0.5;
+const BIG_DECK = 0.6;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
-const BIG_DECK_LEAN = 62;
+const BIG_DECK_LEAN = 45;
 
 /**
  * Your draw at the start of your turn, played by you: your deck rises from its zone to the middle of the screen, big,
@@ -100,11 +100,12 @@ export class TurnDraw {
     // Its volume is the one drawn on its zone (the card's shadow: the edges of the cards under it, without gaps), lying
     // back with it as the cards do on the table
     Object.assign(copy.style, { display: 'block', width: '100%', height: '100%' });
-    // The glow, around the deck and its volume
+    // The glow, around the whole deck: the top card and the edges under it (the card's shadow, one pixel a step)
+    const depth = parseFloat(top.style.getPropertyValue('--edge')) || 0;
     const glow = this.document.createElement('span');
     Object.assign(glow.style, {
       position: 'absolute',
-      inset: '0',
+      inset: `0 0 ${-depth}px 0`,
       borderRadius: getComputedStyle(top).borderRadius,
       boxShadow: '0 0 1.1rem 0.25rem var(--color-primary), 0 0 0.35rem 0.1rem var(--color-primary)',
       opacity: '0',

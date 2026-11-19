@@ -1,6 +1,6 @@
 import { CardEffect, KeywordEffect, KeywordEffectRef } from '@data/cards/card.model';
 import { BuiltCard, EffectSlot, Measure } from './card-build';
-import { PieceStyle, PieceTable } from './spec.model';
+import { Bevel, PieceStyle, PieceTable } from './spec.model';
 import { SvgRenderer, svgEl } from './svg-render';
 import { betweenCopiesMark } from '../effect-text';
 
@@ -365,7 +365,9 @@ function drawSlot(
   measure: Measure,
 ): EffectLayout {
   const g = svgEl('g', { 'data-name': `effect:${slot.name}` }, r.svg);
-  const lay = layoutFit(tokens, slot.box.w, slot.box.h, measure);
+  // A box with an ultimate effect ends with its reminder, at the bottom right: the effects fit above it
+  const ultimate = tokens.some((t) => t.t === 'ultimate');
+  const lay = layoutFit(tokens, slot.box.w, slot.box.h - (ultimate ? ULTIMATE_NOTE_ROOM : 0), measure);
   const px = lay.px;
   let y = slot.box.y;
   lay.lines.forEach((line, i) => {
@@ -390,8 +392,8 @@ function drawSlot(
           under ? tuckOf(px, measure) : 0,
         );
         lastPiece = pg;
-      } else if (tok.t === 'ultimate') drawUltimate(g, slot.box, y, px, measure);
-      else if (tok.t === 'ultimateEnd') drawUltimateBar(g, slot.box, y + px * 0.3, px);
+      } else if (tok.t === 'ultimate') drawUltimate(r, g, slot.box, y, px, measure);
+      else if (tok.t === 'ultimateEnd') drawUltimateBar(r, g, slot.box, y + px * 0.3, px);
       else if (tok.t === 'word') {
         svgEl(
           'text',
@@ -410,6 +412,7 @@ function drawSlot(
     }
     y += lay.lineHeights[i];
   });
+  if (ultimate) drawUltimateNote(g, slot.box, color);
   return lay;
 }
 
@@ -500,36 +503,57 @@ function drawPiece(
   ).textContent = tok.label;
 }
 
-const ULTIMATE_PURPLE = '#5b3b6e';
+// The ultimate effect as SIMBOLOS.psd draws it (EXTRAS / EFECTO DEFINITIVO), in the colors of the printed cards: the
+// editor draws in design colors and the whole card goes to screen colors at the end ("Guardar para Web"), so these are
+// the design colors that come out as E1.1-W04 shows them (#5a3c6e purple, #ebc868 gold).
+const ULTIMATE_PURPLE = '#3d2fad';
+const ULTIMATE_GOLD = '#efc053';
+/** Its bevels: inner bevel, chisel hard, the light at 120° and 30° (the bar 20, its diamonds 10, the label 2). */
+const ultimateBevel = (size: number): Bevel => ({
+  size,
+  depth: 100,
+  angle: 120,
+  altitude: 30,
+  hi: '#ffffff',
+  hiOpacity: 0.75,
+  sh: '#000000',
+  shOpacity: 0.75,
+});
+/** "(Solo puedes activar 1 Efecto Definitivo por turno.)": Arial Bold Italic 5 pt, right aligned at the box's foot. */
+const ULTIMATE_NOTE = '(Solo puedes activar 1 Efecto Definitivo por turno.)';
+const ULTIMATE_NOTE_PX = 20.83;
+/** The room the note takes at the bottom of the box (its line and a gap above it). */
+const ULTIMATE_NOTE_ROOM = 26;
+
+/** A beveled shape of the ultimate effect, in its own layer (each one is beveled alone, as in the PSD). */
+function ultimateShape(r: SvgRenderer, g: Element, d: string, bbox: number[], bevel: number): void {
+  const layer = svgEl('g', {}, g) as SVGElement;
+  svgEl('path', { d, fill: ULTIMATE_PURPLE }, layer);
+  r.addBevel(layer, ultimateBevel(bevel), bbox);
+}
 
 /** The ultimate effect's bar across the box, with a diamond at each end, centered on `mid`. */
-function drawUltimateBar(g: Element, box: EffectSlot['box'], mid: number, px: number): void {
-  const purple = ULTIMATE_PURPLE;
-  svgEl(
-    'rect',
-    {
-      x: box.x + px * 0.3,
-      y: mid - px * 0.09,
-      width: box.w - px * 0.6,
-      height: px * 0.18,
-      rx: px * 0.09,
-      fill: purple,
-    },
+function drawUltimateBar(r: SvgRenderer, g: Element, box: EffectSlot['box'], mid: number, px: number): void {
+  const x0 = box.x + px * 0.3;
+  const x1 = box.x + box.w - px * 0.3;
+  const half = px * 0.09;
+  // A rounded bar, as the PSD's rounded rectangle
+  ultimateShape(
+    r,
     g,
+    `M${x0 + half} ${mid - half}H${x1 - half}A${half} ${half} 0 0 1 ${x1 - half} ${mid + half}` +
+      `H${x0 + half}A${half} ${half} 0 0 1 ${x0 + half} ${mid - half}Z`,
+    [x0, mid - half, x1, mid + half],
+    20,
   );
-  for (const ex of [box.x + px * 0.3, box.x + box.w - px * 0.3]) {
-    svgEl(
-      'path',
-      {
-        d: `M${ex - px * 0.35} ${mid}L${ex} ${mid - px * 0.35}L${ex + px * 0.35} ${mid}L${ex} ${mid + px * 0.35}Z`,
-        fill: purple,
-      },
-      g,
-    );
+  const d = px * 0.35;
+  for (const ex of [x0, x1]) {
+    ultimateShape(r, g, `M${ex - d} ${mid}L${ex} ${mid - d}L${ex + d} ${mid}L${ex} ${mid + d}Z`, [ex - d, mid - d, ex + d, mid + d], 10);
   }
 }
 
 function drawUltimate(
+  r: SvgRenderer,
   g: Element,
   box: EffectSlot['box'],
   y: number,
@@ -541,16 +565,15 @@ function drawUltimate(
   const tw = measure(label, effectFont(px, true)) + px * 1.4;
   const cx = box.x + box.w / 2;
   const h = px * 1.2;
-  drawUltimateBar(g, box, mid, px);
+  drawUltimateBar(r, g, box, mid, px);
   const l = cx - tw / 2;
   const rr = cx + tw / 2;
-  svgEl(
-    'path',
-    {
-      d: `M${l} ${mid}L${l + h / 2} ${mid - h / 2}L${rr - h / 2} ${mid - h / 2}L${rr} ${mid}L${rr - h / 2} ${mid + h / 2}L${l + h / 2} ${mid + h / 2}Z`,
-      fill: ULTIMATE_PURPLE,
-    },
+  ultimateShape(
+    r,
     g,
+    `M${l} ${mid}L${l + h / 2} ${mid - h / 2}L${rr - h / 2} ${mid - h / 2}L${rr} ${mid}L${rr - h / 2} ${mid + h / 2}L${l + h / 2} ${mid + h / 2}Z`,
+    [l, mid - h / 2, rr, mid + h / 2],
+    2,
   );
   svgEl(
     'text',
@@ -558,7 +581,7 @@ function drawUltimate(
       x: cx,
       y: mid + px * 0.35,
       'text-anchor': 'middle',
-      fill: '#ebc868',
+      fill: ULTIMATE_GOLD,
       'font-family': FONT,
       'font-weight': 700,
       'font-style': 'italic',
@@ -566,6 +589,24 @@ function drawUltimate(
     },
     g,
   ).textContent = label;
+}
+
+/** The ultimate effect's reminder at the bottom right of its box, in the effects' color. */
+function drawUltimateNote(g: Element, box: EffectSlot['box'], color: string): void {
+  svgEl(
+    'text',
+    {
+      x: box.x + box.w,
+      y: box.y + box.h - ULTIMATE_NOTE_PX * 0.3,
+      'text-anchor': 'end',
+      fill: color,
+      'font-family': FONT,
+      'font-weight': 700,
+      'font-style': 'italic',
+      'font-size': ULTIMATE_NOTE_PX,
+    },
+    g,
+  ).textContent = ULTIMATE_NOTE;
 }
 
 /**

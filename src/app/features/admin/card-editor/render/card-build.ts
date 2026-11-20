@@ -1296,6 +1296,24 @@ export function buildCard(
       { R: 'ROJO', B: 'AZUL', G: 'VERDE', P: 'PURPLE', W: 'BLANCO' } as Record<string, string>
     )[cols[0]];
     for (const c of ini.children ?? []) c.visible = c.name.endsWith(want);
+    // The tag sits centered on the type bar, as the class label does. The link prototype left it 12 px above its
+    // (lower) bar, over the link effect box.
+    const type = first('TYPE');
+    let top = Infinity;
+    let bottom = -Infinity;
+    walk([ini], (n) => {
+      if (n.children || n.bbox[3] <= n.bbox[1]) return;
+      top = Math.min(top, n.bbox[1]);
+      bottom = Math.max(bottom, n.bbox[3]);
+    });
+    const dy = type && top < bottom ? Math.round((type.bbox[1] + type.bbox[3] - top - bottom) / 2) : 0;
+    if (Math.abs(dy) > 1)
+      walk([ini], (n) => {
+        if (!n.children) n.bbox = [n.bbox[0], n.bbox[1] + dy, n.bbox[2], n.bbox[3] + dy];
+        if (n.paths)
+          n.paths = n.paths.map((sp) => ({ ...sp, d: mapPoints(sp.d, (x, y) => [x, y + dy]) }));
+        if (n.text) n.text = { ...n.text, transform: n.text.transform.map((v, i) => (i === 5 ? v + dy : v)) };
+      });
   }
   for (const k of ['STRUCTURE', 'UTILITY']) {
     const g = first(k);

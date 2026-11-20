@@ -1,8 +1,8 @@
 {
-  "commit": "c03a759b5c7bf22993ba5bf845df6711ffbeeb25",
+  "commit": "bce28d9d0cbc1aecec1250c5efff7ffe56e77d07",
   "dirty": false,
-  "subject": "Sello de Contención: Definitive effect, until the end of the turn",
-  "copiedAt": "2026-11-19T23:35:52.561Z",
+  "subject": "Merge origin/main into feat/cartas-prueba-t3-t4",
+  "copiedAt": "2026-11-20T01:43:47.914Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

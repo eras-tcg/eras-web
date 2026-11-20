@@ -137,6 +137,21 @@ describe('effect-layout', () => {
     ).toBe('[ED] gana 1 gema.');
   });
 
+  it('draws a momento quoted in the text as its piece', () => {
+    const withMomento = new EffectTokens({ ...pieces, timings: { 'en destruccion': { ...style, label: 'En Destrucción' } } }, ref);
+    const toks = withMomento.slot(
+      [{ effectBlocks: [{ resolution: 'otro aliado gana: «En Destrucción puedes robar 1».' }] }],
+      [],
+    );
+    const i = toks.findIndex((t) => t.t === 'piece' && t.kind === 'timing');
+    expect(toks[i]).toEqual({ t: 'piece', kind: 'timing', label: 'En Destrucción' });
+    expect(toks[i - 1]).toEqual({ t: 'word', text: '«', italic: false });
+    expect(toks[i + 1]).toEqual({ t: 'space' });
+    // A word that only starts like a momento stays a word
+    const none = withMomento.slot([{ effectBlocks: [{ resolution: 'gana «En Destrucciones».' }] }], []);
+    expect(none.some((t) => t.t === 'piece' && t.kind === 'timing')).toBe(false);
+  });
+
   it('shrinks the text until it fits', () => {
     const many = tokens.slot(
       [{ effectBlocks: [{ resolution: 'palabra '.repeat(60).trim() }] }],

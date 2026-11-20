@@ -76,6 +76,14 @@ export class EffectTokens {
     private readonly ref: Record<string, KeywordEffectRef | undefined>,
   ) {}
 
+  /** The momentos of the symbol sheet as printed ("En Destrucción"), longest first. */
+  private get momentos(): string[] {
+    return Object.values(this.pieces.timings)
+      .map((p) => p.label)
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+  }
+
   /** One box: own keywords first, then the effects, one paragraph each. */
   slot(
     effects: readonly CardEffect[] | null | undefined,
@@ -134,19 +142,19 @@ export class EffectTokens {
         if (this.pieces.conditions[pieceKey(cond)])
           out.push({ t: 'piece', kind: 'condition', label: cond });
         else {
-          found.push(...rich(cond, out));
+          found.push(...rich(cond, out, this.momentos));
           // "Luego:" already carries its colon
           if (!/[:;,]$/.test(cond)) append(out, ':');
         }
       }
       if (b.cost) {
         out.push({ t: 'space' });
-        found.push(...rich(b.cost, out));
+        found.push(...rich(b.cost, out, this.momentos));
         if (!/[:;,]$/.test(b.cost.trim())) append(out, ';');
       }
       if (b.resolution) {
         out.push({ t: 'space' });
-        found.push(...rich(b.resolution, out));
+        found.push(...rich(b.resolution, out, this.momentos));
       }
       for (const f of found) {
         const note = keywordReminder(f.keyword, f.value, this.ref);
@@ -167,21 +175,40 @@ function words(text: string, italic: boolean, out: Token[]): void {
   }
 }
 
+/**
+ * Words, with a momento quoted in the text («En Destrucción puedes…», an effect a card gives) drawn as its piece,
+ * as the printed cards do.
+ */
+function quoted(text: string, momentos: readonly string[], out: Token[]): void {
+  const fold = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  let last = 0;
+  for (let i = text.indexOf('«'); i >= 0; i = text.indexOf('«', i + 1)) {
+    const at = i + 1;
+    const label = momentos.find((m) => fold(text.slice(at, at + m.length)) === fold(m) && !/[\p{L}\p{N}]/u.test(text[at + m.length] ?? ''));
+    if (!label) continue;
+    words(text.slice(last, at), false, out);
+    out.push({ t: 'piece', kind: 'timing', label });
+    last = at + label.length;
+  }
+  if (last < text.length) words(text.slice(last), false, out);
+}
+
 /** "text [[Keyword:3]] more" → words and keyword pieces; returns the keywords found. */
 function rich(
   text: string,
   out: Token[],
+  momentos: readonly string[] = [],
 ): { keyword: string; value: string | null; label: string }[] {
   const found: { keyword: string; value: string | null; label: string }[] = [];
   let last = 0;
   for (const m of text.matchAll(/\[\[([^\]:]+)(?::([^\]]*))?\]\]/g)) {
-    if (m.index > last) words(text.slice(last, m.index), false, out);
+    if (m.index > last) quoted(text.slice(last, m.index), momentos, out);
     const label = fill(m[1], m[2]);
     out.push({ t: 'piece', kind: 'keyword', label });
     found.push({ keyword: m[1], value: m[2] ?? null, label });
     last = m.index + m[0].length;
   }
-  if (last < text.length) words(text.slice(last), false, out);
+  if (last < text.length) quoted(text.slice(last), momentos, out);
   return found;
 }
 

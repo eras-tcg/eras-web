@@ -227,6 +227,9 @@ const TUCK = 0.44;
 const tuckOf = (px: number, measure: Measure) => px * TUCK - measure(' ', effectFont(px));
 /** How far, in em, an interlocked momento starts before the end of the previous one's tip. */
 const JOIN = 0.74;
+/** Photoshop's first baseline below the top of a text box, and Arial's descent, in em. */
+const BASELINE = 0.715;
+const DESCENT = 0.212;
 
 export function layoutAt(
   tokens: Token[],
@@ -300,7 +303,10 @@ export function layoutAt(
         : lineH,
   );
   const total = lineHeights.reduce((a, b) => a + b, 0);
-  return { lines, lineHeights, height: total, pt, px, fits: total <= height };
+  // As in Photoshop, the text fits when the last line's letters are inside the box (its baseline and Arial's
+  // descent), not its whole leading.
+  const inked = total - (lineHeights.at(-1) ?? 0) + px * (BASELINE + DESCENT);
+  return { lines, lineHeights, height: total, pt, px, fits: inked <= height };
 }
 
 /** The largest size that fits, or the smallest one. */
@@ -376,7 +382,7 @@ function drawSlot(
   let inUltimate = false;
   lay.lines.forEach((line, i) => {
     // Photoshop's first baseline in a text box sits about 0.715 em below the box top (Arial).
-    const baseline = y + px * 0.715;
+    const baseline = y + px * BASELINE;
     let lastPiece: SVGElement | null = null;
     for (const { tok, x, under } of line) {
       const X = slot.box.x + x;

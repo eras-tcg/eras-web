@@ -3,6 +3,7 @@ import {
   Token,
   cmykStops,
   keywordReminder,
+  layoutAt,
   layoutFit,
   pieceKey,
 } from './effect-layout';
@@ -147,6 +148,18 @@ describe('effect-layout', () => {
     const small = layoutFit(many, 660, 200, measure);
     expect(big.pt).toBe(7);
     expect(small.pt).toBeLessThan(7);
+  });
+
+  it('fits a text when the letters of its last line are inside the box, as Photoshop does', () => {
+    const measure = (t: string, font: string) => t.length * Number(/(\d+(?:\.\d+)?)px/.exec(font)![1]) * 0.5;
+    const text = tokens.slot([{ effectBlocks: [{ resolution: 'palabra '.repeat(40).trim() }] }], []);
+    const at6 = layoutAt(text, 660, 10_000, 6, measure);
+    const lines = at6.lines.length;
+    // Room for the lines but the last one's leading below its letters: still 6 pt
+    const room = at6.lineHeights.slice(0, -1).reduce((a, b) => a + b, 0) + at6.px * (0.715 + 0.212);
+    expect(lines).toBeGreaterThan(1);
+    expect(layoutAt(text, 660, room, 6, measure).fits).toBe(true);
+    expect(layoutAt(text, 660, room - 1, 6, measure).fits).toBe(false);
   });
 
   it('blends gradient stops in CMYK when they carry it', () => {

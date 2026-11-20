@@ -304,6 +304,12 @@
             [selected]="shown()"
             (toggled)="toggleShown($event)"
           />
+          <eras-toggle-group
+            label="Cartas"
+            [options]="poolOptions"
+            [selected]="[filters().pool]"
+            (toggled)="filters.update((f) => ({ ...f, pool: $any($event) }))"
+          />
           @if (signedIn()) {
             <eras-toggle-group
               label="Colección"

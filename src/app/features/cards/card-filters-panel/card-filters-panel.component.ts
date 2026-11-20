@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, model, output } from '@angular/core';
-import { CardFilters, CardSortKey, NumberRange } from '@data/cards/card-filters';
+import { CARD_POOL_LABELS, CardFilters, CardPool, CardSortKey, NumberRange } from '@data/cards/card-filters';
 import { FilterOptions } from '@data/cards/card-rules';
 import { CARD_TYPE_LABELS, COLOR_LABELS, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { Edition } from '@data/editions/edition.model';
@@ -59,6 +59,7 @@ export class CardFiltersPanelComponent {
   protected readonly rarityOptions = computed<ToggleOption[]>(() =>
     this.options().rarities.map((r) => ({ value: r, label: r, color: `var(--color-rarity-${r.toLowerCase()})` })),
   );
+  protected readonly poolOptions: ToggleOption[] = (Object.keys(CARD_POOL_LABELS) as CardPool[]).map((value) => ({ value, label: CARD_POOL_LABELS[value] }));
   protected readonly colorModeOptions: ToggleOption[] = [
     { value: 'any', label: 'Cualquier color' },
     { value: 'identity', label: 'Solo identidad' },

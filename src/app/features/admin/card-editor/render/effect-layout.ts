@@ -116,15 +116,21 @@ export class EffectTokens {
     const out: Token[] = [];
     const usage = USAGE[e.ussageLimit ?? ''];
     if (usage?.ultimate) out.push({ t: 'ultimate' });
-    const head: Token[] = (e.instance ?? '')
-      .split('>')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((label) => ({ t: 'piece', kind: 'timing', label }) as Token);
+    // `A>B` are chained momentos, drawn touching (Turno Aliado + En Mano, as in the printed cards); `A><B` are two
+    // separate momentos (En Mano, En Tributos), drawn side by side with a space between them.
+    const head: Token[] = [];
+    const separate = new Set<number>();
+    for (const group of (e.instance ?? '').split('><')) {
+      const labels = group
+        .split('>')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (labels.length && head.length) separate.add(head.length);
+      for (const label of labels) head.push({ t: 'piece', kind: 'timing', label } as Token);
+    }
     if (usage?.piece) head.push({ t: 'piece', kind: 'condition', label: usage.piece, style: usage.style });
     head.forEach((p, i) => {
-      // Consecutive momentos touch (Turno Aliado + En Mano), as in the printed cards.
-      const joined = p.t === 'piece' && p.kind === 'timing' && i > 0;
+      const joined = p.t === 'piece' && p.kind === 'timing' && i > 0 && !separate.has(i);
       if (i && !joined) out.push({ t: 'space' });
       out.push(p);
     });

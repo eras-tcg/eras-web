@@ -534,9 +534,9 @@ protoOf(JsonArray).h = function () {
   return this.kz_1.h();
 };
 protoOf(JsonArray).mz = function (elements) {
-  return this.kz_1.n1(elements);
+  return this.kz_1.o1(elements);
 };
-protoOf(JsonArray).n1 = function (elements) {
+protoOf(JsonArray).o1 = function (elements) {
   return this.mz(elements);
 };
 protoOf(JsonArray).l = function (index) {
@@ -550,8 +550,8 @@ protoOf(JsonArray).s = function (element) {
     return -1;
   return this.nz(element instanceof JsonElement ? element : THROW_CCE());
 };
-protoOf(JsonArray).o1 = function (index) {
-  return this.kz_1.o1(index);
+protoOf(JsonArray).t = function (index) {
+  return this.kz_1.t(index);
 };
 protoOf(JsonArray).p1 = function (fromIndex, toIndex) {
   return this.kz_1.p1(fromIndex, toIndex);
@@ -3488,7 +3488,7 @@ protoOf(AbstractJsonTreeDecoder).p14 = function (tag) {
       } else {
         tmp_0 = tmp0_elvis_lhs;
       }
-      tmp$ret$0 = tmp_0.b1_1;
+      tmp$ret$0 = tmp_0.c1_1;
       break $l$block;
     } catch ($p) {
       if ($p instanceof IllegalArgumentException) {

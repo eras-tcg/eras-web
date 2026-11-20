@@ -12,6 +12,8 @@ export interface Deck {
   userId?: string;
   username?: string | null;
   createdAt?: string | null;
+  /** One of the decks the bot may play in ranked Modo solo (set by a simulator administrator). */
+  botDeck?: boolean;
 }
 
 /** Body of POST / PUT /api/drive/decklists (manage_decks, own decks only). */

@@ -1,8 +1,8 @@
 {
-  "commit": "bce28d9d0cbc1aecec1250c5efff7ffe56e77d07",
+  "commit": "09f2e0d0c2f29d706ed0ed49de74754b4324f1f4",
   "dirty": false,
-  "subject": "Merge origin/main into feat/cartas-prueba-t3-t4",
-  "copiedAt": "2026-11-20T01:43:47.914Z",
+  "subject": "Ranked Modo solo: a rival of its own, hidden until the game starts",
+  "copiedAt": "2026-11-20T12:48:50.801Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

@@ -122,6 +122,25 @@ export class DeckViewPage {
   protected readonly inBox = computed(() => (this.canEdit() ? boxOf(this.id(), this.boxes.boxes()) : null));
   protected readonly boxColor = deckBoxColor;
 
+  /** A simulator administrator puts the deck in the bot's pool for ranked Modo solo (or takes it out). */
+  protected readonly canSetBotDeck = computed(() => !!this.deck() && this.auth.can('simulator_admin'));
+  protected readonly savingBotDeck = signal(false);
+
+  protected async toggleBotDeck(): Promise<void> {
+    const deck = this.deck();
+    if (!deck) return;
+    this.savingBotDeck.set(true);
+    this.error.set(null);
+    try {
+      const saved = await this.decks.setBotDeck(deck.id, !deck.botDeck);
+      this.deck.set({ ...deck, botDeck: !!saved.botDeck });
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'No se pudo cambiar el mazo del bot');
+    } finally {
+      this.savingBotDeck.set(false);
+    }
+  }
+
   /** "Deckbox" (the owner): in which of their deckboxes this deck goes. */
   protected async pickBox(): Promise<void> {
     const deck = this.deck();

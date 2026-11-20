@@ -25,6 +25,11 @@ export class DecksApi {
     return this.http.post<Deck>(this.api.url('/api/drive/decklists'), request);
   }
 
+  /** simulator_admin: sets the deck aside for the bot (ranked Modo solo), or not. */
+  setBotDeck(id: string, botDeck: boolean): Observable<Deck> {
+    return this.http.put<Deck>(this.api.url(`/api/drive/decklists/${encodeURIComponent(id)}/bot-deck`), { botDeck });
+  }
+
   update(id: string, request: DeckSaveRequest): Observable<Deck> {
     return this.http.put<Deck>(this.api.url(`/api/drive/decklists/${encodeURIComponent(id)}`), request);
   }

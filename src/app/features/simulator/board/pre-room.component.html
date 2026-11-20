@@ -39,7 +39,10 @@
       >
         @if (p) {
           <div class="starter-slot">
-            @if (starterOf(p); as s) {
+            @if (hiddenRival(p)) {
+              <!-- Ranked against the bot: who the rival is shows once the game starts -->
+              <div class="starter-empty"><span class="pulse" aria-hidden="true"></span></div>
+            } @else if (starterOf(p); as s) {
               <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
             } @else {
               <div class="starter-empty">{{ p.deckId ? 'Sin Iniciador' : 'Eligiendo mazo…' }}</div>
@@ -52,7 +55,9 @@
             <span class="ring"><eras-avatar [url]="p.avatar ?? null" [name]="p.username" /></span>
             <span class="plate-text">
               <span class="name">{{ p.username }}{{ p.userId === me() ? ' (tú)' : '' }}</span>
-              <span class="deck-name">{{ p.deckName ?? (p.deckId ? 'Mazo elegido' : 'Sin mazo') }}</span>
+              @if (!hiddenRival(p)) {
+                <span class="deck-name">{{ p.deckName ?? (p.deckId ? 'Mazo elegido' : 'Sin mazo') }}</span>
+              }
             </span>
             @if (p.userId === game.state()?.hostId) {
               <eras-badge>Dueño</eras-badge>
@@ -118,11 +123,17 @@
         </label>
       }
     }
-    @if (game.botRoom() && game.rankedRoom()) {
-      <span class="first">Nivel del bot: <strong>{{ botLevelLabel() }}</strong> <span class="muted">(según tu fuerza en ranked)</span></span>
-    } @else if (game.botRoom() || editorBot()) {
+    @if (myRank(); as r) {
+      <!-- Ranked: the player's rank as this game finds it -->
+      <div class="my-rank" aria-label="Tu rango">
+        <eras-rank-emblem [tier]="r.tier" [size]="32" />
+        <strong>{{ rankTitle(r) }}</strong>
+        <eras-rank-progress [standing]="r" />
+      </div>
+    }
+    @if ((game.botRoom() && !game.rankedRoom()) || editorBot()) {
       <eras-toggle-group label="Nivel del bot" [options]="botLevels()" [selected]="[botLevel()]" (toggled)="setBotLevel($event)" />
-      @if (botModels().length) {
+      @if (botModels().length && game.simulatorAdmin()) {
         <!-- Instead of a level: a model under test (it replaces the level until a level is chosen again) -->
         <label class="bot-model">
           <span>Probar modelo</span>

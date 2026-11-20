@@ -90,6 +90,15 @@ export class DecksStore {
     }
   }
 
+  /** simulator_admin: the deck goes into (or out of) the bot's pool for ranked Modo solo; returns it saved. */
+  async setBotDeck(id: string, botDeck: boolean): Promise<Deck> {
+    try {
+      return await firstValueFrom(this.api.setBotDeck(id, botDeck));
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, 'No se pudo cambiar el mazo del bot'), { cause: e });
+    }
+  }
+
   async delete(id: string): Promise<void> {
     try {
       await firstValueFrom(this.api.delete(id));

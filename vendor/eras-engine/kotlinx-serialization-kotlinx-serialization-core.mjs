@@ -899,7 +899,7 @@ protoOf(AbstractDecoder).vl = function () {
 };
 protoOf(AbstractDecoder).wl = function () {
   var tmp = this.ml();
-  return tmp instanceof Char ? tmp.b1_1 : THROW_CCE();
+  return tmp instanceof Char ? tmp.c1_1 : THROW_CCE();
 };
 protoOf(AbstractDecoder).xl = function () {
   var tmp = this.ml();
@@ -1298,9 +1298,9 @@ protoOf(MapLikeSerializer).no = function (decoder, builder, startIndex, size) {
     throw IllegalArgumentException_init_$Create$(toString(message));
   }
   var progression = step(until(0, imul(size, 2)), 2);
-  var inductionVariable = progression.w_1;
-  var last = progression.x_1;
-  var step_0 = progression.y_1;
+  var inductionVariable = progression.x_1;
+  var last = progression.y_1;
+  var step_0 = progression.z_1;
   if (step_0 > 0 && inductionVariable <= last || (step_0 < 0 && last <= inductionVariable))
     do {
       var index = inductionVariable;
@@ -3394,7 +3394,7 @@ protoOf(TaggedDecoder).sv = function (tag) {
 };
 protoOf(TaggedDecoder).tv = function (tag) {
   var tmp = this.kv(tag);
-  return tmp instanceof Char ? tmp.b1_1 : THROW_CCE();
+  return tmp instanceof Char ? tmp.c1_1 : THROW_CCE();
 };
 protoOf(TaggedDecoder).uv = function (tag) {
   var tmp = this.kv(tag);

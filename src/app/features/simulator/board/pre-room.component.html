@@ -41,7 +41,7 @@
           <div class="starter-slot">
             @if (hiddenRival(p)) {
               <!-- Ranked against the bot: who the rival is shows once the game starts -->
-              <div class="starter-empty"><span class="pulse" aria-hidden="true"></span></div>
+              <div class="starter-empty unknown" aria-hidden="true">?</div>
             } @else if (starterOf(p); as s) {
               <eras-game-card [imageUrl]="s.imageUrl" [foil]="s.finish ?? null" [name]="s.cardName ?? null" />
             } @else {
@@ -147,7 +147,7 @@
       }
     }
     @if (game.rankedRoom()) {
-      <span class="first">¿Quién empieza? <strong>Aleatorio</strong> <span class="muted">(en ranked se sortea)</span></span>
+      <!-- Ranked: who goes first is always drawn -->
     } @else if (game.isHost()) {
       <eras-toggle-group label="¿Quién empieza?" [options]="firstToggle()" [selected]="[firstChoice()]" (toggled)="game.setFirstPlayer($event)" />
     } @else {

@@ -848,19 +848,6 @@ function reversed(_this__u8e3s4) {
   reverse(list);
   return list;
 }
-function reversed(_this__u8e3s4) {
-  var tmp;
-  if (isInterface(_this__u8e3s4, Collection)) {
-    tmp = _this__u8e3s4.k() <= 1;
-  } else {
-    tmp = false;
-  }
-  if (tmp)
-    return toList_0(_this__u8e3s4);
-  var list = toMutableList_0(_this__u8e3s4);
-  reverse(list);
-  return list;
-}
 function plus(_this__u8e3s4, elements) {
   if (isInterface(elements, Collection)) {
     var result = ArrayList_init_$Create$_0(_this__u8e3s4.k() + elements.k() | 0);
@@ -1033,24 +1020,6 @@ function first_0(_this__u8e3s4) {
   if (_this__u8e3s4.m())
     throw NoSuchElementException_init_$Create$_0('List is empty.');
   return _this__u8e3s4.l(0);
-}
-function last(_this__u8e3s4) {
-  if (isInterface(_this__u8e3s4, KtList))
-    return last_0(_this__u8e3s4);
-  else {
-    var iterator = _this__u8e3s4.h();
-    if (!iterator.i())
-      throw NoSuchElementException_init_$Create$_0('Collection is empty.');
-    var last = iterator.j();
-    while (iterator.i())
-      last = iterator.j();
-    return last;
-  }
-}
-function last_0(_this__u8e3s4) {
-  if (_this__u8e3s4.m())
-    throw NoSuchElementException_init_$Create$_0('List is empty.');
-  return _this__u8e3s4.l(get_lastIndex_2(_this__u8e3s4));
 }
 function last(_this__u8e3s4) {
   if (isInterface(_this__u8e3s4, KtList))

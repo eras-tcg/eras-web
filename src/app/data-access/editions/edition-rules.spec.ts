@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BoxEntry, Edition } from './edition.model';
-import { canSimulateBox, canSimulatePack, compareEditionIds, coverFrameStyle, isTestEdition, pickRandomPackFromBox, validateBoxConfig } from './edition-rules';
+import { canSimulateBox, canSimulatePack, compareEditionIds, coverFrameStyle, isTestEdition, pickRandomPackFromBox, sortEditions, validateBoxConfig } from './edition-rules';
 
 const entry = (packTypeName: string, mode: BoxEntry['mode'], quantity = 0, probOptions: BoxEntry['probOptions'] = []): BoxEntry => ({
   packTypeName,
@@ -17,6 +17,22 @@ describe('compareEditionIds', () => {
 
   it('puts the testing editions last', () => {
     expect(['T2', 'E2', 'T1', 'ST1', 'E1'].sort(compareEditionIds)).toEqual(['ST1', 'E1', 'E2', 'T1', 'T2']);
+  });
+});
+
+describe('sortEditions', () => {
+  it('orders by release date, undated after the dated ones and testing editions last', () => {
+    const ed = (editionId: string, releaseDate = '') => ({ editionId, releaseDate }) as Edition;
+    const sorted = sortEditions([
+      ed('T1'),
+      ed('E2', '2026-04-11-01'),
+      ed('ST5', '2026-04-03-01'),
+      ed('E3.1'),
+      ed('E1.3', '2026-04-02-01'),
+      ed('ST1', '2026-03-15-01'),
+      ed('E1', '2026-03-20-01'),
+    ]);
+    expect(sorted.map((e) => e.editionId)).toEqual(['ST1', 'E1', 'E1.3', 'ST5', 'E2', 'E3.1', 'T1']);
   });
 });
 

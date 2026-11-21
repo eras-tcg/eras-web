@@ -6,7 +6,7 @@ export type CardSortKey = 'number' | 'name' | 'cost' | 'level' | 'strength';
 export type SortDirection = 'asc' | 'desc';
 /** Which cards a search shows: the legal ones (not in testing), every card, or only the cards in testing. */
 export type CardPool = 'legal' | 'all' | 'test';
-export const CARD_POOL_LABELS: Record<CardPool, string> = { legal: 'Cartas legales', all: 'Todas las cartas', test: 'Cartas en test' };
+export const CARD_POOL_LABELS: Record<CardPool, string> = { legal: 'Legales', all: 'Todas', test: 'Test' };
 
 /** A numeric range; `null` bounds mean "no limit on this side". */
 export interface NumberRange {

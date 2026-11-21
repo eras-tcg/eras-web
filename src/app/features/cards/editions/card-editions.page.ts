@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  booleanAttribute,
   computed,
   effect,
   inject,
@@ -18,7 +19,10 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { RarityTabComponent, rarityColor } from '@ui/domain/rarity-tab/rarity-tab.component';
 import { openCardDetailDialog } from '../card-detail-dialog/card-detail-dialog.component';
-import { cardImageUrl } from '@data/cards/card-rules';
+import { altArtsOf, cardImageUrl, cardShineUrl, withAltArt } from '@data/cards/card-rules';
+import { CollectionStore } from '@data/collection/collection.store';
+import { bestAlt, bestFinish, ownedCards, setCompletion, shineOf } from '@data/collection/collection-rules';
+import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { CardsStore } from '@data/cards/cards.store';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { firstValueFrom } from 'rxjs';
@@ -96,10 +100,14 @@ interface EditionForm {
     MenuComponent,
     MenuItemDirective,
     EditionTileComponent,
+    CardImageComponent,
   ],
   template: `
-    <eras-page [title]="edition()?.editionName || (editionId() ?? 'Ediciones')" width="wide">
-      @if (edition()) {
+    <eras-page
+      [title]="edition()?.editionName || (editionId() ?? (collection() ? 'Colección' : 'Ediciones'))"
+      width="wide"
+    >
+      @if (edition() && !collection()) {
         <button page-actions erasButton variant="ghost" type="button" (click)="showMetrics()">
           Métricas
         </button>
@@ -220,7 +228,11 @@ interface EditionForm {
 
       @if (edition(); as e) {
         <p class="meta">
-          {{ e.editionId }} · {{ filled().filled }} de {{ filled().total }} cartas
+          @if (collection()) {
+            {{ e.editionId }} · {{ ownedHere() }} de {{ filled().filled }} cartas obtenidas
+          } @else {
+            {{ e.editionId }} · {{ filled().filled }} de {{ filled().total }} cartas
+          }
           @if (structure()) {
             · mazo de {{ deck() }} cartas
           }
@@ -261,8 +273,19 @@ interface EditionForm {
                       [attr.aria-label]="s.code + ' ' + s.meta.cardName"
                       (click)="showCard(s)"
                     >
-                      @if (slotImage(s); as src) {
-                        <img [src]="src" alt="" loading="lazy" />
+                      @if (collection()) {
+                        <!-- The collection: in grey when missing, else in the finest finish owned, shining -->
+                        @let copy = ownedCopy(s);
+                        <eras-card-image
+                          [class.lacking]="!copy"
+                          [attr.title]="copy ? null : 'No tienes esta carta'"
+                          [src]="copy?.image ?? slotImage(s)"
+                          [alt]="s.meta.cardName ?? ''"
+                          [foil]="copy?.shine ?? null"
+                          [shineSrc]="shineUrlFor(s.meta)"
+                        />
+                      } @else if (slotImage(s); as src) {
+                        <eras-card-image [src]="src" [alt]="s.meta.cardName ?? ''" [shineSrc]="shineUrlFor(s.meta)" />
                       } @else {
                         <span class="name">{{ s.meta.cardName }}</span>
                         <span class="code">{{ s.code }}</span>
@@ -377,13 +400,22 @@ interface EditionForm {
       } @else if (!editionId()) {
         <eras-grid minColumn="min(12rem, 40vw, 36dvh)" [gap]="4">
           @for (e of list(); track e.edition.editionId) {
-            <a class="tile" [routerLink]="['/cards/editions', e.edition.editionId]">
+            <a
+              class="tile"
+              [routerLink]="[collection() ? '/cards/collection' : '/cards/editions', e.edition.editionId]"
+            >
               <eras-edition-tile
                 [image]="e.edition.editionImage"
                 [frame]="e.edition.coverFrame"
                 [code]="e.edition.editionId"
                 [name]="e.edition.editionName"
-                [detail]="e.filled.filled + ' / ' + e.filled.total"
+                [detail]="
+                  collection()
+                    ? e.owned + ' / ' + e.filled.filled
+                    : e.filled.filled + ' / ' + e.filled.total
+                "
+                [dimmed]="collection() && !e.complete"
+                [foil]="e.shine"
               />
             </a>
           }
@@ -521,11 +553,11 @@ interface EditionForm {
       position: relative;
       display: grid;
       place-items: center;
-      aspect-ratio: 744 / 1039;
+      aspect-ratio: 63 / 88;
       padding: 0;
       overflow: hidden;
       border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-card);
       background: var(--color-surface);
       color: var(--color-text);
       cursor: pointer;
@@ -552,10 +584,11 @@ interface EditionForm {
       background: transparent;
       color: var(--color-text-muted);
     }
-    .slot img {
+    .lacking {
+      filter: grayscale(1);
+    }
+    .slot eras-card-image {
       inline-size: 100%;
-      block-size: 100%;
-      object-fit: cover;
     }
     .slot .name {
       padding: var(--space-2);
@@ -577,9 +610,12 @@ export class CardEditionsPage {
   readonly editionId = input<string>();
   /** `?card=<id>`: back from the editor, the page goes to that card's slot. */
   readonly card = input<string>();
+  /** The player's collection (route data): owned cards in their finest finish, missing ones in grey; nothing edited. */
+  readonly collection = input(false, { transform: booleanAttribute });
 
   protected readonly editions = inject(EditionsStore);
   private readonly cards = inject(CardsStore);
+  private readonly owned = inject(CollectionStore);
   private readonly editMode = inject(EditModeService);
   private readonly router = inject(Router);
   private readonly adminApi = inject(CardsAdminApi);
@@ -593,9 +629,12 @@ export class CardEditionsPage {
   private readonly asked = new Set<string>();
 
   protected readonly colors = CARD_COLORS;
+  protected readonly shineUrlFor = cardShineUrl;
   protected readonly colorLabels = COLOR_LABELS;
-  protected readonly canEditCards = computed(() => this.editMode.allows('manage_cards'));
-  protected readonly canEditEditions = computed(() => this.editMode.allows('manage_editions'));
+  protected readonly canEditCards = computed(() => !this.collection() && this.editMode.allows('manage_cards'));
+  protected readonly canEditEditions = computed(
+    () => !this.collection() && this.editMode.allows('manage_editions'),
+  );
 
   protected readonly form = signal<EditionForm | null>(null);
   /** The cover shown in the form: the one chosen, else the edition's. */
@@ -627,12 +666,26 @@ export class CardEditionsPage {
   protected readonly structure = computed(() => isStructure(this.edition()?.editionId ?? ''));
   protected readonly deck = computed(() => deckSize(this.groups()));
   protected readonly savingCopies = signal<string | null>(null);
+  /** The editions with their slots filled and, in the collection, how many of their cards the player owns. */
   protected readonly list = computed(() =>
-    this.editions.catalogEditions().map((edition) => ({
-      edition,
-      filled: slotsFilled(editionSlots(edition, this.cards.metaList())),
-    })),
+    // The collection leaves out the editions in testing: their cards are never owned
+    (this.collection() ? this.editions.editions() : this.editions.catalogEditions()).map((edition) => {
+      const groups = editionSlots(edition, this.cards.metaList(), this.cards.cards());
+      const ids = cardIds(groups);
+      // In the collection an edition not complete is in grey; a complete one shines in the finest finish the player
+      // has of every card
+      const set = this.collection() ? setCompletion(this.owned.collection(), ids) : null;
+      return {
+        edition,
+        filled: slotsFilled(groups),
+        owned: set ? ownedCards(this.owned.collection(), ids) : 0,
+        complete: set?.complete ?? true,
+        shine: set?.shine ?? null,
+      };
+    }),
   );
+  /** Cards of the edition shown the player owns. */
+  protected readonly ownedHere = computed(() => ownedCards(this.owned.collection(), cardIds(this.groups())));
 
   constructor() {
     void this.editions.load();
@@ -787,6 +840,23 @@ export class CardEditionsPage {
     return render ?? (s.card ? cardImageUrl(s.card) : null);
   }
 
+  /**
+   * The player's finest copy of a slot's card: its picture (an alternative art owned shows instead) and its shine;
+   * null when they have none.
+   */
+  protected ownedCopy(s: EditionSlot): { image: string | null; shine: 'foil' | 'prism' | null } | null {
+    // The collection keeps copies by the catalog card (the printing's image), as in Cards
+    if (!s.meta || !s.card) return null;
+    const copies = this.owned.collection()?.cards[s.card.id];
+    const alt = bestAlt(copies, altArtsOf(s.card).map((a) => a.id));
+    const finish = bestFinish(copies) ?? alt?.finish ?? null;
+    if (!finish) return null;
+    return {
+      image: alt ? cardImageUrl(withAltArt(s.card, alt.art)) : null,
+      shine: shineOf(alt?.finish ?? finish),
+    };
+  }
+
   /** The edition's cards as the catalog shows them in detail (a card made in the editor shows its finished image). */
   private detailCards(): { slot: EditionSlot; card: CatalogCard }[] {
     return this.groups()
@@ -873,6 +943,7 @@ export class CardEditionsPage {
       this.modal,
       all.map((x) => x.card),
       Math.max(0, index),
+      { collection: this.collection() },
     );
   }
 
@@ -920,4 +991,9 @@ export class CardEditionsPage {
       queryParams: s.meta ? { card: s.meta.id } : { slot: s.code },
     });
   }
+}
+
+/** The catalog ids of the cards in an edition's slots (the collection keeps copies by them). */
+function cardIds(groups: readonly { slots: readonly EditionSlot[] }[]): string[] {
+  return groups.flatMap((g) => g.slots).flatMap((s) => (s.meta && s.card ? [s.card.id] : []));
 }

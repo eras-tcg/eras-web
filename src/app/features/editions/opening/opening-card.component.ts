@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 import { FoilKind } from '@data/editions/booster-rules';
+import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 
 /** Sparkles a foil card throws, and a prismatic one (more, farther, in every color). */
 const SPARKLES = 12;
@@ -18,16 +19,18 @@ const PRISM_SPARKLES = 24;
  */
 @Component({
   selector: 'eras-opening-card',
+  imports: [CardFaceComponent],
   template: `
     @if (prism()) {
       <!-- Behind it: rays of every color, and a ring of light spreading out -->
       <span class="prism-rays" aria-hidden="true"></span>
       <span class="prism-ring" aria-hidden="true"></span>
     }
-    <span class="face back" aria-hidden="true"></span>
+    <!-- Both faces are the one card drawing (eras-card-face): its back, and its picture with its still shine -->
+    <span class="face back" aria-hidden="true"><eras-card-face hidden /></span>
     <span class="face front">
       @if (src(); as image) {
-        <img [src]="image" [alt]="up() ? alt() : ''" />
+        <eras-card-face [src]="image" [alt]="up() ? alt() : ''" eager />
       }
       @if (foiled()) {
         <span class="foil" aria-hidden="true"></span>
@@ -36,7 +39,7 @@ const PRISM_SPARKLES = 24;
         <span class="spectrum" aria-hidden="true"></span>
       }
       @if (altSrc(); as alt) {
-        <img class="alt-art" [src]="alt" alt="" />
+        <eras-card-face class="alt-art" [src]="alt" eager noShine />
       }
       @if (altShown()) {
         <span class="alt-flash" aria-hidden="true"></span>

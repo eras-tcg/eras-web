@@ -31,10 +31,15 @@
     zoomable
     zoomLabel="Ver el arte en pantalla completa"
     (imageOpened)="openArt()"
+    live
+    [shineSrc]="shine()"
+    [noGloss]="altShown()"
     fill
     [class.with-versions]="showVersions"
   >
     <ng-container ngProjectAs="[detail-actions]">
+      @if (!data.readonly) {
+      <!-- Administration: not from a game (read only there) -->
       <ng-container *erasEdit="'manage_cards'">
         @if (actionError(); as message) {
           <eras-alert tone="danger">{{ message }}</eras-alert>
@@ -48,7 +53,7 @@
             <h3 class="alt-title">Artes alternativos</h3>
             @for (art of arts(); track art.id; let i = $index) {
               <div class="alt-art">
-                <img class="alt-preview" [src]="art.url" [alt]="altArtName(art, i)" />
+                <eras-card-image class="alt-preview" [src]="art.url" [alt]="altArtName(art, i)" noShine />
                 <div class="alt-fields">
                   <label class="alt-field">
                     <span>Nombre</span>
@@ -85,6 +90,7 @@
         }
         <button erasButton variant="danger" size="sm" type="button" [disabled]="busy()" (click)="remove()">Eliminar carta</button>
       </ng-container>
+      }
     </ng-container>
 
     <!--

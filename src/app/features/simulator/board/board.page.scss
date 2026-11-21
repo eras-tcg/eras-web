@@ -428,10 +428,11 @@
   --effect-panel-width: 17rem;
 
   position: fixed;
-  inset-block-end: var(--space-3);
+  // From the top, just under the game menu's button (top left): its card always at the same height, whatever the length
+  // of its text, which goes down from there (scrolling past the bottom)
+  inset-block-start: var(--sim-menu-clear);
   inset-inline-start: var(--space-3);
   z-index: var(--z-sim-card-panel);
-  // Up to just under the game menu's button (top left): the card is never under it
   max-block-size: calc(100dvh - var(--sim-menu-clear) - var(--space-3));
 }
 

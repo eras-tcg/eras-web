@@ -28,6 +28,10 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { rankTitle } from '@data/ranks/rank.model';
+import { RanksStore } from '@data/ranks/ranks.store';
+import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
+import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
 
 /**
  * The room before a game, in the hub's line (the top row of every screen, a "versus" of the two seats with their
@@ -53,6 +57,8 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     IconButtonComponent,
     IconComponent,
     SpinnerComponent,
+    RankEmblemComponent,
+    RankProgressComponent,
   ],
   templateUrl: './pre-room.component.html',
   styleUrl: './pre-room.component.scss',
@@ -66,6 +72,15 @@ export class PreRoomComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly collection = inject(CollectionStore);
+  private readonly ranks = inject(RanksStore);
+
+  protected readonly rankTitle = rankTitle;
+  /** Ranked (with the server): the player's rank as this game finds it. */
+  protected readonly myRank = computed(() => (this.game.rankedRoom() && !this.game.local() ? this.ranks.mine() : null));
+  /** Ranked against the bot, before the game: its seat does not say who it is yet (the server sends none of it). */
+  protected hiddenRival(p: PlayerState): boolean {
+    return this.game.botRoom() && this.game.rankedRoom() && p.userId !== this.me() && this.game.status() === 'WAITING';
+  }
 
   protected readonly me = computed(() => this.auth.user()?.id ?? '');
   protected readonly search = signal('');
@@ -201,8 +216,6 @@ export class PreRoomComponent {
     this.botChoices().filter((c) => c.kind !== 'model').map((c) => ({ value: c.id, label: c.label })),
   );
   protected readonly botModels = computed(() => this.botChoices().filter((c) => c.kind === 'model'));
-  /** The level the bot plays at, in words (ranked: the server picks it by the owner's strength). */
-  protected readonly botLevelLabel = computed(() => this.botChoices().find((c) => c.id === this.botLevel())?.label ?? this.botLevel());
   /** The model being tried, or '' when the bot plays a level. */
   protected readonly botModel = computed(() => (this.botModels().some((m) => m.id === this.botLevel()) ? this.botLevel() : ''));
   /** Friendly or ranked (the owner chooses before the game). */
@@ -278,6 +291,7 @@ export class PreRoomComponent {
     void this.cards.load();
     // Offline the list is the engine's (and the server is not there to ask)
     if (this.game.local()) return;
+    void this.ranks.load();
     void this.decks.loadPublic();
     const id = this.auth.user()?.id;
     if (id) {

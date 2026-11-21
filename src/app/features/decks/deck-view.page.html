@@ -9,6 +9,11 @@
       }
     }
     <button erasButton variant="secondary" type="button" [disabled]="total() === 0" (click)="openProxies()">Proxies</button>
+    @if (canSetBotDeck()) {
+      <button erasButton variant="secondary" type="button" [attr.aria-pressed]="!!deck()?.botDeck" [disabled]="savingBotDeck()" (click)="toggleBotDeck()">
+        <eras-icon name="bot" /> {{ deck()?.botDeck ? 'Quitar del bot' : 'Dar al bot' }}
+      </button>
+    }
     @if (canCopy()) {
       <a erasButton routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
     }

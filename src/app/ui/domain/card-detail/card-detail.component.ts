@@ -77,5 +77,11 @@ export class CardDetailComponent {
   /** The image can be clicked (imageOpened); `zoomLabel` says what it opens. */
   readonly zoomable = input(false, { transform: booleanAttribute });
   readonly zoomLabel = input('Ver la carta');
+  /** The image leans toward the pointer, its shine moving (eras-card-image `live`). */
+  readonly live = input(false, { transform: booleanAttribute });
+  /** The card's shine image when it cannot be found from `imageUrl` (eras-card-image `shineSrc`). */
+  readonly shineSrc = input<string | null>(null);
+  /** Without the glossy coat (an alternative art, eras-card-image `noGloss`). */
+  readonly noGloss = input(false, { transform: booleanAttribute });
   readonly imageOpened = output<void>();
 }

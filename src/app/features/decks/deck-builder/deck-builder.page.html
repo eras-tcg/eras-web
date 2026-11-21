@@ -216,6 +216,8 @@
                       rarityOver
                       [imageUrl]="altImageUrl(entry.card, copy.art)"
                       [foil]="shineOf(copy.finish)"
+                      [shineSrc]="copy.art ? shineUrl(entry.card.meta) : null"
+                      [noGloss]="!!copy.art"
                       [active]="selected()?.id === entry.card.id"
                       (selected)="select(altArt(entry.card, copy.art), copy.finish)"
                     />

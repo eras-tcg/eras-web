@@ -4,7 +4,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
-import { filterOptions, mergeCards } from './card-rules';
+import { cardImageUrl, cardShineUrl, filterOptions, mergeCards } from './card-rules';
 import { CardsApi } from './cards.api';
 import { SharedLoad } from '../shared/shared-load';
 
@@ -45,6 +45,16 @@ export class CardsStore {
   readonly metaList = this.meta.asReadonly();
   readonly imageList = this.images.asReadonly();
   readonly options = computed(() => filterOptions(this.cards(), this.meta(), this.ref()));
+  /** Each card picture (its address without version) and where that card shines, for the cards that have a shine. */
+  readonly shineByImage = computed(() => {
+    const out = new Map<string, string>();
+    for (const card of this.cards()) {
+      const shine = cardShineUrl(card.meta);
+      const image = cardImageUrl(card);
+      if (shine && image) out.set(image.split(/[?#]/)[0], shine);
+    }
+    return out;
+  });
 
   /** What of this card the simulator does not run yet, or null (also null without metadata). */
   unprogrammedOf(card: CatalogCard): string | null {

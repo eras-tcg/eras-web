@@ -439,7 +439,7 @@ export class MatchBannerComponent {
   private readonly auth = inject(AuthService);
   private readonly animations = inject(BoardAnimations);
   private readonly missions = inject(MissionsStore);
-  /** The missions as they were when the game started (online only: Modo solo and the Sala de pruebas count for none). */
+  /** The missions as they were when the game started (online and ranked Modo solo: friendly Modo solo and the Sala de pruebas count for none). */
   private readonly missionsBefore = signal<MissionBoard | null>(null);
   /** At the end: the missions this game moved on. */
   protected readonly missionSteps = computed(() => (this.end() ? missionSteps(this.missionsBefore(), this.missions.board()) : []));
@@ -543,7 +543,8 @@ export class MatchBannerComponent {
     }
     if (before === null || before === status) return;
     // Online, the missions are read when the game starts and again when it ends: the end shows how far it took them
-    if (!this.game.ownRoom() && !this.game.replayRoom()) {
+    // (Modo solo: only ranked games count for them)
+    if ((!this.game.ownRoom() || (this.game.botRoom() && this.game.rankedRoom())) && !this.game.replayRoom()) {
       if (status === 'IN_PROGRESS' && before !== 'IN_PROGRESS') void this.missions.load().then(() => this.missionsBefore.set(this.missions.board()));
       if (status === 'POST_GAME') void this.missions.load();
     }

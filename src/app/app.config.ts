@@ -12,6 +12,8 @@ import { MainScreensPreloading } from '@core/navigation/preloading';
 import { isNativeApp } from '@core/pwa/app-mode';
 import { onScreenTransition } from '@core/navigation/view-transitions';
 import { DataPrefetch } from '@data/prefetch/data-prefetch';
+import { CardsStore } from '@data/cards/cards.store';
+import { CARD_SHINE, imageKey, shineUrlOf } from '@ui/domain/card-image/card-shine';
 import { connectionGateInterceptor } from '@core/server/connection-gate.interceptor';
 import { serverInterceptor } from '@core/server/server.interceptor';
 import { routes } from './app.routes';
@@ -37,6 +39,14 @@ export const appConfig: ApplicationConfig = {
     // The data most screens use, read in the background after signing in
     provideAppInitializer(() => void inject(DataPrefetch)),
     { provide: LOCALE_ID, useValue: 'es' },
+    // The card pictures find their still shine through the catalog (any image of a card that has one)
+    {
+      provide: CARD_SHINE,
+      useFactory: () => {
+        const cards = inject(CardsStore);
+        return (url: string | null | undefined) => cards.shineByImage().get(imageKey(url)) ?? shineUrlOf(url);
+      },
+    },
     // Installable and playable offline (ngsw + the card pictures' cache, public/eras-sw.js). Registered once the app
     // is stable (at most 30 s after starting), so it never competes with the first screen. Not in the Android app: its
     // code is in the APK (it keeps only the card pictures' worker, NativeApp)

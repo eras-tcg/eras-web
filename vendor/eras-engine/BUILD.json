@@ -1,8 +1,8 @@
 {
-  "commit": "bce28d9d0cbc1aecec1250c5efff7ffe56e77d07",
+  "commit": "fb7d3322fcf98665fa988ba2d3c04ea27877c3b0",
   "dirty": false,
-  "subject": "Merge origin/main into feat/cartas-prueba-t3-t4",
-  "copiedAt": "2026-11-20T01:43:47.914Z",
+  "subject": "Merge branch 'feat/life-play-from-lives' into local/sin-drive-golpe",
+  "copiedAt": "2026-11-21T05:29:16.550Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

@@ -16,7 +16,7 @@ type RangeKey = 'cost' | 'level' | 'strength' | 'specialCost';
 type ListKey = 'classes' | 'keywords' | 'tags' | 'rarities';
 
 /**
- * Sidebar with every card filter plus the grid view options and the catalog's marks ("Mostrar colección" first,
+ * Sidebar with every card filter plus the grid view options and the catalog's marks ("Mostrar obtenidas" first,
  * "Sin programar" and "Sin metadatos" with the view's preferences at the end). Stateless: emits the new values; the
  * marks are two-way (`model`), the page remembers them on the device.
  */

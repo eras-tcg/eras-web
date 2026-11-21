@@ -57,6 +57,14 @@ describe('effect-layout', () => {
     expect(pieceKey('En Invocación')).toBe('en invocacion');
   });
 
+  it('explains a keyword once per card: not again in a lower box', () => {
+    const card = new EffectTokens(pieces, ref);
+    const upper = text(card.slot([], [{ keyword: 'Celeridad' }]));
+    const lower = text(card.slot([], [{ keyword: 'Celeridad' }]));
+    expect(upper).toContain('(cuando esta carta es invocada');
+    expect(lower).toBe('<Celeridad>');
+  });
+
   it('writes a keyword reminder from its effect', () => {
     expect(keywordReminder('Provocar {nivel}', 4, ref)).toBe(
       'al entrar al paso de bloqueo: puedes elegir 1 enemigo nivel 4 o menor; debe declarar bloqueo si puede.',

@@ -1,11 +1,29 @@
 import { CatalogCard } from '../cards/card.model';
 import { Collection } from './collection.model';
-import { altCopies, bestAlt, copyArt, copyFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, nearestFinish, ownedCount } from './collection-rules';
+import { altCopies, bestAlt, copyArt, copyFinish, deckCopies, bestFinish, bestFinishAmong, coverFinish, breakPlan, craftCosts, craftedSummary, missingCards, deckCopyFinishes, ownedFinishes, shineOf, extraCopies, extrasOf, fragmentsFrom, missingCopies, nearestFinish, ownedCount, ownedCards, setCompletion } from './collection-rules';
 
 const card = (id: string) => ({ id }) as CatalogCard;
 const collection: Collection = { cards: { a: { plain: 1, foil: 1 }, b: { plain: 5, prism: 1 } }, fragments: { C: 40 } };
 
 describe('collection rules', () => {
+  it('tells a complete set and the finest finish owned of every card', () => {
+    expect(setCompletion(collection, ['a', 'c'])).toEqual({ complete: false, shine: null });
+    expect(setCompletion(collection, [])).toEqual({ complete: false, shine: null });
+    // a: plain and foil; b: plain and prism → complete, no finish common to both but plain
+    expect(setCompletion(collection, ['a', 'b'])).toEqual({ complete: true, shine: null });
+    const shiny: Collection = { cards: { a: { foil: 1, prism: 1 }, b: { 'alt-x1-prism': 1, foil: 2 } }, fragments: {} };
+    expect(setCompletion(shiny, ['a', 'b'])).toEqual({ complete: true, shine: 'prism' });
+    expect(setCompletion({ ...shiny, cards: { ...shiny.cards, b: { foil: 1 } } }, ['a', 'b'])).toEqual({
+      complete: true,
+      shine: 'foil',
+    });
+  });
+
+  it('counts the cards owned among some', () => {
+    expect(ownedCards(collection, ['a', 'b', 'c'])).toBe(2);
+    expect(ownedCards(null, ['a'])).toBe(0);
+  });
+
   it('reads the art and the finish of a kept copy (the single art of before is the art "0")', () => {
     expect(copyArt('alt-x1-foil')).toBe('x1');
     expect(copyFinish('alt-x1-foil')).toBe('foil');

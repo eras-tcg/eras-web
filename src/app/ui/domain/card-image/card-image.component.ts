@@ -1,39 +1,39 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { CardFaceComponent } from '../card-face/card-face.component';
 
 /**
- * A card at its printed proportions (63×88). Optional small `badge` at the top (it leaves the printed name visible).
- * `foil`: a foil copy shines over it (holographic, or starlight for prism); the shine is part of the card, so it
- * follows it wherever it moves, turns or grows.
+ * A card on the web pages: the card itself (eras-card-face: picture, still shine, `foil`, `live` 3D turn…) and an optional
+ * small `badge` at the top (it leaves the printed name visible). Sized by its parent (width, or height with the ratio).
  */
 @Component({
   selector: 'eras-card-image',
+  imports: [CardFaceComponent],
   template: `
-    @if (src()) {
-      <img [src]="src()" [alt]="alt()" [attr.loading]="eager() ? null : 'lazy'" decoding="async" />
-    } @else {
-      <span class="missing">{{ alt() }}</span>
-    }
+    <eras-card-face
+      [src]="src()"
+      [alt]="alt()"
+      [eager]="eager()"
+      [foil]="foil()"
+      [shineSrc]="shineSrc()"
+      [noShine]="noShine()"
+      [noGloss]="noGloss()"
+      [live]="live()"
+    />
     @if (badge()) {
       <span class="badge" [class.info]="badgeTone() === 'info'">{{ badge() }}</span>
     }
   `,
-  host: { '[class.foil-foil]': "foil() === 'foil'", '[class.foil-prism]': "foil() === 'prism'" },
   styles: `
-    @use 'mixins/foil';
-
     :host {
       position: relative;
-      display: grid;
-      place-items: center;
+      display: block;
       aspect-ratio: 63 / 88;
-      overflow: hidden;
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
+      border-radius: var(--radius-card);
     }
-    img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-    .missing { padding: var(--space-2); color: var(--color-text-subtle); font-size: var(--font-size-sm); text-align: center; }
+    eras-card-face { position: absolute; inset: 0; }
     .badge {
       position: absolute;
+      z-index: 2;
       inset-block-start: 12%;
       inset-inline-start: 50%;
       max-inline-size: 90%;
@@ -51,10 +51,6 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       pointer-events: none;
     }
     .badge.info { background: color-mix(in srgb, var(--color-info) 75%, transparent); }
-    :host(.foil-foil)::after { @include foil.rainbow; }
-    :host(.foil-prism) { @include foil.scaled; }
-    :host(.foil-prism)::before { @include foil.glitter-dots; }
-    :host(.foil-prism)::after { @include foil.glitter-light; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -66,4 +62,12 @@ export class CardImageComponent {
   readonly badgeTone = input<'danger' | 'info'>('danger');
   readonly eager = input(false, { transform: booleanAttribute });
   readonly foil = input<'foil' | 'prism' | null>(null);
+  /** The card's shine image when the app cannot find it from `src` (see card-shine.ts). */
+  readonly shineSrc = input<string | null>(null);
+  /** Without the still shine (the 3D viewer draws its own, moving). */
+  readonly noShine = input(false, { transform: booleanAttribute });
+  /** Without the glossy coat only (an alternative art, see eras-card-face). */
+  readonly noGloss = input(false, { transform: booleanAttribute });
+  /** Grabbed and dragged, it turns in 3D (see eras-card-face). */
+  readonly live = input(false, { transform: booleanAttribute });
 }

@@ -9,6 +9,7 @@ import { holdToPeek } from './hold-peek';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 import { CardSheetComponent } from './card-sheet.component';
+import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 
 /**
  * Beside the board, a card: on the table, as it is now (CardSheet: with its Materiales and Recursos, then every effect
@@ -19,13 +20,13 @@ import { CardSheetComponent } from './card-sheet.component';
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [EffectLineComponent, CardSheetComponent],
+  imports: [EffectLineComponent, CardSheetComponent, CardFaceComponent],
   template: `
     @if (onTable(); as t) {
       <eras-card-sheet column [slot]="t.slot" [zone]="t.zone" [opponent]="t.opponent" [activeText]="activeText()" />
     } @else {
     @if (imageUrl()) {
-      <img class="art" [src]="imageUrl()" [alt]="name()" draggable="false" />
+      <eras-card-face class="art" [src]="imageUrl()" [alt]="name()" eager />
     }
     @if (lines().length) {
       <ul class="effects" aria-label="Efectos de la carta">
@@ -63,9 +64,6 @@ import { CardSheetComponent } from './card-sheet.component';
       cursor: zoom-in;
       -webkit-touch-callout: none;
       inline-size: 100%;
-      aspect-ratio: 63 / 88;
-      border-radius: var(--radius-md);
-      object-fit: cover;
       box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
     }
     .effects { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }

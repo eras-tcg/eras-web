@@ -34,14 +34,12 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
   backface-visibility: hidden;
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .back {
-  border: 2px solid var(--color-hub-accent);
-  background: var(--color-card-back);
   box-shadow: var(--shadow-md);
 }
 
@@ -51,10 +49,8 @@
   transform: rotateY(180deg);
 }
 
-.front img {
+.face > eras-card-face {
   inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
 }
 
 :host(.up) .back {
@@ -68,7 +64,6 @@
 // Face down, an SR or SEC card already glows in its rarity's color; the plain ones do not
 :host(.aura-sr:not(.up)) .back,
 :host(.aura-sec:not(.up)) .back {
-  border-color: var(--aura);
   box-shadow:
     0 0 0 2px var(--aura),
     0 0 1.5rem color-mix(in srgb, var(--aura) 80%, transparent);

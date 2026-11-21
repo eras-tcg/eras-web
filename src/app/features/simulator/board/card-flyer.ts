@@ -3,6 +3,7 @@ import { BoardAnimations } from './board-animations';
 import { CardPose, Stage, poseFrames, poseOf, stageOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LAYER, TIMING } from './timing';
+import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
 /** How a card flies (all optional). */
 export interface FlightOptions {
@@ -174,24 +175,17 @@ export class CardFlyer {
       transformStyle: 'preserve-3d',
       transformOrigin: '50% 50%',
     });
+    // Its two faces, drawn as the card is everywhere (cardFaceStyle): its picture (its back without one) and its back
     const face = (back: boolean) => {
-      const el = this.document.createElement(back || !from.imageUrl ? 'div' : 'img');
+      const el = this.document.createElement('div');
       Object.assign(el.style, {
         position: 'absolute',
         inset: '0',
-        width: '100%',
-        height: '100%',
-        borderRadius: '6px',
-        objectFit: 'cover',
         backfaceVisibility: 'hidden',
         boxShadow: '0 6px 12px rgb(0 0 0 / 40%)',
+        ...cardFaceStyle(back ? null : from.imageUrl),
       });
-      if (back || !from.imageUrl) {
-        el.style.background = 'var(--color-card-back)';
-        if (back) el.style.transform = 'rotateY(180deg)';
-      } else {
-        (el as HTMLImageElement).src = from.imageUrl;
-      }
+      if (back) el.style.transform = 'rotateY(180deg)';
       return el;
     };
     inner.append(face(false), face(true));

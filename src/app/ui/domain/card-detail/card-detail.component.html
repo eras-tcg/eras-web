@@ -87,6 +87,9 @@
       [src]="imageUrl()"
       [alt]="name()"
       [foil]="foil()"
+      [live]="live()"
+      [shineSrc]="shineSrc()"
+      [noGloss]="noGloss()"
       eager
       (click)="zoomable() && imageOpened.emit()"
       (keydown.enter)="zoomable() && imageOpened.emit()"

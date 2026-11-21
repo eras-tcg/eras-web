@@ -1,10 +1,11 @@
+import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
-import { altArtName, altArtsOf, fullEditionId, nameVariants, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, cardShineUrl, fullEditionId, isGlossyRarity, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
 import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, nearestFinish, shineOf } from '@data/collection/collection-rules';
@@ -32,6 +33,8 @@ export interface CardDetailDialogData {
   copy?: { foil: FoilKind | null };
   /** The player's collection is on (catalog): each printing shines in the finest finish they own of it. */
   collection?: boolean;
+  /** Read only (opened from a game): no administration, even for editors. */
+  readonly?: boolean;
 }
 
 /**
@@ -42,7 +45,7 @@ export function openCardDetailDialog(
   modal: ModalService,
   cards: readonly CatalogCard[],
   index = 0,
-  options: Pick<CardDetailDialogData, 'copy' | 'collection'> = {},
+  options: Pick<CardDetailDialogData, 'copy' | 'collection' | 'readonly'> = {},
 ): void {
   const data: CardDetailDialogData = { cards, index, ...options };
   modal.open(CardDetailDialogComponent, { data });
@@ -55,7 +58,7 @@ export function openCardDetailDialog(
  */
 @Component({
   selector: 'eras-card-detail-dialog',
-  imports: [CardDetailComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent],
+  imports: [CardDetailComponent, CardImageComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent],
   templateUrl: './card-detail-dialog.component.html',
   styleUrl: './card-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +73,7 @@ export class CardDetailDialogComponent {
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
   private readonly collection = inject(CollectionStore);
+  private readonly injector = inject(Injector);
   protected readonly shopOdds = inject(ShopOddsStore);
 
   /** Position in the grid. Switching printings changes `card` but not the grid position. */
@@ -127,6 +131,14 @@ export class CardDetailDialogComponent {
   /** The card as shown: with the alternative art the player has (collection) or picked (catalog); its text is the same. */
   private readonly shown = computed(() => withAltArt(this.card(), this.data.collection ? (this.altOwned()?.art ?? null) : this.pickedArt()));
 
+  /**
+   * The card's shine image, from its metadata: its image may come as a copy the page holds (the collection's), whose
+   * address says nothing of the card. An alternative art shown keeps its gold and its foil's cut, not its glossy coat
+   * (its texts may sit otherwise; the frame, name and code, and the boxes the foil leaves clear are the card's).
+   */
+  protected readonly shine = computed(() => cardShineUrl(this.card().meta));
+  protected readonly altShown = computed(() => this.shown() !== this.card());
+
   protected readonly view = computed(() => cardDetailView(this.shown(), this.store.ref(), this.store.unprogrammedOf(this.card())));
 
   constructor() {
@@ -137,8 +149,47 @@ export class CardDetailDialogComponent {
 
   /** The card as shown (its version: finish and art) over the whole screen. */
   protected openArt(): void {
-    const data: CardArtViewerData = { src: this.view().imageUrl, alt: this.view().name, foil: this.foil() };
+    const data: CardArtViewerData = {
+      src: this.view().imageUrl,
+      alt: this.view().name,
+      foil: this.foil(),
+      shine: this.shine(),
+      noGloss: this.altShown(),
+      gloss: this.glossMask(),
+      gold: this.goldMask(),
+    };
     this.modal.open(CardArtViewerComponent, { data, maxWidth: '100vw', maxHeight: '100dvh' });
+  }
+
+  /** The card builder, loaded only when a mask is drawn. */
+  private renderer() {
+    return import('../../admin/card-editor/render/card-render.service').then(({ CardRenderService }) =>
+      this.injector.get(CardRenderService),
+    );
+  }
+
+  /**
+   * A card of rarity R and above has a glossy coat on its boxes and numbers' circles: where it goes, drawn from its
+   * template. Not for an alternative art shown, which may be laid out otherwise.
+   */
+  private glossMask(): Promise<string | null> | null {
+    const meta = this.card().meta;
+    if (!meta || !isGlossyRarity(meta.rarity) || this.shown() !== this.card()) return null;
+    return this.renderer()
+      .then((r) => r.glossMask(meta))
+      .catch(() => null);
+  }
+
+  /**
+   * A card with a gold border (any rarity, as its template draws it: the mask is null without one): where it is, for
+   * its metallic shine (an alternative art's too).
+   */
+  private goldMask(): Promise<string | null> | null {
+    const meta = this.card().meta;
+    if (!meta) return null;
+    return this.renderer()
+      .then((r) => r.goldMask(meta))
+      .catch(() => null);
   }
 
   protected readonly busy = signal(false);

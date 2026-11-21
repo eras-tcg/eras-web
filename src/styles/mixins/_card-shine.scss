@@ -1,0 +1,78 @@
+// A card's shine laid still over its image: its mask is the PNG drawn with the card's render (/api/cards/<id>/shine)
+// in three thirds, the glossy parts on top, the gold border in the middle and where a foil goes below, white
+// where it shines (luminance masks). Set --card-shine to that image's url() on the element; a card with no shine image
+// shows none (a mask that fails to load hides the layer).
+
+@mixin -layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  mask-image: var(--card-shine);
+  -webkit-mask-image: var(--card-shine);
+  mask-size: 100% 300%;
+  -webkit-mask-size: 100% 300%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-mode: luminance;
+  -webkit-mask-source-type: luminance;
+  pointer-events: none;
+}
+
+// The glossy coat: the 3D viewer's band of light as the card shows held flat (faint, in the middle); a card that
+// follows the pointer moves it with --gloss-x/--gloss-y and makes it stronger with --gloss (see card-tilt.ts lightOf)
+@mixin gloss {
+  @include -layer;
+
+  background: linear-gradient(
+      115deg,
+      rgb(255 255 255 / 0%) 30%,
+      rgb(255 255 255 / 85%) 45%,
+      rgb(255 255 255 / 20%) 50%,
+      rgb(255 255 255 / 50%) 55%,
+      rgb(255 255 255 / 0%) 70%
+    )
+    var(--gloss-x, 50%) var(--gloss-y, 50%) / 200% 200% no-repeat;
+  mask-position: 0 0;
+  -webkit-mask-position: 0 0;
+  mix-blend-mode: screen;
+  opacity: var(--gloss, 0.25);
+}
+
+// The gold border's metal: polished gold bands along it (in proportion to the card) and a glint; a card that follows
+// the pointer slides them with --metal and the glint with --gloss-x/--gloss-y
+@mixin gold {
+  @include -layer;
+
+  background:
+    linear-gradient(115deg, rgb(255 255 245 / 0%) 40%, rgb(255 255 245 / 90%) 47%, rgb(255 255 245 / 0%) 54%)
+      var(--gloss-x, 50%) var(--gloss-y, 50%) / 220% 220% no-repeat,
+    repeating-linear-gradient(
+      115deg,
+      #6b4708 0,
+      #b9821c 6%,
+      #f3cf62 10%,
+      #fff6cf 12%,
+      #e2b13e 14%,
+      #8a5c0e 20%,
+      #6b4708 24%
+    )
+    var(--metal, 0px) 0 / auto;
+  mask-position: 0 50%;
+  -webkit-mask-position: 0 50%;
+}
+
+// A foil (holographic or prismatic) only where it goes (all the card but its glossy parts and its effect box): the shine's last third.
+// Include it in the foil's own layer with --card-shine set.
+@mixin foil-cut {
+  mask-image: var(--card-shine);
+  -webkit-mask-image: var(--card-shine);
+  mask-size: 100% 300%;
+  -webkit-mask-size: 100% 300%;
+  mask-position: 0 100%;
+  -webkit-mask-position: 0 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-mode: luminance;
+  -webkit-mask-source-type: luminance;
+}

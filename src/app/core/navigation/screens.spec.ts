@@ -16,6 +16,8 @@ describe('parentScreen', () => {
     expect(parentScreen('/editions/E1.2')?.route).toBe('/editions');
     expect(parentScreen('/deck/42')?.route).toBe('/my-decks');
     expect(parentScreen('/roles')?.route).toBe('/admin');
+    expect(parentScreen('/cards/collection')?.route).toBe('/cards');
+    expect(parentScreen('/cards/collection/E1.3')?.route).toBe('/cards/collection');
   });
 
   it('ignores query, fragment and a trailing slash', () => {

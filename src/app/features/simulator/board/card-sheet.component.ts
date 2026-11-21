@@ -8,6 +8,7 @@ import { CardSlot, ZoneName } from '@data/simulator/simulator.model';
 import { CardFactsComponent } from '@ui/domain/card-facts/card-facts.component';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
+import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
@@ -30,7 +31,7 @@ interface SheetLine {
  */
 @Component({
   selector: 'eras-card-sheet',
-  imports: [NgTemplateOutlet, IconComponent, EffectLineComponent, CardFactsComponent, GameCardComponent, HoldPeekDirective],
+  imports: [NgTemplateOutlet, IconComponent, EffectLineComponent, CardFactsComponent, GameCardComponent, CardFaceComponent, HoldPeekDirective],
   host: { '[class.column]': 'column()' },
   template: `
     @let s = slot();
@@ -51,7 +52,7 @@ interface SheetLine {
         <div class="resource-row" erasHoldPeek (peek)="openDetail(r.slot)">
           <div class="resource" [class.name-only]="r.lines.length === 0" role="img" [attr.aria-label]="'Recurso: ' + r.name">
             @if (r.imageUrl) {
-              <img [src]="r.imageUrl" alt="" />
+              <eras-card-face [src]="r.imageUrl" [foil]="r.slot.finish ?? null" eager />
             } @else {
               <span>{{ r.name }}</span>
             }

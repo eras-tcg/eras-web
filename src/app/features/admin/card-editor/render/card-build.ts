@@ -661,6 +661,12 @@ function slotBox(text: TextSpec, bbox: number[]): EffectSlot['box'] {
   return { x: bbox[0], y: bbox[1], w: 660, h: 260 };
 }
 
+/**
+ * Where an effect box ends above the name bar under it (card px from the bar's top): the bar's box starts a little
+ * above its drawn edge (its bevel's room), so the last line may reach into that room, as on the printed cards.
+ */
+const EFFECT_BAR_GAP = -12;
+
 /** Builds the spec of a card from its prototype. */
 export function buildCard(
   card: CardDraft,
@@ -1435,6 +1441,13 @@ export function buildCard(
     if (!n?.text) continue;
     n.visible = false;
     effectSlots.push({ name, box: slotBox(n.text, n.bbox) });
+  }
+  // An effect box ends where the name bar below it starts: the prototype's text frame runs under the bar on cards with
+  // inherited effects (its text would be drawn under the name)
+  const barBelow = widestNode(spec.layers, 'left curved side') ?? widestNode(spec.layers, 'br corner');
+  for (const slot of effectSlots) {
+    if (slot.name === 'INHERIT EFFECT' || !barBelow || barBelow.bbox[1] <= slot.box.y) continue;
+    slot.box.h = Math.min(slot.box.h, barBelow.bbox[1] - slot.box.y - EFFECT_BAR_GAP);
   }
 
   // Art over the whole card, under the frame.

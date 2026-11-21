@@ -10,6 +10,7 @@ const SOCIAL: ScreenLink = { route: '/social', label: 'Social' };
 const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
 const CARDS: ScreenLink = { route: '/cards', label: 'Cartas' };
 const CARD_EDITIONS: ScreenLink = { route: '/cards/editions', label: 'Ediciones' };
+const COLLECTION: ScreenLink = { route: '/cards/collection', label: 'Colección' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 const PROFILE: ScreenLink = { route: '/profile', label: 'Mi perfil' };
@@ -29,6 +30,8 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
   [/^\/cards\/editions\/[^/]+$/, CARD_EDITIONS],
   [/^\/cards\/editions$/, CARDS],
+  [/^\/cards\/collection\/[^/]+$/, COLLECTION],
+  [/^\/cards\/collection$/, CARDS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [ADMIN_SCREENS, ADMIN],
   [/^\/profile\/history$/, PROFILE],

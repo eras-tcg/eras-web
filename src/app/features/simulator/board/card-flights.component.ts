@@ -115,6 +115,7 @@ export class CardFlightsComponent {
           this.handSeen = this.measure.hands(state);
           this.deckIds = new Set(Object.values(state.players ?? {}).flatMap((p) => p.deck.map((c) => c.instanceId)));
           this.timeline.skip(state);
+          this.motions.releaseAll();
           return;
         }
         this.deferring = !this.animations.idle();
@@ -150,6 +151,8 @@ export class CardFlightsComponent {
     for (const [id, from] of this.seen) {
       if (onField.has(id) || this.settled.has(id)) continue;
       const to = this.measure.destination(state, id, this.me());
+      // A destroyed card waiting where it broke: its flight takes over from it
+      this.motions.release(id);
       if (to) this.flyer.fly(from, to.element, to.faceDown);
     }
   }
@@ -271,6 +274,7 @@ export class CardFlightsComponent {
     for (const [id, from] of this.handSeen) {
       if (inHand.has(id) || onField.has(id) || this.lives.flown.has(id) || this.lives.isParked(id)) continue;
       const to = this.measure.destination(state, id, this.me());
+      this.motions.release(id);
       if (!to) continue;
       const hops = this.hops.get(id) ?? [];
       const owner = players.find((p) => PILES.some((z) => (p[z] as CardSlot[]).some((c) => c.instanceId === id)))?.userId;
@@ -356,13 +360,27 @@ export class CardFlightsComponent {
         // New on the field: from its place in the hand, else from the pile it was in. Where it lands is measured
         // before it starts to travel (once it moves, its box is where it comes from)
         const landing = card.getBoundingClientRect();
-        const from = this.handSeen.get(c.instanceId) ?? this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
+        // A revealed life played onto the field comes from the top of the lives, where it waited (the rules play it from
+        // the lives, though the engine kept it in the hand while asking)
+        const from =
+          this.lives.fieldFrom(c.instanceId) ??
+          this.lifePlayed(c, p.userId) ??
+          this.handSeen.get(c.instanceId) ??
+          this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
         if (from) this.glide(sprite, card, c, from, TIMING.summon);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;
       }
     }
     return summoned;
+  }
+
+  /** A revealed life just played (the last choice was to play it): from the top of its owner's lives, face up. */
+  private lifePlayed(card: CardSlot, owner: string): Seen | null {
+    const asked = this.previous?.prompt;
+    if (asked?.purpose !== 'LIFE_PLAY' || asked.subjectId !== card.instanceId) return null;
+    const top = this.measure.pile(`${owner}:lifeStack`);
+    return top ? { ...top, imageUrl: card.imageUrl ?? top.imageUrl } : null;
   }
 
   /**
@@ -389,7 +407,7 @@ export class CardFlightsComponent {
 
   /**
    * A card destroyed, before its update is shown: it breaks where it lies (the field, a hand or the top of its pile)
-   * and stays hidden until the update moves it; done when it is gone.
+   * and its broken copy stays there, in its place, until the update flies it to its zone; done when the blow is over.
    */
   private shatterNow(id: string): Promise<void> {
     const from = this.seen.get(id) ?? this.handSeen.get(id) ?? (this.pileOf.has(id) ? this.measure.pile(this.pileOf.get(id)) : null);
@@ -398,7 +416,7 @@ export class CardFlightsComponent {
     const real = fieldSprite(this.document, id) ?? handPlace(this.document, id);
     // As drawn now: a blocker exhausted with its block breaks turned
     const tapped = from.tapped || !!real?.querySelector('eras-game-card.tapped');
-    this.motions.shatter({ ...from, tapped, imageUrl: from.imageUrl ?? findSlot(this.game.state(), id)?.imageUrl ?? null });
+    this.motions.shatter({ ...from, tapped, imageUrl: from.imageUrl ?? findSlot(this.game.state(), id)?.imageUrl ?? null }, id);
     // It flies to its zone from how it lies now (turned, if exhausted with its block)
     const drawn = real?.querySelector<HTMLElement>('eras-game-card');
     if (drawn && this.seen.has(id)) this.seen.set(id, { ...from, tapped, pose: poseOf(drawn) });

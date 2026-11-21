@@ -10,12 +10,12 @@
   block-size: min(52rem, var(--app-height, 100dvh) - 2 * var(--space-5));
 }
 
-// The text scrolls inside the card's detail (fill); the panel itself never does
+// The text scrolls inside the card's detail (fill); the panel itself never does, and it does not clip: the card,
+// turned by a drag, comes out over it
 .panel {
   position: relative;
   align-self: stretch;
   min-block-size: 0;
-  overflow: hidden;
   padding: var(--space-7) var(--space-5) var(--space-5);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -165,9 +165,6 @@ eras-card-detail.with-versions {
 .alt-preview {
   flex-shrink: 0;
   inline-size: 4rem;
-  aspect-ratio: 63 / 88;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
 }
 
 // Phones in landscape: a tighter panel (the card's picture fits its height) and smaller arrows

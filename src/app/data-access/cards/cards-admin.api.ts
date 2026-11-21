@@ -87,6 +87,13 @@ export class CardsAdminApi {
     });
   }
 
+  /** Where the card shines (a PNG drawn with its render: gloss on top, gold below): answers the card. */
+  setShine(metaId: string, image: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/shine`), image, {
+      headers: { 'Content-Type': 'image/png' },
+    });
+  }
+
   render(metaId: string): Observable<Blob> {
     return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), { responseType: 'blob' });
   }

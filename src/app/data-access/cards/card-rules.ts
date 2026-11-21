@@ -242,3 +242,14 @@ function trimSegments(segments: EffectSegment[]): EffectSegment[] {
   }
   return out;
 }
+
+/** Rarity R and above (R, SR, SEC): the card has a glossy coat on its frame, boxes and numbers. */
+export function isGlossyRarity(rarity: string | null | undefined): boolean {
+  return CARD_RARITIES.indexOf((rarity ?? '').toUpperCase() as (typeof CARD_RARITIES)[number]) >= CARD_RARITIES.indexOf('R');
+}
+
+/** Where a saved card shines (drawn with its render: gloss on top, gold below), or null when it has no shine yet. */
+export function cardShineUrl(meta: Pick<CardMeta, 'id' | 'shineKey'> | null | undefined): string | null {
+  if (!meta?.shineKey) return null;
+  return `/api/cards/${encodeURIComponent(meta.id)}/shine?v=${encodeURIComponent(meta.shineKey)}`;
+}

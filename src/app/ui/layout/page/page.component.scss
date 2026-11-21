@@ -2,11 +2,15 @@
 // quick buttons sit in the same place on every screen; only the content keeps the page's width, centered
 :host {
   --page-top: max(var(--space-5), env(safe-area-inset-top));
+  --page-gutter-start: max(var(--layout-gutter), env(safe-area-inset-left));
+  --page-gutter-end: max(var(--layout-gutter), env(safe-area-inset-right));
 
-  display: block;
+  // One screen high below the app header: the top row stays and only the area under it scrolls
+  display: flex;
+  flex-direction: column;
   inline-size: 100%;
-  padding: var(--page-top) max(var(--layout-gutter), env(safe-area-inset-right)) var(--space-8)
-    max(var(--layout-gutter), env(safe-area-inset-left));
+  block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
+  padding-block-start: var(--page-top);
 }
 
 @media (max-width: 63.99rem) {
@@ -17,8 +21,19 @@
 
 // Stays in place while the screens change (view transitions)
 .bar {
+  flex: none;
   margin-block-end: var(--space-5);
+  padding-inline: var(--page-gutter-start) var(--page-gutter-end);
   view-transition-name: screen-bar;
+}
+
+// The full width (its scrollbar at the window's edge); the content inside keeps the page's width, centered
+.scroll {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: none;
+  padding: 0 var(--page-gutter-end) var(--space-8) var(--page-gutter-start);
 }
 
 :host(.width-narrow) .content {
@@ -75,14 +90,12 @@
   margin-inline: auto;
 }
 
-// fill: the page is exactly the height left below the app header (--app-header-height, set by the shell);
-// the content takes the rest, for screens that must not scroll (tier list).
-:host(.fill) {
+// fill: nothing scrolls, the content takes exactly what is left (tier list, deck builder)
+:host(.fill) .scroll {
   display: flex;
   flex-direction: column;
-  inline-size: 100%;
-  block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
-  padding-block: var(--page-top) var(--space-4);
+  overflow: visible;
+  padding-block-end: var(--space-4);
 }
 
 :host(.fill) .bar {
@@ -108,7 +121,9 @@
 @media (orientation: landscape) and (max-height: 30rem) {
   :host {
     --page-top: max(var(--space-2), env(safe-area-inset-top));
+  }
 
+  .scroll {
     padding-block-end: var(--space-4);
   }
 
@@ -117,7 +132,7 @@
     margin-block-end: var(--space-2);
   }
 
-  :host(.fill) {
+  :host(.fill) .scroll {
     padding-block-end: var(--space-2);
   }
 

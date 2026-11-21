@@ -77,6 +77,8 @@ export interface CardMeta {
   artType?: string | null;
   /** The finished card drawn by the editor (a cache), served by `/api/cards/{id}/render`; null until saved there. */
   renderKey?: string | null;
+  /** Where the card shines, drawn with its render (gloss on top, gold below): GET /api/cards/{id}/shine. */
+  shineKey?: string | null;
   /** In a structure deck (ST…): how many copies of this card the deck brings. */
   deckCopies?: number | null;
 }

@@ -34,6 +34,8 @@ import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
         [badge]="badge()"
         [badgeTone]="badgeTone()"
         [foil]="foil()"
+        [shineSrc]="shineSrc()"
+        [noGloss]="noGloss()"
       />
       @if (count() > 1 || (showSingleCount() && count() === 1)) {
         <span class="count">×{{ count() }}</span>
@@ -105,6 +107,10 @@ export class CardThumbComponent {
   readonly dimmed = input(false, { transform: booleanAttribute });
   readonly active = input(false, { transform: booleanAttribute });
   readonly foil = input<'foil' | 'prism' | null>(null);
+  /** The card's shine image when its address says nothing of the card (an alternative art: its foil's cut). */
+  readonly shineSrc = input<string | null>(null);
+  /** Without the glossy coat (an alternative art: its texts may sit otherwise; its gold and foil cut are the card's). */
+  readonly noGloss = input(false, { transform: booleanAttribute });
   /** The card's rarity for its tab; null: no tab (an empty string: room for it, no tab). */
   readonly rarity = input<string | null>(null);
   /** The rarity tab over the card, inside its top-right corner (no room left above it). */

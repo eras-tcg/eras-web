@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { CardFaceComponent } from '../card-face/card-face.component';
 
 /** What the table shows of a card with its information on: cost, type, classes and level. */
 export interface GameCardInfo {
@@ -18,27 +19,24 @@ function roman(n: number): string {
   return out || '0';
 }
 
-/** A card on the game table: image or back, tapped rotation, strength and attachment badges, target glow. */
+/**
+ * A card on the game table: the card itself (eras-card-face: picture or back, still shine, foil, peek) with what the
+ * table adds around it: tapped rotation, strength and attachment badges, the table's information, target glow.
+ */
 @Component({
   selector: 'eras-game-card',
-  imports: [IconComponent],
+  imports: [IconComponent, CardFaceComponent],
   template: `
-    @if (!hidden() && imageUrl()) {
-      <img [src]="imageUrl()" alt="" draggable="false" />
-      @if (foil(); as kind) {
-        <!-- The owner's foil copy: the shine is part of the card, it turns and moves with it -->
-        <span class="shine" [class.prism]="kind === 'prism'" aria-hidden="true"></span>
-      }
-    } @else if (!hidden() && name()) {
-      <!-- A card without art (a test card): its name -->
-      <span class="face">{{ name() }}</span>
-    } @else {
-      <span class="back" aria-hidden="true"></span>
-    }
-    @if (peeked() && !hidden()) {
-      <!-- A hidden card shown anyway: its back still covers the lower right corner -->
-      <span class="back peek" aria-hidden="true"></span>
-    }
+    <!-- Face down, or with neither picture nor name: its back. A test card without art shows its name -->
+    <eras-card-face
+      [src]="imageUrl()"
+      [name]="name()"
+      [hidden]="hidden() || (!imageUrl() && !name())"
+      [peeked]="peeked()"
+      [foil]="foil()"
+      [turned]="upsideDown()"
+      eager
+    />
     @if (strength() !== null) {
       <span class="strength" [class.up]="modifier() > 0" [class.down]="modifier() < 0">
         {{ modifier() > 0 ? '▲' : modifier() < 0 ? '▼' : '' }}{{ strength() }}
@@ -72,14 +70,12 @@ function roman(n: number): string {
     }
   `,
   styles: `
-    @use 'mixins/foil';
-
     :host {
       position: relative;
       display: block;
       inline-size: var(--game-card-width, 4.5rem);
       aspect-ratio: 63 / 88;
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-card);
       overflow: visible;
       transition: transform var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard);
       user-select: none;
@@ -88,52 +84,13 @@ function roman(n: number): string {
     :host(.tapped) { transform: rotate(90deg); }
     // The rival's card, as across a real table: the card turns round; its badges go to their places on the turned card
     // (below), their text still upright
-    :host(.upside-down) :is(img, .shine, .face, .back) { transform: rotate(180deg); }
     // Exhausted, the rival's card shows its art sideways the other way: its badges' text turns with it
     :host(.upside-down.tapped) { --badge-turn: 180deg; }
     .strength, .badge { rotate: var(--badge-turn, 0deg); }
     :host(.targeted) { box-shadow: 0 0 0 3px var(--color-danger), 0 0 14px var(--color-danger); }
     :host(.source) { box-shadow: 0 0 0 3px var(--color-primary); }
     :host(.selectable) { cursor: crosshair; }
-    img, .back, .face { display: block; inline-size: 100%; block-size: 100%; border-radius: inherit; object-fit: cover; }
-    .face {
-      display: grid;
-      place-items: center;
-      padding: 0.25rem;
-      overflow: hidden;
-      border: 1px dashed var(--color-border);
-      background: var(--color-surface-muted);
-      color: var(--color-text);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-bold);
-      text-align: center;
-      overflow-wrap: anywhere;
-    }
-    .shine {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      border-radius: inherit;
-      pointer-events: none;
-    }
-    // The wrapper blends with the card (see foil.rainbow)
-    .shine:not(.prism) { mix-blend-mode: soft-light; }
-    .shine:not(.prism)::after { @include foil.rainbow(normal); }
-    .shine.prism { @include foil.scaled; }
-    .shine.prism::before { @include foil.glitter-dots; }
-    .shine.prism::after { @include foil.glitter-light; }
-    .back {
-      // The card back art, with its own black edge (no outline of ours): the same in both themes, like a physical card
-      background: var(--color-card-back);
-    }
-    // Past position t of a "to bottom right" gradient lies 2·(1−t)² of the card: fading from 52% to 72% leaves about
-    // 70% of the card in sight and its back over the last 30%, the lower right corner
-    .peek {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      mask-image: linear-gradient(to bottom right, transparent 52%, #000 72%);
-    }
+    eras-card-face { position: absolute; inset: 0; }
     .strength {
       position: absolute;
       inset-block-start: -0.4rem;

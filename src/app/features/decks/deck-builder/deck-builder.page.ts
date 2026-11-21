@@ -24,6 +24,7 @@ import { CatalogCard } from '@data/cards/card.model';
 import {
   altArtsOf,
   cardImageUrl,
+  cardShineUrl,
   collapseByName,
   fullEditionId,
   withAltArt,
@@ -143,6 +144,8 @@ export class DeckBuilderPage {
   /** `?box=`: a new deck started inside this deckbox goes into it when first saved. */
   readonly box = input<string>();
 
+  /** The card's shine image (an alternative art takes its foil's cut from it). */
+  protected readonly shineUrl = cardShineUrl;
   protected readonly draft = inject(DeckDraft);
   protected readonly cards = inject(CardsStore);
   protected readonly collection = inject(CollectionStore);

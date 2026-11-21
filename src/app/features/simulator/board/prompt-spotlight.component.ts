@@ -134,6 +134,15 @@ export class PromptSpotlightComponent {
     this.showChain(chain);
     for (const element of ids.map((id) => this.elementOf(id))) {
       if (!element) continue;
+      // A life waiting on its lives is already a copy drawn where it lies: lit as it is
+      if (element.dataset['parkedLife']) {
+        const copy = element.cloneNode(true) as HTMLElement;
+        delete copy.dataset['parkedLife'];
+        copy.style.zIndex = '';
+        copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
+        this.layer.append(copy);
+        continue;
+      }
       const rect = element.getBoundingClientRect();
       const width = element.offsetWidth;
       const height = element.offsetHeight;
@@ -238,6 +247,9 @@ export class PromptSpotlightComponent {
 
   /** The card on the field, or the pile it is in. */
   private elementOf(id: string): HTMLElement | null {
+    // A revealed life waiting on its lives (Reforzar, play it): there, though the state keeps it in the hand
+    const parked = this.document.querySelector<HTMLElement>(`[data-parked-life="${CSS.escape(id)}"]`);
+    if (parked) return parked;
     // A card of the field, or of a hand (the card itself, not the whole hand)
     const card = tableCard(this.document, id);
     if (card) return card;

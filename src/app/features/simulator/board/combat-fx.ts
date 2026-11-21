@@ -5,6 +5,7 @@ import { centerOf, fieldCard, fieldPlace, fieldSprite, liftPlace, pile, tableCar
 import { FxDraw } from './fx-draw';
 import { overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
+import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
 /** A field card as drawn: its center, its own size (not the box of an exhausted, turned card) and whether it is turned. */
 interface Drawn {
@@ -79,9 +80,8 @@ export class CombatFx {
       height: `${seen.height}px`,
       zIndex: LAYER.charge,
       pointerEvents: 'none',
-      borderRadius: '6px',
-      background: seen.imageUrl ? `center / cover url("${seen.imageUrl}")` : 'var(--color-card-back)',
       boxShadow: '0 8px 24px rgb(0 0 0 / 45%)',
+      ...cardFaceStyle(seen.imageUrl),
     });
     over.host.append(copy);
     if (real) real.style.visibility = 'hidden';

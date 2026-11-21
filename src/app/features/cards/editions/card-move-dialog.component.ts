@@ -7,6 +7,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { EditionSlot, editionSlots } from '@data/editions/edition-slots';
 import { EditionsStore } from '@data/editions/editions.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
+import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
@@ -30,7 +31,7 @@ export interface CardMoveData {
  */
 @Component({
   selector: 'eras-card-move-dialog',
-  imports: [ModalComponent, ButtonComponent, AlertComponent],
+  imports: [ModalComponent, ButtonComponent, AlertComponent, CardImageComponent],
   template: `
     <eras-modal [title]="reprint ? 'Reimprimir carta' : 'Mover carta'" size="full" (closed)="ref.close()">
       <div class="layout">
@@ -39,7 +40,7 @@ export interface CardMoveData {
             <span class="label">{{ reprint ? 'Reimprimiendo' : 'Moviendo' }}</span>
             <div class="card-img">
               @if (imageOf(h); as src) {
-                <img [src]="src" alt="" />
+                <eras-card-image [src]="src" eager />
               } @else {
                 <span class="name">{{ h.cardName }}</span>
               }
@@ -83,13 +84,13 @@ export interface CardMoveData {
               >
                 @if (s.meta) {
                   @if (imageOf(s.meta, s.card); as src) {
-                    <img [src]="src" alt="" loading="lazy" />
+                    <eras-card-image [src]="src" />
                   } @else {
                     <span class="name">{{ s.meta.cardName }}</span>
                   }
                 } @else if (s.code === handOrigin() && chain().hand; as h) {
                   @if (imageOf(h); as src) {
-                    <img class="ghost" [src]="src" alt="" />
+                    <eras-card-image class="ghost" [src]="src" />
                   }
                 }
                 <span class="code">{{ s.code }}</span>
@@ -160,18 +161,16 @@ export interface CardMoveData {
       color: var(--color-text-muted);
     }
     .card-img {
-      aspect-ratio: 744 / 1039;
-      border-radius: var(--radius-md);
+      aspect-ratio: 63 / 88;
+      border-radius: var(--radius-card);
       overflow: hidden;
       background: var(--color-surface-muted);
       display: grid;
       place-items: center;
       box-shadow: 0 0 0 2px var(--color-primary);
     }
-    .card-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .card-img eras-card-image {
+      inline-size: 100%;
     }
     .from {
       font-size: var(--font-size-sm);
@@ -218,8 +217,8 @@ export interface CardMoveData {
     }
     .slot {
       position: relative;
-      aspect-ratio: 744 / 1039;
-      border-radius: var(--radius-sm);
+      aspect-ratio: 63 / 88;
+      border-radius: var(--radius-card);
       border: 1px solid var(--color-border);
       background: var(--color-surface-muted);
       padding: 0;
@@ -243,10 +242,8 @@ export interface CardMoveData {
     .slot:hover {
       box-shadow: 0 0 0 2px var(--color-primary);
     }
-    .slot img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .slot eras-card-image {
+      inline-size: 100%;
     }
     .slot .name {
       padding: var(--space-1);

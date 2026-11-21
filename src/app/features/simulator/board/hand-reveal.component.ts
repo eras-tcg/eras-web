@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { GameStore } from '@data/simulator/game.store';
+import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 
 /** A card revealed from a hand: it turns over, big, at the middle of the screen for a moment (the rival sees what it is). */
 @Component({
   selector: 'eras-hand-reveal',
+  imports: [CardFaceComponent],
   template: `
     @for (card of game.revealed(); track card.id) {
       <figure class="revealed" role="status" aria-live="polite">
         <span class="flip">
-          <span class="back" aria-hidden="true"></span>
+          <eras-card-face class="back" hidden />
           @if (card.imageUrl) {
-            <img [src]="card.imageUrl" [alt]="card.name ?? 'Carta revelada'" />
+            <eras-card-face [src]="card.imageUrl" [alt]="card.name ?? 'Carta revelada'" eager />
           }
         </span>
         <figcaption>Revela {{ card.name ?? 'una carta' }}</figcaption>
@@ -39,17 +41,13 @@ import { GameStore } from '@data/simulator/game.store';
       transform-style: preserve-3d;
       animation: turn 0.7s cubic-bezier(0.3, 0.8, 0.3, 1) 0.15s backwards;
     }
-    .flip img, .back {
+    .flip > eras-card-face {
       position: absolute;
       inset: 0;
-      inline-size: 100%;
-      block-size: 100%;
-      border-radius: var(--radius-md);
-      object-fit: cover;
       backface-visibility: hidden;
       box-shadow: 0 0 0 2px var(--color-sim-glow), 0 0 36px 8px color-mix(in srgb, var(--color-sim-glow) 45%, transparent);
     }
-    .back { background: var(--color-card-back); transform: rotateY(180deg); }
+    .back { transform: rotateY(180deg); }
     figcaption {
       padding: var(--space-1) var(--space-3);
       border-radius: var(--radius-pill);

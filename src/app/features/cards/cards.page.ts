@@ -5,7 +5,7 @@ import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { CardFilters, EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from '@data/cards/card-filters';
 import { CatalogCard } from '@data/cards/card.model';
-import { altArtsOf, cardImageUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
+import { altArtsOf, cardImageUrl, cardShineUrl, collapseByName, withAltArt } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { AltCopy, bestAlt, bestFinishAmong, shineOf } from '@data/collection/collection-rules';
 import { isTestEdition } from '@data/editions/edition-rules';
@@ -58,6 +58,8 @@ export class CardsPage {
   /** `?edition=E1` (bound by the router). */
   readonly edition = input<string>();
 
+  /** The card's shine image (an alternative art takes its foil's cut from it). */
+  protected readonly shineUrl = cardShineUrl;
   protected readonly store = inject(CardsStore);
   protected readonly editions = inject(EditionsStore);
   private readonly collection = inject(CollectionStore);

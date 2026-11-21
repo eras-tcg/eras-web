@@ -2,6 +2,9 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  // A card's corners, in proportion to its size (3.2% of its width): the same shape at any size;
+  // horizontal / vertical so the corner stays round on a 63:88 box
+  --radius-card: 3.2% / 2.29%;
   --radius-pill: 999px;
 
   --border-width: 1px;

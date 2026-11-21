@@ -1,3 +1,4 @@
+import { HoldPeekDirective } from './hold-peek';
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';
@@ -34,7 +35,7 @@ const TAP_MS = TIMING.tap;
  */
 @Component({
   selector: 'eras-sim-card',
-  imports: [GameCardComponent, CdkContextMenuTrigger, CdkConnectedOverlay, CdkOverlayOrigin, MenuComponent, MenuItemDirective, IconComponent, ChainMarksComponent],
+  imports: [GameCardComponent, CdkContextMenuTrigger, CdkConnectedOverlay, CdkOverlayOrigin, MenuComponent, MenuItemDirective, IconComponent, ChainMarksComponent, HoldPeekDirective],
   templateUrl: './sim-card.component.html',
   styleUrl: './sim-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,7 +58,7 @@ export class SimCardComponent {
     play: 'Jugar',
     activate: 'Activar efecto',
   };
-  protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'plus', ritual: 'layers', play: 'play', activate: 'sparkles' };
+  protected readonly actionIcons: Record<LegalAction, IconName> = { attack: 'sword', summon: 'card-play', ritual: 'card-special', play: 'card-play', activate: 'sparkles' };
   /** Slow effects of this card that can be activated now. */
   protected readonly myEffects = computed(() => this.game.rules().activatable.filter((e) => e.instanceId === this.slot().instanceId));
   /** The card's special summon: Ritual, Evolución, Ascenso or Materialización. */
@@ -68,8 +69,8 @@ export class SimCardComponent {
   protected readonly canActivate = computed(() => this.actions().includes('activate'));
   /** The toolbar opens above the card, or below when there is no room. */
   protected readonly toolbarPositions: ConnectedPosition[] = [
-    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
-    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 8 },
+    // Over the card itself, side by side
+    { originX: 'center', originY: 'center', overlayX: 'center', overlayY: 'center' },
   ];
   /** The card has several effects to activate: the toolbar lists them. */
   protected readonly effectsOpen = signal(false);
@@ -214,7 +215,7 @@ export class SimCardComponent {
 
   protected onDoubleClick(): void {
     this.game.selectedId.set(null);
-    if (this.zone() === 'field') this.dialogs.cardInfo(this.slot(), this.zone(), this.opponent());
+    if (this.zone() === 'field') this.dialogs.cardInfo(this.slot());
     // Flipping by hand: a test room or a site editor only (the server refuses it to anyone else online)
     else if (!this.opponent() && this.game.editorMode()) this.game.flipCard(this.slot().instanceId, this.zone());
   }
@@ -360,6 +361,9 @@ export class SimCardComponent {
       event.preventDefault();
       return;
     }
+    // Picked up: its actions go (they would float where it was), once the browser has taken the drag (changing the
+    // page during dragstart makes Chrome end it at once)
+    setTimeout(() => this.game.selectedId.set(null));
     this.drag.start(event, { instanceId: this.slot().instanceId, fromZone: this.zone(), attack: this.canAttack() });
   }
 

@@ -1,8 +1,8 @@
 {
-  "commit": "eebd8ca612d09ac9e70e827ee9d1de1d9641ace5",
+  "commit": "fb7d3322fcf98665fa988ba2d3c04ea27877c3b0",
   "dirty": false,
-  "subject": "Merge branch 'feat/ranked-bot-humano' into local/sin-drive-golpe",
-  "copiedAt": "2026-11-20T12:55:03.311Z",
+  "subject": "Merge branch 'feat/life-play-from-lives' into local/sin-drive-golpe",
+  "copiedAt": "2026-11-21T05:29:16.550Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

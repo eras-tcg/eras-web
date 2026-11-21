@@ -3,6 +3,7 @@ import { CardFlyer } from './card-flyer';
 import { CardPose, poseFrames, poseOf, stageOf } from './card-pose';
 import { TableMeasure } from './card-seen';
 import { LAYER, TIMING } from './timing';
+import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
 /** A card the turn's draw put in the hand: its place there (hidden until it lands) and its face. */
 export interface TurnDrawCard {
@@ -14,8 +15,6 @@ export interface TurnDrawCard {
 const BIG_DECK = 0.6;
 /** How far it leans back there, in degrees (lying down, as on a table seen from in front of it). */
 const BIG_DECK_LEAN = 45;
-/** A card's corner radius, of its width. */
-const CARD_RADIUS = 0.045;
 /** How far apart the cards of its volume are drawn, in pixels (at its big size). */
 const LAYER_STEP = 2;
 /** The card drawn shown face up (as big as the deck's cards), standing a little above the deck's middle: of its height. */
@@ -111,11 +110,10 @@ export class TurnDraw {
       transformOrigin: '50% 50%',
       transformStyle: 'preserve-3d',
     });
-    // Rounded as a card is at this size (the zone's card may be tiny, its corners at their smallest)
-    const radius = `${width * CARD_RADIUS}px`;
+    // Rounded as a card is (in proportion to its size: the copy keeps the card's own corners as it grows)
+    const radius = 'var(--radius-card)';
     const copy = top.cloneNode(true) as HTMLElement;
     copy.removeAttribute('hidden');
-    copy.querySelectorAll<HTMLElement>('*').forEach((e) => (e.style.borderRadius = radius));
     Object.assign(copy.style, {
       display: 'block',
       width: '100%',
@@ -255,17 +253,14 @@ export class TurnDraw {
   ): HTMLElement {
     const gap = width * 0.1;
     const left = view.innerWidth / 2 - (count * width + (count - 1) * gap) / 2 + i * (width + gap);
-    const place = this.document.createElement('img');
-    place.alt = '';
-    if (imageUrl) place.src = imageUrl;
+    const place = this.document.createElement('div');
     Object.assign(place.style, {
       position: 'fixed',
       left: `${left}px`,
       top: `${view.innerHeight / 2 - height / 2 - height * REVEAL_RISE}px`,
       width: `${width}px`,
       height: `${height}px`,
-      borderRadius: `${width * CARD_RADIUS}px`,
-      objectFit: 'cover',
+      ...cardFaceStyle(imageUrl),
       zIndex: LAYER.flight,
       pointerEvents: 'none',
     });

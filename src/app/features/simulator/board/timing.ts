@@ -18,7 +18,7 @@ export const TIMING = {
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */
-  shatter: 420,
+  shatter: 720,
   /** Cards flying between zones; a draw, one card after another; a card changing line; a summon and its burst. */
   flight: 650,
   draw: 550,

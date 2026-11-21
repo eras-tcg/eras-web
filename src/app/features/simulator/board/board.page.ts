@@ -114,6 +114,8 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     '(click)': 'game.selectedId.set(null)',
     '[class.fullscreen]': 'screen.fullView()',
     '[class.in-game]': 'inGame()',
+    // "Brillo de las cartas" off: the table's cards leave out their still shine (game-card)
+    '[class.no-card-shine]': 'prefs.shineOff()',
     '[class.arcane]': 'inGame() && prefs.arcane()',
   },
 })
@@ -146,8 +148,12 @@ export class BoardPage {
     const id = this.game.selectedId();
     if (!id || this.game.myPrompt()) return null;
     for (const opponent of [false, true]) {
-      const slot = (opponent ? this.game.opponentState() : this.game.myState())?.field.find((c) => c.instanceId === id);
-      if (slot) return !slot.faceDown || !opponent || this.game.seeAll() ? slot : null;
+      const player = opponent ? this.game.opponentState() : this.game.myState();
+      // On the table or in a hand (the rival's only when shown)
+      const slot = player?.field.find((c) => c.instanceId === id) ?? player?.hand.find((c) => c.instanceId === id);
+      if (!slot) continue;
+      const hidden = opponent ? slot.faceDown || player?.hand.includes(slot) : false;
+      return !hidden || this.game.seeAll() ? slot : null;
     }
     return null;
   });

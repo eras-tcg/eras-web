@@ -4,6 +4,7 @@ import { handPlace, lifePlace } from './board-dom';
 import { CardFlyer } from './card-flyer';
 import { Seen, TableMeasure } from './card-seen';
 import { LAYER, TIMING } from './timing';
+import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
 /**
  * The life lost by direct damage: before its update is shown it turns face up where it lies on its pile; when the
@@ -19,12 +20,19 @@ export class LifeFlights {
   private readonly parked = new Map<string, { seen: Seen; element: HTMLElement }>();
   /** Lives that flew this update (leaving their place on top of the lives): the other flights leave them alone. */
   readonly flown = new Set<string>();
+  /** Lives played onto the field this update (a revealed utility or structure): where each waited, face up. */
+  private readonly played = new Map<string, Seen>();
 
   constructor(
     private readonly document: Document,
     private readonly measure: TableMeasure,
     private readonly flyer: CardFlyer,
   ) {}
+
+  /** Where a life played onto the field in this update comes from (the top of its lives, face up); null for any other. */
+  fieldFrom(id: string): Seen | null {
+    return this.played.get(id) ?? null;
+  }
 
   /** A life waits on top of its pile: it does not fly with the update. */
   isParked(id: string): boolean {
@@ -45,8 +53,7 @@ export class LifeFlights {
       position: 'absolute',
       inset: '0',
       zIndex: '2',
-      borderRadius: '6px',
-      background: `center / cover url("${imageUrl}")`,
+      ...cardFaceStyle(imageUrl),
       boxShadow: '0 0 0 2px var(--color-sim-rival), 0 0 16px 4px color-mix(in srgb, var(--color-sim-rival) 55%, transparent)',
       pointerEvents: 'none',
     });
@@ -66,11 +73,14 @@ export class LifeFlights {
     const prompt = state.prompt;
     // Reforzar, or play a revealed utility or structure: for its owner and for the rival alike (the server shows it to both)
     const id = prompt?.purpose === 'REINFORCE' || prompt?.purpose === 'LIFE_PLAY' ? prompt.subjectId : null;
-    const seen = id ? this.lifeSeen.get(id) : undefined;
+    // Where it turned face up; else (that was not drawn) the top of its owner's lives, face up
+    const seen = id ? (this.lifeSeen.get(id) ?? this.lifeTop(state, id)) : undefined;
     if (id && seen && !this.parked.has(id)) {
       const { element, inner } = this.flyer.still(seen);
       inner.style.filter = 'drop-shadow(0 0 10px color-mix(in srgb, var(--color-sim-rival) 70%, transparent))';
       element.style.zIndex = LAYER.parkedLife;
+      // The card the choice is about is this one, on its lives (PromptSpotlight lights it here, not in the hand)
+      element.dataset['parkedLife'] = id;
       this.parked.set(id, { seen, element });
     }
     this.lifeSeen.clear();
@@ -81,14 +91,31 @@ export class LifeFlights {
     }
   }
 
+  /** The top of the lives of the player whose hand holds `id`, showing that card face up. */
+  private lifeTop(state: GameState, id: string): Seen | undefined {
+    const owner = Object.values(state.players ?? {}).find((p) => p.hand.some((c) => c.instanceId === id));
+    const top = owner ? this.measure.pile(`${owner.userId}:lifeStack`) : null;
+    const imageUrl = findSlot(state, id)?.imageUrl ?? null;
+    return top && imageUrl ? { ...top, imageUrl } : undefined;
+  }
+
   /** Answered: a parked life goes from the top of its lives to where it is now (their bottom, or the hand). */
   unpark(state: GameState, me: string | undefined): void {
     this.flown.clear();
+    this.played.clear();
     for (const [id, { seen, element }] of [...this.parked]) {
       if (state.prompt?.subjectId === id) continue;
       this.parked.delete(id);
       const inHand = handPlace(this.document, id);
       if (inHand) inHand.style.visibility = '';
+      // Played onto the field: it flies there from the top of its lives, where it waited (not from the hand, where the
+      // state kept it meanwhile), with the summons (fieldFrom)
+      if (Object.values(state.players ?? {}).some((p) => p.field.some((c) => c.instanceId === id))) {
+        element.remove();
+        this.played.set(id, seen);
+        this.flown.add(id);
+        continue;
+      }
       const to = this.measure.destination(state, id, me);
       element.remove();
       if (!to) continue;

@@ -22,7 +22,8 @@ import { ScreenLink } from '@core/navigation/screens';
         <div class="actions"><ng-content select="[page-actions]" /></div>
       </eras-screen-bar>
     }
-    <div class="content"><ng-content /></div>
+    <!-- The top row stays: only this area scrolls -->
+    <div class="scroll"><div class="content"><ng-content /></div></div>
   `,
   styleUrl: './page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +33,7 @@ import { ScreenLink } from '@core/navigation/screens';
 export class PageComponent {
   readonly title = input.required<string>();
   readonly width = input<'narrow' | 'default' | 'wide'>('default');
-  /** Exactly one screen high (below the header); the content fills the rest instead of scrolling the page. */
+  /** The content fills the rest of the screen instead of scrolling (the page is always one screen high). */
   readonly fill = input(false, { transform: booleanAttribute });
   /** Without the top row: the content alone takes the screen. */
   readonly immersive = input(false, { transform: booleanAttribute });

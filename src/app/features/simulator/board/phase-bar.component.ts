@@ -175,11 +175,7 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         gap: var(--space-1);
         min-inline-size: 100%;
         margin: 0;
-        padding: var(--space-1);
-        border-radius: var(--radius-lg);
-        background: color-mix(in srgb, var(--color-surface) 80%, transparent);
-        backdrop-filter: blur(8px);
-        box-shadow: var(--shadow-lg);
+        padding: 0;
         list-style: none;
         transform-origin: bottom right;
         animation: phases-open var(--duration-base, 200ms) var(--easing-standard, ease) both;
@@ -188,11 +184,13 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         animation: phase-rise var(--duration-base, 200ms) var(--easing-standard, ease) both;
         animation-delay: calc(var(--i) * 45ms);
       }
+      // Each phase a button on its own (no panel around them): the see-through pill of the phase button
       .choice {
         inline-size: 100%;
         padding: 0.25rem var(--space-3);
-        border: 1px solid transparent;
-        background: none;
+        border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+        background: var(--color-surface);
+        box-shadow: 0 2px 10px rgb(0 0 0 / 35%);
         color: var(--color-text-muted);
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-bold);
@@ -211,12 +209,13 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       .choice.current,
       .choice.current.mine {
         border-color: transparent;
-        background: color-mix(in srgb, var(--color-sim-rival) 16%, transparent);
+        background: color-mix(in srgb, var(--color-sim-rival) 16%, var(--color-surface));
         box-shadow: none;
         color: var(--color-text);
       }
-      .choice.current.mine { background: color-mix(in srgb, var(--color-sim-ally) 16%, transparent); }
-      .choice:disabled:not(.current) { opacity: 0.5; }
+      .choice.current.mine { background: color-mix(in srgb, var(--color-sim-ally) 16%, var(--color-surface)); }
+      // One you cannot go to: its pill stays solid over the table, only its name fades
+      .choice:disabled:not(.current) { color: color-mix(in srgb, var(--color-text-muted) 55%, transparent); }
     }
 
     @keyframes phases-open {
@@ -252,11 +251,6 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       font-weight: var(--font-weight-regular);
       box-shadow: 0 0 10px color-mix(in srgb, var(--arcane-gold) 30%, transparent);
     }
-    :host-context(.arcane) .choices {
-      background: linear-gradient(180deg, #23272f, #14171d);
-      backdrop-filter: none;
-      box-shadow: 0 0 0 1px var(--arcane-gold-soft), var(--shadow-lg);
-    }
     @media all {
       :host-context(.arcane) .current-phase,
       :host-context(.arcane) .choice {
@@ -265,14 +259,15 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
         letter-spacing: 0.04em;
       }
     }
-    :host-context(.arcane) .choice { border-color: transparent; background: none; box-shadow: none; }
+    /* Each phase a plaque of its own (no panel around them) */
+    :host-context(.arcane) .choice { border-color: var(--arcane-gold-soft); box-shadow: 0 2px 10px rgb(0 0 0 / 45%); }
     :host-context(.arcane) .choice:not(:disabled) { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
     :host-context(.arcane) .choice.current,
     :host-context(.arcane) .choice.current.mine {
-      border-color: transparent;
-      background: color-mix(in srgb, var(--arcane-gold) 18%, transparent);
+      border-color: var(--arcane-gold-soft);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--arcane-gold) 22%, #2a2620), #17140f);
       color: var(--arcane-gold-light);
-      box-shadow: none;
+      box-shadow: 0 2px 10px rgb(0 0 0 / 45%);
     }
 
     /* Wide screens: the phase button and its phases, a size bigger */

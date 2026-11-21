@@ -34,12 +34,11 @@
   inline-size: var(--game-card-width);
   block-size: calc(var(--card-height) * 0.2);
   overflow: hidden;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  background: var(--color-surface-muted);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 35%);
+  // Its shadow follows the card's own corners (the strip is cut straight, the card below it is rounded)
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 35%));
 }
-.resource.name-only { block-size: calc(var(--card-height) * 0.075); border-radius: 0; }
-.resource img { display: block; inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
+.resource.name-only { block-size: calc(var(--card-height) * 0.075); }
+.resource eras-card-face { inline-size: 100%; margin-block-start: calc(var(--card-height) * -0.8); }
 .resource span { display: block; padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .effects { display: grid; gap: var(--space-3); min-inline-size: 0; }
 .unprogrammed {

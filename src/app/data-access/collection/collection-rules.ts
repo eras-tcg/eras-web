@@ -38,6 +38,27 @@ export function ownedCount(collection: Collection | null, cardId: string): numbe
   return copies ? Object.values(copies).reduce<number>((sum, n) => sum + (n ?? 0), 0) : 0;
 }
 
+/** How many of some cards the player has at least one copy of (any finish or art). */
+export function ownedCards(collection: Collection | null, cardIds: readonly string[]): number {
+  return cardIds.filter((id) => ownedCount(collection, id) > 0).length;
+}
+
+/**
+ * A set of cards in the collection (an edition): complete when the player owns every card; its shine, the finest
+ * finish (foil or prism) they have at least one copy of, of any art, for every card (null for plain or incomplete).
+ */
+export function setCompletion(
+  collection: Collection | null,
+  cardIds: readonly string[],
+): { complete: boolean; shine: 'foil' | 'prism' | null } {
+  const complete = cardIds.length > 0 && ownedCards(collection, cardIds) === cardIds.length;
+  if (!complete) return { complete, shine: null };
+  const has = (id: string, finish: Finish) =>
+    Object.entries(collection?.cards[id] ?? {}).some(([key, n]) => (n ?? 0) > 0 && copyFinish(key) === finish);
+  const shine = (['prism', 'foil'] as const).find((f) => cardIds.every((id) => has(id, f))) ?? null;
+  return { complete, shine };
+}
+
 /** A copy with one of the card's alternative arts: the art and its finish. */
 export interface AltCopy {
   art: string;

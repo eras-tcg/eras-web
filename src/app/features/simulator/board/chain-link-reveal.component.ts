@@ -3,7 +3,7 @@ import { CardsStore } from '@data/cards/cards.store';
 import { playsTimeline } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardSlot, GameState, PendingEffect } from '@data/simulator/simulator.model';
-import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
+import { CardWithSourceComponent } from '@ui/domain/card-with-source/card-with-source.component';
 import { BoardAnimations } from './board-animations';
 import { TIMING } from './timing';
 import { BoardChoreography } from './board-choreography';
@@ -97,7 +97,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
  */
 @Component({
   selector: 'eras-chain-link-reveal',
-  imports: [GameCardComponent],
+  imports: [CardWithSourceComponent],
   template: `
     @for (s of shown(); track s.id) {
       @if (s.kind === 'resolution') {
@@ -123,10 +123,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
             }
             @if (s.leaving; as l) {
               <span class="card leaving" [class.rival]="!l.mine" aria-hidden="true" [style.--x]="l.x" [style.--y]="l.y" [style.--tilt]="l.tilt + 'deg'">
-                <eras-game-card [imageUrl]="l.imageUrl" [name]="l.name" />
-                @if (l.sourceName) {
-                  <span class="source"><eras-game-card [imageUrl]="l.sourceImage" [name]="l.sourceName" /></span>
-                }
+                <eras-card-with-source [imageUrl]="l.imageUrl" [name]="l.name" [sourceName]="l.sourceName" [sourceImage]="l.sourceImage" sourceAt="start" />
                 <span class="number">{{ l.link }}</span>
               </span>
             }
@@ -143,10 +140,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
                 [style.--from-y]="c.fromY"
                 [style.--from-tilt]="c.fromTilt + 'deg'"
               >
-                <eras-game-card [imageUrl]="c.imageUrl" [name]="c.name" />
-                @if (c.sourceName) {
-                  <span class="source" [title]="'Heredado de ' + c.sourceName"><eras-game-card [imageUrl]="c.sourceImage" [name]="c.sourceName" /></span>
-                }
+                <eras-card-with-source [imageUrl]="c.imageUrl" [name]="c.name" [sourceName]="c.sourceName" [sourceImage]="c.sourceImage" sourceAt="start" />
                 <span class="number">{{ c.link }}</span>
               </span>
             }
@@ -206,10 +200,10 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       animation: shift 0.45s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
     }
     .card.rival { --link-cyan: var(--color-sim-link-rival); }
-    .card > eras-game-card { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
+    .card > eras-card-with-source { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
     /* The new link lands from above and larger, with a flash, after the others made room */
     .card.new { z-index: 3; filter: none; animation: land 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.25s backwards; }
-    .card.new > eras-game-card { box-shadow: 0 0 0 2px var(--link-cyan), 0 0 26px 6px color-mix(in srgb, var(--link-cyan) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
+    .card.new > eras-card-with-source { box-shadow: 0 0 0 2px var(--link-cyan), 0 0 26px 6px color-mix(in srgb, var(--link-cyan) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
     /* The oldest of four goes up and away */
     .card.leaving { z-index: 1; animation: leave 0.45s ease forwards; }
     /* A chain from one card's center to the next: steel links in diagonal, behind the cards */
@@ -228,16 +222,8 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     }
     /* The new chain runs out from the card before to the new one */
     .chain.new { animation: chain-out 0.4s ease 0.6s backwards; }
-    /* The Recurso of an inherited effect, small at the lower left corner (the number is at the right) */
-    .source {
-      --game-card-width: calc(var(--u) * 4.5);
-      position: absolute;
-      inset-block-end: calc(var(--u) * -0.6);
-      inset-inline-start: calc(var(--u) * -1.2);
-      display: block;
-      border-radius: var(--radius-sm);
-      box-shadow: 0 0 0 2px #08141f, 0 4px 10px rgb(0 0 0 / 55%);
-    }
+    /* The Recurso of an inherited effect: small at the lower left corner (the number is at the right) */
+    .card > eras-card-with-source { --source-ring: #08141f; }
     .number {
       position: absolute;
       inset-block-end: -0.55em;
@@ -253,9 +239,9 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     .caption strong { color: var(--link-cyan); font: 700 var(--font-size-xl, 1.5rem)/1.1 var(--font-family-display); letter-spacing: 0.04em; }
     .caption span { font-size: var(--font-size-sm); }
     /* Resolving: the cards stay put; the link resolving glows, then breaks away and its chain snaps */
-    .resolve .card, .resolve .card.new, .resolve .card > eras-game-card, .resolve .chain, .resolve .number { animation: none; }
+    .resolve .card, .resolve .card.new, .resolve .card > eras-card-with-source, .resolve .chain, .resolve .number { animation: none; }
     .resolve .card.resolving { z-index: 3; filter: none; animation: resolve-out 1.3s ease 0.55s forwards; }
-    .resolve .card.resolving > eras-game-card { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-cyan); animation: glow 0.55s ease-in-out alternate 2; }
+    .resolve .card.resolving > eras-card-with-source { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-cyan); animation: glow 0.55s ease-in-out alternate 2; }
     .resolve .chain.new { animation: snap 0.45s ease 0.8s forwards; }
     @keyframes resolve-out {
       25% { scale: 1.08; filter: brightness(1.5); }
@@ -294,7 +280,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     @keyframes number-in { from { opacity: 0; transform: scale(2.2); } }
     @keyframes caption-in { from { opacity: 0; transform: translateY(0.75rem); } }
     @media (prefers-reduced-motion: reduce) {
-      .reveal, .card, .card > eras-game-card, .chain, .number, .caption, .band { animation: none; }
+      .reveal, .card, .card > eras-card-with-source, .chain, .number, .caption, .band { animation: none; }
       .card.leaving { display: none; }
     }
   `,

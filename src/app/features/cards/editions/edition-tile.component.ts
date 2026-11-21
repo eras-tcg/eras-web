@@ -4,10 +4,12 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
 
 /**
  * An edition as a card-shaped tile, as in the shop: its cover behind (placed by its framing), its code, name and
- * an optional line at the bottom over a scrim.
+ * an optional line at the bottom over a scrim. `foil` makes the cover shine as a foil or prism card does; `dimmed`
+ * puts it in grey.
  */
 @Component({
   selector: 'eras-edition-tile',
+  host: { '[class.dimmed]': 'dimmed()' },
   template: `
     @if (image()) {
       <img
@@ -19,6 +21,9 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
         [style.transform]="place().transform"
       />
     }
+    @if (foil()) {
+      <span class="shine" [class.prism]="foil() === 'prism'"></span>
+    }
     <span class="info">
       <span class="code">{{ code() }}</span>
       <span class="title">{{ name() || code() }}</span>
@@ -28,6 +33,8 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
     </span>
   `,
   styles: `
+    @use 'mixins/foil';
+
     :host {
       position: relative;
       display: flex;
@@ -46,6 +53,29 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
       inline-size: 100%;
       block-size: 100%;
       object-fit: cover;
+    }
+    :host(.dimmed) img {
+      filter: grayscale(1);
+    }
+    /* The shine over the cover, under the scrim and the text (its own layer: the foil blends with the cover) */
+    .shine {
+      position: absolute;
+      inset: 0;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+    .shine::after {
+      @include foil.rainbow($blend: normal);
+    }
+    .shine.prism {
+      mix-blend-mode: normal;
+      @include foil.scaled;
+    }
+    .shine.prism::before {
+      @include foil.glitter-dots;
+    }
+    .shine.prism::after {
+      @include foil.glitter-light;
     }
     :host::after {
       position: absolute;
@@ -90,6 +120,8 @@ export class EditionTileComponent {
   readonly code = input.required<string>();
   readonly name = input<string | null | undefined>(null);
   readonly detail = input<string | null>(null);
+  readonly foil = input<'foil' | 'prism' | null>(null);
+  readonly dimmed = input(false);
 
   protected readonly place = computed(() => coverFrameStyle(this.frame()));
 }

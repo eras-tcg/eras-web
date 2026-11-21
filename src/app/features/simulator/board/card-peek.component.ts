@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, booleanAttribute, inject, input } from '@angular/core';
 import { CardsStore } from '@data/cards/cards.store';
 import { GameStore } from '@data/simulator/game.store';
-import { CardSlot, ZONES } from '@data/simulator/simulator.model';
+import { CardSlot } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
-import { CardInfoData, CardInfoDialogComponent } from './dialogs/card-info-dialog.component';
 import { holdToPeek } from './hold-peek';
 
 /**
@@ -61,22 +60,19 @@ export class CardPeekComponent {
   }
 }
 
-/** Opens a card in detail: as it is now on the table (when it is in a zone other than the deck), else from the catalog. */
-export function openCardDetail(game: GameStore, cards: CardsStore, modal: ModalService, c: CardSlot): void {
-  for (const opponent of [false, true]) {
-    const player = opponent ? game.opponentState() : game.myState();
-    const zone = ZONES.find((z) => player?.[z].some((x) => x.instanceId === c.instanceId));
-    if (zone && zone !== 'deck') {
-      const data: CardInfoData = { instanceId: c.instanceId, zone, opponent, readonly: true };
-      modal.open(CardInfoDialogComponent, { data });
-      return;
-    }
-  }
-  openCatalogCard(cards, modal, c.cardId);
+/**
+ * Opens a card of the game in detail: the card itself as in the catalog (nothing of the game: its place, Materiales or
+ * modifiers show in the panel beside the board), in the finish of this copy, read only.
+ */
+export function openCardDetail(_game: GameStore, cards: CardsStore, modal: ModalService, c: CardSlot): void {
+  openCatalogCard(cards, modal, c.cardId, c.finish ?? null);
 }
 
-/** Opens a card of the game as in the cards catalog (nothing when the catalog does not have it). */
-export function openCatalogCard(cards: CardsStore, modal: ModalService, cardId: string | null | undefined): void {
+/**
+ * Opens a card of the game as in the cards catalog, read only (no administration, even for editors), shining in
+ * `finish` (the copy's). Nothing when the catalog does not have it.
+ */
+export function openCatalogCard(cards: CardsStore, modal: ModalService, cardId: string | null | undefined, finish: 'foil' | 'prism' | null = null): void {
   const catalog = cards.cards().find((x) => x.id === cardId);
-  if (catalog) openCardDetailDialog(modal, [catalog]);
+  if (catalog) openCardDetailDialog(modal, [catalog], 0, { copy: { foil: finish }, readonly: true });
 }

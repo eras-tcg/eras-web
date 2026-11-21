@@ -1,3 +1,4 @@
+import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { EditModeService } from '@core/auth/edit-mode.service';
@@ -34,7 +35,7 @@ const ODDS_FIELDS: { key: keyof ShopOdds; label: string }[] = [
  */
 @Component({
   selector: 'eras-pack-odds-dialog',
-  imports: [ModalComponent, AlertComponent, ButtonComponent],
+  imports: [ModalComponent, AlertComponent, ButtonComponent, CardImageComponent],
   template: `
     <eras-modal title="Probabilidades" [subtitle]="edition.editionName ?? edition.editionId" size="lg" (closed)="ref.close()">
       <section class="block">
@@ -128,7 +129,7 @@ const ODDS_FIELDS: { key: keyof ShopOdds; label: string }[] = [
                   @for (row of alts(); track row.card.id + row.art.id) {
                     <tr>
                       <th scope="row">
-                        <span class="alt-card"><img [src]="row.art.url" alt="" loading="lazy" /> {{ row.card.name }}</span>
+                        <span class="alt-card"><eras-card-image [src]="row.art.url" noShine /> {{ row.card.name }}</span>
                       </th>
                       <td>{{ row.name }}</td>
                       <td class="num strong">{{ percent(row.odds) }}</td>
@@ -220,11 +221,9 @@ const ODDS_FIELDS: { key: keyof ShopOdds; label: string }[] = [
       align-items: center;
       gap: var(--space-2);
     }
-    .alt-card img {
+    .alt-card eras-card-image {
+      flex: none;
       inline-size: 1.75rem;
-      aspect-ratio: 63 / 88;
-      border-radius: var(--radius-sm);
-      object-fit: cover;
     }
     .editor {
       padding-block-start: var(--space-4);

@@ -28,6 +28,8 @@ import { LogDialogComponent } from './dialogs/log-dialog.component';
 import { ZoneDialogComponent, ZoneDialogData } from './dialogs/zone-dialog.component';
 import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { GameStore } from '@data/simulator/game.store';
+import { CardsStore } from '@data/cards/cards.store';
+import { openCatalogCard } from './card-peek.component';
 
 /** Opens the board's dialogs (one instance per board page). */
 @Injectable()
@@ -35,17 +37,13 @@ export class BoardDialogs {
   private readonly modal = inject(ModalService);
   private readonly sheet = inject(SheetState);
   private readonly game = inject(GameStore);
+  private readonly cards = inject(CardsStore);
   /** The board's injector: dialogs that use board services (BoardEffects) are created under it. */
   private readonly injector = inject(Injector);
 
-  cardInfo(slot: CardSlot, zone: ZoneName, opponent: boolean): void {
-    const data: CardInfoData = {
-      instanceId: slot.instanceId,
-      zone,
-      opponent,
-      readonly: this.sheet.lowered() || !this.game.editorMode(),
-    };
-    this.modal.open(CardInfoDialogComponent, { data });
+  /** A card of the table in detail: the card as in the catalog, in its copy's finish, read only (see openCardDetail). */
+  cardInfo(slot: CardSlot): void {
+    openCatalogCard(this.cards, this.modal, slot.cardId, slot.finish ?? null);
   }
 
   detach(slot: CardSlot, only: AttachmentType, opponent: boolean): void {

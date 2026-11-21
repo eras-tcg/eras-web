@@ -16,7 +16,7 @@
   cursor: pointer;
 }
 :host { position: relative; display: inline-block; }
-eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
+eras-game-card.selected { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-card); }
 /* Exhausting a card of the field is seen: it turns sideways in TAP_MS (sim-card.component.ts) before its attack is marked */
 :host eras-game-card { transition-duration: var(--sim-tap-turn, 300ms); }
 /* Exhausted: its place widens first (its neighbors make room), then it turns into it */
@@ -73,16 +73,13 @@ eras-game-card.can-activate { box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 1
 eras-game-card.can-play.can-activate {
   box-shadow: 0 0 0 2px var(--color-sim-gold), 0 0 0 4px var(--color-sim-ally), 0 0 16px 4px color-mix(in srgb, var(--color-sim-gold) 60%, transparent);
 }
+// The card's actions: buttons on their own over the card, side by side, no panel around them
 .actions {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-lg, var(--shadow-md));
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
 }
 .action {
   display: inline-flex;
@@ -100,11 +97,37 @@ eras-game-card.can-play.can-activate {
   cursor: pointer;
 }
 .action eras-icon { inline-size: 1.1rem; block-size: 1.1rem; }
+// An action that is its icon alone (its name is its label and tooltip): a round button
+.action.icon {
+  justify-content: center;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  padding: 0;
+  border-width: 2px;
+}
+.action.icon eras-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 60%));
+}
+// Over the card it stands out with a shadow; its icon takes its ring's color
+.action.icon {
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 55%), 0 4px 12px rgb(0 0 0 / 65%);
+}
+.action.icon.play { color: var(--color-sim-ally); }
+.action.icon.special { color: var(--color-sim-special); }
+.action.icon.activate { color: var(--color-sim-gold); }
 .action.play { border-color: var(--color-sim-ally); }
+.action.special { border-color: var(--color-sim-special); }
 .action.effect, .action.activate { border-color: var(--color-sim-gold); }
-.action:hover { border-color: var(--color-primary); }
 .action.attack { border-color: var(--color-danger); color: var(--color-danger); }
 .action.effect { border-color: var(--color-primary); }
+// Hovered, a button lights up in its own color (its ring and icon's), never another one
+.action.icon:hover { border-color: currentColor; }
+.action.icon:hover {
+  background: color-mix(in srgb, currentColor 20%, var(--color-surface));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 55%), 0 0 14px 3px color-mix(in srgb, currentColor 55%, transparent), 0 4px 12px rgb(0 0 0 / 65%);
+}
 .action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
 eras-game-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 

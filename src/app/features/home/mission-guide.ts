@@ -31,7 +31,7 @@ const GUIDES: Record<string, MissionGuide> = {
     points: [
       'Busca por nombre y filtra por edición, color, tipo o rareza.',
       'Abre una carta para ver su arte en grande, su texto y sus efectos.',
-      'Activa «Mostrar colección» para ver cuáles ya tienes y en qué acabado.',
+      'Activa «Mostrar obtenidas» para ver cuáles ya tienes y en qué acabado.',
     ],
     goal: 'Explora el catálogo para completar la misión.',
   },

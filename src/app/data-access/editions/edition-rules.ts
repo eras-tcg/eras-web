@@ -19,8 +19,18 @@ export function compareEditionIds(a: string, b: string): number {
   return parseFloat(a.replace(/[^0-9.]/g, '')) - parseFloat(b.replace(/[^0-9.]/g, ''));
 }
 
+/**
+ * Editions by release date (ST1–4, E1…E1.3, ST5–8, E2…); an edition without a date goes after the dated ones, by
+ * compareEditionIds, and the testing editions last.
+ */
 export function sortEditions(editions: readonly Edition[]): Edition[] {
-  return [...editions].sort((x, y) => compareEditionIds(x.editionId, y.editionId));
+  return [...editions].sort((x, y) => {
+    const xTest = isTestEdition(x.editionId);
+    if (xTest !== isTestEdition(y.editionId)) return xTest ? 1 : -1;
+    const xDate = x.releaseDate || '￿';
+    const yDate = y.releaseDate || '￿';
+    return xDate.localeCompare(yDate) || compareEditionIds(x.editionId, y.editionId);
+  });
 }
 
 export function probabilitySum(entry: BoxEntry): number {

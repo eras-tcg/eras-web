@@ -54,6 +54,8 @@
   --color-sim-ally: var(--color-card-b);
   --color-sim-rival: var(--color-card-r);
   --color-sim-effect: var(--color-card-p);
+  // A special summon (ritual, materialización…): set apart from playing or summoning a card
+  --color-sim-special: var(--color-card-p);
   --color-sim-gold: #f5b301;
   /* The chain and the effects' targets: whose they are (cyan: mine, pink: the rival's) */
   --color-sim-link-mine: #38bdf8;

@@ -4,8 +4,11 @@ import { Bevel, PieceStyle, PieceTable } from './spec.model';
 import { SvgRenderer, svgEl } from './svg-render';
 import { betweenCopiesMark } from '../effect-text';
 
-/** Effect text sizes tried in order until the text fits its box (points at 300 dpi). */
-export const EFFECT_SIZES = [7, 6.5, 6, 5.5, 5];
+/**
+ * Effect text sizes tried in order until the text fits its box (points at 300 dpi). The last ones are a last resort for
+ * a long text: smaller still, rather than over the box's edge.
+ */
+export const EFFECT_SIZES = [7, 6.5, 6, 5.5, 5, 4.6, 4.2, 3.8];
 export const ptToPx = (pt: number) => (pt * 300) / 72;
 const FONT = '"ERAS Arial"';
 export const effectFont = (px: number, italic = false) =>
@@ -71,10 +74,25 @@ export function keywordReminder(
 }
 
 export class EffectTokens {
+  /**
+   * The keywords already explained on this card (keyword and value): a keyword explained in an upper box (its own
+   * effects) is not explained again in a lower one (its inherited effects). One instance per card.
+   */
+  private readonly explained = new Set<string>();
+
   constructor(
     private readonly pieces: PieceTable,
     private readonly ref: Record<string, KeywordEffectRef | undefined>,
   ) {}
+
+  /** The reminder of a keyword the first time the card shows it; null when it has none or it was given already. */
+  private reminder(keyword: string, value: string | number | null | undefined): string | null {
+    const key = `${keyword.trim().toLowerCase()}|${value ?? ''}`;
+    if (this.explained.has(key)) return null;
+    const note = keywordReminder(keyword, value, this.ref);
+    if (note) this.explained.add(key);
+    return note;
+  }
 
   /** The momentos of the symbol sheet as printed ("En Destrucción"), longest first. */
   private get momentos(): string[] {
@@ -104,7 +122,7 @@ export class EffectTokens {
     const out: Token[] = [];
     if (!k.keyword) return out;
     out.push({ t: 'piece', kind: 'keyword', label: fill(k.keyword, k.number) });
-    const note = keywordReminder(k.keyword, k.number, this.ref);
+    const note = this.reminder(k.keyword, k.number);
     if (note) {
       out.push({ t: 'space' });
       words(`(${note})`, true, out);
@@ -116,15 +134,21 @@ export class EffectTokens {
     const out: Token[] = [];
     const usage = USAGE[e.ussageLimit ?? ''];
     if (usage?.ultimate) out.push({ t: 'ultimate' });
-    const head: Token[] = (e.instance ?? '')
-      .split('>')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((label) => ({ t: 'piece', kind: 'timing', label }) as Token);
+    // `A>B` are chained momentos, drawn touching (Turno Aliado + En Mano, as in the printed cards); `A><B` are two
+    // separate momentos (En Mano, En Tributos), drawn side by side with a space between them.
+    const head: Token[] = [];
+    const separate = new Set<number>();
+    for (const group of (e.instance ?? '').split('><')) {
+      const labels = group
+        .split('>')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (labels.length && head.length) separate.add(head.length);
+      for (const label of labels) head.push({ t: 'piece', kind: 'timing', label } as Token);
+    }
     if (usage?.piece) head.push({ t: 'piece', kind: 'condition', label: usage.piece, style: usage.style });
     head.forEach((p, i) => {
-      // Consecutive momentos touch (Turno Aliado + En Mano), as in the printed cards.
-      const joined = p.t === 'piece' && p.kind === 'timing' && i > 0;
+      const joined = p.t === 'piece' && p.kind === 'timing' && i > 0 && !separate.has(i);
       if (i && !joined) out.push({ t: 'space' });
       out.push(p);
     });
@@ -157,7 +181,7 @@ export class EffectTokens {
         found.push(...rich(b.resolution, out, this.momentos));
       }
       for (const f of found) {
-        const note = keywordReminder(f.keyword, f.value, this.ref);
+        const note = this.reminder(f.keyword, f.value);
         if (note) {
           out.push({ t: 'space' });
           words(`(${f.label}: ${note})`, true, out);
@@ -342,9 +366,11 @@ export function layoutFit(
   width: number,
   height: number,
   measure: Measure,
+  maxPt = EFFECT_SIZES[0],
 ): EffectLayout {
-  let lay = layoutAt(tokens, width, height, EFFECT_SIZES[0], measure);
-  for (const pt of EFFECT_SIZES.slice(1)) {
+  const sizes = EFFECT_SIZES.filter((pt) => pt <= maxPt);
+  let lay = layoutAt(tokens, width, height, sizes[0] ?? EFFECT_SIZES.at(-1)!, measure);
+  for (const pt of sizes.slice(1)) {
     if (lay.fits) break;
     lay = layoutAt(tokens, width, height, pt, measure);
   }
@@ -398,11 +424,12 @@ function drawSlot(
   color: string,
   pieces: PieceTable,
   measure: Measure,
+  maxPt = EFFECT_SIZES[0],
 ): EffectLayout {
   const g = svgEl('g', { 'data-name': `effect:${slot.name}` }, r.svg);
   // A box with an ultimate effect ends with its reminder, at the bottom right: the effects fit above it
   const ultimate = tokens.some((t) => t.t === 'ultimate');
-  const lay = layoutFit(tokens, slot.box.w, slot.box.h - (ultimate ? ULTIMATE_NOTE_ROOM : 0), measure);
+  const lay = layoutFit(tokens, slot.box.w, slot.box.h - (ultimate ? ULTIMATE_NOTE_ROOM : 0), measure, maxPt);
   const px = lay.px;
   let y = slot.box.y;
   // Inside an ultimate effect (between its heading and its closing bar) its momento is the ultimate's own, in purple

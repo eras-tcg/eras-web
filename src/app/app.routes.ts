@@ -60,6 +60,22 @@ export const routes: Routes = [
         title: 'Ediciones · ERAS',
         loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
       },
+      // The player's collection: the editions with how many of their cards they own, and one edition's cards in grey
+      // when missing
+      {
+        path: 'cards/collection',
+        title: 'Colección · ERAS',
+        canMatch: [authGuard],
+        data: { collection: true },
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
+      {
+        path: 'cards/collection/:editionId',
+        title: 'Colección · ERAS',
+        canMatch: [authGuard],
+        data: { collection: true },
+        loadComponent: () => import('@features/cards/editions/card-editions.page').then((m) => m.CardEditionsPage),
+      },
       {
         path: 'cards/editions/:editionId',
         title: 'Ediciones · ERAS',

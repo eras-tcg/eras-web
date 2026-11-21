@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardMeta, CardRefData, CatalogCard, DriveCard } from './card.model';
 import { EMPTY_FILTERS, filterCards, hasActiveFilters, sortCards } from './card-filters';
-import { cardImageUrl, collapseByName, matchesFileName, mergeCards, nameVariants, renderEffect, renderKeywordEffect, withAltArt, altArtsOf } from './card-rules';
+import { cardImageUrl, collapseByName, matchesFileName, mergeCards, nameVariants, renderEffect, renderKeywordEffect, withAltArt, altArtsOf, isGlossyRarity } from './card-rules';
 
 const drive = (over: Partial<DriveCard> = {}): DriveCard => ({
   id: 'd1',
@@ -207,5 +207,12 @@ describe('renderEffect', () => {
   it('describes parameterized keyword effects', () => {
     const line = renderKeywordEffect({ keyword: 'Provocar {nivel}', number: '4' }, ref);
     expect(line.segments.map((s) => s.text).join('')).toBe('Provocar 4 (nivel 4 o menor)');
+  });
+});
+
+describe('isGlossyRarity', () => {
+  it('is R and above', () => {
+    expect(['R', 'SR', 'SEC', 'sr'].every(isGlossyRarity)).toBe(true);
+    expect(['C', 'UC', '', null, 'X'].some(isGlossyRarity)).toBe(false);
   });
 });

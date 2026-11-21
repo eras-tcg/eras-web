@@ -976,7 +976,7 @@ export class CardEditorPage {
     };
   }
 
-  /** The finished card (the preview as drawn now) as the card's cached image. */
+  /** The finished card (the preview as drawn now) as the card's cached image, and where it shines. */
   private async saveRender(id: string): Promise<void> {
     const shown = this.lastPreview;
     if (!shown) return;
@@ -984,7 +984,10 @@ export class CardEditorPage {
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/jpeg', 0.9),
     );
-    if (blob) await firstValueFrom(this.api.setRender(id, blob));
+    if (!blob) return;
+    const saved = await firstValueFrom(this.api.setRender(id, blob));
+    // Where it shines goes with it (drawn from the saved card, its rarity and gold border)
+    await this.renderer.saveShine(saved).catch(() => undefined);
   }
 
   /** Saves the card's document (a new card is created), then its art if it changed. */

@@ -96,6 +96,11 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Animaciones</strong><small>Cartas que vuelan, combates y avisos de turno y fase</small></span>
             <span class="state">{{ prefs.animationsOff() ? 'No' : 'Sí' }}</span>
           </button>
+          <button type="button" class="pref" role="switch" [attr.aria-checked]="!prefs.shineOff()" (click)="prefs.shineOff.set(!prefs.shineOff())">
+            <eras-icon name="sparkles" />
+            <span class="text"><strong>Brillo de las cartas</strong><small>Glossy y borde dorado de las cartas en la mesa</small></span>
+            <span class="state">{{ prefs.shineOff() ? 'No' : 'Sí' }}</span>
+          </button>
           <button type="button" class="pref" role="switch" [attr.aria-checked]="!prefs.noticesOff()" (click)="prefs.noticesOff.set(!prefs.noticesOff())">
             <eras-icon name="list" />
             <span class="text"><strong>Avisos de las últimas acciones</strong><small>Arriba a la izquierda de la mesa</small></span>

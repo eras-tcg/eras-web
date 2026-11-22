@@ -93,6 +93,23 @@ export class PromptSpotlightComponent {
     return layer;
   }
 
+  /** A layer for the copies of table cards, cut where your hand's cards are (the box around them), so the hand stays over them. */
+  private underHand(): HTMLElement {
+    const group = this.document.createElement('div');
+    Object.assign(group.style, { position: 'fixed', inset: '0', pointerEvents: 'none' });
+    const cards = [...this.document.querySelectorAll('eras-player-half:not(.opponent) .in-hand')].map((c) => c.getBoundingClientRect());
+    const view = this.document.defaultView;
+    if (cards.length && view) {
+      const left = Math.min(...cards.map((r) => r.left));
+      const right = Math.max(...cards.map((r) => r.right));
+      const top = Math.min(...cards.map((r) => r.top));
+      const bottom = Math.max(...cards.map((r) => r.bottom));
+      const [w, h] = [view.innerWidth, view.innerHeight];
+      group.style.clipPath = `path(evenodd, "M0 0 H${w} V${h} H0 Z M${left} ${top} H${right} V${bottom} H${left} Z")`;
+    }
+    return group;
+  }
+
   /** The chain panel itself is hidden while its copy stands in for it, so the two are never seen out of step. */
   private hiddenChain: HTMLElement | null = null;
   private showChain(chain: HTMLElement | null): void {
@@ -122,7 +139,8 @@ export class PromptSpotlightComponent {
       const r = e?.getBoundingClientRect();
       return r ? `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}` : '-';
     };
-    const key = [ids.join(','), ...ids.map((id) => place(this.elementOf(id))), place(chainPanel), place(chainPanel?.parentElement)].join('|');
+    const hand = this.document.querySelector('eras-player-half:not(.opponent) .hand-cards');
+    const key = [ids.join(','), ...ids.map((id) => place(this.elementOf(id))), place(chainPanel), place(chainPanel?.parentElement), place(hand)].join('|');
     if (state === this.drawnState && key === this.drawnKey && this.layer.nextSibling === pane) return;
     this.drawnState = state;
     this.drawnKey = key;
@@ -132,15 +150,19 @@ export class PromptSpotlightComponent {
     this.showChain(null);
     if (chain) this.layer.append(this.chainCopy(chain));
     this.showChain(chain);
+    // Your hand is always over the table: the copies of cards that are not in it leave out the hand's place
+    const table = this.underHand();
+    this.layer.append(table);
     for (const element of ids.map((id) => this.elementOf(id))) {
       if (!element) continue;
+      const into = element.closest('.in-hand') ? this.layer : table;
       // A life waiting on its lives is already a copy drawn where it lies: lit as it is
       if (element.dataset['parkedLife']) {
         const copy = element.cloneNode(true) as HTMLElement;
         delete copy.dataset['parkedLife'];
         copy.style.zIndex = '';
         copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
-        this.layer.append(copy);
+        into.append(copy);
         continue;
       }
       const rect = element.getBoundingClientRect();
@@ -161,7 +183,7 @@ export class PromptSpotlightComponent {
       // "Mesa en perspectiva": drawn as the table shows it, with its camera (leaning back, turned, the far side smaller)
       const plane = tablePlane(this.document);
       if (plane?.holds(element)) {
-        this.layer.append(this.leaning(element, copy, width, height));
+        into.append(this.leaning(element, copy, width, height));
         continue;
       }
       // Centered where the card is, turned and sized as what holds it draws it (a hand's fan, the rival's hand turned round);
@@ -172,7 +194,7 @@ export class PromptSpotlightComponent {
       copy.style.transformOrigin = '50% 50%';
       if (held.turn || held.scale !== 1) copy.style.rotate = `${held.turn}deg`;
       if (held.scale !== 1) copy.style.scale = String(held.scale);
-      this.layer.append(copy);
+      into.append(copy);
     }
     // A copy is the card as it already is: its entry animations (a chain mark landing) are not played again
     for (const animation of this.layer.getAnimations?.({ subtree: true }) ?? []) {

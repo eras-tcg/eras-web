@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { seeThroughPress } from './board-see-through';
+import { HAND_PEEK_CLASS, seeThroughPress } from './board-see-through';
 
 describe('seeThroughPress', () => {
   function setup() {
@@ -45,5 +45,29 @@ describe('seeThroughPress', () => {
     expect(click.defaultPrevented).toBe(false);
     stop();
     el.remove();
+  });
+
+  it('raises only the card of the hand under the pointer while looking through', () => {
+    const { stop } = setup();
+    const cards = [0, 1, 2].map(() => {
+      const c = document.createElement('div');
+      c.className = 'in-hand';
+      document.body.appendChild(c);
+      return c;
+    });
+    const el = backdrop('eras-sheet-backdrop');
+    el.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+    // jsdom has no layout: the elements under the pointer are given
+    const doc = document as Document & { elementsFromPoint: (x: number, y: number) => Element[] };
+    const before = doc.elementsFromPoint;
+    doc.elementsFromPoint = () => [el, cards[1]];
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10, bubbles: true }));
+    expect(cards.map((c) => c.classList.contains(HAND_PEEK_CLASS))).toEqual([false, true, false]);
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+    expect(cards.some((c) => c.classList.contains(HAND_PEEK_CLASS))).toBe(false);
+    doc.elementsFromPoint = before;
+    stop();
+    el.remove();
+    cards.forEach((c) => c.remove());
   });
 });

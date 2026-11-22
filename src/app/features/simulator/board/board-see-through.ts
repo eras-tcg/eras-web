@@ -4,6 +4,8 @@ import { WritableSignal } from '@angular/core';
 const LONG_PRESS_MS = 350;
 /** A pointer that moves more than this is dragging, not pressing. */
 const PRESS_SLOP_PX = 6;
+/** The class of the card of the hand under the pointer while looking through (it rises like one hovered). */
+export const HAND_PEEK_CLASS = 'see-through-peek';
 
 export interface SeeThroughPress {
   /** There is something over the table to look through (a sheet from the bottom, a chain). */
@@ -51,11 +53,24 @@ export function seeThroughPress(win: Window, o: SeeThroughPress): () => void {
       o.seeThrough.set(true);
     }, LONG_PRESS_MS);
   };
+  // While looking through, the panels' backdrop is still over the table and takes the pointer: the card of your hand
+  // under it (that one alone) rises as it would under the pointer, to read its level and name
+  let peeked: Element | null = null;
+  const peek = (card: Element | null) => {
+    if (card === peeked) return;
+    peeked?.classList.remove(HAND_PEEK_CLASS);
+    peeked = card;
+    peeked?.classList.add(HAND_PEEK_CLASS);
+  };
   const move = (e: PointerEvent) => {
     if (timer && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > PRESS_SLOP_PX) cancel();
+    if (!o.seeThrough()) return peek(null);
+    const under = win.document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.matches('.in-hand'));
+    peek(under ?? null);
   };
   const up = () => {
     cancel();
+    peek(null);
     if (o.seeThrough()) swallowClick = true;
     o.seeThrough.set(false);
   };
@@ -84,6 +99,7 @@ export function seeThroughPress(win: Window, o: SeeThroughPress): () => void {
   win.addEventListener('drop', dragged);
   return () => {
     cancel();
+    peek(null);
     o.seeThrough.set(false);
     win.removeEventListener('pointerdown', down, true);
     win.removeEventListener('pointermove', move, true);

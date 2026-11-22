@@ -41,7 +41,7 @@
 
   :host(:not(.opponent)) .in-hand:hover,
   :host(:not(.opponent)) .in-hand.raised,
-  :host(:not(.opponent)) .in-hand.see-through-peek,
+  :host(.looking:not(.opponent)) .in-hand,
   :host(:not(.opponent)) .in-hand:has(:focus-visible) {
     transform: translateY(calc(max(0px, var(--hand-card) * 88 / 63 - var(--hand-peek) - var(--hand-raise)) * -1)) rotate(0deg);
   }

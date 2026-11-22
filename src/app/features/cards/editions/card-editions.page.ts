@@ -562,6 +562,11 @@ interface EditionForm {
       color: var(--color-text);
       cursor: pointer;
     }
+    /* With its card in it: the card alone, edge to edge (the empty slot's border and fill would show under it) */
+    .slot:not(.empty) {
+      border: 0;
+      background: none;
+    }
     .slot:disabled {
       cursor: default;
     }

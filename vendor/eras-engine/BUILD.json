@@ -1,8 +1,8 @@
 {
-  "commit": "e182290a8ccfff0e5feefea0fc3c68440b6e8e61",
+  "commit": "32f48359f1239a727d9c74bc82e031d7517f1f48",
   "dirty": false,
-  "subject": "Bot: budgetMs covers the whole decision",
-  "copiedAt": "2026-11-22T03:54:25.597Z",
+  "subject": "Special summon by effect: the material can come from the hand",
+  "copiedAt": "2026-11-22T17:06:05.952Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

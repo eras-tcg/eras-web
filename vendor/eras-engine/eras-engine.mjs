@@ -36432,6 +36432,37 @@ protoOf(SpecialProcedure).o31 = function (room, effect, special) {
     case 2:
       var all = ArrayList_init_$Create$_0(ensureNotNull(player).x1e_1);
       all.r(player.z1e_1);
+      var _iterator__ex2g4s = this.m31(room, effect, special).h();
+      while (_iterator__ex2g4s.i()) {
+        var c = _iterator__ex2g4s.j();
+        var tmp$ret$0;
+        $l$block_0: {
+          // Inline function 'kotlin.collections.none' call
+          var tmp_0;
+          if (isInterface(all, Collection)) {
+            tmp_0 = all.m();
+          } else {
+            tmp_0 = false;
+          }
+          if (tmp_0) {
+            tmp$ret$0 = true;
+            break $l$block_0;
+          }
+          var _iterator__ex2g4s_0 = all.h();
+          while (_iterator__ex2g4s_0.i()) {
+            var element = _iterator__ex2g4s_0.j();
+            if (element === c) {
+              tmp$ret$0 = false;
+              break $l$block_0;
+            }
+          }
+          tmp$ret$0 = true;
+        }
+        if (tmp$ret$0) {
+          all.f(c);
+        }
+      }
+
       tmp = all;
       break;
     default:
@@ -37547,7 +37578,7 @@ protoOf(SpecialRequirements).z3d = function (zones) {
     } else {
       // Inline function 'kotlin.takeIf' call
       var tmp_0;
-      if (tmp0_safe_receiver.equals(Zone_FIELD_getInstance()) || tmp0_safe_receiver.equals(Zone_HAND_getInstance())) {
+      if (tmp0_safe_receiver.equals(Zone_FIELD_getInstance()) || tmp0_safe_receiver.equals(Zone_HAND_getInstance()) || tmp0_safe_receiver.equals(Zone_DISCARD_PILE_getInstance())) {
         tmp_0 = tmp0_safe_receiver;
       } else {
         tmp_0 = null;

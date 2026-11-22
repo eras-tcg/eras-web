@@ -339,6 +339,8 @@ eras-player-plate {
 .hand {
   grid-area: hand;
   position: relative;
+  // Always over the table: its rows (and a card lifted or marked in them, the one a chain activates) never cover it
+  z-index: 3;
   border: none;
   background: none;
   padding: 0;
@@ -449,11 +451,6 @@ eras-player-plate {
 
 .hand-window .in-hand {
   pointer-events: auto;
-}
-
-// Its fade makes the window a layer of its own: lift the hand above the Retaguardia, as the fan is
-.hand.straight {
-  z-index: 3;
 }
 
 .hand.straight .hand-window {

@@ -1,8 +1,8 @@
 {
-  "commit": "fb7d3322fcf98665fa988ba2d3c04ea27877c3b0",
+  "commit": "e182290a8ccfff0e5feefea0fc3c68440b6e8e61",
   "dirty": false,
-  "subject": "Merge branch 'feat/life-play-from-lives' into local/sin-drive-golpe",
-  "copiedAt": "2026-11-21T05:29:16.550Z",
+  "subject": "Bot: budgetMs covers the whole decision",
+  "copiedAt": "2026-11-22T03:54:25.597Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

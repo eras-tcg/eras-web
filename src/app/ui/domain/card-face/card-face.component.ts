@@ -97,6 +97,9 @@ import { CARD_SHINE } from '../card-image/card-shine';
       inline-size: 100%;
       block-size: 100%;
       overflow: hidden;
+      // Its own blending group: the foil's soft-light mixes with the card's picture even inside the leaning table's
+      // 3D plane (there, without it, Chrome showed the foil's raw colors over the card)
+      isolation: isolate;
       border-radius: inherit;
       background: var(--color-surface-muted);
     }

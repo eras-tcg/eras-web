@@ -1,7 +1,8 @@
 # Build on GitHub, deploy to AWS (S3 + CloudFront) with eras-tcg/infra deploy-site-aws.yml.
 #   PR to main   -> lint + test + build (site and Android app) only
 #   push to main -> build (configuration "aws") + the Android app (configuration "capacitor", APK) + deploy
-#                   staging.erastcg.com + deploy erastcg.com (waits for approval)
+#                   erastcg.com (waits for approval). No staging step since 2026-11-22: staging.erastcg.com keeps
+#                   the last site deployed there
 #   Rollback     -> re-run the deploy job of an earlier run (its build artifact is kept 90 days)
 # The Android app ships with the site: /app/ERAS.apk, /app/web-<version>.zip (its live update) and /app/app-update.json.
 # Only with the release signing key (secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
@@ -140,18 +141,9 @@ jobs:
           path: site
           retention-days: 90
 
-  deploy-staging:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: site
-    uses: eras-tcg/infra/.github/workflows/deploy-site-aws.yml@main
-    secrets: inherit
-    with:
-      environment: staging
-      artifact: site
-
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: deploy-staging
+    needs: site
     uses: eras-tcg/infra/.github/workflows/deploy-site-aws.yml@main
     secrets: inherit
     with:

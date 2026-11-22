@@ -1,3 +1,3 @@
 // Written by `npm run engine:update` (scripts/engine-update.mjs): do not edit.
 /** The vendored engine's build (vendor/eras-engine/BUILD.json): it versions the engine's assets (/engine/*.json). */
-export const ENGINE_BUILD = 'be5c5f1e08dc';
+export const ENGINE_BUILD = '42023f0864bb';

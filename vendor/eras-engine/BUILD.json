@@ -1,8 +1,8 @@
 {
-  "commit": "be5c5f1e08dc28336e84b7306dd85f43a5a9761e",
+  "commit": "42023f0864bb8822a1d0402909d6731e21a40223",
   "dirty": false,
-  "subject": "Fal: new effect, activated from the Tributos in your turn, no condition",
-  "copiedAt": "2026-11-22T18:15:37.169Z",
+  "subject": "Batalla por la Frontera Interdimensional: new effect, one enemy, -4 per tributed material",
+  "copiedAt": "2026-11-22T18:27:26.130Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

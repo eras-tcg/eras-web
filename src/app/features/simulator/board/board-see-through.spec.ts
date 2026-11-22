@@ -1,0 +1,49 @@
+import { signal } from '@angular/core';
+import { seeThroughPress } from './board-see-through';
+
+describe('seeThroughPress', () => {
+  function setup() {
+    const seeThrough = signal(false);
+    const stop = seeThroughPress(window, {
+      canSeeThrough: () => true,
+      sheetOpen: () => true,
+      lookOnly: () => false,
+      seeThrough,
+      dragEnded: () => undefined,
+    });
+    return { seeThrough, stop };
+  }
+
+  function backdrop(kind: string): HTMLElement {
+    const el = document.createElement('div');
+    el.className = `cdk-overlay-backdrop ${kind}`;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  it('looks through at once when the choice\'s backdrop is pressed, and keeps the click from closing it', () => {
+    const { seeThrough, stop } = setup();
+    const el = backdrop('eras-sheet-backdrop');
+    el.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+    expect(seeThrough()).toBe(true);
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    el.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    stop();
+    el.remove();
+  });
+
+  it('leaves a modal\'s backdrop alone: its click closes the modal (a card\'s detail over a choice)', () => {
+    const { seeThrough, stop } = setup();
+    const el = backdrop('eras-backdrop');
+    el.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+    expect(seeThrough()).toBe(false);
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    el.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(false);
+    stop();
+    el.remove();
+  });
+});

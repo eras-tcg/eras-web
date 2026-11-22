@@ -36,13 +36,14 @@ export function seeThroughPress(win: Window, o: SeeThroughPress): () => void {
   const down = (e: PointerEvent) => {
     if (e.button !== 0 || !o.canSeeThrough()) return;
     const target = e.target as Element | null;
-    if (target?.classList.contains('cdk-overlay-backdrop') && o.sheetOpen() && !o.lookOnly()) {
+    // Only a choice's own backdrop: a modal's (a card's detail opened over the choice) closes the modal as usual
+    if (target?.classList.contains('eras-sheet-backdrop') && o.sheetOpen() && !o.lookOnly()) {
       cancel();
       o.seeThrough.set(true);
       return;
     }
     // Not over the panels themselves (a choice, the chain): a long press there is choosing, not looking
-    if (target?.closest('.cdk-overlay-container, .chain-panel, .eras-prompt-spotlight')) return;
+    if (target?.closest('.cdk-overlay-container, .cdk-overlay-popover, .cdk-overlay-backdrop, .chain-panel, .eras-prompt-spotlight')) return;
     cancel();
     start = { x: e.clientX, y: e.clientY };
     timer = setTimeout(() => {

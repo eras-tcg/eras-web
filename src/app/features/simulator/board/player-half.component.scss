@@ -468,6 +468,7 @@ eras-player-plate {
 // Your card rises to be seen whole while the pointer is on it (just the hidden half)
 :host(:not(.opponent)) .in-hand:hover,
 :host(:not(.opponent)) .in-hand.raised,
+:host(:not(.opponent)) .in-hand.see-through-peek,
 :host(:not(.opponent)) .in-hand:has(:focus-visible) {
   z-index: 2;
   // The card rises what the hand still hides of it: the higher the hand stands, the less it rises

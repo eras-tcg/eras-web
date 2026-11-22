@@ -117,6 +117,12 @@ a {
   outline-offset: 2px;
 }
 
+// The card an open choice is about (prompt-spotlight): lit where it is, through a hole in the choice's backdrop
+.eras-spotlit {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent));
+}
+
 .cdk-overlay-backdrop.eras-backdrop {
   background: var(--color-overlay);
 }

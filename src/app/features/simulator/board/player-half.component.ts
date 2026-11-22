@@ -284,7 +284,12 @@ export class PlayerHalfComponent {
 
   protected turnHandBy(step: number): void {
     if (this.animating()) return;
-    this.handTurnWanted.set(Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurn() + step)));
+    const turn = Math.max(-this.handTurnMax(), Math.min(this.handTurnMax(), this.handTurn() + step));
+    if (turn === this.handTurn()) return;
+    this.handTurnWanted.set(turn);
+    // A card of this hand chosen before turning it is let go: its buttons would float where it no longer is
+    const chosen = this.game.selectedId();
+    if (chosen && this.player().hand.some((c) => c.instanceId === chosen)) this.game.selectedId.set(null);
   }
 
   /** The wheel over the hand turns it (down or right: towards the right end). */

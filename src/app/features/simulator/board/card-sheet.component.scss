@@ -8,13 +8,13 @@
   display: grid;
   justify-items: center;
 }
-/* Materiales: their right edge shows behind the card, one step each */
+/* Materiales: their right edge shows behind the card, one step each to the right (level with it, no staircase) */
 .art { position: relative; padding-inline-end: calc(var(--materials, 0) * 1.1rem); }
 .main-card { position: relative; z-index: 2; }
 .main-card eras-game-card { display: block; filter: drop-shadow(0 14px 22px rgb(0 0 0 / 45%)); }
 .material {
   position: absolute;
-  inset-block-start: calc((var(--i) + 1) * 0.45rem);
+  inset-block-start: 0;
   inset-inline-start: calc((var(--i) + 1) * 1.1rem);
   z-index: calc(1 - var(--i));
   filter: brightness(0.75);
@@ -80,7 +80,8 @@
   box-shadow: inset 3px 0 0 var(--color-sim-effect-active), 0 0 14px color-mix(in srgb, var(--color-sim-effect-active) 35%, transparent);
 }
 .panel h4 + .effect { padding-block-start: 0; border-block-start: none; }
-.materials { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+// One Material per line, whatever their names' length
+.materials { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .link {
   display: inline-flex;
   align-items: center;

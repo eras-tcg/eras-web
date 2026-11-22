@@ -1,8 +1,8 @@
 {
-  "commit": "32f48359f1239a727d9c74bc82e031d7517f1f48",
+  "commit": "be5c5f1e08dc28336e84b7306dd85f43a5a9761e",
   "dirty": false,
-  "subject": "Special summon by effect: the material can come from the hand",
-  "copiedAt": "2026-11-22T17:06:05.952Z",
+  "subject": "Fal: new effect, activated from the Tributos in your turn, no condition",
+  "copiedAt": "2026-11-22T18:15:37.169Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

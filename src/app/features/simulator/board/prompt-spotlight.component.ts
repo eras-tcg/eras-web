@@ -5,21 +5,30 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
 import { pileOf } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { ZoneName } from '@data/simulator/simulator.model';
-import { flatTurn, poseFrames, poseOf, stageOf } from './card-pose';
 import { pile, tableCard } from './board-dom';
-import { tablePlane } from './table-plane';
 import { LAYER } from './timing';
+
+/** The class of a card lit by the open choice (its glow, global styles). */
+const SPOTLIT = 'eras-spotlit';
+/** Room around a lit card in the backdrop's hole (its glow shows there). */
+const HOLE_PAD = 10;
+
+function clearMask(el: HTMLElement): void {
+  for (const p of ['mask-image', 'mask-size', 'mask-position', 'mask-repeat', 'mask-composite']) {
+    el.style.removeProperty(p);
+    el.style.removeProperty(`-webkit-${p}`);
+  }
+}
 
 /** The piles a choice's card is looked for in, when it is not on the table. */
 const ZONES: ZoneName[] = ['hand', 'tributeZone', 'discardPile', 'lifeStack', 'deck'];
 
 /**
- * While one of my choices is open, the card whose effect it belongs to is drawn again above the choice's
- * backdrop, at the same place, so it is not darkened: it is the visual reference of what the choice is about.
- * A card that is not on the field lights up its pile (Tributos, Descarte…). The chain panel is drawn again too: it
- * is the reference of the effect. The overlays live in the browser's top layer (popovers), where no z-index
- * reaches, so the copies go inside the choice's own overlay, between its backdrop and the choice itself: a modal opened
- * over the choice (a card's detail) covers them as it covers the choice.
+ * While one of my choices is open, the card whose effect it belongs to stays lit where it is: the choice's backdrop
+ * leaves a hole over it and it glows, so it is the visual reference of what the choice is about while the table keeps
+ * its own heights (your hand stays over it). A card that is not on the field lights up its pile (Tributos, Descarte…).
+ * The chain panel is drawn again above the backdrop (inside the choice's own overlay, in the browser's top layer, where
+ * no z-index reaches): it is the reference of the effect. A modal opened over the choice covers both.
  */
 @Component({
   selector: 'eras-prompt-spotlight',
@@ -82,6 +91,7 @@ export class PromptSpotlightComponent {
       view?.removeEventListener('resize', draw);
       this.document.removeEventListener('scroll', draw, { capture: true });
       this.showChain(null);
+      this.light([], null);
       this.layer.remove();
     });
   }
@@ -93,21 +103,44 @@ export class PromptSpotlightComponent {
     return layer;
   }
 
-  /** A layer for the copies of table cards, cut where your hand's cards are (the box around them), so the hand stays over them. */
-  private underHand(): HTMLElement {
-    const group = this.document.createElement('div');
-    Object.assign(group.style, { position: 'fixed', inset: '0', pointerEvents: 'none' });
-    const cards = [...this.document.querySelectorAll('eras-player-half:not(.opponent) .in-hand')].map((c) => c.getBoundingClientRect());
-    const view = this.document.defaultView;
-    if (cards.length && view) {
-      const left = Math.min(...cards.map((r) => r.left));
-      const right = Math.max(...cards.map((r) => r.right));
-      const top = Math.min(...cards.map((r) => r.top));
-      const bottom = Math.max(...cards.map((r) => r.bottom));
-      const [w, h] = [view.innerWidth, view.innerHeight];
-      group.style.clipPath = `path(evenodd, "M0 0 H${w} V${h} H0 Z M${left} ${top} H${right} V${bottom} H${left} Z")`;
-    }
-    return group;
+  /** The cards lit last time, and the backdrop holed for them. */
+  private lit: HTMLElement[] = [];
+  private holed: HTMLElement | null = null;
+
+  /**
+   * Lights these cards where they are: a glow on each, and a hole in the choice's backdrop over each (a mask: the
+   * backdrop still takes the clicks there), so nothing covers them but what the table itself draws over them.
+   */
+  private light(cards: HTMLElement[], backdrop: HTMLElement | null): void {
+    for (const c of this.lit) if (!cards.includes(c)) c.classList.remove(SPOTLIT);
+    for (const c of cards) c.classList.add(SPOTLIT);
+    this.lit = cards;
+    if (this.holed && this.holed !== backdrop) clearMask(this.holed);
+    this.holed = backdrop;
+    if (!backdrop) return;
+    if (!cards.length) return clearMask(backdrop);
+    const holes = cards.map((c) => c.getBoundingClientRect()).map((r) => ({
+      x: r.left - HOLE_PAD,
+      y: r.top - HOLE_PAD,
+      w: r.width + 2 * HOLE_PAD,
+      h: r.height + 2 * HOLE_PAD,
+    }));
+    const fill = 'linear-gradient(#000, #000)';
+    const images = [fill, ...holes.map(() => fill)].join(', ');
+    const sizes = ['100% 100%', ...holes.map((h) => `${h.w}px ${h.h}px`)].join(', ');
+    const positions = ['0 0', ...holes.map((h) => `${h.x}px ${h.y}px`)].join(', ');
+    Object.assign(backdrop.style, {
+      maskImage: images,
+      maskSize: sizes,
+      maskPosition: positions,
+      maskRepeat: 'no-repeat',
+      maskComposite: 'exclude',
+    });
+    backdrop.style.setProperty('-webkit-mask-image', images);
+    backdrop.style.setProperty('-webkit-mask-size', sizes);
+    backdrop.style.setProperty('-webkit-mask-position', positions);
+    backdrop.style.setProperty('-webkit-mask-repeat', 'no-repeat');
+    backdrop.style.setProperty('-webkit-mask-composite', 'xor');
   }
 
   /** The chain panel itself is hidden while its copy stands in for it, so the two are never seen out of step. */
@@ -129,6 +162,7 @@ export class PromptSpotlightComponent {
       this.layer.replaceChildren();
       this.drawnKey = '';
       this.showChain(null);
+      this.light([], null);
       this.layer.remove();
       return;
     }
@@ -139,8 +173,7 @@ export class PromptSpotlightComponent {
       const r = e?.getBoundingClientRect();
       return r ? `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}` : '-';
     };
-    const hand = this.document.querySelector('eras-player-half:not(.opponent) .hand-cards');
-    const key = [ids.join(','), ...ids.map((id) => place(this.elementOf(id))), place(chainPanel), place(chainPanel?.parentElement), place(hand)].join('|');
+    const key = [ids.join(','), ...ids.map((id) => place(this.elementOf(id))), place(chainPanel), place(chainPanel?.parentElement)].join('|');
     if (state === this.drawnState && key === this.drawnKey && this.layer.nextSibling === pane) return;
     this.drawnState = state;
     this.drawnKey = key;
@@ -150,79 +183,14 @@ export class PromptSpotlightComponent {
     this.showChain(null);
     if (chain) this.layer.append(this.chainCopy(chain));
     this.showChain(chain);
-    // Your hand is always over the table: the copies of cards that are not in it leave out the hand's place
-    const table = this.underHand();
-    this.layer.append(table);
-    for (const element of ids.map((id) => this.elementOf(id))) {
-      if (!element) continue;
-      const into = element.closest('.in-hand') ? this.layer : table;
-      // A life waiting on its lives is already a copy drawn where it lies: lit as it is
-      if (element.dataset['parkedLife']) {
-        const copy = element.cloneNode(true) as HTMLElement;
-        delete copy.dataset['parkedLife'];
-        copy.style.zIndex = '';
-        copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
-        into.append(copy);
-        continue;
-      }
-      const rect = element.getBoundingClientRect();
-      const width = element.offsetWidth;
-      const height = element.offsetHeight;
-      const copy = element.cloneNode(true) as HTMLElement;
-      copy.removeAttribute('id');
-      copy.style.position = 'fixed';
-      copy.style.margin = '0';
-      copy.style.filter = 'drop-shadow(0 0 6px color-mix(in srgb, var(--color-sim-glow) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--color-sim-glow) 70%, transparent))';
-      // The size the card takes from where it is
-      copy.style.setProperty('--game-card-width', getComputedStyle(element).getPropertyValue('--game-card-width'));
-      copy.style.width = `${width}px`;
-      copy.style.height = `${height}px`;
-      // Its chain marks (beside the card, in its sim card) go on the copy too: the chain stays readable on it
-      const marks = element.parentElement?.querySelector(':scope > eras-chain-marks');
-      if (marks) copy.append(marks.cloneNode(true));
-      // "Mesa en perspectiva": drawn as the table shows it, with its camera (leaning back, turned, the far side smaller)
-      const plane = tablePlane(this.document);
-      if (plane?.holds(element)) {
-        into.append(this.leaning(element, copy, width, height));
-        continue;
-      }
-      // Centered where the card is, turned and sized as what holds it draws it (a hand's fan, the rival's hand turned round);
-      // its own transform, like exhausted, is kept by its classes
-      const held = flatTurn(element.parentElement ?? element, null);
-      copy.style.left = `${rect.left + rect.width / 2 - width / 2}px`;
-      copy.style.top = `${rect.top + rect.height / 2 - height / 2}px`;
-      copy.style.transformOrigin = '50% 50%';
-      if (held.turn || held.scale !== 1) copy.style.rotate = `${held.turn}deg`;
-      if (held.scale !== 1) copy.style.scale = String(held.scale);
-      into.append(copy);
-    }
+    // The cards themselves, where they are (no copy): the choice's backdrop leaves a hole over each one, so the table keeps
+    // its own heights (your hand over it) and the card is not darkened; a glow marks it
+    const backdrop = pane.parentElement.querySelector<HTMLElement>(':scope > .cdk-overlay-backdrop');
+    this.light(ids.map((id) => this.elementOf(id)).filter((e): e is HTMLElement => !!e), backdrop);
     // A copy is the card as it already is: its entry animations (a chain mark landing) are not played again
     for (const animation of this.layer.getAnimations?.({ subtree: true }) ?? []) {
       if (Number.isFinite(animation.effect?.getComputedTiming().iterations ?? Infinity)) animation.finish();
     }
-  }
-
-  /**
-   * A copy of a card on the leaning table, in its pose seen by the table's camera (as the cards flying between zones).
-   * Its turn (exhausted, a hand's fan) is in the pose, so its own transform is replaced; a rival's card keeps its
-   * faces turned by its class, so the pose does not turn it again.
-   */
-  private leaning(element: HTMLElement, copy: HTMLElement, width: number, height: number): HTMLElement {
-    const stage = stageOf(this.document);
-    const pose = poseOf(element);
-    if (element.classList.contains('upside-down')) pose.turn -= 180;
-    const frame = this.document.createElement('div');
-    Object.assign(frame.style, {
-      position: 'fixed',
-      inset: '0',
-      perspective: `${stage.distance}px`,
-      perspectiveOrigin: `${stage.originX}px ${stage.originY}px`,
-      pointerEvents: 'none',
-    });
-    Object.assign(copy.style, { position: 'absolute', left: '0px', top: '0px', width: `${width}px`, height: `${height}px`, transformOrigin: '50% 50%' });
-    copy.style.transform = String(poseFrames(stage, pose, pose, { fromBack: false, toBack: false })[0]['transform']);
-    frame.append(copy);
-    return frame;
   }
 
   /**

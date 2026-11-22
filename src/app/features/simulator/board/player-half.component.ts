@@ -58,6 +58,7 @@ const PILE_EDGE_TAPER = 0.15;
     '[class.has-playmat]': '!!player().playmat',
     '[style.--playmat]': 'playmatImage()',
     '[style.--hand-lift]': 'prefs.handLift()',
+    '[class.looking]': 'looking()',
   },
 })
 export class PlayerHalfComponent {
@@ -72,6 +73,8 @@ export class PlayerHalfComponent {
   protected readonly tilted = this.prefs.tilted;
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
   protected readonly lookOnly = inject(SheetState).lowered;
+  /** Looking through the panels (left button held): your whole hand rises to be read, the card under the pointer in front. */
+  protected readonly looking = inject(SheetState).seeThrough;
   /** A touch screen: no dragging, the hints speak of tapping. */
   protected readonly touchOnly = isTouchOnly(inject(DOCUMENT).defaultView);
 

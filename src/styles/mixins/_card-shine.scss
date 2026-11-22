@@ -16,6 +16,9 @@
   -webkit-mask-repeat: no-repeat;
   mask-mode: luminance;
   -webkit-mask-source-type: luminance;
+  // Scaled, the mask's next third bleeds into the layer's bottom edge (the foil cut starts white): a gold or glossy line
+  // under the card. The last hair of the layer is left out
+  clip-path: inset(0 0 max(1px, 0.3%) 0);
   pointer-events: none;
 }
 

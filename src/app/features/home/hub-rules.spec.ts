@@ -63,6 +63,10 @@ describe('hubSlides', () => {
     expect(slide.action).toBeNull();
     // a saved default news item without its link keeps the default's
     expect(hubSlides(null, [news('Compromiso Y Evolución')])[0].link).toBe('/cards/editions/E1.3');
+    // a home news item with no link whose title names an edition announces it; the platform's history never does
+    expect(hubSlides(null, [news('Llega E1.3: El Ciclo del Caos')])[0].link).toBe('/cards/editions/E1.3');
+    expect(hubSlides(null, [news('E1.3 en el simulador', [], { id: 'platform-x' })])[0].link).toBeNull();
+    expect(hubSlides(null, [news('Llega ERAS 2.0')])[0].link).toBeNull();
     // any other link stays a button, the news opening in full
     const [other] = hubSlides(null, [news('m', [], { linkRoute: '/deck-builder', linkLabel: 'Armar' })], cards);
     expect([other.link, other.action]).toEqual([null, { label: 'Armar', url: '/deck-builder' }]);

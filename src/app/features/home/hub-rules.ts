@@ -65,6 +65,16 @@ export function editionLink(url: string): string {
   return match ? `/cards/editions/${match[1]}` : url;
 }
 
+/**
+ * The page of the edition a home news item's title names ("Llega E1.3: …" → /cards/editions/E1.3), or null; never for
+ * the platform's history (its titles mention editions without announcing them: "E1.3 en el simulador").
+ */
+function namedEdition(item: HomeNews): string | null {
+  if (item.id?.startsWith('platform-')) return null;
+  const match = /\b(E\d+(?:\.\d+)*)\b/.exec(item.title);
+  return match ? `/cards/editions/${match[1]}` : null;
+}
+
 /** Carousel of the hub: the featured edition (its rarest cards), then each news item with its cards. */
 export function hubSlides(edition: Edition | null, news: readonly HomeNews[], cards: readonly CatalogCard[] = []): HubSlide[] {
   const byId = new Map(cards.map((c) => [c.id, c]));
@@ -85,9 +95,10 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
     });
   }
   news.forEach((item, i) => {
-    // An edition's announcement (its link leads to an edition: its own one, or the default news' of the same title)
-    // works as the featured edition: a click goes to the edition's page, no pop-up, no button
-    const route = item.linkRoute || DEFAULT_NEWS.find((d) => d.title === item.title)?.linkRoute || null;
+    // An edition's announcement works as the featured edition: a click goes to the edition's page, no pop-up, no
+    // button. It is one when its link leads to an edition (its own link, or the default news' of the same title) or,
+    // a news item of the home with no link, when its title names an edition ("Llega E1.3: El Ciclo del Caos")
+    const route = item.linkRoute || DEFAULT_NEWS.find((d) => d.title === item.title)?.linkRoute || namedEdition(item) || null;
     const url = route ? editionLink(route) : null;
     const edition = url?.startsWith('/cards/editions/') ? url : null;
     slides.push({

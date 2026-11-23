@@ -7,12 +7,6 @@
   <!-- One screen high: only the filters and the grid scroll, each by itself -->
   <eras-split aside="17rem" fill [asideHidden]="!showFilters()">
     <div split-aside>
-      <!-- The filters fold from their own panel; folded, a filter button above the cards unfolds them -->
-      <div class="filters-head">
-        <button erasButton variant="float" type="button" aria-label="Ocultar filtros" [attr.aria-expanded]="true" (click)="showFilters.set(false)">
-          <eras-icon name="chevron-left" />
-        </button>
-      </div>
       <!-- The marks on the cards are settings of the catalog: in the panel, remembered on the device -->
       <eras-card-filters-panel
         [filters]="filters()"
@@ -32,13 +26,20 @@
       @if (store.loading() && displayed().length === 0) {
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else if (!store.error()) {
-        <!-- The count and the filter button float over the cards while they scroll: no bar of their own -->
+        <!-- The count and the filters' button float over the cards while they scroll: no bar of their own. One button,
+             always here beside the count, folds and unfolds the filters (the panel keeps all its room for them) -->
         <eras-stack class="toolbar" direction="row" [gap]="3" align="center" wrap>
-          @if (!showFilters()) {
-            <button erasButton variant="float" type="button" [marked]="filtersActive()" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
-              <eras-icon name="filter" />
-            </button>
-          }
+          <button
+            erasButton
+            variant="float"
+            type="button"
+            [marked]="!showFilters() && filtersActive()"
+            [attr.aria-label]="showFilters() ? 'Ocultar filtros' : 'Mostrar filtros'"
+            [attr.aria-expanded]="showFilters()"
+            (click)="showFilters.set(!showFilters())"
+          >
+            <eras-icon [name]="showFilters() ? 'chevron-left' : 'filter'" />
+          </button>
           <span class="count">{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>

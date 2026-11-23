@@ -20,7 +20,7 @@
   --color-overlay: var(--theme-overlay);
   // A panel that sits on the screen's backdrop (tier rows, cards, tables, filter panels): the surface, a little
   // see-through, so the vortex behind every screen shows faintly. Dialogs, menus and controls stay solid.
-  --color-surface-glass: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  --color-surface-glass: color-mix(in srgb, var(--color-surface) 70%, transparent);
 
   // Game palette (same in every theme)
   --color-rarity-c: #9ca3af;

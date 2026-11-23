@@ -69,7 +69,7 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
   news.forEach((item, i) => {
     slides.push({
       key: item.id ?? `news-${i}`,
-      eyebrow: `Noticias · ${newsDateLabel(item.date)}`,
+      eyebrow: newsDateLabel(item.date),
       date: item.date,
       title: item.title,
       text: item.excerpt,

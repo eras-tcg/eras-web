@@ -176,14 +176,17 @@ def minimal_gem(scene, size):
     ramp = lambda val: np.stack([np.interp(val[..., 0], pos, [hexc(c)[ch] for _, c in GEM_RAMP]) for ch in range(3)], -1)
     lo, hi = FACE_LEVEL
     pieces = [(table, TABLE_LEVEL, True)] + [(f, lo + (hi - lo) * face_light(f), False) for f in faces]
+    cover = np.zeros((ih, iw, 1), np.float32)
     for poly, level, is_table in pieces:
         m = raster(lambda d, poly=poly: d.polygon([to(p) for p in poly], fill=255)) * (1 - cut)
+        cover = cover + m
         val = level * shade
         if is_table:  # the table glows from its heart (white) to its own gold at the edges
             val = val + (1 - val) * heart
         col = ramp(np.clip(val, 0, 1))
         rgb = rgb * (1 - m) + np.clip(col, 0, 1) * m
     scene[..., :3] = rgb
+    scene[..., 3:] = np.maximum(scene[..., 3:], np.clip(cover, 0, 1))  # on a clear scene: the gem alone (the icons)
     return scene
 
 

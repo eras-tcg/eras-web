@@ -110,6 +110,12 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
 
 if __name__ == '__main__':
     out = sys.argv[1]
-    im = vortex(SIZE * SS).filter(ImageFilter.GaussianBlur(6 * SS)).resize((SIZE, SIZE), Image.LANCZOS)
+    # The card back's vortex (design/cardback/build_cardback.py), round here: five arms turned 18°, a light blue accent,
+    # the mist even, the arms wide by the gem, the eye fading out long. The page's gem is 0.29 of the square, the card
+    # back's 0.24 of its vortex: the eye and the ice blue scaled to match
+    g = 0.29 / 0.24
+    im = vortex(SIZE * SS, accent='#38bdf8', fade_out=(0.45, 1.0), n_arms=5, taper=True, twist=1.7, box=(1, 1), shape=2,
+                eye=(0.02 * g, 0.42 * g), mist_mode='flat', sharp=0.9, rim=(0.08 * g, 0.36 * g, 0.8 * g), turn=18)
+    im = im.filter(ImageFilter.GaussianBlur(6 * SS)).resize((SIZE, SIZE), Image.LANCZOS)
     im.save(out, 'WEBP', quality=88, method=6)
     print(out, im.size)

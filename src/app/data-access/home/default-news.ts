@@ -35,11 +35,9 @@ export const DEFAULT_NEWS: HomeNews[] = [
   },
 ];
 
-/** "mié 4 nov · 20:00" (the news' date as the carousel shows it); the text itself when it is not a date. */
+/** "mié 4 nov" (the news' day as the carousel shows it, no hour); the text itself when it is not a date. */
 export function newsDateLabel(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  const day = new Intl.DateTimeFormat('es', { weekday: 'short', day: 'numeric', month: 'short' }).format(date).replace(/[.,]/g, '');
-  const time = new Intl.DateTimeFormat('es', { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
-  return `${day} · ${time}`;
+  return new Intl.DateTimeFormat('es', { weekday: 'short', day: 'numeric', month: 'short' }).format(date).replace(/[.,]/g, '');
 }

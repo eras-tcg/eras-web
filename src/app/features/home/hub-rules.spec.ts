@@ -48,7 +48,7 @@ describe('hubSlides', () => {
     const [slide] = hubSlides(null, [news('n1', ['r', 'missing', 'sec'], { linkRoute: '/editions', linkLabel: 'A la tienda' })], cards);
     expect(slide.cards.map((c) => c.id)).toEqual(['r', 'sec']);
     expect(slide.action).toEqual({ label: 'A la tienda', url: '/editions' });
-    expect(slide.eyebrow.startsWith('Noticias · ')).toBe(true);
+    expect(slide.eyebrow).toBe('mié 4 nov');
     expect(hubSlides(null, [news('n2')], cards)[0].action).toBeNull();
   });
 

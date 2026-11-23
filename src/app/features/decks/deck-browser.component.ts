@@ -13,8 +13,7 @@ import { DeckFiltersBarComponent } from './deck-filters-bar.component';
  * Body of the deck lists ("Mazos", "Mazos públicos"), one screen high inside a `fill` page: a filter panel whose
  * bar carries the sorting and folds it into a rail, and the deck grid, the only part that scrolls. The page
  * filters and sorts (two-way `filters`, `sortKey`, `direction`) and projects the covers; [deck-lead] goes first
- * in the grid (e.g. "Nuevo mazo"), [deck-boxes] above the list (where you are inside a deckbox, in "Mazos") and
- * [deck-sections] in the scrolling list above the grid (the ERAS rows and the community heading, in "Mazos públicos").
+ * in the grid (e.g. "Nuevo mazo") and [deck-boxes] above the list (where you are inside a deckbox, in "Mazos").
  *
  * <eras-deck-browser [(filters)]="f" [(sortKey)]="k" [(direction)]="d" [shown]="n" [total]="t" …>
  *   <a deck-lead …>Nuevo mazo</a> @for (…) { <eras-deck-cover … /> }
@@ -38,8 +37,6 @@ export class DeckBrowserComponent {
   readonly authors = input<readonly string[]>([]);
   /** Offer the public/private filter (own decks). */
   readonly showVisibility = input(false, { transform: booleanAttribute });
-  /** Offer the ERAS / community filter (public decks). */
-  readonly showOrigin = input(false, { transform: booleanAttribute });
   /** Decks shown after filtering, and in the whole list. */
   readonly shown = input.required<number>();
   readonly total = input.required<number>();

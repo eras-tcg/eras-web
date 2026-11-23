@@ -47,7 +47,7 @@ const CUTS: Record<number, readonly string[]> = {
       [class.drop]="dropTarget()"
       [class.empty]="pieces().length === 0"
       [style.--box]="color()"
-      [attr.aria-label]="'Abrir la deckbox ' + box().name + ', ' + countLabel()"
+      [attr.aria-label]="'Abrir ' + noun() + ' ' + box().name + ', ' + countLabel()"
       (click)="opened.emit()"
     >
       @for (piece of pieces(); track $index) {
@@ -193,6 +193,8 @@ export class DeckBoxTileComponent {
   readonly covers = input<readonly (string | null)[]>([]);
   readonly count = input.required<number>();
   readonly dropTarget = input(false, { transform: booleanAttribute });
+  /** What the tile is, as read out ("la deckbox"; "la carpeta" for the folders of "Mazos públicos"). */
+  readonly noun = input('la deckbox');
   readonly opened = output<void>();
 
   protected readonly color = computed(() => deckBoxColor(this.box()));

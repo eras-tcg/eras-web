@@ -3,21 +3,23 @@ import { Router } from '@angular/router';
 import { COLOR_LABELS, CARD_COLORS, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { CardsStore } from '@data/cards/cards.store';
 import {
-  DECK_FOLDERS,
+  DeckScope,
   DeckSearch,
   EMPTY_DECK_SEARCH,
-  FORMAT_LABELS,
   archetypeLabel,
   deckArchetypes,
+  deckEditionsOf,
   deckSummons,
+  folderLabel,
   folderOf,
   hasDeckSearch,
   profileDecks,
   searchDecks,
+  systemFolders,
 } from '@data/decks/deck-search';
 import { DeckSortKey, sortDecks } from '@data/decks/deck-rules';
 import { Deck } from '@data/decks/deck.model';
-import { DeckBox } from '@data/decks/deckbox.model';
+import { DeckBox, DeckBoxColor } from '@data/decks/deckbox.model';
 import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -32,17 +34,25 @@ import { FROM_PUBLIC_DECKS, PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-lin
 
 /** A criterion chip: a select whose first option is "any". */
 interface Chip {
-  key: 'color' | 'archetype' | 'summon' | 'format' | 'origin';
+  key: 'color' | 'archetype' | 'summon' | 'edition';
   label: string;
   options: { value: string; label: string }[];
 }
 
+/** A folder tile: a deckbox-like tile made of its first decks' covers. */
+interface Tile {
+  box: DeckBox;
+  count: number;
+  covers: (string | null)[];
+}
+
+const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
+
 /**
- * Public decks: one search box over every deck (name, author, archetype or a card in it) with the common criteria as
- * chips (color, archetype, special summon, format, origin and order), and, while nothing is searched, quick-access
- * folders (Structure, Bloque E1, Arquetipos: the system's; Comunidad: the players'). A folder opens like a deckbox and
- * the search then looks inside it. The system's decks always come first, in the system's order; the players' follow,
- * sorted as chosen.
+ * Public decks. One search box over every deck (name, author, archetype, color or a card in it) with the common criteria
+ * as chips (color, archetype, special summon, edition and order). While nothing is searched, two ways in: the system's
+ * decks, kept in one folder per edition (the Structures apart; each edition's decks are the ones its new cards make,
+ * at least one per color), and the community's decks. The search looks inside the part open.
  */
 @Component({
   selector: 'eras-public-decks-page',
@@ -58,7 +68,7 @@ interface Chip {
           <eras-icon name="search" />
           <input
             type="search"
-            placeholder="Buscar mazo, autor, arquetipo o carta…"
+            [placeholder]="placeholder()"
             aria-label="Buscar mazos"
             [value]="search().text"
             (input)="set('text', $any($event.target).value)"
@@ -89,21 +99,36 @@ interface Chip {
         </div>
       </div>
 
+      @if (crumbs().length) {
+        <nav class="crumbs" aria-label="Ubicación">
+          <button erasButton variant="ghost" size="sm" type="button" (click)="go('', '')"><eras-icon name="chevron-left" /> Mazos públicos</button>
+          @for (c of crumbs(); track c.label; let last = $last) {
+            <span class="sep" aria-hidden="true">›</span>
+            @if (last) {
+              <span class="here">{{ c.label }}</span>
+            } @else {
+              <button class="link" type="button" (click)="go(c.scope, c.folder)">{{ c.label }}</button>
+            }
+          }
+        </nav>
+      }
+
       @if (loading()) {
         <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
-      } @else if (showFolders()) {
-        <h2 class="heading">Accesos rápidos</h2>
-        <eras-grid minColumn="var(--cover-column, min(11rem, 40vw, 34dvh))" [gap]="4">
-          @for (f of folders(); track f.box.id) {
-            <eras-deckbox-tile noun="la carpeta" [box]="f.box" [count]="f.count" [covers]="f.covers" (opened)="set('folder', f.box.id)" />
+      } @else if (view() === 'entry') {
+        <eras-grid minColumn="min(16rem, 42vw)" [gap]="4">
+          @for (t of entries(); track t.box.id) {
+            <eras-deckbox-tile noun="los mazos de" [box]="t.box" [count]="t.count" [covers]="t.covers" (opened)="go($any(t.box.id), '')" />
+          }
+        </eras-grid>
+      } @else if (view() === 'folders') {
+        <eras-grid [minColumn]="coverColumn" [gap]="4">
+          @for (t of folders(); track t.box.id) {
+            <eras-deckbox-tile noun="la carpeta" [box]="t.box" [count]="t.count" [covers]="t.covers" (opened)="go('system', t.box.id)" />
           }
         </eras-grid>
       } @else {
         <div class="results-head">
-          @if (openFolderLabel(); as label) {
-            <button erasButton variant="ghost" size="sm" type="button" (click)="search.set(empty)"><eras-icon name="chevron-left" /> Accesos rápidos</button>
-            <span class="crumb">{{ label }}</span>
-          }
           <span class="count">{{ results().length }} {{ results().length === 1 ? 'mazo' : 'mazos' }}</span>
           @for (a of active(); track a.key) {
             <button class="tag" type="button" [attr.aria-label]="'Quitar ' + a.label" (click)="set(a.key, '')">{{ a.label }} <eras-icon name="x" /></button>
@@ -115,7 +140,7 @@ interface Chip {
         @if (results().length === 0) {
           <p class="note">Ningún mazo coincide con la búsqueda.</p>
         }
-        <eras-grid minColumn="var(--cover-column, min(11rem, 40vw, 34dvh))" [gap]="4">
+        <eras-grid [minColumn]="coverColumn" [gap]="4">
           @for (deck of results(); track deck.id) {
             <eras-deck-cover
               [name]="deck.deckName"
@@ -134,7 +159,7 @@ interface Chip {
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      margin-block-end: var(--space-5);
+      margin-block-end: var(--space-4);
     }
     .box {
       display: flex;
@@ -198,9 +223,31 @@ interface Chip {
       block-size: 0.9rem;
       pointer-events: none;
     }
-    .heading {
-      margin: 0 0 var(--space-3);
-      font-size: var(--font-size-lg);
+    .crumbs {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-1);
+      margin-block-end: var(--space-3);
+    }
+    .sep {
+      color: var(--color-text-muted);
+    }
+    .link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--color-text-muted);
+      font: inherit;
+      cursor: pointer;
+    }
+    .link:hover,
+    .link:focus-visible {
+      color: var(--color-text);
+      text-decoration: underline;
+    }
+    .here {
+      font-weight: 700;
     }
     .results-head {
       display: flex;
@@ -208,9 +255,6 @@ interface Chip {
       align-items: center;
       gap: var(--space-2);
       margin-block-end: var(--space-3);
-    }
-    .crumb {
-      font-weight: 700;
     }
     .count,
     .note {
@@ -251,7 +295,7 @@ export class PublicDecksPage {
   private readonly router = inject(Router);
 
   protected readonly sortOptions = PUBLIC_SORT_OPTIONS;
-  protected readonly empty = EMPTY_DECK_SEARCH;
+  protected readonly coverColumn = COVER_COLUMN;
   protected readonly sortKey = signal<DeckSortKey>('name');
   protected readonly search = signal<DeckSearch>(EMPTY_DECK_SEARCH);
   protected readonly loading = computed(() => this.store.loading() && this.store.publicDecks().length === 0);
@@ -262,21 +306,48 @@ export class PublicDecksPage {
     { key: 'color', label: 'Color', options: CARD_COLORS.map((c) => ({ value: c, label: COLOR_LABELS[c] ?? c })) },
     { key: 'archetype', label: 'Arquetipo', options: deckArchetypes(this.profiles()).map((a) => ({ value: a, label: archetypeLabel(a) })) },
     { key: 'summon', label: 'Invocación', options: deckSummons(this.profiles()).map((k) => ({ value: k, label: SPECIAL_SUMMON_LABELS[k] ?? k })) },
-    { key: 'format', label: 'Formato', options: Object.entries(FORMAT_LABELS).map(([value, label]) => ({ value, label })) },
-    { key: 'origin', label: 'Origen', options: [{ value: 'system', label: 'ERAS' }, { value: 'community', label: 'Comunidad' }] },
+    { key: 'edition', label: 'Edición', options: deckEditionsOf(this.profiles()).map((e) => ({ value: e, label: e })) },
   ]);
 
-  /** The folders while nothing is searched nor open. */
-  protected readonly showFolders = computed(() => !hasDeckSearch(this.search()) && !this.search().folder);
-  protected readonly folders = computed(() =>
-    DECK_FOLDERS.map((f, order) => {
-      const inside = this.ordered(this.store.publicDecks().filter((d) => folderOf(d) === f.id));
-      const box: DeckBox = { id: f.id, userId: '', name: f.label, color: f.color, order, deckIds: inside.map((d) => d.id) };
-      return { box, count: inside.length, covers: inside.slice(0, 4).map((d) => d.deckImage ?? null) };
-    }).filter((f) => f.count > 0),
-  );
-  protected readonly openFolderLabel = computed(() => DECK_FOLDERS.find((f) => f.id === this.search().folder)?.label ?? null);
+  /** What shows: the two ways in, the system's edition folders, or decks (a folder, the community or a search). */
+  protected readonly view = computed<'entry' | 'folders' | 'decks'>(() => {
+    const s = this.search();
+    if (hasDeckSearch(s)) return 'decks';
+    if (!s.scope) return 'entry';
+    if (s.scope === 'system' && !s.folder) return 'folders';
+    return 'decks';
+  });
+
+  protected readonly placeholder = computed(() => {
+    const s = this.search();
+    const where = s.folder ? ` en ${folderLabel(s.folder)}` : s.scope === 'system' ? ' en el sistema' : s.scope === 'community' ? ' en la comunidad' : '';
+    return `Buscar mazo, autor, arquetipo o carta${where}…`;
+  });
+
+  protected readonly entries = computed<Tile[]>(() => {
+    const all = this.store.publicDecks();
+    return [
+      this.tile('system', 'Sistema', 'amber', all.filter((d) => d.systemDeck)),
+      this.tile('community', 'Comunidad', 'teal', all.filter((d) => !d.systemDeck)),
+    ];
+  });
+
+  protected readonly folders = computed<Tile[]>(() => {
+    const all = this.store.publicDecks();
+    return systemFolders(all).map((f) => this.tile(f, folderLabel(f), 'blue', all.filter((d) => d.systemDeck && folderOf(d) === f)));
+  });
+
   protected readonly results = computed(() => this.ordered(searchDecks(this.store.publicDecks(), this.search(), this.profiles())));
+
+  /** Where the search is: Sistema › E1.2, or Comunidad. */
+  protected readonly crumbs = computed(() => {
+    const s = this.search();
+    const out: { label: string; scope: DeckScope; folder: string }[] = [];
+    if (s.scope === 'system') out.push({ label: 'Sistema', scope: 'system', folder: '' });
+    if (s.scope === 'community') out.push({ label: 'Comunidad', scope: 'community', folder: '' });
+    if (s.folder) out.push({ label: folderLabel(s.folder), scope: 'system', folder: s.folder });
+    return out;
+  });
 
   /** The criteria chosen, as removable tags. */
   protected readonly active = computed(() => {
@@ -292,7 +363,7 @@ export class PublicDecksPage {
 
   constructor() {
     void this.store.loadPublic();
-    // Colors, archetypes and cards of each deck come from the card catalog
+    // Colors, archetypes, editions and cards of each deck come from the card catalog
     void this.cards.load();
   }
 
@@ -300,16 +371,27 @@ export class PublicDecksPage {
     this.search.update((s) => ({ ...s, [key]: value }));
   }
 
-  /** Every criterion off; an open folder stays open. */
+  /** Into a part (and folder), keeping the criteria chosen. */
+  protected go(scope: DeckScope, folder: string): void {
+    this.search.update((s) => ({ ...s, scope, folder }));
+  }
+
+  /** Every criterion off; the part open stays. */
   protected clear(): void {
-    this.search.update((s) => ({ ...EMPTY_DECK_SEARCH, folder: s.folder }));
+    this.search.update((s) => ({ ...EMPTY_DECK_SEARCH, scope: s.scope, folder: s.folder }));
   }
 
   protected open(deck: Deck): void {
     void this.router.navigate(deckViewLink(deck.id), { state: FROM_PUBLIC_DECKS });
   }
 
-  /** The system's decks in their order, then the players' as chosen (newest first by age). */
+  private tile(id: string, name: string, color: DeckBoxColor, decks: Deck[]): Tile {
+    const inside = this.ordered(decks);
+    const box: DeckBox = { id, userId: '', name, color, order: 0, deckIds: inside.map((d) => d.id) };
+    return { box, count: inside.length, covers: inside.slice(0, 4).map((d) => d.deckImage ?? null) };
+  }
+
+  /** The system's decks in their order (edition by edition, color by color), then the players' as chosen. */
   private ordered(decks: Deck[]): Deck[] {
     const system = decks.filter((d) => d.systemDeck).sort((a, b) => (a.systemOrder ?? 0) - (b.systemOrder ?? 0));
     const key = this.sortKey();

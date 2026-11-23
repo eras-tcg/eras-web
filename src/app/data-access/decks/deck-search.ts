@@ -4,22 +4,25 @@ import { Deck } from './deck.model';
 
 /**
  * What a public deck is about, worked out from its cards in the catalog: the common criteria of the deck search in
- * "Mazos públicos" (color, archetype, special summon, format) and what the search box looks in (its classes and cards).
+ * "Mazos públicos" (color, archetype, special summon, edition) and what the search box looks in (its classes and cards).
  */
 export interface DeckProfile {
   /** Colors in the usual order. */
   colors: string[];
   /** The class with the most creature copies ("caballero"), or null without creatures. */
   archetype: string | null;
-  /** Every class of its creatures. */
+  /** Every class of its creatures, most copies first. */
   classes: string[];
   /** Its special summon methods ("promotion"…), most copies first. */
   summons: string[];
-  /** "st": only cards of one Structure; "e1": only the E1 block; "mixed": anything else. */
-  format: 'st' | 'e1' | 'mixed';
+  /** The newest edition it has cards of ("E1.2"; a Structure's own deck: "ST4"), or null without known cards. */
+  edition: string | null;
   /** Its card names, lowercase without accents (the search box finds a deck by a card in it). */
   cardNames: string[];
 }
+
+/** Where the search looks: every public deck, the system's or the community's. */
+export type DeckScope = '' | 'system' | 'community';
 
 /** The criteria of the deck search; empty strings mean any. */
 export interface DeckSearch {
@@ -27,23 +30,24 @@ export interface DeckSearch {
   color: string;
   archetype: string;
   summon: string;
-  format: string;
-  origin: '' | 'system' | 'community';
-  /** A quick-access folder ("st", "e1", "arquetipo", "community"), or "" for every deck. */
+  edition: string;
+  scope: DeckScope;
+  /** Inside "Mazos del sistema": the edition folder open ("E1.2", "ST"), or "" for the folders. */
   folder: string;
 }
 
-export const EMPTY_DECK_SEARCH: DeckSearch = { text: '', color: '', archetype: '', summon: '', format: '', origin: '', folder: '' };
+export const EMPTY_DECK_SEARCH: DeckSearch = { text: '', color: '', archetype: '', summon: '', edition: '', scope: '', folder: '' };
 
-export const FORMAT_LABELS: Record<DeckProfile['format'], string> = { st: 'Structure', e1: 'Bloque E1', mixed: 'Mixto' };
+/** Editions in release order: the Structures first, then E1, E1.1… (numbers compared as numbers). */
+export function compareEditions(a: string, b: string): number {
+  const st = (e: string) => (e.startsWith('ST') ? 0 : 1);
+  return st(a) - st(b) || a.localeCompare(b, 'es', { numeric: true });
+}
 
-/** The quick-access folders of "Mazos públicos", in order (the system's rows, then the players' decks). */
-export const DECK_FOLDERS: readonly { id: string; label: string; color: 'amber' | 'blue' | 'violet' | 'slate' }[] = [
-  { id: 'st', label: 'Structure', color: 'amber' },
-  { id: 'e1', label: 'Bloque E1', color: 'blue' },
-  { id: 'arquetipo', label: 'Arquetipos', color: 'violet' },
-  { id: 'community', label: 'Comunidad', color: 'slate' },
-];
+/** How an edition folder is named: "ST" is the Structures'. */
+export function folderLabel(folder: string): string {
+  return folder === 'ST' ? 'Structure' : folder;
+}
 
 /** Lowercase, without accents: how the search box compares. */
 export function plain(text: string): string {
@@ -71,52 +75,52 @@ export function profileDecks(decks: readonly Deck[], cards: readonly CatalogCard
       if (meta?.specialSummonKind) summons.set(meta.specialSummonKind, (summons.get(meta.specialSummonKind) ?? 0) + 1);
     }
     const byCount = (m: Map<string, number>) => [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es')).map(([k]) => k);
-    const ed = [...editions];
-    const sts = new Set(ed.filter((e) => /^ST\d/.test(e)));
-    const format: DeckProfile['format'] =
-      ed.length > 0 && sts.size === 1 && ed.every((e) => sts.has(e)) ? 'st' : ed.length > 0 && ed.every((e) => e === 'E1' || e.startsWith('E1.')) ? 'e1' : 'mixed';
+    const sorted = [...editions].sort(compareEditions);
     out.set(deck.id, {
       colors: CARD_COLORS.filter((c) => colors.has(c)),
       archetype: byCount(classes)[0] ?? null,
       classes: byCount(classes),
       summons: byCount(summons),
-      format,
+      edition: sorted[sorted.length - 1] ?? null,
       cardNames: [...names].filter(Boolean),
     });
   }
   return out;
 }
 
-/** The folder a public deck is kept in: its system row, or the community. */
+/** The edition folder of a system deck ("ST" for the Structures'). */
 export function folderOf(deck: Deck): string {
-  return deck.systemDeck ? (deck.systemGroup ?? 'arquetipo') : 'community';
+  return deck.systemEdition ?? 'ST';
 }
 
 export function hasDeckSearch(s: DeckSearch): boolean {
-  return !!(s.text.trim() || s.color || s.archetype || s.summon || s.format || s.origin);
+  return !!(s.text.trim() || s.color || s.archetype || s.summon || s.edition);
 }
 
+const COLOR_WORDS: Record<string, string> = { B: 'azul', G: 'verde', P: 'violeta', R: 'rojo', W: 'blanco' };
+
 /**
- * The decks that meet every criterion. The search box looks in the deck's name, its author, its classes and its cards
- * (accents and case aside), each word on its own: "rojo krugel" finds red decks with Krugel.
+ * The decks that meet every criterion, in the scope and folder open. The search box looks in the deck's name, its
+ * author, its classes, its colors and its cards (accents and case aside), each word on its own: "rojo krugel" finds red
+ * decks with Krugel.
  */
 export function searchDecks(decks: readonly Deck[], s: DeckSearch, profiles: ReadonlyMap<string, DeckProfile>): Deck[] {
   const words = plain(s.text).split(/\s+/).filter(Boolean);
   return decks.filter((deck) => {
     const p = profiles.get(deck.id);
-    if (s.folder && folderOf(deck) !== s.folder) return false;
-    if (s.origin === 'system' && !deck.systemDeck) return false;
-    if (s.origin === 'community' && deck.systemDeck) return false;
+    if (s.scope === 'system' && !deck.systemDeck) return false;
+    if (s.scope === 'community' && deck.systemDeck) return false;
+    if (s.folder && (!deck.systemDeck || folderOf(deck) !== s.folder)) return false;
     if (s.color && !p?.colors.includes(s.color)) return false;
     if (s.archetype && p?.archetype !== s.archetype) return false;
     if (s.summon && !p?.summons.includes(s.summon)) return false;
-    if (s.format && p?.format !== s.format) return false;
+    if (s.edition && p?.edition !== s.edition) return false;
     if (words.length) {
       const name = plain(deck.deckName);
       const author = plain(deck.username ?? '');
       const classes = (p?.classes ?? []).map(plain);
       const cards = p?.cardNames ?? [];
-      const colorNames = (p?.colors ?? []).map((c) => plain(COLOR_WORDS[c] ?? ''));
+      const colorNames = (p?.colors ?? []).map((c) => COLOR_WORDS[c] ?? '');
       for (const w of words) {
         const found =
           name.includes(w) || author.includes(w) || classes.some((k) => k.includes(w)) || cards.some((c) => c.includes(w)) || colorNames.includes(w);
@@ -127,7 +131,10 @@ export function searchDecks(decks: readonly Deck[], s: DeckSearch, profiles: Rea
   });
 }
 
-const COLOR_WORDS: Record<string, string> = { B: 'azul', G: 'verde', P: 'violeta', R: 'rojo', W: 'blanco' };
+/** The edition folders of the system's decks, in release order. */
+export function systemFolders(decks: readonly Deck[]): string[] {
+  return [...new Set(decks.filter((d) => d.systemDeck).map(folderOf))].sort(compareEditions);
+}
 
 /** The archetypes the decks have, by how many decks have each (then by name). */
 export function deckArchetypes(profiles: ReadonlyMap<string, DeckProfile>): string[] {
@@ -140,6 +147,11 @@ export function deckArchetypes(profiles: ReadonlyMap<string, DeckProfile>): stri
 export function deckSummons(profiles: ReadonlyMap<string, DeckProfile>): string[] {
   const used = new Set([...profiles.values()].flatMap((p) => p.summons));
   return Object.keys(SPECIAL_SUMMON_LABELS).filter((k) => used.has(k));
+}
+
+/** The editions the decks belong to, in release order. */
+export function deckEditionsOf(profiles: ReadonlyMap<string, DeckProfile>): string[] {
+  return [...new Set([...profiles.values()].map((p) => p.edition).filter((e): e is string => !!e))].sort(compareEditions);
 }
 
 /** "muerto viviente" → "Muerto viviente". */

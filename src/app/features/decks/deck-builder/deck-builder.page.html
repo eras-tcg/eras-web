@@ -88,24 +88,26 @@
               >{{ draft.name().length }}/{{ nameMax }}</span
             >
           }
-          <button
-            type="button"
-            erasIconButton
-            size="md"
-            [icon]="draft.isPrivate() ? 'lock' : 'globe'"
-            [title]="
-              draft.isPrivate()
-                ? 'Mazo privado: solo tú lo ves (clic para hacerlo público)'
-                : 'Mazo público: todos lo ven (clic para hacerlo privado)'
-            "
-            [attr.aria-label]="
-              draft.isPrivate()
-                ? 'Mazo privado (clic para hacerlo público)'
-                : 'Mazo público (clic para hacerlo privado)'
-            "
-            [attr.aria-pressed]="draft.isPrivate()"
-            (click)="draft.togglePrivate()"
-          ></button>
+          @if (!draft.system()) {
+            <button
+              type="button"
+              erasIconButton
+              size="md"
+              [icon]="draft.isPrivate() ? 'lock' : 'globe'"
+              [title]="
+                draft.isPrivate()
+                  ? 'Mazo privado: solo tú lo ves (clic para hacerlo público)'
+                  : 'Mazo público: todos lo ven (clic para hacerlo privado)'
+              "
+              [attr.aria-label]="
+                draft.isPrivate()
+                  ? 'Mazo privado (clic para hacerlo público)'
+                  : 'Mazo público (clic para hacerlo privado)'
+              "
+              [attr.aria-pressed]="draft.isPrivate()"
+              (click)="draft.togglePrivate()"
+            ></button>
+          }
         </div>
 
         <!-- The count (a warning icon when the player lacks cards), how the copies show, saving and the other options -->

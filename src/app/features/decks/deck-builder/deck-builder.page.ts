@@ -9,6 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import {
@@ -154,6 +155,7 @@ export class DeckBuilderPage {
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly deckBoxes = inject(DeckBoxesStore);
   private readonly modal = inject(ModalService);
 
@@ -357,8 +359,8 @@ export class DeckBuilderPage {
       this.loadError.set(apiErrorMessage(e, 'No se pudo cargar el mazo'));
       return;
     }
-    // Only the owner can overwrite a deck, so anyone else edits a copy
-    const notMine = deck.userId !== this.auth.user()?.id;
+    // Only the owner can overwrite a deck (a system deck: a simulator administrator in edit mode), so anyone else edits a copy
+    const notMine = deck.systemDeck ? !this.editMode.allows('simulator_admin') : deck.userId !== this.auth.user()?.id;
     this.copyNotice.set(!copy && notMine);
     this.draft.load(deck, catalog, copy || notMine);
     this.shownDeck.set(`${id}|${copy}`);

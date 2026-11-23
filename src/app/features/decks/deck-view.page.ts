@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { ScreenLink } from '@core/navigation/screens';
 import { apiErrorMessage } from '@core/http/api-error';
 import { cardImageUrl } from '@data/cards/card-rules';
@@ -103,6 +104,7 @@ export class DeckViewPage {
   protected readonly cards = inject(CardsStore);
   private readonly editions = inject(EditionsStore);
   private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
   // Opened from the public list: "back" returns there instead of to the player's own decks
   // Back to the same tab, folder and search it was opened from
@@ -119,7 +121,12 @@ export class DeckViewPage {
   protected readonly copies = computed(() => this.groups().flatMap((g) => g.entries.flatMap((e) => Array.from({ length: e.count }, () => e.card))));
   protected readonly total = computed(() => totalCards(this.resolved().entries));
   protected readonly missing = computed(() => (this.cards.cards().length ? this.resolved().missing.length : 0));
-  protected readonly canEdit = computed(() => !!this.deck() && this.auth.user()?.id === this.deck()?.userId);
+  /** The owner edits their deck; a simulator administrator in edit mode, the system's (they stay the system's). */
+  protected readonly canEdit = computed(() => {
+    const deck = this.deck();
+    if (!deck) return false;
+    return deck.systemDeck ? this.editMode.allows('simulator_admin') : this.auth.user()?.id === deck.userId;
+  });
   protected readonly canCopy = computed(() => this.auth.isAuthenticated());
   protected readonly imageUrl = cardImageUrl;
   protected readonly editQuery = computed(() => deckBuilderQuery(this.id()));

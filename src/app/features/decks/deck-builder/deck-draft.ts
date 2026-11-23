@@ -26,6 +26,8 @@ export class DeckDraft {
   private readonly saved = signal<Snapshot | null>(null);
 
   readonly id = signal<string | null>(null);
+  /** The deck being edited is the system's (an administrator edits it; it stays public, author ERAS). */
+  readonly system = signal(false);
   readonly saving = signal(false);
   /** Cards of the loaded deck that are no longer in the catalog. */
   readonly missing = signal(0);
@@ -58,6 +60,7 @@ export class DeckDraft {
       isPrivate: deck.privateDeck ?? false,
     };
     this.missing.set(missing.length);
+    this.system.set(!copy && !!deck.systemDeck);
     if (copy) {
       this.id.set(null);
       this.saved.set(null);
@@ -72,6 +75,7 @@ export class DeckDraft {
   /** A new, empty deck (the builder without a deck loaded). */
   reset(): void {
     this.id.set(null);
+    this.system.set(false);
     this.saved.set(null);
     this.state.set(EMPTY);
     this.missing.set(0);

@@ -38,22 +38,15 @@
 
     @if (loading() || (cards.loading() && groups().length === 0)) {
       <eras-empty-state title="Cargando mazo…"><eras-spinner /></eras-empty-state>
-    } @else if (!error() && groups().length === 0) {
+    } @else if (!error() && copies().length === 0) {
       <eras-empty-state title="Este mazo no tiene cartas" />
     } @else {
-      @for (group of groups(); track group.type) {
-        <eras-section-header [title]="typeLabel(group.type) + ' (' + group.count + ')'" />
-        <eras-grid minColumn="9rem" [gap]="3">
-          @for (entry of group.entries; track entry.card.id) {
-            <eras-card-thumb
-              [name]="entry.card.name ?? ''"
-              [imageUrl]="imageUrl(entry.card)"
-              [count]="entry.count"
-              (selected)="openCard(entry.card.id)"
-            />
-          }
-        </eras-grid>
-      }
+      <!-- Every copy on its own, side by side (creatures, then structures and utilities; copies together) -->
+      <eras-grid minColumn="9rem" [gap]="3">
+        @for (card of copies(); track $index) {
+          <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" (selected)="openCard(card.id)" />
+        }
+      </eras-grid>
     }
   </div>
 </eras-page>

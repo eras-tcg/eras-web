@@ -17,7 +17,6 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
@@ -29,10 +28,9 @@ import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-d
 
 const PUBLIC_DECKS: ScreenLink = { route: '/public-decks', label: 'Mazos públicos' };
 
-const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 'Estructuras', utility: 'Utilidades', 'sin tipo': 'Sin tipo' };
 
 /**
- * Read-only view of a deck: cards grouped by type, card detail, proxies, edit (owner) and copy (signed in). One
+ * Read-only view of a deck: every copy side by side (creatures, then structures and utilities), card detail, proxies, edit (owner) and copy (signed in). One
  * screen high: the name, the buttons and the quick buttons stay; only the cards scroll. The owner sees the deckbox
  * the deck is in under the buttons (it opens it) and picks it with "Deckbox" (manage_decks).
  */
@@ -42,7 +40,6 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
     RouterLink,
     PageComponent,
     GridComponent,
-    SectionHeaderComponent,
     CardThumbComponent,
     AlertComponent,
     EmptyStateComponent,
@@ -106,12 +103,13 @@ export class DeckViewPage {
 
   private readonly resolved = computed(() => entriesFromIds(this.deck()?.cards ?? [], this.cards.cards()));
   protected readonly groups = computed(() => groupByType(this.resolved().entries));
+  /** Every copy of the deck, one after another in the groups' order. */
+  protected readonly copies = computed(() => this.groups().flatMap((g) => g.entries.flatMap((e) => Array.from({ length: e.count }, () => e.card))));
   protected readonly total = computed(() => totalCards(this.resolved().entries));
   protected readonly missing = computed(() => (this.cards.cards().length ? this.resolved().missing.length : 0));
   protected readonly canEdit = computed(() => !!this.deck() && this.auth.user()?.id === this.deck()?.userId);
   protected readonly canCopy = computed(() => this.auth.isAuthenticated());
   protected readonly imageUrl = cardImageUrl;
-  protected readonly typeLabel = (type: string) => TYPE_LABELS[type] ?? type;
   protected readonly editQuery = computed(() => deckBuilderQuery(this.id()));
   protected readonly copyQuery = computed(() => deckBuilderQuery(this.id(), true));
   private readonly router = inject(Router);

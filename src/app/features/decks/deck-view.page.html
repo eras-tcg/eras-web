@@ -18,7 +18,7 @@
       </button>
     }
     @if (canCopy()) {
-      <a erasButton variant="float" routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
+      <a erasButton [variant]="canEdit() ? 'glass' : 'float'" routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
     }
   </div>
 

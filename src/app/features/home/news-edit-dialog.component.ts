@@ -21,6 +21,7 @@ export interface NewsEditData {
 
 const TITLE_MAX = 80;
 const EXCERPT_MAX = 400;
+const BODY_MAX = 4000;
 const RESULTS = 30;
 
 /** "2026-11-23T20:00" for a datetime-local field (the news' ISO date cut to minutes). */
@@ -53,6 +54,9 @@ function nowInput(): string {
         </eras-form-field>
         <eras-form-field label="Texto">
           <textarea rows="3" [maxLength]="excerptMax" [value]="excerpt()" (input)="excerpt.set($any($event.target).value)"></textarea>
+        </eras-form-field>
+        <eras-form-field label="Noticia completa (al abrirla; párrafos separados por una línea en blanco)">
+          <textarea rows="8" [maxLength]="bodyMax" [value]="body()" (input)="body.set($any($event.target).value)"></textarea>
         </eras-form-field>
         <div class="pair">
           <eras-form-field label="Botón (texto)">
@@ -146,12 +150,14 @@ export class NewsEditDialogComponent {
   protected readonly data = inject<NewsEditData>(DIALOG_DATA);
   protected readonly titleMax = TITLE_MAX;
   protected readonly excerptMax = EXCERPT_MAX;
+  protected readonly bodyMax = BODY_MAX;
   protected readonly maxCards = MAX_NEWS_CARDS;
 
   private readonly byId = new Map(this.data.cards.map((c) => [c.id, c]));
   protected readonly title = signal(this.data.news?.title ?? '');
   protected readonly date = signal(this.data.news ? toLocalInput(this.data.news.date) : nowInput());
   protected readonly excerpt = signal(this.data.news?.excerpt ?? '');
+  protected readonly body = signal(this.data.news?.body ?? '');
   protected readonly linkLabel = signal(this.data.news?.linkLabel ?? '');
   protected readonly linkRoute = signal(this.data.news?.linkRoute ?? '');
   protected readonly chosen = signal<CatalogCard[]>(
@@ -197,6 +203,7 @@ export class NewsEditDialogComponent {
       title: this.title().trim(),
       date: this.date(),
       excerpt: this.excerpt().trim(),
+      body: this.body().trim() || null,
       cardIds: this.chosen().map((c) => c.id),
       linkRoute: route || null,
       linkLabel: route ? this.linkLabel().trim() || null : null,

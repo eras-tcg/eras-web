@@ -11,6 +11,8 @@ export interface HomeNews {
   /** ISO date and time, "2026-11-23T20:00". */
   date: string;
   excerpt: string;
+  /** The news told in full, for its pop-up (paragraphs apart by a blank line); none: the excerpt. */
+  body?: string | null;
   /** Up to MAX_NEWS_CARDS cards shown whole beside it (catalog ids). */
   cardIds: string[];
   /** An optional button to a page of the site ("/cards?edition=E1.3") and its text. */

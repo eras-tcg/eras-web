@@ -43,6 +43,11 @@ export class HubCarouselComponent {
     const slides = this.slides();
     return slides.length ? slides[this.index() % slides.length] : null;
   });
+  /** The slide shown, as a list of one: each slide its own element, so changing slides fades one out and the next in. */
+  protected readonly shown = computed(() => {
+    const slide = this.slide();
+    return slide ? [slide] : [];
+  });
 
   constructor() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

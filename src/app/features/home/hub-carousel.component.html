@@ -1,11 +1,15 @@
 @if (loading()) {
   <div class="slide slide-empty"><eras-spinner /></div>
-} @else if (slide(); as current) {
+} @else if (slide()) {
+  <!-- One element per slide (tracked by its key), so the next one fades in while the last one fades out -->
+  @for (current of shown(); track current.key) {
   @let lead = current.cards[0];
   <!-- A showcase: the text on one side, the cards whole (their own shape) on the other, over the first card's art blurred.
        The whole slide answers a click: the edition's page, or the news item in full -->
   <article
     class="slide"
+    animate.enter="slide-enter"
+    animate.leave="slide-leave"
     tabindex="0"
     (click)="selected.emit(current)"
     (keydown.enter)="$event.target === $event.currentTarget && selected.emit(current)"
@@ -34,6 +38,7 @@
       </div>
     }
   </article>
+  }
   @if (slides().length > 1) {
     <button type="button" class="nav prev" aria-label="Anterior" (click)="move(-1)"><eras-icon name="chevron-left" /></button>
     <button type="button" class="nav next" aria-label="Siguiente" (click)="move(1)"><eras-icon name="chevron-right" /></button>

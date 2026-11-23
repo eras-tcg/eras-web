@@ -108,10 +108,10 @@ export class HomePage {
     void this.router.navigateByUrl(url);
   }
 
-  /** A slide clicked: the featured edition goes to its page, a news item opens in full (its button, if any, leads on). */
+  /** A slide clicked: the featured edition goes to its page in Ediciones, a news item opens in full (its button, if any, leads on). */
   protected async selectSlide(slide: HubSlide): Promise<void> {
-    if (slide.kind === 'edition') {
-      if (slide.action) this.openSlide(slide.action.url);
+    if (slide.link) {
+      this.openSlide(slide.link);
       return;
     }
     const url = await firstValueFrom(this.modal.open<string, HubSlide>(NewsDialogComponent, { data: slide }).closed);

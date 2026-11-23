@@ -6,7 +6,7 @@ import { currentStep, stepText } from '@data/missions/progression-rules';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, fullEditionId } from '@data/cards/card-rules';
 import { HomeNews } from '@data/home/home.model';
-import { newsDateLabel } from '@data/home/default-news';
+import { DEFAULT_NEWS, newsDateLabel } from '@data/home/default-news';
 
 /**
  * Background of the home hub: a random edition with artwork, never the one shown last time when there is
@@ -37,6 +37,10 @@ export interface HubSlide {
   date: string | null;
   title: string;
   text: string;
+  /** The news told in full, for its pop-up (the excerpt when it has none). */
+  body: string;
+  /** Where a click on the slide leads (the edition's page); null: a news item, it opens in full. */
+  link: string | null;
   cards: SlideCard[];
   /** Its button: where it leads (a site URL) and its text. */
   action: { label: string; url: string } | null;
@@ -52,10 +56,10 @@ export function editionShowcase(editionId: string, cards: readonly CatalogCard[]
     .slice(0, 3);
 }
 
-/** An edition's page (its shop): where a link to its cards ("/cards?edition=E1.3") leads instead; other links as they are. */
+/** An edition's page (in Ediciones): where a link to its cards ("/cards?edition=E1.3") leads instead; other links as they are. */
 export function editionLink(url: string): string {
   const match = /^\/cards\?edition=([^&#]+)$/.exec(url);
-  return match ? `/editions/${match[1]}` : url;
+  return match ? `/cards/editions/${match[1]}` : url;
 }
 
 /** Carousel of the hub: the featured edition (its rarest cards), then each news item with its cards. */
@@ -71,8 +75,10 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
       date: null,
       title: edition.editionName || edition.editionId,
       text: edition.editionDescription ?? '',
+      body: edition.editionDescription ?? '',
+      link: `/cards/editions/${encodeURIComponent(edition.editionId)}`,
       cards: editionShowcase(edition.editionId, cards).map(view),
-      action: { label: 'Ver edición', url: `/editions/${encodeURIComponent(edition.editionId)}` },
+      action: null,
     });
   }
   news.forEach((item, i) => {
@@ -83,6 +89,8 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
       date: item.date,
       title: item.title,
       text: item.excerpt,
+      body: item.body || DEFAULT_NEWS.find((d) => d.title === item.title)?.body || item.excerpt,
+      link: null,
       cards: item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c).map(view),
       action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: editionLink(item.linkRoute) } : null,
     });

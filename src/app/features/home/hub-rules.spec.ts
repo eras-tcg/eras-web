@@ -38,20 +38,27 @@ describe('hubSlides', () => {
     expect(hubSlides(edition('A'), [news('n1'), news('n2')]).map((s) => s.title)).toEqual(['A', 'n1', 'n2']);
   });
 
-  it("shows the featured edition with its three rarest cards and a button to its page", () => {
+  it('shows the featured edition with its three rarest cards, a click leading to its page in Ediciones', () => {
     const [slide] = hubSlides(edition('A'), [], cards);
     expect(slide.kind).toBe('edition');
     expect(slide.cards.map((c) => c.id)).toEqual(['sec', 'sr', 'r']);
-    expect(slide.action).toEqual({ label: 'Ver edición', url: '/editions/A' });
+    expect(slide.link).toBe('/cards/editions/A');
+    expect(slide.action).toBeNull();
+  });
+
+  it('tells a news item in full: its body, a default one of the same title, or its excerpt', () => {
+    expect(hubSlides(null, [news('n', [], { excerpt: 'corto', body: 'largo' })])[0].body).toBe('largo');
+    expect(hubSlides(null, [news('Llega ERAS 2.0')])[0].body).toContain('ERAS estrena');
+    expect(hubSlides(null, [news('Otra', [], { excerpt: 'corto' })])[0].body).toBe('corto');
   });
 
   it("sends a news link to an edition's cards to the edition's page", () => {
-    expect(editionLink('/cards?edition=E1.3')).toBe('/editions/E1.3');
+    expect(editionLink('/cards?edition=E1.3')).toBe('/cards/editions/E1.3');
     expect(editionLink('/cards?edition=E1&color=R')).toBe('/cards?edition=E1&color=R');
     expect(editionLink('/deck-builder')).toBe('/deck-builder');
     const [slide] = hubSlides(null, [news('n', [], { linkRoute: '/cards?edition=E1.3', linkLabel: 'Ver' })], cards);
     expect(slide.kind).toBe('news');
-    expect(slide.action).toEqual({ label: 'Ver', url: '/editions/E1.3' });
+    expect(slide.action).toEqual({ label: 'Ver', url: '/cards/editions/E1.3' });
   });
 
   it("shows a news item with its own cards, in its order, and its button when it has one", () => {

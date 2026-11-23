@@ -29,7 +29,26 @@
   padding: var(--space-4) var(--space-7) var(--space-6);
   isolation: isolate;
   cursor: pointer;
-  animation: slide-in var(--duration-base) var(--easing-standard);
+}
+
+// From one slide to the next: the new one fades in over the old one fading out (it leaves on top of it, in place)
+.slide-enter {
+  animation: slide-fade-in 600ms var(--easing-standard);
+}
+
+.slide-leave {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  animation: slide-fade-out 600ms var(--easing-standard) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-enter,
+  .slide-leave {
+    animation-duration: 1ms;
+  }
 }
 
 .slide:focus-visible {
@@ -102,10 +121,15 @@
   max-inline-size: 58%;
 }
 
-@keyframes slide-in {
+@keyframes slide-fade-in {
   from {
     opacity: 0;
-    transform: translateX(0.75rem);
+  }
+}
+
+@keyframes slide-fade-out {
+  to {
+    opacity: 0;
   }
 }
 
@@ -211,33 +235,43 @@
   transform: rotate(11deg) translateX(0.3rem);
 }
 
+// Previous / next: the whole edge of the panel (its side margin, top to bottom) is the button, a chevron in its middle
 .nav {
   position: absolute;
   z-index: 2;
-  inset-block-start: 50%;
+  inset-block: 0;
   display: grid;
   place-items: center;
-  inline-size: 2rem;
-  block-size: 2rem;
+  inline-size: var(--space-7);
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-hub-scrim) 55%, transparent);
-  color: var(--color-hub-text);
+  background: transparent;
+  color: var(--color-hub-muted);
   cursor: pointer;
-  transform: translateY(-50%);
+  transition:
+    background var(--duration-fast) var(--easing-standard),
+    color var(--duration-fast) var(--easing-standard);
 }
 
-.nav:hover {
-  color: var(--color-hub-accent);
+.nav:hover,
+.nav:focus-visible {
+  color: var(--color-hub-text);
 }
 
 .prev {
-  inset-inline-start: var(--space-2);
+  inset-inline-start: 0;
+}
+
+.prev:hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-text) 12%, transparent), transparent);
 }
 
 .next {
-  inset-inline-end: var(--space-2);
+  inset-inline-end: 0;
+}
+
+.next:hover {
+  background: linear-gradient(270deg, color-mix(in srgb, var(--color-hub-text) 12%, transparent), transparent);
 }
 
 .dots {

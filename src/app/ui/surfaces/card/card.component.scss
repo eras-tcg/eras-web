@@ -28,6 +28,6 @@
 }
 
 :host(.is-interactive:hover) {
-  border-color: var(--color-text-muted);
+  border-color: var(--color-hub-accent);
   transform: translateY(-1px);
 }

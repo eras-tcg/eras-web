@@ -25,7 +25,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
     }
     .eras-table th {
       padding: var(--space-3);
-      border-block-end: var(--border-width) solid var(--color-border);
+      border-block-end: 2px solid color-mix(in srgb, var(--color-hub-accent) 45%, var(--color-border));
       color: var(--color-text-muted);
       font-size: var(--font-size-xs);
       font-weight: var(--font-weight-bold);

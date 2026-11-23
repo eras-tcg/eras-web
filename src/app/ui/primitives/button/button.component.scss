@@ -80,11 +80,45 @@
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
 }
-/* Even padding: an icon alone makes a circle, a label a pill */
+/* Even padding: an icon alone (named with aria-label) makes a circle */
 :host(.variant-float.size-md) {
   padding: var(--space-3);
 }
 :host(.variant-float.size-sm) {
+  padding: var(--space-2);
+}
+
+/* The floating pills: the gold call to action and its quiet companion, glass over what is behind */
+:host(.variant-glass) {
+  border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--color-text);
+}
+:host(.variant-glass:hover) {
+  border-color: color-mix(in srgb, var(--color-hub-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--color-surface-muted) 90%, transparent);
+}
+/* With a label (no aria-label: an icon alone has one) they are pills in the menu's lettering: the display face in
+   spaced capitals, as the hub's menu and «Descargar ERAS» */
+:host(.variant-float:not([aria-label])),
+:host(.variant-glass:not([aria-label])) {
+  padding-inline: var(--space-5);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+:host(.variant-float.size-sm:not([aria-label])),
+:host(.variant-glass.size-sm:not([aria-label])) {
+  padding-inline: var(--space-4);
+  letter-spacing: 0.08em;
+}
+:host(.variant-glass.size-md) {
+  padding-block: var(--space-3);
+}
+:host(.variant-glass[aria-label]) {
   padding: var(--space-2);
 }
 /* `marked`: something is on (a filter, say), a dot on its corner */

@@ -35,11 +35,8 @@
         <!-- The count and the filter button float over the cards while they scroll: no bar of their own -->
         <eras-stack class="toolbar" direction="row" [gap]="3" align="center" wrap>
           @if (!showFilters()) {
-            <button erasButton variant="secondary" size="sm" type="button" class="unfold" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
+            <button erasButton variant="float" type="button" [marked]="filtersActive()" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
               <eras-icon name="filter" />
-              @if (filtersActive()) {
-                <span class="dot" aria-hidden="true"></span>
-              }
             </button>
           }
           <span class="count">{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>

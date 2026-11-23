@@ -55,6 +55,7 @@ const PAGE_SIZE = 40;
       position: sticky;
       z-index: 2;
       inset-block-start: 0;
+      padding-block: var(--space-3);
       pointer-events: none;
     }
     /* Floating over the cards: each piece its own small surface, the row itself clear */
@@ -64,17 +65,6 @@ const PAGE_SIZE = 40;
       border-radius: 999px;
       background: color-mix(in srgb, var(--color-bg) 80%, transparent);
       backdrop-filter: blur(6px);
-    }
-    .unfold { position: relative; }
-    /* Some filter is on while they are folded */
-    .dot {
-      position: absolute;
-      inset-block-start: 0.2rem;
-      inset-inline-end: 0.2rem;
-      inline-size: 0.5rem;
-      block-size: 0.5rem;
-      border-radius: 50%;
-      background: var(--color-hub-accent);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

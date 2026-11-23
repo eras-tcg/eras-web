@@ -29,6 +29,7 @@ import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import { TabItem, TabsComponent } from '@ui/surfaces/tabs/tabs.component';
 import { DeckBoxTileComponent } from './deckbox-tile.component';
 import { FROM_PUBLIC_DECKS, PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
 
@@ -49,19 +50,21 @@ interface Tile {
 const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
 
 /**
- * Public decks. One search box over every deck (name, author, archetype, color or a card in it) with the common criteria
- * as chips (color, archetype, special summon, edition and order). While nothing is searched, two ways in: the system's
- * decks, kept in one folder per edition (the Structures apart; each edition's decks are the ones its new cards make,
- * at least one per color), and the community's decks. The search looks inside the part open.
+ * Public decks, in two tabs: the system's (one folder per edition, the Structures apart; each edition's decks are the
+ * ones its new cards make, at least one per color) and the community's (searched, never split). One search box (name,
+ * author, archetype, color or a card in it) and the common criteria as chips (color, archetype, special summon, edition,
+ * order) filter both: each tab says how many of its decks match.
  */
 @Component({
   selector: 'eras-public-decks-page',
-  imports: [PageComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PageComponent, TabsComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
     <eras-page title="Mazos públicos" width="wide">
       @if (store.error(); as error) {
         <eras-alert tone="danger">{{ error }}</eras-alert>
       }
+
+      <eras-tabs class="tabs" label="Origen de los mazos" [tabs]="tabs()" [selected]="search().scope" (selectedChange)="go($any($event), '')" />
 
       <div class="search" role="search">
         <label class="box">
@@ -99,28 +102,15 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
         </div>
       </div>
 
-      @if (crumbs().length) {
+      @if (search().folder; as folder) {
         <nav class="crumbs" aria-label="Ubicación">
-          <button erasButton variant="ghost" size="sm" type="button" (click)="go('', '')"><eras-icon name="chevron-left" /> Mazos públicos</button>
-          @for (c of crumbs(); track c.label; let last = $last) {
-            <span class="sep" aria-hidden="true">›</span>
-            @if (last) {
-              <span class="here">{{ c.label }}</span>
-            } @else {
-              <button class="link" type="button" (click)="go(c.scope, c.folder)">{{ c.label }}</button>
-            }
-          }
+          <button erasButton variant="ghost" size="sm" type="button" (click)="go('system', '')"><eras-icon name="chevron-left" /> Ediciones</button>
+          <span class="here">{{ folderTitle(folder) }}</span>
         </nav>
       }
 
       @if (loading()) {
         <eras-empty-state title="Cargando mazos…"><eras-spinner /></eras-empty-state>
-      } @else if (view() === 'entry') {
-        <eras-grid minColumn="min(16rem, 42vw)" [gap]="4">
-          @for (t of entries(); track t.box.id) {
-            <eras-deckbox-tile noun="los mazos de" [box]="t.box" [count]="t.count" [covers]="t.covers" (opened)="go($any(t.box.id), '')" />
-          }
-        </eras-grid>
       } @else if (view() === 'folders') {
         <eras-grid [minColumn]="coverColumn" [gap]="4">
           @for (t of folders(); track t.box.id) {
@@ -155,6 +145,9 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
     </eras-page>
   `,
   styles: `
+    .tabs {
+      margin-block-end: var(--space-4);
+    }
     .search {
       display: flex;
       flex-direction: column;
@@ -297,7 +290,7 @@ export class PublicDecksPage {
   protected readonly sortOptions = PUBLIC_SORT_OPTIONS;
   protected readonly coverColumn = COVER_COLUMN;
   protected readonly sortKey = signal<DeckSortKey>('name');
-  protected readonly search = signal<DeckSearch>(EMPTY_DECK_SEARCH);
+  protected readonly search = signal<DeckSearch>({ ...EMPTY_DECK_SEARCH, scope: 'system' });
   protected readonly loading = computed(() => this.store.loading() && this.store.publicDecks().length === 0);
 
   private readonly profiles = computed(() => profileDecks(this.store.publicDecks(), this.cards.cards()));
@@ -310,26 +303,24 @@ export class PublicDecksPage {
   ]);
 
   /** What shows: the two ways in, the system's edition folders, or decks (a folder, the community or a search). */
-  protected readonly view = computed<'entry' | 'folders' | 'decks'>(() => {
+  protected readonly view = computed<'folders' | 'decks'>(() => {
     const s = this.search();
-    if (hasDeckSearch(s)) return 'decks';
-    if (!s.scope) return 'entry';
-    if (s.scope === 'system' && !s.folder) return 'folders';
-    return 'decks';
+    return s.scope === 'system' && !s.folder && !hasDeckSearch(s) ? 'folders' : 'decks';
+  });
+
+  /** The two tabs, each with how many of its decks match the search (all of them while nothing is searched). */
+  protected readonly tabs = computed<TabItem[]>(() => {
+    const s = { ...this.search(), folder: '' };
+    const n = (scope: DeckScope) => searchDecks(this.store.publicDecks(), { ...s, scope }, this.profiles()).length;
+    return [
+      { key: 'system', label: `Sistema (${n('system')})` },
+      { key: 'community', label: `Comunidad (${n('community')})` },
+    ];
   });
 
   protected readonly placeholder = computed(() => {
     const s = this.search();
-    const where = s.folder ? ` en ${folderLabel(s.folder)}` : s.scope === 'system' ? ' en el sistema' : s.scope === 'community' ? ' en la comunidad' : '';
-    return `Buscar mazo, autor, arquetipo o carta${where}…`;
-  });
-
-  protected readonly entries = computed<Tile[]>(() => {
-    const all = this.store.publicDecks();
-    return [
-      this.tile('system', 'Sistema', 'amber', all.filter((d) => d.systemDeck)),
-      this.tile('community', 'Comunidad', 'teal', all.filter((d) => !d.systemDeck)),
-    ];
+    return s.folder ? `Buscar en ${folderLabel(s.folder)}…` : 'Buscar mazo, autor, arquetipo o carta…';
   });
 
   protected readonly folders = computed<Tile[]>(() => {
@@ -339,15 +330,10 @@ export class PublicDecksPage {
 
   protected readonly results = computed(() => this.ordered(searchDecks(this.store.publicDecks(), this.search(), this.profiles())));
 
-  /** Where the search is: Sistema › E1.2, or Comunidad. */
-  protected readonly crumbs = computed(() => {
-    const s = this.search();
-    const out: { label: string; scope: DeckScope; folder: string }[] = [];
-    if (s.scope === 'system') out.push({ label: 'Sistema', scope: 'system', folder: '' });
-    if (s.scope === 'community') out.push({ label: 'Comunidad', scope: 'community', folder: '' });
-    if (s.folder) out.push({ label: folderLabel(s.folder), scope: 'system', folder: s.folder });
-    return out;
-  });
+  /** An edition folder's title: "Structure", "E1.2". */
+  protected folderTitle(folder: string): string {
+    return folderLabel(folder);
+  }
 
   /** The criteria chosen, as removable tags. */
   protected readonly active = computed(() => {
@@ -371,7 +357,7 @@ export class PublicDecksPage {
     this.search.update((s) => ({ ...s, [key]: value }));
   }
 
-  /** Into a part (and folder), keeping the criteria chosen. */
+  /** Into a tab (and an edition folder), keeping the criteria chosen. */
   protected go(scope: DeckScope, folder: string): void {
     this.search.update((s) => ({ ...s, scope, folder }));
   }

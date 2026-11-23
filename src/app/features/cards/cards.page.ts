@@ -59,11 +59,18 @@ const PAGE_SIZE = 40;
     }
     /* Floating over the cards: each piece its own small surface, the row itself clear */
     .toolbar > * { pointer-events: auto; }
-    .count {
-      padding: var(--space-1) var(--space-3);
+    /* Each over the cards on its own small surface (the clear button's beats the ghost button's own) */
+    .count,
+    .toolbar .clear {
       border-radius: 999px;
       background: color-mix(in srgb, var(--color-bg) 80%, transparent);
       backdrop-filter: blur(6px);
+    }
+    .count {
+      padding: var(--space-1) var(--space-3);
+    }
+    .toolbar .clear:hover {
+      background: color-mix(in srgb, var(--color-surface-muted) 90%, transparent);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

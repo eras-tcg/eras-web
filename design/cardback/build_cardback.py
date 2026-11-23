@@ -24,6 +24,8 @@ TWIST = 1.7  # how tightly the arms coil (the home's: 2.6)
 ARMS = 5  # the vortex's arms (the home's has 3)
 GEM = False  # the ERAS gem, faceted, in the vortex's eye
 MINIMAL = True  # instead: the gem in line only (its girdle, table and the five edges between them)
+STROKE = 0.024  # the line's width, as a share of the gem's size
+CUT = 0.22  # the cuts' length, as a share of the edge they open
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (0, 0, 0, 255)  # the card's ground: black, the vortex fading into it
@@ -56,7 +58,8 @@ def vortex_on(iw, ih, vortex):
 
 def minimal_gem(scene, size):
     """The gem drawn in line over `scene` (H×W×4 floats), centered, `size` across: a translucent dark inside, so it reads
-    over the vortex, and thin light lines (the logo's girdle, table and edges) with a soft blue glow."""
+    over the vortex, and light lines (the logo's girdle, table and edges) cut at one end, turning with the vortex, with a
+    soft blue glow."""
     ih, iw = scene.shape[:2]
     ss = 3
     k = size / 512 * ss
@@ -66,12 +69,24 @@ def minimal_gem(scene, size):
     lines = Image.new('L', (iw * ss, ih * ss), 0)
     ImageDraw.Draw(fill).polygon([to(p) for p in geo.D], fill=255)
     d = ImageDraw.Draw(lines)
-    width = max(1, round(size * 0.011 * ss))
-    for ring in (geo.D, geo.P):
-        pts = [to(p) for p in ring]
-        d.line(pts + [pts[0]], fill=255, width=width, joint='curve')
+    width = max(1, round(size * STROKE * ss))
+
+    def stroke(p, q, cut_start, cut_end):
+        """One edge from p to q, cut short at each end by those shares of its length, with round ends."""
+        (px, py), (qx, qy) = to(p), to(q)
+        a = (px + (qx - px) * cut_start, py + (qy - py) * cut_start)
+        b = (qx - (qx - px) * cut_end, qy - (qy - py) * cut_end)
+        d.line([a, b], fill=255, width=width)
+        for x, y in (a, b):
+            d.ellipse([x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255)
+
+    # Five cuts turning with the vortex: the girdle opens after each edge's foot (every other side), the table at the
+    # end of each side, and each edge leaves the table whole and stops short of the girdle
+    for j in range(10):
+        stroke(geo.D[j], geo.D[(j + 1) % 10], CUT if j % 2 == 0 else 0, 0)
     for kk in range(5):
-        d.line([to(geo.P[kk]), to(geo.D[2 * kk])], fill=255, width=width)
+        stroke(geo.P[kk], geo.P[(kk + 1) % 5], 0, CUT * 0.6)
+        stroke(geo.P[kk], geo.D[2 * kk], 0, CUT * 0.7)
     fill = np.asarray(fill.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
     line = np.asarray(lines.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
     rgb = scene[..., :3]

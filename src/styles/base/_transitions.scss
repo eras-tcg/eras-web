@@ -31,11 +31,25 @@ html[data-nav='same'] {
   --eras-nav-scale: 0.985;
 }
 
+// Only the screen itself (the shell's <main>, named while a change is on) slides and fades. The rest of the page,
+// the vortex behind every screen (AmbientBackdrop) above all, stays as it is and keeps turning: no cross-fade
+html[data-nav] eras-shell > main {
+  view-transition-name: eras-screen;
+}
+
 ::view-transition-old(root) {
-  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+  display: none;
 }
 
 ::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(eras-screen) {
+  animation: eras-screen-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(eras-screen) {
   animation: eras-screen-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
 }
 

@@ -36,8 +36,20 @@
   aspect-ratio: var(--hub-card-ratio);
   background-position: center;
   background-size: cover;
-  // Its left edge fades out into the backdrop (gone at the very edge: no seam)
-  mask-image: linear-gradient(90deg, transparent 2%, rgb(0 0 0 / 35%) 18%, #000 50%);
+  // Its left edge fades out into the backdrop over most of its width, on an eased ramp, and curved: an ellipse from
+  // its right side makes the fade reach further in at the top and the bottom, so no straight edge shows
+  mask-image:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(0 0 0 / 6%) 10%,
+      rgb(0 0 0 / 22%) 22%,
+      rgb(0 0 0 / 48%) 34%,
+      rgb(0 0 0 / 76%) 46%,
+      #000 60%
+    ),
+    radial-gradient(130% 110% at 100% 50%, #000 60%, transparent 100%);
+  mask-composite: intersect;
 }
 
 // The quick buttons' scrim at the top

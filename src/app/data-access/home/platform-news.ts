@@ -41,12 +41,21 @@ export const PLATFORM_NEWS: HomeNews[] = [
     ['/public-decks', 'Ver los mazos'],
   ),
   item(
-    '20261122-e13-mano',
+    '20261122-e13',
     '2026-11-22',
-    'E1.3 en el simulador y una mano más cómoda',
-    'Las 15 cartas de E1.3 ya funcionan en el simulador, y tu mano siempre queda a la vista sobre la mesa.',
-    'Se programaron las 15 cartas de E1.3, como Soldado Invernal, Leucothi, Gumxo, Sable Templario y Hacha Templaria. Fal, Batalla por la Frontera Interdimensional y Limpiador Errante se ajustaron a sus textos nuevos.\n\n' +
-      'El material de una invocación especial por efecto ahora puede venir de la mano. Cuando miras a través de los paneles, tu mano se eleva para que no la pierdas de vista, y los Materiales de una carta se listan uno por línea.',
+    'E1.3 completa en el simulador',
+    'Las 15 cartas de E1.3 ya funcionan en el simulador: la edición se puede jugar entera.',
+    'Se programaron las 15 cartas de E1.3, como Soldado Invernal, Leucothi, Gumxo, Sable Templario y Hacha Templaria, y con ellas la edición queda completa en el simulador.\n\n' +
+      'Fal, Batalla por la Frontera Interdimensional y Limpiador Errante se ajustaron a sus textos nuevos.',
+    ['/cards/editions/E1.3', 'Ver la edición'],
+  ),
+  item(
+    '20261122-mano',
+    '2026-11-22',
+    'Una mano más cómoda',
+    'Tu mano siempre queda a la vista sobre la mesa, y el material de una invocación especial puede venir de ella.',
+    'Cuando miras a través de los paneles, tu mano se eleva para que no la pierdas de vista, y los Materiales de una carta se listan uno por línea.\n\n' +
+      'El material de una invocación especial por efecto ahora puede venir de la mano.',
     SIMULATOR,
   ),
   item(
@@ -77,13 +86,21 @@ export const PLATFORM_NEWS: HomeNews[] = [
     ['/cards', 'Ver las cartas'],
   ),
   item(
-    '20261119-e11-e12',
+    '20261119-e12',
     '2026-11-19',
-    'Más cartas de E1.1 y E1.2 en el simulador',
-    'Las cartas de E1.1 y E1.2 que faltaban ya tienen sus efectos en el simulador.',
-    'Llegaron las cartas de E1.1 y E1.2 que aún no se podían jugar, con los textos que ajustó el diseñador.\n\n' +
+    'E1.2 completa en el simulador',
+    'Las cartas de E1.2 que faltaban ya tienen sus efectos: la edición se puede jugar entera.',
+    'Llegaron las cartas de E1.2 que aún no se podían jugar, con los textos que ajustó el diseñador, y con ellas la edición queda completa en el simulador.',
+    ['/cards/editions/E1.2', 'Ver la edición'],
+  ),
+  item(
+    '20261119-e11',
+    '2026-11-19',
+    'E1.1 completa en el simulador',
+    'Las cartas de E1.1 que faltaban ya tienen sus efectos: la edición se puede jugar entera.',
+    'Llegaron 23 cartas de E1.1 que aún no se podían jugar, y Nuliber y Niobats se ajustaron a su texto actual. Con ellas la edición queda completa en el simulador.\n\n' +
       'El motor entiende ahora el límite "dos veces por turno", tanto por copia como entre copias de la misma carta.',
-    SIMULATOR,
+    ['/cards/editions/E1.1', 'Ver la edición'],
   ),
   item(
     '20261119-robo-detalle',
@@ -106,11 +123,20 @@ export const PLATFORM_NEWS: HomeNews[] = [
   item(
     '20261117-estructura',
     '2026-11-17',
-    'Nuevos mazos de estructura y las cartas de E1',
-    'ST1 a ST4 se renuevan con mazos nuevos, y las cartas de E1 de los cinco colores llegan al simulador.',
+    'Nuevos mazos de estructura',
+    'ST1 a ST4 se renuevan con mazos nuevos, y los anteriores pasan a llamarse ST5 a ST8.',
     'Los mazos de estructura que había pasan a llamarse ST5 a ST8, y los nuevos ST1, ST2, ST3 y ST4 llegan programados con sus efectos y requisitos.\n\n' +
-      'Las cartas de E1 de los cinco colores (Azul, Verde, Violeta, Roja y Blanca) tienen sus efectos y sus requisitos de invocación especial en el motor. El botón de efectos opcionales tiene tres modos: Sí, Auto (el predeterminado, que no te ofrece reductores de coste innecesarios) y No.',
+      'El botón de efectos opcionales tiene tres modos: Sí, Auto (el predeterminado, que no te ofrece reductores de coste innecesarios) y No.',
     SIMULATOR,
+  ),
+  item(
+    '20261117-e1',
+    '2026-11-17',
+    'E1 completa en el simulador',
+    'Las cartas de E1 de los cinco colores tienen sus efectos y requisitos en el simulador: la edición se puede jugar entera.',
+    'Azul, Verde, Violeta, Roja y Blanca: cada carta de E1 tiene sus efectos y sus requisitos de invocación especial y de ritual en el motor, con las piezas nuevas que necesitaban.\n\n' +
+      'Las cartas se ajustaron a su texto impreso, y con ellas la primera edición queda completa en el simulador.',
+    ['/cards/editions/E1', 'Ver la edición'],
   ),
   item(
     '20261115-enlace',

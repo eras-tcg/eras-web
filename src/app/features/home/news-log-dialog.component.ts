@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
 import { HomeStore } from '@data/home/home.store';
+import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubSlide, hubSlides } from './hub-rules';
@@ -21,7 +22,7 @@ interface NewsMonth {
  */
 @Component({
   selector: 'eras-news-log-dialog',
-  imports: [ModalComponent],
+  imports: [ModalComponent, CardImageComponent],
   template: `
     <eras-modal
       title="Noticias"
@@ -43,13 +44,22 @@ interface NewsMonth {
                       <span class="excerpt">{{ item.text }}</span>
                     }
                   </span>
-                  <!-- Its picture: its first card's art, or the vortex with the gem -->
-                  @if (item.cards[0]?.imageUrl; as art) {
+                  <!-- Its picture: its cards whole and fanned (as on the carousel), or the vortex with the gem -->
+                  @if (item.cards.length) {
                     <span
-                      class="thumb art"
-                      [style.background-image]="'url(' + art + ')'"
+                      class="thumb fan"
+                      [attr.data-count]="item.cards.length"
                       aria-hidden="true"
-                    ></span>
+                    >
+                      @for (card of item.cards; track card.id; let i = $index) {
+                        <eras-card-image
+                          class="fan-card"
+                          [src]="card.imageUrl"
+                          [alt]="''"
+                          [style.--i]="i"
+                        />
+                      }
+                    </span>
                   } @else {
                     <span class="thumb default" aria-hidden="true"></span>
                   }
@@ -103,13 +113,38 @@ interface NewsMonth {
       align-self: stretch;
       margin-block: calc(-1 * var(--space-3));
       margin-inline-end: calc(-1 * var(--space-3));
-      border-radius: 0 var(--radius-md) var(--radius-md) 0;
-      background-position: center 30%;
-      background-size: cover;
-      mask-image: linear-gradient(90deg, transparent, #000 45%);
     }
-    /* No picture: the carousel's vortex with the gem in its eye */
+    /* Its cards whole, fanned as on the carousel, as tall as the row lets them */
+    .fan {
+      --fan-card: 2.7rem;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fan-card {
+      inline-size: var(--fan-card);
+      flex: none;
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-md);
+      transform: rotate(calc((var(--i) - 1) * 9deg));
+    }
+    .fan-card + .fan-card {
+      margin-inline-start: calc(var(--fan-card) * -0.45);
+    }
+    .fan[data-count='1'] .fan-card {
+      transform: rotate(-4deg);
+    }
+    .fan[data-count='2'] .fan-card {
+      transform: rotate(calc(var(--i) * 9deg - 4.5deg));
+    }
+    .fan[data-count='3'] .fan-card:nth-child(2) {
+      z-index: 1;
+      transform: translateY(-0.15rem) scale(1.06);
+    }
+    /* No picture: the carousel's vortex with the gem in its eye, fading into the row */
     .thumb.default {
+      mask-image: linear-gradient(90deg, transparent, #000 45%);
       background:
         url('/favicon.svg') center / 2.4rem no-repeat,
         url('/images/vortex.webp') center / 8.5rem no-repeat;

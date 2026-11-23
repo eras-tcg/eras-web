@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
@@ -34,7 +34,6 @@ const PAGE_SIZE = 40;
 @Component({
   selector: 'eras-cards-page',
   imports: [
-    RouterLink,
     PageComponent,
     SplitComponent,
     GridComponent,
@@ -51,6 +50,18 @@ const PAGE_SIZE = 40;
   templateUrl: './cards.page.html',
   styles: `
     .lacking { filter: grayscale(1); }
+    .filters-head { display: flex; justify-content: flex-end; margin-block-end: var(--space-1); }
+    .unfold { position: relative; }
+    /* Some filter is on while they are folded */
+    .dot {
+      position: absolute;
+      inset-block-start: 0.2rem;
+      inset-inline-end: 0.2rem;
+      inline-size: 0.5rem;
+      block-size: 0.5rem;
+      border-radius: 50%;
+      background: var(--color-hub-accent);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

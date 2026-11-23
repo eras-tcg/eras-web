@@ -1,9 +1,4 @@
 <eras-page title="Cartas" width="wide" fill>
-  <a page-actions erasButton routerLink="/cards/collection">Mostrar colección</a>
-  <a page-actions erasButton variant="ghost" routerLink="/cards/editions">Ediciones</a>
-  <button page-actions erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
-    <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-  </button>
 
   @if (store.error(); as error) {
     <eras-alert tone="danger">{{ error }}</eras-alert>
@@ -12,6 +7,12 @@
   <!-- One screen high: only the filters and the grid scroll, each by itself -->
   <eras-split aside="17rem" fill [asideHidden]="!showFilters()">
     <div split-aside>
+      <!-- The filters fold from their own panel; folded, a filter button above the cards unfolds them -->
+      <div class="filters-head">
+        <button erasButton variant="ghost" size="sm" type="button" aria-label="Ocultar filtros" [attr.aria-expanded]="true" (click)="showFilters.set(false)">
+          <eras-icon name="chevron-left" />
+        </button>
+      </div>
       <!-- The marks on the cards are settings of the catalog: in the panel, remembered on the device -->
       <eras-card-filters-panel
         [filters]="filters()"
@@ -32,6 +33,14 @@
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else if (!store.error()) {
         <eras-stack direction="row" [gap]="3" align="center" wrap>
+          @if (!showFilters()) {
+            <button erasButton variant="secondary" size="sm" type="button" class="unfold" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
+              <eras-icon name="filter" />
+              @if (filtersActive()) {
+                <span class="dot" aria-hidden="true"></span>
+              }
+            </button>
+          }
           <span>{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
           @if (filtersActive()) {
             <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>

@@ -63,12 +63,14 @@
 
 :host(.variant-float) {
   position: relative;
-  border-color: color-mix(in srgb, #fff6cf 55%, transparent);
+  /* All of it inside its own box (the ring is its border, the light an inset), so no container clips it; only a
+     slight shadow below */
+  border: 3px solid color-mix(in srgb, var(--color-sim-gold) 35%, var(--color-bg));
   border-radius: 999px;
   background: linear-gradient(135deg, #f3cf62, var(--color-sim-gold) 55%, #b9821c);
   box-shadow:
-    0 4px 14px rgb(0 0 0 / 0.45),
-    0 0 0 3px color-mix(in srgb, var(--color-sim-gold) 25%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, #fff6cf 70%, transparent),
+    0 1px 3px rgb(0 0 0 / 0.5);
   color: #2a1a03;
 }
 :host(.variant-float:hover) {

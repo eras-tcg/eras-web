@@ -26,9 +26,10 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
         grid-template-columns var(--duration-slow) var(--easing-standard),
         column-gap var(--duration-slow) var(--easing-standard);
     }
-    /* Its column narrows to nothing; its content keeps its width meanwhile (clipped), then is hidden */
+    /* Its column narrows to nothing; its content keeps (nearly) its width meanwhile, clipped, then is hidden. Open, the
+       content takes the column's inner width (a scrollbar inside it never pushes the content out of sight) */
     .aside { min-inline-size: 0; overflow-x: hidden; }
-    .aside-content { inline-size: var(--split-aside); }
+    .aside-content { inline-size: 100%; min-inline-size: calc(var(--split-aside) - 1.25rem); }
     :host(.aside-hidden) { grid-template-columns: 0 minmax(0, 1fr); column-gap: 0; }
     :host(.aside-hidden) .aside { visibility: hidden; transition: visibility 0s var(--duration-slow); }
     @media (max-width: 56rem) {

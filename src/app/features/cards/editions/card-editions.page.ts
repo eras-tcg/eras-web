@@ -104,7 +104,7 @@ interface EditionForm {
   ],
   template: `
     <eras-page
-      [title]="edition()?.editionName || (editionId() ?? (collection() ? 'Colección' : 'Ediciones'))"
+      [title]="edition()?.editionName ? edition()!.editionId + ' ' + edition()!.editionName : (editionId() ?? (collection() ? 'Colección' : 'Ediciones'))"
       width="wide"
     >
       @if (edition() && !collection()) {
@@ -229,9 +229,9 @@ interface EditionForm {
       @if (edition(); as e) {
         <p class="meta">
           @if (collection()) {
-            {{ e.editionId }} · {{ ownedHere() }} de {{ filled().filled }} cartas obtenidas
+            {{ ownedHere() }} de {{ filled().filled }} cartas obtenidas
           } @else {
-            {{ e.editionId }} · {{ filled().filled }} de {{ filled().total }} cartas
+            {{ filled().filled }} de {{ filled().total }} cartas
           }
           @if (structure()) {
             · mazo de {{ deck() }} cartas

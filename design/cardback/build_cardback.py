@@ -23,9 +23,8 @@ SHAPE = 3  # the vortex's fade outline: 2 an ellipse, higher nearer the card's r
 TWIST = 1.7  # how tightly the arms coil (the home's: 2.6)
 ARMS = 5  # the vortex's arms (the home's has 3)
 GEM = False  # the ERAS gem, faceted, in the vortex's eye
-MINIMAL = True  # instead: the gem in line only (its girdle, table and the five edges between them)
-STROKE = 0.024  # the line's width, as a share of the gem's size
-CUT = 0.22  # the cuts' length, as a share of the edge they open
+MINIMAL = True  # instead: the gem flat, its six faces apart by even channels
+CHANNEL = 0.035  # the channels' width, as a share of the gem's size
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (0, 0, 0, 255)  # the card's ground: black, the vortex fading into it
@@ -56,44 +55,54 @@ def vortex_on(iw, ih, vortex):
     return im
 
 
+def inset(poly, d):
+    """A convex polygon (clockwise or not) moved in by `d` on every side: each side shifted along its inner normal, the
+    corners where the shifted sides meet (mitred, so the channels between pieces keep one width)."""
+    n = len(poly)
+    area = sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))
+    sign = 1 if area > 0 else -1
+    lines = []
+    for i in range(n):
+        (x1, y1), (x2, y2) = poly[i], poly[(i + 1) % n]
+        dx, dy = x2 - x1, y2 - y1
+        length = (dx * dx + dy * dy) ** 0.5
+        nx, ny = -dy / length * sign, dx / length * sign  # inward
+        lines.append(((x1 + nx * d, y1 + ny * d), (dx, dy)))
+    out = []
+    for i in range(n):
+        (p1, d1), (p2, d2) = lines[i - 1], lines[i]
+        den = d1[0] * d2[1] - d1[1] * d2[0]
+        t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / den
+        out.append((p1[0] + d1[0] * t, p1[1] + d1[1] * t))
+    return out
+
+
 def minimal_gem(scene, size):
-    """The gem drawn in line over `scene` (H×W×4 floats), centered, `size` across: a translucent dark inside, so it reads
-    over the vortex, and light lines (the logo's girdle, table and edges) cut at one end, turning with the vortex, with a
-    soft blue glow."""
+    """The gem as flat pieces over `scene` (H×W×4 floats), centered, `size` across: the table and the five side faces of
+    the logo, each in one tone by how it faces the light, apart by channels of one width (the cuts), with a soft blue
+    glow behind."""
     ih, iw = scene.shape[:2]
-    ss = 3
+    ss = 4
     k = size / 512 * ss
     ox, oy = (iw - size) / 2 * ss, (ih - size) / 2 * ss
     to = lambda p: (ox + p[0] * k, oy + p[1] * k)
-    fill = Image.new('L', (iw * ss, ih * ss), 0)
-    lines = Image.new('L', (iw * ss, ih * ss), 0)
-    ImageDraw.Draw(fill).polygon([to(p) for p in geo.D], fill=255)
-    d = ImageDraw.Draw(lines)
-    width = max(1, round(size * STROKE * ss))
-
-    def stroke(p, q, cut_start, cut_end):
-        """One edge from p to q, cut short at each end by those shares of its length, with round ends."""
-        (px, py), (qx, qy) = to(p), to(q)
-        a = (px + (qx - px) * cut_start, py + (qy - py) * cut_start)
-        b = (qx - (qx - px) * cut_end, qy - (qy - py) * cut_end)
-        d.line([a, b], fill=255, width=width)
-        for x, y in (a, b):
-            d.ellipse([x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255)
-
-    # Five cuts turning with the vortex: the girdle opens after each edge's foot (every other side), the table at the
-    # end of each side, and each edge leaves the table whole and stops short of the girdle
-    for j in range(10):
-        stroke(geo.D[j], geo.D[(j + 1) % 10], CUT if j % 2 == 0 else 0, 0)
-    for kk in range(5):
-        stroke(geo.P[kk], geo.P[(kk + 1) % 5], 0, CUT * 0.6)
-        stroke(geo.P[kk], geo.D[2 * kk], 0, CUT * 0.7)
-    fill = np.asarray(fill.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
-    line = np.asarray(lines.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
+    gap = 512 * CHANNEL / 2  # each piece gives half the channel, in the logo's units
+    pieces = [(inset(geo.P, gap), 1.0)] + [(inset(geo.face(kk), gap), geo.lit(kk)) for kk in range(5)]
+    light, dark = np.array([0.88, 0.95, 1.0], np.float32), np.array([0.09, 0.2, 0.55], np.float32)
     rgb = scene[..., :3]
-    rgb = rgb * (1 - fill * 0.6)                                   # the dark inside
-    glow = blur(line, size * 0.025) * 1.6
-    rgb = 1 - (1 - rgb) * (1 - np.clip(glow, 0, 1) * np.array([0.38, 0.65, 0.98], np.float32) * 0.8)
-    rgb = rgb * (1 - line) + np.array([0.86, 0.92, 1.0], np.float32) * line
+    # Glow: the gem's light on the vortex, from its silhouette
+    sil = Image.new('L', (iw * ss, ih * ss), 0)
+    ImageDraw.Draw(sil).polygon([to(p) for p in inset(geo.D, gap)], fill=255)  # the pieces' outer edge: no rim
+    sil = np.asarray(sil.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
+    glow = np.clip(blur(sil, size * 0.08) * 0.9, 0, 1) * np.array([0.25, 0.5, 0.95], np.float32)
+    rgb = 1 - (1 - rgb) * (1 - glow)
+    rgb = rgb * (1 - sil * 0.85)  # the channels show a dark ground, not the vortex
+    for poly, lit in pieces:
+        m = Image.new('L', (iw * ss, ih * ss), 0)
+        ImageDraw.Draw(m).polygon([to(p) for p in poly], fill=255)
+        m = np.asarray(m.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
+        tone = dark + (light - dark) * (0.1 + 0.9 * lit)
+        rgb = rgb * (1 - m) + tone * m
     scene[..., :3] = rgb
     return scene
 

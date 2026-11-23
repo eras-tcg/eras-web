@@ -3,45 +3,55 @@
 } @else if (slide()) {
   <!-- One element per slide (tracked by its key), so the next one fades in while the last one fades out -->
   @for (current of shown(); track current.key) {
-  @let lead = current.cards[0];
-  <!-- A showcase: the text on one side, the cards whole (their own shape) on the other, over the first card's art blurred.
+    @let lead = current.cards[0];
+    <!-- A showcase: the text on one side, the cards whole (their own shape) on the other, over the first card's art blurred.
        The whole slide answers a click: the edition's page, or the news item in full -->
-  <article
-    class="slide"
-    animate.enter="slide-enter"
-    animate.leave="slide-leave"
-    tabindex="0"
-    (click)="selected.emit(current)"
-    (keydown.enter)="$event.target === $event.currentTarget && selected.emit(current)"
-    [class.has-cards]="current.cards.length > 0" [style.--slide-art]="lead?.imageUrl ? 'url(' + lead.imageUrl + ')' : null" [attr.aria-label]="current.title">
-    <div class="slide-body">
-      <span class="eyebrow">
-        @if (current.date) {
-          <time [attr.datetime]="current.date">{{ current.eyebrow }}</time>
-        } @else {
-          {{ current.eyebrow }}
-        }
-      </span>
-      <h2 class="slide-title">{{ current.title }}</h2>
-      @if (current.text) {
-        <p class="slide-text">{{ current.text }}</p>
-      }
-      @if (current.action; as action) {
-        <button erasButton size="sm" type="button" class="slide-action" (click)="$event.stopPropagation(); opened.emit(action.url)">{{ action.label }} <eras-icon name="chevron-right" /></button>
-      }
-    </div>
-    @if (current.cards.length) {
-      <div class="fan" [attr.data-count]="current.cards.length">
-        @for (card of current.cards; track card.id; let i = $index) {
-          <eras-card-image class="fan-card" [src]="card.imageUrl" [alt]="card.name" [style.--i]="i" eager />
+    <article
+      class="slide"
+      animate.enter="slide-enter"
+      animate.leave="slide-leave"
+      tabindex="0"
+      (click)="selected.emit(current)"
+      (keydown.enter)="$event.target === $event.currentTarget && selected.emit(current)"
+      [class.has-cards]="current.cards.length > 0"
+      [style.--slide-art]="lead?.imageUrl ? 'url(' + lead.imageUrl + ')' : null"
+      [attr.aria-label]="current.title"
+    >
+      <div class="slide-body">
+        <span class="eyebrow">
+          @if (current.date) {
+            <time [attr.datetime]="current.date">{{ current.eyebrow }}</time>
+          } @else {
+            {{ current.eyebrow }}
+          }
+        </span>
+        <h2 class="slide-title">{{ current.title }}</h2>
+        @if (current.text) {
+          <p class="slide-text">{{ current.text }}</p>
         }
       </div>
-    }
-  </article>
+      @if (current.cards.length) {
+        <div class="fan" [attr.data-count]="current.cards.length">
+          @for (card of current.cards; track card.id; let i = $index) {
+            <eras-card-image
+              class="fan-card"
+              [src]="card.imageUrl"
+              [alt]="card.name"
+              [style.--i]="i"
+              eager
+            />
+          }
+        </div>
+      }
+    </article>
   }
   @if (slides().length > 1) {
-    <button type="button" class="nav prev" aria-label="Anterior" (click)="move(-1)"><eras-icon name="chevron-left" /></button>
-    <button type="button" class="nav next" aria-label="Siguiente" (click)="move(1)"><eras-icon name="chevron-right" /></button>
+    <button type="button" class="nav prev" aria-label="Anterior" (click)="move(-1)">
+      <eras-icon name="chevron-left" />
+    </button>
+    <button type="button" class="nav next" aria-label="Siguiente" (click)="move(1)">
+      <eras-icon name="chevron-right" />
+    </button>
     <div class="dots">
       @for (s of slides(); track s.key; let i = $index) {
         <button

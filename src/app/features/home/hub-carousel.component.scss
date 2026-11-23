@@ -185,10 +185,6 @@
   -webkit-line-clamp: 3;
 }
 
-.slide-action {
-  margin-block-start: var(--space-2);
-}
-
 // The cards whole, fanned: as tall as the slide lets them (height-driven, their own ratio)
 .fan {
   // About two thirds of the slide's height (a card is 88/63 as tall as wide), and never much of its width

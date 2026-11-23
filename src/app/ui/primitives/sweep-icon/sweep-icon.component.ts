@@ -18,6 +18,8 @@ import { IconComponent, IconName } from '../icon/icon.component';
     <eras-icon class="lit" [name]="erasSweep()" />
   `,
   styles: `
+    @use 'mixins/gold-wash';
+
     :host {
       --sweep-size: 2.25rem;
 
@@ -51,31 +53,15 @@ import { IconComponent, IconName } from '../icon/icon.component';
     :host(:focus-visible) {
       outline: none;
     }
-    /* The wash: gold at the row's left edge fading to nothing on the right; it opens from the left on hover */
+    /* The wash: gold at the row's left edge fading to nothing on the right (and downwards); opens on hover */
     :host(.wash) {
-      position: relative;
-    }
-    :host(.wash)::before {
-      position: absolute;
-      inset-block: calc(-1 * var(--sweep-wash-top, 0.5rem)) calc(-1 * var(--sweep-wash-bottom, 1rem));
-      inset-inline-start: calc(-1 * var(--sweep-wash-start, 0px));
-      z-index: -1;
-      inline-size: var(--sweep-wash-width, 32rem);
-      background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-accent) 32%, transparent), color-mix(in srgb, var(--color-hub-accent) 10%, transparent) 45%, transparent);
-      content: '';
-      mask-image: linear-gradient(to bottom, #000 45%, transparent);
-      opacity: 0;
-      pointer-events: none;
-      transform: scaleX(0.2);
-      transform-origin: left;
-      transition:
-        opacity var(--duration-sweep) var(--easing-standard),
-        transform var(--duration-sweep) var(--easing-standard);
-    }
-    :host(.wash:hover)::before,
-    :host(.wash:focus-visible)::before {
-      opacity: 1;
-      transform: none;
+      @include gold-wash.gold-wash(
+        $start: var(--sweep-wash-start, 0px),
+        $top: var(--sweep-wash-top, 0.5rem),
+        $bottom: var(--sweep-wash-bottom, 1rem),
+        $width: var(--sweep-wash-width, 32rem),
+        $mask: linear-gradient(to bottom, #000 45%, transparent)
+      );
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

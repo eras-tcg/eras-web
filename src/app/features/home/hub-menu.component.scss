@@ -1,3 +1,5 @@
+@use 'mixins/gold-wash';
+
 // Wide screens: big words with a bar on the left; the first one (the main action) larger
 :host {
   display: block;
@@ -30,6 +32,17 @@
     color var(--duration-fast) var(--easing-standard),
     transform var(--duration-fast) var(--easing-standard),
     border-color var(--duration-fast) var(--easing-standard);
+}
+
+// As "back": on hover a band of gold opens from the bar and fades out to the right (soft above and below); over the
+// option's own background where it has one (the cards of upright phones)
+.item {
+  isolation: isolate;
+
+  @include gold-wash.gold-wash(
+    $width: min(100%, 36rem),
+    $mask: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent)
+  );
 }
 
 .item:hover,
@@ -94,6 +107,10 @@
     flex-direction: row;
     justify-content: space-around;
     gap: var(--space-1);
+  }
+
+  :host(.main) .item::before {
+    display: none;
   }
 
   :host(.main) .item {

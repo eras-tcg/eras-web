@@ -48,7 +48,8 @@ def vortex(size):
     gold = rgb('#f5b301')
 
     # Arms run blue→violet along the spiral; mist fills between them with deep blue
-    hue = 0.5 + 0.5 * np.sin(s1 * 1.5)
+    # (whole multiples of the angle only: anything else leaves a seam where the angle wraps around)
+    hue = 0.5 + 0.5 * np.sin(s1 + 0.4)
     arm_color = blue * (1 - hue[..., None]) + violet * hue[..., None]
     col = night + (deep - night) * (mist[..., None] * 0.9)
     col = col + (arm_color - col) * (arms[..., None] * 0.85)

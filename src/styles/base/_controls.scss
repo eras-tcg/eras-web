@@ -96,34 +96,25 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' view
 }
 
 // ---- Checkbox ----------------------------------------------------------------------------------------------------
-// A rounded box that fills with the gold of the float button, with a dark check.
+// A plain box: gold when checked, with a dark check drawn centered in it (an image, so it never leaves the box).
+
+$check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232a1a03' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+$dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232a1a03' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M4 8h8'/%3E%3C/svg%3E");
 
 :where(input[type='checkbox']) {
   appearance: none;
-  display: inline-grid;
+  box-sizing: border-box;
   flex: none;
-  place-content: center;
-  inline-size: 1.15rem;
-  block-size: 1.15rem;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
   margin: 0;
-  vertical-align: -0.2rem;
-  border: 2px solid color-mix(in srgb, var(--color-text-muted) 65%, transparent);
+  border: 2px solid var(--color-text-muted);
   border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  background: var(--color-surface) no-repeat center / 100%;
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--easing-standard),
     border-color var(--duration-fast) var(--easing-standard);
-
-  &::before {
-    content: '';
-    inline-size: 0.7rem;
-    block-size: 0.7rem;
-    background: #2a1a03;
-    clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%);
-    scale: 0;
-    transition: scale var(--duration-fast) var(--easing-standard);
-  }
 
   &:hover {
     border-color: var(--color-sim-gold);
@@ -131,19 +122,16 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' view
 
   &:checked,
   &:indeterminate {
-    border-color: color-mix(in srgb, var(--color-sim-gold) 60%, var(--color-bg));
-    background: linear-gradient(135deg, #f3cf62, var(--color-sim-gold) 55%, #b9821c);
+    border-color: var(--color-sim-gold);
+    background-color: var(--color-sim-gold);
   }
 
-  &:checked::before {
-    scale: 1;
+  &:checked {
+    background-image: $check;
   }
 
-  &:indeterminate::before {
-    block-size: 0.18rem;
-    clip-path: none;
-    border-radius: 1px;
-    scale: 1;
+  &:indeterminate {
+    background-image: $dash;
   }
 
   &:focus-visible {
@@ -157,10 +145,17 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' view
   }
 }
 
+// The label around a checkbox lines it up with its text
+:where(label:has(> input[type='checkbox'])) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :where(select)::picker(select),
-  :where(input[type='checkbox']),
-  :where(input[type='checkbox'])::before {
+  :where(input[type='checkbox']) {
     transition: none;
   }
 }

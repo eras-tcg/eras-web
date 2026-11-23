@@ -1,0 +1,153 @@
+// The card back's frame behind a dialog's content (see card-back-frame-shape.ts for the shape): the surface cut along a
+// gold line with bevelled corners and a notch at the top and at the bottom, each holding a small gem. The parent is
+// positioned and isolated; this sits under its content and fills it.
+:host {
+  // The shape (keep in step with FRAME in card-back-frame-shape.ts): the bevel, and each notch's half-width at the edge
+  // and at its floor, and its depth
+  --frame-corner: 14px;
+  --frame-notch-outer: 58px;
+  --frame-notch-inner: 40px;
+  --frame-notch-depth: 12px;
+
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+// The surface, cut along the gold line: bevelled corners and both notches, nothing of it outside the frame; a breath
+// of the vortex's blue at the top
+.surface {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(
+    var(--frame-corner) 0,
+    calc(50% - var(--frame-notch-outer)) 0,
+    calc(50% - var(--frame-notch-inner)) var(--frame-notch-depth),
+    calc(50% + var(--frame-notch-inner)) var(--frame-notch-depth),
+    calc(50% + var(--frame-notch-outer)) 0,
+    calc(100% - var(--frame-corner)) 0,
+    100% var(--frame-corner),
+    100% calc(100% - var(--frame-corner)),
+    calc(100% - var(--frame-corner)) 100%,
+    calc(50% + var(--frame-notch-outer)) 100%,
+    calc(50% + var(--frame-notch-inner)) calc(100% - var(--frame-notch-depth)),
+    calc(50% - var(--frame-notch-inner)) calc(100% - var(--frame-notch-depth)),
+    calc(50% - var(--frame-notch-outer)) 100%,
+    var(--frame-corner) 100%,
+    0 calc(100% - var(--frame-corner)),
+    0 var(--frame-corner)
+  );
+  background:
+    radial-gradient(70% 40% at 50% 0%, color-mix(in srgb, var(--color-ambient-mote) 9%, transparent), transparent),
+    var(--color-surface);
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.frame path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  // pathLength="1": each half is one dash, drawn in from the top gem
+  stroke-dasharray: 1;
+  animation: trace var(--duration-trace) var(--easing-standard) both;
+}
+
+.stop-gold {
+  stop-color: var(--color-frame-gold);
+}
+
+.stop-pale {
+  stop-color: var(--color-frame-gold-pale);
+}
+
+.stop-deep {
+  stop-color: var(--color-frame-gold-deep);
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+// The gems on the notches, floating clear of the line (a gap under them) and bobbing a little; the top one shows
+// first, the bottom one, upside down, when the line reaches it
+.gem {
+  position: absolute;
+  inset-inline-start: 50%;
+  inline-size: 11px;
+  block-size: 11px;
+  translate: -50% -50%;
+  clip-path: polygon(50% 0, 100% 38%, 81% 100%, 19% 100%, 0 38%);
+  background: linear-gradient(135deg, var(--color-frame-gold-pale), var(--color-frame-gold) 60%, var(--color-frame-gem-edge));
+  animation:
+    gem var(--duration-slow) var(--easing-standard) both,
+    gem-float 3.2s ease-in-out var(--duration-trace) infinite;
+}
+
+.gem.top {
+  // Floats up, away from the notch's floor below it
+  --gem-float: -2px;
+  inset-block-start: 3px;
+}
+
+.gem.bottom {
+  // Floats down, away from the notch's floor above it
+  --gem-float: 2px;
+  inset-block-start: calc(100% - 3px);
+  rotate: 180deg;
+  animation-delay: var(--duration-trace), calc(var(--duration-trace) + 1.6s);
+}
+
+@keyframes gem {
+  from {
+    scale: 0;
+  }
+
+  to {
+    scale: 1;
+  }
+}
+
+// Away from the line and back, never touching it
+@keyframes gem-float {
+  0%,
+  100% {
+    translate: -50% -50%;
+  }
+
+  50% {
+    translate: -50% calc(-50% + var(--gem-float));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem {
+    animation: none;
+  }
+}
+
+
+// At a game's table a dialog is part of the play: it is just there, no tracing nor gems popping in
+:host-context(body.eras-in-game) {
+  .frame path {
+    animation: none;
+  }
+
+  .gem {
+    animation: gem-float 3.2s ease-in-out infinite;
+  }
+}

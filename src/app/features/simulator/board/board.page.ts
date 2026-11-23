@@ -221,6 +221,13 @@ export class BoardPage {
     effect(() =>
       this.document.body.classList.toggle('eras-arcane', this.inGame() && this.prefs.arcane()),
     );
+    // A playmat on either side of a game: the background behind the table stays plain (AmbientBackdrop)
+    effect(() =>
+      this.document.body.classList.toggle(
+        'eras-playmat',
+        this.inGame() && (!!this.game.myState()?.playmat || !!this.game.opponentState()?.playmat),
+      ),
+    );
     // A chain is shown above the choices (they leave it room)
     // The chain's list open (from its button): the choices leave it room at the top
     effect(() => this.document.body.classList.toggle('eras-chain-open', this.chainOpen()));
@@ -230,6 +237,7 @@ export class BoardPage {
       this.document.body.classList.remove(
         'eras-in-game',
         'eras-arcane',
+        'eras-playmat',
         'eras-acting-me',
         'eras-acting-rival',
         'eras-chain-open',

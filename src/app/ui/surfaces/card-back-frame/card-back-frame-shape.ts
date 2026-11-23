@@ -1,14 +1,17 @@
 /**
- * The card back's frame around a dialog, as two SVG paths: each half starts at the gem on the top notch and runs
- * down its side to the gem on the bottom notch, so the frame can trace itself outwards from the top gem.
+ * The card back's frame (eras-card-back-frame) around a dialog, as two SVG paths: each half starts at the gem on the
+ * top notch and runs down its side to the gem on the bottom notch, so the frame can trace itself outwards from the top
+ * gem.
  */
 export interface FrameHalves {
   right: string;
   left: string;
 }
 
-/** Bevel of the corners, the notch's half-width at the edge and at its floor, and its depth (px); the panel is cut along
- * the same shape in modal.component.scss (--modal-corner, --modal-notch-*), keep them in step. */
+/**
+ * Bevel of the corners, the notch's half-width at the edge and at its floor, and its depth (px); the surface is cut
+ * along the same shape in card-back-frame.component.scss (--frame-corner, --frame-notch-*), keep them in step.
+ */
 export const FRAME = { corner: 14, notchOuter: 58, notchInner: 40, notchDepth: 12 } as const;
 
 export function frameHalves(width: number, height: number): FrameHalves {

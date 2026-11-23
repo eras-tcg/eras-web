@@ -1,9 +1,11 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { PlaymatStore } from '@core/auth/playmat.store';
 import { apiErrorMessage } from '@core/http/api-error';
 import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardBackService } from '@core/theme/card-back.service';
+import { BackdropService } from '@core/theme/backdrop.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { frameImage } from '@ui/domain/image-framer/frame-image';
@@ -21,7 +23,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
  */
 @Component({
   selector: 'eras-game-preferences-panel',
-  imports: [IconComponent],
+  imports: [IconComponent, NgTemplateOutlet],
   template: `
     <div class="tabs" role="tablist" aria-label="Secciones">
       @for (t of sections(); track t.id) {
@@ -39,6 +41,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Tema</strong><small>Los colores de todo el sitio</small></span>
             <span class="state">{{ theme.theme() === 'dark' ? 'Oscuro' : 'Claro' }}</span>
           </button>
+          <ng-container [ngTemplateOutlet]="backdropPref" />
         }
         @case ('table') {
           @if (withPlaymat()) {
@@ -70,6 +73,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
               </span>
             </div>
           }
+          <ng-container [ngTemplateOutlet]="backdropPref" />
           <!-- Each click: limpio ↔ arcano -->
           <button type="button" class="pref" (click)="prefs.tableStyle.set((prefs.tableStyle() + 1) % 2)">
             <eras-icon name="sparkles" />
@@ -185,6 +189,14 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
         }
       }
     </div>
+    <!-- The background behind the screens and the arcane table. Each click: animado → estático → plano -->
+    <ng-template #backdropPref>
+      <button type="button" class="pref" (click)="backdrop.cycle()">
+        <eras-icon name="image" />
+        <span class="text"><strong>Fondo</strong><small>El vórtice detrás de las pantallas; con tapete, la mesa queda lisa</small></span>
+        <span class="state">{{ backdrop.label() }}</span>
+      </button>
+    </ng-template>
   `,
   styles: `
     :host { display: block; }
@@ -344,6 +356,7 @@ export class GamePreferencesPanelComponent {
 
   protected readonly prefs = inject(BoardPreferences);
   protected readonly theme = inject(ThemeService);
+  protected readonly backdrop = inject(BackdropService);
   protected readonly game = inject(GameStore);
   /** Only under the board (the game's dialog). */
   protected readonly screen = inject(BoardScreen, { optional: true });

@@ -12,6 +12,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { BackdropService } from '../theme/backdrop.service';
 import { MOTE_GONE, Mote, ORBIT_SQUASH, moteCount, moteOpacity, spawnMote, stepMote } from './ambient-dust';
 
 /** Where the vortex's eye sits on the screen (fractions of its width and height): right, left, or the middle. */
@@ -24,8 +25,10 @@ export type AmbientEye = keyof typeof EYE;
  * on the left (`start`: the hub screens, whose artwork fills the right and fades into it). While a game is on (the
  * table sets `body.eras-in-game`) it turns behind the table, its eye in the middle, only in the arcane style
  * (`body.eras-arcane`, the default; the clean one has its own background), and without a background of its own, so
- * the glow of who acts (on the body) still shows. Hidden and stopped with `active` false. Still when the device asks
- * for reduced motion; paused while the page is hidden.
+ * the glow of who acts (on the body) still shows; not under a playmat (`body.eras-playmat`). The player's background
+ * preference (BackdropService) decides the rest: animated, still (the vortex and its dust without moving) or flat (no
+ * vortex). Hidden and stopped with `active` false. Still when the device asks for reduced motion; paused while the
+ * page is hidden.
  */
 @Component({
   selector: 'eras-ambient-backdrop',
@@ -88,16 +91,15 @@ export type AmbientEye = keyof typeof EYE;
         rotate: -360deg;
       }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .vortex {
-        animation: none;
-      }
+    :host(.still) .vortex {
+      animation: none;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     'aria-hidden': 'true',
     '[class.off]': '!shown()',
+    '[class.still]': 'still()',
     '[class.at-table]': 'inGame()',
     '[class.eye-start]': "eyeAt() === 'start'",
     '[class.eye-centre]': "eyeAt() === 'centre'",
@@ -109,10 +111,21 @@ export class AmbientBackdropComponent {
   /** Where its eye sits: on the right (`end`) or on the left (`start`). */
   readonly eye = input<AmbientEye>('end');
 
-  /** A game's table is up, and in the arcane style (both marked on the body by the table). */
+  private readonly backdrop = inject(BackdropService);
+  private readonly reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /** A game's table is up, in the arcane style, with a playmat on either side (all marked on the body by the table). */
   protected readonly inGame = signal(false);
   private readonly arcane = signal(false);
-  protected readonly shown = computed(() => this.active() && (!this.inGame() || this.arcane()));
+  private readonly playmat = signal(false);
+  protected readonly shown = computed(
+    () =>
+      this.active() &&
+      this.backdrop.mode() !== 'flat' &&
+      (!this.inGame() || (this.arcane() && !this.playmat())),
+  );
+  /** Nothing moves: the player chose it still, or the device asks for less motion. */
+  protected readonly still = computed(() => this.reducedMotion || this.backdrop.mode() === 'still');
   /** At the table the eye sits in the middle, under the field. */
   protected readonly eyeAt = computed<AmbientEye>(() => (this.inGame() ? 'centre' : this.eye()));
 
@@ -129,7 +142,6 @@ export class AmbientBackdropComponent {
       const canvas = this.canvas().nativeElement;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const styles = getComputedStyle(host);
       const dustColor = styles.getPropertyValue('--color-ambient-dust').trim() || 'gold';
       const moteColor = styles.getPropertyValue('--color-ambient-mote').trim() || 'skyblue';
@@ -155,7 +167,7 @@ export class AmbientBackdropComponent {
         canvas.height = Math.round(height * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         motes = Array.from({ length: moteCount(width, height) }, () => spawnMote(maxRadius, true));
-        if (still) draw();
+        if (this.still()) draw();
       };
 
       const pentagon = (x: number, y: number, size: number, rotation: number) => {
@@ -199,7 +211,7 @@ export class AmbientBackdropComponent {
       };
 
       start = () => {
-        if (still || frame || document.hidden) return;
+        if (this.still() || frame || document.hidden) return;
         last = performance.now();
         frame = requestAnimationFrame(tick);
       };
@@ -218,6 +230,7 @@ export class AmbientBackdropComponent {
       const readBody = () => {
         this.inGame.set(body.classList.contains('eras-in-game'));
         this.arcane.set(body.classList.contains('eras-arcane'));
+        this.playmat.set(body.classList.contains('eras-playmat'));
       };
       const watchGame = new MutationObserver(readBody);
       watchGame.observe(body, { attributes: true, attributeFilter: ['class'] });
@@ -230,8 +243,12 @@ export class AmbientBackdropComponent {
       });
     });
 
-    // Stopped where it does not show
-    effect(() => (this.shown() ? start?.() : stop?.()));
+    // Stopped where it does not show, and when the player wants it still (the dust drawn once, where it is)
+    effect(() => {
+      if (!this.shown() || this.still()) stop?.();
+      else start?.();
+      if (this.shown() && this.still()) place?.();
+    });
     // The eye moves (hub ↔ page): the dust starts over around it
     effect(() => {
       this.eyeAt();

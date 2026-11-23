@@ -1,13 +1,8 @@
-// The card back's frame: the panel with bevelled corners, a gold line around it with a notch at the top and at the
-// bottom, each holding a small gem (see modal-frame.ts for the shape)
+// In the card back's frame (eras-card-back-frame, drawn behind the content)
 :host {
   --modal-width: 32rem;
-  // The frame's shape (keep in step with FRAME in modal-frame.ts): the bevel, and each notch's half-width at the edge
-  // and at its floor, and its depth
+  // The frame's bevel, for what is cut to it inside (the news' vortex)
   --modal-corner: 14px;
-  --modal-notch-outer: 58px;
-  --modal-notch-inner: 40px;
-  --modal-notch-depth: 12px;
   // The body's foot: what scrolls fades out over it and is gone before the gold frame (and its notch)
   --modal-fade: 2.5rem;
 
@@ -20,6 +15,7 @@
   max-block-size: calc(100vh - 2 * var(--space-6));
   color: var(--color-text);
   filter: drop-shadow(0 12px 32px rgb(0 0 0 / 45%));
+  isolation: isolate;
 }
 
 :host(.size-lg) {
@@ -32,132 +28,6 @@
 
 :host(.size-full) {
   --modal-width: 96rem;
-}
-
-// The surface, cut along the gold line: bevelled corners and both notches, nothing of it outside the frame; a breath
-// of the vortex's blue at the top
-.panel {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  clip-path: polygon(
-    var(--modal-corner) 0,
-    calc(50% - var(--modal-notch-outer)) 0,
-    calc(50% - var(--modal-notch-inner)) var(--modal-notch-depth),
-    calc(50% + var(--modal-notch-inner)) var(--modal-notch-depth),
-    calc(50% + var(--modal-notch-outer)) 0,
-    calc(100% - var(--modal-corner)) 0,
-    100% var(--modal-corner),
-    100% calc(100% - var(--modal-corner)),
-    calc(100% - var(--modal-corner)) 100%,
-    calc(50% + var(--modal-notch-outer)) 100%,
-    calc(50% + var(--modal-notch-inner)) calc(100% - var(--modal-notch-depth)),
-    calc(50% - var(--modal-notch-inner)) calc(100% - var(--modal-notch-depth)),
-    calc(50% - var(--modal-notch-outer)) 100%,
-    var(--modal-corner) 100%,
-    0 calc(100% - var(--modal-corner)),
-    0 var(--modal-corner)
-  );
-  background:
-    radial-gradient(70% 40% at 50% 0%, color-mix(in srgb, var(--color-ambient-mote) 9%, transparent), transparent),
-    var(--color-surface);
-}
-
-.frame {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.frame path {
-  fill: none;
-  stroke-width: 2;
-  stroke-linejoin: round;
-  // pathLength="1": each half is one dash, drawn in from the top gem
-  stroke-dasharray: 1;
-  animation: trace var(--duration-trace) var(--easing-standard) both;
-}
-
-.stop-gold {
-  stop-color: var(--color-frame-gold);
-}
-
-.stop-pale {
-  stop-color: var(--color-frame-gold-pale);
-}
-
-.stop-deep {
-  stop-color: var(--color-frame-gold-deep);
-}
-
-@keyframes trace {
-  from {
-    stroke-dashoffset: 1;
-  }
-
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-// The gems on the notches, floating clear of the line (a gap under them) and bobbing a little; the top one shows
-// first, the bottom one, upside down, when the line reaches it
-.gem {
-  position: absolute;
-  inset-inline-start: 50%;
-  inline-size: 11px;
-  block-size: 11px;
-  translate: -50% -50%;
-  clip-path: polygon(50% 0, 100% 38%, 81% 100%, 19% 100%, 0 38%);
-  background: linear-gradient(135deg, var(--color-frame-gold-pale), var(--color-frame-gold) 60%, var(--color-frame-gem-edge));
-  animation:
-    gem var(--duration-slow) var(--easing-standard) both,
-    gem-float 3.2s ease-in-out var(--duration-trace) infinite;
-}
-
-.gem.top {
-  // Floats up, away from the notch's floor below it
-  --gem-float: -2px;
-  inset-block-start: 3px;
-}
-
-.gem.bottom {
-  // Floats down, away from the notch's floor above it
-  --gem-float: 2px;
-  inset-block-start: calc(100% - 3px);
-  rotate: 180deg;
-  animation-delay: var(--duration-trace), calc(var(--duration-trace) + 1.6s);
-}
-
-@keyframes gem {
-  from {
-    scale: 0;
-  }
-
-  to {
-    scale: 1;
-  }
-}
-
-// Away from the line and back, never touching it
-@keyframes gem-float {
-  0%,
-  100% {
-    translate: -50% -50%;
-  }
-
-  50% {
-    translate: -50% calc(-50% + var(--gem-float));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gem {
-    animation: none;
-  }
 }
 
 .header {

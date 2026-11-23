@@ -1,4 +1,4 @@
-import { FRAME, frameHalves } from './modal-frame';
+import { FRAME, frameHalves } from './card-back-frame-shape';
 
 describe('frameHalves', () => {
   it('runs each half from the top gem to the bottom gem, one the mirror of the other', () => {

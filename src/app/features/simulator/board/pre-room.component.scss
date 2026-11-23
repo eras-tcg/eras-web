@@ -288,9 +288,6 @@
     z-index: 2;
     align-items: center;
     padding-block: var(--space-1);
-    // Glass over the decks scrolling under it, as the panels over the backdrop
-    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
-    backdrop-filter: blur(8px);
   }
 }
 

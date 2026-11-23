@@ -21,6 +21,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { DetailFrameComponent } from '@ui/surfaces/detail-frame/detail-frame.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { firstValueFrom } from 'rxjs';
 import { cardDetailView } from '../card-detail-view';
@@ -58,11 +59,10 @@ export function openCardDetailDialog(
  */
 @Component({
   selector: 'eras-card-detail-dialog',
-  imports: [CardDetailComponent, CardImageComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent],
+  imports: [CardDetailComponent, CardImageComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent, DetailFrameComponent],
   templateUrl: './card-detail-dialog.component.html',
   styleUrl: './card-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:keydown)': 'onKey($event)' },
 })
 export class CardDetailDialogComponent {
   protected readonly data = inject<CardDetailDialogData>(DIALOG_DATA);
@@ -343,12 +343,5 @@ export class CardDetailDialogComponent {
   /** Another card or printing opens in its usual art, in the finish preferred (or the closest it comes in). */
   private resetVersion(): void {
     this.pickedArt.set(null);
-  }
-
-  protected onKey(event: KeyboardEvent): void {
-    // Leave arrows alone while typing in a field
-    if (event.target instanceof Element && event.target.closest('input, textarea, select')) return;
-    if (event.key === 'ArrowLeft') this.move(-1);
-    if (event.key === 'ArrowRight') this.move(1);
   }
 }

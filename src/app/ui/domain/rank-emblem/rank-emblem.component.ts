@@ -25,18 +25,18 @@ const ART: Record<Exclude<RankTier, 'CHALLENGER'>, GemArt> = {
     dark: '#374151',
   },
   BRONZE: {
-    outline: '32,5 8.6,18.5 8.6,45.5 32,59 55.4,45.5 55.4,18.5',
-    cuts: 'M32 20 L21.6 26 L21.6 38 L32 44 L42.4 38 L42.4 26 Z M32 20 L32 5 M21.6 38 L8.6 45.5 M42.4 38 L55.4 45.5',
+    outline: '22,6 42,6 58,22 58,42 42,58 22,58 6,42 6,22',
+    cuts: 'M26.5 17 L37.5 17 L47 26.5 L47 37.5 L37.5 47 L26.5 47 L17 37.5 L17 26.5 Z M26.5 17 L22 6 M47 26.5 L58 22 M37.5 47 L42 58 M17 37.5 L6 42',
     light: '#f0b27a',
     dark: '#8a4f24',
   },
   SILVER: {
-    outline: '22,6 42,6 58,22 58,42 42,58 22,58 6,42 6,22',
-    cuts: 'M26.5 17 L37.5 17 L47 26.5 L47 37.5 L37.5 47 L26.5 47 L17 37.5 L17 26.5 Z M26.5 17 L22 6 M47 26.5 L58 22 M37.5 47 L42 58 M17 37.5 L6 42',
+    outline: '32,5 8.6,18.5 8.6,45.5 32,59 55.4,45.5 55.4,18.5',
+    cuts: 'M32 20 L21.6 26 L21.6 38 L32 44 L42.4 38 L42.4 26 Z M32 20 L32 5 M21.6 38 L8.6 45.5 M42.4 38 L55.4 45.5',
     light: '#f8fafc',
     dark: '#7c8a9e',
   },
-  // A hexagonal cut: a wide table, every corner cut to the girdle (bronze's hexagon, all six faces apart)
+  // A hexagonal cut: a wide table, every corner cut to the girdle (silver's hexagon, all six faces apart)
   GOLD: {
     outline: '32,4 7.8,18 7.8,46 32,60 56.2,46 56.2,18',
     cuts: 'M32 17 L19 24.5 L19 39.5 L32 47 L45 39.5 L45 24.5 Z M32 17 L32 4 M19 24.5 L7.8 18 M19 39.5 L7.8 46 M32 47 L32 60 M45 39.5 L56.2 46 M45 24.5 L56.2 18',

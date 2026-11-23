@@ -17,8 +17,8 @@ type ListKey = 'classes' | 'keywords' | 'tags' | 'rarities';
 
 /**
  * Sidebar with every card filter plus the grid view options and the catalog's marks ("Mostrar obtenidas" first,
- * "Sin programar" and "Sin metadatos" with the view's preferences at the end). Stateless: emits the new values; the
- * marks are two-way (`model`), the page remembers them on the device.
+ * "Sin metadatos" for editors with the view's preferences at the end). Stateless: emits the new values; the marks are
+ * two-way (`model`), the page remembers them on the device.
  */
 @Component({
   selector: 'eras-card-filters-panel',
@@ -36,8 +36,6 @@ export class CardFiltersPanelComponent {
 
   /** Each card in the player's finest finish; in grey the ones they lack. */
   readonly showCollection = model(false);
-  /** Marks the cards the simulator cannot play yet. */
-  readonly showUnprogrammed = model(false);
   /** Marks the cards without metadata (editors). */
   readonly showNoMeta = model(false);
 
@@ -73,7 +71,7 @@ export class CardFiltersPanelComponent {
     this.filtersChange.emit({ ...this.filters(), [key]: value });
   }
 
-  protected setText(key: 'name' | 'type' | 'specialSummon' | 'requirement' | 'edition' | 'cardNumber', event: Event): void {
+  protected setText(key: 'name' | 'type' | 'specialSummon' | 'requirement' | 'edition', event: Event): void {
     this.set(key, (event.target as HTMLInputElement | HTMLSelectElement).value);
   }
 

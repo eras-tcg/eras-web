@@ -95,8 +95,7 @@ export class CardsPage {
   protected readonly renderCount = signal(PAGE_SIZE);
 
   protected readonly canManage = computed(() => this.editMode.allows('manage_cards'));
-  /** Marks on the cards ("Sin programar", "Sin metadatos"): hidden unless turned on. Remembered on the device. */
-  protected readonly showUnprogrammed = persistedFlag('eras-cards-mark-unprogrammed');
+  /** The editors' mark "Sin metadatos": hidden unless turned on. Remembered on the device. */
   protected readonly showNoMeta = persistedFlag('eras-cards-mark-no-meta');
   /** The player's collection on the cards: each in its finest finish owned, in grey when they have none. */
   protected readonly showCollection = persistedFlag('eras-cards-show-collection');
@@ -154,10 +153,10 @@ export class CardsPage {
     });
   }
 
-  /** Missing metadata first; with metadata, whether the simulator runs it. Each one only when its mark is on. */
+  /** Missing metadata first (only when its mark is on); with metadata, always whether the simulator runs it. */
   protected badge(card: CatalogCard): string | null {
     if (!card.meta) return this.showNoMeta() ? 'Sin metadatos' : null;
-    return this.showUnprogrammed() && this.store.unprogrammedOf(card) ? 'Sin programar' : null;
+    return this.store.unprogrammedOf(card) ? 'Sin programar' : null;
   }
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */

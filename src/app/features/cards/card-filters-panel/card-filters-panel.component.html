@@ -30,8 +30,6 @@
     <input type="search" placeholder="Buscar por nombre…" [value]="f.name" (input)="setText('name', $event)" />
   </eras-form-field>
 
-  <eras-toggle-group label="Cartas" [options]="poolOptions" [selected]="[f.pool]" (toggled)="set('pool', $any($event))" />
-
   <eras-form-field label="Edición">
     <select (change)="setText('edition', $event)">
       <option value="">Todas</option>
@@ -96,10 +94,6 @@
     <input type="search" placeholder="Buscar por requerimiento…" [value]="f.requirement" (input)="setText('requirement', $event)" />
   </eras-form-field>
 
-  <eras-form-field label="Número de carta">
-    <input type="search" inputmode="numeric" placeholder="Buscar por número…" [value]="f.cardNumber" (input)="setText('cardNumber', $event)" />
-  </eras-form-field>
-
   @if (o.rarities.length) {
     <eras-toggle-group label="Rareza" [options]="rarityOptions()" [selected]="activeRarities()" (toggled)="toggleRarity($event)" />
   }
@@ -123,15 +117,13 @@
     (toggled)="setView('collapse', $event === 'collapse')"
   />
 
+  <eras-toggle-group label="Cartas" [options]="poolOptions" [selected]="[f.pool]" (toggled)="set('pool', $any($event))" />
+
   <eras-form-field [label]="'Tamaño de cartas (' + view().size + 'px)'">
     <input type="range" min="100" max="500" step="10" [value]="view().size" (input)="setSize($event)" />
   </eras-form-field>
 
-  <!-- Marks on the cards, hidden unless asked for -->
-  <label class="eras-form-field__text" title="Cartas que todavía no se pueden jugar en el simulador">
-    <input type="checkbox" [checked]="showUnprogrammed()" (change)="showUnprogrammed.set($any($event.target).checked)" />
-    Marcar las sin programar
-  </label>
+  <!-- The editors' mark on the cards, hidden unless asked for (unprogrammed cards are always marked) -->
   @if (canManage()) {
     <label class="eras-form-field__text" title="Cartas sin metadatos">
       <input type="checkbox" [checked]="showNoMeta()" (change)="showNoMeta.set($any($event.target).checked)" />

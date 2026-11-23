@@ -52,13 +52,12 @@
 }
 
 // A slide without cards: the platform's own backdrop instead of a flat color. Night blue, a gold glow and a blue one,
-// fine diagonal lines like a foil card's sheen (fading towards the text), and the ERAS emblem large and faint where the
-// cards would be
+// fine diagonal lines like a foil card's sheen (fading towards the text), and the ERAS gem whole where the cards would be
 .slide:not(.has-cards)::before {
   inset: 0;
   background:
-    url('/favicon.svg') no-repeat right -12% center / auto 165%,
-    repeating-linear-gradient(115deg, var(--color-hub-line) 0 1px, transparent 1px 0.9rem),
+    url('/favicon.svg') no-repeat right 4% center / auto min(82%, 34cqi),
+    repeating-linear-gradient(115deg, color-mix(in srgb, var(--color-hub-line) 45%, transparent) 0 1px, transparent 1px 0.9rem),
     radial-gradient(ellipse 55% 85% at 92% 100%, color-mix(in srgb, var(--color-hub-accent) 38%, transparent), transparent 70%),
     radial-gradient(ellipse 50% 70% at 78% 0%, color-mix(in srgb, var(--color-card-b) 32%, transparent), transparent 70%),
     var(--color-hub-scrim);
@@ -69,8 +68,13 @@
 
 .slide:not(.has-cards)::after {
   background:
-    linear-gradient(90deg, var(--color-hub-scrim) 30%, color-mix(in srgb, var(--color-hub-scrim) 55%, transparent) 65%, color-mix(in srgb, var(--color-hub-scrim) 20%, transparent)),
+    linear-gradient(90deg, var(--color-hub-scrim) 25%, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 55%, transparent 70%),
     linear-gradient(0deg, color-mix(in srgb, var(--color-hub-accent) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
+}
+
+// The gem keeps its own column, as the cards do: the text never runs over it
+.slide:not(.has-cards) .slide-body {
+  max-inline-size: 62%;
 }
 
 @keyframes slide-in {

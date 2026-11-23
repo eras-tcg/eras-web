@@ -1,5 +1,7 @@
 # Build on GitHub, deploy to AWS (S3 + CloudFront) with eras-tcg/infra deploy-site-aws.yml.
 #   PR to main   -> lint + test + build (site and Android app) only
+#   Deploys never wait for lint/tests (user, 2026-11-23): they run alongside the build and only report.
+#   Every job has a time limit, so nothing can hold the pipeline.
 #   push to main -> build (configuration "aws") + the Android app (configuration "capacitor", APK) + deploy
 #                   erastcg.com (waits for approval). No staging step since 2026-11-22: staging.erastcg.com keeps
 #                   the last site deployed there
@@ -26,6 +28,7 @@ concurrency:
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,8 +40,8 @@ jobs:
       - run: npm test -- --watch=false
 
   build:
-    needs: lint-test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,8 +58,8 @@ jobs:
           retention-days: 90
 
   android:
-    needs: lint-test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -124,6 +127,7 @@ jobs:
   site:
     needs: [build, android]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/download-artifact@v4
         with:

@@ -21,6 +21,7 @@ import { SplitComponent } from '@ui/layout/split/split.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { PillComponent } from '@ui/primitives/pill/pill.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { InViewDirective } from '@ui/utilities/in-view.directive';
@@ -45,6 +46,7 @@ const PAGE_SIZE = 40;
     ButtonComponent,
     IconComponent,
     SpinnerComponent,
+    PillComponent,
     InViewDirective,
   ],
   templateUrl: './cards.page.html',
@@ -57,21 +59,8 @@ const PAGE_SIZE = 40;
       padding: var(--space-3) var(--space-2);
       pointer-events: none;
     }
-    /* Floating over the cards: each piece its own small surface, the row itself clear */
+    /* Floating over the cards: each piece its own small surface (float, pill, glass), the row itself clear */
     .toolbar > * { pointer-events: auto; }
-    /* Each over the cards on its own small surface (the clear button's beats the ghost button's own) */
-    .count,
-    .toolbar .clear {
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--color-bg) 80%, transparent);
-      backdrop-filter: blur(6px);
-    }
-    .count {
-      padding: var(--space-1) var(--space-3);
-    }
-    .toolbar .clear:hover {
-      background: color-mix(in srgb, var(--color-surface-muted) 90%, transparent);
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

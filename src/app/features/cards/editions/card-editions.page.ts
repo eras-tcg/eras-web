@@ -108,12 +108,12 @@ interface EditionForm {
       width="wide"
     >
       @if (edition() && !collection()) {
-        <button page-actions erasButton variant="ghost" type="button" (click)="showMetrics()">
+        <button page-actions erasButton variant="glass" type="button" (click)="showMetrics()">
           Métricas
         </button>
       }
       @if (canEditEditions() && !form()) {
-        <button page-actions erasButton variant="secondary" type="button" (click)="startForm()">
+        <button page-actions erasButton [variant]="edition() ? 'glass' : 'float'" type="button" (click)="startForm()">
           {{ edition() ? 'Editar edición' : 'Nueva edición' }}
         </button>
       }

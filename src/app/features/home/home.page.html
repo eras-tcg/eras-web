@@ -7,7 +7,7 @@
         <span class="sr-only" role="status">Editando la portada</span>
         <button
           erasButton
-          variant="secondary"
+          variant="glass"
           size="sm"
           type="button"
           [disabled]="home.saving()"
@@ -15,11 +15,11 @@
         >
           Cancelar
         </button>
-        <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">
+        <button erasButton variant="float" size="sm" type="button" [loading]="home.saving()" (click)="save()">
           Guardar portada
         </button>
       } @else {
-        <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()">
+        <button erasButton variant="glass" size="sm" type="button" (click)="startEdit()">
           <eras-icon name="edit" /> Editar portada
         </button>
       }

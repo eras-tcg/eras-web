@@ -6,6 +6,7 @@ import { SortControlComponent, SortOption } from '@ui/forms/sort-control/sort-co
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { PillComponent } from '@ui/primitives/pill/pill.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { DeckFiltersBarComponent } from './deck-filters-bar.component';
 
@@ -21,7 +22,7 @@ import { DeckFiltersBarComponent } from './deck-filters-bar.component';
  */
 @Component({
   selector: 'eras-deck-browser',
-  imports: [DeckFiltersBarComponent, SortControlComponent, GridComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [DeckFiltersBarComponent, SortControlComponent, GridComponent, EmptyStateComponent, ButtonComponent, IconComponent, PillComponent, SpinnerComponent],
   templateUrl: './deck-browser.component.html',
   styleUrl: './deck-browser.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

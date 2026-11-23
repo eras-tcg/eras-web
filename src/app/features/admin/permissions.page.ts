@@ -23,7 +23,7 @@ import { feedbackState } from './admin-feedback';
   imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
     <eras-page title="Permisos">
-      <button page-actions erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
+      <button page-actions erasButton variant="glass" type="button" [disabled]="loading()" (click)="load()"><eras-icon name="refresh" /> Recargar</button>
 
       @if (fb.feedback(); as f) {
         <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>

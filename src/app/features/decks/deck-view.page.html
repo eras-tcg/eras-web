@@ -1,23 +1,24 @@
 <eras-page [title]="deck()?.deckName ?? 'Mazo'" width="wide" fill [back]="back">
-  <!-- Row kept for the buttons even while loading; only the body below scrolls -->
+  <!-- Row kept for the buttons even while loading; only the body below scrolls. The main one (edit, or copy a deck
+       that is not yours) in gold, the rest in glass -->
   <div class="actions" role="toolbar" aria-label="Acciones del mazo">
     @if (canEdit()) {
-      <a erasButton variant="secondary" routerLink="/deck-builder" [queryParams]="editQuery()" [state]="editState"><eras-icon name="edit" /> Editar</a>
+      <a erasButton variant="float" routerLink="/deck-builder" [queryParams]="editQuery()" [state]="editState"><eras-icon name="edit" /> Editar</a>
       @if (!deck()?.systemDeck) {
-        <button erasButton variant="secondary" type="button" [disabled]="deleting()" (click)="remove()"><eras-icon name="trash" /> Borrar</button>
+        <button erasButton variant="glass" type="button" [disabled]="deleting()" (click)="remove()"><eras-icon name="trash" /> Borrar</button>
       }
       @if (canManageBoxes() && !deck()?.systemDeck) {
-        <button erasButton variant="secondary" type="button" (click)="pickBox()"><eras-icon name="box" /> Deckbox</button>
+        <button erasButton variant="glass" type="button" (click)="pickBox()"><eras-icon name="box" /> Deckbox</button>
       }
     }
-    <button erasButton variant="secondary" type="button" [disabled]="total() === 0" (click)="openProxies()">Proxies</button>
+    <button erasButton variant="glass" type="button" [disabled]="total() === 0" (click)="openProxies()">Proxies</button>
     @if (canSetBotDeck()) {
-      <button erasButton variant="secondary" type="button" [attr.aria-pressed]="!!deck()?.botDeck" [disabled]="savingBotDeck()" (click)="toggleBotDeck()">
+      <button erasButton variant="glass" type="button" [attr.aria-pressed]="!!deck()?.botDeck" [disabled]="savingBotDeck()" (click)="toggleBotDeck()">
         <eras-icon name="bot" /> {{ deck()?.botDeck ? 'Quitar del bot' : 'Dar al bot' }}
       </button>
     }
     @if (canCopy()) {
-      <a erasButton routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
+      <a erasButton variant="float" routerLink="/deck-builder" [queryParams]="copyQuery()"><eras-icon name="plus" /> Crear copia</a>
     }
   </div>
 

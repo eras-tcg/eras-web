@@ -39,7 +39,7 @@ import { HubScreenComponent } from '../home/hub-screen.component';
       <section class="board" aria-labelledby="board-title">
         <h2 id="board-title" class="board-title">
           <eras-rank-emblem tier="CHALLENGER" [size]="22" /> Retadores
-          <button type="button" erasButton variant="secondary" size="sm" class="guide-button" (click)="openGuide()"><eras-icon name="book" /> Guía de ligas</button>
+          <button type="button" erasButton variant="glass" size="sm" class="guide-button" (click)="openGuide()"><eras-icon name="book" /> Guía de ligas</button>
         </h2>
         @if (rows(); as list) {
           <ol class="list">

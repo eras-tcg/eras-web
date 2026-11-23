@@ -345,7 +345,7 @@
           <eras-stack direction="row" [gap]="1">
             <button
               erasButton
-              variant="ghost"
+              variant="glass"
               size="sm"
               type="button"
               class="options-toggle"
@@ -356,11 +356,11 @@
               <eras-icon [name]="searchOptionsOpen() ? 'chevron-up' : 'chevron-down'" /> Opciones
             </button>
             @if (filtersActive()) {
-              <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()">
+              <button erasButton variant="glass" size="sm" type="button" (click)="clearFilters()">
                 <eras-icon name="x" /> Limpiar
               </button>
             }
-            <button erasButton variant="secondary" size="sm" type="button" (click)="openFilters()">
+            <button erasButton variant="float" size="sm" type="button" [marked]="filtersActive()" (click)="openFilters()">
               <eras-icon name="filter" /> Filtros
             </button>
           </eras-stack>

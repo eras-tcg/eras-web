@@ -27,7 +27,7 @@ type View = 'orphans' | 'all';
   imports: [PageComponent, TabsComponent, FormFieldComponent, TableComponent, AlertComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
     <eras-page title="Metadatos de cartas" width="wide">
-      <button page-actions erasButton variant="secondary" type="button" [disabled]="store.loading()" (click)="store.load(true)">Recargar</button>
+      <button page-actions erasButton variant="glass" type="button" [disabled]="store.loading()" (click)="store.load(true)"><eras-icon name="refresh" /> Recargar</button>
 
       @if (fb.feedback(); as f) {
         <eras-alert [tone]="f.tone">{{ f.text }}</eras-alert>

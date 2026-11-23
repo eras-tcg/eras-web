@@ -28,7 +28,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
         <eras-stack direction="row" [gap]="2" align="center" justify="space-between" wrap>
           <span>{{ resultLabel() }}</span>
           @if (active()) {
-            <button erasButton variant="ghost" size="sm" type="button" (click)="filtersChange.emit(empty)"><eras-icon name="x" /> Limpiar filtros</button>
+            <button erasButton variant="glass" size="sm" type="button" (click)="filtersChange.emit(empty)"><eras-icon name="x" /> Limpiar filtros</button>
           }
         </eras-stack>
       </eras-stack>

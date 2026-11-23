@@ -50,21 +50,6 @@
   padding: var(--space-2);
 }
 
-.rail button {
-  position: relative;
-}
-
-// Some filter is on while they are folded
-.dot {
-  position: absolute;
-  inset-block-start: 0.2rem;
-  inset-inline-end: 0.2rem;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 50%;
-  background: var(--color-hub-accent);
-}
-
 /* Decks */
 .decks {
   display: flex;

@@ -13,6 +13,7 @@ import { DeckBoxesStore } from '@data/decks/deckboxes.store';
 import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
+import { CrumbsComponent } from '@ui/layout/crumbs/crumbs.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -37,7 +38,7 @@ type Dragged = { kind: 'deck'; id: string } | { kind: 'box'; id: string };
  */
 @Component({
   selector: 'eras-my-decks-page',
-  imports: [RouterLink, PageComponent, DeckBrowserComponent, DeckCoverComponent, DeckBoxTileComponent, AlertComponent, ButtonComponent, IconComponent],
+  imports: [RouterLink, PageComponent, CrumbsComponent, DeckBrowserComponent, DeckCoverComponent, DeckBoxTileComponent, AlertComponent, ButtonComponent, IconComponent],
   templateUrl: './my-decks.page.html',
   styleUrl: './my-decks.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

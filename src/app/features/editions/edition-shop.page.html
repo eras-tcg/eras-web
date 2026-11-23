@@ -1,7 +1,7 @@
 <eras-page [title]="edition()?.editionName || editionId()" width="wide" fill>
   <ng-container ngProjectAs="[page-actions]">
     @if (edition()) {
-      <button *erasEdit="'manage_editions'" erasButton variant="ghost" size="sm" type="button" (click)="openForm()"><eras-icon name="edit" /> Editar</button>
+      <button *erasEdit="'manage_editions'" erasButton variant="glass" type="button" (click)="openForm()"><eras-icon name="edit" /> Editar</button>
     }
   </ng-container>
 

@@ -1,8 +1,8 @@
 {
-  "commit": "f7843ddcf97b2a9144244373aa8b6be4704b8839",
+  "commit": "e288c0cce271a867987a83b0eb13126f05bcb969",
   "dirty": false,
-  "subject": "Ritual parts: the first is the summoner when the Requerimiento says \"+\"; Fal to the front line",
-  "copiedAt": "2026-11-22T20:29:28.802Z",
+  "subject": "Flureteus looks at 4 cards, as its new printed text says",
+  "copiedAt": "2026-11-23T02:20:00.496Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

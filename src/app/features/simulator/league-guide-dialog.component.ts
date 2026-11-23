@@ -27,7 +27,7 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
   selector: 'eras-league-guide-dialog',
   imports: [ModalComponent, ButtonComponent, RankEmblemComponent],
   template: `
-    <eras-modal title="Guía de ligas" (closed)="ref.close()">
+    <eras-modal title="Guía de ligas" size="lg" (closed)="ref.close()">
       <p class="intro">
         Las partidas ranked (Online o Modo solo) mueven tu rango. Cada liga tiene divisiones: empiezas en Hierro 1 y subes de
         división con cada victoria; al pasar la última, subes de liga.
@@ -36,7 +36,7 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
         <div class="league">
           <span class="emblems">
             @for (t of g.tiers; track t) {
-              <eras-rank-emblem [tier]="t" [size]="32" />
+              <eras-rank-emblem [tier]="t" [size]="64" />
             }
           </span>
           <span class="league-text">
@@ -55,15 +55,15 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
     .intro { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); }
     .league {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: var(--space-3);
       margin-block-end: var(--space-2);
-      padding: var(--space-2) var(--space-3);
+      padding: var(--space-3) var(--space-4);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
       background: var(--color-surface);
     }
-    .emblems { display: flex; flex: none; gap: var(--space-1); inline-size: 4.5rem; }
+    .emblems { display: flex; flex: none; gap: var(--space-2); inline-size: calc(2 * 64px + var(--space-2)); }
     .league-text { display: flex; flex-direction: column; gap: 2px; }
     .league-text span { font-size: var(--font-size-sm); }
     .muted { color: var(--color-text-muted); }

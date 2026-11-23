@@ -1,21 +1,44 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TILT, cardEdge, lightOf, tiltFromDrag } from './card-tilt';
+import { MAX_TILT, cardEdge, facingTilt, lightOf, restingTurn, spinFromDrag } from './card-tilt';
 
 describe('card tilt', () => {
   it('turns the card the way it is dragged, from where it was', () => {
     const flat = { rx: 0, ry: 0 };
-    expect(tiltFromDrag(flat, 50, 0, 400, 560)).toEqual({ rx: 0, ry: 11.25 });
-    expect(tiltFromDrag(flat, 0, -56, 400, 560)).toEqual({ rx: 9, ry: 0 });
-    expect(tiltFromDrag({ rx: 5, ry: 10 }, -40, 0, 400, 560)).toEqual({ rx: 5, ry: 1 });
+    expect(spinFromDrag(flat, 50, 0, 400, 560)).toEqual({ rx: 0, ry: 11.25 });
+    expect(spinFromDrag(flat, 0, -56, 400, 560)).toEqual({ rx: 9, ry: 0 });
+    expect(spinFromDrag({ rx: 5, ry: 10 }, -40, 0, 400, 560)).toEqual({ rx: 5, ry: 1 });
   });
 
-  it('never turns past the limit', () => {
-    expect(tiltFromDrag({ rx: 0, ry: 0 }, 5000, 5000, 400, 560)).toEqual({ rx: -MAX_TILT, ry: MAX_TILT });
+  it('spins all the way round across, and only leans up and down', () => {
+    expect(spinFromDrag({ rx: 0, ry: 0 }, 800, 0, 400, 560)).toEqual({ rx: 0, ry: 180 });
+    expect(spinFromDrag({ rx: 0, ry: 180 }, 400, 5000, 400, 560)).toEqual({
+      rx: -MAX_TILT,
+      ry: 270,
+    });
+  });
+
+  it('comes to rest flat on the side nearer to the eye', () => {
+    expect(restingTurn({ rx: 20, ry: 80 })).toEqual({ rx: 0, ry: 0 });
+    expect(restingTurn({ rx: -10, ry: 100 })).toEqual({ rx: 0, ry: 180 });
+    expect(restingTurn({ rx: 0, ry: -275 })).toEqual({ rx: 0, ry: -360 });
+  });
+
+  it('lights the side in sight by its own lean', () => {
+    expect(facingTilt({ rx: 5, ry: 190 })).toEqual({ rx: 5, ry: 10 });
+    expect(facingTilt({ rx: 0, ry: 80 })).toEqual({ rx: 0, ry: MAX_TILT });
   });
 
   it('moves the glare against the turn and brightens it the more it turns', () => {
     const flat = lightOf({ rx: 0, ry: 0 });
-    expect(flat).toEqual({ x: 50, y: 50, glare: 0.2, shade: 0, glossX: 50, glossY: 50, gloss: 0.25 });
+    expect(flat).toEqual({
+      x: 50,
+      y: 50,
+      glare: 0.2,
+      shade: 0,
+      glossX: 50,
+      glossY: 50,
+      gloss: 0.25,
+    });
     const turned = lightOf({ rx: 0, ry: MAX_TILT });
     expect(turned.x).toBe(0);
     // The gloss band slides the other way, and shines brighter

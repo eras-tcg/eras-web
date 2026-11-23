@@ -163,7 +163,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       padding: var(--space-2) var(--space-3);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       color: var(--color-text-muted);
     }
     .box:focus-within {

@@ -16,7 +16,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
       overflow-x: auto;
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
     }
     .eras-table table {
       inline-size: 100%;

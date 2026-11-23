@@ -77,7 +77,7 @@ import { HubScreenComponent } from '../home/hub-screen.component';
       border: var(--border-width) solid var(--color-border);
       border-inline-start: 3px solid var(--color-hub-accent);
       border-radius: var(--radius-md);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       color: var(--color-text);
       text-decoration: none;
     }
@@ -141,7 +141,7 @@ import { HubScreenComponent } from '../home/hub-screen.component';
       padding: var(--space-2) var(--space-3);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
 
       eras-avatar {
         --avatar-size: 2rem;

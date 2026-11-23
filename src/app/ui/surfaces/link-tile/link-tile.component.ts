@@ -27,7 +27,7 @@ import { IconComponent, IconName } from '../../primitives/icon/icon.component';
       padding: var(--space-4);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       color: var(--color-text);
       text-decoration: none;
       transition:

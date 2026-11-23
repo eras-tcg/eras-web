@@ -105,7 +105,7 @@ interface Row {
       border: 1px solid var(--color-border);
       border-inline-start: 4px solid var(--color-border);
       border-radius: var(--radius-md);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
     }
     .row.won {
       border-inline-start-color: var(--color-success);

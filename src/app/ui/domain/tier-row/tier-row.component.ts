@@ -16,7 +16,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
       overflow: hidden;
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       transition: outline-color var(--duration-fast) var(--easing-standard);
       outline: 2px dashed transparent;
       outline-offset: -2px;

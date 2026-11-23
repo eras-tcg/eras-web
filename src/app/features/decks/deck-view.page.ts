@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { EditModeService } from '@core/auth/edit-mode.service';
-import { ScreenLink } from '@core/navigation/screens';
 import { apiErrorMessage } from '@core/http/api-error';
 import { cardImageUrl } from '@data/cards/card-rules';
 import { CardsStore } from '@data/cards/cards.store';
@@ -24,10 +23,9 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { chooseDeckBox } from './deckbox-picker-dialog.component';
-import { FROM_PUBLIC_DECKS, deckBuilderQuery } from './deck-links';
+import { DeckArrival, deckBackLink, deckBuilderQuery } from './deck-links';
 import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-dialog/proxy-print-dialog.component';
 
-const PUBLIC_DECKS: ScreenLink = { route: '/public-decks', label: 'Mazos públicos' };
 
 
 /**
@@ -106,10 +104,10 @@ export class DeckViewPage {
   private readonly auth = inject(AuthService);
   private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
-  // Opened from the public list: "back" returns there instead of to the player's own decks
-  // Back to the same tab, folder and search it was opened from
-  private readonly arrival = inject(Location).getState() as { from?: string; query?: Record<string, string> } | null;
-  protected readonly back = this.arrival?.from === FROM_PUBLIC_DECKS.from ? { ...PUBLIC_DECKS, queryParams: this.arrival.query } : undefined;
+  // Opened from the public list or the tierlist: "back" returns there (as it was left) instead of to the player's
+  // own decks
+  private readonly arrival = inject(Location).getState() as DeckArrival | null;
+  protected readonly back = deckBackLink(this.arrival);
   /** What the builder gets on "Editar": this view's own arrival, handed back when it returns here. */
   protected readonly editState = { deckArrival: this.arrival ?? null };
 

@@ -29,7 +29,7 @@ npm run e2e:pwa                      # Playwright contra los builds de producci�
 
 ## Modos de la app (`core/pwa/app-mode.ts`)
 
-- **`app`**: la PWA instalada (display-mode standalone o fullscreen) o la app nativa (Capacitor).
+- **`app`**: la PWA instalada (display-mode standalone o fullscreen), la app nativa (Capacitor) o la de Windows (Electron, `window.erasDesktop`).
   - **Local primero**: no llama a `/api` ni a `/wake` hasta que el jugador pide algo online o toca "Conectar" (`core/server/connection*.ts` y el interceptor `connection-gate`). Lo que funciona sin servidor está en `routeNeedsServer`.
   - Siempre horizontal y en pantalla completa. Las barras del sistema nunca achican la vista: `--app-width`, `--app-height`, `--app-vw` y `--app-vh` en `core/pwa/app-screen.ts`.
   - Guarda solas las imágenes de las cartas al conectar (`offline-pictures-auto.ts`) y envía las partidas offline al conectar (`offline-games-upload.ts`).

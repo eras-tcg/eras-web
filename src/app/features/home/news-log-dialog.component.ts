@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
 import { HomeStore } from '@data/home/home.store';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubSlide, hubSlides } from './hub-rules';
@@ -22,7 +21,7 @@ interface NewsMonth {
  */
 @Component({
   selector: 'eras-news-log-dialog',
-  imports: [ModalComponent, IconComponent],
+  imports: [ModalComponent],
   template: `
     <eras-modal
       title="Noticias"
@@ -44,7 +43,16 @@ interface NewsMonth {
                       <span class="excerpt">{{ item.text }}</span>
                     }
                   </span>
-                  <eras-icon class="go" name="chevron-right" />
+                  <!-- Its picture: its first card's art, or the vortex with the gem -->
+                  @if (item.cards[0]?.imageUrl; as art) {
+                    <span
+                      class="thumb art"
+                      [style.background-image]="'url(' + art + ')'"
+                      aria-hidden="true"
+                    ></span>
+                  } @else {
+                    <span class="thumb default" aria-hidden="true"></span>
+                  }
                 </button>
               </li>
             }
@@ -76,8 +84,11 @@ interface NewsMonth {
     }
     .row {
       display: grid;
-      grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+      grid-template-columns: 5.5rem minmax(0, 1fr) 7rem;
       align-items: center;
+      /* Every news item the same height, whatever its text */
+      block-size: 5.5rem;
+      overflow: hidden;
       gap: var(--space-3);
       inline-size: 100%;
       padding: var(--space-3);
@@ -87,6 +98,21 @@ interface NewsMonth {
       color: inherit;
       text-align: start;
       cursor: pointer;
+    }
+    .thumb {
+      align-self: stretch;
+      margin-block: calc(-1 * var(--space-3));
+      margin-inline-end: calc(-1 * var(--space-3));
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      background-position: center 30%;
+      background-size: cover;
+      mask-image: linear-gradient(90deg, transparent, #000 45%);
+    }
+    /* No picture: the carousel's vortex with the gem in its eye */
+    .thumb.default {
+      background:
+        url('/favicon.svg') center / 2.4rem no-repeat,
+        url('/images/vortex.webp') center / 8.5rem no-repeat;
     }
     .row:hover,
     .row:focus-visible {
@@ -102,7 +128,10 @@ interface NewsMonth {
       min-inline-size: 0;
     }
     .title {
+      overflow: hidden;
       font-weight: var(--font-weight-bold);
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .excerpt {
       display: -webkit-box;
@@ -111,9 +140,6 @@ interface NewsMonth {
       font-size: var(--font-size-sm);
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
-    }
-    .go {
-      color: var(--color-text-muted);
     }
     .empty {
       margin: 0;

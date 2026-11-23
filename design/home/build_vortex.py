@@ -24,7 +24,8 @@ def smooth(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def vortex(size):
+def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0)):
+    """`accent`: the faint edge on one arm. `fade_out`: where (radius, 0..1 at the square's edge) it fades out to clear."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
@@ -45,7 +46,7 @@ def vortex(size):
     blue = rgb('#1d4ed8')
     violet = rgb('#5b21b6')
     ice = rgb('#93c5fd')
-    gold = rgb('#f5b301')
+    gold = rgb(accent)
 
     # Arms run blue→violet along the spiral; mist fills between them with deep blue
     # (whole multiples of the angle only: anything else leaves a seam where the angle wraps around)
@@ -61,7 +62,7 @@ def vortex(size):
     col = col + (gold - col) * (gold_edge * 0.55)[..., None]
 
     # Transparent at the rim: the slide's own color takes over
-    alpha = 1 - smooth(0.6, 1.0, r)
+    alpha = 1 - smooth(fade_out[0], fade_out[1], r)
     img = np.dstack([np.clip(col, 0, 1), alpha])
     return Image.fromarray((img * 255).round().astype(np.uint8), 'RGBA')
 

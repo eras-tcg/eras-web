@@ -1,5 +1,5 @@
 """The ERAS card back, built by layers (no generated imagery), for the web and the simulator: black at the card's edge
-fading into the night blue (no hard border: the black seeps into the design), the color vortex of the home (design/home/build_vortex.py) centered, and the ERAS gem
+fading into the night blue (no hard border: the black seeps into the design), the color vortex of the home (design/home/build_vortex.py) centered, with a light blue accent, and the ERAS gem
 (variant A, design/logo) set into its eye: sunk in a shadow, reflecting the vortex,
 veiled by it, blooming over it. Same size ratio as the old back (472×660), drawn at 2×.
 
@@ -18,7 +18,8 @@ import build_vortex as v  # noqa: E402
 import render_png as gem  # noqa: E402
 
 W, H = 472, 660
-FADE = 0.11  # how far in the edge's black reaches, as a share of the width
+SHAPE = 3  # the dark's outline: 2 an ellipse, higher nearer the card's rectangle
+ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (8, 10, 22, 255)
 
@@ -53,19 +54,18 @@ def cardback():
     iw, ih = w, h
     inner = Image.new('RGBA', (iw, ih), NIGHT)
 
-    # Vortex: square, a bit taller than the card's face so its arms reach every edge
+    # Vortex: square, a bit taller than the card's face, opaque out to the corners so its arms reach every edge; its
+    # accent a light blue of the palette instead of the home's gold
     vs = round(ih * 1.15)
-    vortex = v.vortex(vs * 2).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
+    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5)).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
     inner.alpha_composite(vortex, ((iw - vs) // 2, (ih - vs) // 2))
 
-    # Vignette: the corners sink into the night, the center stays lit
     ys, xs = np.mgrid[0:ih, 0:iw].astype(np.float32)
-    d = np.hypot((xs - iw / 2) / (iw / 2), (ys - ih / 2) / (ih / 2)) / np.sqrt(2)
-    shade = np.clip((d - 0.45) / 0.55, 0, 1) ** 1.5 * 0.55
-    vign = np.zeros((ih, iw, 4), np.uint8)
-    vign[..., :3] = NIGHT[:3]
-    vign[..., 3] = (shade * 255).round().astype(np.uint8)
-    inner.alpha_composite(Image.fromarray(vign, 'RGBA'))
+    # Where the arms are (1 on them, 0 in the gaps), from the vortex's own spiral (build_vortex: angle + 2.6·ln r, three
+    # arms), so the edge's black can follow it
+    vx, vy = (xs - iw / 2) / (vs / 2), (ys - ih / 2) / (vs / 2)
+    spiral = np.arctan2(vy, vx) + 2.6 * np.log(np.hypot(vx, vy) + 1e-6)
+    arms = (0.5 + 0.5 * np.cos(3 * spiral)) ** 1.2
 
     # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
     # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms
@@ -102,13 +102,14 @@ def cardback():
 
     inner = Image.fromarray((np.clip(scene, 0, 1) * 255).round().astype(np.uint8), 'RGBA')
 
-    # Edge: solid black at the very edge, easing into the scene
-    # (each side's fade on its own, joined as light through two veils: corners darker, no crease on the diagonal)
-    def fade(dist):
-        t = np.clip(dist / (w * FADE), 0, 1)
-        return (1 - t * t * (3 - 2 * t)) ** 1.4
-
-    black = 1 - (1 - fade(np.minimum(xs, iw - 1 - xs))) * (1 - fade(np.minimum(ys, ih - 1 - ys)))
+    # Edge: the vortex comes out of black. The dark grows outwards from the center over a rounded rectangle that fits
+    # the card (a superellipse, 1 at the edges' midpoints), shifted by the spiral: the gaps go dark sooner, the arms
+    # later, so the colors darken along the arms into the black and the arms touch the edge; only the corners and the
+    # gaps at the rim are solid black
+    e = ((np.abs(xs - iw / 2) / (iw / 2)) ** SHAPE + (np.abs(ys - ih / 2) / (ih / 2)) ** SHAPE) ** (1 / SHAPE)
+    e = e + (1 - arms) * 0.22 - arms * 0.08
+    black = np.clip((e - 0.62) / 0.42, 0, 1)
+    black = black * black * (3 - 2 * black)
     edge = np.zeros((ih, iw, 4), np.uint8)
     edge[..., 3] = (black * 255).round().astype(np.uint8)
     card = inner

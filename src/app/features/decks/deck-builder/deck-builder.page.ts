@@ -1,3 +1,5 @@
+import { Location } from '@angular/common';
+import { ScreenLink } from '@core/navigation/screens';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -170,11 +172,24 @@ export class DeckBuilderPage {
     () => this.auth.user() !== null && this.auth.can('manage_decks'),
   );
   protected readonly signedIn = computed(() => this.auth.user() !== null);
+  /**
+   * A system deck being edited (an administrator in edit mode): it is nobody's collection, so every card counts as owned
+   * and no rarity shows.
+   */
+  protected readonly systemEdit = computed(() => this.draft.system());
+  /** Where "back" leads: the deck's view while a saved deck is open (with that view's own way back); else the parent. */
+  private readonly arrival = inject(Location).getState() as { deckArrival?: Record<string, unknown> | null } | null;
+  protected readonly back = computed<ScreenLink | undefined>(() => {
+    const id = this.draft.id();
+    if (!id) return undefined;
+    const deckArrival = this.arrival?.deckArrival;
+    return { route: `/deck/${id}`, label: 'Mazo', ...(deckArrival ? { state: deckArrival } : {}) };
+  });
 
   // ── Collection ────────────────────────────────────────────────────────
   /** Copies the deck needs that the player does not own (signed in only). */
   protected readonly missing = computed(() =>
-    this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0,
+    this.signedIn() && !this.systemEdit() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0,
   );
   /** A card in testing: outside the economy (always available, never crafted or broken). */
   protected testCard(card: CatalogCard): boolean {
@@ -182,13 +197,14 @@ export class DeckBuilderPage {
   }
 
   /** The rarity on a card's tab: its metadata's (C when it has none, as crafting counts it); none without metadata. */
-  protected rarityOf(card: CatalogCard): string {
+  protected rarityOf(card: CatalogCard): string | null {
+    if (this.systemEdit()) return null;
     return card.meta ? card.meta.rarity || 'C' : '';
   }
 
   protected owns(card: CatalogCard): boolean {
     // A card in testing is never owned: a tester uses it as if it were (it plays in the test room)
-    return !this.signedIn() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;
+    return !this.signedIn() || this.systemEdit() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;
   }
   /** The finest finish the player owns of a card (null when none). */
   protected best(card: CatalogCard): Finish | null {
@@ -196,6 +212,7 @@ export class DeckBuilderPage {
   }
   /** Each of the deck's copies of a card: its finish and art (the alternative arts first; null for one they lack). */
   protected copies(entry: DeckEntry): DeckCopy[] {
+    if (this.systemEdit()) return Array.from({ length: entry.count }, () => ({ finish: 'plain' as const, art: null }));
     return deckCopies(
       this.collection.collection()?.cards[entry.card.id],
       entry.count,
@@ -279,7 +296,7 @@ export class DeckBuilderPage {
   /** The search's cards as shown: each with the finest finish the player owns, or one per finish they own. */
   private readonly items = computed(() =>
     this.results().flatMap((card) => {
-      const finishes = ownedFinishes(this.collection.collection()?.cards[card.id]);
+      const finishes = this.systemEdit() ? [] : ownedFinishes(this.collection.collection()?.cards[card.id]);
       if (this.allFinishes() && finishes.length > 1)
         return finishes.map((finish) => ({ card, finish, key: `${card.id}|${finish}` }));
       return [{ card, finish: finishes[0] ?? null, key: card.id }];

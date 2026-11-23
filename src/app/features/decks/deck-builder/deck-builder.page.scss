@@ -91,6 +91,20 @@ eras-card-thumb {
 // hover or focus; always on touch). The count stays top right.
 .entry {
   position: relative;
+  // Its buttons are sized from its width (cqi), so they fit the small cards the whole-deck layout gives
+  container-type: inline-size;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+// The card and its buttons lift together while the pointer is anywhere on them: lifting the card alone (as a card
+// thumb does) made it drop and rise again each time the pointer crossed onto a button, which blinked
+.entry:hover {
+  transform: translateY(-2px);
+}
+
+.entry eras-card-thumb,
+.entry:hover eras-card-thumb {
+  transform: none;
 }
 
 .entry-actions {
@@ -107,18 +121,18 @@ eras-card-thumb {
 }
 
 .entry-actions .minus {
-  inset-block-end: var(--space-1);
-  inset-inline-start: var(--space-1);
+  inset-block-end: 4cqi;
+  inset-inline-start: 4cqi;
 }
 
 .entry-actions .plus {
-  inset-block-end: var(--space-1);
-  inset-inline-end: var(--space-1);
+  inset-block-end: 4cqi;
+  inset-inline-end: 4cqi;
 }
 
 .entry-actions .cover {
-  inset-block-start: var(--space-1);
-  inset-inline-start: var(--space-1);
+  inset-block-start: 4cqi;
+  inset-inline-start: 4cqi;
 }
 
 @media (hover: none) {
@@ -131,8 +145,10 @@ eras-card-thumb {
   position: absolute;
   display: grid;
   place-items: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
+  // At most 40 % of the card's width each, so − and + never overlap
+  inline-size: min(1.75rem, 40cqi);
+  block-size: min(1.75rem, 40cqi);
+  font-size: min(1rem, 26cqi);
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -161,8 +177,8 @@ eras-card-thumb {
 }
 
 .entry-actions eras-icon {
-  inline-size: 1rem;
-  block-size: 1rem;
+  inline-size: min(1rem, 24cqi);
+  block-size: min(1rem, 24cqi);
 }
 
 // The deck's column fills its pane: the list scrolls, the metrics drawer stays at the bottom and opens upwards
@@ -171,6 +187,8 @@ eras-card-thumb {
   flex-direction: column;
   block-size: 100%;
   min-block-size: 0;
+  // Its height is the pane's: the metrics drawer is sized from it (cqb)
+  container-type: size;
 }
 
 .deck-scroll {
@@ -229,8 +247,8 @@ eras-card-thumb {
 }
 
 .drawer-body {
-  // Open, the metrics take at most a third of the screen (scrolling inside): the deck's list keeps the rest
-  max-block-size: 32dvh;
+  // Open, the metrics take at most a third of the deck's column (scrolling inside): the deck's list keeps the rest
+  max-block-size: 30cqb;
   overflow: auto;
   padding: 0 var(--space-4) var(--space-4);
 }
@@ -239,6 +257,7 @@ eras-card-thumb {
 @media (max-width: 48rem) {
   .deck-column {
     block-size: auto;
+    container-type: normal;
   }
 
   .deck-scroll {
@@ -333,12 +352,12 @@ eras-card-thumb {
 
   // The deck's corner buttons, smaller, so they fit on the smaller cards
   .entry-actions button {
-    inline-size: 1.35rem;
-    block-size: 1.35rem;
+    inline-size: min(1.35rem, 40cqi);
+    block-size: min(1.35rem, 40cqi);
   }
 
   .entry-actions eras-icon {
-    inline-size: 0.8rem;
-    block-size: 0.8rem;
+    inline-size: min(0.8rem, 24cqi);
+    block-size: min(0.8rem, 24cqi);
   }
 }

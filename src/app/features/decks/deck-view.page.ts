@@ -110,6 +110,8 @@ export class DeckViewPage {
   // Back to the same tab, folder and search it was opened from
   private readonly arrival = inject(Location).getState() as { from?: string; query?: Record<string, string> } | null;
   protected readonly back = this.arrival?.from === FROM_PUBLIC_DECKS.from ? { ...PUBLIC_DECKS, queryParams: this.arrival.query } : undefined;
+  /** What the builder gets on "Editar": this view's own arrival, handed back when it returns here. */
+  protected readonly editState = { deckArrival: this.arrival ?? null };
 
   protected readonly deck = signal<Deck | null>(null);
   protected readonly loading = signal(true);

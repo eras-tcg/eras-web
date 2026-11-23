@@ -4,6 +4,8 @@ export interface ScreenLink {
   label: string;
   /** The screen as it was left (its tab, folder, search…), when it keeps that in its address. */
   queryParams?: Record<string, string>;
+  /** Navigation state handed back to that screen (e.g. where it was opened from, for its own "back"). */
+  state?: Record<string, unknown>;
 }
 
 const HOME: ScreenLink = { route: '/home', label: 'Inicio' };

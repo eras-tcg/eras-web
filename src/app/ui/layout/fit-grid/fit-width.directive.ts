@@ -24,10 +24,11 @@ export class FitWidthDirective {
   readonly fitMax = input(260);
 
   private readonly room = signal({ width: 0, height: 0 });
+  // Too little room for any size (or not measured yet): the smallest, and the element scrolls
   protected readonly width = computed(() => {
     const { width, height } = this.room();
     const fit = fitItemWidth(this.erasFitWidth(), width, height, this.fitRatio(), this.fitGap(), this.fitMax());
-    return fit > 0 ? Math.max(this.fitMin(), fit) : this.fitMax();
+    return Math.max(this.fitMin(), fit);
   });
 
   constructor() {

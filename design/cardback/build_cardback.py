@@ -19,6 +19,7 @@ import render_png as gem  # noqa: E402
 
 W, H = 472, 660
 SHAPE = 3  # the dark's outline: 2 an ellipse, higher nearer the card's rectangle
+ARMS = 5  # the vortex's arms (the home's has 3)
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (8, 10, 22, 255)
@@ -57,15 +58,15 @@ def cardback():
     # Vortex: square, a bit taller than the card's face, opaque out to the corners so its arms reach every edge; its
     # accent a light blue of the palette instead of the home's gold
     vs = round(ih * 1.15)
-    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5)).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
+    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5), n_arms=ARMS).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
     inner.alpha_composite(vortex, ((iw - vs) // 2, (ih - vs) // 2))
 
     ys, xs = np.mgrid[0:ih, 0:iw].astype(np.float32)
-    # Where the arms are (1 on them, 0 in the gaps), from the vortex's own spiral (build_vortex: angle + 2.6·ln r, three
+    # Where the arms are (1 on them, 0 in the gaps), from the vortex's own spiral (build_vortex: angle + 2.6·ln r, ARMS
     # arms), so the edge's black can follow it
     vx, vy = (xs - iw / 2) / (vs / 2), (ys - ih / 2) / (vs / 2)
     spiral = np.arctan2(vy, vx) + 2.6 * np.log(np.hypot(vx, vy) + 1e-6)
-    arms = (0.5 + 0.5 * np.cos(3 * spiral)) ** 1.2
+    arms = (0.5 + 0.5 * np.cos(ARMS * spiral)) ** 1.2
 
     # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
     # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms

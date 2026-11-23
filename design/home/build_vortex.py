@@ -24,8 +24,8 @@ def smooth(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0)):
-    """`accent`: the faint edge on one arm. `fade_out`: where (radius, 0..1 at the square's edge) it fades out to clear."""
+def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3):
+    """`accent`: the faint edge on one arm. `n_arms`: how many arms. `fade_out`: where (radius, 0..1 at the square's edge) it fades out to clear."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
@@ -35,10 +35,10 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0)):
     # Two spirals with different twist and arm count: their beat gives the field depth instead of a regular pattern
     s1 = a + 2.6 * lr
     s2 = -a * 1 + 1.4 * lr + 0.9
-    arms = 0.5 + 0.5 * np.cos(3 * s1)          # three main arms
+    arms = 0.5 + 0.5 * np.cos(n_arms * s1)     # the main arms
     arms = arms ** 1.8
     mist = 0.5 + 0.5 * np.cos(2 * s2 + 0.6 * np.sin(5 * s1))
-    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(3 * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
+    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
     gold_edge *= 0.5 + 0.5 * np.cos(s1)        # on one arm more than the others
 
     night = rgb('#080a16')

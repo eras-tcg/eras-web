@@ -7,7 +7,7 @@ import { OfflineGame } from './offline-game';
 
 /**
  * Whether the installed app keeps the card pictures by itself now: it is the app (the browser's tab keeps the
- * "Descargar para jugar sin conexión" button), it can keep them, and the connection is not one to spare (Save-Data,
+ * "Descargar ERAS" button), it can keep them, and the connection is not one to spare (Save-Data,
  * mobile data or 2G: then it waits for the next connection on wifi). Null connection info (Safari) = go ahead.
  */
 export function shouldKeepPicturesNow(state: {

@@ -2,6 +2,8 @@ import { DialogRef } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { AndroidApp, offersAndroidApp } from '@core/pwa/android-app';
+import { InstallPrompt } from '@core/pwa/install-prompt';
 import { AppOffline, AppReadiness } from '@core/pwa/app-offline';
 import { StorageUsage, costlyConnection, formatBytes, persistStorage, storageUsage } from '@core/pwa/device-storage';
 import { OnlineStatus } from '@core/server/online-status';
@@ -15,6 +17,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { ModalService } from '@ui/surfaces/modal/modal.service';
 
 /** How often the app's own download (the service worker's) is looked at while it is not complete. */
 const READINESS_EVERY_MS = 2000;
@@ -29,8 +32,9 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
 }
 
 /**
- * "Descargar para jugar sin conexión": what the installed app needs to open and play against the bot without the
- * connection. The app itself (code, engine, starter decks) is the service worker's (it shows how far it got); the card
+ * "Descargar ERAS", the game on this device in one place. First the app itself: the APK on Android (when the site
+ * publishes it), otherwise installing the page (the browser's prompt, or how to do it by hand on iPhone). Then what it
+ * needs to open and play against the bot without the connection. The app itself (code, engine, starter decks) is the service worker's (it shows how far it got); the card
  * pictures of the starter decks and of the player's saved decks are downloaded here on request, with the progress, an
  * estimate of the size, a way to cancel, and the device's storage. Asks the browser to keep the storage (persist).
  */
@@ -38,11 +42,29 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
   selector: 'eras-offline-download-dialog',
   imports: [DatePipe, ModalComponent, AlertComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
-    <eras-modal title="Jugar sin conexión" subtitle="Lo que ERAS guarda en este dispositivo para jugar contra el bot sin internet." (closed)="close()">
+    <eras-modal title="Descargar ERAS" subtitle="Instala la app y guarda lo necesario para jugar contra el bot sin internet." (closed)="close()">
+      <!-- The app: what the device can install, the main step -->
+      <section class="row install" aria-labelledby="install-app">
+        <eras-icon name="smartphone" />
+        <div class="grow">
+          <h3 id="install-app">La app</h3>
+          @if (androidOffer()) {
+            <p>La app de ERAS para Android: en pantalla completa y se actualiza sola.</p>
+            <button erasButton type="button" (click)="openAndroidApp()"><eras-icon name="download" /> Descargar la app para Android</button>
+          } @else if (installer.offer() !== 'none') {
+            <p>Con su propio ícono, en pantalla completa y sin la barra del navegador.</p>
+            <button erasButton type="button" (click)="install()"><eras-icon name="download" /> Instalar ERAS</button>
+          } @else {
+            <p class="muted">Este navegador no puede instalarla (o ya está instalada): puedes jugar desde aquí.</p>
+          }
+        </div>
+      </section>
+
+      <h3 class="part">Para jugar sin conexión</h3>
       <section class="row" aria-labelledby="offline-app">
         <eras-icon [name]="app()?.ready ? 'check-circle' : 'box'" />
         <div>
-          <h3 id="offline-app">La aplicación</h3>
+          <h3 id="offline-app">El juego</h3>
           @if (app(); as state) {
             @if (!state.supported) {
               <p class="muted">Este navegador no puede guardar la aplicación: necesita conexión al abrirla.</p>
@@ -150,7 +172,7 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
           } @else {
             <button erasButton variant="ghost" type="button" (click)="close()">Cerrar</button>
             <button erasButton type="button" [disabled]="!canDownload()" (click)="download()">
-              <eras-icon name="download" /> {{ warning() && missing().length ? 'Descargar de todos modos' : 'Descargar' }}
+              <eras-icon name="download" /> {{ warning() && missing().length ? 'Descargar las imágenes de todos modos' : 'Descargar las imágenes' }}
             </button>
           }
         }
@@ -161,6 +183,13 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
     .row { display: flex; gap: var(--space-3); align-items: flex-start; }
     .row > eras-icon { flex: none; inline-size: 1.4rem; block-size: 1.4rem; margin-block-start: 0.15rem; color: var(--color-primary); }
     .grow { flex: 1; min-inline-size: 0; }
+    .install p { margin-block-end: var(--space-3); }
+    .part {
+      padding-block-start: var(--space-3);
+      border-block-start: var(--border-width) solid var(--color-border);
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
     h3 { margin: 0 0 var(--space-1); font-size: var(--font-size-md, 1rem); }
     p { margin: 0; }
     .muted { color: var(--color-text-muted); }
@@ -179,6 +208,13 @@ export class OfflineDownloadDialogComponent {
   private readonly decksStore = inject(DecksStore);
   protected readonly network = inject(OnlineStatus);
   protected readonly canKeep = canKeepPictures();
+  protected readonly installer = inject(InstallPrompt);
+  private readonly androidApp = inject(AndroidApp);
+  private readonly modal = inject(ModalService);
+  /** "Descargar la app para Android" (an Android phone, outside the app, when the site publishes the APK). */
+  protected readonly androidOffer = computed(() =>
+    offersAndroidApp({ android: this.androidApp.android, native: false, apk: this.androidApp.apk() }),
+  );
 
   protected readonly app = signal<AppReadiness | null>(null);
   protected readonly decks = signal<{ mine: number; savedAt: number | null } | null>(null);
@@ -208,6 +244,7 @@ export class OfflineDownloadDialogComponent {
       this.abort?.abort();
       clearTimeout(this.readinessTimer);
     });
+    this.androidApp.lookUp();
     void this.checkApp();
     void this.refresh();
     void this.refreshStorage();
@@ -215,6 +252,21 @@ export class OfflineDownloadDialogComponent {
 
   protected close(): void {
     this.ref.close();
+  }
+
+  /** The APK and how to install it (unknown sources, Xiaomi's warning). */
+  protected async openAndroidApp(): Promise<void> {
+    const { AndroidAppDialogComponent } = await import('./android-app-dialog.component');
+    this.modal.open(AndroidAppDialogComponent, { data: this.androidApp.apk(), width: '34rem' });
+  }
+
+  /** The browser's prompt; on iPhone and iPad, or on Android without the prompt, how to install it by hand. */
+  protected async install(): Promise<void> {
+    const offer = this.installer.offer();
+    if (offer === 'prompt' && (await this.installer.install()) !== 'unavailable') return;
+    const platform = offer === 'ios' ? 'ios' : 'android';
+    const { InstallIosDialogComponent } = await import('./install-ios-dialog.component');
+    this.modal.open(InstallIosDialogComponent, { data: platform });
   }
 
   protected cancel(): void {

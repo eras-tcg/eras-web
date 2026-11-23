@@ -311,7 +311,7 @@ test('"Conectar" en la app instalada: el estado Conectando… y luego Conectado'
   expect(servers!.imageHits.cors + servers!.imageHits.plain).toBeGreaterThan(0);
   await page.goto(`${BASE}/play`);
   await expect(page.getByRole('button', { name: 'Modo solo sin conexión' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Descargar para jugar sin conexión' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Descargar ERAS' })).toHaveCount(0);
   await context.close();
 });
 

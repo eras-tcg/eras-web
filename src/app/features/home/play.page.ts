@@ -2,8 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorMessage } from '@core/http/api-error';
-import { AndroidApp, offersAndroidApp } from '@core/pwa/android-app';
-import { InstallPrompt } from '@core/pwa/install-prompt';
 import { detectAppMode } from '@core/pwa/app-mode';
 import { ConnectionService } from '@core/server/connection.service';
 import { OnlineStatus, isUnreachable } from '@core/server/online-status';
@@ -49,8 +47,8 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
 
 /**
  * "Jugar" screen of the hub: online rooms, Modo solo (against the bot), the Sala de pruebas (a test room), the tutorial,
- * or Modo solo sin conexión (the bot in the browser: first in the list when the server cannot be reached); then the
- * download for offline and "Instalar ERAS" (when the browser can install it and it is not installed yet).
+ * or Modo solo sin conexión (the bot in the browser: first in the list when the server cannot be reached); then, outside
+ * the installed app, "Descargar ERAS": installing it and keeping what it needs to play offline, in one dialog.
  */
 @Component({
   selector: 'eras-play-page',
@@ -58,23 +56,13 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
   template: `
     <eras-hub-screen title="Jugar">
       <eras-hub-menu variant="sub" label="Modos de juego" [items]="menu()" [busy]="busy()" (picked)="start($event.id)" />
-      <!-- The game on this device: what it keeps for offline, and installing it (until it is installed) -->
-      <div class="extras">
-        <!-- The installed app keeps the pictures by itself when it connects (OfflinePicturesAuto) -->
-        @if (!installedApp) {
-          <button erasButton variant="secondary" size="sm" type="button" (click)="openDownload()">
-            <eras-icon name="download" /> Descargar para jugar sin conexión
-          </button>
-        }
-        <!-- Android: the app (APK from the site) instead of installing the page (the PWA) -->
-        @if (androidOffer()) {
-          <button erasButton size="sm" type="button" (click)="openAndroidApp()">
-            <eras-icon name="smartphone" /> Descargar la app para Android
-          </button>
-        } @else if (installer.offer() !== 'none') {
-          <button erasButton size="sm" type="button" (click)="install()"><eras-icon name="smartphone" /> Instalar ERAS</button>
-        }
-      </div>
+      <!-- The game on this device, one button: installing it and what it keeps for offline. The installed app keeps the
+           pictures by itself when it connects (OfflinePicturesAuto) -->
+      @if (!installedApp) {
+        <div class="extras">
+          <button erasButton size="sm" type="button" (click)="openDownload()"><eras-icon name="download" /> Descargar ERAS</button>
+        </div>
+      }
       @if (cutOff()) {
         <eras-alert tone="info">
           @if (offlineNow()) {
@@ -128,19 +116,9 @@ export class PlayPage {
   private readonly router = inject(Router);
   private readonly network = inject(OnlineStatus);
   private readonly warmup = inject(ServerWarmupService);
-  protected readonly installer = inject(InstallPrompt);
-  private readonly androidApp = inject(AndroidApp);
-  /** "Descargar la app para Android" (an Android phone, outside the app, when the site publishes the APK). */
-  protected readonly androidOffer = computed(() =>
-    offersAndroidApp({ android: this.androidApp.android, native: false, apk: this.androidApp.apk() }),
-  );
   protected readonly installedApp = detectAppMode() === 'app';
   private readonly modal = inject(ModalService);
   private readonly connection = inject(ConnectionService);
-
-  constructor() {
-    this.androidApp.lookUp();
-  }
 
   /** The server could not be reached the last time a game was opened. */
   private readonly unreachable = signal(false);
@@ -183,7 +161,7 @@ export class PlayPage {
         this.error.set(
           this.offline.ready()
             ? `No se pudo abrir ${what}`
-            : `No se pudo cargar ${what}: necesita conexión una vez para descargar el juego (o usa «Descargar para jugar sin conexión»)`,
+            : `No se pudo cargar ${what}: necesita conexión una vez para descargar el juego (o usa «Descargar ERAS»)`,
         );
         return;
       }
@@ -194,24 +172,9 @@ export class PlayPage {
     }
   }
 
-  /** "Descargar para jugar sin conexión": its own chunk, opened over the menu. */
+  /** "Descargar ERAS": its own chunk, opened over the menu. */
   protected async openDownload(): Promise<void> {
     const { OfflineDownloadDialogComponent } = await import('./offline-download-dialog.component');
     this.modal.open(OfflineDownloadDialogComponent, { width: '36rem' });
-  }
-
-  /** The APK and how to install it (unknown sources, Xiaomi's warning). */
-  protected async openAndroidApp(): Promise<void> {
-    const { AndroidAppDialogComponent } = await import('./android-app-dialog.component');
-    this.modal.open(AndroidAppDialogComponent, { data: this.androidApp.apk(), width: '34rem' });
-  }
-
-  /** The browser's prompt; on iPhone and iPad, or on Android without the prompt, how to install it by hand. */
-  protected async install(): Promise<void> {
-    const offer = this.installer.offer();
-    if (offer === 'prompt' && (await this.installer.install()) !== 'unavailable') return;
-    const platform = offer === 'ios' ? 'ios' : 'android';
-    const { InstallIosDialogComponent } = await import('./install-ios-dialog.component');
-    this.modal.open(InstallIosDialogComponent, { data: platform });
   }
 }

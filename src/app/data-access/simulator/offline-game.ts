@@ -89,7 +89,7 @@ export class OfflineGame {
   /**
    * The table's own pictures (the card back), fetched with the engine and kept by this page, so a game whose connection
    * goes after it starts still draws them (installed, the service worker keeps it too). The cards' pictures come from
-   * the image host: offline, those the service worker kept (seen before, or "Descargar ERAS").
+   * the image host: offline, those the service worker kept (seen before, or kept by "Guardar el juego para jugar sin conexión").
    */
   private readonly pictures: HTMLImageElement[] = [];
 

@@ -14,6 +14,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { RouterLink } from '@angular/router';
 import { GamePreferencesPanelComponent } from '@features/simulator/board/game-preferences-panel.component';
+import { OfflineKeepComponent } from './offline-keep.component';
 import { ProfileHeroComponent } from './profile-hero.component';
 import { matching } from '../auth/matching.validator';
 
@@ -25,7 +26,7 @@ type Feedback = { tone: 'success' | 'danger'; text: string } | null;
  */
 @Component({
   selector: 'eras-profile-page',
-  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, IconComponent, ProfileHeroComponent, GamePreferencesPanelComponent, RouterLink],
+  imports: [ReactiveFormsModule, PageComponent, CardComponent, StackComponent, SectionHeaderComponent, FormFieldComponent, AlertComponent, ButtonComponent, SpinnerComponent, IconComponent, ProfileHeroComponent, GamePreferencesPanelComponent, OfflineKeepComponent, RouterLink],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

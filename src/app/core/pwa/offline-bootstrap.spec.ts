@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { offlineLaunchTarget } from './offline-launch';
-import { costlyConnection, formatBytes } from './device-storage';
+import { costlyConnection } from './device-storage';
 import { prefetchedUrls } from './app-offline';
 import { ServerWarmupService, WAKE_URL } from '../server/server-warmup.service';
 
@@ -61,12 +61,6 @@ describe('device storage and the connection', () => {
     expect(costlyConnection({ saveData: true })).toEqual({ saveData: true, metered: false, slow: false });
     expect(costlyConnection({ type: 'cellular', effectiveType: '4g' })).toEqual({ saveData: false, metered: true, slow: false });
     expect(costlyConnection({ type: 'wifi', effectiveType: '2g' })?.slow).toBe(true);
-  });
-
-  it('writes sizes for people', () => {
-    expect(formatBytes(512)).toBe('1 kB');
-    expect(formatBytes(300 * 1024)).toBe('300 kB');
-    expect(formatBytes(12.34 * 1024 * 1024)).toBe('12,3 MB');
   });
 
   it('the app files the service worker downloads on install are its prefetch groups', () => {

@@ -14,8 +14,13 @@ describe('shouldKeepPicturesNow', () => {
     expect(shouldKeepPicturesNow({ app: true, canKeep: true, connection: { ...wifi, slow: true } })).toBe(false);
   });
 
-  it('never in the browser tab (it has the button) or where pictures cannot be kept', () => {
+  it('in the browser tab only when the player turned it on in the profile', () => {
     expect(shouldKeepPicturesNow({ app: false, canKeep: true, connection: wifi })).toBe(false);
+    expect(shouldKeepPicturesNow({ app: false, wanted: true, canKeep: true, connection: wifi })).toBe(true);
+    expect(shouldKeepPicturesNow({ app: false, wanted: true, canKeep: true, connection: { ...wifi, metered: true } })).toBe(false);
+  });
+
+  it('never where pictures cannot be kept', () => {
     expect(shouldKeepPicturesNow({ app: true, canKeep: false, connection: wifi })).toBe(false);
   });
 });

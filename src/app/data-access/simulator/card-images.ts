@@ -6,8 +6,6 @@
  */
 export const CARD_IMAGES_CACHE = 'eras-card-images-v1';
 
-/** A guess of a card picture's size before any is downloaded (the real average replaces it as they arrive). */
-export const ESTIMATED_PICTURE_BYTES = 180 * 1024;
 /** Pictures downloaded at the same time. */
 const PARALLEL = 4;
 
@@ -32,35 +30,6 @@ export async function missingPictures(urls: readonly string[]): Promise<string[]
   const cache = await caches.open(CARD_IMAGES_CACHE);
   const kept = await Promise.all(urls.map((url) => cache.match(url, { ignoreVary: true })));
   return urls.filter((_, i) => !kept[i]);
-}
-
-/**
- * What the kept pictures really take: the size of those whose host allowed reading them, and how many are opaque
- * (no CORS on the image host). The browser counts each opaque one as several megabytes of quota, far more than the
- * picture; for those the usual picture size is the estimate.
- */
-export async function keptPictureSizes(urls: readonly string[]): Promise<{ bytes: number; opaque: number }> {
-  if (!canKeepPictures() || !urls.length) return { bytes: 0, opaque: 0 };
-  const cache = await caches.open(CARD_IMAGES_CACHE);
-  const kept = await Promise.all(urls.map((url) => cache.match(url, { ignoreVary: true })));
-  let bytes = 0;
-  let opaque = 0;
-  for (const response of kept) {
-    if (!response) continue;
-    if (response.type === 'opaque') {
-      opaque++;
-      bytes += ESTIMATED_PICTURE_BYTES;
-    } else {
-      bytes += Number(response.headers.get('content-length')) || ESTIMATED_PICTURE_BYTES;
-    }
-  }
-  return { bytes, opaque };
-}
-
-/** The total size to show: the measured average for every picture (or the guess until one is measured). */
-export function estimateBytes(count: number, progress: Pick<PictureProgress, 'bytes' | 'measured'> | null = null): number {
-  const average = progress && progress.measured > 0 ? progress.bytes / progress.measured : ESTIMATED_PICTURE_BYTES;
-  return Math.round(count * average);
 }
 
 const noCorsHosts = new Set<string>();

@@ -1,4 +1,4 @@
-import { CARD_IMAGES_CACHE, ESTIMATED_PICTURE_BYTES, keptPictureSizes, missingPictures } from './card-images';
+import { CARD_IMAGES_CACHE, missingPictures } from './card-images';
 
 /** A Cache Storage holding these responses under CARD_IMAGES_CACHE. */
 function fakeCaches(entries: Record<string, Response>): CacheStorage {
@@ -18,17 +18,11 @@ describe('the kept card pictures', () => {
     (globalThis as { caches?: CacheStorage }).caches = original;
   });
 
-  it('measures readable pictures by their length and opaque ones by the usual picture size', async () => {
+  it('finds the pictures not kept yet (an opaque one is kept)', async () => {
     (globalThis as { caches?: CacheStorage }).caches = fakeCaches({
       a: new Response('x', { headers: { 'content-length': '1000' } }),
       b: opaque(),
     });
-    expect(await keptPictureSizes(['a', 'b', 'c'])).toEqual({ bytes: 1000 + ESTIMATED_PICTURE_BYTES, opaque: 1 });
     expect(await missingPictures(['a', 'b', 'c'])).toEqual(['c']);
-  });
-
-  it('counts nothing when no picture is kept', async () => {
-    (globalThis as { caches?: CacheStorage }).caches = fakeCaches({});
-    expect(await keptPictureSizes(['a'])).toEqual({ bytes: 0, opaque: 0 });
   });
 });

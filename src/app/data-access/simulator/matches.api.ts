@@ -12,6 +12,15 @@ export interface MatchPlayer {
   starterCardId?: string | null;
   /** The server's bot (Modo solo). */
   bot?: boolean;
+  /** The deck the player started the game with, as its list (games kept before it was saved have none). */
+  cards?: MatchDeckCard[];
+}
+
+/** One card of a deck kept with a game, and its copies. */
+export interface MatchDeckCard {
+  cardId?: string | null;
+  cardName?: string | null;
+  count: number;
 }
 
 /** A game of the history, as the server keeps it once over. */

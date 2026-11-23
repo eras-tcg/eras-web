@@ -1,6 +1,7 @@
 """The home carousel's backdrop for slides without cards: a vortex made only of color, no shapes. Each pixel's tone comes
 from a logarithmic spiral (angle + twist·ln r), so the bands of color curl in towards a dark eye; deep blue and violet
-arms, a lighter blue where they meet the eye, a faint gold edge on one arm. Transparent towards the rim, so it melts
+arms, a lighter blue where they meet the eye, a faint gold edge on one arm. The eye is as wide as the ERAS gem, which
+the page sets on it: the arms converge on the gem's edge. Transparent towards the rim, so it melts
 into the slide's night blue. The page turns it slowly.
 
     python build_vortex.py <out.webp>
@@ -36,7 +37,7 @@ def vortex(size):
     arms = 0.5 + 0.5 * np.cos(3 * s1)          # three main arms
     arms = arms ** 1.8
     mist = 0.5 + 0.5 * np.cos(2 * s2 + 0.6 * np.sin(5 * s1))
-    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(3 * s1 - 0.55)) * smooth(0.15, 0.4, r) * (1 - smooth(0.55, 0.85, r))
+    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(3 * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
     gold_edge *= 0.5 + 0.5 * np.cos(s1)        # on one arm more than the others
 
     night = rgb('#080a16')
@@ -52,9 +53,9 @@ def vortex(size):
     col = night + (deep - night) * (mist[..., None] * 0.9)
     col = col + (arm_color - col) * (arms[..., None] * 0.85)
     # Near the eye the arms brighten into ice blue, then the eye itself goes dark
-    rim = smooth(0.05, 0.16, r) * (1 - smooth(0.16, 0.42, r))
+    rim = smooth(0.2, 0.3, r) * (1 - smooth(0.3, 0.55, r))
     col = col + (ice - col) * (rim * (0.35 + 0.5 * arms))[..., None]
-    eye = 1 - smooth(0.02, 0.11, r)
+    eye = 1 - smooth(0.12, 0.26, r)  # under the gem
     col = col + (night - col) * (eye * 0.92)[..., None]
     col = col + (gold - col) * (gold_edge * 0.55)[..., None]
 

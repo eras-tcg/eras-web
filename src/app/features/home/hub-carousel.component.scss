@@ -52,10 +52,14 @@
 }
 
 // A slide without cards: a vortex of color where the cards would be (vortex.webp, built in design/home: tones curled
-// along a spiral into a dark eye, no shapes), larger than the slide and turning slowly
-.slide:not(.has-cards)::before {
+// along a spiral, no shapes), larger than the slide and turning slowly, converging on the ERAS gem, still, in its eye
+.slide:not(.has-cards) {
   --vortex: max(170cqb, 60cqi);
+  // The vortex's eye is drawn for a gem 0.29 of its size
+  --gem: calc(var(--vortex) * 0.29);
+}
 
+.slide:not(.has-cards)::before {
   inset: auto;
   inset-block-start: calc(50% - var(--vortex) / 2);
   inset-inline-start: calc(76% - var(--vortex) / 2);
@@ -81,6 +85,8 @@
 
 .slide:not(.has-cards)::after {
   background:
+    // centered where the vortex's eye is (76 % across)
+    url('/favicon.svg') no-repeat left calc(76cqi - var(--gem) / 2) center / var(--gem) var(--gem),
     linear-gradient(90deg, var(--color-hub-scrim) 25%, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 55%, transparent 70%),
     linear-gradient(0deg, color-mix(in srgb, var(--color-hub-accent) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
 }

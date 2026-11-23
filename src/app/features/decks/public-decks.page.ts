@@ -25,6 +25,7 @@ import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { CrumbsComponent } from '@ui/layout/crumbs/crumbs.component';
+import { SearchFieldComponent } from '@ui/forms/search-field/search-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -59,7 +60,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
  */
 @Component({
   selector: 'eras-public-decks-page',
-  imports: [PageComponent, CrumbsComponent, PillComponent, TabsComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PageComponent, CrumbsComponent, SearchFieldComponent, PillComponent, TabsComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
     <eras-page title="Mazos públicos" width="wide">
       @if (store.error(); as error) {
@@ -69,16 +70,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       <eras-tabs class="tabs" label="Origen de los mazos" [tabs]="tabs()" [selected]="search().scope" (selectedChange)="go($any($event), '')" />
 
       <div class="search" role="search">
-        <label class="box">
-          <eras-icon name="search" />
-          <input
-            type="search"
-            [placeholder]="placeholder()"
-            aria-label="Buscar mazos"
-            [value]="search().text"
-            (input)="set('text', $any($event.target).value)"
-          />
-        </label>
+        <eras-search-field label="Buscar mazos" [placeholder]="placeholder()" [value]="search().text" (valueChange)="set('text', $event)" />
         <div class="chips">
           @for (chip of chips(); track chip.key) {
             <label class="chip" [class.on]="!!search()[chip.key]">
@@ -155,29 +147,6 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       flex-direction: column;
       gap: var(--space-3);
       margin-block-end: var(--space-4);
-    }
-    .box {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface-glass);
-      color: var(--color-text-muted);
-    }
-    .box:focus-within {
-      border-color: var(--color-hub-accent);
-    }
-    .box input {
-      flex: 1;
-      min-inline-size: 0;
-      border: 0;
-      background: none;
-      color: var(--color-text);
-      font: inherit;
-      font-size: var(--font-size-md);
-      outline: none;
     }
     .chips {
       display: flex;

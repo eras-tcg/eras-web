@@ -103,27 +103,33 @@
   }
 }
 
-// The gems on the notches: the top one shows first, the bottom one when the line reaches it
+// The gems on the notches, floating clear of the line (a gap under them) and bobbing a little; the top one shows
+// first, the bottom one, upside down, when the line reaches it
 .gem {
   position: absolute;
   inset-inline-start: 50%;
-  inline-size: 14px;
-  block-size: 14px;
+  inline-size: 11px;
+  block-size: 11px;
   translate: -50% -50%;
   clip-path: polygon(50% 0, 100% 38%, 81% 100%, 19% 100%, 0 38%);
   background: linear-gradient(135deg, var(--color-frame-gold-pale), var(--color-frame-gold) 60%, var(--color-frame-gem-edge));
-  animation: gem var(--duration-slow) var(--easing-standard) both;
+  animation:
+    gem var(--duration-slow) var(--easing-standard) both,
+    gem-float 3.2s ease-in-out var(--duration-trace) infinite;
 }
 
 .gem.top {
-  inset-block-start: 6px;
+  // Floats up, away from the notch's floor below it
+  --gem-float: -2px;
+  inset-block-start: 3px;
 }
 
 .gem.bottom {
-  inset-block-start: calc(100% - 6px);
-  // Upside down, as the bottom notch is the top one turned over
+  // Floats down, away from the notch's floor above it
+  --gem-float: 2px;
+  inset-block-start: calc(100% - 3px);
   rotate: 180deg;
-  animation-delay: var(--duration-trace);
+  animation-delay: var(--duration-trace), calc(var(--duration-trace) + 1.6s);
 }
 
 @keyframes gem {
@@ -133,6 +139,24 @@
 
   to {
     scale: 1;
+  }
+}
+
+// Away from the line and back, never touching it
+@keyframes gem-float {
+  0%,
+  100% {
+    translate: -50% -50%;
+  }
+
+  50% {
+    translate: -50% calc(-50% + var(--gem-float));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem {
+    animation: none;
   }
 }
 

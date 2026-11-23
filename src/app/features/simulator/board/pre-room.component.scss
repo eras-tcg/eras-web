@@ -187,18 +187,7 @@
 .picker { display: grid; gap: var(--space-3); }
 .picker-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }
 .picker-title { margin: 0; padding-inline-start: var(--space-2); border-inline-start: 3px solid var(--color-hub-accent); font-family: var(--font-family-display); font-size: var(--font-size-lg); font-weight: var(--font-weight-regular); letter-spacing: 0.05em; text-transform: uppercase; }
-.search {
-  inline-size: min(100%, 16rem);
-  padding: var(--space-1) 0;
-  border: 0;
-  border-block-end: 1px solid var(--color-border);
-  border-radius: 0;
-  outline: none;
-  background: transparent;
-  color: var(--color-text);
-  font: inherit;
-}
-.search:focus { border-block-end-color: var(--color-hub-accent); }
+.search { inline-size: min(100%, 18rem); }
 .starters { --game-card-width: 6rem; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pick { padding: var(--space-1); border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
 .pick:hover { border-color: var(--color-border); }
@@ -229,23 +218,7 @@
 .pickers { display: contents; }
 
 // Inside a deckbox: back to every deck, and its name (under the title and search)
-.crumbs { display: flex; flex-basis: 100%; align-items: center; gap: var(--space-2); }
-.crumb-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-}
-.crumb-back:hover { border-color: var(--color-hub-accent); color: var(--color-text); }
-.crumb-back eras-icon { inline-size: 1rem; block-size: 1rem; }
-.crumb-here { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-family-display); letter-spacing: 0.04em; text-transform: uppercase; }
+.crumbs { flex-basis: 100%; }
 .crumbs .dot { inline-size: 0.7rem; block-size: 0.7rem; border-radius: 50%; }
 
 /* Landscape (computers, and phones held sideways): two columns, one screen high. The seats and the options on the left,
@@ -315,7 +288,9 @@
     z-index: 2;
     align-items: center;
     padding-block: var(--space-1);
-    background: var(--color-bg);
+    // Glass over the decks scrolling under it, as the panels over the backdrop
+    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+    backdrop-filter: blur(8px);
   }
 }
 

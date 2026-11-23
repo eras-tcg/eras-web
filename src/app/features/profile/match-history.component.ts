@@ -12,6 +12,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
+import type { RivalDeckData } from './rival-deck-dialog.component';
 
 const PAGE = 20;
 
@@ -35,6 +36,8 @@ interface Row {
   detail: string;
   /** It can still be watched again. */
   replay: boolean;
+  /** The rival's deck as they played it (none in games kept before it was saved). */
+  rivalDeck: RivalDeckData | null;
 }
 
 /** The signed-in player's last games (online and Modo solo): the result, the rival, the deck and how long it took. */
@@ -60,6 +63,9 @@ interface Row {
                 <eras-badge [color]="r.ranked ? 'var(--color-primary)' : null">{{ r.ranked ? 'Ranked' : 'Amistosa' }}</eras-badge>
               </span>
               <time class="when" [attr.datetime]="r.endedAt">{{ r.endedAt | date: 'd MMM, HH:mm' }}</time>
+              @if (r.rivalDeck; as deck) {
+                <button erasButton variant="secondary" size="sm" type="button" class="rival-deck" (click)="showRivalDeck(deck)">Mazo rival</button>
+              }
               @if (r.replay) {
                 <button erasButton variant="secondary" size="sm" type="button" class="watch" [loading]="opening() === r.id" [disabled]="!!opening()" (click)="watch(r.id)">
                   Ver repetición
@@ -91,7 +97,7 @@ interface Row {
     }
     .row {
       display: grid;
-      grid-template-columns: 6.5rem minmax(0, 1fr) auto auto auto;
+      grid-template-columns: 6.5rem minmax(0, 1fr) auto auto auto auto;
       align-items: center;
       gap: var(--space-3);
       padding: var(--space-2) var(--space-3);
@@ -131,12 +137,36 @@ interface Row {
       gap: var(--space-1);
     }
     @media (max-width: 40rem) {
+      /* Result and kind on top, the game below, then when and the buttons */
       .row {
         grid-template-columns: minmax(0, 1fr) auto;
+        row-gap: var(--space-2);
       }
-      .kind,
-      .when {
+      .result {
+        grid-row: 1;
+        grid-column: 1;
+      }
+      .kind {
+        grid-row: 1;
+        grid-column: 2;
         justify-self: end;
+      }
+      .main,
+      .when {
+        grid-column: 1 / -1;
+      }
+      .rival-deck {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .watch {
+        grid-column: 2;
+        justify-self: end;
+      }
+      .rival-deck:only-of-type,
+      .watch:first-of-type {
+        grid-column: 1 / -1;
+        justify-self: stretch;
       }
     }
   `,
@@ -195,6 +225,12 @@ export class MatchHistoryComponent {
     }
   }
 
+  /** The list the rival played (its dialog is loaded on first use). */
+  protected async showRivalDeck(deck: RivalDeckData): Promise<void> {
+    const { RivalDeckDialogComponent } = await import('./rival-deck-dialog.component');
+    this.modal.open(RivalDeckDialogComponent, { data: deck });
+  }
+
   protected next(): void {
     if (!this.loading()) void this.load(this.page + 1);
   }
@@ -233,6 +269,9 @@ export function toRow(g: MatchSummary, me: string | undefined): Row {
     deck: mine?.deckName ?? 'Mazo',
     result: !g.winnerId ? 'none' : g.winnerId === me ? 'won' : 'lost',
     replay: !!g.hasLog,
+    rivalDeck: rival?.cards?.length
+      ? { rival: rival.username || (rival.bot ? 'Bot' : 'Rival'), deckName: rival.deckName, cards: rival.cards }
+      : null,
     detail: [`${g.turns} ${g.turns === 1 ? 'turno' : 'turnos'}`, `${minutes} min`, reason].filter(Boolean).join(' · '),
   };
 }

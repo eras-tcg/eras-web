@@ -1,3 +1,5 @@
+import { Location } from '@angular/common';
+import { ScreenLink } from '@core/navigation/screens';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +11,7 @@ import {
   untracked,
 } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { apiErrorMessage } from '@core/http/api-error';
 import {
@@ -59,6 +62,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
+import { FitWidthDirective } from '@ui/layout/fit-grid/fit-width.directive';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { WorkbenchComponent } from '@ui/layout/workbench/workbench.component';
@@ -126,6 +130,7 @@ const DRAG_TYPE = 'application/x-eras-card';
     IconComponent,
     SpinnerComponent,
     InViewDirective,
+    FitWidthDirective,
     CollectionPanelComponent,
     FragmentsBarComponent,
     ToggleGroupComponent,
@@ -152,6 +157,7 @@ export class DeckBuilderPage {
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly deckBoxes = inject(DeckBoxesStore);
   private readonly modal = inject(ModalService);
 
@@ -166,11 +172,24 @@ export class DeckBuilderPage {
     () => this.auth.user() !== null && this.auth.can('manage_decks'),
   );
   protected readonly signedIn = computed(() => this.auth.user() !== null);
+  /**
+   * A system deck being edited (an administrator in edit mode): it is nobody's collection, so every card counts as owned
+   * and no rarity shows.
+   */
+  protected readonly systemEdit = computed(() => this.draft.system());
+  /** Where "back" leads: the deck's view while a saved deck is open (with that view's own way back); else the parent. */
+  private readonly arrival = inject(Location).getState() as { deckArrival?: Record<string, unknown> | null } | null;
+  protected readonly back = computed<ScreenLink | undefined>(() => {
+    const id = this.draft.id();
+    if (!id) return undefined;
+    const deckArrival = this.arrival?.deckArrival;
+    return { route: `/deck/${id}`, label: 'Mazo', ...(deckArrival ? { state: deckArrival } : {}) };
+  });
 
   // ── Collection ────────────────────────────────────────────────────────
   /** Copies the deck needs that the player does not own (signed in only). */
   protected readonly missing = computed(() =>
-    this.signedIn() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0,
+    this.signedIn() && !this.systemEdit() ? missingCopies(this.draft.entries(), this.collection.collection()) : 0,
   );
   /** A card in testing: outside the economy (always available, never crafted or broken). */
   protected testCard(card: CatalogCard): boolean {
@@ -178,13 +197,14 @@ export class DeckBuilderPage {
   }
 
   /** The rarity on a card's tab: its metadata's (C when it has none, as crafting counts it); none without metadata. */
-  protected rarityOf(card: CatalogCard): string {
+  protected rarityOf(card: CatalogCard): string | null {
+    if (this.systemEdit()) return null;
     return card.meta ? card.meta.rarity || 'C' : '';
   }
 
   protected owns(card: CatalogCard): boolean {
     // A card in testing is never owned: a tester uses it as if it were (it plays in the test room)
-    return !this.signedIn() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;
+    return !this.signedIn() || this.systemEdit() || isTestEdition(card.edition) || this.collection.owned(card.id) > 0;
   }
   /** The finest finish the player owns of a card (null when none). */
   protected best(card: CatalogCard): Finish | null {
@@ -192,6 +212,7 @@ export class DeckBuilderPage {
   }
   /** Each of the deck's copies of a card: its finish and art (the alternative arts first; null for one they lack). */
   protected copies(entry: DeckEntry): DeckCopy[] {
+    if (this.systemEdit()) return Array.from({ length: entry.count }, () => ({ finish: 'plain' as const, art: null }));
     return deckCopies(
       this.collection.collection()?.cards[entry.card.id],
       entry.count,
@@ -205,6 +226,8 @@ export class DeckBuilderPage {
   protected readonly shineOf = shineOf;
   /** The deck's cards in its order (by type, as the groups go), all together in one grid. */
   protected readonly entries = computed(() => this.draft.groups().flatMap((g) => g.entries));
+  /** A copy's width / height in the deck's list, its rarity tab above it counted (15 % of its width). */
+  protected readonly copyRatio = 1 / (88 / 63 + 0.15);
 
   // ── Messages ──────────────────────────────────────────────────────────
   protected readonly loadError = signal<string | null>(null);
@@ -273,7 +296,7 @@ export class DeckBuilderPage {
   /** The search's cards as shown: each with the finest finish the player owns, or one per finish they own. */
   private readonly items = computed(() =>
     this.results().flatMap((card) => {
-      const finishes = ownedFinishes(this.collection.collection()?.cards[card.id]);
+      const finishes = this.systemEdit() ? [] : ownedFinishes(this.collection.collection()?.cards[card.id]);
       if (this.allFinishes() && finishes.length > 1)
         return finishes.map((finish) => ({ card, finish, key: `${card.id}|${finish}` }));
       return [{ card, finish: finishes[0] ?? null, key: card.id }];
@@ -353,8 +376,8 @@ export class DeckBuilderPage {
       this.loadError.set(apiErrorMessage(e, 'No se pudo cargar el mazo'));
       return;
     }
-    // Only the owner can overwrite a deck, so anyone else edits a copy
-    const notMine = deck.userId !== this.auth.user()?.id;
+    // Only the owner can overwrite a deck (a system deck: a simulator administrator in edit mode), so anyone else edits a copy
+    const notMine = deck.systemDeck ? !this.editMode.allows('simulator_admin') : deck.userId !== this.auth.user()?.id;
     this.copyNotice.set(!copy && notMine);
     this.draft.load(deck, catalog, copy || notMine);
     this.shownDeck.set(`${id}|${copy}`);

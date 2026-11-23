@@ -29,7 +29,6 @@ export interface CardFilters {
   requirement: string;
   /** Edition id, "E1" or "E1.1"; empty = all. */
   edition: string;
-  cardNumber: string;
   rarities: string[];
   starterOnly: boolean;
   keywords: string[];
@@ -53,7 +52,6 @@ export const EMPTY_FILTERS: CardFilters = {
   specialSummon: '',
   requirement: '',
   edition: '',
-  cardNumber: '',
   rarities: [],
   starterOnly: false,
   keywords: [],
@@ -65,7 +63,7 @@ const isRangeSet = (r: NumberRange) => r.min !== null || r.max !== null;
 
 export function hasActiveFilters(f: CardFilters): boolean {
   return (
-    !!(f.name || f.type || f.specialSummon || f.requirement || f.edition || f.cardNumber || f.starterOnly) ||
+    !!(f.name || f.type || f.specialSummon || f.requirement || f.edition || f.starterOnly) ||
     f.pool !== 'legal' ||
     [f.colors, f.classes, f.rarities, f.keywords, f.tags].some((list) => list.length > 0) ||
     [f.cost, f.level, f.strength, f.specialCost].some(isRangeSet)
@@ -148,7 +146,6 @@ export function filterCards(cards: readonly CatalogCard[], f: CardFilters, inclu
     if (isRangeSet(f.specialCost) && (m?.specialCost == null || !inRange(m.specialCost, f.specialCost))) return false;
     if (f.specialSummon && m?.specialSummonKind !== f.specialSummon) return false;
     if (!matchesPattern(f.requirement, m?.requirement ?? '')) return false;
-    if (!matchesPattern(f.cardNumber, String(card.number ?? ''))) return false;
     if (f.rarities.length && !f.rarities.includes(m?.rarity ?? '')) return false;
     if (f.starterOnly && m?.starter !== true) return false;
     return matchesKeywords(card, f.keywords) && matchesTags(card, f.tags);

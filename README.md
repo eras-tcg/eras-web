@@ -64,7 +64,8 @@ legal and the player owns its cards, even if the saved deck was edited or delete
 
 The production builds (`production`, `staging`, `aws`) register a service worker, `public/eras-sw.js`: Angular's
 `ngsw-worker.js` (configured by `ngsw-config.json`) plus a cache for the card pictures. It is registered once the app
-is stable (`registerWhenStable:30000`), or at once when the player opens "Descargar para jugar sin conexión".
+is stable (`registerWhenStable:30000`), or at once when the player turns on "Guardar el juego para jugar sin
+conexión" (profile).
 
 - **What it keeps:** on install it downloads the app shell and every chunk (the board, the engine's worker), the fonts,
   icons, card back and `/engine/*.json` (prefetch groups; the engine's `?v=` is ignored for the match). `/images/**`
@@ -72,10 +73,12 @@ is stable (`registerWhenStable:30000`), or at once when the player opens "Descar
   those paths are not navigations either).
 - **Card pictures** (another origin, the R2 image host): cross-origin `<img>` requests are answered cache first from
   `eras-card-images-v1` (CORS when the host allows it, otherwise an opaque response; at most 1500, the oldest go
-  first; the URLs carry `?v=` so they never go stale). "Jugar" → **Descargar para jugar sin conexión** downloads the
-  pictures of the starter decks and of the player's saved decks into that cache: progress, size estimate, cancel, a
-  warning on data saving / mobile data, and the device's storage (`navigator.storage.estimate`). It also asks the
-  browser to keep the storage (`navigator.storage.persist`), as installing does; a first visit never asks.
+  first; the URLs carry `?v=` so they never go stale). Profile → Preferencias → **Guardar el juego para jugar sin
+  conexión** (`features/profile/offline-keep.component.ts`, a device preference `eras-keep-offline`) downloads the
+  pictures of the starter decks and of the player's saved decks into that cache at once, then by itself after each
+  sync of the library like the installed app (`OfflinePicturesAuto`: not on data saving / mobile data / 2G), with
+  the progress and how many are kept. It also asks the browser to keep the storage (`navigator.storage.persist`), as
+  installing does; a first visit never asks.
 - **Decks for offline:** whenever the player's decks and the card catalog are loaded online they are kept in IndexedDB
   (`eras` / `kv`, key `offline-library:<userId>`: the decks and only the catalog's part they and the starter decks
   need; `offline-library-sync.ts`). Modo solo sin conexión offers them after a reload or an offline start. Signing
@@ -84,8 +87,10 @@ is stable (`registerWhenStable:30000`), or at once when the player opens "Descar
   backend (the AWS warm-up screen is skipped while offline), with a "Sin conexión" notice and the server's modes left
   out. An expired session is kept until the connection is back (and never ends an offline game); it then goes to the
   login as before. Without any session, the login says it needs internet once.
-- **Install:** "Jugar" → **Instalar ERAS** shows the browser's prompt (`beforeinstallprompt`, caught from the start
-  by `index.html`) or, on iPhone/iPad, how to add it (Compartir → Agregar a inicio). Hidden once installed. Manifest:
+- **Install:** "Jugar" → **Descargar ERAS** gives the app for the device: the APK on Android and the installer on
+  Windows when the site publishes them (each with how to install it), otherwise the browser's prompt
+  (`beforeinstallprompt`, caught from the start by `index.html`) or, on iPhone/iPad, how to add it (Compartir →
+  Agregar a inicio). Hidden once installed, and where nothing can be installed. Manifest:
   `public/manifest.json` (icons in `public/icons`, maskable 192/512).
 - **Updates:** the service worker checks for a new version every 5 minutes and when the tab is shown; when it is ready
   the header says "Nueva versión disponible – Recargar" (never over a game's table, never reloading by itself). If
@@ -141,8 +146,8 @@ app: `core/pwa/app-mode.ts`, decided once at start). The browser's tab keeps the
 
 A native Android app (Capacitor 8) around the same Angular code, downloaded from the site as an APK
 (`/app/ERAS.apk`; not in Google Play). The site and the PWA are unchanged; on an Android phone "Jugar" offers
-**Descargar la app para Android** (with how to allow installing it) instead of "Instalar ERAS" once the site publishes
-an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; other platforms keep "Instalar ERAS").
+the APK (with how to allow installing it) from "Descargar ERAS" once the site publishes
+an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; elsewhere it installs the page).
 
 - **What it is:** `android/` (committed; `npx cap sync android` copies the web build into it), `capacitor.config.ts`
   (appId `com.erastcg.eras`, the page served at `https://localhost` from the APK). The web part is the build
@@ -152,7 +157,7 @@ an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; other platforms 
   `no-cors`, its answer is never read), and without ngsw (the code is in the APK).
 - **The installed app's behaviour** (`AppMode` `'app'`, `core/pwa/app-mode.ts`: `isNativeApp()` reads the bridge
   Capacitor puts on the page): local-first, offline games, the card pictures kept automatically; the pictures are
-  served by `eras-pictures-sw.js` (the pictures' half of `eras-sw.js`, registered alone there). No "Instalar ERAS",
+  served by `eras-pictures-sw.js` (the pictures' half of `eras-sw.js`, registered alone there). No "Descargar ERAS",
   no full screen API or orientation lock from the page, no `index.html` version polling.
 - **Native screen** (`MainActivity.java`): landscape (`sensorLandscape`), immersive full screen (the bars show for a
   moment over the game on a swipe, see-through, and hide again; re-applied on resume and focus), laid out under the
@@ -196,6 +201,32 @@ an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; other platforms 
 - **Tests:** `core/native/app-update.spec.ts` (manifest, versions, plan, attempts), `core/pwa/app-mode.spec.ts`,
   `core/http/api-config.spec.ts` (the app's environment and build), `core/pwa/android-app.spec.ts`, and the Android
   app's part of `version.service.spec.ts`.
+
+### The Windows app
+
+A Windows program (Electron, `desktop/`) that opens the site in its own window: `https://www.erastcg.com`, the same
+code and the same service worker as the browser, so it plays offline and updates like the installed PWA. Downloaded
+from the site (`/app/ERAS-Setup.exe`, not in the Microsoft Store). On a Windows PC "Descargar ERAS" gives the
+installer (with how to get past SmartScreen) once the site publishes it (`core/pwa/desktop-app.ts` reads `/app/desktop.json`).
+
+- **What it is:** `desktop/main.cjs` (one maximized window, no menu bar, F11 for full screen, other sites open in the
+  player's browser, a page asking for the connection when the site was never loaded, `desktop/offline.html`) and
+  `desktop/preload.cjs`, which sets `window.erasDesktop`: the site then runs as the installed app (`AppMode` `'app'`,
+  `isDesktopApp()` in `core/pwa/app-mode.ts`: local-first, offline games, no "Descargar ERAS").
+- **Updates:** the site updates itself inside it (ngsw, `VersionService`), so players never reinstall for a web
+  change. A new installer is needed only when `desktop/` changes: bump `desktop/package.json`'s version.
+- **CI** (job `desktop`, `windows-latest`): `npm ci && npm run dist` in `desktop/` (electron-builder, NSIS one-click
+  installer per user, shortcuts on the desktop and the start menu, the icon from `public/icons/icon-512.png`), then
+  `desktop.json` (`{version, exe}`); the job `site` puts both under `app/` (eras-tcg/infra `deploy-site.sh` uploads
+  the installer as a download).
+- **Not code-signed:** Windows SmartScreen warns about an unknown publisher ("Más información" → "Ejecutar de todas
+  formas"; the dialog says so). Signing needs a code-signing certificate (yearly cost) and electron-builder's `win`
+  signing options with its secrets.
+- **Locally:** `cd desktop && npm ci && npm start` (opens the site; `ERAS_URL=http://localhost:4200/` for a local
+  build). `npm run dist` builds `desktop/release/ERAS-Setup.exe`; on a PC without Developer Mode extracting
+  electron-builder's signing tools fails on symbolic links: add `-c.win.signAndEditExecutable=false` (the exe then
+  keeps Electron's icon) or turn Developer Mode on.
+- **Tests:** `core/pwa/desktop-app.spec.ts`, `core/pwa/app-mode.spec.ts`.
 
 ### Updating the vendored engine
 

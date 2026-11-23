@@ -14,6 +14,12 @@ export interface Deck {
   createdAt?: string | null;
   /** One of the decks the bot may play in ranked Modo solo (set by a simulator administrator). */
   botDeck?: boolean;
+  /** Proposed by the system (author ERAS): only these may go to the bot. */
+  systemDeck?: boolean;
+  /** A system deck's folder in "Mazos públicos": its edition ("E1", "E1.2"…) or "ST". */
+  systemEdition?: string | null;
+  /** A system deck's place in its folder. */
+  systemOrder?: number | null;
 }
 
 /** Body of POST / PUT /api/drive/decklists (manage_decks, own decks only). */

@@ -2,9 +2,11 @@
   <!-- Row kept for the buttons even while loading; only the body below scrolls -->
   <div class="actions" role="toolbar" aria-label="Acciones del mazo">
     @if (canEdit()) {
-      <a erasButton variant="secondary" routerLink="/deck-builder" [queryParams]="editQuery()"><eras-icon name="edit" /> Editar</a>
-      <button erasButton variant="secondary" type="button" [disabled]="deleting()" (click)="remove()"><eras-icon name="trash" /> Borrar</button>
-      @if (canManageBoxes()) {
+      <a erasButton variant="secondary" routerLink="/deck-builder" [queryParams]="editQuery()" [state]="editState"><eras-icon name="edit" /> Editar</a>
+      @if (!deck()?.systemDeck) {
+        <button erasButton variant="secondary" type="button" [disabled]="deleting()" (click)="remove()"><eras-icon name="trash" /> Borrar</button>
+      }
+      @if (canManageBoxes() && !deck()?.systemDeck) {
         <button erasButton variant="secondary" type="button" (click)="pickBox()"><eras-icon name="box" /> Deckbox</button>
       }
     }
@@ -38,22 +40,18 @@
 
     @if (loading() || (cards.loading() && groups().length === 0)) {
       <eras-empty-state title="Cargando mazo…"><eras-spinner /></eras-empty-state>
-    } @else if (!error() && groups().length === 0) {
+    } @else if (!error() && copies().length === 0) {
       <eras-empty-state title="Este mazo no tiene cartas" />
     } @else {
-      @for (group of groups(); track group.type) {
-        <eras-section-header [title]="typeLabel(group.type) + ' (' + group.count + ')'" />
-        <eras-grid minColumn="9rem" [gap]="3">
-          @for (entry of group.entries; track entry.card.id) {
-            <eras-card-thumb
-              [name]="entry.card.name ?? ''"
-              [imageUrl]="imageUrl(entry.card)"
-              [count]="entry.count"
-              (selected)="openCard(entry.card.id)"
-            />
+      <!-- Every copy on its own, side by side (creatures, then structures and utilities; copies together), sized so
+           that the whole deck fits without scrolling -->
+      <div class="fit" [erasFitWidth]="copies().length" [fitGap]="8">
+        <div class="copies">
+          @for (card of copies(); track $index) {
+            <eras-card-thumb [name]="card.name ?? ''" [imageUrl]="imageUrl(card)" (selected)="openCard(card.id)" />
           }
-        </eras-grid>
-      }
+        </div>
+      </div>
     }
   </div>
 </eras-page>

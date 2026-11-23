@@ -43,6 +43,16 @@ describe('match history rows', () => {
     expect(row.detail).toContain('por rendición');
   });
 
+  it("offers the rival's list as they played it", () => {
+    const cards = [{ cardId: 'c1', cardName: 'Benzo', count: 2 }];
+    const row = toRow(game({ players: [{ userId: 'me', username: 'Ana' }, { userId: 'bot', username: 'Lia', bot: true, deckName: 'E1 Rojo', cards }] }), 'me');
+    expect(row.rivalDeck).toEqual({ rival: 'Lia', deckName: 'E1 Rojo', cards });
+  });
+
+  it('a game kept before the lists were saved has no rival list', () => {
+    expect(toRow(game(), 'me').rivalDeck).toBeNull();
+  });
+
   it('a game without a winner', () => {
     expect(toRow(game({ winnerId: null }), 'me').result).toBe('none');
   });

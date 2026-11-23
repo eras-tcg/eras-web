@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { AvatarStore } from '@core/auth/avatar.store';
 import { PlaymatStore } from '@core/auth/playmat.store';
+import { CardBackService } from '@core/theme/card-back.service';
 import { CardsStore } from '../cards/cards.store';
 import { DecksStore } from '../decks/decks.store';
 import { CardMeta, DriveCard } from '../cards/card.model';
@@ -76,6 +77,7 @@ export class OfflineGame {
   private readonly decks = inject(DecksStore);
   private readonly avatar = inject(AvatarStore);
   private readonly playmat = inject(PlaymatStore);
+  private readonly cardBack = inject(CardBackService);
   private readonly injector = inject(Injector);
   /** The engine's finished games are being kept (once per visit). */
   private recording = false;
@@ -87,7 +89,7 @@ export class OfflineGame {
   /**
    * The table's own pictures (the card back), fetched with the engine and kept by this page, so a game whose connection
    * goes after it starts still draws them (installed, the service worker keeps it too). The cards' pictures come from
-   * the image host: offline, those the service worker kept (seen before, or "Descargar para jugar sin conexión").
+   * the image host: offline, those the service worker kept (seen before, or kept by "Guardar el juego para jugar sin conexión").
    */
   private readonly pictures: HTMLImageElement[] = [];
 
@@ -138,6 +140,7 @@ export class OfflineGame {
       userId: this.auth.user()?.id ?? LOCAL_USER_ID,
       avatar: this.avatar.url(),
       playmat: this.playmat.url(),
+      cardBack: this.cardBack.id(),
       ...(editor ? { editor: true } : {}),
     };
     await this.game.connectLocal(config, decks.list);

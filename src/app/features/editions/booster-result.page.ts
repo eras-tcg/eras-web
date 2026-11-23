@@ -20,7 +20,7 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 import { dealFromCenter } from './opening/deal-from-center';
 import { BOOM_AT } from './opening/pack-break.component';
-import { fitItemWidth } from './fit-grid';
+import { fitItemWidth } from '@ui/layout/fit-grid/fit-grid';
 import { OpeningCardComponent } from './opening/opening-card.component';
 import { OpeningPackComponent } from './opening/opening-pack.component';
 import { PackBreakComponent } from './opening/pack-break.component';

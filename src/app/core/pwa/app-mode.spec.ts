@@ -1,4 +1,4 @@
-import { detectAppMode, isNativeApp } from './app-mode';
+import { detectAppMode, isDesktopApp, isNativeApp } from './app-mode';
 
 /** A window with these display modes and, optionally, Capacitor's bridge. */
 const win = (native?: boolean, modes: string[] = []) =>
@@ -23,5 +23,15 @@ describe('the Android app (Capacitor)', () => {
     expect(detectAppMode(win(false))).toBe('browser');
     expect(detectAppMode(win(undefined, ['display-mode: standalone']))).toBe('app');
     expect(detectAppMode(win())).toBe('browser');
+  });
+});
+
+describe('the Windows app (Electron)', () => {
+  it("is told by its preload, and is the installed app ('app')", () => {
+    const desktop = { ...win(), erasDesktop: { platform: 'win32' } } as unknown as Window;
+    expect(isDesktopApp(desktop)).toBe(true);
+    expect(isDesktopApp(win())).toBe(false);
+    expect(isDesktopApp(undefined)).toBe(false);
+    expect(detectAppMode(desktop)).toBe('app');
   });
 });

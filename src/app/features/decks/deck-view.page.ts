@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { EditModeService } from '@core/auth/edit-mode.service';
 import { ScreenLink } from '@core/navigation/screens';
 import { apiErrorMessage } from '@core/http/api-error';
 import { cardImageUrl } from '@data/cards/card-rules';
@@ -15,9 +16,8 @@ import { EditionsStore } from '@data/editions/editions.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
+import { FitWidthDirective } from '@ui/layout/fit-grid/fit-width.directive';
 import { PageComponent } from '@ui/layout/page/page.component';
-import { SectionHeaderComponent } from '@ui/layout/section-header/section-header.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
@@ -29,10 +29,9 @@ import { ProxyPrintDialogComponent, ProxyPrintDialogData } from './proxy-print-d
 
 const PUBLIC_DECKS: ScreenLink = { route: '/public-decks', label: 'Mazos públicos' };
 
-const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 'Estructuras', utility: 'Utilidades', 'sin tipo': 'Sin tipo' };
 
 /**
- * Read-only view of a deck: cards grouped by type, card detail, proxies, edit (owner) and copy (signed in). One
+ * Read-only view of a deck: every copy side by side (creatures, then structures and utilities), card detail, proxies, edit (owner) and copy (signed in). One
  * screen high: the name, the buttons and the quick buttons stay; only the cards scroll. The owner sees the deckbox
  * the deck is in under the buttons (it opens it) and picks it with "Deckbox" (manage_decks).
  */
@@ -41,8 +40,7 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
   imports: [
     RouterLink,
     PageComponent,
-    GridComponent,
-    SectionHeaderComponent,
+    FitWidthDirective,
     CardThumbComponent,
     AlertComponent,
     EmptyStateComponent,
@@ -75,6 +73,16 @@ const TYPE_LABELS: Record<string, string> = { creature: 'Criaturas', structure: 
     }
     .in-box:hover { color: var(--color-text); }
     .in-box .dot { inline-size: 0.6rem; block-size: 0.6rem; border-radius: 50%; }
+    .fit {
+      flex: 1;
+      min-block-size: 0;
+    }
+    .copies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, var(--fit-width, 9rem));
+      justify-content: center;
+      gap: var(--space-2);
+    }
     .body {
       display: flex;
       flex: 1;
@@ -96,9 +104,14 @@ export class DeckViewPage {
   protected readonly cards = inject(CardsStore);
   private readonly editions = inject(EditionsStore);
   private readonly auth = inject(AuthService);
+  private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
   // Opened from the public list: "back" returns there instead of to the player's own decks
-  protected readonly back = (inject(Location).getState() as { from?: string } | null)?.from === FROM_PUBLIC_DECKS.from ? PUBLIC_DECKS : undefined;
+  // Back to the same tab, folder and search it was opened from
+  private readonly arrival = inject(Location).getState() as { from?: string; query?: Record<string, string> } | null;
+  protected readonly back = this.arrival?.from === FROM_PUBLIC_DECKS.from ? { ...PUBLIC_DECKS, queryParams: this.arrival.query } : undefined;
+  /** What the builder gets on "Editar": this view's own arrival, handed back when it returns here. */
+  protected readonly editState = { deckArrival: this.arrival ?? null };
 
   protected readonly deck = signal<Deck | null>(null);
   protected readonly loading = signal(true);
@@ -106,12 +119,18 @@ export class DeckViewPage {
 
   private readonly resolved = computed(() => entriesFromIds(this.deck()?.cards ?? [], this.cards.cards()));
   protected readonly groups = computed(() => groupByType(this.resolved().entries));
+  /** Every copy of the deck, one after another in the groups' order. */
+  protected readonly copies = computed(() => this.groups().flatMap((g) => g.entries.flatMap((e) => Array.from({ length: e.count }, () => e.card))));
   protected readonly total = computed(() => totalCards(this.resolved().entries));
   protected readonly missing = computed(() => (this.cards.cards().length ? this.resolved().missing.length : 0));
-  protected readonly canEdit = computed(() => !!this.deck() && this.auth.user()?.id === this.deck()?.userId);
+  /** The owner edits their deck; a simulator administrator in edit mode, the system's (they stay the system's). */
+  protected readonly canEdit = computed(() => {
+    const deck = this.deck();
+    if (!deck) return false;
+    return deck.systemDeck ? this.editMode.allows('simulator_admin') : this.auth.user()?.id === deck.userId;
+  });
   protected readonly canCopy = computed(() => this.auth.isAuthenticated());
   protected readonly imageUrl = cardImageUrl;
-  protected readonly typeLabel = (type: string) => TYPE_LABELS[type] ?? type;
   protected readonly editQuery = computed(() => deckBuilderQuery(this.id()));
   protected readonly copyQuery = computed(() => deckBuilderQuery(this.id(), true));
   private readonly router = inject(Router);
@@ -123,7 +142,7 @@ export class DeckViewPage {
   protected readonly boxColor = deckBoxColor;
 
   /** A simulator administrator puts the deck in the bot's pool for ranked Modo solo (or takes it out). */
-  protected readonly canSetBotDeck = computed(() => !!this.deck() && this.auth.can('simulator_admin'));
+  protected readonly canSetBotDeck = computed(() => !!this.deck()?.systemDeck && this.auth.can('simulator_admin'));
   protected readonly savingBotDeck = signal(false);
 
   protected async toggleBotDeck(): Promise<void> {

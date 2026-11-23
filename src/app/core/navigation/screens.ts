@@ -2,13 +2,17 @@
 export interface ScreenLink {
   route: string;
   label: string;
+  /** The screen as it was left (its tab, folder, search…), when it keeps that in its address. */
+  queryParams?: Record<string, string>;
+  /** Navigation state handed back to that screen (e.g. where it was opened from, for its own "back"). */
+  state?: Record<string, unknown>;
 }
 
 const HOME: ScreenLink = { route: '/home', label: 'Inicio' };
 const PLAY: ScreenLink = { route: '/play', label: 'Jugar' };
 const SOCIAL: ScreenLink = { route: '/social', label: 'Social' };
 const EDITIONS: ScreenLink = { route: '/editions', label: 'Tienda' };
-const CARDS: ScreenLink = { route: '/cards', label: 'Cartas' };
+const LIBRARY: ScreenLink = { route: '/library', label: 'Cartas' };
 const CARD_EDITIONS: ScreenLink = { route: '/cards/editions', label: 'Ediciones' };
 const COLLECTION: ScreenLink = { route: '/cards/collection', label: 'Colección' };
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
@@ -29,9 +33,8 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:public-decks|tierlist)$/, SOCIAL],
   [/^\/(?:booster-result|editions\/[^/]+)$/, EDITIONS],
   [/^\/cards\/editions\/[^/]+$/, CARD_EDITIONS],
-  [/^\/cards\/editions$/, CARDS],
+  [/^\/cards(?:\/editions|\/collection)?$/, LIBRARY],
   [/^\/cards\/collection\/[^/]+$/, COLLECTION],
-  [/^\/cards\/collection$/, CARDS],
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [ADMIN_SCREENS, ADMIN],
   [/^\/profile\/history$/, PROFILE],

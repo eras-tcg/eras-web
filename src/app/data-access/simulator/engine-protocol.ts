@@ -30,6 +30,8 @@ export interface LocalMatchConfig {
   roomId?: string;
   avatar?: string | null;
   playmat?: string | null;
+  /** The player's card back (an id of CARD_BACKS); null for the default. */
+  cardBack?: string | null;
   /** Epoch millis written on every history line; null: the clock's. */
   time?: number | null;
   botClock?: 'ticks' | 'system';

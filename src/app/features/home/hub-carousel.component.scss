@@ -1,87 +1,194 @@
-// Panel on the flat column of the hub; only the edition slide (over its artwork) uses the --color-hub-* tokens
+// A showcase panel on the flat column of the hub: the slide's text on one side and its cards whole on the other (the
+// system's images are cards, 63:88: cropping them into a wide banner made no sense), over the first card's art blurred.
 :host {
   position: relative;
   overflow: hidden;
   // Gives way first when the window is short
-  flex: 0 1 14rem;
-  min-block-size: 8.5rem;
+  flex: 0 1 15rem;
+  min-block-size: 9rem;
+  // The cards are sized from its height (cqb)
+  container-type: size;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: var(--color-hub-scrim);
   box-shadow: var(--shadow-md);
+  color: var(--color-hub-text);
 }
 
 .slide {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-2);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
   inline-size: 100%;
   block-size: 100%;
   margin: 0;
-  padding: var(--space-5) var(--space-8, 3rem) var(--space-6);
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  animation: slide-in var(--duration-base) var(--easing-standard);
+  overflow: hidden;
+  padding: var(--space-4) var(--space-7) var(--space-6);
+  isolation: isolate;
+  cursor: pointer;
 }
 
-@keyframes slide-in {
+// From one slide to the next: the new one fades in over the old one fading out (it leaves on top of it, in place)
+.slide-enter {
+  animation: slide-fade-in 600ms var(--easing-standard);
+}
+
+.slide-leave {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  animation: slide-fade-out 600ms var(--easing-standard) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-enter,
+  .slide-leave {
+    animation-duration: 1ms;
+  }
+}
+
+.slide:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+// The first card's art, blurred and dimmed, gives the slide its color
+.slide::before {
+  position: absolute;
+  z-index: -2;
+  inset: -2rem;
+  background: var(--slide-art, none) center 30% / cover;
+  filter: blur(1.5rem) saturate(1.2);
+  opacity: 0.55;
+  content: '';
+}
+
+// Dark on the text's side, open on the cards' side
+.slide::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, var(--color-hub-scrim) 25%, color-mix(in srgb, var(--color-hub-scrim) 40%, transparent));
+  content: '';
+}
+
+// A slide without cards: a vortex of color where the cards would be (vortex.webp, built in design/home: tones curled
+// along a spiral, no shapes), larger than the slide and turning slowly, converging on the ERAS gem, still, in its eye.
+// It lives under the slides, not in them: from one such slide to the next only the text changes, the vortex keeps
+// turning; it fades in and out only when a slide with cards comes or goes. Such a slide is clear over it.
+.backdrop {
+  --vortex: max(170cqb, 60cqi);
+  // The vortex's eye is drawn for a gem 0.29 of its size
+  --gem: calc(var(--vortex) * 0.29);
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms var(--easing-standard);
+}
+
+.backdrop.on {
+  opacity: 1;
+}
+
+.backdrop-vortex {
+  position: absolute;
+  inset-block-start: calc(50% - var(--vortex) / 2);
+  inset-inline-start: calc(76% - var(--vortex) / 2);
+  inline-size: var(--vortex);
+  block-size: var(--vortex);
+  background: url('/images/vortex.webp') center / contain no-repeat;
+  animation: vortex-turn 90s linear infinite;
+}
+
+@keyframes vortex-turn {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop-vortex {
+    animation: none;
+  }
+}
+
+.backdrop::after {
+  position: absolute;
+  inset: 0;
+  background:
+    // centered where the vortex's eye is (76 % across)
+    url('/favicon.svg') no-repeat left calc(76cqi - var(--gem) / 2) center / var(--gem) var(--gem),
+    linear-gradient(90deg, var(--color-hub-scrim) 25%, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 55%, transparent 70%),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-hub-accent) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
+  content: '';
+}
+
+.slide:not(.has-cards)::before,
+.slide:not(.has-cards)::after {
+  display: none;
+}
+
+// The vortex keeps its own side, as the cards do: the text never runs over its eye
+.slide:not(.has-cards) .slide-body {
+  max-inline-size: 58%;
+}
+
+@keyframes slide-fade-in {
   from {
     opacity: 0;
-    transform: translateX(0.75rem);
+  }
+}
+
+@keyframes slide-fade-out {
+  to {
+    opacity: 0;
   }
 }
 
 .slide-empty {
-  align-items: center;
-  color: var(--color-text-muted);
-}
-
-.slide-edition,
-.has-art {
-  position: relative;
-  justify-content: flex-end;
-  background-position: center;
-  background-size: cover;
-  color: var(--color-hub-text);
-}
-
-.slide-edition {
-  cursor: pointer;
-}
-
-.slide-edition .eyebrow,
-.has-art .eyebrow {
-  color: var(--color-text-muted);
-}
-
-.slide-edition .slide-text,
-.has-art .slide-text {
+  cursor: default;
+  display: grid;
+  place-items: center;
   color: var(--color-hub-muted);
 }
 
-.slide-edition::before,
-.has-art::before {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, var(--color-hub-scrim) 5%, transparent 85%);
-  content: '';
-}
-
 .slide-body {
-  position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1);
+  min-inline-size: 0;
+  max-block-size: 100%;
+  overflow: hidden;
+}
+
+.eyebrow {
+  max-inline-size: 100%;
+  overflow: hidden;
+  color: var(--color-hub-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .slide-title {
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
   font-family: var(--font-family-display);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-tight);
   letter-spacing: 0.03em;
@@ -91,42 +198,100 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--color-text-muted);
+  color: var(--color-hub-muted);
   font-size: var(--font-size-sm);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
 
-.nav {
-  position: absolute;
-  inset-block-start: 50%;
-  display: grid;
-  place-items: center;
-  inline-size: 2rem;
-  block-size: 2rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-hub-scrim) 55%, transparent);
-  color: var(--color-hub-text);
-  cursor: pointer;
-  transform: translateY(-50%);
+// The cards whole, fanned: as tall as the slide lets them (height-driven, their own ratio)
+.fan {
+  // About two thirds of the slide's height (a card is 88/63 as tall as wide), and never much of its width
+  --fan-card: clamp(3rem, min(48cqb, 16cqi), 8rem);
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline-end: var(--space-2);
 }
 
-.nav:hover {
-  color: var(--color-hub-accent);
+.fan-card {
+  inline-size: var(--fan-card);
+  flex: none;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  transform: rotate(calc((var(--i) - 1) * 7deg)) translateY(calc(var(--i) * 0px));
+  transition: transform var(--duration-base) var(--easing-standard);
+}
+
+// Overlapping: each card under the next one's edge
+.fan-card + .fan-card {
+  margin-inline-start: calc(var(--fan-card) * -0.42);
+}
+
+.fan[data-count='1'] .fan-card {
+  transform: rotate(-3deg);
+}
+
+.fan[data-count='2'] .fan-card {
+  transform: rotate(calc(var(--i) * 8deg - 4deg));
+}
+
+.fan[data-count='3'] .fan-card:nth-child(2) {
+  z-index: 1;
+  transform: translateY(-0.4rem) scale(1.06);
+}
+
+:host(:hover) .fan[data-count='3'] .fan-card:nth-child(1) {
+  transform: rotate(-11deg) translateX(-0.3rem);
+}
+
+:host(:hover) .fan[data-count='3'] .fan-card:nth-child(3) {
+  transform: rotate(11deg) translateX(0.3rem);
+}
+
+// Previous / next: the whole edge of the panel (its side margin, top to bottom) is the button, a chevron in its middle
+.nav {
+  position: absolute;
+  z-index: 2;
+  inset-block: 0;
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-7);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-hub-muted);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--easing-standard),
+    color var(--duration-fast) var(--easing-standard);
+}
+
+.nav:hover,
+.nav:focus-visible {
+  color: var(--color-hub-text);
 }
 
 .prev {
-  inset-inline-start: var(--space-2);
+  inset-inline-start: 0;
+}
+
+.prev:hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-text) 12%, transparent), transparent);
 }
 
 .next {
-  inset-inline-end: var(--space-2);
+  inset-inline-end: 0;
+}
+
+.next:hover {
+  background: linear-gradient(270deg, color-mix(in srgb, var(--color-hub-text) 12%, transparent), transparent);
 }
 
 .dots {
   position: absolute;
+  z-index: 2;
   inset-block-end: var(--space-2);
   inset-inline: 0;
   display: flex;
@@ -140,7 +305,7 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--color-border);
+  background: var(--color-hub-line);
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--easing-standard),
@@ -153,40 +318,40 @@
   background: var(--color-hub-accent);
 }
 
-.eyebrow {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+@media (max-width: 63.99rem) {
+  .slide-text {
+    -webkit-line-clamp: 2;
+  }
 }
 
-@media (max-width: 63.99rem) {
-  .slide-title {
-    display: -webkit-box;
-    overflow: hidden;
-    font-size: var(--font-size-xl);
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+// Phones: smaller cards, two at most beside the text
+@media (max-width: 40rem) {
+  .slide {
+    gap: var(--space-2);
+    padding-inline: var(--space-6);
+  }
+
+  .fan {
+    --fan-card: clamp(2.75rem, min(44cqb, 20cqi), 5rem);
+  }
+
+  .fan-card:nth-child(n + 3) {
+    display: none;
   }
 
   .slide-text {
     -webkit-line-clamp: 2;
-  }
-
-  .slide {
-    padding-inline: var(--space-8, 2.75rem);
   }
 }
 
 // Short windows: a tighter slide, so the column fits without scrolling
 @media (max-height: 44rem) {
   :host {
-    min-block-size: 7rem;
+    min-block-size: 7.5rem;
   }
 
   .slide {
-    gap: var(--space-1);
+    gap: var(--space-2);
     padding-block: var(--space-3) var(--space-5);
   }
 
@@ -200,5 +365,9 @@
 
   .slide-text {
     -webkit-line-clamp: 1;
+  }
+
+  .fan {
+    --fan-card: clamp(2.75rem, min(46cqb, 16cqi), 4.5rem);
   }
 }

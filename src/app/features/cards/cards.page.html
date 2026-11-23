@@ -1,9 +1,4 @@
 <eras-page title="Cartas" width="wide" fill>
-  <a page-actions erasButton routerLink="/cards/collection">Mostrar colección</a>
-  <a page-actions erasButton variant="ghost" routerLink="/cards/editions">Ediciones</a>
-  <button page-actions erasButton variant="secondary" type="button" [attr.aria-expanded]="showFilters()" (click)="showFilters.set(!showFilters())">
-    <eras-icon name="filter" /> {{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-  </button>
 
   @if (store.error(); as error) {
     <eras-alert tone="danger">{{ error }}</eras-alert>
@@ -20,7 +15,6 @@
         [view]="view()"
         [canManage]="canManage()"
         [(showCollection)]="showCollection"
-        [(showUnprogrammed)]="showUnprogrammed"
         [(showNoMeta)]="showNoMeta"
         (filtersChange)="filters.set($event)"
         (viewChange)="view.set($event)"
@@ -31,10 +25,23 @@
       @if (store.loading() && displayed().length === 0) {
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else if (!store.error()) {
-        <eras-stack direction="row" [gap]="3" align="center" wrap>
-          <span>{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
+        <!-- The count and the filters' button float over the cards while they scroll: no bar of their own. One button,
+             always here beside the count, folds and unfolds the filters (the panel keeps all its room for them) -->
+        <eras-stack class="toolbar" direction="row" [gap]="3" align="center" wrap>
+          <button
+            erasButton
+            variant="float"
+            type="button"
+            [marked]="!showFilters() && filtersActive()"
+            [attr.aria-label]="showFilters() ? 'Ocultar filtros' : 'Mostrar filtros'"
+            [attr.aria-expanded]="showFilters()"
+            (click)="showFilters.set(!showFilters())"
+          >
+            <eras-icon [name]="showFilters() ? 'chevron-left' : 'filter'" />
+          </button>
+          <span class="count">{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
           @if (filtersActive()) {
-            <button erasButton variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
+            <button erasButton class="clear" variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
           }
         </eras-stack>
 

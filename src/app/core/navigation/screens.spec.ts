@@ -7,7 +7,9 @@ describe('parentScreen', () => {
   });
 
   it('places each screen under its hub entry', () => {
-    expect(parentScreen('/cards')?.route).toBe('/home');
+    expect(parentScreen('/library')?.route).toBe('/home');
+    expect(parentScreen('/cards')?.route).toBe('/library');
+    expect(parentScreen('/cards/editions')?.route).toBe('/library');
     expect(parentScreen('/simulator')?.route).toBe('/play');
     expect(parentScreen('/simulator/abc123')?.route).toBe('/play');
     expect(parentScreen('/ruling')?.route).toBe('/play');
@@ -16,12 +18,12 @@ describe('parentScreen', () => {
     expect(parentScreen('/editions/E1.2')?.route).toBe('/editions');
     expect(parentScreen('/deck/42')?.route).toBe('/my-decks');
     expect(parentScreen('/roles')?.route).toBe('/admin');
-    expect(parentScreen('/cards/collection')?.route).toBe('/cards');
+    expect(parentScreen('/cards/collection')?.route).toBe('/library');
     expect(parentScreen('/cards/collection/E1.3')?.route).toBe('/cards/collection');
   });
 
   it('ignores query, fragment and a trailing slash', () => {
-    expect(parentScreen('/cards?edition=E1#top')?.route).toBe('/home');
+    expect(parentScreen('/cards?edition=E1#top')?.route).toBe('/library');
     expect(parentScreen('/public-decks/')?.route).toBe('/social');
   });
 
@@ -43,7 +45,8 @@ describe('navDirection', () => {
   it('goes forward into a deeper screen and back out of it', () => {
     expect(navDirection('/home', '/play')).toBe('forward');
     expect(navDirection('/simulator', '/play')).toBe('back');
-    expect(navDirection('/cards', '/editions')).toBe('same');
+    expect(navDirection('/library', '/editions')).toBe('same');
+    expect(navDirection('/library', '/cards')).toBe('forward');
   });
 });
 

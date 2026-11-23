@@ -10,6 +10,7 @@ import { ThemeService } from '../theme/theme.service';
 import { ConnectionService } from '../server/connection.service';
 import { AppScreen } from '../pwa/app-screen';
 import { MISSIONS_DIALOG } from '../missions/missions-dialog';
+import { NEWS_LOG_DIALOG } from '../news/news-dialog';
 import { MissionsStore } from '../missions/missions.store';
 import { ProgressionStore } from '../missions/progression.store';
 import { WalletStore } from '../wallet/wallet.store';
@@ -48,6 +49,7 @@ export class AppToolsComponent {
   private readonly modal = inject(ModalService);
   private readonly document = inject(DOCUMENT);
   private readonly missionsDialog = inject(MISSIONS_DIALOG, { optional: true });
+  private readonly newsDialog = inject(NEWS_LOG_DIALOG, { optional: true });
   protected readonly connection = inject(ConnectionService);
   /** Not in the installed app on a phone or tablet: it is always full screen. */
   protected readonly fullscreenToggle = inject(AppScreen).fullscreenToggle;
@@ -55,6 +57,8 @@ export class AppToolsComponent {
   readonly onArt = input(false, { transform: booleanAttribute });
   /** The hub screens: the only ones with administration and sign out. */
   readonly hub = input(false, { transform: booleanAttribute });
+  /** The news bell (the home's bar only). */
+  readonly news = input(false, { transform: booleanAttribute });
 
   /** Also follows Esc and the board's own full screen button. */
   protected readonly fullscreen = signal(!!this.document.fullscreenElement);
@@ -91,6 +95,11 @@ export class AppToolsComponent {
     if ((await this.connection.connect('/missions')) !== 'connected') return;
     if (this.missionsDialog) this.modal.open(await this.missionsDialog());
     else void this.router.navigateByUrl('/missions');
+  }
+
+  /** The news log: every news item of the platform, by date, over the screen. */
+  protected async openNews(): Promise<void> {
+    if (this.newsDialog) this.modal.open(await this.newsDialog());
   }
 
   protected async toggleFullscreen(): Promise<void> {

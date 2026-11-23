@@ -1,81 +1,3 @@
-:host {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-3);
-  // One size for every card, whatever its text: the largest the screen allows, up to a limit (the installed app
-  // measures its screen as --app-width/--app-height)
-  inline-size: min(90rem, var(--app-width, 100vw) - 2 * var(--space-3));
-  block-size: min(52rem, var(--app-height, 100dvh) - 2 * var(--space-5));
-}
-
-// The text scrolls inside the card's detail (fill); the panel itself never does, and it does not clip: the card,
-// turned by a drag, comes out over it
-.panel {
-  position: relative;
-  align-self: stretch;
-  min-block-size: 0;
-  padding: var(--space-7) var(--space-5) var(--space-5);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-lg);
-}
-
-// Big round arrows to move through the grid
-.nav {
-  inline-size: 3.5rem;
-  block-size: 3.5rem;
-  padding: 0;
-  border-radius: 50%;
-  box-shadow: var(--shadow-md);
-}
-
-.nav eras-icon {
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-}
-
-@media (min-width: 64rem) {
-  .nav {
-    inline-size: 4.25rem;
-    block-size: 4.25rem;
-  }
-
-  .nav eras-icon {
-    inline-size: 2.1rem;
-    block-size: 2.1rem;
-  }
-}
-
-.close {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-2);
-}
-
-// A phone held upright: the panel over the whole width, the arrows under it
-@media (orientation: portrait) and (max-width: 44rem) {
-  :host {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .panel {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    padding: var(--space-4);
-  }
-
-  .nav {
-    justify-self: center;
-    inline-size: 100%;
-    block-size: 3rem;
-    border-radius: var(--radius-md);
-  }
-}
-
 // Administration: the card's alternative arts, each with a small preview, its odds and its buttons
 .alt-arts {
   display: grid;
@@ -167,12 +89,8 @@ eras-card-detail.with-versions {
   inline-size: 4rem;
 }
 
-// Phones in landscape: a tighter panel (the card's picture fits its height) and smaller arrows
+// Phones in landscape (the frame tightens its panel): the finishes over their title
 @media (orientation: landscape) and (max-height: 30rem) {
-  :host {
-    block-size: calc(var(--app-height, 100dvh) - 2 * var(--space-2));
-  }
-
   // The finishes' title over them, so they take no more width than the card and leave it to the text
   .versions {
     grid-template-columns: minmax(0, 1fr);
@@ -181,20 +99,5 @@ eras-card-detail.with-versions {
 
   eras-card-detail.with-versions {
     --detail-under-size: 4.25rem;
-  }
-
-  // Room on the right for the close button, beside the card (the height is what is scarce)
-  .panel {
-    padding: var(--space-3) var(--space-7) var(--space-3) var(--space-4);
-  }
-
-  .nav {
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
-  }
-
-  .nav eras-icon {
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
   }
 }

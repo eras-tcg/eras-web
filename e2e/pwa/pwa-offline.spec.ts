@@ -7,7 +7,7 @@ import { PLAIN_IMAGES_PORT, PWA_PORT, PwaServers, startPwaServers } from './pwa-
 /**
  * The installed app without the connection, against the production build (service worker on): it is loaded once
  * online (the service worker installs and keeps the app, the player's decks are kept in IndexedDB, the card pictures
- * are downloaded from "Descargar para jugar sin conexión"), then the servers stop and the browser goes offline, and
+ * are downloaded by "Guardar el juego para jugar sin conexión" in the profile), then the servers stop and the browser goes offline, and
  * the app is opened again: it opens on "Jugar" and a game against the bot is played with the player's own deck.
  *
  * Run: `npm run e2e:pwa` (builds, then playwright.pwa.config.ts).
@@ -87,18 +87,12 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   await page.waitForFunction(() => !!navigator.serviceWorker?.controller, null, { timeout: 90_000 });
   await expect.poll(() => storedDecks(page), { timeout: 30_000 }).toEqual(['Mazo e2e']);
 
-  await page.getByRole('button', { name: 'Descargar para jugar sin conexión' }).click();
-  const panel = page.getByRole('dialog');
-  await expect(panel.getByText('Lista: se abre sin conexión.')).toBeVisible({ timeout: 120_000 });
-  await expect(panel.getByText(/y tu mazo guardado/)).toBeVisible();
-  await expect(panel.getByText(/0 de \d+ guardadas/)).toBeVisible({ timeout: 30_000 });
-  await panel.getByRole('button', { name: 'Descargar' }).click();
-  await expect(panel.getByText('Listo: las imágenes quedaron guardadas para jugar sin conexión.')).toBeVisible({ timeout: 60_000 });
-  await expect(panel.getByText(/Las imágenes guardadas ocupan unos/)).toBeVisible();
-  await expect(panel.getByText(/reserva varios MB por cada imagen de otro sitio/)).toBeVisible();
-  await page.screenshot({ path: join(SHOTS, 'offline-download-panel.png') });
+  // The profile's "Guardar el juego para jugar sin conexión" downloads the pictures at once
+  await page.goto(`${BASE}/profile`);
+  await page.getByLabel('Guardar el juego para jugar sin conexión').check();
+  await expect(page.getByText(/Todo guardado: juegas contra el bot sin internet/)).toBeVisible({ timeout: 120_000 });
+  await page.screenshot({ path: join(SHOTS, 'offline-keep-profile.png') });
   expect(servers!.imageHits.plain).toBeGreaterThan(0);
-  await panel.getByRole('button', { name: 'Cerrar', exact: true }).last().click();
 
   // 2. No servers, no network; the installed app is opened again
   await servers!.close();
@@ -110,8 +104,8 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   await expect(page.getByText(/Sin conexión\. Puedes jugar contra el bot sin conexión/)).toBeVisible();
   // The server's modes are not offered without the connection
   await expect(page.getByRole('link', { name: 'Online' })).toHaveCount(0);
-  // Installed: no "Instalar ERAS"
-  await expect(page.getByRole('button', { name: 'Instalar ERAS' })).toHaveCount(0);
+  // Installed: no "Descargar ERAS"
+  await expect(page.getByRole('button', { name: 'Descargar ERAS' })).toHaveCount(0);
   await page.screenshot({ path: join(SHOTS, 'offline-launch-desktop.png') });
 
   // 3. A game against the bot with the deck kept on the device
@@ -151,12 +145,13 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
   expect(back).toBe(true);
   await page.screenshot({ path: join(SHOTS, 'offline-game-desktop.png') });
 
-  // 4. A phone held upright, still offline, in the browser (not installed): "Instalar ERAS" follows the browser's offer
+  // 4. A phone held upright, still offline, in the browser (not installed): "Descargar ERAS" follows the browser's offer
+  // (no APK nor installer published here)
   const phone = await context.newPage();
   await phone.setViewportSize({ width: 390, height: 844 });
   await phone.goto(`${BASE}/play`);
   await expect(phone.getByRole('button', { name: 'Modo solo sin conexión' }).first()).toBeVisible();
-  await expect(phone.getByRole('button', { name: 'Instalar ERAS' })).toHaveCount(0);
+  await expect(phone.getByRole('button', { name: 'Descargar ERAS' })).toHaveCount(0);
   await phone.screenshot({ path: join(SHOTS, 'play-offline-phone.png') });
 
   // Chromium offers the installation only under conditions a test cannot meet: the same event, made by hand
@@ -171,10 +166,12 @@ test('la app instalada abre y juega contra el bot sin conexión, con el mazo pro
     offer['userChoice'] = Promise.resolve({ outcome: 'accepted', platform: 'web' });
     window.dispatchEvent(offer);
   });
-  const install = phone.getByRole('button', { name: 'Instalar ERAS' });
+  const install = phone.getByRole('button', { name: 'Descargar ERAS' });
   await expect(install).toBeVisible();
   await phone.screenshot({ path: join(SHOTS, 'install-button-phone.png') });
+  // Our window first (what it gives), then the browser's own confirmation
   await install.click();
+  await phone.getByRole('dialog').getByRole('button', { name: 'Instalar' }).click();
   await expect.poll(() => phone.evaluate(() => (window as unknown as { __prompted: number }).__prompted)).toBe(1);
   await expect(install).toHaveCount(0);
 });

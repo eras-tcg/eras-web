@@ -10,6 +10,8 @@
 # Only with the release signing key (secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
 # ANDROID_KEY_PASSWORD; README, "The Android app"): without it the APK is signed with a debug key, kept only as this
 # run's artifact (NOT for distribution) and nothing is published under /app (the site keeps what it had).
+# The Windows app ships with the site too: /app/ERAS-Setup.exe and /app/desktop.json (job "desktop", desktop/: Electron,
+# a window over the site; not code-signed, so Windows SmartScreen warns about it).
 name: CI/CD
 
 on:
@@ -123,9 +125,39 @@ jobs:
           path: out
           retention-days: 90
 
-  # The site as deployed: the web build plus, when it was signed, the Android app under /app
+  # The Windows app (desktop/, Electron): its installer and the manifest the site reads to offer it
+  desktop:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+      - run: npm run dist
+      - name: Published files
+        run: |
+          version=$(node -p "require('./package.json').version")
+          mkdir -p ../out/app
+          cp release/ERAS-Setup.exe ../out/app/ERAS-Setup.exe
+          node -e "require('fs').writeFileSync('../out/app/desktop.json', JSON.stringify({ version: process.argv[1], exe: 'https://www.erastcg.com/app/ERAS-Setup.exe' }, null, 2) + '\n')" "$version"
+          cat ../out/app/desktop.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-app
+          path: out
+          retention-days: 90
+
+  # The site as deployed: the web build plus, under /app, the Android app (when it was signed) and the Windows app
   site:
-    needs: [build, android]
+    needs: [build, android, desktop]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -138,7 +170,12 @@ jobs:
         with:
           name: android-app
           path: site
-      - run: ls -la site/app 2>/dev/null || echo "no Android app in this deploy"
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: desktop-app
+          path: site
+      - run: ls -la site/app 2>/dev/null || echo "no apps in this deploy"
       - uses: actions/upload-artifact@v4
         with:
           name: site

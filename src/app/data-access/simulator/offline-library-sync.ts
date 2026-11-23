@@ -51,7 +51,7 @@ export class OfflineLibrarySync {
       libraryRecord(userId, { decks: this.decks.myDecks(), images: this.cards.imageList(), meta: this.cards.metaList(), starters }),
     );
     this.sendGames(userId);
-    // The installed app keeps the pictures for offline by itself (its own chunk; the browser's tab has the button)
+    // The pictures for offline, kept by themselves in the installed app or when the player asked (its own chunk)
     import('./offline-pictures-auto')
       .then((m) => this.injector.get(m.OfflinePicturesAuto).run())
       .catch(() => undefined);

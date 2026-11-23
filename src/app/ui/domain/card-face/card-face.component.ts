@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal } from '@angular/core';
-import { DRAG_START, Tilt, cardEdge, lightOf, tiltFromDrag } from '../card-art-viewer/card-tilt';
+import { DRAG_START, Tilt, cardEdge, facingTilt, lightOf, spinFromDrag } from '../card-art-viewer/card-tilt';
 import { CARD_SHINE } from '../card-image/card-shine';
 
 /**
@@ -13,8 +13,9 @@ import { CARD_SHINE } from '../card-image/card-shine';
  * - `peeked`: a hidden card shown anyway, its back still over the lower right corner;
  * - `turned`: the picture upside down (the rival's card across the table);
  * - `live`: grabbed and dragged it turns in 3D, lit from a lamp in front (a glare, the far side in shadow, a rim lit on
- *   the lamp's side, the gloss band and the gold's glint moving), with its thickness, above what is around it; let go,
- *   it settles back. A drag is not a click. `--card-live-shadow` gives it a shadow behind (the 3D viewer's);
+ *   the lamp's side, the gloss band and the gold's glint moving), with its thickness and its back behind, above what is
+ *   around it. Across it turns as far as face down (its back in sight); let go, it settles back face up.
+ *   A drag is not a click. `--card-live-shadow` gives it a shadow behind (the 3D viewer's);
  * - `masks`: where it shines drawn at the card's size (the 3D viewer's, sharper than the shine PNG), instead of it.
  * Sized by its parent (width, or height with the ratio); what goes around a card (badges, counts, frames) belongs to the
  * components that wrap it (eras-card-image, eras-game-card…).
@@ -27,6 +28,8 @@ import { CARD_SHINE } from '../card-image/card-shine';
       @for (e of edge; track e.z) {
         <span class="edge" [class.back]="$last" [style.transform]="'translateZ(' + e.z + 'px)'" [style.--edge-lit]="e.lit"></span>
       }
+      <!-- Its back, behind its thickness and facing the other way: in sight once it is turned round -->
+      <span class="reverse" [style.transform]="'translateZ(' + backZ + 'px) rotateY(180deg)'" aria-hidden="true"></span>
     }
     <!-- The face, flat and cut to the card's outline: its blended layers mix with its own picture -->
     <div class="face">
@@ -160,7 +163,15 @@ import { CARD_SHINE } from '../card-image/card-shine';
       transition: transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     :host(.live.held) { z-index: 10; cursor: grabbing; transition: none; }
-    :host(.live) .face { isolation: isolate; transform: translateZ(0); transform-style: flat; }
+    :host(.live) .face { isolation: isolate; transform: translateZ(0); transform-style: flat; backface-visibility: hidden; }
+    .reverse {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--color-card-back);
+      backface-visibility: hidden;
+      pointer-events: none;
+    }
     .edge {
       position: absolute;
       inset: 0;
@@ -249,9 +260,13 @@ export class CardFaceComponent {
 
   /** The sheets of a live card's thickness, behind its face. */
   protected readonly edge = cardEdge();
+  /** How far behind the face its back sits (past its thickness). */
+  protected readonly backZ = Math.min(...this.edge.map((e) => e.z)) - 0.5;
   private readonly tilt = signal<Tilt>({ rx: 0, ry: 0 });
   protected readonly held = signal(false);
-  protected readonly light = computed(() => (this.live() ? lightOf(this.tilt()) : null));
+  /** The side in sight's own lean, which lights it. */
+  private readonly facing = computed(() => facingTilt(this.tilt()));
+  protected readonly light = computed(() => (this.live() ? lightOf(this.facing()) : null));
   protected readonly transform = computed(() => {
     const { rx, ry } = this.tilt();
     return this.live() && (rx || ry) ? `perspective(1600px) rotateX(${rx}deg) rotateY(${ry}deg)` : null;
@@ -259,11 +274,11 @@ export class CardFaceComponent {
   /** The shadow falls toward the side turned away (rx > 0 sends the top away: 0deg; ry > 0 the right side: 90deg). */
   protected readonly shadeAngle = computed(() => {
     if (!this.live()) return null;
-    const { rx, ry } = this.tilt();
+    const { rx, ry } = this.facing();
     return rx || ry ? (Math.atan2(ry, rx) * 180) / Math.PI : 0;
   });
   /** How far the gold's bands slide (px): a polished metal's reflections run fast as it turns. */
-  protected readonly metal = computed(() => (this.live() ? this.tilt().ry * 9 - this.tilt().rx * 6 : null));
+  protected readonly metal = computed(() => (this.live() ? this.facing().ry * 9 - this.facing().rx * 6 : null));
 
   /** The press in progress: where it started, the card's size, and whether it has become a drag. */
   private press: { x: number; y: number; w: number; h: number; moved: boolean } | null = null;
@@ -302,10 +317,10 @@ export class CardFaceComponent {
     if (!p.moved && Math.hypot(dx, dy) < DRAG_START) return;
     p.moved = true;
     this.held.set(true);
-    this.tilt.set(tiltFromDrag({ rx: 0, ry: 0 }, dx, dy, p.w, p.h));
+    this.tilt.set(spinFromDrag({ rx: 0, ry: 0 }, dx, dy, p.w, p.h));
   }
 
-  /** Let go: the card settles back flat. */
+  /** Let go: the card settles back flat, face up. */
   protected release(event: PointerEvent): void {
     const p = this.press;
     if (!p) return;

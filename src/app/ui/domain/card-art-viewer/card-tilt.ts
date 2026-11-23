@@ -1,7 +1,7 @@
 /** Pixels a press moves before it counts as a drag (less is a tap). */
 export const DRAG_START = 6;
 
-/** How far a held card turns, each way, in degrees. */
+/** How far a held card leans (and how far its light follows the turn), each way, in degrees. */
 export const MAX_TILT = 35;
 
 /** A card's turn: around its horizontal axis (`rx`, top away when positive) and its vertical one (`ry`). */
@@ -10,19 +10,34 @@ export interface Tilt {
   ry: number;
 }
 
+/** A card turned face down, its back in sight (degrees around its vertical axis). */
+const FACE_DOWN = 180;
+
 const clamp = (n: number, max: number) => Math.max(-max, Math.min(max, n));
 
 /**
  * The turn of a card dragged from where it was grabbed: half its width across turns it 45°, as if pushing its side
- * (right turns its right side away, up turns its top away), never past MAX_TILT.
+ * (right turns its right side away, up turns its top away). Across it turns as far as face down (its back in sight),
+ * either way, and no further; up and down it only leans, never past MAX_TILT.
  */
-export function tiltFromDrag(start: Tilt, dx: number, dy: number, width: number, height: number): Tilt {
-  const perPx = 90 / Math.max(1, width);
+export function spinFromDrag(
+  start: Tilt,
+  dx: number,
+  dy: number,
+  width: number,
+  height: number,
+): Tilt {
   const perPy = 90 / Math.max(1, height);
   return {
     rx: clamp(start.rx + dy * perPy * -1, MAX_TILT) || 0,
-    ry: clamp(start.ry + dx * perPx, MAX_TILT) || 0,
+    ry: clamp(start.ry + dx * (90 / Math.max(1, width)), FACE_DOWN) || 0,
   };
+}
+
+/** The side in sight's own lean (the turn from its nearest flat position), never past MAX_TILT: what lights it. */
+export function facingTilt(tilt: Tilt): Tilt {
+  const ry = tilt.ry - Math.round(tilt.ry / 180) * 180;
+  return { rx: tilt.rx, ry: clamp(ry, MAX_TILT) || 0 };
 }
 
 /** The light on a turned card (positions in % of the card, strengths 0–1). */
@@ -68,6 +83,9 @@ export const EDGE_SHEETS = 8;
 export function cardEdge(depth = EDGE_DEPTH, sheets = EDGE_SHEETS): { z: number; lit: number }[] {
   return Array.from({ length: sheets }, (_, i) => {
     const t = (i + 1) / sheets;
-    return { z: -Math.round(t * depth * 100) / 100, lit: Math.round(Math.sin(t * Math.PI) * 100) / 100 };
+    return {
+      z: -Math.round(t * depth * 100) / 100,
+      lit: Math.round(Math.sin(t * Math.PI) * 100) / 100,
+    };
   });
 }

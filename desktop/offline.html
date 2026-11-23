@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>ERAS</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        background: #141414;
+        color: #eeeeee;
+        font-family: system-ui, sans-serif;
+        text-align: center;
+      }
+      img {
+        width: 96px;
+        height: 96px;
+      }
+      h1 {
+        margin: 16px 0 8px;
+        font-size: 22px;
+        letter-spacing: 0.3em;
+      }
+      p {
+        max-width: 26rem;
+        margin: 0 auto 24px;
+        color: #a3a3a3;
+        line-height: 1.5;
+      }
+      button {
+        padding: 10px 22px;
+        border: 3px solid #5a4410;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #f3cf62, #f5b301 55%, #b9821c);
+        color: #2a1a03;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="build/icon.png" alt="" />
+      <h1>ERAS</h1>
+      <p>No hay conexión. La primera vez ERAS necesita internet para descargar el juego; después también se abre sin conexión.</p>
+      <button type="button" id="retry">Reintentar</button>
+    </main>
+    <script>
+      // Back to the page that failed (the site), once there is a connection
+      const target = new URLSearchParams(location.search).get('url') || 'https://www.erastcg.com/';
+      document.getElementById('retry').addEventListener('click', () => location.assign(target));
+    </script>
+  </body>
+</html>

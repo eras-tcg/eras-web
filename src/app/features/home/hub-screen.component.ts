@@ -46,6 +46,8 @@ export class HubScreenComponent {
   readonly back = input<{ route: string; label: string }>({ route: '/home', label: 'el inicio' });
   /** Choose a new artwork (the home); other screens keep the last one. */
   readonly reroll = input(false, { transform: booleanAttribute });
+  /** The news bell in its bar (the home only). */
+  readonly news = input(false, { transform: booleanAttribute });
 
   protected readonly background = signal<Edition | null>(null);
 

@@ -18,6 +18,12 @@ const STALL_MS = 800;
  * (`html[data-nav]`: deeper slides in from the right, back from the left; see styles/base/_transitions.scss).
  */
 export function onScreenTransition({ transition, from, to }: ViewTransitionInfo): void {
+  // The same screen with other query params (a tab, a folder, a filter, the search): no screen change, no animation
+  // (it would flash the whole page, the bar included)
+  if (pathOf(from) === pathOf(to)) {
+    transition.skipTransition();
+    return;
+  }
   const html = document.documentElement;
   html.dataset['nav'] = navDirection(pathOf(from), pathOf(to));
   void transition.finished.finally(() => delete html.dataset['nav']).catch(() => undefined);

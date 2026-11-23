@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { EditModeService } from '@core/auth/edit-mode.service';
 import { ProgressionStore } from '@core/missions/progression.store';
 import { persistedFlag } from '@core/storage/persisted-flag';
@@ -34,7 +34,6 @@ const PAGE_SIZE = 40;
 @Component({
   selector: 'eras-cards-page',
   imports: [
-    RouterLink,
     PageComponent,
     SplitComponent,
     GridComponent,
@@ -51,6 +50,28 @@ const PAGE_SIZE = 40;
   templateUrl: './cards.page.html',
   styles: `
     .lacking { filter: grayscale(1); }
+    .toolbar {
+      position: sticky;
+      z-index: 2;
+      inset-block-start: 0;
+      padding: var(--space-3) var(--space-2);
+      pointer-events: none;
+    }
+    /* Floating over the cards: each piece its own small surface, the row itself clear */
+    .toolbar > * { pointer-events: auto; }
+    /* Each over the cards on its own small surface (the clear button's beats the ghost button's own) */
+    .count,
+    .toolbar .clear {
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+      backdrop-filter: blur(6px);
+    }
+    .count {
+      padding: var(--space-1) var(--space-3);
+    }
+    .toolbar .clear:hover {
+      background: color-mix(in srgb, var(--color-surface-muted) 90%, transparent);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -81,8 +102,7 @@ export class CardsPage {
   protected readonly renderCount = signal(PAGE_SIZE);
 
   protected readonly canManage = computed(() => this.editMode.allows('manage_cards'));
-  /** Marks on the cards ("Sin programar", "Sin metadatos"): hidden unless turned on. Remembered on the device. */
-  protected readonly showUnprogrammed = persistedFlag('eras-cards-mark-unprogrammed');
+  /** The editors' mark "Sin metadatos": hidden unless turned on. Remembered on the device. */
   protected readonly showNoMeta = persistedFlag('eras-cards-mark-no-meta');
   /** The player's collection on the cards: each in its finest finish owned, in grey when they have none. */
   protected readonly showCollection = persistedFlag('eras-cards-show-collection');
@@ -140,10 +160,10 @@ export class CardsPage {
     });
   }
 
-  /** Missing metadata first; with metadata, whether the simulator runs it. Each one only when its mark is on. */
+  /** Missing metadata first (only when its mark is on); with metadata, always whether the simulator runs it. */
   protected badge(card: CatalogCard): string | null {
     if (!card.meta) return this.showNoMeta() ? 'Sin metadatos' : null;
-    return this.showUnprogrammed() && this.store.unprogrammedOf(card) ? 'Sin programar' : null;
+    return this.store.unprogrammedOf(card) ? 'Sin programar' : null;
   }
 
   /** The finest finish the player owns of a card (of any printing when shown once per name), null when none. */

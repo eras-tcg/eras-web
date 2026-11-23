@@ -14,7 +14,7 @@ import { AppToolsComponent } from './app-tools.component';
   imports: [RouterLink, IconComponent, AppToolsComponent],
   template: `
     @if (parent(); as back) {
-      <a class="back" [routerLink]="back.route" [attr.aria-label]="'Volver a ' + back.label">
+      <a class="back" [routerLink]="back.route" [queryParams]="back.queryParams ?? null" [state]="back.state" [attr.aria-label]="'Volver a ' + back.label">
         <eras-icon name="chevron-left" />
       </a>
     }

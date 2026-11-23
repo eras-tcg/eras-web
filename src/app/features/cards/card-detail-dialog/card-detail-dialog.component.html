@@ -1,17 +1,14 @@
 @let v = view();
-@if (navigable) {
-<button erasButton variant="secondary" type="button" class="nav prev" aria-label="Carta anterior" [disabled]="!hasPrevious()" (click)="move(-1)">
-  <eras-icon name="chevron-left" />
-</button>
-} @else {
-<span></span>
-}
-
-<div class="panel" role="document">
-  <button erasButton variant="ghost" size="sm" type="button" class="close" aria-label="Cerrar" (click)="ref.close()">
-    <eras-icon name="x" />
-  </button>
-
+<eras-detail-frame
+  [navigable]="navigable"
+  [hasPrevious]="hasPrevious()"
+  [hasNext]="hasNext()"
+  previousLabel="Carta anterior"
+  nextLabel="Carta siguiente"
+  (previous)="move(-1)"
+  (next)="move(1)"
+  (closed)="ref.close()"
+>
   <eras-card-detail
     [name]="v.name"
     [edition]="v.edition"
@@ -109,10 +106,4 @@
       </div>
     }
   </eras-card-detail>
-</div>
-
-@if (navigable) {
-<button erasButton variant="secondary" type="button" class="nav next" aria-label="Carta siguiente" [disabled]="!hasNext()" (click)="move(1)">
-  <eras-icon name="chevron-right" />
-</button>
-}
+</eras-detail-frame>

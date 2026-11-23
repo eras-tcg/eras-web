@@ -1,14 +1,27 @@
-<eras-hub-screen reroll>
+<eras-hub-screen reroll news>
   <eras-hub-menu [items]="menu" />
 
   @if (editMode.allows('manage_home')) {
     <div class="edit-bar">
       @if (home.editing()) {
         <span class="sr-only" role="status">Editando la portada</span>
-        <button erasButton variant="secondary" size="sm" type="button" [disabled]="home.saving()" (click)="home.cancelEdit()">Cancelar</button>
-        <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">Guardar portada</button>
+        <button
+          erasButton
+          variant="secondary"
+          size="sm"
+          type="button"
+          [disabled]="home.saving()"
+          (click)="home.cancelEdit()"
+        >
+          Cancelar
+        </button>
+        <button erasButton size="sm" type="button" [loading]="home.saving()" (click)="save()">
+          Guardar portada
+        </button>
       } @else {
-        <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()"><eras-icon name="edit" /> Editar portada</button>
+        <button erasButton variant="secondary" size="sm" type="button" (click)="startEdit()">
+          <eras-icon name="edit" /> Editar portada
+        </button>
       }
     </div>
   }
@@ -20,29 +33,109 @@
   }
 
   @if (home.editing()) {
+    <!-- The carousel's editor: the featured edition, then the news in their order -->
     <div class="editor">
       <div class="editor-row">
         <span class="editor-label">Edición destacada</span>
-        <span class="editor-value">{{ home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna' }}</span>
-        <button erasButton size="sm" type="button" (click)="pickEdition()"><eras-icon name="edit" /> Cambiar</button>
+        <span class="editor-value">{{
+          home.content().edition?.editionName ?? home.content().edition?.editionId ?? 'Ninguna'
+        }}</span>
+        <button erasButton size="sm" type="button" (click)="pickEdition()">
+          <eras-icon name="edit" /> Cambiar
+        </button>
       </div>
+      <div class="news-head">
+        <span class="editor-label">Noticias</span>
+        <button erasButton size="sm" type="button" (click)="newNews()">
+          <eras-icon name="plus" /> Nueva noticia
+        </button>
+      </div>
+      <ol class="news-list">
+        @for (item of home.news(); track $index; let i = $index, first = $first, last = $last) {
+          <li class="news-row">
+            <span class="news-text">
+              <span class="news-date">{{ dateLabel(item.date) }}</span>
+              <span class="news-title">{{ item.title }}</span>
+              @if (cardNames(item); as names) {
+                <span class="news-cards">{{ names }}</span>
+              }
+            </span>
+            <span class="news-actions">
+              <button
+                erasButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                aria-label="Subir"
+                [disabled]="first"
+                (click)="moveNews(i, -1)"
+              >
+                <eras-icon name="chevron-up" />
+              </button>
+              <button
+                erasButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                aria-label="Bajar"
+                [disabled]="last"
+                (click)="moveNews(i, 1)"
+              >
+                <eras-icon name="chevron-down" />
+              </button>
+              <button
+                erasButton
+                variant="secondary"
+                size="sm"
+                type="button"
+                (click)="editNewsAt(i)"
+              >
+                <eras-icon name="edit" /> Editar
+              </button>
+              <button
+                erasButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                [attr.aria-label]="'Borrar ' + item.title"
+                (click)="deleteNews(i)"
+              >
+                <eras-icon name="trash" />
+              </button>
+            </span>
+          </li>
+        } @empty {
+          <li class="news-empty">Sin noticias.</li>
+        }
+      </ol>
     </div>
   } @else {
     <eras-hub-carousel
       [slides]="slides()"
       [loading]="home.loading()"
-      (editionSelected)="openCards($event)"
+      (selected)="selectSlide($event)"
     />
   }
 
   @if (step(); as next) {
     @if (next.flow || next.guide) {
-      <button type="button" class="mission" [class.pending]="progressPending()" (click)="openStep(next)">
-        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
+      <button
+        type="button"
+        class="mission"
+        [class.pending]="progressPending()"
+        (click)="openStep(next)"
+      >
+        <ng-container
+          [ngTemplateOutlet]="stepContent"
+          [ngTemplateOutletContext]="{ $implicit: next }"
+        />
       </button>
     } @else {
       <a class="mission" [class.pending]="progressPending()" [routerLink]="next.route">
-        <ng-container [ngTemplateOutlet]="stepContent" [ngTemplateOutletContext]="{ $implicit: next }" />
+        <ng-container
+          [ngTemplateOutlet]="stepContent"
+          [ngTemplateOutletContext]="{ $implicit: next }"
+        />
       </a>
     }
   }

@@ -45,6 +45,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/home/missions.page').then((m) => m.MissionsPage),
       },
       {
+        path: 'library',
+        title: 'Cartas · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/home/library.page').then((m) => m.LibraryPage),
+      },
+      {
         path: 'social',
         title: 'Social · ERAS',
         canMatch: [authGuard],

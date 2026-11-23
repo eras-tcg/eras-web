@@ -55,8 +55,15 @@ const PAGE_SIZE = 40;
       position: sticky;
       z-index: 2;
       inset-block-start: 0;
-      padding-block: var(--space-2);
-      background: var(--color-bg);
+      pointer-events: none;
+    }
+    /* Floating over the cards: each piece its own small surface, the row itself clear */
+    .toolbar > * { pointer-events: auto; }
+    .count {
+      padding: var(--space-1) var(--space-3);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+      backdrop-filter: blur(6px);
     }
     .unfold { position: relative; }
     /* Some filter is on while they are folded */

@@ -21,6 +21,7 @@ W, H = 472, 660
 SHAPE = 3  # the vortex's fade outline: 2 an ellipse, higher nearer the card's rectangle
 TWIST = 1.7  # how tightly the arms coil (the home's: 2.6)
 ARMS = 5  # the vortex's arms (the home's has 3)
+GEM = False  # the ERAS gem in the vortex's eye (off while the vortex is designed alone)
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (0, 0, 0, 255)  # the card's ground: black, the vortex fading into it
@@ -63,40 +64,41 @@ def cardback():
     vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(0.55, 1.0), n_arms=ARMS, taper=True, twist=TWIST, box=box, shape=SHAPE).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
     inner.alpha_composite(vortex, ((iw - vs) // 2, (ih - vs) // 2))
 
-    # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
-    # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms
-    gs = round(vs * 0.25)
-    gx, gy = (iw - gs) // 2, (ih - gs) // 2
-    scene = arr(inner)
-    g = arr(gem.draw_gem(512 * gem.SS).resize((gs, gs), Image.LANCZOS))
-    full = np.zeros_like(scene)
-    full[gy:gy + gs, gx:gx + gs] = g
-    fa = full[..., 3:]
+    if GEM:
+        # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
+        # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms
+        gs = round(vs * 0.25)
+        gx, gy = (iw - gs) // 2, (ih - gs) // 2
+        scene = arr(inner)
+        g = arr(gem.draw_gem(512 * gem.SS).resize((gs, gs), Image.LANCZOS))
+        full = np.zeros_like(scene)
+        full[gy:gy + gs, gx:gx + gs] = g
+        fa = full[..., 3:]
 
-    # Contact shadow: a soft dark ring a little wider than the gem
-    sh = blur(fa, gs * 0.08)
-    scene[..., :3] *= 1 - np.clip(sh * 1.3, 0, 1) * 0.75
+        # Contact shadow: a soft dark ring a little wider than the gem
+        sh = blur(fa, gs * 0.08)
+        scene[..., :3] *= 1 - np.clip(sh * 1.3, 0, 1) * 0.75
 
-    # Reflections: the vortex's colors, blurred, screened onto the facets
-    env = blur(scene[..., :3], gs * 0.12)
-    gem_rgb = full[..., :3]
-    gem_rgb = 1 - (1 - gem_rgb) * (1 - env * 0.3)
-    scene[..., :3] = scene[..., :3] * (1 - fa) + gem_rgb * fa
+        # Reflections: the vortex's colors, blurred, screened onto the facets
+        env = blur(scene[..., :3], gs * 0.12)
+        gem_rgb = full[..., :3]
+        gem_rgb = 1 - (1 - gem_rgb) * (1 - env * 0.3)
+        scene[..., :3] = scene[..., :3] * (1 - fa) + gem_rgb * fa
 
-    # Veil: the vortex passes over the girdle (none on the table, some on the outer facets)
-    yy, xx = np.mgrid[0:ih, 0:iw].astype(np.float32)
-    rr = np.hypot(xx - iw / 2, yy - ih / 2) / (gs * 200 / 512)  # 1 at the girdle
-    veil = np.clip((rr - 0.7) / 0.3, 0, 1) ** 1.5 * 0.6 * fa[..., 0]
-    vor = blur(arr(vortex_on(iw, ih, vortex))[..., :3], gs * 0.02)
-    scene[..., :3] = scene[..., :3] * (1 - veil[..., None]) + vor * veil[..., None]
+        # Veil: the vortex passes over the girdle (none on the table, some on the outer facets)
+        yy, xx = np.mgrid[0:ih, 0:iw].astype(np.float32)
+        rr = np.hypot(xx - iw / 2, yy - ih / 2) / (gs * 200 / 512)  # 1 at the girdle
+        veil = np.clip((rr - 0.7) / 0.3, 0, 1) ** 1.5 * 0.6 * fa[..., 0]
+        vor = blur(arr(vortex_on(iw, ih, vortex))[..., :3], gs * 0.02)
+        scene[..., :3] = scene[..., :3] * (1 - veil[..., None]) + vor * veil[..., None]
 
-    # Bloom: the gem's light spills over the arms
-    # (around it, not on it: the facets keep their contrast)
-    bloom = blur(gem_rgb * fa, gs * 0.18) * 0.9 + blur(gem_rgb * fa, gs * 0.05) * 0.35
-    bloom *= 1 - fa * 0.85
-    scene[..., :3] = 1 - (1 - scene[..., :3]) * (1 - np.clip(bloom, 0, 1))
+        # Bloom: the gem's light spills over the arms
+        # (around it, not on it: the facets keep their contrast)
+        bloom = blur(gem_rgb * fa, gs * 0.18) * 0.9 + blur(gem_rgb * fa, gs * 0.05) * 0.35
+        bloom *= 1 - fa * 0.85
+        scene[..., :3] = 1 - (1 - scene[..., :3]) * (1 - np.clip(bloom, 0, 1))
 
-    inner = Image.fromarray((np.clip(scene, 0, 1) * 255).round().astype(np.uint8), 'RGBA')
+        inner = Image.fromarray((np.clip(scene, 0, 1) * 255).round().astype(np.uint8), 'RGBA')
 
     card = inner
     return card.convert('RGB')

@@ -57,6 +57,8 @@ export class AppToolsComponent {
   readonly onArt = input(false, { transform: booleanAttribute });
   /** The hub screens: the only ones with administration and sign out. */
   readonly hub = input(false, { transform: booleanAttribute });
+  /** The news bell (the home's bar only). */
+  readonly news = input(false, { transform: booleanAttribute });
 
   /** Also follows Esc and the board's own full screen button. */
   protected readonly fullscreen = signal(!!this.document.fullscreenElement);

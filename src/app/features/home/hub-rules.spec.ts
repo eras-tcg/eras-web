@@ -52,13 +52,20 @@ describe('hubSlides', () => {
     expect(hubSlides(null, [news('Otra', [], { excerpt: 'corto' })])[0].body).toBe('corto');
   });
 
-  it("sends a news link to an edition's cards to the edition's page", () => {
+  it("treats an edition's announcement as the edition: a click to its page in Ediciones, no button", () => {
     expect(editionLink('/cards?edition=E1.3')).toBe('/cards/editions/E1.3');
+    expect(editionLink('/editions/E1.3')).toBe('/cards/editions/E1.3');
     expect(editionLink('/cards?edition=E1&color=R')).toBe('/cards?edition=E1&color=R');
     expect(editionLink('/deck-builder')).toBe('/deck-builder');
     const [slide] = hubSlides(null, [news('n', [], { linkRoute: '/cards?edition=E1.3', linkLabel: 'Ver' })], cards);
     expect(slide.kind).toBe('news');
-    expect(slide.action).toEqual({ label: 'Ver', url: '/cards/editions/E1.3' });
+    expect(slide.link).toBe('/cards/editions/E1.3');
+    expect(slide.action).toBeNull();
+    // a saved default news item without its link keeps the default's
+    expect(hubSlides(null, [news('Compromiso Y Evolución')])[0].link).toBe('/cards/editions/E1.3');
+    // any other link stays a button, the news opening in full
+    const [other] = hubSlides(null, [news('m', [], { linkRoute: '/deck-builder', linkLabel: 'Armar' })], cards);
+    expect([other.link, other.action]).toEqual([null, { label: 'Armar', url: '/deck-builder' }]);
   });
 
   it("shows a news item with its own cards, in its order, and its button when it has one", () => {

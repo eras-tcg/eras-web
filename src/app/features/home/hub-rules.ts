@@ -56,9 +56,12 @@ export function editionShowcase(editionId: string, cards: readonly CatalogCard[]
     .slice(0, 3);
 }
 
-/** An edition's page (in Ediciones): where a link to its cards ("/cards?edition=E1.3") leads instead; other links as they are. */
+/**
+ * An edition's page (in Ediciones, "/cards/editions/E1.3"): where a link to its cards ("/cards?edition=E1.3") or to its
+ * shop ("/editions/E1.3") leads instead; other links as they are.
+ */
 export function editionLink(url: string): string {
-  const match = /^\/cards\?edition=([^&#]+)$/.exec(url);
+  const match = /^\/cards\?edition=([^&#]+)$/.exec(url) ?? /^\/editions\/([^/?#]+)$/.exec(url);
   return match ? `/cards/editions/${match[1]}` : url;
 }
 
@@ -82,6 +85,11 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
     });
   }
   news.forEach((item, i) => {
+    // An edition's announcement (its link leads to an edition: its own one, or the default news' of the same title)
+    // works as the featured edition: a click goes to the edition's page, no pop-up, no button
+    const route = item.linkRoute || DEFAULT_NEWS.find((d) => d.title === item.title)?.linkRoute || null;
+    const url = route ? editionLink(route) : null;
+    const edition = url?.startsWith('/cards/editions/') ? url : null;
     slides.push({
       key: item.id ?? `news-${i}`,
       kind: 'news',
@@ -90,9 +98,9 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
       title: item.title,
       text: item.excerpt,
       body: item.body || DEFAULT_NEWS.find((d) => d.title === item.title)?.body || item.excerpt,
-      link: null,
+      link: edition,
       cards: item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c).map(view),
-      action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: editionLink(item.linkRoute) } : null,
+      action: url && !edition ? { label: item.linkLabel || 'Ver más', url } : null,
     });
   });
   return slides;

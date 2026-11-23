@@ -22,6 +22,8 @@ export const DEFAULT_NEWS: HomeNews[] = [
       'La primera edición de ERAS ya está en la tienda.\n\n' +
       'El comienzo del fin de los tiempos es el punto de partida del juego: sus cartas son la base de las demás ediciones y de los mazos de estructura.\n\n' +
       'Abre sus sobres y cajas, revisa en tu colección las cartas que te faltan y arma tu primer mazo con ellas. Cada apertura suma a tu colección desde el principio.',
+    linkRoute: '/cards/editions/E1',
+    linkLabel: 'Ver edición',
     cardIds: [],
   },
   {
@@ -32,6 +34,8 @@ export const DEFAULT_NEWS: HomeNews[] = [
       'Segunda parada de la semana: Enfrentamientos Interdimensionales (E1.1) llega a la tienda.\n\n' +
       'Sus sobres y cajas ya se pueden abrir con tus gemas. Sus cartas amplían lo que ofrece la primera edición y abren nuevas formas de armar tus mazos.\n\n' +
       'Revisa la edición para ver todas sus cartas y suma las que te interesen a tu colección.',
+    linkRoute: '/cards/editions/E1.1',
+    linkLabel: 'Ver edición',
     cardIds: [],
   },
   {
@@ -42,6 +46,8 @@ export const DEFAULT_NEWS: HomeNews[] = [
       'Ocaso del Mundo Conocido (E1.2) se suma a la tienda.\n\n' +
       'Además de sus cartas normales, en cada apertura puedes encontrar versiones foil y prismáticas: la misma carta con un acabado especial que brilla al moverla.\n\n' +
       'Las copias foil y prismáticas cuentan para tu colección como cualquier otra, y se muestran con su brillo en tus mazos y en la mesa.',
+    linkRoute: '/cards/editions/E1.2',
+    linkLabel: 'Ver edición',
     cardIds: [],
   },
   {
@@ -52,6 +58,8 @@ export const DEFAULT_NEWS: HomeNews[] = [
       'Cerramos la semana con Compromiso y Evolución (E1.3).\n\n' +
       'Con ella, las cuatro primeras ediciones quedan disponibles en la tienda. Ya puedes abrir sobres y cajas de cualquiera de ellas, romper las copias que te sobran en fragmentos y fabricar las cartas que te faltan.\n\n' +
       'Es un buen momento para completar tu colección y armar mazos que combinen cartas de las cuatro ediciones.',
+    linkRoute: '/cards/editions/E1.3',
+    linkLabel: 'Ver edición',
     cardIds: [],
   },
 ];

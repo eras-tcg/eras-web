@@ -197,7 +197,7 @@ export class RankingPage {
   /** "Guía de ligas", in a dialog (its own chunk). */
   protected async openGuide(): Promise<void> {
     const { LeagueGuideDialogComponent } = await import('./league-guide-dialog.component');
-    this.modal.open(LeagueGuideDialogComponent, { width: '36rem' });
+    this.modal.open(LeagueGuideDialogComponent);
   }
   protected readonly rows = signal<ChallengerRow[] | null>(null);
   protected readonly failed = signal(false);

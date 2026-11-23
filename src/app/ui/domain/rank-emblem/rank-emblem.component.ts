@@ -15,7 +15,7 @@ interface GemArt {
 /**
  * Each tier a stone more cut than the one below, in the ERAS gem's language («Espiral», design/cardback): solid faces in
  * one tone lit from the top left, the cuts empty, no outlines. A rough iron stone with a crack, bronze, silver, a gold
- * gem in profile, a platinum emerald cut, a diamond with every facet.
+ * hexagonal cut, a platinum emerald cut, a diamond with every facet.
  */
 const ART: Record<Exclude<RankTier, 'CHALLENGER'>, GemArt> = {
   IRON: {
@@ -36,9 +36,10 @@ const ART: Record<Exclude<RankTier, 'CHALLENGER'>, GemArt> = {
     light: '#f8fafc',
     dark: '#7c8a9e',
   },
+  // A hexagonal cut: a wide table, every corner cut to the girdle (bronze's hexagon, all six faces apart)
   GOLD: {
-    outline: '18,12 46,12 58,25 32,58 6,25',
-    cuts: 'M6 25 L58 25 M25 25 L32 12 L39 25 M22 25 L32 58 M42 25 L32 58',
+    outline: '32,4 7.8,18 7.8,46 32,60 56.2,46 56.2,18',
+    cuts: 'M32 17 L19 24.5 L19 39.5 L32 47 L45 39.5 L45 24.5 Z M32 17 L32 4 M19 24.5 L7.8 18 M19 39.5 L7.8 46 M32 47 L32 60 M45 39.5 L56.2 46 M45 24.5 L56.2 18',
     light: '#fde68a',
     dark: '#b7791f',
   },

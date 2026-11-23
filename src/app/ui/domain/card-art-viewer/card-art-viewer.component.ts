@@ -27,8 +27,8 @@ export interface CardArtViewerData {
 
 /**
  * A card over the whole screen, on black, as big as it fits, with its finish: the one card drawing (eras-card-face)
- * live, so grabbing it turns it in 3D (all the way round to its back), lit from the front, with its thickness, and its
- * glossy coat and gold border drawn sharp at this size (the masks). Let go, it settles on the side in sight. The mouse
+ * live, so grabbing it turns it in 3D (as far as face down), lit from the front, with its thickness, and its
+ * glossy coat and gold border drawn sharp at this size (the masks). Let go, it settles back face up. The mouse
  * wheel zooms in and out toward the pointer. A tap anywhere, Esc or the close button takes it away. Opened with
  * ModalService, as wide and tall as the screen (maxWidth 100vw, maxHeight 100dvh).
  */

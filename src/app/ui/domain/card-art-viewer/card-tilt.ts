@@ -10,12 +10,15 @@ export interface Tilt {
   ry: number;
 }
 
+/** A card turned face down, its back in sight (degrees around its vertical axis). */
+const FACE_DOWN = 180;
+
 const clamp = (n: number, max: number) => Math.max(-max, Math.min(max, n));
 
 /**
  * The turn of a card dragged from where it was grabbed: half its width across turns it 45°, as if pushing its side
- * (right turns its right side away, up turns its top away). Across it turns freely, all the way round to its back and
- * on; up and down it only leans, never past MAX_TILT.
+ * (right turns its right side away, up turns its top away). Across it turns as far as face down (its back in sight),
+ * either way, and no further; up and down it only leans, never past MAX_TILT.
  */
 export function spinFromDrag(
   start: Tilt,
@@ -27,13 +30,8 @@ export function spinFromDrag(
   const perPy = 90 / Math.max(1, height);
   return {
     rx: clamp(start.rx + dy * perPy * -1, MAX_TILT) || 0,
-    ry: start.ry + dx * (90 / Math.max(1, width)) || 0,
+    ry: clamp(start.ry + dx * (90 / Math.max(1, width)), FACE_DOWN) || 0,
   };
-}
-
-/** Where a spun card comes to rest when let go: flat, on whichever side is nearer to the eye (face or back). */
-export function restingTurn(tilt: Tilt): Tilt {
-  return { rx: 0, ry: Math.round(tilt.ry / 180) * 180 || 0 };
 }
 
 /** The side in sight's own lean (the turn from its nearest flat position), never past MAX_TILT: what lights it. */

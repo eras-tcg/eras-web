@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal } from '@angular/core';
-import { DRAG_START, Tilt, cardEdge, facingTilt, lightOf, restingTurn, spinFromDrag } from '../card-art-viewer/card-tilt';
+import { DRAG_START, Tilt, cardEdge, facingTilt, lightOf, spinFromDrag } from '../card-art-viewer/card-tilt';
 import { CARD_SHINE } from '../card-image/card-shine';
 
 /**
@@ -14,7 +14,7 @@ import { CARD_SHINE } from '../card-image/card-shine';
  * - `turned`: the picture upside down (the rival's card across the table);
  * - `live`: grabbed and dragged it turns in 3D, lit from a lamp in front (a glare, the far side in shadow, a rim lit on
  *   the lamp's side, the gloss band and the gold's glint moving), with its thickness and its back behind, above what is
- *   around it. Across it spins all the way round; let go, it settles flat on the side nearer to the eye (face or back).
+ *   around it. Across it turns as far as face down (its back in sight); let go, it settles back face up.
  *   A drag is not a click. `--card-live-shadow` gives it a shadow behind (the 3D viewer's);
  * - `masks`: where it shines drawn at the card's size (the 3D viewer's, sharper than the shine PNG), instead of it.
  * Sized by its parent (width, or height with the ratio); what goes around a card (badges, counts, frames) belongs to the
@@ -281,7 +281,7 @@ export class CardFaceComponent {
   protected readonly metal = computed(() => (this.live() ? this.facing().ry * 9 - this.facing().rx * 6 : null));
 
   /** The press in progress: where it started, the card's size, and whether it has become a drag. */
-  private press: { x: number; y: number; w: number; h: number; moved: boolean; from: Tilt } | null = null;
+  private press: { x: number; y: number; w: number; h: number; moved: boolean } | null = null;
 
   /** A drag just ended: the click that follows it is not the card's. */
   private dragged = false;
@@ -306,7 +306,7 @@ export class CardFaceComponent {
     const box = el.getBoundingClientRect();
     el.setPointerCapture(event.pointerId);
     this.dragged = false;
-    this.press = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, moved: false, from: this.tilt() };
+    this.press = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, moved: false };
   }
 
   protected drag(event: PointerEvent): void {
@@ -317,10 +317,10 @@ export class CardFaceComponent {
     if (!p.moved && Math.hypot(dx, dy) < DRAG_START) return;
     p.moved = true;
     this.held.set(true);
-    this.tilt.set(spinFromDrag(p.from, dx, dy, p.w, p.h));
+    this.tilt.set(spinFromDrag({ rx: 0, ry: 0 }, dx, dy, p.w, p.h));
   }
 
-  /** Let go: the card settles flat, on the side nearer to the eye. */
+  /** Let go: the card settles back flat, face up. */
   protected release(event: PointerEvent): void {
     const p = this.press;
     if (!p) return;
@@ -328,6 +328,6 @@ export class CardFaceComponent {
     this.press = null;
     this.dragged = p.moved;
     this.held.set(false);
-    this.tilt.set(restingTurn(this.tilt()));
+    this.tilt.set({ rx: 0, ry: 0 });
   }
 }

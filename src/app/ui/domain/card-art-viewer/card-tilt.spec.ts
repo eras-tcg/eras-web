@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TILT, cardEdge, facingTilt, lightOf, restingTurn, spinFromDrag } from './card-tilt';
+import { MAX_TILT, cardEdge, facingTilt, lightOf, spinFromDrag } from './card-tilt';
 
 describe('card tilt', () => {
   it('turns the card the way it is dragged, from where it was', () => {
@@ -9,18 +9,9 @@ describe('card tilt', () => {
     expect(spinFromDrag({ rx: 5, ry: 10 }, -40, 0, 400, 560)).toEqual({ rx: 5, ry: 1 });
   });
 
-  it('spins all the way round across, and only leans up and down', () => {
+  it('turns across as far as face down, and only leans up and down', () => {
     expect(spinFromDrag({ rx: 0, ry: 0 }, 800, 0, 400, 560)).toEqual({ rx: 0, ry: 180 });
-    expect(spinFromDrag({ rx: 0, ry: 180 }, 400, 5000, 400, 560)).toEqual({
-      rx: -MAX_TILT,
-      ry: 270,
-    });
-  });
-
-  it('comes to rest flat on the side nearer to the eye', () => {
-    expect(restingTurn({ rx: 20, ry: 80 })).toEqual({ rx: 0, ry: 0 });
-    expect(restingTurn({ rx: -10, ry: 100 })).toEqual({ rx: 0, ry: 180 });
-    expect(restingTurn({ rx: 0, ry: -275 })).toEqual({ rx: 0, ry: -360 });
+    expect(spinFromDrag({ rx: 0, ry: 0 }, -5000, 5000, 400, 560)).toEqual({ rx: -MAX_TILT, ry: -180 });
   });
 
   it('lights the side in sight by its own lean', () => {

@@ -7,6 +7,7 @@ import { provideRouter, withComponentInputBinding, withPreloading, withViewTrans
 import { authInterceptor } from '@core/auth/auth.interceptor';
 import { BusyState, busyInterceptor } from '@core/http/busy';
 import { loadingInterceptor } from '@core/http/loading';
+import { NEWS_LOG_DIALOG } from '@core/news/news-dialog';
 import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
 import { MainScreensPreloading } from '@core/navigation/preloading';
 import { isNativeApp } from '@core/pwa/app-mode';
@@ -53,5 +54,7 @@ export const appConfig: ApplicationConfig = {
     provideServiceWorker('eras-sw.js', { enabled: !isDevMode() && !isNativeApp(), registrationStrategy: 'registerWhenStable:30000' }),
     // The quick button «Misiones» off the hub menus opens them as a dialog
     { provide: MISSIONS_DIALOG, useValue: () => import('@features/home/missions-dialog.component').then((m) => m.MissionsDialogComponent) },
+    // The bar's bell: the news log
+    { provide: NEWS_LOG_DIALOG, useValue: () => import('@features/home/news-log-dialog.component').then((m) => m.NewsLogDialogComponent) },
   ],
 };

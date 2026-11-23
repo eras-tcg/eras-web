@@ -12,6 +12,7 @@ import { EditionsStore } from '@data/editions/editions.store';
 import { HomeStore } from '@data/home/home.store';
 import { HomeNews } from '@data/home/home.model';
 import { newsDateLabel } from '@data/home/default-news';
+import { latestNews } from '@data/home/news-rules';
 import { CardsStore } from '@data/cards/cards.store';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
@@ -72,7 +73,8 @@ export class HomePage {
     () => welcomeNextStep(this.progression.board()?.welcome ?? null) !== null || this.progression.waiting() > 0,
   );
   protected readonly slides = computed(() =>
-    hubSlides(this.home.content().edition, this.home.news(), this.cards.cards()),
+    // While editing, the news being edited; otherwise the latest of every news item
+    hubSlides(this.home.content().edition, this.home.editing() ? this.home.news() : latestNews(this.home.allNews()), this.cards.cards()),
   );
   protected readonly saveError = signal<string | null>(null);
 

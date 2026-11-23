@@ -9,6 +9,8 @@ import { HomeApi } from './home.api';
 import { SharedLoad } from '../shared/shared-load';
 import { HomeContent, HomeNews } from './home.model';
 import { DEFAULT_NEWS } from './default-news';
+import { allNews } from './news-rules';
+import { PLATFORM_NEWS } from './platform-news';
 
 /**
  * Home page content (featured edition, the carousel's news, featured deck slots).
@@ -32,6 +34,8 @@ export class HomeStore {
   readonly content = computed(() => this.draft() ?? this.saved());
   /** The carousel's news: the saved ones (or the draft's), DEFAULT_NEWS while none were ever saved. */
   readonly news = computed<HomeNews[]>(() => this.content().news ?? DEFAULT_NEWS);
+  /** Every news item of the platform, newest first: these and the platform's history (the news log; the carousel shows the latest). */
+  readonly allNews = computed<HomeNews[]>(() => allNews(this.news(), PLATFORM_NEWS));
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {

@@ -32,7 +32,8 @@
       @if (store.loading() && displayed().length === 0) {
         <eras-empty-state title="Cargando cartas…"><eras-spinner /></eras-empty-state>
       } @else if (!store.error()) {
-        <eras-stack direction="row" [gap]="3" align="center" wrap>
+        <!-- The count and the filter button stay in sight while the cards scroll under them -->
+        <eras-stack class="toolbar" direction="row" [gap]="3" align="center" wrap>
           @if (!showFilters()) {
             <button erasButton variant="secondary" size="sm" type="button" class="unfold" aria-label="Mostrar filtros" [attr.aria-expanded]="false" (click)="showFilters.set(true)">
               <eras-icon name="filter" />

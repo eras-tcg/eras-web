@@ -51,6 +51,13 @@ const PAGE_SIZE = 40;
   styles: `
     .lacking { filter: grayscale(1); }
     .filters-head { display: flex; justify-content: flex-end; margin-block-end: var(--space-1); }
+    .toolbar {
+      position: sticky;
+      z-index: 2;
+      inset-block-start: 0;
+      padding-block: var(--space-2);
+      background: var(--color-bg);
+    }
     .unfold { position: relative; }
     /* Some filter is on while they are folded */
     .dot {

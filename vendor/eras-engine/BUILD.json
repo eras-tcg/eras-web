@@ -1,8 +1,8 @@
 {
-  "commit": "e288c0cce271a867987a83b0eb13126f05bcb969",
+  "commit": "2812daea35499df83839d2293e296472ac879526",
   "dirty": false,
-  "subject": "Flureteus looks at 4 cards, as its new printed text says",
-  "copiedAt": "2026-11-23T02:20:00.496Z",
+  "subject": "feat(simulator): each player's card back travels with them to the table",
+  "copiedAt": "2026-11-23T17:53:16.058Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

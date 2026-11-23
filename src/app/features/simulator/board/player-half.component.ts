@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRender
 import { knownToOwner, zoneTargetId } from '@data/simulator/game-rules';
 import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/legal-actions';
 import { GameStore } from '@data/simulator/game.store';
+import { CardBackService, cardBackFill, cardBackOf } from '@core/theme/card-back.service';
 import { CardSlot, OptionalMode, PlayerState, ZoneName } from '@data/simulator/simulator.model';
 import { drawnFrontRow, formationPlaces, pointsSide } from '@data/simulator/formations';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
@@ -57,6 +58,7 @@ const PILE_EDGE_TAPER = 0.15;
     '[class.info]': 'game.showInfo()',
     '[class.has-playmat]': '!!player().playmat',
     '[style.--playmat]': 'playmatImage()',
+    '[style.--color-card-back]': 'backFill()',
     '[style.--hand-lift]': 'prefs.handLift()',
     '[class.looking]': 'looking()',
   },
@@ -101,6 +103,14 @@ export class PlayerHalfComponent {
     const url = this.player().playmat;
     return url ? `url("${url.replace(/"/g, '%22')}")` : null;
   });
+  /**
+   * The back of this player's face-down cards: the rival's as they chose it (from the server), yours as you have it
+   * now (a change in the profile shows at once).
+   */
+  protected readonly backFill = computed(() =>
+    cardBackFill(this.opponent() ? cardBackOf(this.player().cardBack) : this.cardBack.current()),
+  );
+  private readonly cardBack = inject(CardBackService);
   protected readonly attackDrag = computed(() => this.opponent() && !!this.drag.dragging()?.attack);
   /** A phone in landscape (read once): small piles, so a thinner edge (it must stay inside the pile's zone). */
   private readonly maxPileDepth =

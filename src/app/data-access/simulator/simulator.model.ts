@@ -93,6 +93,8 @@ export interface PlayerState {
   avatar?: string | null;
   /** Their playmat (an image URL from their profile), under their half of the table; null for none. */
   playmat?: string | null;
+  /** The card back they chose in their profile (an id of CARD_BACKS); null for the default. */
+  cardBack?: string | null;
   connected: boolean;
   /** Pre-room: the deck's name, the starter chosen (a card id of the deck) and whether they confirmed. */
   deckName?: string | null;

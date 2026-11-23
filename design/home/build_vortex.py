@@ -31,12 +31,13 @@ def arm_profile(s1, r, n_arms, taper):
     c = 0.5 + 0.5 * np.cos(n_arms * s1)
     if not taper:
         return c ** 1.8
-    return c ** (1.8 - 1.2 * smooth(0.3, 1.05, r))
+    return c ** (1.8 - 1.5 * smooth(0.25, 1.0, r))
 
 
-def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False):
+def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, twist=2.6):
     """`accent`: the faint edge on one arm. `n_arms`: how many arms. `fade_out`: where (radius, 0..1 at the square's edge)
-    it fades out to clear. `taper`: arms widening towards the rim (arm_profile)."""
+    it fades out to clear. `taper`: arms widening towards the rim (arm_profile). `twist`: how tightly the arms coil
+    (lower: a more open spiral)."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
@@ -44,7 +45,7 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False):
     lr = np.log(r)
 
     # Two spirals with different twist and arm count: their beat gives the field depth instead of a regular pattern
-    s1 = a + 2.6 * lr
+    s1 = a + twist * lr
     s2 = -a * 1 + 1.4 * lr + 0.9
     arms = arm_profile(s1, r, n_arms, taper)  # the main arms
     mist = 0.5 + 0.5 * np.cos(2 * s2 + 0.6 * np.sin(5 * s1))

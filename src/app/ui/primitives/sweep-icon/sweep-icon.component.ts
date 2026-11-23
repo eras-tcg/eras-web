@@ -6,7 +6,8 @@ import { IconComponent, IconName } from '../icon/icon.component';
  * the left, with a soft edge. "Back" on every screen and the dialogs' close button. Name it with `aria-label`; size
  * it with `--sweep-size`.
  * `wash`: the hover also lays a band of gold behind it that fades out to the right, across the row it sits in (the
- * screen's top row): from `--sweep-wash-start` to its left (the window's edge) over `--sweep-wash-width`.
+ * screen's top row): from `--sweep-wash-start` to its left (the window's edge) over `--sweep-wash-width`, and up
+ * `--sweep-wash-top` above it (to the window's top).
  * <a erasSweep="chevron-left" wash routerLink="/home" aria-label="Volver al inicio"></a>
  */
 @Component({
@@ -56,7 +57,7 @@ import { IconComponent, IconName } from '../icon/icon.component';
     }
     :host(.wash)::before {
       position: absolute;
-      inset-block: -0.5rem;
+      inset-block: calc(-1 * var(--sweep-wash-top, 0.5rem)) -0.5rem;
       inset-inline-start: calc(-1 * var(--sweep-wash-start, 0px));
       z-index: -1;
       inline-size: var(--sweep-wash-width, 32rem);

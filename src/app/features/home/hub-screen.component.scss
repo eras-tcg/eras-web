@@ -180,6 +180,7 @@
 .back {
   --sweep-size: 2.5rem;
   --sweep-wash-start: calc(max(var(--layout-gutter), env(safe-area-inset-left)) - var(--space-2));
+  --sweep-wash-top: max(var(--space-5), env(safe-area-inset-top));
   margin-inline-start: calc(-1 * var(--space-2));
 }
 

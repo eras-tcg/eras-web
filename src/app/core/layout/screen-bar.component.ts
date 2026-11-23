@@ -33,6 +33,7 @@ import { AppToolsComponent } from './app-tools.component';
     .back {
       --sweep-size: 2.5rem;
       --sweep-wash-start: calc(var(--page-gutter-start, var(--layout-gutter)) - var(--space-2));
+      --sweep-wash-top: var(--page-top, var(--space-5));
       margin-inline-start: calc(-1 * var(--space-2));
     }
     .back:hover,

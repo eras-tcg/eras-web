@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { IconComponent } from '../../primitives/icon/icon.component';
 import { CardFaceComponent } from '../card-face/card-face.component';
 
-/** How far the wheel zooms in. */
+/** How far the wheel zooms in and out (1 = as big as fits). */
 const MAX_ZOOM = 4;
+const MIN_ZOOM = 0.4;
 
 export interface CardArtViewerData {
   src: string | null;
@@ -149,13 +150,13 @@ export class CardArtViewerComponent {
   /** The wheel's zoom: how big (1 = as big as fits) and how far moved (px) to keep the pointed spot under the pointer. */
   protected readonly zoom = signal({ scale: 1, x: 0, y: 0 });
 
-  /** The wheel zooms in and out (between 1 and MAX_ZOOM) around the spot under the pointer. */
+  /** The wheel zooms in (up to MAX_ZOOM, around the spot under the pointer) and out (down to MIN_ZOOM, centered). */
   protected zoomBy(event: WheelEvent): void {
     event.preventDefault();
     const { scale, x, y } = this.zoom();
-    const next = Math.min(MAX_ZOOM, Math.max(1, scale * Math.exp(-event.deltaY * 0.0015)));
-    if (next === 1) {
-      this.zoom.set({ scale: 1, x: 0, y: 0 });
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale * Math.exp(-event.deltaY * 0.0015)));
+    if (next <= 1) {
+      this.zoom.set({ scale: next, x: 0, y: 0 });
       return;
     }
     // The pointer from the screen's middle (where the card's center rests): that spot stays put

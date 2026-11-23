@@ -13,7 +13,8 @@
     'top top' auto
     'side .' minmax(0, 1fr)
     / minmax(22rem, 36%) 1fr;
-  gap: var(--space-4) var(--space-6);
+  // The same room under the top row as on every other screen (eras-page)
+  gap: var(--space-6);
   block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
   padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--layout-gutter), env(safe-area-inset-right))
     max(var(--space-5), env(safe-area-inset-bottom)) max(var(--layout-gutter), env(safe-area-inset-left));
@@ -181,6 +182,7 @@
   --sweep-size: 2.5rem;
   --sweep-wash-start: calc(max(var(--layout-gutter), env(safe-area-inset-left)) - var(--space-2));
   --sweep-wash-top: max(var(--space-5), env(safe-area-inset-top));
+  --sweep-wash-bottom: var(--space-6);
   margin-inline-start: calc(-1 * var(--space-2));
 }
 
@@ -318,6 +320,11 @@
 
 /* Short windows (a phone held sideways): the two columns, tighter, so the menu fits beside the artwork */
 @media (max-height: 30rem) and (orientation: landscape) {
+  // Little height: the gold wash of "back" ends where the content starts
+  .back {
+    --sweep-wash-bottom: var(--space-2);
+  }
+
   :host {
     grid-template-columns: minmax(18rem, 48%) 1fr;
     gap: var(--space-2) var(--space-4);

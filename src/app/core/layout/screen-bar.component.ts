@@ -34,6 +34,7 @@ import { AppToolsComponent } from './app-tools.component';
       --sweep-size: 2.5rem;
       --sweep-wash-start: calc(var(--page-gutter-start, var(--layout-gutter)) - var(--space-2));
       --sweep-wash-top: var(--page-top, var(--space-5));
+      --sweep-wash-bottom: var(--screen-bar-gap, var(--space-6));
       margin-inline-start: calc(-1 * var(--space-2));
     }
     .back:hover,

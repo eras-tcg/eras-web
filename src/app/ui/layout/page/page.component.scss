@@ -4,6 +4,9 @@
   --page-top: max(var(--space-5), env(safe-area-inset-top));
   --page-gutter-start: max(var(--layout-gutter), env(safe-area-inset-left));
   --page-gutter-end: max(var(--layout-gutter), env(safe-area-inset-right));
+  // The room kept under the top row on every screen: the content never sits against it (nor under the gold wash
+  // of "back", which fades out over it)
+  --screen-bar-gap: var(--space-6);
 
   // One screen high below the app header: the top row stays and only the area under it scrolls
   display: flex;
@@ -22,7 +25,7 @@
 // Stays in place while the screens change (view transitions)
 .bar {
   flex: none;
-  margin-block-end: var(--space-5);
+  margin-block-end: var(--screen-bar-gap);
   padding-inline: var(--page-gutter-start) var(--page-gutter-end);
   view-transition-name: screen-bar;
 }
@@ -98,10 +101,6 @@
   padding-block-end: var(--space-4);
 }
 
-:host(.fill) .bar {
-  margin-block-end: var(--space-4);
-}
-
 :host(.fill) .content {
   flex: 1;
   gap: var(--space-3);
@@ -121,15 +120,11 @@
 @media (orientation: landscape) and (max-height: 30rem) {
   :host {
     --page-top: max(var(--space-2), env(safe-area-inset-top));
+    --screen-bar-gap: var(--space-2);
   }
 
   .scroll {
     padding-block-end: var(--space-4);
-  }
-
-  .bar,
-  :host(.fill) .bar {
-    margin-block-end: var(--space-2);
   }
 
   :host(.fill) .scroll {

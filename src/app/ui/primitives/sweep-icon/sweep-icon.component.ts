@@ -6,8 +6,8 @@ import { IconComponent, IconName } from '../icon/icon.component';
  * the left, with a soft edge. "Back" on every screen and the dialogs' close button. Name it with `aria-label`; size
  * it with `--sweep-size`.
  * `wash`: the hover also lays a band of gold behind it that fades out to the right, across the row it sits in (the
- * screen's top row): from `--sweep-wash-start` to its left (the window's edge) over `--sweep-wash-width`, and up
- * `--sweep-wash-top` above it (to the window's top).
+ * screen's top row): from `--sweep-wash-start` to its left (the window's edge) over `--sweep-wash-width`, from
+ * `--sweep-wash-top` above it (the window's top) to `--sweep-wash-bottom` below it, fading out downwards too.
  * <a erasSweep="chevron-left" wash routerLink="/home" aria-label="Volver al inicio"></a>
  */
 @Component({
@@ -57,12 +57,13 @@ import { IconComponent, IconName } from '../icon/icon.component';
     }
     :host(.wash)::before {
       position: absolute;
-      inset-block: calc(-1 * var(--sweep-wash-top, 0.5rem)) -0.5rem;
+      inset-block: calc(-1 * var(--sweep-wash-top, 0.5rem)) calc(-1 * var(--sweep-wash-bottom, 1rem));
       inset-inline-start: calc(-1 * var(--sweep-wash-start, 0px));
       z-index: -1;
       inline-size: var(--sweep-wash-width, 32rem);
       background: linear-gradient(90deg, color-mix(in srgb, var(--color-hub-accent) 32%, transparent), color-mix(in srgb, var(--color-hub-accent) 10%, transparent) 45%, transparent);
       content: '';
+      mask-image: linear-gradient(to bottom, #000 45%, transparent);
       opacity: 0;
       pointer-events: none;
       transform: scaleX(0.2);

@@ -24,7 +24,8 @@ TWIST = 1.7  # how tightly the arms coil (the home's: 2.6)
 ARMS = 5  # the vortex's arms (the home's has 3)
 GEM = False  # the ERAS gem, faceted, in the vortex's eye
 MINIMAL = True  # instead: the gem flat, its six faces apart by even channels
-CHANNEL = 0.035  # the channels' width, as a share of the gem's size
+CHANNEL = 0.022  # the channels' width, as a share of the gem's size
+MONO = True  # one flat color for every face (the mark read by its channels alone), no glow
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
 NIGHT = (0, 0, 0, 255)  # the card's ground: black, the vortex fading into it
@@ -94,14 +95,14 @@ def minimal_gem(scene, size):
     sil = Image.new('L', (iw * ss, ih * ss), 0)
     ImageDraw.Draw(sil).polygon([to(p) for p in inset(geo.D, gap)], fill=255)  # the pieces' outer edge: no rim
     sil = np.asarray(sil.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
-    glow = np.clip(blur(sil, size * 0.08) * 0.9, 0, 1) * np.array([0.25, 0.5, 0.95], np.float32)
+    glow = np.clip(blur(sil, size * 0.08) * (0 if MONO else 0.9), 0, 1) * np.array([0.25, 0.5, 0.95], np.float32)
     rgb = 1 - (1 - rgb) * (1 - glow)
     rgb = rgb * (1 - sil * 0.85)  # the channels show a dark ground, not the vortex
     for poly, lit in pieces:
         m = Image.new('L', (iw * ss, ih * ss), 0)
         ImageDraw.Draw(m).polygon([to(p) for p in poly], fill=255)
         m = np.asarray(m.resize((iw, ih), Image.LANCZOS), np.float32)[..., None] / 255
-        tone = dark + (light - dark) * (0.1 + 0.9 * lit)
+        tone = light if MONO else dark + (light - dark) * (0.1 + 0.9 * lit)
         rgb = rgb * (1 - m) + tone * m
     scene[..., :3] = rgb
     return scene

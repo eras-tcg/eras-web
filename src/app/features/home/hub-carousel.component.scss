@@ -77,22 +77,33 @@
 }
 
 // A slide without cards: a vortex of color where the cards would be (vortex.webp, built in design/home: tones curled
-// along a spiral, no shapes), larger than the slide and turning slowly, converging on the ERAS gem, still, in its eye
-.slide:not(.has-cards) {
+// along a spiral, no shapes), larger than the slide and turning slowly, converging on the ERAS gem, still, in its eye.
+// It lives under the slides, not in them: from one such slide to the next only the text changes, the vortex keeps
+// turning; it fades in and out only when a slide with cards comes or goes. Such a slide is clear over it.
+.backdrop {
   --vortex: max(170cqb, 60cqi);
   // The vortex's eye is drawn for a gem 0.29 of its size
   --gem: calc(var(--vortex) * 0.29);
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms var(--easing-standard);
 }
 
-.slide:not(.has-cards)::before {
-  inset: auto;
+.backdrop.on {
+  opacity: 1;
+}
+
+.backdrop-vortex {
+  position: absolute;
   inset-block-start: calc(50% - var(--vortex) / 2);
   inset-inline-start: calc(76% - var(--vortex) / 2);
   inline-size: var(--vortex);
   block-size: var(--vortex);
   background: url('/images/vortex.webp') center / contain no-repeat;
-  filter: none;
-  opacity: 1;
   animation: vortex-turn 90s linear infinite;
 }
 
@@ -103,17 +114,25 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .slide:not(.has-cards)::before {
+  .backdrop-vortex {
     animation: none;
   }
 }
 
-.slide:not(.has-cards)::after {
+.backdrop::after {
+  position: absolute;
+  inset: 0;
   background:
     // centered where the vortex's eye is (76 % across)
     url('/favicon.svg') no-repeat left calc(76cqi - var(--gem) / 2) center / var(--gem) var(--gem),
     linear-gradient(90deg, var(--color-hub-scrim) 25%, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 55%, transparent 70%),
     linear-gradient(0deg, color-mix(in srgb, var(--color-hub-accent) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
+  content: '';
+}
+
+.slide:not(.has-cards)::before,
+.slide:not(.has-cards)::after {
+  display: none;
 }
 
 // The vortex keeps its own side, as the cards do: the text never runs over its eye

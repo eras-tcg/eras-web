@@ -1,6 +1,8 @@
 @if (loading()) {
   <div class="slide slide-empty"><eras-spinner /></div>
-} @else if (slide()) {
+} @else if (slide(); as active) {
+  <!-- The vortex with the gem, under the slides: it keeps turning from one slide without cards to the next -->
+  <div class="backdrop" [class.on]="!active.cards.length" aria-hidden="true"><span class="backdrop-vortex"></span></div>
   <!-- One element per slide (tracked by its key), so the next one fades in while the last one fades out -->
   @for (current of shown(); track current.key) {
     @let lead = current.cards[0];

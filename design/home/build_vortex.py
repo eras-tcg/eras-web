@@ -24,14 +24,16 @@ def smooth(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def arm_profile(s1, reach, n_arms, taper):
+def arm_profile(s1, reach, n_arms, taper, widen=1.5, sharp=1.8):
     """Where the arms are, 0..1, along the spiral phase `s1`, `reach` out (0 at the eye, 1 at the edge). Without
     `taper` each arm takes the same share of the turn everywhere; with it the arms are as they are near the eye and widen
-    steadily towards the edge (a softer profile further out)."""
+    steadily towards the edge (a softer profile further out); `widen`: how much (1.8 or more: they meet their
+    neighbours out there); `sharp`: how narrow they are near the eye (lower: wider, less dark between them there)."""
     c = 0.5 + 0.5 * np.cos(n_arms * s1)
     if not taper:
         return c ** 1.8
-    return c ** (1.8 - 1.5 * smooth(0.25, 1.0, reach))
+    near = 1 - smooth(0.2, 0.45, reach)  # `sharp` only by the eye; further out the arms are as ever
+    return c ** np.maximum(1.8 - widen * smooth(0.25, 1.0, reach) - (1.8 - sharp) * near, 0.05)
 
 
 def box_reach(x, y, box, shape):
@@ -40,16 +42,26 @@ def box_reach(x, y, box, shape):
     return ((np.abs(x) / box[0]) ** shape + (np.abs(y) / box[1]) ** shape) ** (1 / shape)
 
 
-def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, twist=2.6, box=None, shape=3):
+def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, twist=2.6, box=None, shape=3,
+           eye=(0.12, 0.26), eye_points=0.0, eye_color=None, widen=1.5, mist_mode='cross', mist_amount=0.9, sharp=1.8,
+           rim=(0.2, 0.3, 0.55), fade_power=1.0, turn=0.0):
     """`accent`: the faint edge on one arm. `n_arms`: how many arms. `fade_out`: where (radius, 0..1 at the square's edge)
     it fades out to clear. `taper`: arms widening towards the rim (arm_profile). `twist`: how tightly the arms coil
     (lower: a more open spiral). `box`: the half sizes (in the square's units) of the rectangle it is shown in: with
     `taper`, every arm then reaches its full width where it meets that rectangle's edge, whichever side it leaves by, and
-    all the arms are alike (one color along them by distance, the mist and accent with the arms' symmetry)."""
+    all the arms are alike (one color along them by distance, the mist and accent with the arms' symmetry). `eye`: the
+    dark eye's radii, where it starts to clear and where it is clear. `eye_points`: how far the eye reaches out between
+    the arms, in sharp points that coil with them (0: a round eye). `eye_color`: the eye's color (None: the night's).
+    `widen`: how much the tapered arms widen towards the edge (see arm_profile). `mist_mode`: the deep blue between the
+    arms: 'cross' coils the other way (where it misses a gap, a dark hole), 'along' follows the gaps, 'flat' even;
+    `mist_amount`: how much of it (lower: the night shows between the arms). `sharp`: see arm_profile. `rim`: the ice
+    blue where the arms meet the eye: where it starts, where it is fullest, where it is gone (radii). `fade_power`: the
+    fade out's curve (higher: it thins sooner and lingers longer, with no edge to see). `turn`: the spiral turned by
+    this many degrees, its fade (`box`) still square to the rectangle."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
-    a = np.arctan2(y, x)
+    a = np.arctan2(y, x) + np.radians(turn)
     lr = np.log(r)
 
     # Two spirals with different twist and arm count: their beat gives the field depth instead of a regular pattern
@@ -57,8 +69,13 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
     s2 = -a * 1 + 1.4 * lr + 0.9
     even = taper and box is not None  # every arm alike (see the docstring)
     reach = box_reach(x, y, box, shape) if even else r
-    arms = arm_profile(s1, reach, n_arms, taper)  # the main arms
-    mist = 0.5 + 0.5 * np.cos((n_arms if even else 2) * s2 + 0.6 * np.sin(5 * s1))
+    arms = arm_profile(s1, reach, n_arms, taper, widen, sharp)  # the main arms
+    if mist_mode == 'along':  # brightest midway between two arms, along the whole gap
+        mist = 0.5 - 0.5 * np.cos(n_arms * s1)
+    elif mist_mode == 'flat':
+        mist = np.full_like(r, 0.5)
+    else:
+        mist = 0.5 + 0.5 * np.cos((n_arms if even else 2) * s2 + 0.6 * np.sin(5 * s1))
     gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, reach))
     if not even:
         gold_edge *= 0.5 + 0.5 * np.cos(s1)    # on one arm more than the others
@@ -75,17 +92,18 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
     # (even: blue near the eye to violet out, the same on every arm)
     hue = smooth(0.3, 1.0, reach) if even else 0.5 + 0.5 * np.sin(s1 + 0.4)
     arm_color = blue * (1 - hue[..., None]) + violet * hue[..., None]
-    col = night + (deep - night) * (mist[..., None] * 0.9)
+    col = night + (deep - night) * (mist[..., None] * mist_amount)
     col = col + (arm_color - col) * (arms[..., None] * 0.85)
     # Near the eye the arms brighten into ice blue, then the eye itself goes dark
-    rim = smooth(0.2, 0.3, r) * (1 - smooth(0.3, 0.55, r))
+    rim = smooth(rim[0], rim[1], r) * (1 - smooth(rim[1], rim[2], r))
     col = col + (ice - col) * (rim * (0.35 + 0.5 * arms))[..., None]
-    eye = 1 - smooth(0.12, 0.26, r)  # under the gem
-    col = col + (night - col) * (eye * 0.92)[..., None]
+    gap = (1 - (0.5 + 0.5 * np.cos(n_arms * s1))) ** 4  # 1 midway between two arms, falling fast towards them
+    eye = 1 - smooth(eye[0], eye[1], r / (1 + eye_points * gap))  # under the gem
+    col = col + ((rgb(eye_color) if eye_color else night) - col) * (eye * 0.92)[..., None]
     col = col + (gold - col) * (gold_edge * 0.55)[..., None]
 
     # Transparent at the rim: the slide's own color takes over
-    alpha = 1 - smooth(fade_out[0], fade_out[1], reach)
+    alpha = (1 - smooth(fade_out[0], fade_out[1], reach)) ** fade_power
     img = np.dstack([np.clip(col, 0, 1), alpha])
     return Image.fromarray((img * 255).round().astype(np.uint8), 'RGBA')
 

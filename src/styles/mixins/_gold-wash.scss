@@ -1,8 +1,34 @@
 // A band of gold behind an element: it starts at the element's left (or `$start` further out, to the window's edge)
 // and fades out to the right over `$width`, and opens from the left when the element is hovered or focused.
 // "Back" (erasSweep `wash`) and the options of the hub's menu. Include it in the element's own rule: it draws on
-// its ::before, behind its content. `$top`/`$bottom` stretch it above and below; `$mask` fades its edges.
-@mixin gold-wash($start: 0px, $top: 0px, $bottom: 0px, $width: 32rem, $mask: none) {
+// its ::before, behind its content. `$top`/`$bottom` stretch it above and below; `$mask` fades its edges;
+// `$background` is the band itself and `$from` how much of it shows as it starts to open (0: it spills out of the
+// left edge).
+$gold-wash-soft: linear-gradient(
+  90deg,
+  color-mix(in srgb, var(--color-hub-accent) 32%, transparent),
+  color-mix(in srgb, var(--color-hub-accent) 10%, transparent) 45%,
+  transparent
+);
+
+// Solid gold at the left edge, as if a gold border spilled out to the right
+$gold-wash-spill: linear-gradient(
+  90deg,
+  var(--color-hub-accent),
+  color-mix(in srgb, var(--color-hub-accent) 55%, transparent) 8%,
+  color-mix(in srgb, var(--color-hub-accent) 22%, transparent) 30%,
+  transparent 85%
+);
+
+@mixin gold-wash(
+  $start: 0px,
+  $top: 0px,
+  $bottom: 0px,
+  $width: 32rem,
+  $mask: none,
+  $background: $gold-wash-soft,
+  $from: 0.2
+) {
   position: relative;
 
   &::before {
@@ -11,21 +37,20 @@
     inset-inline-start: calc(-1 * #{$start});
     z-index: -1;
     inline-size: $width;
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--color-hub-accent) 32%, transparent),
-      color-mix(in srgb, var(--color-hub-accent) 10%, transparent) 45%,
-      transparent
-    );
+    background: $background;
     content: '';
     mask-image: $mask;
-    opacity: 0;
     pointer-events: none;
-    transform: scaleX(0.2);
+    transform: scaleX($from);
     transform-origin: left;
     transition:
       opacity var(--duration-sweep) var(--easing-standard),
       transform var(--duration-sweep) var(--easing-standard);
+
+    // Opening from nothing it only spills out of the edge; from a sliver it also fades in
+    @if $from != 0 {
+      opacity: 0;
+    }
   }
 
   &:hover::before,

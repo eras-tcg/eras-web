@@ -34,14 +34,17 @@
     border-color var(--duration-fast) var(--easing-standard);
 }
 
-// As "back": on hover a band of gold opens from the bar and fades out to the right (soft above and below); over the
+// On hover the gold bar spills out to the right: solid at the bar, fading out, straight above and below; over the
 // option's own background where it has one (the cards of upright phones)
 .item {
   isolation: isolate;
 
+  // From under the bar itself (6px on hover), so no seam shows between them
   @include gold-wash.gold-wash(
+    $start: 6px,
     $width: min(100%, 36rem),
-    $mask: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent)
+    $background: gold-wash.$gold-wash-spill,
+    $from: 0
   );
 }
 

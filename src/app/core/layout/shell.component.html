@@ -1,3 +1,6 @@
+<!-- Behind every screen: the card back's vortex and its gem dust (off on the hub, which has its artwork, and in a game) -->
+<ng-container *ngComponentOutlet="ambientBackdrop(); inputs: { active: ambient() }" />
+
 <!-- No navigation bar: each screen draws its own top strip. The header only carries the banners (version, no connection). -->
 <header class="header">
   @switch (versionBanner()) {

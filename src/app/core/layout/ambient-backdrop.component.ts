@@ -1,0 +1,189 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterNextRender,
+  booleanAttribute,
+  effect,
+  inject,
+  input,
+  viewChild,
+} from '@angular/core';
+import { MOTE_GONE, Mote, ORBIT_SQUASH, moteCount, moteOpacity, spawnMote, stepMote } from './ambient-dust';
+
+/** Where the vortex's eye sits on the screen (fractions of its width and height). */
+const CENTRE = { x: 0.8, y: 0.55 };
+
+/**
+ * Behind every screen: the card back's vortex, huge and faint, turning very slowly, and gem dust (gold pentagons,
+ * blue motes) falling in a spiral into its eye. Screens with a background of their own cover it (the hub's artwork);
+ * `active` false stops it (the game's table). Still when the device asks for reduced motion; paused while the page
+ * is hidden.
+ */
+@Component({
+  selector: 'eras-ambient-backdrop',
+  template: `
+    <div class="vortex"></div>
+    <canvas #dust></canvas>
+    <div class="vignette"></div>
+  `,
+  styles: `
+    // Behind the page's content (which has no background of its own), over the body's color
+    :host {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      background: radial-gradient(80% 70% at 80% 55%, var(--color-ambient-glow), var(--color-bg) 70%);
+    }
+    :host(.off) {
+      display: none;
+    }
+    .vortex {
+      position: absolute;
+      inset-block-start: 55%;
+      inset-inline-start: 80%;
+      inline-size: 130vmax;
+      aspect-ratio: 1;
+      translate: -50% -50%;
+      background: url('/images/vortex.webp') center / contain no-repeat;
+      opacity: var(--color-ambient-vortex-opacity);
+      animation: ambient-turn 300s linear infinite;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      inline-size: 100%;
+      block-size: 100%;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(120% 100% at 30% 40%, transparent 50%, color-mix(in srgb, var(--color-bg) 70%, transparent));
+    }
+    @keyframes ambient-turn {
+      to {
+        rotate: -360deg;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .vortex {
+        animation: none;
+      }
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { 'aria-hidden': 'true', '[class.off]': '!active()' },
+})
+export class AmbientBackdropComponent {
+  /** False where the screen covers it or has its own world (the game's table): hidden and stopped. */
+  readonly active = input(true, { transform: booleanAttribute });
+
+  private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dust');
+
+  constructor() {
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const destroyRef = inject(DestroyRef);
+    let start: (() => void) | undefined;
+    let stop: (() => void) | undefined;
+
+    afterNextRender(() => {
+      const canvas = this.canvas().nativeElement;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const styles = getComputedStyle(host);
+      const dustColor = styles.getPropertyValue('--color-ambient-dust').trim() || 'gold';
+      const moteColor = styles.getPropertyValue('--color-ambient-mote').trim() || 'skyblue';
+
+      let width = 0;
+      let height = 0;
+      let cx = 0;
+      let cy = 0;
+      let maxRadius = 0;
+      let motes: Mote[] = [];
+      let frame = 0;
+      let last = 0;
+
+      const resize = () => {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        cx = width * CENTRE.x;
+        cy = height * CENTRE.y;
+        maxRadius = Math.hypot(Math.max(cx, width - cx), Math.max(cy, height - cy));
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        motes = Array.from({ length: moteCount(width, height) }, () => spawnMote(maxRadius, true));
+        if (still) draw();
+      };
+
+      const pentagon = (x: number, y: number, size: number, rotation: number) => {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const t = rotation + (i * 2 * Math.PI) / 5;
+          ctx.lineTo(x + Math.sin(t) * size, y - Math.cos(t) * size);
+        }
+        ctx.closePath();
+      };
+
+      const draw = () => {
+        ctx.clearRect(0, 0, width, height);
+        for (const mote of motes) {
+          if (mote.radius < MOTE_GONE) continue;
+          const x = cx + Math.cos(mote.angle) * mote.radius;
+          const y = cy + Math.sin(mote.angle) * mote.radius * ORBIT_SQUASH;
+          ctx.globalAlpha = moteOpacity(mote);
+          if (mote.gem) {
+            pentagon(x, y, mote.size, mote.spin);
+            ctx.fillStyle = dustColor;
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.arc(x, y, mote.size, 0, Math.PI * 2);
+            ctx.fillStyle = moteColor;
+            ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 1;
+      };
+
+      const tick = (now: number) => {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        for (let i = 0; i < motes.length; i++) {
+          if (!stepMote(motes[i], dt)) motes[i] = spawnMote(maxRadius, false);
+        }
+        draw();
+        frame = requestAnimationFrame(tick);
+      };
+
+      start = () => {
+        if (still || frame || document.hidden) return;
+        last = performance.now();
+        frame = requestAnimationFrame(tick);
+      };
+      stop = () => {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      };
+      const visibility = () => (document.hidden || !this.active() ? stop?.() : start?.());
+
+      resize();
+      if (this.active()) start();
+      window.addEventListener('resize', resize);
+      document.addEventListener('visibilitychange', visibility);
+      destroyRef.onDestroy(() => {
+        stop?.();
+        window.removeEventListener('resize', resize);
+        document.removeEventListener('visibilitychange', visibility);
+      });
+    });
+
+    // Stopped where it does not show
+    effect(() => (this.active() ? start?.() : stop?.()));
+  }
+}

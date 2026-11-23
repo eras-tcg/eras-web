@@ -64,12 +64,12 @@ import { NewsSlide } from './hub-rules';
     /*
      * A news item without cards: the carousel's vortex (vortex.webp, the card back's) on the right, larger than the
      * panel and turning slowly as on the carousel, the ERAS gem still in its eye (0.29 of the vortex); the whole fades
-     * out towards the text, into the panel. Under the content: the panel isolates it.
+     * out towards the text, into the panel. Under the content: the panel isolates it. Cut at the dialog's bevelled
+     * corners (--modal-corner) instead of clipping the dialog, whose gold frame and gems reach past its edge.
      */
     eras-modal.with-back {
       position: relative;
       isolation: isolate;
-      overflow: hidden;
     }
     .backdrop {
       --vortex: 46rem;
@@ -79,6 +79,7 @@ import { NewsSlide } from './hub-rules';
       inset: 0;
       overflow: hidden;
       pointer-events: none;
+      clip-path: polygon(0 0, calc(100% - var(--modal-corner)) 0, 100% var(--modal-corner), 100% calc(100% - var(--modal-corner)), calc(100% - var(--modal-corner)) 100%, 0 100%);
       mask-image: linear-gradient(90deg, transparent 30%, #000 68%);
     }
     .vortex,

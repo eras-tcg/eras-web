@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject } from '@angular/core';
+import { DOCUMENT, NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Type, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -16,7 +16,7 @@ import { LoadingScreenComponent } from './loading-screen.component';
  */
 @Component({
   selector: 'eras-shell',
-  imports: [RouterOutlet, RouterLink, IconComponent, AppToolsComponent, LoadingScreenComponent],
+  imports: [RouterOutlet, RouterLink, NgComponentOutlet, IconComponent, AppToolsComponent, LoadingScreenComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +57,11 @@ export class ShellComponent {
   /** The hub screens (home, Jugar, Social): they fit the window exactly. */
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
+  /** The vortex behind the screens: not under the hub's artwork (it covers it) nor at a game's table. */
+  protected readonly ambient = computed(() => !this.hub() && !inGame(this.url()));
+  /** Its component, loaded once the first screen is up (its own chunk, out of the first download). */
+  protected readonly ambientBackdrop = signal<Type<unknown> | null>(null);
+
   constructor() {
     // A new version is taken by itself on a safe screen (never over a game, the deck builder or a form)
     effect(() => {
@@ -74,6 +79,7 @@ export class ShellComponent {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
       this.version.start();
+      void import('./ambient-backdrop.component').then((m) => this.ambientBackdrop.set(m.AmbientBackdropComponent));
       const header = host.nativeElement.querySelector('header');
       if (!header) return;
       // Published right away too: a header that never shows (no banner) is never reported by the observer

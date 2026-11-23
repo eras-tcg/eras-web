@@ -77,6 +77,17 @@
   --color-hub-accent: var(--color-sim-gold);
   --color-hub-glow: var(--color-sim-glow);
 
+  // The card back's own frame, drawn around the dialogs: gold running to pale gold, the small gems on its notches
+  --color-frame-gold: var(--color-sim-gold);
+  --color-frame-gold-pale: #fff1c2;
+  --color-frame-gold-deep: #d9a52a;
+  --color-frame-gem-edge: #2a1a03;
+  // Behind the screens (AmbientBackdrop): the card back's vortex, its blue motes and the gold gem dust
+  --color-ambient-vortex-opacity: var(--theme-ambient-vortex);
+  --color-ambient-glow: var(--theme-ambient-glow);
+  --color-ambient-mote: #6eaaff;
+  --color-ambient-dust: var(--color-sim-gold);
+
   /**
    * The back of a card: the game's card back art (a `background` value). It covers the card's border too, and the
    * color under it is the art's own black edge, so no other color shows around it. The art is the one the player chose

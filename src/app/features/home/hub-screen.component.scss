@@ -167,31 +167,15 @@
   min-inline-size: 0;
 }
 
+// As in <eras-screen-bar>: the arrow alone (erasSweep), leaning back
 .back {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  transition:
-    color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+  --sweep-size: 2.5rem;
+  margin-inline-start: calc(-1 * var(--space-2));
 }
 
-.back eras-icon {
-  inline-size: 1.2rem;
-  block-size: 1.2rem;
-}
-
-.back:hover {
-  border-color: var(--color-hub-accent);
-  color: var(--color-text);
-  transform: translateX(-2px);
+.back:hover,
+.back:focus-visible {
+  transform: translateX(-3px);
 }
 
 .title {

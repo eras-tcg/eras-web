@@ -1,17 +1,18 @@
+// The card back's frame: the panel with bevelled corners, a gold line around it with a notch at the top and at the
+// bottom, each holding a small gem (see modal-frame.ts for the shape)
 :host {
   --modal-width: 32rem;
+  --modal-corner: 14px;
 
+  position: relative;
   display: flex;
   flex-direction: column;
   inline-size: min(var(--modal-width), calc(100vw - 2 * var(--layout-gutter)));
   // Centered in its overlay pane even when the pane was given another width
   margin-inline: auto;
   max-block-size: calc(100vh - 2 * var(--space-6));
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   color: var(--color-text);
+  filter: drop-shadow(0 12px 32px rgb(0 0 0 / 45%));
 }
 
 :host(.size-lg) {
@@ -26,22 +27,132 @@
   --modal-width: 96rem;
 }
 
+// The surface, cut at the corners; a breath of the vortex's blue at the top
+.panel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(
+    var(--modal-corner) 0,
+    calc(100% - var(--modal-corner)) 0,
+    100% var(--modal-corner),
+    100% calc(100% - var(--modal-corner)),
+    calc(100% - var(--modal-corner)) 100%,
+    var(--modal-corner) 100%,
+    0 calc(100% - var(--modal-corner)),
+    0 var(--modal-corner)
+  );
+  background:
+    radial-gradient(70% 40% at 50% 0%, color-mix(in srgb, var(--color-ambient-mote) 9%, transparent), transparent),
+    var(--color-surface);
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.frame path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  // pathLength="1": each half is one dash, drawn in from the top gem
+  stroke-dasharray: 1;
+  animation: trace var(--duration-trace) var(--easing-standard) both;
+}
+
+.stop-gold {
+  stop-color: var(--color-frame-gold);
+}
+
+.stop-pale {
+  stop-color: var(--color-frame-gold-pale);
+}
+
+.stop-deep {
+  stop-color: var(--color-frame-gold-deep);
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+// The gems on the notches: the top one shows first, the bottom one when the line reaches it
+.gem {
+  position: absolute;
+  inset-inline-start: 50%;
+  inline-size: 14px;
+  block-size: 14px;
+  translate: -50% -50%;
+  clip-path: polygon(50% 0, 100% 38%, 81% 100%, 19% 100%, 0 38%);
+  background: linear-gradient(135deg, var(--color-frame-gold-pale), var(--color-frame-gold) 60%, var(--color-frame-gem-edge));
+  animation: gem var(--duration-slow) var(--easing-standard) both;
+}
+
+.gem.top {
+  inset-block-start: 6px;
+}
+
+.gem.bottom {
+  inset-block-start: calc(100% - 6px);
+  animation-delay: var(--duration-trace);
+}
+
+@keyframes gem {
+  from {
+    scale: 0;
+  }
+
+  to {
+    scale: 1;
+  }
+}
+
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-5) var(--space-3);
+  // Below the top notch
+  padding: calc(var(--space-5) + var(--space-3)) var(--space-5) var(--space-3);
 }
 
+.heading {
+  min-inline-size: 0;
+}
+
+// The screens' title, a step smaller: the display face in spaced capitals with the gold accent bar
 .title {
+  margin: 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--color-hub-accent);
   font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .subtitle {
-  margin-block-start: var(--space-1);
+  margin-block-start: var(--space-2);
+  padding-inline-start: calc(var(--space-3) + 4px);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.close {
+  --sweep-size: 1.5rem;
 }
 
 .body {
@@ -58,9 +169,15 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5) var(--space-5);
+  // Above the bottom notch
+  padding: var(--space-3) var(--space-5) calc(var(--space-5) + var(--space-2));
 }
 
 .footer:empty {
   display: none;
+}
+
+// Without a footer the body ends above the bottom notch
+.body:has(+ .footer:empty) {
+  padding-block-end: calc(var(--space-5) + var(--space-2));
 }

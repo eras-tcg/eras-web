@@ -10,5 +10,6 @@ export function toSaveRequest(content: HomeContent): HomeSaveRequest {
   return {
     edition: content.edition,
     decks: normalizeSlots(content.decks).map((deck, i) => ({ deckPosition: String(i), deck })),
+    ...(content.news ? { news: content.news } : {}),
   };
 }

@@ -3,7 +3,10 @@ import { WelcomeStep } from '@core/missions/progression.model';
 import { stepClaimable } from '@core/missions/progression.store';
 import { Edition } from '@data/editions/edition.model';
 import { currentStep, stepText } from '@data/missions/progression-rules';
-import { NewsItem } from './news';
+import { CatalogCard } from '@data/cards/card.model';
+import { cardImageUrl, fullEditionId } from '@data/cards/card-rules';
+import { HomeNews } from '@data/home/home.model';
+import { newsDateLabel } from '@data/home/default-news';
 
 /**
  * Background of the home hub: a random edition with artwork, never the one shown last time when there is
@@ -16,16 +19,64 @@ export function pickBackground(editions: Edition[], previousId: string | null, r
   return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
 }
 
-export type HubSlide =
-  | { kind: 'edition'; edition: Edition }
-  | { kind: 'news'; news: NewsItem; image: string | null };
+/** A card shown whole on a slide. */
+export interface SlideCard {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+}
 
-/** Carousel of the hub: featured edition, then each news item with the artwork of its edition when known. */
-export function hubSlides(edition: Edition | null, news: NewsItem[], editions: Edition[] = []): HubSlide[] {
+/** A slide of the hub's carousel: its text on one side and up to three whole cards on the other. */
+export interface HubSlide {
+  key: string;
+  /** "Edición destacada" or "Noticias · mié 4 nov · 20:00". */
+  eyebrow: string;
+  /** ISO date of a news item, for its <time>. */
+  date: string | null;
+  title: string;
+  text: string;
+  cards: SlideCard[];
+  /** Its button: where it leads (a site URL) and its text. */
+  action: { label: string; url: string } | null;
+}
+
+const RARITY_RANK: Record<string, number> = { GOD: 6, SEC: 5, SR: 4, R: 3, UC: 2, C: 1 };
+
+/** The three rarest cards of an edition with an image (then by number): the featured edition's showcase. */
+export function editionShowcase(editionId: string, cards: readonly CatalogCard[]): CatalogCard[] {
+  return cards
+    .filter((c) => fullEditionId(c) === editionId && !!cardImageUrl(c))
+    .sort((a, b) => (RARITY_RANK[b.meta?.rarity ?? ''] ?? 0) - (RARITY_RANK[a.meta?.rarity ?? ''] ?? 0) || (a.number ?? 0) - (b.number ?? 0))
+    .slice(0, 3);
+}
+
+/** Carousel of the hub: the featured edition (its rarest cards), then each news item with its cards. */
+export function hubSlides(edition: Edition | null, news: readonly HomeNews[], cards: readonly CatalogCard[] = []): HubSlide[] {
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  const view = (c: CatalogCard): SlideCard => ({ id: c.id, name: c.meta?.cardName ?? c.name ?? '', imageUrl: cardImageUrl(c) });
   const slides: HubSlide[] = [];
-  if (edition) slides.push({ kind: 'edition', edition });
-  const art = new Map(editions.map((e) => [e.editionId, e.editionImage ?? null]));
-  for (const item of news) slides.push({ kind: 'news', news: item, image: (item.editionId && art.get(item.editionId)) || null });
+  if (edition) {
+    slides.push({
+      key: `edition-${edition.editionId}`,
+      eyebrow: 'Edición destacada',
+      date: null,
+      title: edition.editionName || edition.editionId,
+      text: edition.editionDescription ?? '',
+      cards: editionShowcase(edition.editionId, cards).map(view),
+      action: { label: 'Ver cartas', url: `/cards?edition=${encodeURIComponent(edition.editionId)}` },
+    });
+  }
+  news.forEach((item, i) => {
+    slides.push({
+      key: item.id ?? `news-${i}`,
+      eyebrow: `Noticias · ${newsDateLabel(item.date)}`,
+      date: item.date,
+      title: item.title,
+      text: item.excerpt,
+      cards: item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c).map(view),
+      action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: item.linkRoute } : null,
+    });
+  });
   return slides;
 }
 

@@ -7,10 +7,11 @@ import { Edition } from '../editions/edition.model';
 import { normalizeSlots, toSaveRequest } from './home-rules';
 import { HomeApi } from './home.api';
 import { SharedLoad } from '../shared/shared-load';
-import { HomeContent } from './home.model';
+import { HomeContent, HomeNews } from './home.model';
+import { DEFAULT_NEWS } from './default-news';
 
 /**
- * Home page content (featured edition + featured deck slots).
+ * Home page content (featured edition, the carousel's news, featured deck slots).
  * Editing works on a draft; `save()` persists it, `cancelEdit()` discards it.
  */
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,8 @@ export class HomeStore {
 
   readonly editing = computed(() => this.draft() !== null);
   readonly content = computed(() => this.draft() ?? this.saved());
+  /** The carousel's news: the saved ones (or the draft's), DEFAULT_NEWS while none were ever saved. */
+  readonly news = computed<HomeNews[]>(() => this.content().news ?? DEFAULT_NEWS);
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
@@ -42,7 +45,7 @@ export class HomeStore {
     this.error.set(null);
     try {
       const data = await firstValueFrom(this.api.get());
-      this.saved.set({ edition: data.edition ?? null, decks: normalizeSlots(data.decks) });
+      this.saved.set({ edition: data.edition ?? null, decks: normalizeSlots(data.decks), news: data.news ?? null });
       this.loaded = true;
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo cargar la portada'));
@@ -51,8 +54,10 @@ export class HomeStore {
     }
   }
 
+  /** A draft of the saved content; its news start from DEFAULT_NEWS when none were ever saved (saving keeps them). */
   startEdit(): void {
-    this.draft.set(structuredClone(this.saved()));
+    const saved = structuredClone(this.saved());
+    this.draft.set({ ...saved, news: saved.news ?? structuredClone(DEFAULT_NEWS) });
   }
 
   cancelEdit(): void {
@@ -61,6 +66,10 @@ export class HomeStore {
 
   setEdition(edition: Edition): void {
     this.draft.update((d) => d && { ...d, edition });
+  }
+
+  setNews(news: HomeNews[]): void {
+    this.draft.update((d) => d && { ...d, news });
   }
 
   setDeck(slot: number, deck: Deck | null): void {

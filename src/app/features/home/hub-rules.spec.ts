@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { Edition } from '@data/editions/edition.model';
 import { hubSlides, nextStep, pickBackground, welcomeNextStep } from './hub-rules';
-import { NewsItem } from './news';
+import { CatalogCard } from '@data/cards/card.model';
+import { HomeNews } from '@data/home/home.model';
 
 const edition = (editionId: string, editionImage: string | null = `${editionId}.webp`): Edition => ({ editionId, editionImage });
-const news = (title: string): NewsItem => ({ date: '2026-01-01', dateLabel: '1 ene 2026', title, excerpt: '' });
+const news = (title: string, cardIds: string[] = [], over: Partial<HomeNews> = {}): HomeNews => ({ date: '2026-11-04T20:00', title, excerpt: '', cardIds, ...over });
+const card = (id: string, edition: string, rarity: string, number = 1): CatalogCard => ({
+  id, name: id, edition, sub_edition: '', number, color_identity: 'R', image_url: `${id}.jpg`, time_stamp: null, meta: { id: `m-${id}`, cardName: id, rarity },
+});
 
 describe('pickBackground', () => {
   it('only picks editions with artwork', () => {
@@ -28,19 +32,28 @@ describe('pickBackground', () => {
 });
 
 describe('hubSlides', () => {
+  const cards = [card('c', 'A', 'C', 3), card('sec', 'A', 'SEC', 9), card('r', 'A', 'R', 2), card('sr', 'A', 'SR', 5), card('other', 'B', 'SEC')];
+
   it('puts the edition before the news', () => {
-    expect(hubSlides(edition('A'), [news('n1'), news('n2')]).map((s) => s.kind)).toEqual(['edition', 'news', 'news']);
+    expect(hubSlides(edition('A'), [news('n1'), news('n2')]).map((s) => s.title)).toEqual(['A', 'n1', 'n2']);
   });
 
-  it('illustrates a news item with its edition artwork when known', () => {
-    const item = { ...news('n1'), editionId: 'A' };
-    expect(hubSlides(null, [item], [edition('A')])[0]).toEqual({ kind: 'news', news: item, image: 'A.webp' });
-    expect(hubSlides(null, [item], [edition('B')])[0]).toEqual({ kind: 'news', news: item, image: null });
-    expect(hubSlides(null, [news('n2')], [edition('A')])[0]).toEqual({ kind: 'news', news: news('n2'), image: null });
+  it("shows the featured edition with its three rarest cards and a button to them", () => {
+    const [slide] = hubSlides(edition('A'), [], cards);
+    expect(slide.cards.map((c) => c.id)).toEqual(['sec', 'sr', 'r']);
+    expect(slide.action).toEqual({ label: 'Ver cartas', url: '/cards?edition=A' });
+  });
+
+  it("shows a news item with its own cards, in its order, and its button when it has one", () => {
+    const [slide] = hubSlides(null, [news('n1', ['r', 'missing', 'sec'], { linkRoute: '/editions', linkLabel: 'A la tienda' })], cards);
+    expect(slide.cards.map((c) => c.id)).toEqual(['r', 'sec']);
+    expect(slide.action).toEqual({ label: 'A la tienda', url: '/editions' });
+    expect(slide.eyebrow.startsWith('Noticias · ')).toBe(true);
+    expect(hubSlides(null, [news('n2')], cards)[0].action).toBeNull();
   });
 
   it('has no edition slide without one', () => {
-    expect(hubSlides(null, [news('n1')]).map((s) => s.kind)).toEqual(['news']);
+    expect(hubSlides(null, [news('n1')]).map((s) => s.title)).toEqual(['n1']);
   });
 });
 

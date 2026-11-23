@@ -60,9 +60,9 @@
   // A special summon (ritual, materialización…): set apart from playing or summoning a card
   --color-sim-special: var(--color-card-p);
   --color-sim-gold: #f5b301;
-  /* The chain and the effects' targets: whose they are (cyan: mine, pink: the rival's) */
-  --color-sim-link-mine: #38bdf8;
-  --color-sim-link-rival: #f472b6;
+  /* The chain and the effects' targets: whose they are (blue: mine, red: the rival's) */
+  --color-sim-link-mine: #3b82f6;
+  --color-sim-link-rival: #ef4444;
   --color-sim-glow: #fde68a;
   --color-sim-moment: #f59e0b;
   /** Text on those colors */
@@ -70,7 +70,7 @@
   --color-sim-on-rival: #fff;
   /** The effect that is activating now (the side panel of a choice): the chain's own color */
   --color-sim-effect-active: var(--color-sim-link-mine);
-  --color-sim-on-effect-active: #04202e;
+  --color-sim-on-effect-active: #fff;
   // Home hub: light text and dark glass over the edition artwork (same in every theme)
   --color-hub-text: #f5f6fa;
   --color-hub-muted: rgb(245 246 250 / 72%);

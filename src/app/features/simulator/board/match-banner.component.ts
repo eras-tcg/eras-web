@@ -188,7 +188,7 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
     }
     .screen.start { cursor: pointer; animation: screen var(--sim-match-start, 2.8s) ease forwards; }
     .screen.end { animation: appear 0.5s ease backwards; }
-    /* A diagonal of light behind the players: cyan from your side, pink from theirs */
+    /* A diagonal of light behind the players: blue from your side, red from theirs */
     .screen::before {
       content: '';
       position: absolute;

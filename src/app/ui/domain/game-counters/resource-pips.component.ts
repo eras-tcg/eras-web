@@ -113,7 +113,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
     }
     :host-context(.arcane) .pip:not(.on) {
       background: conic-gradient(from 0deg at 50% 50%, #4a4f5a 0 25%, #2f343d 25% 50%, #15181d 50% 75%, #23272f 75% 100%);
-      box-shadow: 0 0 0 1px rgb(201 162 75 / 30%), inset 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 60%);
+      box-shadow: 0 0 0 1px var(--arcane-gold-soft), inset 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 60%);
     }
     :host-context(.arcane) .pip.on {
       box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 8px 2px rgb(34 197 94 / 50%);

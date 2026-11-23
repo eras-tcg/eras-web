@@ -249,7 +249,7 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: a ring of light opens from it and a glow fades on it (cyan yours, pink the rival's).
+   * A summoned card lands: a ring of light opens from it and a glow fades on it (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
   burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number): void {

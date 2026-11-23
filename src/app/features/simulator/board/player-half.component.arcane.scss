@@ -182,3 +182,15 @@
     box-shadow: inset 0 0 0 2px var(--arcane-gold), inset 0 3px 10px rgb(0 0 0 / 60%), 0 0 12px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
   }
 }
+
+// The optional effects' buttons under the deck: glass over the vortex, edged in gold
+:host-context(.arcane) .optional-toggle {
+  border-color: var(--arcane-gold-soft);
+  background: color-mix(in srgb, #0c0e12 55%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--arcane-gold-light);
+}
+
+:host-context(.arcane) .optional-toggle:hover {
+  border-color: var(--arcane-gold);
+}

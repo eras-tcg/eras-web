@@ -33,7 +33,7 @@ const MAIN_MENU: HubMenuItem[] = [
   { id: 'play', label: 'Jugar', icon: 'gamepad', route: '/play' },
   { id: 'decks', label: 'Mazos', icon: 'stack', route: '/my-decks' },
   { id: 'editions', label: 'Tienda', icon: 'box', route: '/editions' },
-  { id: 'cards', label: 'Cartas', icon: 'cards', route: '/cards' },
+  { id: 'cards', label: 'Cartas', icon: 'cards', route: '/library' },
   { id: 'social', label: 'Social', icon: 'users', route: '/social' },
 ];
 

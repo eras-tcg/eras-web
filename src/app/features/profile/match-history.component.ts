@@ -137,12 +137,36 @@ interface Row {
       gap: var(--space-1);
     }
     @media (max-width: 40rem) {
+      /* Result and kind on top, the game below, then when and the buttons */
       .row {
         grid-template-columns: minmax(0, 1fr) auto;
+        row-gap: var(--space-2);
       }
-      .kind,
-      .when {
+      .result {
+        grid-row: 1;
+        grid-column: 1;
+      }
+      .kind {
+        grid-row: 1;
+        grid-column: 2;
         justify-self: end;
+      }
+      .main,
+      .when {
+        grid-column: 1 / -1;
+      }
+      .rival-deck {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .watch {
+        grid-column: 2;
+        justify-self: end;
+      }
+      .rival-deck:only-of-type,
+      .watch:first-of-type {
+        grid-column: 1 / -1;
+        justify-self: stretch;
       }
     }
   `,

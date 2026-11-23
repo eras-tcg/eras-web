@@ -7,6 +7,7 @@ import { AppScreen } from '@core/pwa/app-screen';
 import { ConnectionService } from '@core/server/connection.service';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
 import { WarmupScreenComponent } from '@core/server/warmup-screen.component';
+import { CardBackService } from '@core/theme/card-back.service';
 import { ThemeService } from '@core/theme/theme.service';
 
 @Component({
@@ -55,6 +56,8 @@ import { ThemeService } from '@core/theme/theme.service';
 export class App {
   // Created at startup so the saved theme is applied before the first page renders
   protected readonly theme = inject(ThemeService);
+  // Likewise the card back the player chose
+  protected readonly cardBack = inject(CardBackService);
   protected readonly warmup = inject(ServerWarmupService);
   protected readonly connection = inject(ConnectionService);
   protected readonly screen = inject(AppScreen);

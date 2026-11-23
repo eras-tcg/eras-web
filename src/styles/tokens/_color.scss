@@ -79,7 +79,8 @@
 
   /**
    * The back of a card: the game's card back art (a `background` value). It covers the card's border too, and the
-   * color under it is the art's own black edge, so no other color shows around it.
+   * color under it is the art's own black edge, so no other color shows around it. The art is the one the player chose
+   * (--card-back-image, set by CardBackService), the default until then.
    */
-  --color-card-back: #000 url('/images/card-back.png') center / cover no-repeat border-box;
+  --color-card-back: #000 var(--card-back-image, url('/images/card-back.png')) center / cover no-repeat border-box;
 }

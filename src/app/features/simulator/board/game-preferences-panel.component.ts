@@ -3,12 +3,14 @@ import { PlaymatStore } from '@core/auth/playmat.store';
 import { apiErrorMessage } from '@core/http/api-error';
 import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
+import { CardBackService } from '@core/theme/card-back.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { frameImage } from '@ui/domain/image-framer/frame-image';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { BoardPreferences } from './board-preferences';
 import { BoardScreen } from './board-screen';
+import { openCardBackDialog } from './card-back-dialog.component';
 
 type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
 
@@ -56,6 +58,15 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
                 @if (playmat.url()) {
                   <button type="button" [disabled]="playmat.saving()" (click)="removePlaymat()">Quitar</button>
                 }
+              </span>
+            </div>
+            <!-- The back of every face-down card on your screen: chosen (and looked at in detail) in its dialog -->
+            <div class="pref static">
+              <eras-icon name="cards" />
+              <span class="text"><strong>Reverso de las cartas</strong><small>{{ cardBack.current().name }}</small></span>
+              <span class="back-preview" [style.background-image]="'url(' + cardBack.current().src + ')'" aria-hidden="true"></span>
+              <span class="stepper">
+                <button type="button" (click)="chooseBack()">Elegir</button>
               </span>
             </div>
           }
@@ -271,6 +282,13 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       box-shadow: inset 0 0 0 999px rgb(0 0 0 / 20%);
     }
     .playmat-preview.empty { border-style: dashed; box-shadow: none; }
+    .back-preview {
+      flex: none;
+      inline-size: 1.75rem;
+      aspect-ratio: 63 / 88;
+      border-radius: 0.15rem;
+      background: #000 center / cover no-repeat;
+    }
     .text small.error { color: var(--color-danger); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -316,6 +334,12 @@ export class GamePreferencesPanelComponent {
     } catch (e) {
       this.playmatMessage.set({ text: apiErrorMessage(e, 'No se pudo quitar el tapete'), error: true });
     }
+  }
+
+  protected readonly cardBack = inject(CardBackService);
+
+  protected chooseBack(): void {
+    openCardBackDialog(this.modal);
   }
 
   protected readonly prefs = inject(BoardPreferences);

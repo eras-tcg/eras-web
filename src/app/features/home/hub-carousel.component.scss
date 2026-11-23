@@ -28,7 +28,13 @@
   overflow: hidden;
   padding: var(--space-4) var(--space-7) var(--space-6);
   isolation: isolate;
+  cursor: pointer;
   animation: slide-in var(--duration-base) var(--easing-standard);
+}
+
+.slide:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
 }
 
 // The first card's art, blurred and dimmed, gives the slide its color
@@ -104,6 +110,7 @@
 }
 
 .slide-empty {
+  cursor: default;
   display: grid;
   place-items: center;
   color: var(--color-hub-muted);

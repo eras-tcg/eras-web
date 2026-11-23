@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Edition } from '@data/editions/edition.model';
-import { hubSlides, nextStep, pickBackground, welcomeNextStep } from './hub-rules';
+import { editionLink, hubSlides, nextStep, pickBackground, welcomeNextStep } from './hub-rules';
 import { CatalogCard } from '@data/cards/card.model';
 import { HomeNews } from '@data/home/home.model';
 
@@ -38,10 +38,20 @@ describe('hubSlides', () => {
     expect(hubSlides(edition('A'), [news('n1'), news('n2')]).map((s) => s.title)).toEqual(['A', 'n1', 'n2']);
   });
 
-  it("shows the featured edition with its three rarest cards and a button to them", () => {
+  it("shows the featured edition with its three rarest cards and a button to its page", () => {
     const [slide] = hubSlides(edition('A'), [], cards);
+    expect(slide.kind).toBe('edition');
     expect(slide.cards.map((c) => c.id)).toEqual(['sec', 'sr', 'r']);
-    expect(slide.action).toEqual({ label: 'Ver cartas', url: '/cards?edition=A' });
+    expect(slide.action).toEqual({ label: 'Ver edición', url: '/editions/A' });
+  });
+
+  it("sends a news link to an edition's cards to the edition's page", () => {
+    expect(editionLink('/cards?edition=E1.3')).toBe('/editions/E1.3');
+    expect(editionLink('/cards?edition=E1&color=R')).toBe('/cards?edition=E1&color=R');
+    expect(editionLink('/deck-builder')).toBe('/deck-builder');
+    const [slide] = hubSlides(null, [news('n', [], { linkRoute: '/cards?edition=E1.3', linkLabel: 'Ver' })], cards);
+    expect(slide.kind).toBe('news');
+    expect(slide.action).toEqual({ label: 'Ver', url: '/editions/E1.3' });
   });
 
   it("shows a news item with its own cards, in its order, and its button when it has one", () => {

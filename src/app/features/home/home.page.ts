@@ -20,9 +20,10 @@ import { ChoiceDialogComponent, ChoiceDialogData } from '@ui/surfaces/choice-dia
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { HubCarouselComponent } from './hub-carousel.component';
 import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
-import { NextStep, hubSlides, nextStep, welcomeNextStep } from './hub-rules';
+import { HubSlide, NextStep, hubSlides, nextStep, welcomeNextStep } from './hub-rules';
 import { HubScreenComponent } from './hub-screen.component';
 import { MissionGuideFlow } from './mission-guide-flow';
+import { NewsDialogComponent } from './news-dialog.component';
 import { editNews } from './news-edit-dialog.component';
 import { WelcomeFlow } from './welcome-flow';
 
@@ -105,6 +106,16 @@ export class HomePage {
   /** A slide's button: a page of the site. */
   protected openSlide(url: string): void {
     void this.router.navigateByUrl(url);
+  }
+
+  /** A slide clicked: the featured edition goes to its page, a news item opens in full (its button, if any, leads on). */
+  protected async selectSlide(slide: HubSlide): Promise<void> {
+    if (slide.kind === 'edition') {
+      if (slide.action) this.openSlide(slide.action.url);
+      return;
+    }
+    const url = await firstValueFrom(this.modal.open<string, HubSlide>(NewsDialogComponent, { data: slide }).closed);
+    if (url) this.openSlide(url);
   }
 
   private async loadMyDecks(userId: string): Promise<void> {

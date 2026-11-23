@@ -54,7 +54,7 @@
       </ol>
     </div>
   } @else {
-    <eras-hub-carousel [slides]="slides()" [loading]="home.loading()" (opened)="openSlide($event)" />
+    <eras-hub-carousel [slides]="slides()" [loading]="home.loading()" (opened)="openSlide($event)" (selected)="selectSlide($event)" />
   }
 
   @if (step(); as next) {

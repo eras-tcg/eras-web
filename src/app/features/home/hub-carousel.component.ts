@@ -9,7 +9,7 @@ const SLIDE_MS = 7000;
 
 /**
  * Carousel of the home hub (featured edition, news), each slide a showcase: its text and button beside up to three
- * whole cards. `opened` gives the URL of a slide's button. Advances by itself every few seconds,
+ * whole cards. `opened` gives the URL of a slide's button, `selected` the slide clicked anywhere else. Advances by itself every few seconds,
  * except while the pointer or the focus is on it, the tab is hidden or the user prefers reduced motion.
  */
 @Component({
@@ -34,6 +34,8 @@ export class HubCarouselComponent {
 
   /** A slide's button: the site URL it leads to. */
   readonly opened = output<string>();
+  /** A slide clicked (or Enter on it) anywhere but its button. */
+  readonly selected = output<HubSlide>();
 
   protected readonly index = signal(0);
   protected readonly paused = signal(false);

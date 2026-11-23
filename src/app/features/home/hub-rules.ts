@@ -29,7 +29,9 @@ export interface SlideCard {
 /** A slide of the hub's carousel: its text on one side and up to three whole cards on the other. */
 export interface HubSlide {
   key: string;
-  /** "Edición destacada" or "Noticias · mié 4 nov · 20:00". */
+  /** The featured edition (a click goes to its page) or a news item (a click opens it). */
+  kind: 'edition' | 'news';
+  /** "Edición destacada" or the news' day, "mié 4 nov". */
   eyebrow: string;
   /** ISO date of a news item, for its <time>. */
   date: string | null;
@@ -50,6 +52,12 @@ export function editionShowcase(editionId: string, cards: readonly CatalogCard[]
     .slice(0, 3);
 }
 
+/** An edition's page (its shop): where a link to its cards ("/cards?edition=E1.3") leads instead; other links as they are. */
+export function editionLink(url: string): string {
+  const match = /^\/cards\?edition=([^&#]+)$/.exec(url);
+  return match ? `/editions/${match[1]}` : url;
+}
+
 /** Carousel of the hub: the featured edition (its rarest cards), then each news item with its cards. */
 export function hubSlides(edition: Edition | null, news: readonly HomeNews[], cards: readonly CatalogCard[] = []): HubSlide[] {
   const byId = new Map(cards.map((c) => [c.id, c]));
@@ -58,23 +66,25 @@ export function hubSlides(edition: Edition | null, news: readonly HomeNews[], ca
   if (edition) {
     slides.push({
       key: `edition-${edition.editionId}`,
+      kind: 'edition',
       eyebrow: 'Edición destacada',
       date: null,
       title: edition.editionName || edition.editionId,
       text: edition.editionDescription ?? '',
       cards: editionShowcase(edition.editionId, cards).map(view),
-      action: { label: 'Ver cartas', url: `/cards?edition=${encodeURIComponent(edition.editionId)}` },
+      action: { label: 'Ver edición', url: `/editions/${encodeURIComponent(edition.editionId)}` },
     });
   }
   news.forEach((item, i) => {
     slides.push({
       key: item.id ?? `news-${i}`,
+      kind: 'news',
       eyebrow: newsDateLabel(item.date),
       date: item.date,
       title: item.title,
       text: item.excerpt,
       cards: item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c).map(view),
-      action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: item.linkRoute } : null,
+      action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: editionLink(item.linkRoute) } : null,
     });
   });
   return slides;

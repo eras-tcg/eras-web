@@ -2,8 +2,14 @@
   <div class="slide slide-empty"><eras-spinner /></div>
 } @else if (slide(); as current) {
   @let lead = current.cards[0];
-  <!-- A showcase: the text on one side, the cards whole (their own shape) on the other, over the first card's art blurred -->
-  <article class="slide" [class.has-cards]="current.cards.length > 0" [style.--slide-art]="lead?.imageUrl ? 'url(' + lead.imageUrl + ')' : null" [attr.aria-label]="current.title">
+  <!-- A showcase: the text on one side, the cards whole (their own shape) on the other, over the first card's art blurred.
+       The whole slide answers a click: the edition's page, or the news item in full -->
+  <article
+    class="slide"
+    tabindex="0"
+    (click)="selected.emit(current)"
+    (keydown.enter)="$event.target === $event.currentTarget && selected.emit(current)"
+    [class.has-cards]="current.cards.length > 0" [style.--slide-art]="lead?.imageUrl ? 'url(' + lead.imageUrl + ')' : null" [attr.aria-label]="current.title">
     <div class="slide-body">
       <span class="eyebrow">
         @if (current.date) {
@@ -17,7 +23,7 @@
         <p class="slide-text">{{ current.text }}</p>
       }
       @if (current.action; as action) {
-        <button erasButton size="sm" type="button" class="slide-action" (click)="opened.emit(action.url)">{{ action.label }} <eras-icon name="chevron-right" /></button>
+        <button erasButton size="sm" type="button" class="slide-action" (click)="$event.stopPropagation(); opened.emit(action.url)">{{ action.label }} <eras-icon name="chevron-right" /></button>
       }
     </div>
     @if (current.cards.length) {

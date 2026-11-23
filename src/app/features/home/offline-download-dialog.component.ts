@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { AndroidApp, offersAndroidApp } from '@core/pwa/android-app';
+import { DesktopApp, offersDesktopApp } from '@core/pwa/desktop-app';
 import { InstallPrompt } from '@core/pwa/install-prompt';
 import { AppOffline, AppReadiness } from '@core/pwa/app-offline';
 import { StorageUsage, costlyConnection, formatBytes, persistStorage, storageUsage } from '@core/pwa/device-storage';
@@ -32,8 +33,8 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
 }
 
 /**
- * "Descargar ERAS", the game on this device in one place. First the app itself: the APK on Android (when the site
- * publishes it), otherwise installing the page (the browser's prompt, or how to do it by hand on iPhone). Then what it
+ * "Descargar ERAS", the game on this device in one place. First the app itself: the APK on Android or the installer on
+ * Windows (when the site publishes them), otherwise installing the page (the browser's prompt, or how to do it by hand on iPhone). Then what it
  * needs to open and play against the bot without the connection. The app itself (code, engine, starter decks) is the service worker's (it shows how far it got); the card
  * pictures of the starter decks and of the player's saved decks are downloaded here on request, with the progress, an
  * estimate of the size, a way to cancel, and the device's storage. Asks the browser to keep the storage (persist).
@@ -51,6 +52,12 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
           @if (androidOffer()) {
             <p>La app de ERAS para Android: en pantalla completa y se actualiza sola.</p>
             <button erasButton type="button" (click)="openAndroidApp()"><eras-icon name="download" /> Descargar la app para Android</button>
+          } @else if (desktopOffer()) {
+            <p>ERAS para Windows: en su propia ventana, con acceso directo en el escritorio y se actualiza sola.</p>
+            <a erasButton [href]="desktopApp.exe()" download="ERAS-Setup.exe"><eras-icon name="download" /> Descargar para Windows</a>
+            <p class="muted note">
+              Windows puede avisar que el programa no es reconocido: toca «Más información» y luego «Ejecutar de todas formas».
+            </p>
           } @else if (installer.offer() !== 'none') {
             <p>Con su propio ícono, en pantalla completa y sin la barra del navegador.</p>
             <button erasButton type="button" (click)="install()"><eras-icon name="download" /> Instalar ERAS</button>
@@ -184,6 +191,7 @@ export function connectionWarning(connection: ReturnType<typeof costlyConnection
     .row > eras-icon { flex: none; inline-size: 1.4rem; block-size: 1.4rem; margin-block-start: 0.15rem; color: var(--color-primary); }
     .grow { flex: 1; min-inline-size: 0; }
     .install p { margin-block-end: var(--space-3); }
+    .install .note { margin-block: var(--space-2) 0; font-size: var(--font-size-xs); }
     .part {
       padding-block-start: var(--space-3);
       border-block-start: var(--border-width) solid var(--color-border);
@@ -210,6 +218,11 @@ export class OfflineDownloadDialogComponent {
   protected readonly canKeep = canKeepPictures();
   protected readonly installer = inject(InstallPrompt);
   private readonly androidApp = inject(AndroidApp);
+  protected readonly desktopApp = inject(DesktopApp);
+  /** "Descargar para Windows" (a Windows PC, outside the Windows app, when the site publishes the installer). */
+  protected readonly desktopOffer = computed(() =>
+    offersDesktopApp({ windows: this.desktopApp.windows, desktop: false, exe: this.desktopApp.exe() }),
+  );
   private readonly modal = inject(ModalService);
   /** "Descargar la app para Android" (an Android phone, outside the app, when the site publishes the APK). */
   protected readonly androidOffer = computed(() =>
@@ -245,6 +258,7 @@ export class OfflineDownloadDialogComponent {
       clearTimeout(this.readinessTimer);
     });
     this.androidApp.lookUp();
+    this.desktopApp.lookUp();
     void this.checkApp();
     void this.refresh();
     void this.refreshStorage();

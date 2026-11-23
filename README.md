@@ -197,6 +197,32 @@ an APK (`core/pwa/android-app.ts` reads `/app/app-update.json`; other platforms 
   `core/http/api-config.spec.ts` (the app's environment and build), `core/pwa/android-app.spec.ts`, and the Android
   app's part of `version.service.spec.ts`.
 
+### The Windows app
+
+A Windows program (Electron, `desktop/`) that opens the site in its own window: `https://www.erastcg.com`, the same
+code and the same service worker as the browser, so it plays offline and updates like the installed PWA. Downloaded
+from the site (`/app/ERAS-Setup.exe`, not in the Microsoft Store). On a Windows PC "Descargar ERAS" offers
+**Descargar para Windows** first once the site publishes it (`core/pwa/desktop-app.ts` reads `/app/desktop.json`).
+
+- **What it is:** `desktop/main.cjs` (one maximized window, no menu bar, F11 for full screen, other sites open in the
+  player's browser, a page asking for the connection when the site was never loaded, `desktop/offline.html`) and
+  `desktop/preload.cjs`, which sets `window.erasDesktop`: the site then runs as the installed app (`AppMode` `'app'`,
+  `isDesktopApp()` in `core/pwa/app-mode.ts`: local-first, offline games, no "Instalar ERAS").
+- **Updates:** the site updates itself inside it (ngsw, `VersionService`), so players never reinstall for a web
+  change. A new installer is needed only when `desktop/` changes: bump `desktop/package.json`'s version.
+- **CI** (job `desktop`, `windows-latest`): `npm ci && npm run dist` in `desktop/` (electron-builder, NSIS one-click
+  installer per user, shortcuts on the desktop and the start menu, the icon from `public/icons/icon-512.png`), then
+  `desktop.json` (`{version, exe}`); the job `site` puts both under `app/` (eras-tcg/infra `deploy-site.sh` uploads
+  the installer as a download).
+- **Not code-signed:** Windows SmartScreen warns about an unknown publisher ("Más información" → "Ejecutar de todas
+  formas"; the dialog says so). Signing needs a code-signing certificate (yearly cost) and electron-builder's `win`
+  signing options with its secrets.
+- **Locally:** `cd desktop && npm ci && npm start` (opens the site; `ERAS_URL=http://localhost:4200/` for a local
+  build). `npm run dist` builds `desktop/release/ERAS-Setup.exe`; on a PC without Developer Mode extracting
+  electron-builder's signing tools fails on symbolic links: add `-c.win.signAndEditExecutable=false` (the exe then
+  keeps Electron's icon) or turn Developer Mode on.
+- **Tests:** `core/pwa/desktop-app.spec.ts`, `core/pwa/app-mode.spec.ts`.
+
 ### Updating the vendored engine
 
 The engine lives in [`vendor/eras-engine`](vendor/eras-engine/README.md) (built from DriveManager/eras-engine; the

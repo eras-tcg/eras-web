@@ -1,6 +1,7 @@
 /**
  * Where the site runs: the browser's tab ('browser') or the installed app ('app': its own window, opened from the
- * home screen; display-mode standalone or fullscreen, or an iPhone home screen app; or the Android app, Capacitor). The installed app is local-first
+ * home screen; display-mode standalone or fullscreen, or an iPhone home screen app; or the Android app, Capacitor; or the
+ * Windows app, Electron). The installed app is local-first
  * (it does not wake the server until the player asks for something that needs it), always in landscape and full
  * screen; the browser's tab keeps the site as it always was.
  */
@@ -30,7 +31,15 @@ export function isNativeApp(win: object | undefined = typeof window === 'undefin
   }
 }
 
+/**
+ * The Windows app (Electron, desktop/): its window opens the site itself, and its preload says so with `erasDesktop`.
+ * Unlike the Android app, the site there is the site (served from its address, with its service worker).
+ */
+export function isDesktopApp(win: object | undefined = typeof window === 'undefined' ? undefined : window): boolean {
+  return !!(win as { erasDesktop?: unknown } | undefined)?.erasDesktop;
+}
+
 /** Decided once, when the site starts: a tab put in full screen later is still the browser. */
 export function detectAppMode(win?: Pick<Window, 'matchMedia' | 'navigator'>): AppMode {
-  return isNativeApp(win) || isInstalledApp(win) ? 'app' : 'browser';
+  return isNativeApp(win) || isDesktopApp(win) || isInstalledApp(win) ? 'app' : 'browser';
 }

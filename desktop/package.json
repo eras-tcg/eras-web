@@ -1,0 +1,44 @@
+{
+  "name": "eras-desktop",
+  "productName": "ERAS",
+  "version": "1.0.0",
+  "description": "ERAS TCG para Windows",
+  "private": true,
+  "main": "main.cjs",
+  "author": "ERAS TCG",
+  "scripts": {
+    "start": "electron .",
+    "dist": "node prepare.cjs && electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.erastcg.eras",
+    "productName": "ERAS",
+    "artifactName": "ERAS-Setup.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "offline.html",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ERAS"
+    },
+    "publish": null
+  }
+}

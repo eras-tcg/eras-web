@@ -1,27 +1,28 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CardBack, CardBackService } from '@core/theme/card-back.service';
+import { CardBackService, cardBackOf } from '@core/theme/card-back.service';
 import { CardArtViewerComponent, CardArtViewerData } from '@ui/domain/card-art-viewer/card-art-viewer.component';
 import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
+import { DetailFrameComponent } from '@ui/surfaces/detail-frame/detail-frame.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 
 /**
- * Chooses the card back: the one looked at in large (it leans toward the pointer; a click opens it in the 3D viewer,
- * as a card of the catalog) beside every back to choose from. ←/→ walk through them; "Usar este reverso" keeps it.
+ * Chooses the card back, in the frame of the card's detail (one size whatever is shown, so turning the card never
+ * moves it): the back looked at in large, as tall as the panel (it leans toward the pointer; a click opens it in the
+ * 3D viewer), and beside it every back to look at and "Usar este reverso" to keep it.
  */
 @Component({
   selector: 'eras-card-back-dialog',
-  imports: [ModalComponent, CardImageComponent, ButtonComponent],
+  imports: [DetailFrameComponent, CardImageComponent, ButtonComponent],
   template: `
-    <eras-modal title="Reverso de las cartas" size="lg" (closed)="ref.close()">
-      <div class="body" (keydown.arrowleft)="step(-1)" (keydown.arrowright)="step(1)" tabindex="-1">
-        <button type="button" class="large" [attr.aria-label]="'Ver ' + seen().name + ' en detalle'" (click)="openViewer()">
+    <eras-detail-frame (closed)="ref.close()">
+      <div class="body">
+        <button type="button" class="large" aria-label="Ver el reverso en pantalla completa" (click)="openViewer()">
           <eras-card-image [src]="seen().src" [alt]="seen().name" noShine live eager />
         </button>
         <div class="side">
-          <h3 class="name">{{ seen().name }}</h3>
+          <h2 class="name">{{ seen().name }}</h2>
           <div class="list" role="listbox" aria-label="Reversos">
             @for (back of backs; track back.id) {
               <button
@@ -33,45 +34,43 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
                 (click)="seenId.set(back.id)"
               >
                 <eras-card-image [src]="back.src" [alt]="back.name" noShine />
-                <span class="label">{{ back.name }}</span>
+                <span>{{ back.name }}</span>
               </button>
             }
           </div>
+          <button erasButton type="button" class="use" [disabled]="seen().id === cardBack.id()" (click)="use()">
+            {{ seen().id === cardBack.id() ? 'En uso' : 'Usar este reverso' }}
+          </button>
         </div>
       </div>
-      <ng-container modal-footer>
-        <button erasButton variant="secondary" type="button" (click)="ref.close()">Cerrar</button>
-        <button erasButton type="button" [disabled]="seen().id === cardBack.id()" (click)="use()">
-          {{ seen().id === cardBack.id() ? 'En uso' : 'Usar este reverso' }}
-        </button>
-      </ng-container>
-    </eras-modal>
+    </eras-detail-frame>
   `,
   styles: `
+    /* The frame's panel holds the body whole: the large back takes its height, the list the rest of the width */
     .body {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: var(--space-5);
-      align-items: start;
-      outline: none;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--space-6);
+      block-size: 100%;
     }
     .large {
-      display: block;
-      inline-size: min(100%, 22rem);
-      justify-self: center;
+      block-size: 100%;
+      aspect-ratio: 63 / 88;
       padding: 0;
       border: 0;
       border-radius: var(--radius-card);
       background: none;
       cursor: zoom-in;
     }
+    .large eras-card-image { block-size: 100%; }
     .large:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
-    .side { display: flex; flex-direction: column; gap: var(--space-3); min-inline-size: 0; }
-    .name { margin: 0; font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-regular); }
+    .side { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); min-block-size: 0; overflow-y: auto; }
+    .name { margin: 0; font-family: var(--font-family-display); font-size: var(--font-size-2xl); font-weight: var(--font-weight-regular); }
     .list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
       gap: var(--space-3);
+      inline-size: 100%;
     }
     .option {
       display: flex;
@@ -90,9 +89,11 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
     .option:hover { background: var(--color-surface-muted); }
     .option.seen { border-color: var(--color-primary); }
     .option:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-    @media (max-width: 40rem) {
-      .body { grid-template-columns: 1fr; }
-      .large { inline-size: min(100%, 15rem); }
+    /* A phone held upright: the large back over the list, as wide as the panel lets it */
+    @media (orientation: portrait) and (max-width: 44rem) {
+      .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+      .large { justify-self: center; block-size: 100%; max-inline-size: 100%; }
+      .side { overflow: visible; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,12 +106,7 @@ export class CardBackDialogComponent {
 
   /** The back looked at: the one in use until another is clicked. */
   protected readonly seenId = signal(this.cardBack.id());
-  protected readonly seen = computed<CardBack>(() => this.backs.find((b) => b.id === this.seenId()) ?? this.backs[0]);
-
-  protected step(delta: number): void {
-    const i = this.backs.findIndex((b) => b.id === this.seenId());
-    this.seenId.set(this.backs[(i + delta + this.backs.length) % this.backs.length].id);
-  }
+  protected readonly seen = computed(() => cardBackOf(this.seenId()));
 
   protected use(): void {
     this.cardBack.id.set(this.seenId());
@@ -122,7 +118,7 @@ export class CardBackDialogComponent {
   }
 }
 
-/** Opens the card back's chooser. */
+/** Opens the card backs, to choose one. */
 export function openCardBackDialog(modal: ModalService): void {
   modal.open(CardBackDialogComponent);
 }

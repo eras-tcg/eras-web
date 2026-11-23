@@ -2,6 +2,8 @@
 export interface ScreenLink {
   route: string;
   label: string;
+  /** The screen as it was left (its tab, folder, search…), when it keeps that in its address. */
+  queryParams?: Record<string, string>;
 }
 
 const HOME: ScreenLink = { route: '/home', label: 'Inicio' };

@@ -15,7 +15,7 @@ import { EditionsStore } from '@data/editions/editions.store';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
-import { GridComponent } from '@ui/layout/grid/grid.component';
+import { FitWidthDirective } from '@ui/layout/fit-grid/fit-width.directive';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
@@ -39,7 +39,7 @@ const PUBLIC_DECKS: ScreenLink = { route: '/public-decks', label: 'Mazos públic
   imports: [
     RouterLink,
     PageComponent,
-    GridComponent,
+    FitWidthDirective,
     CardThumbComponent,
     AlertComponent,
     EmptyStateComponent,
@@ -72,6 +72,16 @@ const PUBLIC_DECKS: ScreenLink = { route: '/public-decks', label: 'Mazos públic
     }
     .in-box:hover { color: var(--color-text); }
     .in-box .dot { inline-size: 0.6rem; block-size: 0.6rem; border-radius: 50%; }
+    .fit {
+      flex: 1;
+      min-block-size: 0;
+    }
+    .copies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, var(--fit-width, 9rem));
+      justify-content: center;
+      gap: var(--space-2);
+    }
     .body {
       display: flex;
       flex: 1;
@@ -95,7 +105,9 @@ export class DeckViewPage {
   private readonly auth = inject(AuthService);
   private readonly modal = inject(ModalService);
   // Opened from the public list: "back" returns there instead of to the player's own decks
-  protected readonly back = (inject(Location).getState() as { from?: string } | null)?.from === FROM_PUBLIC_DECKS.from ? PUBLIC_DECKS : undefined;
+  // Back to the same tab, folder and search it was opened from
+  private readonly arrival = inject(Location).getState() as { from?: string; query?: Record<string, string> } | null;
+  protected readonly back = this.arrival?.from === FROM_PUBLIC_DECKS.from ? { ...PUBLIC_DECKS, queryParams: this.arrival.query } : undefined;
 
   protected readonly deck = signal<Deck | null>(null);
   protected readonly loading = signal(true);

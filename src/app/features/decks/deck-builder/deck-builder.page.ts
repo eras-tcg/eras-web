@@ -59,6 +59,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { FormFieldComponent } from '@ui/forms/form-field/form-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
+import { FitWidthDirective } from '@ui/layout/fit-grid/fit-width.directive';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { WorkbenchComponent } from '@ui/layout/workbench/workbench.component';
@@ -126,6 +127,7 @@ const DRAG_TYPE = 'application/x-eras-card';
     IconComponent,
     SpinnerComponent,
     InViewDirective,
+    FitWidthDirective,
     CollectionPanelComponent,
     FragmentsBarComponent,
     ToggleGroupComponent,
@@ -205,6 +207,8 @@ export class DeckBuilderPage {
   protected readonly shineOf = shineOf;
   /** The deck's cards in its order (by type, as the groups go), all together in one grid. */
   protected readonly entries = computed(() => this.draft.groups().flatMap((g) => g.entries));
+  /** A copy's width / height in the deck's list, its rarity tab above it counted (15 % of its width). */
+  protected readonly copyRatio = 1 / (88 / 63 + 0.15);
 
   // ── Messages ──────────────────────────────────────────────────────────
   protected readonly loadError = signal<string | null>(null);

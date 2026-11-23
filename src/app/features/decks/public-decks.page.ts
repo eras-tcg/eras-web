@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { COLOR_LABELS, CARD_COLORS, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { CardsStore } from '@data/cards/cards.store';
 import {
@@ -31,7 +31,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { TabItem, TabsComponent } from '@ui/surfaces/tabs/tabs.component';
 import { DeckBoxTileComponent } from './deckbox-tile.component';
-import { FROM_PUBLIC_DECKS, PUBLIC_SORT_OPTIONS, deckViewLink } from './deck-links';
+import { PUBLIC_SORT_OPTIONS, deckViewLink, fromPublicDecks } from './deck-links';
 
 /** A criterion chip: a select whose first option is "any". */
 interface Chip {
@@ -286,11 +286,15 @@ export class PublicDecksPage {
   protected readonly store = inject(DecksStore);
   private readonly cards = inject(CardsStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly sortOptions = PUBLIC_SORT_OPTIONS;
   protected readonly coverColumn = COVER_COLUMN;
-  protected readonly sortKey = signal<DeckSortKey>('name');
-  protected readonly search = signal<DeckSearch>({ ...EMPTY_DECK_SEARCH, scope: 'system' });
+  // The tab, folder, search and order live in the address: "back" from a deck (and a reload) returns to them
+  private readonly initial = readQuery(this.route.snapshot.queryParamMap);
+  protected readonly sortKey = signal<DeckSortKey>(this.initial.sort);
+  protected readonly search = signal<DeckSearch>(this.initial.search);
+  private readonly query = computed(() => writeQuery(this.search(), this.sortKey()));
   protected readonly loading = computed(() => this.store.loading() && this.store.publicDecks().length === 0);
 
   private readonly profiles = computed(() => profileDecks(this.store.publicDecks(), this.cards.cards()));
@@ -348,6 +352,10 @@ export class PublicDecksPage {
   });
 
   constructor() {
+    effect(() => {
+      const queryParams = this.query();
+      void this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
+    });
     void this.store.loadPublic();
     // Colors, archetypes, editions and cards of each deck come from the card catalog
     void this.cards.load();
@@ -368,7 +376,7 @@ export class PublicDecksPage {
   }
 
   protected open(deck: Deck): void {
-    void this.router.navigate(deckViewLink(deck.id), { state: FROM_PUBLIC_DECKS });
+    void this.router.navigate(deckViewLink(deck.id), { state: fromPublicDecks(this.query()) });
   }
 
   private tile(id: string, name: string, color: DeckBoxColor, decks: Deck[]): Tile {
@@ -384,4 +392,34 @@ export class PublicDecksPage {
     const community = sortDecks(decks.filter((d) => !d.systemDeck), key, key === 'createdAt' ? 'desc' : 'asc');
     return [...system, ...community];
   }
+}
+
+/** Address keys of the page's state (only what differs from the start: the system's tab, no search, by name). */
+const QUERY = { scope: 'tab', folder: 'ed', text: 'q', color: 'color', archetype: 'arq', summon: 'inv', edition: 'edicion' } as const;
+
+function readQuery(params: { get(key: string): string | null }): { search: DeckSearch; sort: DeckSortKey } {
+  const get = (k: string) => params.get(k) ?? '';
+  const scope: DeckScope = get(QUERY.scope) === 'community' ? 'community' : 'system';
+  const sort = get('orden');
+  return {
+    search: {
+      ...EMPTY_DECK_SEARCH,
+      scope,
+      folder: scope === 'system' ? get(QUERY.folder) : '',
+      text: get(QUERY.text),
+      color: get(QUERY.color),
+      archetype: get(QUERY.archetype),
+      summon: get(QUERY.summon),
+      edition: get(QUERY.edition),
+    },
+    sort: sort === 'username' || sort === 'createdAt' ? sort : 'name',
+  };
+}
+
+function writeQuery(s: DeckSearch, sort: DeckSortKey): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (s.scope === 'community') out[QUERY.scope] = 'community';
+  for (const key of ['folder', 'text', 'color', 'archetype', 'summon', 'edition'] as const) if (s[key]) out[QUERY[key]] = s[key];
+  if (sort !== 'name') out['orden'] = sort;
+  return out;
 }

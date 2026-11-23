@@ -16,3 +16,6 @@ export const deckBuilderQuery = (id: string, copy = false) => (copy ? { id, copy
 
 /** Navigation state of a deck opened from the public list, so its "back" returns there. */
 export const FROM_PUBLIC_DECKS = { from: 'public-decks' };
+
+/** That state with the public list as it was left (its address' query params: tab, folder, search…). */
+export const fromPublicDecks = (query: Record<string, string>) => ({ ...FROM_PUBLIC_DECKS, query });

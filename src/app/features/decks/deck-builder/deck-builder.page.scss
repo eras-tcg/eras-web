@@ -180,6 +180,19 @@ eras-card-thumb {
   overscroll-behavior: none;
 }
 
+// The deck's list takes the room left in the column; its copies are as big as lets all of them fit (--fit-width)
+.deck-list {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.copies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--fit-width, var(--copy-column, 4.75rem)));
+  justify-content: center;
+  gap: var(--space-2);
+}
+
 .metrics-drawer {
   flex: none;
   display: grid;
@@ -216,6 +229,9 @@ eras-card-thumb {
 }
 
 .drawer-body {
+  // Open, the metrics take at most a third of the screen (scrolling inside): the deck's list keeps the rest
+  max-block-size: 32dvh;
+  overflow: auto;
   padding: 0 var(--space-4) var(--space-4);
 }
 
@@ -227,6 +243,16 @@ eras-card-thumb {
 
   .deck-scroll {
     overflow: visible;
+  }
+
+  .drawer-body {
+    max-block-size: none;
+    overflow: visible;
+  }
+
+  // The page scrolls as a whole: the copies keep their usual size
+  .copies {
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--copy-column, 4.75rem), 100%), 1fr));
   }
 }
 

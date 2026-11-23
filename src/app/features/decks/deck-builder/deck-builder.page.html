@@ -184,6 +184,10 @@
         }
 
         <eras-dropzone
+          class="deck-list"
+          [erasFitWidth]="draft.total()"
+          [fitRatio]="copyRatio"
+          [fitGap]="8"
           [active]="dragOver()"
           (dragover)="dragOverDeck($event)"
           (dragleave)="dragOver.set(false)"
@@ -198,8 +202,9 @@
             />
           } @else {
             <!-- Every copy by itself, all types together in the deck's order: each with its finish (the player's finest
-                 first), in grey when lacking; its buttons sit over it (− bottom left, + bottom right, cover top left) -->
-            <eras-grid minColumn="var(--copy-column, 4.75rem)" [gap]="2">
+                 first), in grey when lacking; its buttons sit over it (− bottom left, + bottom right, cover top left).
+                 Sized so that the whole deck fits in its pane without scrolling (erasFitWidth) -->
+            <div class="copies">
               @for (entry of entries(); track entry.card.id) {
                 @for (copy of copies(entry); track $index) {
                   <div
@@ -265,7 +270,7 @@
                   </div>
                 }
               }
-            </eras-grid>
+            </div>
           }
         </eras-dropzone>
       </eras-stack>

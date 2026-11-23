@@ -14,7 +14,7 @@ import { AppToolsComponent } from './app-tools.component';
   imports: [RouterLink, SweepIconComponent, AppToolsComponent],
   template: `
     @if (parent(); as back) {
-      <a class="back" erasSweep="chevron-left" [routerLink]="back.route" [queryParams]="back.queryParams ?? null" [state]="back.state" [attr.aria-label]="'Volver a ' + back.label"></a>
+      <a class="back" erasSweep="chevron-left" wash [routerLink]="back.route" [queryParams]="back.queryParams ?? null" [state]="back.state" [attr.aria-label]="'Volver a ' + back.label"></a>
     }
     <div class="middle"><ng-content /></div>
     @if (!admin) {
@@ -29,9 +29,10 @@ import { AppToolsComponent } from './app-tools.component';
       align-items: flex-start;
       gap: var(--space-3);
     }
-    /* The arrow alone, big; gold sweeps over it (erasSweep) and it leans back */
+    /* The arrow alone, big; gold sweeps over it and washes the row from the window's left edge (erasSweep wash) */
     .back {
       --sweep-size: 2.5rem;
+      --sweep-wash-start: calc(var(--page-gutter-start, var(--layout-gutter)) - var(--space-2));
       margin-inline-start: calc(-1 * var(--space-2));
     }
     .back:hover,

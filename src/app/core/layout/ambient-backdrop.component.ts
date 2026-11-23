@@ -12,14 +12,15 @@ import {
 } from '@angular/core';
 import { MOTE_GONE, Mote, ORBIT_SQUASH, moteCount, moteOpacity, spawnMote, stepMote } from './ambient-dust';
 
-/** Where the vortex's eye sits on the screen (fractions of its width and height). */
-const CENTRE = { x: 0.8, y: 0.55 };
+/** Where the vortex's eye sits on the screen (fractions of its width and height), to the right or the left. */
+const EYE = { end: { x: 0.8, y: 0.55 }, start: { x: 0.22, y: 0.6 } } as const;
+export type AmbientEye = keyof typeof EYE;
 
 /**
  * Behind every screen: the card back's vortex, huge and faint, turning very slowly, and gem dust (gold pentagons,
- * blue motes) falling in a spiral into its eye. Screens with a background of their own cover it (the hub's artwork);
- * `active` false stops it (the game's table). Still when the device asks for reduced motion; paused while the page
- * is hidden.
+ * blue motes) falling in a spiral into its eye. `eye` puts that eye on the right (`end`, behind a page's content) or
+ * on the left (`start`: the hub screens, whose artwork fills the right and fades into it). `active` false stops it
+ * (the game's table). Still when the device asks for reduced motion; paused while the page is hidden.
  */
 @Component({
   selector: 'eras-ambient-backdrop',
@@ -31,20 +32,27 @@ const CENTRE = { x: 0.8, y: 0.55 };
   styles: `
     // Behind the page's content (which has no background of its own), over the body's color
     :host {
+      --eye-x: 80%;
+      --eye-y: 55%;
+
       position: fixed;
       inset: 0;
       z-index: -1;
       overflow: hidden;
       pointer-events: none;
-      background: radial-gradient(80% 70% at 80% 55%, var(--color-ambient-glow), var(--color-bg) 70%);
+      background: radial-gradient(80% 70% at var(--eye-x) var(--eye-y), var(--color-ambient-glow), var(--color-bg) 70%);
+    }
+    :host(.eye-start) {
+      --eye-x: 22%;
+      --eye-y: 60%;
     }
     :host(.off) {
       display: none;
     }
     .vortex {
       position: absolute;
-      inset-block-start: 55%;
-      inset-inline-start: 80%;
+      inset-block-start: var(--eye-y);
+      inset-inline-start: var(--eye-x);
       inline-size: 130vmax;
       aspect-ratio: 1;
       translate: -50% -50%;
@@ -75,11 +83,13 @@ const CENTRE = { x: 0.8, y: 0.55 };
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { 'aria-hidden': 'true', '[class.off]': '!active()' },
+  host: { 'aria-hidden': 'true', '[class.off]': '!active()', '[class.eye-start]': "eye() === 'start'" },
 })
 export class AmbientBackdropComponent {
   /** False where the screen covers it or has its own world (the game's table): hidden and stopped. */
   readonly active = input(true, { transform: booleanAttribute });
+  /** Where its eye sits: on the right (`end`) or on the left (`start`). */
+  readonly eye = input<AmbientEye>('end');
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dust');
 
@@ -88,6 +98,7 @@ export class AmbientBackdropComponent {
     const destroyRef = inject(DestroyRef);
     let start: (() => void) | undefined;
     let stop: (() => void) | undefined;
+    let place: (() => void) | undefined;
 
     afterNextRender(() => {
       const canvas = this.canvas().nativeElement;
@@ -111,8 +122,9 @@ export class AmbientBackdropComponent {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         width = window.innerWidth;
         height = window.innerHeight;
-        cx = width * CENTRE.x;
-        cy = height * CENTRE.y;
+        const eye = EYE[this.eye()];
+        cx = width * eye.x;
+        cy = height * eye.y;
         maxRadius = Math.hypot(Math.max(cx, width - cx), Math.max(cy, height - cy));
         canvas.width = Math.round(width * dpr);
         canvas.height = Math.round(height * dpr);
@@ -172,6 +184,7 @@ export class AmbientBackdropComponent {
       };
       const visibility = () => (document.hidden || !this.active() ? stop?.() : start?.());
 
+      place = resize;
       resize();
       if (this.active()) start();
       window.addEventListener('resize', resize);
@@ -185,5 +198,10 @@ export class AmbientBackdropComponent {
 
     // Stopped where it does not show
     effect(() => (this.active() ? start?.() : stop?.()));
+    // The eye moves (hub ↔ page): the dust starts over around it
+    effect(() => {
+      this.eye();
+      place?.();
+    });
   }
 }

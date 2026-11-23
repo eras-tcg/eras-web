@@ -43,9 +43,36 @@ def mix(a, b, t):
     return '#' + ''.join(f'{round(x + (y - x) * t):02x}' for x, y in zip(a, b))
 
 
-def gem(name, table, faces, bezel=False, glow='#3b82f6'):
-    """table: (light, dark) of the table; faces: per side face (light, dark)."""
+def gem(name, table, faces, bezel=False, glow='#3b82f6', hero=False):
+    """table: (light, dark) of the table; faces: per side face (light, dark). `hero`: the gem in its scene (halo, rays of
+    light and sparkles around it, in a larger canvas), the backdrop of the home's carousel."""
     defs, layers = [], []
+    if hero:
+        # Halo: the gem's blue light on what is behind it
+        defs.append('<radialGradient id="halo" gradientUnits="userSpaceOnUse" cx="256" cy="256" r="380">'
+                    '<stop offset="0" stop-color="#3b82f6" stop-opacity="0.55"/><stop offset="0.45" stop-color="#1d4ed8" stop-opacity="0.22"/>'
+                    '<stop offset="1" stop-color="#1d4ed8" stop-opacity="0"/></radialGradient>')
+        layers.append('<g id="halo"><circle cx="256" cy="256" r="380" fill="url(#halo)"/></g>')
+        # Rayos: thin beams from the gem, fading out; uneven widths and lengths, so they read as light, not a pattern
+        defs.append('<radialGradient id="ray" gradientUnits="userSpaceOnUse" cx="256" cy="256" r="400">'
+                    '<stop offset="0.35" stop-color="#dbeafe" stop-opacity="0.30"/><stop offset="1" stop-color="#dbeafe" stop-opacity="0"/></radialGradient>')
+        rays = []
+        for deg, width, length in [(8, 5, 400), (37, 2.5, 330), (61, 4, 380), (98, 2, 300), (122, 6, 400), (151, 3, 350),
+                                   (188, 4.5, 390), (213, 2, 310), (241, 5, 400), (276, 2.5, 340), (301, 4, 380), (332, 3, 330)]:
+            tip = pt(length, deg)
+            a = pt(R * 0.5, deg - width)
+            b = pt(R * 0.5, deg + width)
+            rays.append(f'<polygon points="{poly([a, tip, b])}"/>')
+        layers.append('<g id="rayos" fill="url(#ray)">' + ''.join(rays) + '</g>')
+        # Destellos: a few four-point sparkles, white and gold
+        sparks = []
+        for deg, dist, size, color in [(28, 300, 10, '#ffffff'), (70, 340, 6, '#fde68a'), (140, 285, 8, '#ffffff'), (200, 330, 5, '#fde68a'),
+                                       (250, 305, 9, '#ffffff'), (318, 345, 6, '#ffffff'), (355, 270, 4, '#fde68a')]:
+            x, y = pt(dist, deg)
+            s4 = size * 0.22
+            star = [(x, y - size), (x + s4, y - s4), (x + size, y), (x + s4, y + s4), (x, y + size), (x - s4, y + s4), (x - size, y), (x - s4, y - s4)]
+            sparks.append(f'<polygon points="{poly(star)}" fill="{color}" opacity="0.85"/>')
+        layers.append('<g id="destellos">' + ''.join(sparks) + '</g>')
     # Resplandor: soft light around the gem
     defs.append(f'<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="55%" stop-color="{glow}" stop-opacity="0.45"/>'
                 f'<stop offset="100%" stop-color="{glow}" stop-opacity="0"/></radialGradient>')
@@ -95,7 +122,8 @@ def gem(name, table, faces, bezel=False, glow='#3b82f6'):
     layers.append(f'<g id="brillos"><polygon points="{poly([s0, s1, s2])}" fill="#ffffff" opacity="0.35"/>'
                   f'<circle cx="{D[1][0] + 10:.1f}" cy="{D[1][1] + 8:.1f}" r="5" fill="#ffffff" opacity="0.85"/>'
                   f'<circle cx="{D[1][0] + 10:.1f}" cy="{D[1][1] + 8:.1f}" r="12" fill="#ffffff" opacity="0.18"/></g>')
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">'
+    box = '-256 -256 1024 1024' if hero else '0 0 512 512'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{box}" width="512" height="512">'
             f'<title>ERAS — {name}</title><defs>{"".join(defs)}</defs>{"".join(layers)}</svg>\n')
 
 
@@ -120,3 +148,7 @@ if __name__ == '__main__':
         with open(f'{out}/{file}.svg', 'w', encoding='utf-8', newline='\n') as f:
             f.write(gem(**v))
         print(file)
+    # The home carousel's backdrop: variant A in its scene
+    with open(f'{out}/gem-hero.svg', 'w', encoding='utf-8', newline='\n') as f:
+        f.write(gem(**VARIANTS['gema-zafiro'], hero=True))
+    print('gem-hero')

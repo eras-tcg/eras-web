@@ -51,15 +51,17 @@
   content: '';
 }
 
-// A slide without cards: the platform's own backdrop instead of a flat color. Night blue, a gold glow and a blue one,
-// fine diagonal lines like a foil card's sheen (fading towards the text), and the ERAS gem whole where the cards would be
+// A slide without cards: the platform's own backdrop instead of a flat color. Night blue with a faint gold glow, and
+// the ERAS gem whole where the cards would be, in its scene (gem-hero.svg, built with the gem in design/logo: its blue
+// halo, soft rays of light and a few sparkles). The scene is twice the gem: --gem is the gem's size, the scene is
+// placed so that the gem keeps 4 % from the right edge and its rays run off the slide
 .slide:not(.has-cards)::before {
+  --gem: min(82cqb, 34cqi);
+
   inset: 0;
   background:
-    url('/favicon.svg') no-repeat right 4% center / auto min(82%, 34cqi),
-    repeating-linear-gradient(115deg, color-mix(in srgb, var(--color-hub-line) 45%, transparent) 0 1px, transparent 1px 0.9rem),
-    radial-gradient(ellipse 55% 85% at 92% 100%, color-mix(in srgb, var(--color-hub-accent) 38%, transparent), transparent 70%),
-    radial-gradient(ellipse 50% 70% at 78% 0%, color-mix(in srgb, var(--color-card-b) 32%, transparent), transparent 70%),
+    url('/images/gem-hero.svg') no-repeat right calc(4% - var(--gem) / 2) center / auto calc(var(--gem) * 2),
+    radial-gradient(ellipse 60% 90% at 100% 100%, color-mix(in srgb, var(--color-hub-accent) 22%, transparent), transparent 70%),
     var(--color-hub-scrim);
   filter: none;
   opacity: 1;

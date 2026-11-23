@@ -27,6 +27,7 @@ import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconButtonComponent } from '@ui/primitives/icon-button/icon-button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { SweepIconComponent } from '@ui/primitives/sweep-icon/sweep-icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { rankTitle } from '@data/ranks/rank.model';
 import { RanksStore } from '@data/ranks/ranks.store';
@@ -56,6 +57,7 @@ import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.comp
     ButtonComponent,
     IconButtonComponent,
     IconComponent,
+    SweepIconComponent,
     SpinnerComponent,
     RankEmblemComponent,
     RankProgressComponent,

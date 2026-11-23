@@ -190,7 +190,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       align-items: center;
       border: 1px solid var(--color-border);
       border-radius: 999px;
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       color: var(--color-text-muted);
     }
     .chip.on {

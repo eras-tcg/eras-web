@@ -5,9 +5,11 @@ import {
   ElementRef,
   afterNextRender,
   booleanAttribute,
+  computed,
   effect,
   inject,
   input,
+  signal,
   viewChild,
 } from '@angular/core';
 import { MOTE_GONE, Mote, ORBIT_SQUASH, moteCount, moteOpacity, spawnMote, stepMote } from './ambient-dust';
@@ -19,8 +21,9 @@ export type AmbientEye = keyof typeof EYE;
 /**
  * Behind every screen: the card back's vortex, huge and faint, turning very slowly, and gem dust (gold pentagons,
  * blue motes) falling in a spiral into its eye. `eye` puts that eye on the right (`end`, behind a page's content) or
- * on the left (`start`: the hub screens, whose artwork fills the right and fades into it). `active` false stops it
- * (the game's table). Still when the device asks for reduced motion; paused while the page is hidden.
+ * on the left (`start`: the hub screens, whose artwork fills the right and fades into it). It stops and hides while a
+ * game is on (the table sets `body.eras-in-game`; the room before it keeps the vortex), and with `active` false.
+ * Still when the device asks for reduced motion; paused while the page is hidden.
  */
 @Component({
   selector: 'eras-ambient-backdrop',
@@ -83,13 +86,17 @@ export type AmbientEye = keyof typeof EYE;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { 'aria-hidden': 'true', '[class.off]': '!active()', '[class.eye-start]': "eye() === 'start'" },
+  host: { 'aria-hidden': 'true', '[class.off]': '!shown()', '[class.eye-start]': "eye() === 'start'" },
 })
 export class AmbientBackdropComponent {
   /** False where the screen covers it or has its own world (the game's table): hidden and stopped. */
   readonly active = input(true, { transform: booleanAttribute });
   /** Where its eye sits: on the right (`end`) or on the left (`start`). */
   readonly eye = input<AmbientEye>('end');
+
+  /** A game's table is up (it marks the body): the table is its own world. */
+  private readonly inGame = signal(false);
+  protected readonly shown = computed(() => this.active() && !this.inGame());
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dust');
 
@@ -182,14 +189,19 @@ export class AmbientBackdropComponent {
         cancelAnimationFrame(frame);
         frame = 0;
       };
-      const visibility = () => (document.hidden || !this.active() ? stop?.() : start?.());
+      const visibility = () => (document.hidden || !this.shown() ? stop?.() : start?.());
 
       place = resize;
       resize();
-      if (this.active()) start();
+      if (this.shown()) start();
       window.addEventListener('resize', resize);
       document.addEventListener('visibilitychange', visibility);
+      const body = document.body;
+      const watchGame = new MutationObserver(() => this.inGame.set(body.classList.contains('eras-in-game')));
+      watchGame.observe(body, { attributes: true, attributeFilter: ['class'] });
+      this.inGame.set(body.classList.contains('eras-in-game'));
       destroyRef.onDestroy(() => {
+        watchGame.disconnect();
         stop?.();
         window.removeEventListener('resize', resize);
         document.removeEventListener('visibilitychange', visibility);
@@ -197,7 +209,7 @@ export class AmbientBackdropComponent {
     });
 
     // Stopped where it does not show
-    effect(() => (this.active() ? start?.() : stop?.()));
+    effect(() => (this.shown() ? start?.() : stop?.()));
     // The eye moves (hub ↔ page): the dust starts over around it
     effect(() => {
       this.eye();

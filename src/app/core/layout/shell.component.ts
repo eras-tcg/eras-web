@@ -57,8 +57,6 @@ export class ShellComponent {
   /** The hub screens (home, Jugar, Social): they fit the window exactly. */
   protected readonly hub = computed(() => /^\/(?:home|play|social)(?:[?#]|$)/.test(this.url()));
 
-  /** The vortex behind the screens (the hub's too, its artwork fading into it); not at a game's table. */
-  protected readonly ambient = computed(() => !inGame(this.url()));
   /** Screens framed by <eras-hub-screen> (artwork on the right): the vortex's eye goes to the left, where it shows. */
   protected readonly artScreen = computed(() =>
     /^\/(?:home|play|social|library|missions|ranking|simulator)(?:[?#]|$)/.test(this.url()),

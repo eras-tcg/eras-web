@@ -1,5 +1,5 @@
-<!-- Behind every screen: the card back's vortex and its gem dust (off at a game's table) -->
-<ng-container *ngComponentOutlet="ambientBackdrop(); inputs: { active: ambient(), eye: artScreen() ? 'start' : 'end' }" />
+<!-- Behind every screen: the card back's vortex and its gem dust (it hides itself while a game is on) -->
+<ng-container *ngComponentOutlet="ambientBackdrop(); inputs: { eye: artScreen() ? 'start' : 'end' }" />
 
 <!-- No navigation bar: each screen draws its own top strip. The header only carries the banners (version, no connection). -->
 <header class="header">

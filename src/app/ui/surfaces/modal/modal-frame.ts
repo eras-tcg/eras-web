@@ -7,7 +7,8 @@ export interface FrameHalves {
   left: string;
 }
 
-/** Bevel of the corners, the notch's half-width at the edge and at its floor, and its depth (px). */
+/** Bevel of the corners, the notch's half-width at the edge and at its floor, and its depth (px); the panel is cut along
+ * the same shape in modal.component.scss (--modal-corner, --modal-notch-*), keep them in step. */
 export const FRAME = { corner: 14, notchOuter: 58, notchInner: 40, notchDepth: 12 } as const;
 
 export function frameHalves(width: number, height: number): FrameHalves {

@@ -2,7 +2,12 @@
 // bottom, each holding a small gem (see modal-frame.ts for the shape)
 :host {
   --modal-width: 32rem;
+  // The frame's shape (keep in step with FRAME in modal-frame.ts): the bevel, and each notch's half-width at the edge
+  // and at its floor, and its depth
   --modal-corner: 14px;
+  --modal-notch-outer: 58px;
+  --modal-notch-inner: 40px;
+  --modal-notch-depth: 12px;
   // The body's foot: what scrolls fades out over it and is gone before the gold frame (and its notch)
   --modal-fade: 2.5rem;
 
@@ -29,17 +34,26 @@
   --modal-width: 96rem;
 }
 
-// The surface, cut at the corners; a breath of the vortex's blue at the top
+// The surface, cut along the gold line: bevelled corners and both notches, nothing of it outside the frame; a breath
+// of the vortex's blue at the top
 .panel {
   position: absolute;
   inset: 0;
   z-index: -1;
   clip-path: polygon(
     var(--modal-corner) 0,
+    calc(50% - var(--modal-notch-outer)) 0,
+    calc(50% - var(--modal-notch-inner)) var(--modal-notch-depth),
+    calc(50% + var(--modal-notch-inner)) var(--modal-notch-depth),
+    calc(50% + var(--modal-notch-outer)) 0,
     calc(100% - var(--modal-corner)) 0,
     100% var(--modal-corner),
     100% calc(100% - var(--modal-corner)),
     calc(100% - var(--modal-corner)) 100%,
+    calc(50% + var(--modal-notch-outer)) 100%,
+    calc(50% + var(--modal-notch-inner)) calc(100% - var(--modal-notch-depth)),
+    calc(50% - var(--modal-notch-inner)) calc(100% - var(--modal-notch-depth)),
+    calc(50% - var(--modal-notch-outer)) 100%,
     var(--modal-corner) 100%,
     0 calc(100% - var(--modal-corner)),
     0 var(--modal-corner)
@@ -107,6 +121,8 @@
 
 .gem.bottom {
   inset-block-start: calc(100% - 6px);
+  // Upside down, as the bottom notch is the top one turned over
+  rotate: 180deg;
   animation-delay: var(--duration-trace);
 }
 

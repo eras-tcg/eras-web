@@ -82,7 +82,7 @@ export interface CardArtViewerData {
       inline-size: 100%;
       block-size: 100%;
       padding: var(--space-4);
-      background: rgb(0 0 0 / 92%);
+      background: rgb(0 0 0 / 72%);
       cursor: zoom-out;
       animation: fade 180ms ease-out both;
     }

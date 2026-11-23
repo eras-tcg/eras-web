@@ -57,6 +57,9 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
             </select>
           </eras-form-field>
           <eras-toggle-group label="Colores" [options]="colorOptions" [selected]="activeColors()" (toggled)="toggleColor($event)" />
+          @if (showOrigin()) {
+            <eras-toggle-group label="Origen" [options]="originOptions" [selected]="[f.origin]" (toggled)="set('origin', $any($event))" />
+          }
           @if (showVisibility()) {
             <eras-toggle-group label="Visibilidad" [options]="visibilityOptions" [selected]="[f.visibility]" (toggled)="set('visibility', $any($event))" />
           }
@@ -69,6 +72,8 @@ export class DeckFiltersBarComponent {
   readonly authors = input<readonly string[]>([]);
   readonly editions = input.required<readonly string[]>();
   readonly showVisibility = input(false, { transform: booleanAttribute });
+  /** Offer the ERAS / community filter (public decks). */
+  readonly showOrigin = input(false, { transform: booleanAttribute });
   readonly panel = input(false, { transform: booleanAttribute });
   readonly shown = input.required<number>();
   readonly total = input.required<number>();
@@ -85,6 +90,11 @@ export class DeckFiltersBarComponent {
     color: `var(--color-card-${c.toLowerCase()})`,
     swatch: true,
   }));
+  protected readonly originOptions: ToggleOption[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'system', label: 'ERAS' },
+    { value: 'community', label: 'Comunidad' },
+  ];
   protected readonly visibilityOptions: ToggleOption[] = [
     { value: 'all', label: 'Todos' },
     { value: 'public', label: 'Públicos' },

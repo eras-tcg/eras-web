@@ -16,6 +16,10 @@ export interface Deck {
   botDeck?: boolean;
   /** Proposed by the system (author ERAS): only these may go to the bot. */
   systemDeck?: boolean;
+  /** A system deck's row in "Mazos públicos": "st" (Structure), "e1" (Bloque E1) or "arquetipo". */
+  systemGroup?: string | null;
+  /** A system deck's place in its row. */
+  systemOrder?: number | null;
 }
 
 /** Body of POST / PUT /api/drive/decklists (manage_decks, own decks only). */

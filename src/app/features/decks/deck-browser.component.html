@@ -17,6 +17,7 @@
       <eras-deck-filters-bar
         panel
         [showVisibility]="showVisibility()"
+        [showOrigin]="showOrigin()"
         [filters]="filters()"
         [authors]="authors()"
         [editions]="editions()"
@@ -64,6 +65,7 @@
       @if (note(); as text) {
         <p class="note">{{ text }}</p>
       }
+      <ng-content select="[deck-sections]" />
       <!-- Two columns on upright phones (40vw), one row in sight on phones held sideways (34dvh), 11rem covers elsewhere -->
       <eras-grid minColumn="var(--cover-column, min(11rem, 40vw, 34dvh))" [gap]="coverGap">
         <ng-content select="[deck-lead]" />

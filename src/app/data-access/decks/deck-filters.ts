@@ -19,12 +19,14 @@ export interface DeckFilters {
   /** Empty = any; otherwise the deck must contain cards of this edition. */
   edition: string;
   visibility: 'all' | 'public' | 'private';
+  /** Public decks: the system's (ERAS), the players' (community) or both. */
+  origin: 'all' | 'system' | 'community';
 }
 
-export const EMPTY_DECK_FILTERS: DeckFilters = { name: '', authors: [], colors: [], edition: '', visibility: 'all' };
+export const EMPTY_DECK_FILTERS: DeckFilters = { name: '', authors: [], colors: [], edition: '', visibility: 'all', origin: 'all' };
 
 export function hasDeckFilters(f: DeckFilters): boolean {
-  return !!f.name.trim() || f.authors.length > 0 || f.colors.length > 0 || !!f.edition || f.visibility !== 'all';
+  return !!f.name.trim() || f.authors.length > 0 || f.colors.length > 0 || !!f.edition || f.visibility !== 'all' || f.origin !== 'all';
 }
 
 /** Colors (in the usual order) and editions of each deck, by deck id. Cards missing from the catalog are ignored. */
@@ -56,11 +58,26 @@ export function filterDecks(decks: readonly Deck[], f: DeckFilters, summaries: R
     if (f.authors.length && !f.authors.includes(deck.username ?? '')) return false;
     if (f.visibility === 'public' && deck.privateDeck) return false;
     if (f.visibility === 'private' && !deck.privateDeck) return false;
+    if (f.origin === 'system' && !deck.systemDeck) return false;
+    if (f.origin === 'community' && deck.systemDeck) return false;
     const summary = summaries.get(deck.id);
     if (f.colors.length && !summary?.colors.some((c) => f.colors.includes(c))) return false;
     if (f.edition && !summary?.editions.includes(f.edition)) return false;
     return true;
   });
+}
+
+/** The rows of the system's decks in "Mazos públicos", in their order. */
+export const SYSTEM_GROUPS: readonly { id: string; label: string }[] = [
+  { id: 'st', label: 'Structure' },
+  { id: 'e1', label: 'Bloque E1' },
+  { id: 'arquetipo', label: 'Arquetipos' },
+];
+
+/** The system's decks by row (SYSTEM_GROUPS, empty rows left out), each row in the system's order. */
+export function systemRows(decks: readonly Deck[]): { id: string; label: string; decks: Deck[] }[] {
+  const system = decks.filter((d) => d.systemDeck).sort((a, b) => (a.systemOrder ?? 0) - (b.systemOrder ?? 0));
+  return SYSTEM_GROUPS.map((g) => ({ ...g, decks: system.filter((d) => (d.systemGroup ?? 'arquetipo') === g.id) })).filter((r) => r.decks.length > 0);
 }
 
 /** Distinct authors, alphabetically. */

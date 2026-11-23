@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
 import { Deck } from './deck.model';
-import { EMPTY_DECK_FILTERS, deckAuthors, deckEditions, filterDecks, hasDeckFilters, summarizeDecks } from './deck-filters';
+import { EMPTY_DECK_FILTERS, deckAuthors, deckEditions, filterDecks, hasDeckFilters, summarizeDecks, systemRows } from './deck-filters';
 
 const card = (id: string, edition: string, color: string, sub = '', colors: string[] = []): CatalogCard => ({
   id,
@@ -49,6 +49,28 @@ describe('filterDecks', () => {
     expect(names(filterDecks(decks, { ...EMPTY_DECK_FILTERS, edition: 'E1.1' }, summaries))).toEqual(['Rojo verde']);
     expect(names(filterDecks(decks, { ...EMPTY_DECK_FILTERS, visibility: 'private' }, summaries))).toEqual(['Rojo verde']);
     expect(filterDecks(decks, { ...EMPTY_DECK_FILTERS, visibility: 'public' }, summaries)).toHaveLength(2);
+  });
+});
+
+describe('system decks', () => {
+  const all = [
+    deck('Comunidad', ['a'], { username: 'ana' }),
+    deck('Arquetipo', ['a'], { systemDeck: true, systemGroup: 'arquetipo', systemOrder: 5 }),
+    deck('ST2', ['a'], { systemDeck: true, systemGroup: 'st', systemOrder: 1 }),
+    deck('ST1', ['a'], { systemDeck: true, systemGroup: 'st', systemOrder: 0 }),
+  ];
+
+  it('filters by origin: ERAS or community', () => {
+    expect(names(filterDecks(all, { ...EMPTY_DECK_FILTERS, origin: 'community' }, summaries))).toEqual(['Comunidad']);
+    expect(names(filterDecks(all, { ...EMPTY_DECK_FILTERS, origin: 'system' }, summaries))).toEqual(['Arquetipo', 'ST2', 'ST1']);
+    expect(hasDeckFilters({ ...EMPTY_DECK_FILTERS, origin: 'system' })).toBe(true);
+  });
+
+  it('groups the system decks in their rows and order, without empty rows', () => {
+    const rows = systemRows(all);
+    expect(rows.map((r) => r.label)).toEqual(['Structure', 'Arquetipos']);
+    expect(names(rows[0].decks)).toEqual(['ST1', 'ST2']);
+    expect(names(rows[1].decks)).toEqual(['Arquetipo']);
   });
 });
 

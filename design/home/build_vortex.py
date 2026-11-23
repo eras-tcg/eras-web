@@ -24,20 +24,28 @@ def smooth(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def arm_profile(s1, r, n_arms, taper):
-    """Where the arms are, 0..1, along the spiral phase `s1` at radius `r`. Without `taper` each arm takes the same share
-    of the turn everywhere; with it the arms are as they are near the eye and widen steadily towards the rim (a softer
-    profile further out)."""
+def arm_profile(s1, reach, n_arms, taper):
+    """Where the arms are, 0..1, along the spiral phase `s1`, `reach` out (0 at the eye, 1 at the edge). Without
+    `taper` each arm takes the same share of the turn everywhere; with it the arms are as they are near the eye and widen
+    steadily towards the edge (a softer profile further out)."""
     c = 0.5 + 0.5 * np.cos(n_arms * s1)
     if not taper:
         return c ** 1.8
-    return c ** (1.8 - 1.5 * smooth(0.25, 1.0, r))
+    return c ** (1.8 - 1.5 * smooth(0.25, 1.0, reach))
 
 
-def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, twist=2.6):
+def box_reach(x, y, box, shape):
+    """How far out a point is in a rectangle of half sizes `box` (a superellipse of exponent `shape`): 1 on its edges'
+    midpoints, the same wherever an arm leaves it."""
+    return ((np.abs(x) / box[0]) ** shape + (np.abs(y) / box[1]) ** shape) ** (1 / shape)
+
+
+def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, twist=2.6, box=None, shape=3):
     """`accent`: the faint edge on one arm. `n_arms`: how many arms. `fade_out`: where (radius, 0..1 at the square's edge)
     it fades out to clear. `taper`: arms widening towards the rim (arm_profile). `twist`: how tightly the arms coil
-    (lower: a more open spiral)."""
+    (lower: a more open spiral). `box`: the half sizes (in the square's units) of the rectangle it is shown in: with
+    `taper`, every arm then reaches its full width where it meets that rectangle's edge, whichever side it leaves by, and
+    all the arms are alike (one color along them by distance, the mist and accent with the arms' symmetry)."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
@@ -47,10 +55,13 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
     # Two spirals with different twist and arm count: their beat gives the field depth instead of a regular pattern
     s1 = a + twist * lr
     s2 = -a * 1 + 1.4 * lr + 0.9
-    arms = arm_profile(s1, r, n_arms, taper)  # the main arms
-    mist = 0.5 + 0.5 * np.cos(2 * s2 + 0.6 * np.sin(5 * s1))
-    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
-    gold_edge *= 0.5 + 0.5 * np.cos(s1)        # on one arm more than the others
+    even = taper and box is not None  # every arm alike (see the docstring)
+    reach = box_reach(x, y, box, shape) if even else r
+    arms = arm_profile(s1, reach, n_arms, taper)  # the main arms
+    mist = 0.5 + 0.5 * np.cos((n_arms if even else 2) * s2 + 0.6 * np.sin(5 * s1))
+    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, reach))
+    if not even:
+        gold_edge *= 0.5 + 0.5 * np.cos(s1)    # on one arm more than the others
 
     night = rgb('#080a16')
     deep = rgb('#0d1b4a')
@@ -61,7 +72,8 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
 
     # Arms run blue→violet along the spiral; mist fills between them with deep blue
     # (whole multiples of the angle only: anything else leaves a seam where the angle wraps around)
-    hue = 0.5 + 0.5 * np.sin(s1 + 0.4)
+    # (even: blue near the eye to violet out, the same on every arm)
+    hue = smooth(0.3, 1.0, reach) if even else 0.5 + 0.5 * np.sin(s1 + 0.4)
     arm_color = blue * (1 - hue[..., None]) + violet * hue[..., None]
     col = night + (deep - night) * (mist[..., None] * 0.9)
     col = col + (arm_color - col) * (arms[..., None] * 0.85)

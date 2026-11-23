@@ -59,7 +59,8 @@ def cardback():
     # Vortex: square, a bit taller than the card's face, opaque out to the corners so its arms reach every edge; its
     # accent a light blue of the palette instead of the home's gold
     vs = round(ih * 1.15)
-    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5), n_arms=ARMS, taper=True, twist=TWIST).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
+    box = (iw / vs, ih / vs)  # the card's half sizes in the vortex's units: every arm widens up to the card's edge
+    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5), n_arms=ARMS, taper=True, twist=TWIST, box=box, shape=SHAPE).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
     inner.alpha_composite(vortex, ((iw - vs) // 2, (ih - vs) // 2))
 
     ys, xs = np.mgrid[0:ih, 0:iw].astype(np.float32)
@@ -67,7 +68,7 @@ def cardback():
     # arms), so the edge's black can follow it
     vx, vy = (xs - iw / 2) / (vs / 2), (ys - ih / 2) / (vs / 2)
     vr = np.hypot(vx, vy) + 1e-6
-    arms = v.arm_profile(np.arctan2(vy, vx) + TWIST * np.log(vr), vr, ARMS, True)
+    arms = v.arm_profile(np.arctan2(vy, vx) + TWIST * np.log(vr), v.box_reach(vx, vy, box, SHAPE), ARMS, True)
 
     # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
     # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms

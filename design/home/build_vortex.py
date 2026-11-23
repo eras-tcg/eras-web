@@ -85,7 +85,7 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False, t
     col = col + (gold - col) * (gold_edge * 0.55)[..., None]
 
     # Transparent at the rim: the slide's own color takes over
-    alpha = 1 - smooth(fade_out[0], fade_out[1], r)
+    alpha = 1 - smooth(fade_out[0], fade_out[1], reach)
     img = np.dstack([np.clip(col, 0, 1), alpha])
     return Image.fromarray((img * 255).round().astype(np.uint8), 'RGBA')
 

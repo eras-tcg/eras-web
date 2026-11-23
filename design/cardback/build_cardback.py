@@ -1,6 +1,6 @@
-"""The ERAS card back, built by layers (no generated imagery), for the web and the simulator: black at the card's edge
-fading into the night blue (no hard border: the black seeps into the design), the color vortex of the home (design/home/build_vortex.py) centered, with a light blue accent, and the ERAS gem
-(variant A, design/logo) set into its eye: sunk in a shadow, reflecting the vortex,
+"""The ERAS card back, built by layers (no generated imagery), for the web and the simulator: a black ground, the
+color vortex of the home (design/home/build_vortex.py) centered on it and fading into it towards the edges, five arms
+with a light blue accent, and the ERAS gem (variant A, design/logo) set into its eye: sunk in a shadow, reflecting the vortex,
 veiled by it, blooming over it. Same size ratio as the old back (472×660), drawn at 2×.
 
     python build_cardback.py <out.png>
@@ -18,12 +18,12 @@ import build_vortex as v  # noqa: E402
 import render_png as gem  # noqa: E402
 
 W, H = 472, 660
-SHAPE = 3  # the dark's outline: 2 an ellipse, higher nearer the card's rectangle
+SHAPE = 3  # the vortex's fade outline: 2 an ellipse, higher nearer the card's rectangle
 TWIST = 1.7  # how tightly the arms coil (the home's: 2.6)
 ARMS = 5  # the vortex's arms (the home's has 3)
 ACCENT = '#38bdf8'  # the vortex's accent arm: a light blue of the palette
 K = 2  # output scale
-NIGHT = (8, 10, 22, 255)
+NIGHT = (0, 0, 0, 255)  # the card's ground: black, the vortex fading into it
 
 
 def arr(im):
@@ -56,19 +56,12 @@ def cardback():
     iw, ih = w, h
     inner = Image.new('RGBA', (iw, ih), NIGHT)
 
-    # Vortex: square, a bit taller than the card's face, opaque out to the corners so its arms reach every edge; its
-    # accent a light blue of the palette instead of the home's gold
+    # Vortex: square, a bit taller than the card's face, fading into the black ground evenly towards the card's edges
+    # (box: the same for every arm, whichever side it leaves by); its accent a light blue of the palette
     vs = round(ih * 1.15)
     box = (iw / vs, ih / vs)  # the card's half sizes in the vortex's units: every arm widens up to the card's edge
-    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(1.1, 1.5), n_arms=ARMS, taper=True, twist=TWIST, box=box, shape=SHAPE).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
+    vortex = v.vortex(vs * 2, accent=ACCENT, fade_out=(0.55, 1.0), n_arms=ARMS, taper=True, twist=TWIST, box=box, shape=SHAPE).filter(ImageFilter.GaussianBlur(6 * 2 * vs / 2048)).resize((vs, vs), Image.LANCZOS)
     inner.alpha_composite(vortex, ((iw - vs) // 2, (ih - vs) // 2))
-
-    ys, xs = np.mgrid[0:ih, 0:iw].astype(np.float32)
-    # Where the arms are (1 on them, 0 in the gaps), from the vortex's own spiral (build_vortex: angle + TWIST·ln r, ARMS
-    # arms), so the edge's black can follow it
-    vx, vy = (xs - iw / 2) / (vs / 2), (ys - ih / 2) / (vs / 2)
-    vr = np.hypot(vx, vy) + 1e-6
-    arms = v.arm_profile(np.arctan2(vy, vx) + TWIST * np.log(vr), v.box_reach(vx, vy, box, SHAPE), ARMS, True)
 
     # The gem in the eye, set into the scene rather than laid on it: it sinks into a shadow, its facets reflect the
     # vortex's tones, the vortex's light veils its girdle, and its own light blooms over the arms
@@ -105,18 +98,7 @@ def cardback():
 
     inner = Image.fromarray((np.clip(scene, 0, 1) * 255).round().astype(np.uint8), 'RGBA')
 
-    # Edge: the vortex comes out of black. The dark grows outwards from the center over a rounded rectangle that fits
-    # the card (a superellipse, 1 at the edges' midpoints), shifted by the spiral: the gaps go dark sooner, the arms
-    # later, so the colors darken along the arms into the black and the arms touch the edge; only the corners and the
-    # gaps at the rim are solid black
-    e = ((np.abs(xs - iw / 2) / (iw / 2)) ** SHAPE + (np.abs(ys - ih / 2) / (ih / 2)) ** SHAPE) ** (1 / SHAPE)
-    e = e + (1 - arms) * 0.22 - arms * 0.08
-    black = np.clip((e - 0.62) / 0.42, 0, 1)
-    black = black * black * (3 - 2 * black)
-    edge = np.zeros((ih, iw, 4), np.uint8)
-    edge[..., 3] = (black * 255).round().astype(np.uint8)
     card = inner
-    card.alpha_composite(Image.fromarray(edge, 'RGBA'))
     return card.convert('RGB')
 
 

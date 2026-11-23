@@ -26,18 +26,17 @@ def smooth(e0, e1, x):
 
 def arm_profile(s1, r, n_arms, taper):
     """Where the arms are, 0..1, along the spiral phase `s1` at radius `r`. Without `taper` each arm takes the same share
-    of the turn everywhere; with it the share grows with the radius, so each arm starts as a thin line at the eye and
-    widens steadily outwards."""
+    of the turn everywhere; with it the arms are as they are near the eye and widen steadily towards the rim (a softer
+    profile further out)."""
     c = 0.5 + 0.5 * np.cos(n_arms * s1)
     if not taper:
         return c ** 1.8
-    share = 0.06 + 0.64 * smooth(0.2, 1.05, r)
-    return smooth(1 - share, 1, c)
+    return c ** (1.8 - 1.2 * smooth(0.3, 1.05, r))
 
 
 def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False):
     """`accent`: the faint edge on one arm. `n_arms`: how many arms. `fade_out`: where (radius, 0..1 at the square's edge)
-    it fades out to clear. `taper`: arms thin at the eye, widening outwards (arm_profile)."""
+    it fades out to clear. `taper`: arms widening towards the rim (arm_profile)."""
     ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
     x, y = (xs + 0.5) / size * 2 - 1, (ys + 0.5) / size * 2 - 1
     r = np.hypot(x, y) + 1e-6
@@ -49,13 +48,7 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False):
     s2 = -a * 1 + 1.4 * lr + 0.9
     arms = arm_profile(s1, r, n_arms, taper)  # the main arms
     mist = 0.5 + 0.5 * np.cos(2 * s2 + 0.6 * np.sin(5 * s1))
-    if taper:
-        # Tapered: no mist near the eye, where it would thicken the thin arms
-        mist = mist * smooth(0.25, 0.85, r)
-        # The accent runs along one side of each arm, as thin as the arm there
-        gold_edge = arm_profile(s1 - 0.55 / n_arms, r, n_arms, True) * (1 - arms) * 2.2 * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
-    else:
-        gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
+    gold_edge = smooth(0.80, 0.97, 0.5 + 0.5 * np.cos(n_arms * s1 - 0.55)) * smooth(0.3, 0.45, r) * (1 - smooth(0.6, 0.88, r))
     gold_edge *= 0.5 + 0.5 * np.cos(s1)        # on one arm more than the others
 
     night = rgb('#080a16')
@@ -73,8 +66,7 @@ def vortex(size, accent='#f5b301', fade_out=(0.6, 1.0), n_arms=3, taper=False):
     col = col + (arm_color - col) * (arms[..., None] * 0.85)
     # Near the eye the arms brighten into ice blue, then the eye itself goes dark
     rim = smooth(0.2, 0.3, r) * (1 - smooth(0.3, 0.55, r))
-    # (tapered: only the arms brighten, no ring around the eye)
-    col = col + (ice - col) * (rim * ((0.05 if taper else 0.35) + 0.5 * arms))[..., None]
+    col = col + (ice - col) * (rim * (0.35 + 0.5 * arms))[..., None]
     eye = 1 - smooth(0.12, 0.26, r)  # under the gem
     col = col + (night - col) * (eye * 0.92)[..., None]
     col = col + (gold - col) * (gold_edge * 0.55)[..., None]

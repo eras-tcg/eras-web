@@ -14,6 +14,8 @@ export interface Deck {
   createdAt?: string | null;
   /** One of the decks the bot may play in ranked Modo solo (set by a simulator administrator). */
   botDeck?: boolean;
+  /** Proposed by the system (author ERAS): only these may go to the bot. */
+  systemDeck?: boolean;
 }
 
 /** Body of POST / PUT /api/drive/decklists (manage_decks, own decks only). */

@@ -123,7 +123,7 @@ export class DeckViewPage {
   protected readonly boxColor = deckBoxColor;
 
   /** A simulator administrator puts the deck in the bot's pool for ranked Modo solo (or takes it out). */
-  protected readonly canSetBotDeck = computed(() => !!this.deck() && this.auth.can('simulator_admin'));
+  protected readonly canSetBotDeck = computed(() => !!this.deck()?.systemDeck && this.auth.can('simulator_admin'));
   protected readonly savingBotDeck = signal(false);
 
   protected async toggleBotDeck(): Promise<void> {

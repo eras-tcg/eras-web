@@ -50,12 +50,14 @@ const PAGE_SIZE = 40;
   templateUrl: './cards.page.html',
   styles: `
     .lacking { filter: grayscale(1); }
-    .filters-head { display: flex; justify-content: flex-end; margin-block-end: var(--space-1); }
+    /* The same floating button folds them (from their panel) and unfolds them (over the cards), with room for its
+       ring and shadow so no edge clips them */
+    .filters-head { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-2) var(--space-2); }
     .toolbar {
       position: sticky;
       z-index: 2;
       inset-block-start: 0;
-      padding-block: var(--space-3);
+      padding: var(--space-3) var(--space-2);
       pointer-events: none;
     }
     /* Floating over the cards: each piece its own small surface, the row itself clear */

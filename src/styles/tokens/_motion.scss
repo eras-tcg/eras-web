@@ -1,6 +1,8 @@
 :root {
   --duration-fast: 120ms;
   --duration-base: 200ms;
+  // A panel folding or unfolding (a split's aside)
+  --duration-slow: 320ms;
   --easing-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --z-header: 100;
@@ -54,5 +56,6 @@
   :root {
     --duration-fast: 0ms;
     --duration-base: 0ms;
+    --duration-slow: 0ms;
   }
 }

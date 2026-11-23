@@ -4,7 +4,7 @@ import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
-import { HubSlide } from './hub-rules';
+import { NewsSlide } from './hub-rules';
 
 /**
  * A news item of the hub's carousel in full, as a pop-up: its day, the news told at length (its paragraphs) and its
@@ -140,7 +140,7 @@ import { HubSlide } from './hub-rules';
 })
 export class NewsDialogComponent {
   protected readonly ref = inject<DialogRef<string>>(DialogRef);
-  protected readonly news = inject<HubSlide>(DIALOG_DATA);
+  protected readonly news = inject<NewsSlide>(DIALOG_DATA);
   /** The news told in full, a paragraph per block (apart by a blank line). */
   protected readonly paragraphs = this.news.body
     .split(/\n\s*\n/)

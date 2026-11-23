@@ -6,7 +6,8 @@ import { currentStep, stepText } from '@data/missions/progression-rules';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl, fullEditionId } from '@data/cards/card-rules';
 import { HomeNews } from '@data/home/home.model';
-import { DEFAULT_NEWS, newsDateLabel } from '@data/home/default-news';
+import { newsDateLabel } from '@data/home/default-news';
+import { announcedEdition, editionPage, newsBody } from '@data/home/news-rules';
 
 /**
  * Background of the home hub: a random edition with artwork, never the one shown last time when there is
@@ -26,95 +27,136 @@ export interface SlideCard {
   imageUrl: string | null;
 }
 
-/** A slide of the hub's carousel: its text on one side and up to three whole cards on the other. */
-export interface HubSlide {
+/** What every slide shows: its text on one side and up to three whole cards on the other. */
+interface SlideBase {
   key: string;
-  /** The featured edition (a click goes to its page) or a news item (a click opens it). */
-  kind: 'edition' | 'news';
   /** "Edición destacada" or the news' day, "mié 4 nov". */
   eyebrow: string;
   /** ISO date of a news item, for its <time>. */
   date: string | null;
   title: string;
   text: string;
-  /** The news told in full, for its pop-up (the excerpt when it has none). */
-  body: string;
-  /** Where a click on the slide leads (the edition's page); null: a news item, it opens in full. */
-  link: string | null;
   cards: SlideCard[];
-  /** Its button: where it leads (a site URL) and its text. */
+}
+
+/** An edition (the featured one, or a news item announcing one): its three rarest cards; a click goes to its page. */
+export interface EditionSlide extends SlideBase {
+  kind: 'edition';
+  link: string;
+}
+
+/**
+ * A news item proper: its cards when it has any (else the vortex with the gem); a click opens it in full, with its
+ * button when it has one.
+ */
+export interface NewsSlide extends SlideBase {
+  kind: 'news';
+  /** The news told in full, for its pop-up. */
+  body: string;
   action: { label: string; url: string } | null;
 }
 
+/** A slide of the hub's carousel, and a row of the news log. */
+export type HubSlide = EditionSlide | NewsSlide;
+
 const RARITY_RANK: Record<string, number> = { GOD: 6, SEC: 5, SR: 4, R: 3, UC: 2, C: 1 };
 
-/** The three rarest cards of an edition with an image (then by number): the featured edition's showcase. */
+/** The three rarest cards of an edition with an image (then by number): an edition's showcase. */
 export function editionShowcase(editionId: string, cards: readonly CatalogCard[]): CatalogCard[] {
   return cards
     .filter((c) => fullEditionId(c) === editionId && !!cardImageUrl(c))
-    .sort((a, b) => (RARITY_RANK[b.meta?.rarity ?? ''] ?? 0) - (RARITY_RANK[a.meta?.rarity ?? ''] ?? 0) || (a.number ?? 0) - (b.number ?? 0))
+    .sort(
+      (a, b) =>
+        (RARITY_RANK[b.meta?.rarity ?? ''] ?? 0) - (RARITY_RANK[a.meta?.rarity ?? ''] ?? 0) ||
+        (a.number ?? 0) - (b.number ?? 0),
+    )
     .slice(0, 3);
 }
 
-/**
- * An edition's page (in Ediciones, "/cards/editions/E1.3"): where a link to its cards ("/cards?edition=E1.3") or to its
- * shop ("/editions/E1.3") leads instead; other links as they are.
- */
-export function editionLink(url: string): string {
-  const match = /^\/cards\?edition=([^&#]+)$/.exec(url) ?? /^\/editions\/([^/?#]+)$/.exec(url);
-  return match ? `/cards/editions/${match[1]}` : url;
+const view = (c: CatalogCard): SlideCard => ({
+  id: c.id,
+  name: c.meta?.cardName ?? c.name ?? '',
+  imageUrl: cardImageUrl(c),
+});
+
+/** The featured edition: its name and description, its showcase. */
+function editionSlide(edition: Edition, cards: readonly CatalogCard[]): EditionSlide {
+  return {
+    key: `edition-${edition.editionId}`,
+    kind: 'edition',
+    eyebrow: 'Edición destacada',
+    date: null,
+    title: edition.editionName || edition.editionId,
+    text: edition.editionDescription ?? '',
+    cards: editionShowcase(edition.editionId, cards).map(view),
+    link: editionPage(edition.editionId),
+  };
 }
 
-/**
- * The page of the edition a home news item's title names ("Llega E1.3: …" → /cards/editions/E1.3), or null; never for
- * the platform's history (its titles mention editions without announcing them: "E1.3 en el simulador").
- */
-function namedEdition(item: HomeNews): string | null {
-  if (item.id?.startsWith('platform-')) return null;
-  const match = /\b(E\d+(?:\.\d+)*)\b/.exec(item.title);
-  return match ? `/cards/editions/${match[1]}` : null;
-}
-
-/** Carousel of the hub: the featured edition (its rarest cards), then each news item with its cards. */
-export function hubSlides(edition: Edition | null, news: readonly HomeNews[], cards: readonly CatalogCard[] = []): HubSlide[] {
-  const byId = new Map(cards.map((c) => [c.id, c]));
-  const view = (c: CatalogCard): SlideCard => ({ id: c.id, name: c.meta?.cardName ?? c.name ?? '', imageUrl: cardImageUrl(c) });
-  const slides: HubSlide[] = [];
-  if (edition) {
-    slides.push({
-      key: `edition-${edition.editionId}`,
+/** A news item: an edition's announcement (its cards, else the edition's showcase) or a news item proper. */
+function newsSlide(
+  item: HomeNews,
+  index: number,
+  cards: readonly CatalogCard[],
+  byId: Map<string, CatalogCard>,
+): HubSlide {
+  const own = item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c);
+  const base = {
+    key: item.id ?? `news-${index}`,
+    eyebrow: newsDateLabel(item.date),
+    date: item.date,
+    title: item.title,
+    text: item.excerpt,
+  };
+  const edition = announcedEdition(item);
+  if (edition)
+    return {
+      ...base,
       kind: 'edition',
-      eyebrow: 'Edición destacada',
-      date: null,
-      title: edition.editionName || edition.editionId,
-      text: edition.editionDescription ?? '',
-      body: edition.editionDescription ?? '',
-      link: `/cards/editions/${encodeURIComponent(edition.editionId)}`,
-      cards: editionShowcase(edition.editionId, cards).map(view),
-      action: null,
-    });
+      cards: (own.length ? own : editionShowcase(edition, cards)).map(view),
+      link: editionPage(edition),
+    };
+  return {
+    ...base,
+    kind: 'news',
+    cards: own.map(view),
+    body: newsBody(item),
+    action: item.linkRoute ? { label: item.linkLabel || 'Ver más', url: item.linkRoute } : null,
+  };
+}
+
+/** The hub's carousel (and the news log): the featured edition, then each news item. */
+export function hubSlides(
+  edition: Edition | null,
+  news: readonly HomeNews[],
+  cards: readonly CatalogCard[] = [],
+): HubSlide[] {
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  return [
+    ...(edition ? [editionSlide(edition, cards)] : []),
+    ...news.map((item, i) => newsSlide(item, i, cards, byId)),
+  ];
+}
+
+/** A month of the news log and its slides, in the order given (newest first). */
+export interface SlideMonth {
+  label: string;
+  items: HubSlide[];
+}
+
+/** The news log's slides by month ("noviembre de 2026"); one without a date goes under "Sin fecha". */
+export function slidesByMonth(slides: readonly HubSlide[]): SlideMonth[] {
+  const months: SlideMonth[] = [];
+  for (const slide of slides) {
+    const date = new Date(slide.date ?? '');
+    const label = Number.isNaN(date.getTime())
+      ? 'Sin fecha'
+      : new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(date);
+    const last = months.at(-1);
+    if (last?.label === label) last.items.push(slide);
+    else months.push({ label, items: [slide] });
   }
-  news.forEach((item, i) => {
-    // An edition's announcement works as the featured edition: a click goes to the edition's page, no pop-up, no
-    // button. It is one when its link leads to an edition (its own link, or the default news' of the same title) or,
-    // a news item of the home with no link, when its title names an edition ("Llega E1.3: El Ciclo del Caos")
-    const route = item.linkRoute || DEFAULT_NEWS.find((d) => d.title === item.title)?.linkRoute || namedEdition(item) || null;
-    const url = route ? editionLink(route) : null;
-    const edition = url?.startsWith('/cards/editions/') ? url : null;
-    slides.push({
-      key: item.id ?? `news-${i}`,
-      kind: 'news',
-      eyebrow: newsDateLabel(item.date),
-      date: item.date,
-      title: item.title,
-      text: item.excerpt,
-      body: item.body || DEFAULT_NEWS.find((d) => d.title === item.title)?.body || item.excerpt,
-      link: edition,
-      cards: item.cardIds.map((id) => byId.get(id)).filter((c): c is CatalogCard => !!c).map(view),
-      action: url && !edition ? { label: item.linkLabel || 'Ver más', url } : null,
-    });
-  });
-  return slides;
+  return months;
 }
 
 export interface NextStep {

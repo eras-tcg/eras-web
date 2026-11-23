@@ -24,8 +24,8 @@ import { HubMenuComponent, HubMenuItem } from './hub-menu.component';
 import { HubSlide, NextStep, hubSlides, nextStep, welcomeNextStep } from './hub-rules';
 import { HubScreenComponent } from './hub-screen.component';
 import { MissionGuideFlow } from './mission-guide-flow';
-import { NewsDialogComponent } from './news-dialog.component';
 import { editNews } from './news-edit-dialog.component';
+import { slideDestination } from './slide-destination';
 import { WelcomeFlow } from './welcome-flow';
 
 /** The site's main menu, in one screen like a game's. */
@@ -105,19 +105,10 @@ export class HomePage {
     });
   }
 
-  /** A slide's button: a page of the site. */
-  protected openSlide(url: string): void {
-    void this.router.navigateByUrl(url);
-  }
-
-  /** A slide clicked: the featured edition goes to its page in Ediciones, a news item opens in full (its button, if any, leads on). */
+  /** A slide clicked: an edition goes to its page in Ediciones, a news item opens in full (its button, if any, leads on). */
   protected async selectSlide(slide: HubSlide): Promise<void> {
-    if (slide.link) {
-      this.openSlide(slide.link);
-      return;
-    }
-    const url = await firstValueFrom(this.modal.open<string, HubSlide>(NewsDialogComponent, { data: slide }).closed);
-    if (url) this.openSlide(url);
+    const url = await slideDestination(slide, this.modal);
+    if (url) void this.router.navigateByUrl(url);
   }
 
   private async loadMyDecks(userId: string): Promise<void> {

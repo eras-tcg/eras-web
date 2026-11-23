@@ -1,20 +1,13 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { CardsStore } from '@data/cards/cards.store';
 import { HomeStore } from '@data/home/home.store';
 import { CardImageComponent } from '@ui/domain/card-image/card-image.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { HubSlide, hubSlides } from './hub-rules';
-import { NewsDialogComponent } from './news-dialog.component';
-
-/** A month of the log and its news, newest first. */
-interface NewsMonth {
-  label: string;
-  items: HubSlide[];
-}
+import { HubSlide, hubSlides, slidesByMonth } from './hub-rules';
+import { slideDestination } from './slide-destination';
 
 /**
  * The news log (the bar's bell): every news item of the platform, newest first and by month, the carousel's and the
@@ -190,32 +183,18 @@ export class NewsLogDialogComponent {
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
 
-  protected readonly months = computed<NewsMonth[]>(() => {
-    const months: NewsMonth[] = [];
-    for (const slide of hubSlides(null, this.home.allNews(), this.cards.cards())) {
-      const date = new Date(slide.date ?? '');
-      const label = Number.isNaN(date.getTime())
-        ? 'Sin fecha'
-        : new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(date);
-      const last = months.at(-1);
-      if (last?.label === label) last.items.push(slide);
-      else months.push({ label, items: [slide] });
-    }
-    return months;
-  });
+  protected readonly months = computed(() =>
+    slidesByMonth(hubSlides(null, this.home.allNews(), this.cards.cards())),
+  );
 
   constructor() {
     void this.home.load();
     void this.cards.load();
   }
 
-  /** A news item in full; an edition's announcement goes to its edition (the log closes on leaving). */
-  protected async open(item: HubSlide): Promise<void> {
-    const url =
-      item.link ??
-      (await firstValueFrom(
-        this.modal.open<string, HubSlide>(NewsDialogComponent, { data: item }).closed,
-      ));
+  /** An edition goes to its page, a news item opens in full; the log closes when leaving for a page. */
+  protected async open(slide: HubSlide): Promise<void> {
+    const url = await slideDestination(slide, this.modal);
     if (!url) return;
     this.ref.close();
     void this.router.navigateByUrl(url);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Edition } from '@data/editions/edition.model';
-import { editionLink, hubSlides, nextStep, pickBackground, welcomeNextStep } from './hub-rules';
+import { HubSlide, hubSlides, nextStep, pickBackground, slidesByMonth, welcomeNextStep } from './hub-rules';
 import { CatalogCard } from '@data/cards/card.model';
 import { HomeNews } from '@data/home/home.model';
 
@@ -40,48 +40,74 @@ describe('hubSlides', () => {
 
   it('shows the featured edition with its three rarest cards, a click leading to its page in Ediciones', () => {
     const [slide] = hubSlides(edition('A'), [], cards);
-    expect(slide.kind).toBe('edition');
+    expect(slide).toMatchObject({ kind: 'edition', link: '/cards/editions/A' });
     expect(slide.cards.map((c) => c.id)).toEqual(['sec', 'sr', 'r']);
-    expect(slide.link).toBe('/cards/editions/A');
-    expect(slide.action).toBeNull();
   });
 
-  it('tells a news item in full: its body, a default one of the same title, or its excerpt', () => {
-    expect(hubSlides(null, [news('n', [], { excerpt: 'corto', body: 'largo' })])[0].body).toBe('largo');
-    expect(hubSlides(null, [news('Llega ERAS 2.0')])[0].body).toContain('ERAS estrena');
-    expect(hubSlides(null, [news('Otra', [], { excerpt: 'corto' })])[0].body).toBe('corto');
+  it("shows an edition's announcement as the edition: its three rarest cards (or its own) and its page", () => {
+    const [slide] = hubSlides(
+      null,
+      [news('Llega A', [], { linkRoute: '/cards/editions/A' })],
+      cards,
+    );
+    expect(slide).toMatchObject({
+      kind: 'edition',
+      link: '/cards/editions/A',
+      eyebrow: 'mié 4 nov',
+    });
+    expect(slide.cards.map((c) => c.id)).toEqual(['sec', 'sr', 'r']);
+    expect(
+      hubSlides(
+        null,
+        [news('Llega A', ['c'], { linkRoute: '/cards/editions/A' })],
+        cards,
+      )[0].cards.map((c) => c.id),
+    ).toEqual(['c']);
   });
 
-  it("treats an edition's announcement as the edition: a click to its page in Ediciones, no button", () => {
-    expect(editionLink('/cards?edition=E1.3')).toBe('/cards/editions/E1.3');
-    expect(editionLink('/editions/E1.3')).toBe('/cards/editions/E1.3');
-    expect(editionLink('/cards?edition=E1&color=R')).toBe('/cards?edition=E1&color=R');
-    expect(editionLink('/deck-builder')).toBe('/deck-builder');
-    const [slide] = hubSlides(null, [news('n', [], { linkRoute: '/cards?edition=E1.3', linkLabel: 'Ver' })], cards);
-    expect(slide.kind).toBe('news');
-    expect(slide.link).toBe('/cards/editions/E1.3');
-    expect(slide.action).toBeNull();
-    // a saved default news item without its link keeps the default's
-    expect(hubSlides(null, [news('Compromiso Y Evolución')])[0].link).toBe('/cards/editions/E1.3');
-    // a home news item with no link whose title names an edition announces it; the platform's history never does
-    expect(hubSlides(null, [news('Llega E1.3: El Ciclo del Caos')])[0].link).toBe('/cards/editions/E1.3');
-    expect(hubSlides(null, [news('E1.3 en el simulador', [], { id: 'platform-x' })])[0].link).toBeNull();
-    expect(hubSlides(null, [news('Llega ERAS 2.0')])[0].link).toBeNull();
-    // any other link stays a button, the news opening in full
-    const [other] = hubSlides(null, [news('m', [], { linkRoute: '/deck-builder', linkLabel: 'Armar' })], cards);
-    expect([other.link, other.action]).toEqual([null, { label: 'Armar', url: '/deck-builder' }]);
-  });
-
-  it("shows a news item with its own cards, in its order, and its button when it has one", () => {
-    const [slide] = hubSlides(null, [news('n1', ['r', 'missing', 'sec'], { linkRoute: '/editions', linkLabel: 'A la tienda' })], cards);
+  it('shows a news item proper with its own cards, in its order, told in full, with its button when it has one', () => {
+    const [slide] = hubSlides(
+      null,
+      [
+        news('n1', ['r', 'missing', 'sec'], {
+          linkRoute: '/missions',
+          linkLabel: 'Ir',
+          body: 'largo',
+        }),
+      ],
+      cards,
+    );
+    expect(slide).toMatchObject({
+      kind: 'news',
+      body: 'largo',
+      action: { label: 'Ir', url: '/missions' },
+    });
     expect(slide.cards.map((c) => c.id)).toEqual(['r', 'sec']);
-    expect(slide.action).toEqual({ label: 'A la tienda', url: '/editions' });
-    expect(slide.eyebrow).toBe('mié 4 nov');
-    expect(hubSlides(null, [news('n2')], cards)[0].action).toBeNull();
+    expect(hubSlides(null, [news('n2')], cards)[0]).toMatchObject({
+      kind: 'news',
+      action: null,
+      cards: [],
+    });
   });
 
   it('has no edition slide without one', () => {
     expect(hubSlides(null, [news('n1')]).map((s) => s.title)).toEqual(['n1']);
+  });
+});
+
+describe('slidesByMonth', () => {
+  it('groups the slides by month, in their order', () => {
+    const slides = hubSlides(null, [
+      news('a', [], { date: '2026-11-20T10:00' }),
+      news('b', [], { date: '2026-11-02T10:00' }),
+      news('c', [], { date: '2026-10-28T10:00' }),
+    ]);
+    expect(
+      slidesByMonth(slides).map((m) => [m.label, m.items.map((i: HubSlide) => i.title)]),
+    ).toEqual([
+      ['noviembre de 2026', ['a', 'b']],
+      ['octubre de 2026', ['c']],
+    ]);
   });
 });
 

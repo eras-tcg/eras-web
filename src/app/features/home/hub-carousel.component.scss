@@ -51,21 +51,32 @@
   content: '';
 }
 
-// A slide without cards: the platform's own backdrop instead of a flat color. Night blue with a faint gold glow, and
-// the ERAS gem whole where the cards would be, in its scene (gem-hero.svg, built with the gem in design/logo: its blue
-// halo, soft rays of light and a few sparkles). The scene is twice the gem: --gem is the gem's size, the scene is
-// placed so that the gem keeps 4 % from the right edge and its rays run off the slide
+// A slide without cards: a vortex of color where the cards would be (vortex.webp, built in design/home: tones curled
+// along a spiral into a dark eye, no shapes), larger than the slide and turning slowly
 .slide:not(.has-cards)::before {
-  --gem: min(82cqb, 34cqi);
+  --vortex: max(170cqb, 60cqi);
 
-  inset: 0;
-  background:
-    url('/images/gem-hero.svg') no-repeat right calc(4% - var(--gem) / 2) center / auto calc(var(--gem) * 2),
-    radial-gradient(ellipse 60% 90% at 100% 100%, color-mix(in srgb, var(--color-hub-accent) 22%, transparent), transparent 70%),
-    var(--color-hub-scrim);
+  inset: auto;
+  inset-block-start: calc(50% - var(--vortex) / 2);
+  inset-inline-start: calc(76% - var(--vortex) / 2);
+  inline-size: var(--vortex);
+  block-size: var(--vortex);
+  background: url('/images/vortex.webp') center / contain no-repeat;
   filter: none;
   opacity: 1;
-  mask-image: none;
+  animation: vortex-turn 90s linear infinite;
+}
+
+@keyframes vortex-turn {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide:not(.has-cards)::before {
+    animation: none;
+  }
 }
 
 .slide:not(.has-cards)::after {
@@ -74,9 +85,9 @@
     linear-gradient(0deg, color-mix(in srgb, var(--color-hub-accent) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
 }
 
-// The gem keeps its own column, as the cards do: the text never runs over it
+// The vortex keeps its own side, as the cards do: the text never runs over its eye
 .slide:not(.has-cards) .slide-body {
-  max-inline-size: 62%;
+  max-inline-size: 58%;
 }
 
 @keyframes slide-in {

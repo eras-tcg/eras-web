@@ -14,32 +14,53 @@ import { HubSlide } from './hub-rules';
   selector: 'eras-news-dialog',
   imports: [ModalComponent, ButtonComponent, IconComponent, CardImageComponent],
   template: `
-    <eras-modal [title]="news.title" [subtitle]="news.eyebrow" size="xl" [class.with-back]="!news.cards.length" (closed)="ref.close()">
+    <eras-modal
+      [title]="news.title"
+      [subtitle]="news.eyebrow"
+      size="xl"
+      [class.with-back]="!news.cards.length"
+      (closed)="ref.close()"
+    >
       @if (!news.cards.length) {
-        <div class="backdrop" aria-hidden="true"><span class="vortex"></span><span class="gem"></span></div>
-      }
-      <div class="story">
-        @for (p of paragraphs; track $index) {
-          <p>{{ p }}</p>
-        }
-      </div>
-      @if (news.cards.length) {
-        <div class="cards">
-          @for (card of news.cards; track card.id) {
-            <eras-card-image [src]="card.imageUrl" [alt]="card.name" eager />
-          }
+        <div class="backdrop" aria-hidden="true">
+          <span class="vortex"></span><span class="gem"></span>
         </div>
       }
+      <!-- A fixed space for the news, so the pop-up is always as tall and its button always at its foot -->
+      <div class="content">
+        <div class="story">
+          @for (p of paragraphs; track $index) {
+            <p>{{ p }}</p>
+          }
+        </div>
+        @if (news.cards.length) {
+          <div class="cards">
+            @for (card of news.cards; track card.id) {
+              <eras-card-image [src]="card.imageUrl" [alt]="card.name" eager />
+            }
+          </div>
+        }
+      </div>
       @if (news.action; as action) {
         <ng-container modal-footer>
-          <button erasButton type="button" (click)="ref.close(action.url)">{{ action.label }} <eras-icon name="chevron-right" /></button>
+          <button erasButton type="button" (click)="ref.close(action.url)">
+            {{ action.label }} <eras-icon name="chevron-right" />
+          </button>
         </ng-container>
       }
     </eras-modal>
   `,
   styles: `
-    .story { display: grid; gap: var(--space-4); max-inline-size: 60ch; font-size: var(--font-size-lg); line-height: 1.6; }
-    .story p { margin: 0; }
+    .story {
+      display: grid;
+      gap: var(--space-4);
+      max-inline-size: 60ch;
+      font-size: var(--font-size-lg);
+      line-height: 1.6;
+    }
+    .story p {
+      margin: 0;
+    }
     /*
      * A news item without cards: the carousel's vortex (vortex.webp, the card back's) on the right, larger than the
      * panel and turning slowly as on the carousel, the ERAS gem still in its eye (0.29 of the vortex); the whole fades
@@ -49,7 +70,6 @@ import { HubSlide } from './hub-rules';
       position: relative;
       isolation: isolate;
       overflow: hidden;
-      min-block-size: min(32rem, calc(100vh - 2 * var(--space-6)));
     }
     .backdrop {
       --vortex: 46rem;
@@ -80,17 +100,33 @@ import { HubSlide } from './hub-rules';
       background: url('/favicon.svg') center / contain no-repeat;
     }
     @keyframes news-vortex-turn {
-      to { rotate: -360deg; }
+      to {
+        rotate: -360deg;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
-      .vortex { animation: none; }
+      .vortex {
+        animation: none;
+      }
     }
-    eras-modal.with-back .story { max-inline-size: min(60ch, 50%); }
+    eras-modal.with-back .story {
+      max-inline-size: min(60ch, 50%);
+    }
     /* A narrow screen keeps the whole width for the text */
     @media (max-width: 40rem) {
-      eras-modal.with-back { min-block-size: 0; }
-      .backdrop { display: none; }
-      eras-modal.with-back .story { max-inline-size: none; }
+      .content {
+        block-size: auto;
+      }
+      .backdrop {
+        display: none;
+      }
+      eras-modal.with-back .story {
+        max-inline-size: none;
+      }
+    }
+    .content {
+      block-size: min(24rem, calc(100vh - 14rem));
+      overflow-y: auto;
     }
     .cards {
       display: grid;

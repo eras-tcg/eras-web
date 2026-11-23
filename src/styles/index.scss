@@ -16,6 +16,7 @@
 @layer base {
   @include meta.load-css('base/document');
   @include meta.load-css('base/transitions');
+  @include meta.load-css('base/controls');
 }
 @layer cdk {
   @include meta.load-css('@angular/cdk/overlay-prebuilt');

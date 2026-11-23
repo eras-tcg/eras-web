@@ -31,10 +31,10 @@ export interface SortOption {
   styles: `
     :host { display: inline-flex; align-items: center; gap: var(--space-2); }
     select {
-      padding: var(--space-2) var(--space-3);
+      padding: var(--space-2) 2.25rem var(--space-2) var(--space-3);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
-      background: var(--color-surface);
+      background-color: var(--color-surface);
       color: var(--color-text);
     }
   `,

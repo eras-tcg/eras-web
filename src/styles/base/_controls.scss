@@ -1,0 +1,166 @@
+// Native form controls in the ERAS look, everywhere and without a component: the dropdowns (`<select>`) and the
+// checkboxes. In the base layer and with zero specificity (`:where`), so a component that styles its own still wins.
+
+// ---- Dropdown ----------------------------------------------------------------------------------------------------
+// Closed: the field with a gold chevron of its own. Open (browsers with customizable selects: Chrome, Edge, the
+// Android app): the list drawn like the app's menus, the chosen option in gold. Elsewhere the open list stays native.
+
+$chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f5b301' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+:where(select:not([multiple], [size])) {
+  appearance: none;
+  padding-inline-end: 2.25rem;
+  background-image: $chevron;
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
+@supports (appearance: base-select) {
+  :where(select:not([multiple], [size])),
+  :where(select:not([multiple], [size]))::picker(select) {
+    appearance: base-select;
+  }
+
+  // The chevron is the field's own (same look where the list stays native)
+  :where(select)::picker-icon {
+    display: none;
+  }
+
+  :where(select)::picker(select) {
+    max-block-size: min(22rem, 60vh);
+    margin-block: var(--space-1);
+    padding: var(--space-1);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-lg);
+    scrollbar-width: thin;
+    // Opens with a short fade and slide
+    opacity: 0;
+    translate: 0 -0.25rem;
+    transition:
+      opacity var(--duration-fast) var(--easing-standard),
+      translate var(--duration-fast) var(--easing-standard),
+      display var(--duration-fast) allow-discrete,
+      overlay var(--duration-fast) allow-discrete;
+  }
+
+  :where(select):open::picker(select) {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    :where(select):open::picker(select) {
+      opacity: 0;
+      translate: 0 -0.25rem;
+    }
+  }
+
+  :where(select) option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  :where(select) option:hover,
+  :where(select) option:focus-visible {
+    background: var(--color-surface-muted);
+    outline: none;
+  }
+
+  :where(select) option:checked {
+    background: color-mix(in srgb, var(--color-sim-gold) 14%, transparent);
+    color: var(--color-sim-gold);
+    font-weight: var(--font-weight-medium);
+  }
+
+  // The check of the chosen option goes at the end, in gold
+  :where(select) option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: var(--color-sim-gold);
+  }
+
+  :where(select) option:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+// ---- Checkbox ----------------------------------------------------------------------------------------------------
+// A rounded box that fills with the gold of the float button, with a dark check.
+
+:where(input[type='checkbox']) {
+  appearance: none;
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin: 0;
+  vertical-align: -0.2rem;
+  border: 2px solid color-mix(in srgb, var(--color-text-muted) 65%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+
+  &::before {
+    content: '';
+    inline-size: 0.7rem;
+    block-size: 0.7rem;
+    background: #2a1a03;
+    clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%);
+    scale: 0;
+    transition: scale var(--duration-fast) var(--easing-standard);
+  }
+
+  &:hover {
+    border-color: var(--color-sim-gold);
+  }
+
+  &:checked,
+  &:indeterminate {
+    border-color: color-mix(in srgb, var(--color-sim-gold) 60%, var(--color-bg));
+    background: linear-gradient(135deg, #f3cf62, var(--color-sim-gold) 55%, #b9821c);
+  }
+
+  &:checked::before {
+    scale: 1;
+  }
+
+  &:indeterminate::before {
+    block-size: 0.18rem;
+    clip-path: none;
+    border-radius: 1px;
+    scale: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(select)::picker(select),
+  :where(input[type='checkbox']),
+  :where(input[type='checkbox'])::before {
+    transition: none;
+  }
+}

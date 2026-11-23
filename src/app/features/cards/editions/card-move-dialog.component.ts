@@ -197,9 +197,10 @@ export interface CardMoveData {
     .field select {
       font: inherit;
       padding: var(--space-2);
+      padding-inline-end: 2.25rem;
       border-radius: var(--radius-sm);
       border: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background-color: var(--color-surface);
       color: var(--color-text);
     }
     .hint {

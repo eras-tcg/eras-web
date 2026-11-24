@@ -232,6 +232,27 @@ export class UsersPage {
     this.fb.ok(`Usuario ${username} creado${roleNote}.${mailNote}`);
   }
 
+  /** Verifies an account by hand, when the player's verification mail never arrived. */
+  protected async verify(user: UserRecord): Promise<void> {
+    const ok = await this.modal.confirm({
+      title: 'Verificar usuario',
+      message: `¿Verificar la cuenta de "${user.username}"? Podrá iniciar sesión sin abrir el correo de verificación.`,
+      confirmLabel: 'Verificar',
+    });
+    if (!ok) return;
+    this.busyId.set(user.id);
+    this.fb.clear();
+    try {
+      await firstValueFrom(this.api.verifyUser(user.id));
+      this.users.update((list) => list.map((u) => (u.id === user.id ? { ...u, verified: true } : u)));
+      this.fb.ok(`Usuario ${user.username} verificado`);
+    } catch (e) {
+      this.fb.fail(e, 'No se pudo verificar el usuario');
+    } finally {
+      this.busyId.set(null);
+    }
+  }
+
   protected async remove(user: UserRecord): Promise<void> {
     const ok = await this.modal.confirm({
       title: 'Eliminar usuario',

@@ -24,6 +24,11 @@ export class UsersAdminApi {
   setPassword(id: string, newPassword: string): Observable<unknown> {
     return this.http.put(this.api.url(`/api/users/set-password/${encodeURIComponent(id)}`), { newPassword });
   }
+  /** Verifies an account by hand (the player never got the mail). */
+  verifyUser(id: string): Observable<unknown> {
+    return this.http.put(this.api.url(`/api/users/verify/${encodeURIComponent(id)}`), {});
+  }
+
   deleteUser(id: string): Observable<unknown> {
     return this.http.delete(this.api.url(`/api/users/delete/${encodeURIComponent(id)}`), { responseType: 'text' });
   }

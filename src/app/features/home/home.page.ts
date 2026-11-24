@@ -26,6 +26,7 @@ import { HubScreenComponent } from './hub-screen.component';
 import { MissionGuideFlow } from './mission-guide-flow';
 import { editNews } from './news-edit-dialog.component';
 import { slideDestination } from './slide-destination';
+import { escapeToQuit } from './desktop-quit';
 import { WelcomeFlow } from './welcome-flow';
 
 /** The site's main menu, in one screen like a game's. */
@@ -79,6 +80,8 @@ export class HomePage {
   protected readonly saveError = signal<string | null>(null);
 
   constructor() {
+    // The Windows app: Escape here asks whether to close it
+    escapeToQuit();
     // A new player is greeted (the first "Bienvenida" step), once per visit
     effect(() => {
       const board = this.progression.board();

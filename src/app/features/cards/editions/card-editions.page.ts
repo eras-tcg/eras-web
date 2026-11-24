@@ -443,17 +443,13 @@ interface EditionForm {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
     }
-    /* The tile lifts on hover, as in the shop */
+    /* On hover the tile lights its edge, as in the shop; it does not move (lifted, a row at the top of the scroll
+       would be cut under the bar) */
     .tile {
       display: block;
       border-radius: var(--radius-lg);
       color: inherit;
       text-decoration: none;
-      transition: transform var(--duration-fast) var(--easing-standard);
-    }
-    .tile:hover,
-    .tile:focus-visible {
-      transform: translateY(-3px);
     }
     .tile:hover eras-edition-tile,
     .tile:focus-visible eras-edition-tile {

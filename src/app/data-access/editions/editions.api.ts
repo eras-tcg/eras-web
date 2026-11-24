@@ -18,6 +18,11 @@ export class EditionsApi {
     return this.http.post<Edition>(this.api.url('/api/drive/editions'), request);
   }
 
+  /** Hides the edition (in development: only admins and testers see it) or shows it to everyone. */
+  setHidden(editionId: string, hidden: boolean): Observable<Edition> {
+    return this.http.put<Edition>(this.api.url(`/api/drive/editions/${encodeURIComponent(editionId)}/hidden`), { hidden });
+  }
+
   /** The edition's cover: the image file is the body. */
   setImage(editionId: string, file: Blob): Observable<Edition> {
     return this.http.put<Edition>(this.api.url(`/api/drive/editions/${encodeURIComponent(editionId)}/image`), file, {

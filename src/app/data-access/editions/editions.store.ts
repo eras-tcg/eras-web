@@ -86,6 +86,16 @@ export class EditionsStore {
     await this.load(true);
   }
 
+  /** Hides an edition from the players (in development) or shows it, and reloads the list. Throws a readable message on failure. */
+  async setHidden(editionId: string, hidden: boolean): Promise<void> {
+    try {
+      await firstValueFrom(this.api.setHidden(editionId, hidden));
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, hidden ? 'No se pudo ocultar la edición' : 'No se pudo mostrar la edición'), { cause: e });
+    }
+    await this.load(true);
+  }
+
   /** Sets an edition's cover and reloads the list. Throws a readable message on failure. */
   async setImage(editionId: string, file: Blob): Promise<void> {
     try {

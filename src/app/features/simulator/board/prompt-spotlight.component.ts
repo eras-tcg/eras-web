@@ -10,8 +10,13 @@ import { LAYER } from './timing';
 
 /** The class of a card lit by the open choice (its glow, global styles). */
 const SPOTLIT = 'eras-spotlit';
-/** Room around a lit card in the backdrop's hole (its glow shows there). */
-const HOLE_PAD = 10;
+/**
+ * Room around a lit card in the backdrop's hole, as a share of the card's longer side: the hole is a soft ellipse
+ * (clear over the card, fading into the backdrop around it), so no edge of it shows.
+ */
+const HOLE_PAD = 0.5;
+/** The hole's clear part, as a share of its ellipse: the card (its corners too) lies inside it. */
+const HOLE_CLEAR = '75%';
 
 function clearMask(el: HTMLElement): void {
   for (const p of ['mask-image', 'mask-size', 'mask-position', 'mask-repeat', 'mask-composite']) {
@@ -119,14 +124,13 @@ export class PromptSpotlightComponent {
     this.holed = backdrop;
     if (!backdrop) return;
     if (!cards.length) return clearMask(backdrop);
-    const holes = cards.map((c) => c.getBoundingClientRect()).map((r) => ({
-      x: r.left - HOLE_PAD,
-      y: r.top - HOLE_PAD,
-      w: r.width + 2 * HOLE_PAD,
-      h: r.height + 2 * HOLE_PAD,
-    }));
+    const holes = cards.map((c) => c.getBoundingClientRect()).map((r) => {
+      const pad = Math.max(r.width, r.height) * HOLE_PAD;
+      return { x: r.left - pad, y: r.top - pad, w: r.width + 2 * pad, h: r.height + 2 * pad };
+    });
     const fill = 'linear-gradient(#000, #000)';
-    const images = [fill, ...holes.map(() => fill)].join(', ');
+    const hole = `radial-gradient(closest-side, #000 ${HOLE_CLEAR}, transparent)`;
+    const images = [fill, ...holes.map(() => hole)].join(', ');
     const sizes = ['100% 100%', ...holes.map((h) => `${h.w}px ${h.h}px`)].join(', ');
     const positions = ['0 0', ...holes.map((h) => `${h.x}px ${h.y}px`)].join(', ');
     Object.assign(backdrop.style, {

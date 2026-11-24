@@ -147,6 +147,9 @@ jobs:
           version=$(node -p "require('./package.json').version")
           mkdir -p ../out/app
           cp release/ERAS-Setup.exe ../out/app/ERAS-Setup.exe
+          # What the installed app reads to update itself (electron-updater, provider generic: /app/)
+          cp release/latest.yml ../out/app/latest.yml
+          cp release/ERAS-Setup.exe.blockmap ../out/app/ERAS-Setup.exe.blockmap
           node -e "require('fs').writeFileSync('../out/app/desktop.json', JSON.stringify({ version: process.argv[1], exe: 'https://www.erastcg.com/app/ERAS-Setup.exe' }, null, 2) + '\n')" "$version"
           cat ../out/app/desktop.json
       - uses: actions/upload-artifact@v4

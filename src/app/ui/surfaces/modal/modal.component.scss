@@ -16,14 +16,6 @@
   color: var(--color-text);
   filter: drop-shadow(0 12px 32px rgb(0 0 0 / 45%));
   isolation: isolate;
-  // A dialog that changes its size while open (one view turning into the next) widens or narrows to it
-  transition: inline-size var(--duration-slow) var(--easing-standard);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :host {
-    transition: none;
-  }
 }
 
 :host(.size-lg) {

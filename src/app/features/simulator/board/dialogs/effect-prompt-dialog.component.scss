@@ -19,11 +19,13 @@
   padding-block-end: var(--space-1);
 }
 
-// One card of the choice (and its hold-to-peek), in the row or in a zone's box
+// One card of the choice (and its hold-to-peek), in the row or in a zone's box. As tall as its card (and its tag,
+// when it has one), not stretched to the row: its frame hugs the card, with no empty space under it
 .slot {
   position: relative;
   display: flex;
   flex: none;
+  align-self: flex-start;
 }
 
 // "Mostrar también las que no cumplen": lit while they are shown

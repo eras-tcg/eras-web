@@ -192,8 +192,10 @@
 .pick { padding: var(--space-1); border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
 .pick:hover { border-color: var(--color-border); }
 .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.pick.chosen, .deck.chosen { border-color: var(--color-hub-accent); }
-.deck { border: 3px solid transparent; border-radius: var(--radius-md); }
+.pick.chosen { border-color: var(--color-hub-accent); }
+// The chosen deck: its card ringed, not the note under it (a deck with a note would get a longer ring)
+.deck eras-deck-cover { border-radius: var(--radius-lg); outline: 3px solid transparent; outline-offset: 2px; }
+.deck.chosen eras-deck-cover { outline-color: var(--color-hub-accent); }
 // A deck with cards the simulator does not run: shown, but it cannot be chosen
 .deck.blocked { position: relative; opacity: 0.55; filter: grayscale(0.6); }
 .deck.blocked eras-deck-cover { pointer-events: none; }

@@ -139,6 +139,9 @@
                 }
               </td>
               <td class="actions">
+                @if (!u.verified) {
+                  <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Verificar ' + u.username" [disabled]="busyId() === u.id" (click)="verify(u)"><eras-icon name="check" /></button>
+                }
                 <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Editar ' + u.username" (click)="edit(u)"><eras-icon name="edit" /></button>
                 <button erasButton variant="ghost" size="sm" type="button" [attr.aria-label]="'Eliminar ' + u.username" [disabled]="busyId() === u.id || isSelf(u)" (click)="remove(u)"><eras-icon name="x" /></button>
               </td>

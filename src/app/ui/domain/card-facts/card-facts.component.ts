@@ -32,6 +32,8 @@ export interface CardFact {
     </dl>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     :host { display: block; }
     :host(.compact) {
       --card-fact-min: 3.5rem;
@@ -47,9 +49,8 @@ export interface CardFact {
       gap: 1px;
       min-inline-size: var(--card-fact-min, 4.5rem);
       padding: var(--card-fact-padding, var(--space-1) var(--space-3));
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
+
+      @include cut-corners.cut-corners(0.5rem, var(--color-surface-muted), var(--color-border));
     }
     .fact.wide { flex-basis: 100%; }
     :host(.grid) dl {

@@ -43,7 +43,7 @@
     (cdkMenuClosed)="game.holdBots(false)"
   ></button>
   <ng-template #gameMenu>
-    <eras-menu aria-label="Menú de partida">
+    <eras-menu floating aria-label="Menú de partida">
       <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
       <button erasMenuItem (triggered)="dialogs.decklist()"><eras-icon name="cards" />Ver mi mazo</button>
       <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>

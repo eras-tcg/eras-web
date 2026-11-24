@@ -199,15 +199,17 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     </ng-template>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     :host { display: block; }
+    /* The game's cut on the tabs, their row and every option (mixins/cut-corners) */
     .tabs {
+      @include cut-corners.cut-corners(0.6rem, var(--color-surface-muted), var(--color-border));
+
       display: flex;
       gap: var(--space-1);
       margin-block-end: var(--space-3);
-      padding: 2px;
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-pill);
-      background: var(--color-surface-muted);
+      padding: 3px;
     }
     .tab {
       display: inline-flex;
@@ -215,10 +217,11 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       align-items: center;
       justify-content: center;
       gap: var(--space-1);
+      --tab-fill: transparent;
+
+      @include cut-corners.cut-corners(0.45rem, var(--tab-fill));
+
       padding: var(--space-1) var(--space-2);
-      border: 0;
-      border-radius: var(--radius-pill);
-      background: none;
       color: var(--color-text-muted);
       font: inherit;
       font-size: var(--font-size-sm);
@@ -227,8 +230,8 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       cursor: pointer;
     }
     .tab eras-icon { flex: none; inline-size: 1rem; block-size: 1rem; }
-    .tab.on { background: var(--color-primary); color: var(--color-on-primary); }
-    .tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .tab.on { --tab-fill: var(--color-primary); color: var(--color-on-primary); }
+    .tab:focus-visible { outline: none; color: var(--color-text); }
     /* The same height on every section (the box keeps its size); a longer one scrolls inside */
     /* One column, or --prefs-columns where there is room (the game's dialog) */
     .prefs {
@@ -244,24 +247,26 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       overscroll-behavior: contain;
     }
     .pref {
+      --pref-fill: var(--color-surface);
+      --pref-edge: var(--color-border);
+
+      @include cut-corners.cut-corners(0.7rem, var(--pref-fill), var(--pref-edge));
+
       display: flex;
       align-items: center;
       gap: var(--space-3);
       inline-size: 100%;
       padding: var(--pref-padding, var(--space-2) var(--space-3));
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
       color: var(--color-text);
       font: inherit;
       text-align: start;
       cursor: pointer;
     }
-    .pref:hover { background: var(--color-surface-muted); }
-    .pref:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .pref:hover { --pref-fill: var(--color-surface-muted); }
+    .pref:focus-visible { --pref-edge: var(--color-focus); outline: none; }
     .pref[aria-checked='true'] {
-      border-color: var(--color-primary);
-      background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+      --pref-edge: var(--color-primary);
+      --pref-fill: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
     }
     .pref > eras-icon { flex: none; inline-size: 1.25rem; block-size: 1.25rem; }
     .text { display: flex; flex: 1; flex-direction: column; gap: 0.1rem; min-inline-size: 0; }
@@ -270,7 +275,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     .tilt { cursor: default; }
     .tilt input { inline-size: 100%; margin-block-start: var(--space-1); accent-color: var(--color-primary); cursor: pointer; }
     .static { cursor: default; }
-    .static:hover { background: var(--color-surface); }
+    .static:hover { --pref-fill: var(--color-surface); }
     .stepper { display: inline-flex; flex: none; align-items: center; gap: var(--space-1); }
     .stepper b { min-inline-size: 4rem; font-size: var(--font-size-sm); text-align: center; }
     .stepper button {

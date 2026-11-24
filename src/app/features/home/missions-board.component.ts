@@ -81,18 +81,8 @@ type MissionsTab = 'periodic' | 'progress';
                     }
                   } @else if (s.locked) {
                     <span class="reward locked-tag" aria-label="Bloqueada"><eras-icon name="lock" /></span>
-                  } @else if (s.id === 'welcome') {
-                    <button type="button" class="reward" [disabled]="!!progression.claiming()" (click)="welcome.start()">
-                      <eras-icon name="sparkles" /> Abrir
-                    </button>
-                  } @else if (s.id === structureStep && s.gems === 0) {
-                    <button type="button" class="reward" [disabled]="!!progression.claiming()" (click)="welcome.pickStructure()">
-                      @if (progression.claiming() === 'welcome|' + s.id) {
-                        <eras-spinner />
-                      } @else {
-                        <eras-icon name="structure" /> Elegir
-                      }
-                    </button>
+                  } @else if (s.id === structureStep && !stepReady(s)) {
+                    <button type="button" class="reward" (click)="welcome.pickStructure()"><eras-icon name="structure" /> Elegir</button>
                   } @else if (!stepReady(s)) {
                     <button type="button" class="reward go" (click)="go(s)">Ir <eras-icon name="chevron-right" /></button>
                   } @else {
@@ -248,12 +238,12 @@ export class MissionsBoardComponent {
 
   /** A claimed step can be done again (without gems): the greeting and the structure decks, or its section. */
   protected canRepeat(s: WelcomeStep): boolean {
-    return s.id === 'welcome' || s.id === STRUCTURE_STEP || stepText(s.id).route !== '/missions';
+    return s.id === STRUCTURE_STEP || stepText(s.id).route !== '/missions';
   }
 
   /** Seen again from "Progreso", with nothing claimed. */
   protected repeat(s: WelcomeStep): void {
-    if (s.id === 'welcome' || s.id === STRUCTURE_STEP) void this.welcome.replay();
+    if (s.id === STRUCTURE_STEP) void this.welcome.replay();
     else void this.go(s);
   }
 

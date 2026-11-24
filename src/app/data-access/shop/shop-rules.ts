@@ -12,10 +12,29 @@ export const BOX_PRICE = 2400;
 export const SUB_EDITION_BOX_PRICE = 1200;
 /** A structure deck (ST1, ST2…), whole. */
 export const STRUCTURE_PRICE = 500;
+/** The first four structure decks: the first of them an account takes is free, each of the others costs this. */
+export const STARTERS: readonly string[] = ['ST1', 'ST2', 'ST3', 'ST4'];
+export const STARTER_PRICE = 250;
 
 /** A structure deck has an ST code (ST1, ST2…): it sells itself whole, not in packs. */
 export function isStructure(editionId: string): boolean {
   return editionId.toUpperCase().startsWith('ST');
+}
+
+/** One of the first four structure decks (ST1–ST4). */
+export function isStarter(editionId: string): boolean {
+  return STARTERS.includes(editionId.toUpperCase());
+}
+
+/** The account already has one of the first four structure decks. */
+export function ownsStarter(owned: Iterable<string>): boolean {
+  return [...owned].some(isStarter);
+}
+
+/** What a structure deck costs to an account that has `owned`: one of ST1–ST4 free while it has none of them. */
+export function structurePrice(editionId: string, owned: Iterable<string>): number {
+  if (!isStarter(editionId)) return STRUCTURE_PRICE;
+  return ownsStarter(owned) ? STARTER_PRICE : 0;
 }
 
 /** A sub-edition has a dotted code (E1.1, E1.2…); editions and structures do not (E1, ST1…). */
@@ -39,12 +58,12 @@ export function boxPrice(editionId: string): number {
 }
 
 /**
- * What an edition sells: a structure deck, itself whole; any other edition, a pack (its type drawn at random, see
- * packOdds) and, with a box configured, the booster box. Never a chosen pack type: the point of buying is not
- * knowing which one comes.
+ * What an edition sells (`owned`: the account's structure decks, which set a structure deck's price): a structure
+ * deck, itself whole; any other edition, a pack (its type drawn at random, see packOdds) and, with a box configured,
+ * the booster box. Never a chosen pack type: the point of buying is not knowing which one comes.
  */
-export function shopProducts(edition: Edition): ShopProduct[] {
-  if (isStructure(edition.editionId)) return [{ kind: 'structure', name: 'Structure deck', price: STRUCTURE_PRICE }];
+export function shopProducts(edition: Edition, owned: Iterable<string> = []): ShopProduct[] {
+  if (isStructure(edition.editionId)) return [{ kind: 'structure', name: 'Structure deck', price: structurePrice(edition.editionId, owned) }];
   if (!canSimulatePack(edition)) return [];
   const products: ShopProduct[] = [{ kind: 'pack', name: 'Sobre', price: PACK_PRICE }];
   const packs = edition.boxConfig?.totalPacks ?? 0;
@@ -149,9 +168,9 @@ export interface OpeningRequest {
 }
 
 /** The product an opening belongs to (null when the edition does not sell it). */
-export function productFor(edition: Edition, request: OpeningRequest): ShopProduct | null {
+export function productFor(edition: Edition, request: OpeningRequest, owned: Iterable<string> = []): ShopProduct | null {
   const kind = request.mode === 'box' || request.mode === 'structure' ? request.mode : 'pack';
-  return shopProducts(edition).find((p) => p.kind === kind) ?? null;
+  return shopProducts(edition, owned).find((p) => p.kind === kind) ?? null;
 }
 
 /** The query that opens `product` (a pack's type is drawn by the server, and the opening learns it then). */

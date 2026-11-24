@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CatalogCard } from '../cards/card.model';
 import { BoxEntry, Edition } from '../editions/edition.model';
-import { BOX_PRICE, PACK_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, altArtOdds, boxContents, boxPrice, fromPercent, isSubEdition, openingQuery, packOdds, productFor, shopProducts, toPercent } from './shop-rules';
+import { BOX_PRICE, PACK_PRICE, STARTER_PRICE, STRUCTURE_PRICE, SUB_EDITION_BOX_PRICE, altArtOdds, boxContents, boxPrice, fromPercent, isSubEdition, openingQuery, packOdds, productFor, shopProducts, toPercent } from './shop-rules';
 
 const pack = (name: string) => ({ name, cardsPerRarity: { C: 6, UC: 3, R: 1, SR: 0, SEC: 0 } });
 
@@ -27,9 +27,19 @@ describe('shopProducts', () => {
 describe('structure decks', () => {
   it('sell themselves whole, never in packs', () => {
     const st = { editionId: 'ST1', packTypes: [pack('Normal')] };
-    expect(shopProducts(st)).toEqual([{ kind: 'structure', name: 'Structure deck', price: STRUCTURE_PRICE }]);
+    expect(shopProducts(st)).toEqual([{ kind: 'structure', name: 'Structure deck', price: 0 }]);
     expect(productFor(st, { mode: 'structure' })?.kind).toBe('structure');
     expect(openingQuery(st, shopProducts(st)[0])).toEqual({ edition: 'ST1', mode: 'structure' });
+  });
+
+  it('give the first of ST1–ST4 free, the other three at the starter price and the rest at the usual price', () => {
+    const st1 = { editionId: 'ST1', packTypes: [] };
+    const st5 = { editionId: 'ST5', packTypes: [] };
+    expect(shopProducts(st1, ['ST6'])[0].price).toBe(0);
+    expect(shopProducts(st1, new Set(['ST3']))[0].price).toBe(STARTER_PRICE);
+    expect(productFor(st1, { mode: 'structure' }, ['ST2'])?.price).toBe(STARTER_PRICE);
+    expect(shopProducts(st5)[0].price).toBe(STRUCTURE_PRICE);
+    expect(shopProducts(st5, ['ST1'])[0].price).toBe(STRUCTURE_PRICE);
   });
 });
 

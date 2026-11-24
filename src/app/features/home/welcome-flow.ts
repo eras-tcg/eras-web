@@ -7,9 +7,9 @@ import { StructurePickerDialogComponent } from './structure-picker-dialog.compon
 import { WelcomeDialogComponent } from './welcome-dialog.component';
 
 /**
- * The first steps of the "Bienvenida", told rather than only paid: the greeting (which claims the first step) leads
- * straight to choosing the structure deck, which then opens on the booster result page. The home greets a player
- * whose first step is unclaimed once per visit to the site.
+ * The first step of the "Bienvenida", told rather than only paid: the greeting leads straight to choosing one of
+ * ST1–ST4 (free: the first of them), which then opens on the booster result page. The home greets a player who has
+ * not taken one yet, once per visit to the site.
  */
 @Injectable({ providedIn: 'root' })
 export class WelcomeFlow {
@@ -17,11 +17,11 @@ export class WelcomeFlow {
   private readonly router = inject(Router);
   private greeted = false;
 
-  /** Greets once, when the board says the first step is still unclaimed. */
+  /** Greets once, when the board says the first step (taking one of ST1–ST4) is not done yet. */
   greetIfNew(board: ProgressionBoard | null): void {
     if (this.greeted || !board) return;
     const first = board.welcome[0];
-    if (!first || first.claimed) return;
+    if (!first || first.claimed || first.progress >= first.target) return;
     this.greeted = true;
     void this.start();
   }
@@ -33,7 +33,7 @@ export class WelcomeFlow {
     if (next === 'pick') await this.pickStructure();
   }
 
-  /** Both again from "Progreso", only to look at: nothing is claimed and no deck is given. */
+  /** Both again from "Progreso", only to look at: no deck is taken. */
   async replay(): Promise<void> {
     const data = { replay: true };
     const next = await firstValueFrom(this.modal.open<'pick'>(WelcomeDialogComponent, { width: 'min(40rem, 96vw)', data }).closed);

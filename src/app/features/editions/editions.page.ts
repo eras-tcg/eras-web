@@ -34,7 +34,7 @@ export class EditionsPage {
   protected readonly wallet = inject(WalletStore);
   private readonly modal = inject(ModalService);
 
-  protected readonly products = (edition: Edition) => shopProducts(edition);
+  protected readonly products = (edition: Edition) => shopProducts(edition, this.wallet.structures());
   /** The shelves: editions (packs and boxes) and structure decks, each only when it has something. */
   protected readonly shelves = computed(() => {
     const all = this.store.editions();

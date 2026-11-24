@@ -43,7 +43,7 @@ export class EditionShopPage {
   protected readonly owned = (product: ShopProduct) => product.kind === 'structure' && this.wallet.structures().has(this.editionId());
   protected readonly products = computed(() => {
     const edition = this.edition();
-    return edition ? shopProducts(edition) : [];
+    return edition ? shopProducts(edition, this.wallet.structures()) : [];
   });
   protected readonly pack = computed(() => this.products().find((p) => p.kind === 'pack') ?? null);
   protected readonly structure = computed(() => this.products().some((p) => p.kind === 'structure'));

@@ -1,22 +1,19 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { ProgressionStore } from '@core/missions/progression.store';
 import { EditionsStore } from '@data/editions/editions.store';
 import { isStructure } from '@data/shop/shop-rules';
-import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 
 /**
  * The greeting of a new player: the four structure decks' artwork, a few words about the world and what the
- * "Bienvenida" gives. Its button claims the first step (its gems) and closes with 'pick', so the structure deck
- * picker comes next.
+ * "Bienvenida" gives. Its button closes with 'pick', so the structure deck picker comes next.
  */
 @Component({
   selector: 'eras-welcome-dialog',
-  imports: [ModalComponent, ButtonComponent, IconComponent, AlertComponent],
+  imports: [ModalComponent, ButtonComponent, IconComponent],
   template: `
     <eras-modal title="Bienvenida" size="lg" (closed)="ref.close()">
       <div class="hero" aria-hidden="true">
@@ -30,16 +27,12 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
         de la era dorada luchan por el mismo mundo. Hoy empieza tu historia: elige tu bando, arma tu mazo y deja tu marca.
       </p>
       <ul class="gifts">
-        <li><eras-icon name="gem" /> <span><strong>100 gemas</strong> para empezar</span></li>
         <li><eras-icon name="structure" /> <span><strong>Un structure deck gratis</strong> a tu elección</span></li>
         <li><eras-icon name="target" /> <span><strong>Misiones de bienvenida</strong> que te guían y premian paso a paso</span></li>
       </ul>
-      @if (progression.error(); as message) {
-        <eras-alert tone="danger">{{ message }}</eras-alert>
-      }
       <ng-container modal-footer>
-        <button erasButton type="button" [loading]="!!progression.claiming()" (click)="start()">
-          <eras-icon name="sparkles" /> {{ replay ? 'Continuar' : 'Reclamar y elegir mi mazo' }}
+        <button erasButton type="button" (click)="ref.close('pick')">
+          <eras-icon name="sparkles" /> {{ replay ? 'Continuar' : 'Elegir mi mazo' }}
         </button>
       </ng-container>
     </eras-modal>
@@ -82,9 +75,8 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 })
 export class WelcomeDialogComponent {
   protected readonly ref = inject<DialogRef<'pick'>>(DialogRef);
-  /** Seen again from "Progreso": the button only goes on to the structure decks, nothing is claimed. */
+  /** Seen again from "Progreso": the structure decks come next only to look at. */
   protected readonly replay = inject<{ replay?: boolean } | null>(DIALOG_DATA, { optional: true })?.replay ?? false;
-  protected readonly progression = inject(ProgressionStore);
   private readonly auth = inject(AuthService);
   private readonly editions = inject(EditionsStore);
 
@@ -100,9 +92,5 @@ export class WelcomeDialogComponent {
 
   constructor() {
     void this.editions.load();
-  }
-
-  protected async start(): Promise<void> {
-    if (this.replay || (await this.progression.claimStep('welcome'))) this.ref.close('pick');
   }
 }

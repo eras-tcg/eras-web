@@ -1,6 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ProgressionStore, STRUCTURE_STEP } from '@core/missions/progression.store';
 import { WalletStore } from '@core/wallet/wallet.store';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
@@ -9,7 +8,7 @@ import { DecksStore } from '@data/decks/decks.store';
 import { Edition } from '@data/editions/edition.model';
 import { EditionsStore } from '@data/editions/editions.store';
 import { structureDeck, structureList, structureLore, structureStyle } from '@data/missions/structure-decks';
-import { isStructure } from '@data/shop/shop-rules';
+import { isStarter } from '@data/shop/shop-rules';
 import { CardThumbComponent } from '@ui/domain/card-thumb/card-thumb.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
@@ -21,16 +20,16 @@ import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
 
 /**
- * The "Elige tu structure deck" step: the covers of the structure decks not owned yet; one opens its philosophy, its
- * story and its card list (a card opens its detail). Choosing one (after confirming) claims the step, which gives
- * it free, and closes with its edition id so the caller can open it.
+ * The "Elige tu structure deck" step: the covers of ST1–ST4; one opens its philosophy, its story and its card list (a
+ * card opens its detail). Choosing one (after confirming) takes it free in the shop (the first of ST1–ST4 costs
+ * nothing) and closes with its edition id so the caller can open it.
  */
 @Component({
   selector: 'eras-structure-picker-dialog',
   imports: [ModalComponent, ButtonComponent, IconComponent, AlertComponent, GridComponent, CardThumbComponent, SpinnerComponent],
   template: `
     <eras-modal [title]="current() ? (current()!.editionName ?? current()!.editionId) : 'Elige tu structure deck'" [subtitle]="subtitle()" size="xl" (closed)="ref.close()">
-      @if (progression.error(); as message) {
+      @if (wallet.error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }
       @if (current(); as edition) {
@@ -84,11 +83,11 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
       }
       <ng-container modal-footer>
         @if (current(); as edition) {
-          <button erasButton variant="secondary" type="button" [disabled]="!!progression.claiming()" (click)="viewing.set(null)">
+          <button erasButton variant="secondary" type="button" [disabled]="taking()" (click)="viewing.set(null)">
             <eras-icon name="chevron-left" /> Ver los otros
           </button>
           @if (!replay) {
-            <button erasButton type="button" [loading]="!!progression.claiming()" (click)="choose(edition)">Elegir este mazo</button>
+            <button erasButton type="button" [loading]="taking()" (click)="choose(edition)">Elegir este mazo</button>
           }
         }
       </ng-container>
@@ -149,8 +148,7 @@ export class StructurePickerDialogComponent {
   protected readonly ref = inject<DialogRef<string>>(DialogRef);
   /** Seen again from "Progreso": every structure deck (owned ones too), only to look at. */
   protected readonly replay = inject<{ replay?: boolean } | null>(DIALOG_DATA, { optional: true })?.replay ?? false;
-  protected readonly progression = inject(ProgressionStore);
-  private readonly wallet = inject(WalletStore);
+  protected readonly wallet = inject(WalletStore);
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
   private readonly catalog = inject(CardsStore);
@@ -158,10 +156,12 @@ export class StructurePickerDialogComponent {
 
   /** The structure deck being looked at, or null for the covers. */
   protected readonly viewing = signal<string | null>(null);
+  /** The structure deck chosen is being taken. */
+  protected readonly taking = signal(false);
   protected readonly options = computed(() =>
     this.editions
       .editions()
-      .filter((e) => isStructure(e.editionId) && (this.replay || !this.wallet.structures().has(e.editionId)))
+      .filter((e) => isStarter(e.editionId) && (this.replay || !this.wallet.structures().has(e.editionId)))
       .sort((a, b) => a.editionId.localeCompare(b.editionId)),
   );
   protected readonly current = computed(() => this.options().find((e) => e.editionId === this.viewing()) ?? null);
@@ -195,6 +195,10 @@ export class StructurePickerDialogComponent {
       message: 'Es tu structure deck gratis: solo puedes elegir uno. Los demás podrás comprarlos en la tienda.',
       confirmLabel: 'Elegir',
     });
-    if (sure && (await this.progression.claimStep(STRUCTURE_STEP, edition.editionId))) this.ref.close(edition.editionId);
+    if (!sure) return;
+    this.taking.set(true);
+    const taken = await this.wallet.purchase(edition.editionId, 'structure', `${edition.editionId}|structure`);
+    this.taking.set(false);
+    if (taken) this.ref.close(edition.editionId);
   }
 }

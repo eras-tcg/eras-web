@@ -166,7 +166,7 @@ export interface NextStep {
   route: string;
   icon: IconName;
   /** Opened as a dialog instead of following the route: the greeting or the structure deck picker. */
-  flow?: 'welcome' | 'structure';
+  flow?: 'structure';
   /** A "Bienvenida" step whose section opens with its guide (MissionGuideFlow). */
   guide?: string;
 }
@@ -231,7 +231,6 @@ export function welcomeNextStep(steps: readonly WelcomeStep[] | null): NextStep 
   const text = stepText(step.id);
   const claim = stepClaimable(step);
   const next: NextStep = { title: text.title, text: text.hint, action: claim ? 'Reclamar' : 'Ir', route: claim ? '/missions' : text.route, icon: 'target' };
-  if (step.id === 'welcome') return { ...next, action: 'Abrir', flow: 'welcome' };
-  if (step.id === 'structure' && step.gems === 0) return { ...next, action: 'Elegir', flow: 'structure' };
+  if (step.id === 'structure' && !claim) return { ...next, action: 'Elegir', flow: 'structure' };
   return claim ? next : { ...next, guide: step.id };
 }

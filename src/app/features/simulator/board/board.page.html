@@ -157,7 +157,7 @@
           <eras-icon class="caret" name="chevron-down" />
         </button>
         @if (chainOpen()) {
-          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-card-back-frame notches="top" /><eras-chain-list /></div>
         }
       }
       @if (engineNotice(); as notice) {

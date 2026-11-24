@@ -21,6 +21,7 @@ import {
   isMatchActive,
 } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
+import { CardBackFrameComponent } from '@ui/surfaces/card-back-frame/card-back-frame.component';
 import { ChainListComponent } from './chain-list.component';
 import { SharedBarComponent } from '@ui/domain/game-counters/shared-bar.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
@@ -76,6 +77,7 @@ import { TestRoomControlsComponent } from './test-room-controls.component';
     EffectCardPanelComponent,
     PreRoomComponent,
     ChainListComponent,
+    CardBackFrameComponent,
     PlayerHalfComponent,
     StatusPanelsComponent,
     SharedBarComponent,

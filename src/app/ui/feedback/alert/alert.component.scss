@@ -1,10 +1,16 @@
+@use 'mixins/cut-corners';
+
+// In the game's cut (mixins/cut-corners), as the buttons and the effect cards: its edge in its tone, and a band of
+// that tone along its left side
 :host {
+  @include cut-corners.cut-corners(
+    0.6rem,
+    linear-gradient(90deg, var(--_tone) 0 3px, var(--color-surface) 3px),
+    var(--_tone)
+  );
+
   display: block;
   padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--_tone);
-  border-inline-start-width: 4px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
   color: var(--color-text);
   font-size: var(--font-size-sm);
 }

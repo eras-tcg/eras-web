@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ApplicationRef, ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { WalletStore } from '@core/wallet/wallet.store';
 import { CatalogCard } from '@data/cards/card.model';
 import { cardImageUrl } from '@data/cards/card-rules';
@@ -45,34 +45,38 @@ export interface StructurePickerData {
       @if (greeting()) {
         <eras-welcome-greeting />
       } @else if (current(); as edition) {
-        <div class="detail">
-          <img class="cover" [src]="edition.editionImage" [alt]="'Portada de ' + (edition.editionName ?? edition.editionId)" />
-          <div class="about">
+        <div class="deck">
+          <div class="detail">
+            <img class="cover" [src]="edition.editionImage" [alt]="'Portada de ' + (edition.editionName ?? edition.editionId)" />
             @if (style(edition); as s) {
-              <p class="color">{{ edition.editionId }} · Identidad {{ s.color }}</p>
-              <p class="tagline">{{ s.tagline }}</p>
-              <p>{{ s.philosophy }}</p>
-              <p class="tags">
-                @for (t of s.tags; track t) {
-                  <span class="tag">{{ t }}</span>
-                }
-              </p>
+              <div class="about">
+                <p class="color">{{ edition.editionId }} · Identidad {{ s.color }}</p>
+                <p class="tagline">{{ s.tagline }}</p>
+                <p>{{ s.philosophy }}</p>
+                <p class="tags">
+                  @for (t of s.tags; track t) {
+                    <span class="tag">{{ t }}</span>
+                  }
+                </p>
+              </div>
             }
             @if (lore(edition.editionDescription); as story) {
               <p class="lore">{{ story }}</p>
             }
           </div>
-        </div>
-        <h3 class="list-title">Lista del mazo · {{ total() }} cartas</h3>
-        @if (list().length === 0) {
-          <eras-spinner />
-        } @else {
-          <eras-grid minColumn="min(7rem, 26vw)" [gap]="2">
-            @for (entry of list(); track entry.card.id) {
-              <eras-card-thumb [name]="entry.card.name ?? ''" [imageUrl]="imageUrl(entry.card)" [count]="entry.copies" showSingleCount (selected)="openCard(entry.card)" />
+          <div class="cards">
+            <h3 class="list-title">Lista del mazo · {{ total() }} cartas</h3>
+            @if (list().length === 0) {
+              <eras-spinner />
+            } @else {
+              <eras-grid minColumn="min(7rem, 26vw)" [gap]="2">
+                @for (entry of list(); track entry.card.id) {
+                  <eras-card-thumb [name]="entry.card.name ?? ''" [imageUrl]="imageUrl(entry.card)" [count]="entry.copies" showSingleCount (selected)="openCard(entry.card)" />
+                }
+              </eras-grid>
             }
-          </eras-grid>
-        }
+          </div>
+        </div>
       } @else {
         @if (replay) {
           <p class="intro">Ya elegiste tu structure deck gratis. Aquí puedes volver a mirarlos todos; los demás están en la tienda.</p>
@@ -110,8 +114,6 @@ export interface StructurePickerData {
     </eras-modal>
   `,
   styles: `
-    /* The frame morphs from one view to the next (morphView) */
-    eras-modal { view-transition-name: structure-picker; }
     .intro { margin: 0 0 var(--space-3); color: var(--color-text-muted); }
     .covers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(11rem, 40vw), 1fr)); gap: var(--space-3); }
     .option {
@@ -144,8 +146,10 @@ export interface StructurePickerData {
     }
     .option-name { font-family: var(--font-family-display); font-size: var(--font-size-md); letter-spacing: 0.03em; }
     .option-tagline { font-size: var(--font-size-xs); opacity: 0.85; }
-    .detail { display: grid; grid-template-columns: minmax(0, 14rem) 1fr; gap: var(--space-4); align-items: start; }
-    @media (max-width: 40rem) { .detail { grid-template-columns: 1fr; } .cover { max-inline-size: 12rem; } }
+    /* A deck: its cover (and what it is about) on one side, its card list on the other */
+    .deck { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+    .detail { display: grid; gap: var(--space-3); position: sticky; inset-block-start: 0; }
+    @media (max-width: 40rem) { .deck { grid-template-columns: 1fr; } .cover { max-inline-size: 12rem; } }
     .cover { inline-size: 100%; border-radius: var(--radius-md); aspect-ratio: 3 / 4; object-fit: cover; }
     .about p { margin: 0 0 var(--space-2); line-height: 1.55; }
     .color { color: var(--color-text-muted); font-size: var(--font-size-xs); letter-spacing: 0.05em; text-transform: uppercase; }
@@ -158,7 +162,7 @@ export interface StructurePickerData {
       border-radius: var(--radius-pill);
       font-size: var(--font-size-xs);
     }
-    .list-title { margin: var(--space-4) 0 var(--space-2); font-size: var(--font-size-md); }
+    .list-title { margin: 0 0 var(--space-2); font-size: var(--font-size-md); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -175,6 +179,7 @@ export class StructurePickerDialogComponent {
   private readonly catalog = inject(CardsStore);
   private readonly modal = inject(ModalService);
   private readonly appRef = inject(ApplicationRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   /** The structure deck being looked at, or null for the covers. */
   protected readonly viewing = signal<string | null>(null);
@@ -212,12 +217,16 @@ export class StructurePickerDialogComponent {
 
   /** From the greeting to the covers. */
   protected toCovers(): void {
-    morphView(this.appRef, () => this.greeting.set(false));
+    morphView(this.appRef, this.frame(), () => this.greeting.set(false));
   }
 
   /** A deck (its id) or, with null, the covers again. */
   protected show(editionId: string | null): void {
-    morphView(this.appRef, () => this.viewing.set(editionId));
+    morphView(this.appRef, this.frame(), () => this.viewing.set(editionId));
+  }
+
+  private frame(): HTMLElement | null {
+    return this.host.querySelector('eras-modal');
   }
 
   protected openCard(card: CatalogCard): void {

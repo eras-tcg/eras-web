@@ -24,6 +24,9 @@ describe('structure decks', () => {
     const decks = [{ id: '1', deckName: ' st1 ', cards: ['b', 'a', 'b', 'x'] }] as Deck[];
     expect(structureDeck(decks, 'ST1')?.id).toBe('1');
     expect(structureDeck(decks, 'ST2')).toBeNull();
+    const named = [{ id: '10', deckName: 'ST10 Otro' }, { id: '2', deckName: 'ST1 Saltadores del multiverso' }] as Deck[];
+    expect(structureDeck(named, 'ST1')?.id).toBe('2');
+    expect(structureDeck(named, 'ST10')?.id).toBe('10');
     expect(structureList(decks[0].cards, [card('a'), card('b')]).map((e) => [e.card.id, e.copies])).toEqual([
       ['b', 2],
       ['a', 1],

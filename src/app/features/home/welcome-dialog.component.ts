@@ -2,7 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { EditionsStore } from '@data/editions/editions.store';
-import { isStructure } from '@data/shop/shop-rules';
+import { isStarter } from '@data/shop/shop-rules';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
@@ -85,7 +85,7 @@ export class WelcomeDialogComponent {
   protected readonly covers = computed(() =>
     this.editions
       .editions()
-      .filter((e) => isStructure(e.editionId) && !!e.editionImage)
+      .filter((e) => isStarter(e.editionId) && !!e.editionImage)
       .sort((a, b) => a.editionId.localeCompare(b.editionId))
       .map((e) => e.editionImage as string),
   );

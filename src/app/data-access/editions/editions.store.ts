@@ -4,7 +4,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { Edition, EditionSaveRequest } from './edition.model';
-import { isTestEdition, sortEditions } from './edition-rules';
+import { isHiddenEdition, isTestEdition, sortEditions } from './edition-rules';
 import { EditionsApi } from './editions.api';
 import { SharedLoad } from '../shared/shared-load';
 
@@ -44,6 +44,11 @@ export class EditionsStore {
   readonly catalogEditions = computed(() => sortEditions(this.items()));
   readonly releaseDates = computed(() => new Map(this.items().map((e) => [e.editionId, e.releaseDate ?? ''])));
 
+  /** Whether an admin hid the edition (in development), by itself or by its base edition. */
+  isHidden(editionId: string): boolean {
+    return isHiddenEdition(editionId, this.items());
+  }
+
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {
     return this.loader.run(force);
@@ -82,6 +87,16 @@ export class EditionsStore {
       await firstValueFrom(this.api.save(request));
     } catch (e) {
       throw new Error(apiErrorMessage(e, 'No se pudo guardar la edición'), { cause: e });
+    }
+    await this.load(true);
+  }
+
+  /** Hides an edition from the players (in development) or shows it, and reloads the list. Throws a readable message on failure. */
+  async setHidden(editionId: string, hidden: boolean): Promise<void> {
+    try {
+      await firstValueFrom(this.api.setHidden(editionId, hidden));
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, hidden ? 'No se pudo ocultar la edición' : 'No se pudo mostrar la edición'), { cause: e });
     }
     await this.load(true);
   }

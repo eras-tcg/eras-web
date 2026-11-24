@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BoxEntry, Edition } from './edition.model';
-import { canSimulateBox, canSimulatePack, compareEditionIds, coverFrameStyle, isTestEdition, pickRandomPackFromBox, sortEditions, validateBoxConfig } from './edition-rules';
+import { canSimulateBox, canSimulatePack, compareEditionIds, coverFrameStyle, isHiddenEdition, isTestEdition, pickRandomPackFromBox, sortEditions, validateBoxConfig } from './edition-rules';
 
 const entry = (packTypeName: string, mode: BoxEntry['mode'], quantity = 0, probOptions: BoxEntry['probOptions'] = []): BoxEntry => ({
   packTypeName,
@@ -40,6 +40,18 @@ describe('isTestEdition', () => {
   it('is T and a number', () => {
     expect(['T1', 't3', 'T1.2'].every(isTestEdition)).toBe(true);
     expect(['E1', 'ST1', 'T', '', null].some(isTestEdition)).toBe(false);
+  });
+});
+
+describe('isHiddenEdition', () => {
+  const editions: Edition[] = [{ editionId: 'E3', hidden: true }, { editionId: 'E3.1' }, { editionId: 'E2' }, { editionId: 'E1.2', hidden: true }];
+
+  it('is hidden by its own mark or by its base edition', () => {
+    expect(isHiddenEdition('E3', editions)).toBe(true);
+    expect(isHiddenEdition('e3.1', editions)).toBe(true);
+    expect(isHiddenEdition('E1.2', editions)).toBe(true);
+    expect(isHiddenEdition('E1', editions)).toBe(false);
+    expect(isHiddenEdition('E2', editions)).toBe(false);
   });
 });
 

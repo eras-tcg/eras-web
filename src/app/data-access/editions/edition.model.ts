@@ -55,6 +55,8 @@ export interface Edition {
   /** The regulation its cards print (A…): a new card of the edition starts with it. */
   regulation?: string | null;
   coverFrame?: CoverFrame | null;
+  /** Hidden by an admin (still in development): the server lists it only to admins and testers. */
+  hidden?: boolean | null;
 }
 
 /** Body of POST /api/drive/editions (create or update by editionId). */
@@ -75,4 +77,6 @@ export interface EditionSaveRequest {
   regulation?: string;
   /** Left out: the server keeps the cover's framing. */
   coverFrame?: CoverFrame;
+  /** Left out (the shop's form): the server keeps whether it is hidden. */
+  hidden?: boolean;
 }

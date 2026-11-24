@@ -72,6 +72,21 @@ eras-icon[name='gem'] {
   padding: var(--space-3);
 }
 
+/* An edition an admin hid (in development): only admins and testers get it */
+.tile-hidden {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-hub-scrim) 85%, transparent);
+  color: var(--color-hub-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+}
+
 .tile-code {
   color: var(--color-hub-accent);
   font-size: var(--font-size-xs);

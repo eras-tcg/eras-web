@@ -29,6 +29,10 @@
           <eras-grid minColumn="var(--tile-column, min(12rem, 40vw, 36dvh))" [gap]="4">
             @for (edition of shelf.editions; track edition.editionId) {
               <a class="tile" [routerLink]="['/editions', edition.editionId]" [style.background-image]="edition.editionImage ? 'url(' + edition.editionImage + ')' : null">
+                @if (store.isHidden(edition.editionId)) {
+                  <!-- Only admins and testers get a hidden edition -->
+                  <span class="tile-hidden">En desarrollo</span>
+                }
                 <span class="tile-info">
                   <span class="tile-code">{{ edition.editionId }}</span>
                   <span class="tile-name">{{ edition.editionName || edition.editionId }}</span>

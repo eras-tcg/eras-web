@@ -48,8 +48,6 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     </div>
   `,
   styles: `
-    @use 'mixins/cut-corners';
-
     .bar { display: grid; grid-template-columns: repeat(21, minmax(0, 1fr)); gap: 2px; }
     .bar button {
       padding: var(--space-1) 0;
@@ -165,31 +163,65 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%), var(--arcane-rival);
       box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 12px color-mix(in srgb, var(--arcane-rival) 60%, transparent);
     }
-    /* Each side a see-through channel edged in soft gold, slanted as its steps (its ends run along them), the steps
-       chips — dull gold off, lit in their side's color; the value on the ERAS gem (the site's icon), glowing in the
-       color of the side it is on */
+    /* Each side a see-through channel edged in soft gold: straight at its outer end (towards the table's edge), slanted
+       as its steps at the inner one (by the value); the steps slanted chips — dull gold off, lit in their side's color;
+       the value on the ERAS gem (the site's icon), glowing in the color of the side it is on */
     @media all {
       :host-context(.arcane) .side {
-        @include cut-corners.cut-corners(
-          0px,
-          linear-gradient(180deg, color-mix(in srgb, var(--arcane-stone-dark) 80%, transparent), color-mix(in srgb, #1a1d23 70%, transparent)),
-          var(--arcane-gold-soft)
+        --channel-h: 0.9rem;
+        // The steps' slant (skewX 24°) over the channel's height
+        --slant: calc(var(--channel-h) * 0.445);
+        // Yours, left of the value: straight at the left, slanted at the right
+        --channel: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+        --channel-in: polygon(
+          evenodd,
+          0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%, 0 0,
+          1px 1px, calc(100% - 1.5px) 1px, calc(100% - var(--slant) - 0.6px) calc(100% - 1px), 1px calc(100% - 1px), 1px 1px
         );
 
+        position: relative;
         align-items: center;
         gap: 3px;
-        block-size: 0.9rem;
-        padding: 0 0.3rem;
+        block-size: var(--channel-h);
+        padding: 0 calc(var(--slant) + 0.2rem) 0 0.35rem;
+        background: linear-gradient(180deg, color-mix(in srgb, var(--arcane-stone-dark) 80%, transparent), color-mix(in srgb, #1a1d23 70%, transparent));
+        clip-path: var(--channel);
         mask-image: none;
-        transform: skewX(-24deg);
+        isolation: isolate;
       }
-      :host-context(.arcane) .side.theirs { transform: skewX(24deg); }
-      // The channel is slanted already: the steps stand straight in it
-      :host-context(.arcane) .step,
-      :host-context(.arcane) .side.theirs .step {
+      // The rival's, right of the value: slanted at the left, straight at the right
+      :host-context(.arcane) .side.theirs {
+        --channel: polygon(0 0, 100% 0, 100% 100%, var(--slant) 100%);
+        --channel-in: polygon(
+          evenodd,
+          0 0, 100% 0, 100% 100%, var(--slant) 100%, 0 0,
+          1.5px 1px, calc(100% - 1px) 1px, calc(100% - 1px) calc(100% - 1px), calc(var(--slant) + 0.6px) calc(100% - 1px), 1.5px 1px
+        );
+
+        padding: 0 0.35rem 0 calc(var(--slant) + 0.2rem);
+      }
+      // Its edge: a ring of soft gold along the shape
+      :host-context(.arcane) .side::after {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: var(--arcane-gold-soft);
+        clip-path: var(--channel-in);
+        content: '';
+      }
+      // The outermost step ends straight, as the channel: upright, cut on the slant only at its inner side
+      :host-context(.arcane) .step:last-child {
+        --step-slant: calc(var(--channel-h) * 0.6 * 0.445);
+
+        transform: none;
+        clip-path: polygon(0 0, 100% 0, calc(100% - var(--step-slant)) 100%, 0 100%);
+      }
+      :host-context(.arcane) .side.theirs .step:last-child {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, var(--step-slant) 100%);
+      }
+      :host-context(.arcane) .step {
         block-size: 60%;
         border-radius: 0;
-        transform: none;
         background: color-mix(in srgb, var(--arcane-gold) 16%, #2a2f38);
         box-shadow: none;
       }
@@ -236,7 +268,7 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
       .side { gap: 6px; block-size: 1.1rem; }
       .value { inline-size: 3.25rem; block-size: 3.25rem; font-size: 1.35rem; }
       .value::before { inset: 0.5rem; border-width: 2px; }
-      :host-context(.arcane) .side { gap: 6px; block-size: 1.6rem; padding: 0 0.85rem; }
+      :host-context(.arcane) .side { --channel-h: 1.6rem; gap: 6px; }
       :host-context(.arcane) .value { inline-size: 3.75rem; block-size: 3.75rem; font-size: 1.35rem; }
     }
   `,

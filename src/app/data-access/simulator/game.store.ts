@@ -137,9 +137,9 @@ export class GameStore {
   /** The room and value last sent, so a slow echo does not send it again. */
   private optionalSent: string | null = null;
 
-  /** On → Auto → Off → On. */
+  /** Auto → On → Off → Auto. */
   cycleOptionalMode(): void {
-    const next: Record<OptionalMode, OptionalMode> = { on: 'auto', auto: 'off', off: 'on' };
+    const next: Record<OptionalMode, OptionalMode> = { auto: 'on', on: 'off', off: 'auto' };
     this.optionalMode.set(next[this.optionalMode()]);
   }
 

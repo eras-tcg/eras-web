@@ -1,7 +1,7 @@
 {
   "name": "eras-desktop",
   "productName": "ERAS",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "ERAS TCG para Windows",
   "private": true,
   "main": "main.cjs",
@@ -39,6 +39,14 @@
       "createStartMenuShortcut": true,
       "shortcutName": "ERAS"
     },
-    "publish": null
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://www.erastcg.com/app/"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
   }
 }

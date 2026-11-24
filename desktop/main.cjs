@@ -1,8 +1,47 @@
 // ERAS for Windows: a window of its own over the site (https://www.erastcg.com), the same code the browser runs.
 // The site itself (its service worker) keeps the game for playing offline and updates it; this shell only opens it,
-// so a new installer is needed only when this folder changes (README, "La app de Windows").
+// and updates itself: a new installer published with the site (/app/latest.yml, a higher version in package.json) is
+// downloaded in the background and installed when the app closes, so the next start (and its icon) is the new one.
 const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
+
+/** Where the window was left (full screen, maximized, its size), so it opens again the same way. */
+const STATE_FILE = path.join(app.getPath('userData'), 'window-state.json');
+
+function readState() {
+  try {
+    const saved = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveState(win) {
+  try {
+    const state = { fullScreen: win.isFullScreen(), maximized: win.isMaximized(), bounds: win.getNormalBounds() };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state));
+  } catch {
+    // Not saved: it opens maximized next time
+  }
+}
+
+/** Looks for a newer installer now and every few hours; it installs itself when the app closes. */
+function keepUpdated() {
+  if (!app.isPackaged) return;
+  let autoUpdater;
+  try {
+    ({ autoUpdater } = require('electron-updater'));
+  } catch {
+    return;
+  }
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  const check = () => autoUpdater.checkForUpdates().catch(() => undefined);
+  void check();
+  setInterval(check, 4 * 60 * 60 * 1000);
+}
 
 /** The site it opens (ERAS_URL: another one, for staging or a local build). */
 const SITE = process.env.ERAS_URL || 'https://www.erastcg.com/';
@@ -22,9 +61,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
+    const state = readState();
+    const bounds = state.bounds && typeof state.bounds.width === 'number' ? state.bounds : { width: 1280, height: 800 };
     win = new BrowserWindow({
-      width: 1280,
-      height: 800,
+      ...bounds,
+      fullscreen: state.fullScreen === true,
       minWidth: 960,
       minHeight: 600,
       show: false,
@@ -38,8 +79,10 @@ if (!app.requestSingleInstanceLock()) {
         nodeIntegration: false,
       },
     });
-    win.maximize();
+    if (state.fullScreen !== true && state.maximized !== false) win.maximize();
     win.once('ready-to-show', () => win.show());
+    // Left as it was: in full screen it opens in full screen again
+    win.on('close', () => saveState(win));
 
     // Full screen as the site's Preferencias say (it asks as it opens), and the site told when it changes here
     ipcMain.on('eras:set-full-screen', (event, on) => {
@@ -77,6 +120,7 @@ if (!app.requestSingleInstanceLock()) {
 
     void win.loadURL(SITE);
     win.on('closed', () => (win = null));
+    keepUpdated();
   });
 
   app.on('window-all-closed', () => app.quit());

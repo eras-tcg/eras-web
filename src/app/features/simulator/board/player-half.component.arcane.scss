@@ -224,15 +224,29 @@ $zone-bracket-width: 2px;
     block-size: 45%;
   }
 
-  .optional-toggle.off {
-    --toggle-ring: var(--arcane-rival);
-
-    color: var(--arcane-rival);
-    text-shadow: none;
+  // The optional effects' mode, by how much it lights up: Off dull, Auto as it is, On bright; its word big
+  .mode-toggle b {
+    font-family: var(--font-family-display);
+    font-size: min(1.15rem, 30cqh);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
-  // On: the same rings, brighter and glowing more
-  .optional-toggle.on {
+  .mode-toggle.off {
+    --toggle-ring: var(--arcane-gold-soft);
+
+    color: var(--arcane-text-muted, #8f8877);
+    text-shadow: none;
+    filter: saturate(0.35) brightness(0.7);
+  }
+
+  .mode-toggle:not(.off, .auto) {
+    filter: brightness(1.25) drop-shadow(0 0 8px color-mix(in srgb, var(--arcane-gold) 60%, transparent));
+  }
+
+  // The table's information: as it is, bright while held
+  .info-toggle.on {
     filter: brightness(1.2) drop-shadow(0 0 8px color-mix(in srgb, var(--arcane-gold) 55%, transparent));
   }
 }

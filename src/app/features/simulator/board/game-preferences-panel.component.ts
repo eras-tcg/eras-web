@@ -218,8 +218,10 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       justify-content: center;
       gap: var(--space-1);
       --tab-fill: transparent;
+      --tab-cut: 0px;
+      --tab-cut-end: 0px;
 
-      @include cut-corners.cut-corners(0.45rem, var(--tab-fill));
+      @include cut-corners.cut-corners(var(--tab-cut), var(--tab-fill), $cut-end: var(--tab-cut-end));
 
       padding: var(--space-1) var(--space-2);
       color: var(--color-text-muted);
@@ -230,6 +232,9 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       cursor: pointer;
     }
     .tab eras-icon { flex: none; inline-size: 1rem; block-size: 1rem; }
+    /* Square inside the row: only the ends meet its cut corners */
+    .tab:first-child { --tab-cut: 0.45rem; }
+    .tab:last-child { --tab-cut-end: 0.45rem; }
     .tab.on { --tab-fill: var(--color-primary); color: var(--color-on-primary); }
     .tab:focus-visible { outline: none; color: var(--color-text); }
     /* The same height on every section (the box keeps its size); a longer one scrolls inside */

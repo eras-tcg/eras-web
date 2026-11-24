@@ -2,13 +2,27 @@
 // cards. The edge follows the cut too: the element is painted in `$edge` and cut, and its fill (`$fill`, on its
 // ::before) lies over it `$edge-width` in, cut the same way a hair smaller. Any CSS value (a custom property, say), so
 // a state can change them. The element's content sits over its ::before (it is isolated); a shadow outside it would be
-// cut away, so a glow goes inside the fill.
-@mixin cut-corners($cut: 0.55rem, $fill: transparent, $edge: transparent, $edge-width: var(--border-width)) {
+// cut away, so a glow goes inside the fill. `$cut-end` is the bottom-right corner's cut when it differs (a piece of a
+// row: only the first one is cut at the top left, only the last at the bottom right; 0px leaves a corner square).
+@mixin cut-corners(
+  $cut: 0.55rem,
+  $fill: transparent,
+  $edge: transparent,
+  $edge-width: var(--border-width),
+  $cut-end: $cut
+) {
   position: relative;
   border: 0;
   border-radius: 0;
   background: $edge;
-  clip-path: polygon(#{$cut} 0, 100% 0, 100% calc(100% - #{$cut}), calc(100% - #{$cut}) 100%, 0 100%, 0 #{$cut});
+  clip-path: polygon(
+    #{$cut} 0,
+    100% 0,
+    100% calc(100% - #{$cut-end}),
+    calc(100% - #{$cut-end}) 100%,
+    0 100%,
+    0 #{$cut}
+  );
   isolation: isolate;
 
   &::before {
@@ -17,12 +31,12 @@
     z-index: -1;
     background: $fill;
     clip-path: polygon(
-      calc(#{$cut} - 0.4 * #{$edge-width}) 0,
+      max(0px, #{$cut} - 0.4 * #{$edge-width}) 0,
       100% 0,
-      100% calc(100% - #{$cut} + 0.4 * #{$edge-width}),
-      calc(100% - #{$cut} + 0.4 * #{$edge-width}) 100%,
+      100% calc(100% - max(0px, #{$cut-end} - 0.4 * #{$edge-width})),
+      calc(100% - max(0px, #{$cut-end} - 0.4 * #{$edge-width})) 100%,
       0 100%,
-      0 calc(#{$cut} - 0.4 * #{$edge-width})
+      0 max(0px, #{$cut} - 0.4 * #{$edge-width})
     );
     content: '';
     transition: background var(--duration-fast) var(--easing-standard);

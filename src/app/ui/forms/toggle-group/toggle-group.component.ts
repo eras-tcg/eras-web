@@ -68,8 +68,10 @@ export interface ToggleOption {
       --segment-color: var(--color-text);
       --segment-fill: transparent;
       --segment-edge: transparent;
+      --segment-cut: 0px;
+      --segment-cut-end: 0px;
 
-      @include cut-corners.cut-corners(0.45rem, var(--segment-fill), var(--segment-edge));
+      @include cut-corners.cut-corners(var(--segment-cut), var(--segment-fill), var(--segment-edge), $cut-end: var(--segment-cut-end));
 
       display: inline-flex;
       flex: 1;
@@ -90,6 +92,9 @@ export interface ToggleOption {
         color var(--duration-fast) var(--easing-standard),
         opacity var(--duration-fast) var(--easing-standard);
     }
+    /* Square inside the row: only the ends meet its cut corners */
+    .segment:first-child { --segment-cut: 0.45rem; }
+    .segment:last-child { --segment-cut-end: 0.45rem; }
     .segment:hover {
       color: var(--color-text-muted);
     }

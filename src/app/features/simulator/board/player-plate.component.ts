@@ -2,39 +2,62 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
 import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 
 /**
- * A player's plate on the table: their icon and name on a band that fades out, like a nameplate at the table's edge.
- * `flipped` (the rival's): turned over, the icon on the right and the slant on the left, so both plates face each other.
+ * A player's plate on the table: their icon, big and ringed in gold, and their name on a tag that comes out from behind
+ * it (the hub nameplate's gold fading out, a slanted tip, a line of gold along its foot). `flipped` (the rival's):
+ * turned over, the tag coming out to the left, so both plates face each other.
  */
 @Component({
   selector: 'eras-player-plate',
   imports: [AvatarComponent],
   template: `
-    <eras-avatar [url]="avatar()" [name]="username()" />
-    <span class="name">{{ username() }}</span>
-    @if (!connected()) {
-      <span class="offline">desconectado</span>
-    }
+    <eras-avatar class="icon" [url]="avatar()" [name]="username()" />
+    <span class="tag">
+      <span class="name">{{ username() }}</span>
+      @if (!connected()) {
+        <span class="offline">desconectado</span>
+      }
+    </span>
   `,
   styles: `
-    /* The nameplate of the hub's player (hub-screen): the gold fading out to the right, its right edge cut on a slant,
-       a thin line of gold along the bottom. Opaque: it overlaps the lives or the hand beside it, which must not show
-       through (it would look under them) */
     :host {
-      position: relative;
+      --plate-icon: 2.75rem;
+
       display: flex;
       flex: none;
       align-items: center;
+      min-inline-size: 0;
+    }
+    :host(.flipped) { flex-direction: row-reverse; }
+    // Over the tag, ringed in gold: the tag's straight end hides behind it
+    .icon {
+      --avatar-size: var(--plate-icon);
+
+      position: relative;
+      z-index: 1;
+      flex: none;
+      box-shadow:
+        0 0 0 2px var(--color-hub-accent),
+        0 0 0 4px color-mix(in srgb, var(--color-bg) 70%, transparent),
+        0 4px 12px rgb(0 0 0 / 45%);
+    }
+    // The tag: from under the icon's middle, gold fading out, its far end cut on a slant, a line of gold along its foot.
+    // Opaque: it overlaps the lives or the hand beside it, which must not show through (it would look under them)
+    .tag {
+      position: relative;
+      display: flex;
+      align-items: center;
       gap: var(--space-2);
       min-inline-size: 0;
-      padding: var(--space-1) var(--space-6) var(--space-1) var(--space-1);
+      margin-inline-start: calc(var(--plate-icon) / -2);
+      padding: var(--space-1) var(--space-5) var(--space-1) calc(var(--plate-icon) / 2 + var(--space-2));
       background: linear-gradient(
         90deg,
-        color-mix(in srgb, var(--color-hub-accent) 28%, var(--color-surface)),
-        var(--color-surface) 70%
+        color-mix(in srgb, var(--color-hub-accent) 30%, var(--color-surface)),
+        var(--color-surface) 75%
       );
       clip-path: polygon(0 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
     }
-    :host::after {
+    .tag::after {
       position: absolute;
       inset-inline: 0 1rem;
       inset-block-end: 0;
@@ -42,25 +65,25 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
       background: linear-gradient(90deg, var(--color-hub-accent), transparent);
       content: '';
     }
-    :host(.flipped) {
-      flex-direction: row-reverse;
-      padding: var(--space-1) var(--space-1) var(--space-1) var(--space-6);
+    :host(.flipped) .tag {
+      margin-inline: 0 calc(var(--plate-icon) / -2);
+      padding: var(--space-1) calc(var(--plate-icon) / 2 + var(--space-2)) var(--space-1) var(--space-5);
       background: linear-gradient(
         270deg,
-        color-mix(in srgb, var(--color-hub-accent) 28%, var(--color-surface)),
-        var(--color-surface) 70%
+        color-mix(in srgb, var(--color-hub-accent) 30%, var(--color-surface)),
+        var(--color-surface) 75%
       );
       clip-path: polygon(0 0, 100% 0, 100% 100%, 1rem 100%);
     }
-    :host(.flipped)::after {
+    :host(.flipped) .tag::after {
       inset-inline: 1rem 0;
       background: linear-gradient(270deg, var(--color-hub-accent), transparent);
     }
     :host(.flipped) .name { text-align: end; }
     :host(.away) { opacity: 0.75; }
-    :host(.flipped.away)::after { background: linear-gradient(270deg, var(--color-danger), transparent); }
-    :host(.away)::after { background: linear-gradient(90deg, var(--color-danger), transparent); }
-    eras-avatar { --avatar-size: 2.25rem; }
+    :host(.away) .icon { box-shadow: 0 0 0 2px var(--color-danger), 0 4px 12px rgb(0 0 0 / 45%); }
+    :host(.away) .tag::after { background: linear-gradient(90deg, var(--color-danger), transparent); }
+    :host(.flipped.away) .tag::after { background: linear-gradient(270deg, var(--color-danger), transparent); }
     .name {
       flex: 1;
       min-inline-size: 0;
@@ -74,9 +97,9 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
     .offline { flex: none; color: var(--color-danger); font-size: var(--font-size-xs); }
     /* Phones in landscape: small, it sat over the deck beside it in the narrow side column */
     @media (orientation: landscape) and (max-height: 30rem) {
-      :host { gap: var(--space-1); padding: 2px var(--space-4) 2px 2px; }
-      :host(.flipped) { padding: 2px 2px 2px var(--space-4); }
-      eras-avatar { --avatar-size: 1.5rem; }
+      :host { --plate-icon: 1.9rem; }
+      .tag { gap: var(--space-1); padding-block: 1px; padding-inline-end: var(--space-4); }
+      :host(.flipped) .tag { padding-inline: var(--space-4) calc(var(--plate-icon) / 2 + var(--space-1)); }
       .name { font-size: var(--font-size-xs); }
     }
   `,

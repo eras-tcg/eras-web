@@ -48,15 +48,15 @@
 }
 
 .table.arcane .strip .turn {
-  // Whose turn: the ERAS gem, glowing in that side's color, and a tag coming out of it, washed in that color, its tip
-  // cut on a slant and a line of gold along its foot (the players' nameplates' tag)
+  // Whose turn: a tag washed in that side's color from the left, its tip cut on a slant and a line of gold along its
+  // foot (the players' nameplates' tag)
   --turn-color: var(--arcane-rival);
 
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.2rem 1.6rem 0.2rem 0.35rem;
+  padding: 0.35rem 1.6rem 0.35rem var(--space-3);
   border: 0;
   border-radius: 0;
   background: linear-gradient(
@@ -99,15 +99,9 @@
   }
 }
 
-// The ERAS gem, glowing in the color of whose turn it is
+// The color says whose turn it is: no dot of its own
 .table.arcane .strip .turn-dot {
-  inline-size: 1.7rem;
-  block-size: 1.7rem;
-  border-radius: 0;
-  background: url('/favicon.svg') center / contain no-repeat;
-  box-shadow: none;
-  filter: drop-shadow(0 0 5px var(--turn-color));
-  transform: none;
+  display: none;
 }
 
 // Phones in landscape: as low as the strip there
@@ -116,10 +110,6 @@
     padding-block: 0;
   }
 
-  .table.arcane .strip .turn-dot {
-    inline-size: 1.2rem;
-    block-size: 1.2rem;
-  }
 }
 
 // Menú de partida (beside the table, not in it): a gold-ringed stone button

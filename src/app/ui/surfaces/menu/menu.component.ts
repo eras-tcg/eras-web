@@ -74,7 +74,12 @@ import { ChangeDetectionStrategy, Component, Directive, ViewEncapsulation, boole
 
       background: transparent;
     }
-    .eras-menu.floating .eras-menu-item.danger { --menu-item-edge: color-mix(in srgb, var(--color-danger) 60%, transparent); }
+    .eras-menu.floating .eras-menu-item.danger { --menu-item-edge: color-mix(in srgb, var(--color-danger) 70%, transparent); }
+    .eras-menu.floating .eras-menu-item.danger:hover,
+    .eras-menu.floating .eras-menu-item.danger:focus-visible {
+      --menu-item-edge: var(--color-danger);
+      --menu-item-fill: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+    }
     .eras-menu.floating .eras-menu-item:nth-child(2) { animation-delay: 40ms; }
     .eras-menu.floating .eras-menu-item:nth-child(3) { animation-delay: 80ms; }
     .eras-menu.floating .eras-menu-item:nth-child(4) { animation-delay: 120ms; }

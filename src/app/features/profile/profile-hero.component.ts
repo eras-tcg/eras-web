@@ -132,12 +132,14 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     .edit:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .edit:disabled { opacity: 0.6; cursor: wait; }
     .banner-edit { inset-block-start: var(--space-2); inset-inline-end: var(--space-2); }
-    /* Ringed in gold, as the players' plates at the table */
+    /* In a double ring of gold, as the players' plates at the table */
     .avatar { position: relative; display: inline-flex; flex: none; }
     .avatar eras-avatar {
       box-shadow:
-        0 0 0 2px var(--color-hub-accent),
-        0 0 0 5px color-mix(in srgb, var(--color-bg) 70%, transparent),
+        0 0 0 3px var(--color-hub-accent),
+        0 0 0 6px #17140f,
+        0 0 0 7px var(--color-frame-gold-pale),
+        0 0 14px 7px color-mix(in srgb, var(--color-hub-accent) 22%, transparent),
         0 6px 16px rgb(0 0 0 / 40%);
     }
     .avatar-edit { inset-block-end: -0.15rem; inset-inline-end: -0.15rem; inline-size: 1.7rem; block-size: 1.7rem; }

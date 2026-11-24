@@ -28,7 +28,7 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
       min-inline-size: 0;
     }
     :host(.flipped) { flex-direction: row-reverse; }
-    // Over the tag, ringed in gold: the tag's straight end hides behind it
+    // Over the tag, in a double ring of gold (a thick one, a dark gap, a thin one): the tag's straight end hides behind it
     .icon {
       --avatar-size: var(--plate-icon);
 
@@ -37,7 +37,9 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
       flex: none;
       box-shadow:
         0 0 0 2px var(--color-hub-accent),
-        0 0 0 4px color-mix(in srgb, var(--color-bg) 70%, transparent),
+        0 0 0 4px #17140f,
+        0 0 0 5px var(--color-frame-gold-pale),
+        0 0 10px 5px color-mix(in srgb, var(--color-hub-accent) 25%, transparent),
         0 4px 12px rgb(0 0 0 / 45%);
     }
     // The tag: from under the icon's middle, gold fading out, its far end cut on a slant, a line of gold along its foot.
@@ -81,7 +83,7 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
     }
     :host(.flipped) .name { text-align: end; }
     :host(.away) { opacity: 0.75; }
-    :host(.away) .icon { box-shadow: 0 0 0 2px var(--color-danger), 0 4px 12px rgb(0 0 0 / 45%); }
+    :host(.away) .icon { box-shadow: 0 0 0 2px var(--color-danger), 0 0 0 4px #17140f, 0 0 0 5px var(--color-danger), 0 4px 12px rgb(0 0 0 / 45%); }
     :host(.away) .tag::after { background: linear-gradient(90deg, var(--color-danger), transparent); }
     :host(.flipped.away) .tag::after { background: linear-gradient(270deg, var(--color-danger), transparent); }
     .name {

@@ -195,21 +195,28 @@ $zone-bracket-width: 2px;
     block-size: auto;
     aspect-ratio: 1;
     min-block-size: 0;
+    // Lit stones in a double ring of gold (a thick one, a dark gap, a thin pale one), glowing faintly
+    --toggle-ring: var(--arcane-gold);
+
     border: 0;
     border-radius: 50%;
-    background: radial-gradient(circle at 40% 30%, rgb(255 255 255 / 6%), transparent 60%), linear-gradient(180deg, #1d2129, #111317);
+    background:
+      radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--arcane-gold) 28%, transparent), transparent 62%),
+      radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--toggle-ring) 18%, transparent), transparent 55%),
+      linear-gradient(180deg, #2a2620, #121316);
     box-shadow:
-      inset 0 0 0 1px var(--arcane-gold-soft),
-      inset 0 3px 10px rgb(0 0 0 / 60%),
-      0 0 0 1px rgb(0 0 0 / 40%);
+      inset 0 0 0 2px var(--toggle-ring),
+      inset 0 0 0 4px #17140f,
+      inset 0 0 0 5px color-mix(in srgb, var(--arcane-gold-light) 80%, transparent),
+      inset 0 6px 14px rgb(0 0 0 / 35%),
+      0 0 14px color-mix(in srgb, var(--toggle-ring) 30%, transparent);
     color: var(--arcane-gold-light);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--arcane-gold) 60%, transparent);
+    transition: filter var(--duration-fast) var(--easing-standard);
   }
 
   .optional-toggle:hover {
-    box-shadow:
-      inset 0 0 0 1px var(--arcane-gold),
-      inset 0 3px 10px rgb(0 0 0 / 60%),
-      0 0 12px color-mix(in srgb, var(--arcane-gold) 35%, transparent);
+    filter: brightness(1.15);
   }
 
   .optional-toggle eras-icon {
@@ -218,23 +225,14 @@ $zone-bracket-width: 2px;
   }
 
   .optional-toggle.off {
+    --toggle-ring: var(--arcane-rival);
+
     color: var(--arcane-rival);
-    box-shadow: inset 0 0 0 1px var(--arcane-rival), inset 0 3px 10px rgb(0 0 0 / 60%);
+    text-shadow: none;
   }
 
+  // On: the same rings, brighter and glowing more
   .optional-toggle.on {
-    box-shadow: inset 0 0 0 2px var(--arcane-gold), inset 0 3px 10px rgb(0 0 0 / 60%), 0 0 12px color-mix(in srgb, var(--arcane-gold) 45%, transparent);
+    filter: brightness(1.2) drop-shadow(0 0 8px color-mix(in srgb, var(--arcane-gold) 55%, transparent));
   }
-}
-
-// The optional effects' buttons under the deck: glass over the vortex, edged in gold
-:host-context(.arcane) .optional-toggle {
-  border-color: var(--arcane-gold-soft);
-  background: color-mix(in srgb, #0c0e12 55%, transparent);
-  backdrop-filter: blur(6px);
-  color: var(--arcane-gold-light);
-}
-
-:host-context(.arcane) .optional-toggle:hover {
-  border-color: var(--arcane-gold);
 }

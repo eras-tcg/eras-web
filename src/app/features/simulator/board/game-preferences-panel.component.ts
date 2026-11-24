@@ -235,7 +235,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     /* Square inside the row: only the ends meet its cut corners */
     .tab:first-child { --tab-cut: 0.45rem; }
     .tab:last-child { --tab-cut-end: 0.45rem; }
-    .tab.on { --tab-fill: var(--color-primary); color: var(--color-on-primary); }
+    .tab.on { --tab-fill: var(--color-hub-accent); color: var(--color-on-gold); }
     .tab:focus-visible { outline: none; color: var(--color-text); }
     /* The same height on every section (the box keeps its size); a longer one scrolls inside */
     /* One column, or --prefs-columns where there is room (the game's dialog) */

@@ -72,7 +72,7 @@ import { ChangeDetectionStrategy, Component, Directive, ViewEncapsulation, boole
       --menu-item-edge: var(--color-hub-accent);
       --menu-item-fill: color-mix(in srgb, var(--color-hub-accent) 14%, var(--color-surface));
 
-      background: var(--menu-item-edge);
+      background: transparent;
     }
     .eras-menu.floating .eras-menu-item.danger { --menu-item-edge: color-mix(in srgb, var(--color-danger) 60%, transparent); }
     .eras-menu.floating .eras-menu-item:nth-child(2) { animation-delay: 40ms; }

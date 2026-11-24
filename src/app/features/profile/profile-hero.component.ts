@@ -90,22 +90,24 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     </section>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     .hero {
-      position: relative;
+      --hero-fill: linear-gradient(110deg, color-mix(in srgb, var(--color-hub-accent) 8%, var(--color-surface-glass)), var(--color-surface-glass) 45%);
+
+      /* In the game's cut, its edge in soft gold */
+      @include cut-corners.cut-corners(1.25rem, var(--hero-fill), color-mix(in srgb, var(--color-hub-accent) 35%, var(--color-border)));
+
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: var(--space-4) var(--space-6);
       padding: var(--space-5) var(--space-6);
-      overflow: hidden;
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-lg);
-      background: linear-gradient(110deg, color-mix(in srgb, var(--color-primary) 14%, var(--color-surface)), var(--color-surface) 60%);
     }
     /* Their banner behind, darkened towards the text */
     .hero.has-banner {
-      background:
+      --hero-fill:
         linear-gradient(90deg, color-mix(in srgb, var(--color-surface) 85%, transparent) 15%, color-mix(in srgb, var(--color-surface) 30%, transparent) 70%),
         var(--banner) center / cover no-repeat;
     }
@@ -120,8 +122,8 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
       padding: 0;
       border: 2px solid var(--color-surface);
       border-radius: 50%;
-      background: var(--color-primary);
-      color: var(--color-on-primary);
+      background: var(--color-hub-accent);
+      color: var(--color-on-gold);
       box-shadow: var(--shadow-md);
       cursor: pointer;
     }
@@ -130,7 +132,14 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     .edit:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     .edit:disabled { opacity: 0.6; cursor: wait; }
     .banner-edit { inset-block-start: var(--space-2); inset-inline-end: var(--space-2); }
+    /* Ringed in gold, as the players' plates at the table */
     .avatar { position: relative; display: inline-flex; flex: none; }
+    .avatar eras-avatar {
+      box-shadow:
+        0 0 0 2px var(--color-hub-accent),
+        0 0 0 5px color-mix(in srgb, var(--color-bg) 70%, transparent),
+        0 6px 16px rgb(0 0 0 / 40%);
+    }
     .avatar-edit { inset-block-end: -0.15rem; inset-inline-end: -0.15rem; inline-size: 1.7rem; block-size: 1.7rem; }
     .who { display: flex; flex-direction: column; gap: 0.15rem; min-inline-size: 0; }
     .message { color: var(--color-success); font-size: var(--font-size-xs); }
@@ -158,9 +167,9 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
       display: flex;
       align-items: center;
       gap: var(--space-4);
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-md);
-      background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+      padding: var(--space-3) var(--space-5) var(--space-3) var(--space-4);
+
+      @include cut-corners.cut-corners(0.8rem, color-mix(in srgb, var(--color-surface) 80%, transparent), var(--color-border));
     }
     .rank-text {
       display: flex;
@@ -185,7 +194,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
     }
     .board-link {
       align-self: flex-end;
-      color: var(--color-primary);
+      color: var(--color-hub-accent);
       font-size: var(--font-size-sm);
       white-space: nowrap;
     }

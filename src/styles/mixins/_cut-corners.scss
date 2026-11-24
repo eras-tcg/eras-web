@@ -1,9 +1,10 @@
-// The game's cut: straight sides, the top-left and bottom-right corners cut off on a diagonal — the buttons, the effect
-// cards. The edge follows the cut too: the element is painted in `$edge` and cut, and its fill (`$fill`, on its
-// ::before) lies over it `$edge-width` in, cut the same way a hair smaller. Any CSS value (a custom property, say), so
-// a state can change them. The element's content sits over its ::before (it is isolated); a shadow outside it would be
-// cut away, so a glow goes inside the fill. `$cut-end` is the bottom-right corner's cut when it differs (a piece of a
-// row: only the first one is cut at the top left, only the last at the bottom right; 0px leaves a corner square).
+// The game's cut: straight sides, the top-left and bottom-right corners cut off on a diagonal — the buttons, the cards,
+// the effect cards. The element is cut to that shape; its fill (`$fill`, on its ::before) covers it, and its edge
+// (`$edge`, on its ::after) is a ring of `$edge-width` along the cut, diagonals included — a ring, not a backing, so a
+// see-through fill never shows the edge's color through it. Any CSS value (a custom property, say), so a state can
+// change them. The element's content sits over both (it is isolated); a shadow outside it would be cut away, so a
+// glow goes inside the fill. `$cut-end` is the bottom-right corner's cut when it differs (a piece of a row: only the
+// first one is cut at the top left, only the last at the bottom right; 0px leaves a corner square).
 @mixin cut-corners(
   $cut: 0.55rem,
   $fill: transparent,
@@ -14,7 +15,7 @@
   position: relative;
   border: 0;
   border-radius: 0;
-  background: $edge;
+  background: transparent;
   clip-path: polygon(
     #{$cut} 0,
     100% 0,
@@ -25,20 +26,39 @@
   );
   isolation: isolate;
 
-  &::before {
+  &::before,
+  &::after {
     position: absolute;
-    inset: $edge-width;
+    inset: 0;
     z-index: -1;
-    background: $fill;
-    clip-path: polygon(
-      max(0px, #{$cut} - 0.4 * #{$edge-width}) 0,
-      100% 0,
-      100% calc(100% - max(0px, #{$cut-end} - 0.4 * #{$edge-width})),
-      calc(100% - max(0px, #{$cut-end} - 0.4 * #{$edge-width})) 100%,
-      0 100%,
-      0 max(0px, #{$cut} - 0.4 * #{$edge-width})
-    );
     content: '';
+    pointer-events: none;
     transition: background var(--duration-fast) var(--easing-standard);
+  }
+
+  &::before {
+    background: $fill;
+  }
+
+  // The ring: the outer cut, less the same cut `$edge-width` in (even-odd leaves the inside out)
+  &::after {
+    background: $edge;
+    clip-path: polygon(
+      evenodd,
+      #{$cut} 0,
+      100% 0,
+      100% calc(100% - #{$cut-end}),
+      calc(100% - #{$cut-end}) 100%,
+      0 100%,
+      0 #{$cut},
+      #{$cut} 0,
+      calc(#{$cut} + 0.42 * #{$edge-width}) #{$edge-width},
+      calc(#{$edge-width}) calc(#{$cut} + 0.42 * #{$edge-width}),
+      #{$edge-width} calc(100% - #{$edge-width}),
+      calc(100% - #{$cut-end} - 0.42 * #{$edge-width}) calc(100% - #{$edge-width}),
+      calc(100% - #{$edge-width}) calc(100% - #{$cut-end} - 0.42 * #{$edge-width}),
+      calc(100% - #{$edge-width}) #{$edge-width},
+      calc(#{$cut} + 0.42 * #{$edge-width}) #{$edge-width}
+    );
   }
 }

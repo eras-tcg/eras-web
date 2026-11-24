@@ -183,8 +183,11 @@ export class EffectCardPanelComponent {
   }
 
   constructor() {
-    // Held pressed anywhere on it (its picture, numbers or effects): the card in detail
-    inject(DestroyRef).onDestroy(holdToPeek(this.host, () => !!this.slot() || !!this.catalog(), () => this.openDetail()));
+    // Held pressed anywhere on it (its picture, numbers or effects): the card in detail. Not while it shows a card on
+    // the table: its sheet answers the hold on each of its cards itself (both would open a dialog, one over the other)
+    inject(DestroyRef).onDestroy(
+      holdToPeek(this.host, () => !this.onTable() && (!!this.slot() || !!this.catalog()), () => this.openDetail()),
+    );
     // The lit effect in view, on a card with many effects
     afterRenderEffect(() => {
       if (this.active() < 0) return;

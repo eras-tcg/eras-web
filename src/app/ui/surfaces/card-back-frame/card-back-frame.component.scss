@@ -157,9 +157,12 @@
 }
 
 
-// At a game's table a dialog is part of the play: it is just there, no tracing nor gems popping in
+// At a game's table a dialog is part of the play: it is just there, no tracing nor gems popping in, and its gold line
+// is a thin, quieter hairline that does not weigh on the table
 :host-context(body.eras-in-game) {
   .frame path {
+    stroke-width: 1;
+    opacity: 0.7;
     animation: none;
   }
 

@@ -182,6 +182,6 @@ export class HomePage {
   /** A "Bienvenida" step told as a dialog (the greeting, the structure deck picker) opens it instead of the route. */
   protected openStep(step: NextStep): void {
     if (step.guide) void this.guide.open(step.guide, step.route);
-    else void (step.flow === 'welcome' ? this.welcome.start() : this.welcome.pickStructure());
+    else if (step.flow) void this.welcome.pickStructure();
   }
 }

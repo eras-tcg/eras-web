@@ -17,10 +17,11 @@ export class ShopCheckout {
   async purchase(edition: Edition, product: ShopProduct): Promise<boolean> {
     const left = this.wallet.gems() - product.price;
     if (left < 0) return false;
+    const what = `${product.name} de ${edition.editionName ?? edition.editionId}`;
     const ok = await this.modal.confirm({
-      title: 'Confirmar compra',
-      message: `${product.name} de ${edition.editionName ?? edition.editionId} por ${product.price} gemas. Te quedarán ${left} gemas.`,
-      confirmLabel: 'Comprar',
+      title: product.price ? 'Confirmar compra' : 'Confirmar',
+      message: product.price ? `${what} por ${product.price} gemas. Te quedarán ${left} gemas.` : `${what}, gratis.`,
+      confirmLabel: product.price ? 'Comprar' : 'Obtener',
     });
     if (!ok) return false;
     if (await this.wallet.purchase(edition.editionId, product.kind, purchaseTicket(edition, product))) return true;

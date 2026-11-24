@@ -5,7 +5,8 @@ gem's faces solid in the gold cards' tones, the table turned, its edges cut out 
 thin frame in the gold cards' still metal, its corners cut and a tab with the gem's table top and bottom. Same size
 ratio as the old back (472×660), drawn at 2×.
 
-    python build_cardback.py <out.png>
+    python build_cardback.py <out.png> --blue   «Vórtice», the default back (public/images/card-back.png): the gem in ice blue
+    python build_cardback.py <out.png>          «Campeón» (public/images/card-backs/campeon.png): the gem in gold
 """
 import os
 import sys
@@ -285,7 +286,14 @@ def cardback():
     return card.convert('RGB')
 
 
+# «Vórtice», the default back: the same with the gem in ice blue tones (the palette's light blue, the vortex's accent)
+# instead of the gold cards' («Campeón»); the frame stays gold
+BLUE_RAMP = [(0.0, '#06183a'), (0.18, '#0b2a5c'), (0.36, '#124283'), (0.52, '#1c68b4'), (0.68, '#38a4e8'), (0.84, '#7dd3fc'), (1.0, '#effaff')]
+
+
 if __name__ == '__main__':
     out = sys.argv[1]
+    if '--blue' in sys.argv[2:]:
+        GEM_RAMP = BLUE_RAMP
     cardback().save(out, optimize=True)
     print(out)

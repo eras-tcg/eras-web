@@ -157,6 +157,17 @@
 }
 
 
+// Not the page's first frame: the line is already drawn and the gems already there, floating
+:host(.built) {
+  .frame path {
+    animation: none;
+  }
+
+  .gem {
+    animation: gem-float 3.2s ease-in-out infinite;
+  }
+}
+
 // At a game's table a dialog is part of the play: it is just there, no tracing nor gems popping in, and its gold line
 // is a thin, quieter hairline that does not weigh on the table
 :host-context(body.eras-in-game) {

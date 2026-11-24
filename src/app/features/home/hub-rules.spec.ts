@@ -132,17 +132,17 @@ describe('welcomeNextStep', () => {
   const step = (id: string, progress: number, claimed = false) => ({ id, progress, target: 1, gems: 100, claimed, locked: false });
 
   it('goes where the current step is done, or to the missions once it can be claimed', () => {
-    expect(welcomeNextStep([step('welcome', 1, true), step('deck', 0)])).toEqual(expect.objectContaining({ route: '/deck-builder', action: 'Ir' }));
-    expect(welcomeNextStep([step('welcome', 1, true), step('deck', 1)])).toEqual(expect.objectContaining({ route: '/missions', action: 'Reclamar' }));
+    expect(welcomeNextStep([step('structure', 1, true), step('deck', 0)])).toEqual(expect.objectContaining({ route: '/deck-builder', action: 'Ir' }));
+    expect(welcomeNextStep([step('structure', 1, true), step('deck', 1)])).toEqual(expect.objectContaining({ route: '/missions', action: 'Reclamar' }));
   });
 
-  it('opens the greeting and the structure deck picker as dialogs', () => {
-    expect(welcomeNextStep([step('welcome', 1)])?.flow).toBe('welcome');
-    expect(welcomeNextStep([step('welcome', 1, true), { ...step('structure', 0), gems: 0 }])?.flow).toBe('structure');
+  it('opens the structure deck picker until one of ST1–ST4 is taken, then claims it in the missions', () => {
+    expect(welcomeNextStep([step('structure', 0)])).toEqual(expect.objectContaining({ action: 'Elegir', flow: 'structure' }));
+    expect(welcomeNextStep([step('structure', 1)])).toEqual(expect.objectContaining({ action: 'Reclamar', route: '/missions' }));
   });
 
   it('suggests nothing once the chain is complete or while unknown', () => {
-    expect(welcomeNextStep([step('welcome', 1, true)])).toBeNull();
+    expect(welcomeNextStep([step('structure', 1, true)])).toBeNull();
     expect(welcomeNextStep(null)).toBeNull();
   });
 });

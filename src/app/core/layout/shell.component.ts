@@ -61,6 +61,8 @@ export class ShellComponent {
   protected readonly artScreen = computed(() =>
     /^\/(?:home|play|social|library|missions|ranking|simulator)(?:[?#]|$)/.test(this.url()),
   );
+  /** The account pages (login, validate): the form in the middle, over the vortex's eye. */
+  protected readonly authScreen = computed(() => /^\/(?:login|validate)(?:[/?#]|$)/.test(this.url()));
   /** Its component, loaded once the first screen is up (its own chunk, out of the first download). */
   protected readonly ambientBackdrop = signal<Type<unknown> | null>(null);
 

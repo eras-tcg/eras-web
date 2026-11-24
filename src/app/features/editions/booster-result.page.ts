@@ -107,7 +107,7 @@ export class BoosterResultPage {
   private readonly current = computed<OpeningRequest>(() => this.request() ?? { mode: this.mode(), packType: this.packType() });
   protected readonly product = computed(() => {
     const edition = this.editionData();
-    return edition ? productFor(edition, this.current()) : null;
+    return edition ? productFor(edition, this.current(), this.wallet.structures()) : null;
   });
   protected readonly isBox = computed(() => this.current().mode === 'box');
   protected readonly isStructure = computed(() => this.current().mode === 'structure');

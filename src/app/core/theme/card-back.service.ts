@@ -12,6 +12,7 @@ export interface CardBack {
 /** The card backs, the default first (its image is the token's own, styles/tokens/_color.scss). */
 export const CARD_BACKS: readonly CardBack[] = [
   { id: 'vortice', name: 'Vórtice', src: '/images/card-back.png' },
+  { id: 'campeon', name: 'Campeón', src: '/images/card-backs/campeon.png' },
   { id: 'clasico', name: 'Clásico', src: '/images/card-backs/clasico.png' },
 ];
 

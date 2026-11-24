@@ -55,9 +55,16 @@ export function structureLore(description: string | null | undefined): string | 
   return text.length > 20 ? text : null;
 }
 
-/** The public deck that lists a structure deck's copies: the one named after it (ST1…), as the server reads it. */
+/**
+ * The public deck that lists a structure deck's copies: the one named after it, its code alone or before its name
+ * ("ST1", "ST1 Saltadores del multiverso"), as the server reads it.
+ */
 export function structureDeck(decks: readonly Deck[], editionId: string): Deck | null {
-  return decks.find((d) => d.deckName?.trim().toUpperCase() === editionId.toUpperCase()) ?? null;
+  const code = editionId.toUpperCase();
+  return decks.find((d) => {
+    const name = d.deckName?.trim().toUpperCase() ?? '';
+    return name === code || name.startsWith(code + ' ');
+  }) ?? null;
 }
 
 /** A structure deck's cards, each once with its copies, in the deck's order. */

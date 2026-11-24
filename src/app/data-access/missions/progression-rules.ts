@@ -8,8 +8,7 @@ export interface StepText {
 }
 
 const STEPS: Record<string, StepText> = {
-  welcome: { title: 'Bienvenido a ERAS', hint: 'Reclama tu regalo de bienvenida.', route: '/missions' },
-  structure: { title: 'Elige tu structure deck', hint: 'Escoge un structure deck gratis para empezar a jugar.', route: '/missions' },
+  structure: { title: 'Elige tu structure deck', hint: 'Escoge gratis uno de los structure decks ST1 a ST4 para empezar a jugar.', route: '/missions' },
   'how-to-play': { title: 'Aprende a jugar', hint: 'Lee cómo se juega: gemas, ataques y cadenas de efectos.', route: '/ruling' },
   cards: { title: 'Conoce las cartas', hint: 'Explora el catálogo de cartas.', route: '/cards' },
   deck: { title: 'Arma tu mazo', hint: 'Guarda tu primer mazo en el constructor.', route: '/deck-builder' },

@@ -237,7 +237,7 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         background: linear-gradient(180deg, color-mix(in srgb, var(--arcane-rival) 55%, #fff), var(--arcane-rival));
         box-shadow: 0 0 6px color-mix(in srgb, var(--arcane-rival) 70%, transparent);
       }
-      // The number white, outlined in dark: it reads over the gold gem
+      // The number white, outlined in dark: it reads over the blue gem
       :host-context(.arcane) .value {
         inline-size: 2.6rem;
         block-size: 2.6rem;
@@ -245,7 +245,7 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         font-family: var(--font-family-display);
         font-size: 1.15em;
         paint-order: stroke fill;
-        -webkit-text-stroke: 4px #1a1206;
+        -webkit-text-stroke: 4px #06183a;
         text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
       }
       :host-context(.arcane) .value::before {

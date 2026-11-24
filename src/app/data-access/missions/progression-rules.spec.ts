@@ -12,17 +12,18 @@ describe('progression rules', () => {
     expect(stepText('unknown').title).toBe('unknown');
   });
 
-  it('claims a step only when open, not claimed and done; the structure step by choosing the deck', () => {
+  it('claims a step only when open, not claimed and done', () => {
     expect(stepClaimable(step('deck', { progress: 1 }))).toBe(true);
     expect(stepClaimable(step('deck'))).toBe(false);
     expect(stepClaimable(step('deck', { progress: 1, locked: true }))).toBe(false);
     expect(stepClaimable(step('deck', { progress: 1, claimed: true }))).toBe(false);
-    expect(stepClaimable(step('structure'))).toBe(true);
+    expect(stepClaimable(step('structure'))).toBe(false);
+    expect(stepClaimable(step('structure', { progress: 1 }))).toBe(true);
   });
 
   it('the step to do now is the first one not claimed', () => {
-    expect(currentStep([step('welcome', { claimed: true }), step('structure'), step('cards', { locked: true })])?.id).toBe('structure');
-    expect(currentStep([step('welcome', { claimed: true })])).toBeNull();
+    expect(currentStep([step('structure', { claimed: true }), step('how-to-play'), step('cards', { locked: true })])?.id).toBe('how-to-play');
+    expect(currentStep([step('structure', { claimed: true })])).toBeNull();
   });
 
   it('names a milestone by its next tier and says what it asks', () => {

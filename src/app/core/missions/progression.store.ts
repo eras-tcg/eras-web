@@ -6,16 +6,16 @@ import { ServerAccess } from '../server/server-access';
 import { ApiConfig } from '../http/api-config';
 import { BACKGROUND } from '../http/busy';
 import { apiErrorMessage } from '../http/api-error';
-import { PurchasedPack, WalletStore } from '../wallet/wallet.store';
+import { WalletStore } from '../wallet/wallet.store';
 import { Milestone, ProgressionBoard, WelcomeStep } from './progression.model';
 import { reloadOnProgress } from './reload-on-progress';
 
-/** The welcome step that gives a structure deck: claimed by choosing one. */
+/** The first welcome step: done by taking one of ST1–ST4 (the first of them is free). */
 export const STRUCTURE_STEP = 'structure';
 
-/** Claimable now: open, not claimed, and done (the structure step is done by choosing the deck). */
+/** Claimable now: open, not claimed, and done. */
 export function stepClaimable(step: WelcomeStep): boolean {
-  return !step.locked && !step.claimed && (step.id === STRUCTURE_STEP || step.progress >= step.target);
+  return !step.locked && !step.claimed && step.progress >= step.target;
 }
 
 /** The next tier is done and waits to be claimed. */
@@ -25,8 +25,6 @@ export function milestoneClaimable(m: Milestone): boolean {
 
 interface ClaimResponse {
   board: ProgressionBoard;
-  /** The structure deck the claim gave, when it gave one. */
-  opening?: { gems: number; packs: PurchasedPack[] };
 }
 
 /**
@@ -81,14 +79,9 @@ export class ProgressionStore {
     }
   }
 
-  /**
-   * Claims a welcome step; the structure step takes the structure deck chosen (`editionId`) and leaves its opening
-   * ready for the booster result page (ticket `${editionId}|structure`). False when refused (`error` says why).
-   */
-  async claimStep(stepId: string, editionId?: string): Promise<boolean> {
-    return this.claim({ kind: 'welcome', id: stepId, editionId }, `welcome|${stepId}`, (done) => {
-      if (done.opening && editionId) this.wallet.receiveStructure(editionId, done.opening.packs, `${editionId}|structure`);
-    });
+  /** Claims a welcome step (its gems); false when refused (`error` says why). */
+  async claimStep(stepId: string): Promise<boolean> {
+    return this.claim({ kind: 'welcome', id: stepId }, `welcome|${stepId}`);
   }
 
   async claimMilestone(milestoneId: string): Promise<boolean> {
@@ -107,13 +100,12 @@ export class ProgressionStore {
     });
   }
 
-  private async claim(body: object, key: string, then?: (done: ClaimResponse) => void): Promise<boolean> {
+  private async claim(body: object, key: string): Promise<boolean> {
     this.claiming.set(key);
     this.error.set(null);
     try {
       const done = await firstValueFrom(this.http.post<ClaimResponse>(this.api.url('/api/drive/progression/me/claim'), body));
       this.board.set(done.board);
-      then?.(done);
       void this.wallet.refresh();
       return true;
     } catch (e) {

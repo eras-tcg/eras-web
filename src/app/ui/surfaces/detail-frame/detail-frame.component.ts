@@ -1,18 +1,21 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
+import { SweepIconComponent } from '../../primitives/sweep-icon/sweep-icon.component';
+import { CardBackFrameComponent } from '../card-back-frame/card-back-frame.component';
 
 /**
  * The frame of a dialog that shows one thing of a list in detail (a card, a card back): one size whatever it shows, the
- * largest the screen allows up to a limit, a panel with a close button and the content, and big round arrows on its
- * sides (← and → too) to move through the list. The content fills the panel (eras-card-detail `fill`).
+ * largest the screen allows up to a limit, a panel in the card back's frame (as every dialog) with a close button and
+ * the content, and big round glass arrows on its sides (← and → too) to move through the list. The content fills the
+ * panel (eras-card-detail `fill`).
  */
 @Component({
   selector: 'eras-detail-frame',
-  imports: [ButtonComponent, IconComponent],
+  imports: [ButtonComponent, IconComponent, SweepIconComponent, CardBackFrameComponent],
   template: `
     @if (navigable()) {
-      <button erasButton variant="secondary" type="button" class="nav prev" [attr.aria-label]="previousLabel()" [disabled]="!hasPrevious()" (click)="previous.emit()">
+      <button erasButton variant="glass" type="button" class="nav prev" [attr.aria-label]="previousLabel()" [disabled]="!hasPrevious()" (click)="previous.emit()">
         <eras-icon name="chevron-left" />
       </button>
     } @else {
@@ -20,14 +23,13 @@ import { IconComponent } from '../../primitives/icon/icon.component';
     }
 
     <div class="panel" role="document">
-      <button erasButton variant="ghost" size="sm" type="button" class="close" aria-label="Cerrar" (click)="closed.emit()">
-        <eras-icon name="x" />
-      </button>
+      <eras-card-back-frame />
+      <button erasSweep="x" type="button" class="close" aria-label="Cerrar" (click)="closed.emit()"></button>
       <ng-content />
     </div>
 
     @if (navigable()) {
-      <button erasButton variant="secondary" type="button" class="nav next" [attr.aria-label]="nextLabel()" [disabled]="!hasNext()" (click)="next.emit()">
+      <button erasButton variant="glass" type="button" class="nav next" [attr.aria-label]="nextLabel()" [disabled]="!hasNext()" (click)="next.emit()">
         <eras-icon name="chevron-right" />
       </button>
     }

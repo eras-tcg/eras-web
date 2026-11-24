@@ -39,9 +39,9 @@
           >
             <eras-icon [name]="showFilters() ? 'chevron-left' : 'filter'" />
           </button>
-          <span class="count">{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
+          <span erasPill>{{ count() }} {{ count() === 1 ? 'carta' : 'cartas' }}{{ filtersActive() ? ' (filtradas)' : '' }}</span>
           @if (filtersActive()) {
-            <button erasButton class="clear" variant="ghost" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
+            <button erasButton variant="glass" size="sm" type="button" (click)="clearFilters()"><eras-icon name="x" /> Limpiar filtros</button>
           }
         </eras-stack>
 

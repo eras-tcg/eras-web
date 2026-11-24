@@ -1,23 +1,27 @@
-// "Estilo de la mesa: arcano" (the game's preferences): a dark stone table with its edges in shadow, gold engravings
-// and cut gems. The colors are the table's own, the same in both themes. The halves and the counters read the
-// --arcane-* colors (see player-half, shared-bar, phase-bar and resource-pips)
+@use 'mixins/cut-corners';
+
+// "Estilo de la mesa: arcano" (the game's preferences, the default): the table over the vortex behind every screen
+// (AmbientBackdrop), its edges in shadow, engraved in the brand's gold, with cut gems. The colors are the table's own,
+// the same in both themes. The halves and the counters read the --arcane-* colors (see player-half, shared-bar,
+// phase-bar and resource-pips)
 
 // The arcane colors, on the whole board in a game (the table, the sidebar, the menu button and the space around them):
 // what sits there reads as on stone in both themes; menus and dialogs float outside and keep the theme
 @mixin arcane-colors {
-  --arcane-gold: #c9a24b;
-  --arcane-gold-light: #f2e3bd;
-  --arcane-gold-soft: rgb(201 162 75 / 28%);
+  --arcane-gold: var(--color-sim-gold);
+  --arcane-gold-light: var(--color-frame-gold-pale);
+  --arcane-gold-soft: color-mix(in srgb, var(--color-sim-gold) 28%, transparent);
   --arcane-stone: #1a1e25;
   --arcane-stone-dark: #0c0e12;
-  --arcane-ally: #22c55e;
-  --arcane-rival: #e5484d;
+  // Whose it is: blue yours, red the rival's, as everywhere at the table
+  --arcane-ally: var(--color-sim-ally);
+  --arcane-rival: var(--color-sim-rival);
   --color-surface: #1c1f26;
   --color-surface-muted: #262a33;
-  --color-border: rgb(201 162 75 / 28%);
+  --color-border: var(--arcane-gold-soft);
   --color-text: #e8e3d6;
   --color-text-muted: #b9b2a2;
-  --color-primary: #c9a24b;
+  --color-primary: var(--arcane-gold);
   --color-on-primary: #17140f;
   color-scheme: dark;
 }
@@ -25,12 +29,9 @@
 :host(.arcane) {
   @include arcane-colors;
 
-  // The stone over the whole board, edge to edge (the table on it has no background of its own: no darker bands
-  // around it): faint diagonal grain, lit in the middle, in shadow towards the edges
-  background:
-    radial-gradient(ellipse at 50% 50%, transparent 40%, rgb(0 0 0 / 55%) 100%),
-    repeating-linear-gradient(115deg, rgb(255 255 255 / 2%) 0 2px, transparent 2px 7px),
-    linear-gradient(180deg, #1d2129, #14171d 50%, #1d2129);
+  // The vortex shows through the whole board (the table on it has no background of its own): only its edges go
+  // into shadow, so the table stands out in the middle
+  background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgb(0 0 0 / 55%) 100%);
 }
 
 .table.arcane {
@@ -47,72 +48,82 @@
 }
 
 .table.arcane .strip .turn {
+  // Whose turn: a tag washed in that side's color from the left, its tip cut on a slant and a line of gold along its
+  // foot (the players' nameplates' tag)
+  --turn-color: var(--arcane-rival);
+
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.2rem var(--space-4);
+  padding: 0.35rem 1.6rem 0.35rem var(--space-3);
   border: 0;
-  // The plaque's own shape (below): none of the clean style's rounded pill under it
   border-radius: 0;
-  background: linear-gradient(180deg, #2a2620, #17140f);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--turn-color) 42%, #17140f),
+    color-mix(in srgb, var(--turn-color) 12%, #17140f) 55%,
+    color-mix(in srgb, #17140f 85%, transparent)
+  );
   backdrop-filter: none;
   box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
   color: var(--arcane-gold-light);
   font-family: var(--font-family-display);
   font-weight: var(--font-weight-regular);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
-  // A plaque with cut corners, edged in gold (the outline is the plaque's own drop shadow)
-  clip-path: polygon(0.6rem 0, calc(100% - 0.6rem) 0, 100% 50%, calc(100% - 0.6rem) 100%, 0.6rem 100%, 0 50%);
-  filter: drop-shadow(0 0 0.5px var(--arcane-gold)) drop-shadow(0 0 0.5px var(--arcane-gold));
+}
+
+.table.arcane .strip .turn.my-turn {
+  --turn-color: var(--arcane-ally);
+}
+
+.table.arcane .strip .turn::after {
+  position: absolute;
+  inset-inline: 0 1rem;
+  inset-block-end: 0;
+  block-size: 2px;
+  background: linear-gradient(90deg, var(--arcane-gold), transparent);
+  content: '';
 }
 
 // The plaque fills the strip's side with the clean style's letters (the display face is too wide for it), so the turn
 // takes the same room in both styles
 @media all {
   .table.arcane .strip .turn {
-    padding-block: var(--space-2);
-    padding-inline: var(--space-3);
     font-family: inherit;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.04em;
   }
 }
 
-// Phones in landscape: the plaque as low as the strip there
+// The color says whose turn it is: no dot of its own
+.table.arcane .strip .turn-dot {
+  display: none;
+}
+
+// Phones in landscape: as low as the strip there
 @media (orientation: landscape) and (max-height: 30rem) {
   .table.arcane .strip .turn {
-    padding-block: 0.2rem;
+    padding-block: 0;
   }
-}
 
-.table.arcane .strip .turn::before {
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 1px;
-  background: var(--arcane-rival);
-  box-shadow: 0 0 6px var(--arcane-rival);
-  transform: rotate(45deg);
-  content: '';
-}
-
-.table.arcane .strip .turn.my-turn::before {
-  background: var(--arcane-ally);
-  box-shadow: 0 0 6px var(--arcane-ally);
 }
 
 // Menú de partida (beside the table, not in it): a gold-ringed stone button
 :host(.arcane) .game-menu-btn {
-  border: 1px solid var(--arcane-gold, #c9a24b);
+  border: 1px solid var(--arcane-gold);
   background: linear-gradient(180deg, #2a2620, #17140f);
-  box-shadow: 0 0 10px rgb(201 162 75 / 30%);
-  color: #f2e3bd;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--arcane-gold) 30%, transparent);
+  color: var(--arcane-gold-light);
 }
 
-// The sidebar: stone, with a gold hairline towards the table
+// The sidebar: glass over the vortex, with a gold hairline towards the table
 :host(.arcane) .sidebar {
   border-inline-start-color: var(--arcane-gold-soft);
-  background: linear-gradient(180deg, #1a1d23, #0f1115);
+  background: color-mix(in srgb, #0c0e12 72%, transparent);
+  backdrop-filter: blur(8px);
   box-shadow: inset 1px 0 0 rgb(255 255 255 / 4%);
 }

@@ -125,6 +125,8 @@ a {
 
 .cdk-overlay-backdrop.eras-backdrop {
   background: var(--color-overlay);
+  // What lies behind a dialog goes soft, so its frame stands out
+  backdrop-filter: blur(5px);
 }
 
 // Sheets (choices from the bottom): a lighter backdrop, clear while the sheet is lowered; it still blocks the page

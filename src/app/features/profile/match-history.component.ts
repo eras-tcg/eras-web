@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { apiErrorMessage } from '@core/http/api-error';
 import { GameStore } from '@data/simulator/game.store';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -12,7 +13,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import type { RivalDeckData } from './rival-deck-dialog.component';
+import { RIVAL_DECK_ROUTE, RivalDeckData, RivalDeckState } from './rival-deck-link';
 
 const PAGE = 20;
 
@@ -43,7 +44,7 @@ interface Row {
 /** The signed-in player's last games (online and Modo solo): the result, the rival, the deck and how long it took. */
 @Component({
   selector: 'eras-match-history',
-  imports: [DatePipe, CardComponent, BadgeComponent, ButtonComponent, SpinnerComponent, AlertComponent],
+  imports: [DatePipe, CardComponent, EmptyStateComponent, BadgeComponent, ButtonComponent, SpinnerComponent, AlertComponent],
   template: `
     <eras-card padding="md">
       @if (replayError(); as message) {
@@ -64,23 +65,23 @@ interface Row {
               </span>
               <time class="when" [attr.datetime]="r.endedAt">{{ r.endedAt | date: 'd MMM, HH:mm' }}</time>
               @if (r.rivalDeck; as deck) {
-                <button erasButton variant="secondary" size="sm" type="button" class="rival-deck" (click)="showRivalDeck(deck)">Mazo rival</button>
+                <button erasButton variant="glass" size="sm" type="button" class="rival-deck" (click)="showRivalDeck(deck)">Mazo rival</button>
               }
               @if (r.replay) {
-                <button erasButton variant="secondary" size="sm" type="button" class="watch" [loading]="opening() === r.id" [disabled]="!!opening()" (click)="watch(r.id)">
+                <button erasButton variant="glass" size="sm" type="button" class="watch" [loading]="opening() === r.id" [disabled]="!!opening()" (click)="watch(r.id)">
                   Ver repetición
                 </button>
               }
             </li>
           } @empty {
-            <li class="empty">Todavía no juegas partidas online ni en Modo solo.</li>
+            <li><eras-empty-state title="Todavía no juegas partidas online ni en Modo solo" /></li>
           }
         </ul>
         @if (more()) {
-          <button erasButton variant="secondary" type="button" [loading]="loading()" (click)="next()">Ver más</button>
+          <button erasButton variant="glass" type="button" class="more" [loading]="loading()" (click)="next()">Ver más</button>
         }
       } @else if (failed()) {
-        <p class="empty">No se pudo cargar el historial.</p>
+        <eras-empty-state title="No se pudo cargar el historial" />
       } @else {
         <eras-spinner />
       }
@@ -104,7 +105,7 @@ interface Row {
       border: 1px solid var(--color-border);
       border-inline-start: 4px solid var(--color-border);
       border-radius: var(--radius-md);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
     }
     .row.won {
       border-inline-start-color: var(--color-success);
@@ -127,10 +128,13 @@ interface Row {
       white-space: nowrap;
     }
     .meta,
-    .when,
-    .empty {
+    .when {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
+    }
+    .more {
+      display: flex;
+      margin: var(--space-3) auto 0;
     }
     .kind {
       display: flex;
@@ -225,10 +229,10 @@ export class MatchHistoryComponent {
     }
   }
 
-  /** The list the rival played (its dialog is loaded on first use). */
-  protected async showRivalDeck(deck: RivalDeckData): Promise<void> {
-    const { RivalDeckDialogComponent } = await import('./rival-deck-dialog.component');
-    this.modal.open(RivalDeckDialogComponent, { data: deck });
+  /** The deck the rival played, shown as a deck (its "back" returns to this history). */
+  protected showRivalDeck(deck: RivalDeckData): void {
+    const state: RivalDeckState = { rivalDeck: deck };
+    void this.router.navigate([RIVAL_DECK_ROUTE], { state });
   }
 
   protected next(): void {

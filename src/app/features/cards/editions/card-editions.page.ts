@@ -74,6 +74,8 @@ interface EditionForm {
   cover: File | null;
   /** How the cover sits in its tile; null: as it is. */
   coverFrame: CoverFrame | null;
+  /** Hidden from the players (in development): only admins and testers see it. */
+  hidden: boolean;
 }
 
 /**
@@ -108,18 +110,41 @@ interface EditionForm {
       width="wide"
     >
       @if (edition() && !collection()) {
-        <button page-actions erasButton variant="ghost" type="button" (click)="showMetrics()">
+        <button page-actions erasButton variant="glass" type="button" (click)="showMetrics()">
           Métricas
         </button>
       }
+      @if (canEditEditions() && !form() && edition(); as e) {
+        <button
+          page-actions
+          erasButton
+          variant="ghost"
+          type="button"
+          [loading]="savingHidden()"
+          [disabled]="savingHidden()"
+          (click)="toggleHidden(e)"
+        >
+          {{ e.hidden ? 'Mostrar a todos' : 'Ocultar edición' }}
+        </button>
+      }
       @if (canEditEditions() && !form()) {
-        <button page-actions erasButton variant="secondary" type="button" (click)="startForm()">
+        <button page-actions erasButton [variant]="edition() ? 'glass' : 'float'" type="button" (click)="startForm()">
           {{ edition() ? 'Editar edición' : 'Nueva edición' }}
         </button>
       }
 
       @if (error()) {
         <eras-alert tone="danger">{{ error() }}</eras-alert>
+      }
+      @if (edition(); as e) {
+        @if (!collection() && editions.isHidden(e.editionId)) {
+          <eras-alert>
+            Edición en desarrollo: solo la ven los administradores y los testers.
+            @if (!e.hidden) {
+              La oculta su edición base.
+            }
+          </eras-alert>
+        }
       }
 
       @if (form(); as f) {
@@ -197,11 +222,19 @@ interface EditionForm {
               [frame]="f.coverFrame ?? edition()?.coverFrame"
               [code]="f.editionId || '—'"
               [name]="f.editionName"
+              [inDevelopment]="f.hidden"
             />
             <button erasButton variant="secondary" type="button" (click)="editCover()">
               Editar portada
             </button>
           </div>
+          <span class="label">Visibilidad</span>
+          <eras-stack direction="row" [gap]="1" wrap>
+            <button erasChip [selected]="!f.hidden" (click)="patch({ hidden: false })">Visible para todos</button>
+            <button erasChip [selected]="f.hidden" (click)="patch({ hidden: true })">
+              En desarrollo (solo administradores y testers)
+            </button>
+          </eras-stack>
           <eras-form-field label="Fecha de lanzamiento">
             <input
               type="date"
@@ -416,6 +449,7 @@ interface EditionForm {
                 "
                 [dimmed]="collection() && !e.complete"
                 [foil]="e.shine"
+                [inDevelopment]="!collection() && editions.isHidden(e.edition.editionId)"
               />
             </a>
           }
@@ -443,17 +477,13 @@ interface EditionForm {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
     }
-    /* The tile lifts on hover, as in the shop */
+    /* On hover the tile lights its edge, as in the shop; it does not move (lifted, a row at the top of the scroll
+       would be cut under the bar) */
     .tile {
       display: block;
       border-radius: var(--radius-lg);
       color: inherit;
       text-decoration: none;
-      transition: transform var(--duration-fast) var(--easing-standard);
-    }
-    .tile:hover,
-    .tile:focus-visible {
-      transform: translateY(-3px);
     }
     .tile:hover eras-edition-tile,
     .tile:focus-visible eras-edition-tile {
@@ -650,6 +680,7 @@ export class CardEditionsPage {
   });
   private readonly coverUrl = signal<string | null>(null);
   protected readonly saving = signal(false);
+  protected readonly savingHidden = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly edition = computed(() => {
@@ -739,6 +770,7 @@ export class CardEditionsPage {
       releaseDate: e?.releaseDate ?? '',
       cover: null,
       coverFrame: null,
+      hidden: !!e?.hidden,
     });
   }
 
@@ -827,6 +859,7 @@ export class CardEditionsPage {
         ),
         regulation: f.regulation.trim().toUpperCase(),
         ...(f.coverFrame ? { coverFrame: f.coverFrame } : {}),
+        hidden: f.hidden,
       });
       if (f.cover) await this.editions.setImage(f.editionId, f.cover);
       this.form.set(null);
@@ -835,6 +868,19 @@ export class CardEditionsPage {
       this.error.set(e instanceof Error ? e.message : 'No se pudo guardar la edición');
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  /** Hides the edition from the players (in development) or shows it to everyone. */
+  protected async toggleHidden(edition: Edition): Promise<void> {
+    this.savingHidden.set(true);
+    this.error.set(null);
+    try {
+      await this.editions.setHidden(edition.editionId, !edition.hidden);
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'No se pudo cambiar la visibilidad');
+    } finally {
+      this.savingHidden.set(false);
     }
   }
 

@@ -127,6 +127,12 @@ export const routes: Routes = [
         loadComponent: () => import('@features/profile/match-history.page').then((m) => m.MatchHistoryPage),
       },
       {
+        path: 'profile/history/rival-deck',
+        title: 'Mazo del rival · ERAS',
+        canMatch: [authGuard],
+        loadComponent: () => import('@features/profile/rival-deck.page').then((m) => m.RivalDeckPage),
+      },
+      {
         path: 'public-decks',
         title: 'Mazos públicos · ERAS',
         loadComponent: () => import('@features/decks/public-decks.page').then((m) => m.PublicDecksPage),

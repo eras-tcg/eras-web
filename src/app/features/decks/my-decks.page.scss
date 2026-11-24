@@ -109,44 +109,23 @@
 }
 
 // Inside a deckbox: "Mazos / <name>", its settings
-.crumbs {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.crumbs .shelf.drop {
+// Inside a deckbox (eras-crumbs): the shelf lights up while a deck is dragged over it
+.shelf.drop {
   outline: 2px dashed var(--color-focus);
   outline-offset: 2px;
 }
 
-.crumbs .sep {
-  color: var(--color-text-subtle);
-}
-
-.crumbs .here {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-md);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.crumbs .dot {
+.dot {
   inline-size: 0.75rem;
   block-size: 0.75rem;
   border-radius: 50%;
 }
 
-.crumbs .edit {
+.edit {
   margin-inline-start: auto;
 }
 
-.crumbs .hint {
+.hint {
   flex-basis: 100%;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);

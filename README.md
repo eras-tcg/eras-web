@@ -128,7 +128,10 @@ app: `core/pwa/app-mode.ts`, decided once at start). The browser's tab keeps the
   (`display_override` fullscreen, standalone) and `orientation: landscape`. At runtime, on a phone or tablet (a
   coarse pointer), the first tap asks for full screen (`requestFullscreen`, needs a gesture) and
   `screen.orientation.lock('landscape')`; again after coming back from the background or leaving full screen. No
-  "Pantalla completa" buttons there (a desktop's installed window keeps its button and is never forced). Held upright
+  "Pantalla completa" buttons there. On a computer (an installed window, the Windows app) full screen is a
+  preference of the device in Preferencias (Interfaz, and Pantalla in a game), not a button in the top bar:
+  `core/pwa/app-fullscreen.ts` applies it as the app opens (the Windows app through its shell; elsewhere on the first
+  tap or key, as browsers need a gesture) and follows it when the player leaves it (Esc, F11). Held upright
   where the lock is refused (iPhone, some browsers): "Gira el teléfono" covers the whole app
   (`RotateOverlayComponent`).
 - **A layout that does not jump:** the app's height is `--app-height`, measured on start, on turning the phone and on
@@ -209,7 +212,9 @@ code and the same service worker as the browser, so it plays offline and updates
 from the site (`/app/ERAS-Setup.exe`, not in the Microsoft Store). On a Windows PC "Descargar ERAS" gives the
 installer (with how to get past SmartScreen) once the site publishes it (`core/pwa/desktop-app.ts` reads `/app/desktop.json`).
 
-- **What it is:** `desktop/main.cjs` (one maximized window, no menu bar, F11 for full screen, other sites open in the
+- **What it is:** `desktop/main.cjs` (one maximized window, no menu bar, F11 for full screen, the site's
+  "Pantalla completa" preference set through `erasDesktop.setFullScreen` and told back with `onFullScreenChange`,
+  other sites open in the
   player's browser, a page asking for the connection when the site was never loaded, `desktop/offline.html`) and
   `desktop/preload.cjs`, which sets `window.erasDesktop`: the site then runs as the installed app (`AppMode` `'app'`,
   `isDesktopApp()` in `core/pwa/app-mode.ts`: local-first, offline games, no "Descargar ERAS").

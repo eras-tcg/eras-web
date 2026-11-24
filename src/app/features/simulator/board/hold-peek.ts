@@ -13,15 +13,12 @@ const HOLD_SLOP_PX = 10;
 export class HoldPeekDirective {
   /** False: holding does nothing (a face-down card the player may not see). */
   readonly erasHoldPeek = input<boolean | ''>(true);
-  /** The card can be dragged: held long enough it opens when let go (still), so pressing a moment before dragging it
-   * does not open it over the table. */
-  readonly erasHoldPeekOnRelease = input(false);
   readonly peek = output<void>();
 
   constructor() {
     const element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     inject(DestroyRef).onDestroy(
-      holdToPeek(element, () => this.erasHoldPeek() !== false, () => this.peek.emit(), () => this.erasHoldPeekOnRelease()),
+      holdToPeek(element, () => this.erasHoldPeek() !== false, () => this.peek.emit()),
     );
   }
 }
@@ -33,14 +30,12 @@ const DRAG_CLICK_MS = 400;
  * Holding `box` pressed for HOLD_PEEK_MS calls `peek` (while `enabled()`); moving away, letting go or leaving cancels
  * it. After a peek the click of the release is swallowed, and so is the one after a drag (the pointer moved more than
  * HOLD_SLOP_PX between pressing and letting go, or the browser began dragging): dragging a card never taps it. The
- * pointer is followed over the whole window while pressed, since a drag may hide or move the box under it. With
- * `onRelease()` (a card that can be dragged) the hold only arms it: it opens when let go without having moved, so a
- * press held a moment before dragging never opens it over the table. Returns the cleanup.
+ * pointer is followed over the whole window while pressed, since a drag may hide or move the box under it. It opens
+ * as soon as it has been held long enough, without waiting to be let go (a card that can be dragged too: moving it
+ * before then is a drag). Returns the cleanup.
  */
-export function holdToPeek(box: HTMLElement, enabled: () => boolean, peek: () => void, onRelease?: () => boolean): () => void {
+export function holdToPeek(box: HTMLElement, enabled: () => boolean, peek: () => void): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  /** Held long enough, waiting to be let go (onRelease). */
-  let armed = false;
   let start: { x: number; y: number } | null = null;
   let peeked = false;
   let dragged = false;
@@ -59,7 +54,6 @@ export function holdToPeek(box: HTMLElement, enabled: () => boolean, peek: () =>
     stopFollowing();
     peeked = false;
     dragged = false;
-    armed = false;
     // A new press: the click of an earlier drag is no longer coming
     swallowUntil = 0;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -70,10 +64,6 @@ export function holdToPeek(box: HTMLElement, enabled: () => boolean, peek: () =>
     if (!enabled()) return;
     timer = setTimeout(() => {
       timer = null;
-      if (onRelease?.()) {
-        armed = true;
-        return;
-      }
       peeked = true;
       peek();
     }, HOLD_PEEK_MS);
@@ -84,16 +74,8 @@ export function holdToPeek(box: HTMLElement, enabled: () => boolean, peek: () =>
   const drag = () => {
     cancel();
     dragged = true;
-    armed = false;
   };
-  const up = (e?: PointerEvent) => {
-    // Let go where it was held (not a drag, not cancelled by the browser starting one): an armed hold opens it now
-    const open = armed && !dragged && e?.type === 'pointerup';
-    armed = false;
-    if (open) {
-      peeked = true;
-      peek();
-    }
+  const up = () => {
     cancel();
     stopFollowing();
     start = null;

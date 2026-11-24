@@ -8,6 +8,16 @@ export function isTestEdition(editionId: string | null | undefined): boolean {
   return !!editionId && /^T\d+(?:\.\d+)?$/i.test(editionId.trim());
 }
 
+/**
+ * Whether an admin hid the edition (in development), by itself or by its base edition: hiding E3 hides E3.1, as the
+ * server does. Only admins and testers ever receive a hidden edition.
+ */
+export function isHiddenEdition(editionId: string, editions: readonly Edition[]): boolean {
+  const id = editionId.trim().toUpperCase();
+  const base = id.split('.')[0];
+  return editions.some((e) => !!e.hidden && [id, base].includes(e.editionId.trim().toUpperCase()));
+}
+
 /** Starter decks (ST*) first, then by edition number (E1, E1.1, E1.2, E2...), testing editions (T*) last. */
 export function compareEditionIds(a: string, b: string): number {
   const aStarter = a.startsWith('ST');

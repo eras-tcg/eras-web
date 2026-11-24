@@ -25,7 +25,7 @@ eras-icon[name='gem'] {
   gap: var(--space-6);
   flex: 1;
   min-block-size: 0;
-  // Room for the tiles' hover lift
+  // Room for the tiles' lit edge and shadow
   padding: var(--space-1) var(--space-1) var(--space-6);
   overflow-y: auto;
   overscroll-behavior: none;
@@ -45,16 +45,15 @@ eras-icon[name='gem'] {
   color: var(--color-hub-text);
   text-decoration: none;
   transition:
-    transform var(--duration-fast) var(--easing-standard),
     border-color var(--duration-fast) var(--easing-standard),
     box-shadow var(--duration-fast) var(--easing-standard);
 }
 
+// Its edge lights up; it does not move (lifted, a row at the top of the scroll would be cut under the bar)
 .tile:hover,
 .tile:focus-visible {
   border-color: var(--color-hub-accent);
   box-shadow: var(--shadow-lg);
-  transform: translateY(-3px);
 }
 
 .tile::before {
@@ -71,6 +70,21 @@ eras-icon[name='gem'] {
   gap: var(--space-1);
   inline-size: 100%;
   padding: var(--space-3);
+}
+
+/* An edition an admin hid (in development): only admins and testers get it */
+.tile-hidden {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-hub-scrim) 85%, transparent);
+  color: var(--color-hub-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
 }
 
 .tile-code {

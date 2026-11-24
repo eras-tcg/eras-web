@@ -62,6 +62,8 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
     </ol>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     :host {
       display: block;
     }
@@ -230,26 +232,30 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       .choices, .choices li { animation: none; }
     }
 
-    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): gold-edged plaques over the stone */
+    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): gold-edged plaques in the game's cut (mixins/cut-corners) */
     :host-context(.arcane) button {
-      border-color: var(--arcane-gold-soft);
-      background: linear-gradient(180deg, #2a2620, #17140f);
+      --phase-fill: linear-gradient(180deg, #2a2620, #17140f);
+      --phase-edge: var(--arcane-gold-soft);
+
+      @include cut-corners.cut-corners(0.5rem, var(--phase-fill), var(--phase-edge));
+
+      box-shadow: none;
       color: #b9b2a2;
       font-family: var(--font-family-display);
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    :host-context(.arcane) button.next { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
+    :host-context(.arcane) button.next { --phase-edge: var(--arcane-gold); color: var(--arcane-gold-light); }
     :host-context(.arcane) button.current,
     :host-context(.arcane) button.current.mine,
     :host-context(.arcane) .current-phase,
     :host-context(.arcane) .current-phase.mine {
-      border-color: var(--arcane-gold);
-      background: linear-gradient(180deg, #2f2a20, #17140f);
+      --phase-edge: var(--arcane-gold);
+      --phase-fill: linear-gradient(180deg, #2f2a20, #17140f);
+
       backdrop-filter: none;
       color: var(--arcane-gold-light);
       font-weight: var(--font-weight-regular);
-      box-shadow: 0 0 10px color-mix(in srgb, var(--arcane-gold) 30%, transparent);
     }
     @media all {
       :host-context(.arcane) .current-phase,
@@ -260,14 +266,14 @@ import { SheetState } from '@ui/surfaces/sheet/sheet-state';
       }
     }
     /* Each phase a plaque of its own (no panel around them) */
-    :host-context(.arcane) .choice { border-color: var(--arcane-gold-soft); box-shadow: 0 2px 10px rgb(0 0 0 / 45%); }
-    :host-context(.arcane) .choice:not(:disabled) { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
+    :host-context(.arcane) .choice { --phase-edge: var(--arcane-gold-soft); }
+    :host-context(.arcane) .choice:not(:disabled) { --phase-edge: var(--arcane-gold); color: var(--arcane-gold-light); }
     :host-context(.arcane) .choice.current,
     :host-context(.arcane) .choice.current.mine {
-      border-color: var(--arcane-gold-soft);
-      background: linear-gradient(180deg, color-mix(in srgb, var(--arcane-gold) 22%, #2a2620), #17140f);
+      --phase-edge: var(--arcane-gold-soft);
+      --phase-fill: linear-gradient(180deg, color-mix(in srgb, var(--arcane-gold) 22%, #2a2620), #17140f);
+
       color: var(--arcane-gold-light);
-      box-shadow: 0 2px 10px rgb(0 0 0 / 45%);
     }
 
     /* Wide screens: the phase button and its phases, a size bigger */

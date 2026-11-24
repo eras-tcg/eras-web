@@ -1,15 +1,15 @@
+// In the card back's frame (eras-card-back-frame, behind the content), with the notch and its gem on top only: it
+// rises from the bottom edge
 :host {
   --sheet-width: 48rem;
 
+  position: relative;
   display: flex;
   flex-direction: column;
   inline-size: min(var(--sheet-width), 100vw);
   max-block-size: var(--sheet-max-block-size, 75vh);
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-block-end: none;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--shadow-lg);
+  filter: drop-shadow(0 -6px 24px rgb(0 0 0 / 45%));
+  isolation: isolate;
   color: var(--color-text);
   animation: sheet-up var(--duration-normal, 200ms) var(--easing-standard, ease-out);
   transition:
@@ -28,11 +28,13 @@
 // Lowered: only its arrow stays at the bottom, the same round button in the same place as when it is raised (the
 // sheet keeps its width and header, unseen); only the arrow takes clicks
 :host(.collapsed) {
-  border-color: transparent;
-  background: none;
-  box-shadow: none;
+  filter: none;
   animation: none;
   pointer-events: none;
+}
+
+:host(.collapsed) eras-card-back-frame {
+  display: none;
 }
 
 :host(.collapsed) .heading,
@@ -60,7 +62,8 @@
   flex: none;
   align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-5) var(--space-3);
+  // Below the top notch
+  padding: calc(var(--space-3) + var(--space-3)) var(--space-5) var(--space-3);
 }
 
 .toggle {

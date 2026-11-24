@@ -3,12 +3,13 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import localeEs from '@angular/common/locales/es';
 import { ApplicationConfig, LOCALE_ID, inject, isDevMode, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideRouter, withComponentInputBinding, withPreloading, withViewTransitions } from '@angular/router';
+import { TitleStrategy, provideRouter, withComponentInputBinding, withPreloading, withViewTransitions } from '@angular/router';
 import { authInterceptor } from '@core/auth/auth.interceptor';
 import { BusyState, busyInterceptor } from '@core/http/busy';
 import { loadingInterceptor } from '@core/http/loading';
 import { NEWS_LOG_DIALOG } from '@core/news/news-dialog';
 import { MISSIONS_DIALOG } from '@core/missions/missions-dialog';
+import { ErasTitleStrategy } from '@core/navigation/eras-title';
 import { MainScreensPreloading } from '@core/navigation/preloading';
 import { isNativeApp } from '@core/pwa/app-mode';
 import { onScreenTransition } from '@core/navigation/view-transitions';
@@ -25,6 +26,8 @@ registerLocaleData(localeEs);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    // The tab is always named ERAS (the routes' titles never reach it)
+    { provide: TitleStrategy, useClass: ErasTitleStrategy },
     // Screens change with an animation (browsers without view transitions just swap them)
     // The main screens' code is fetched in the background once someone signs in (MainScreensPreloading)
     provideRouter(

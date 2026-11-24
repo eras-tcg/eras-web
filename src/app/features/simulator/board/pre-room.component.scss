@@ -28,21 +28,16 @@
 
 /* Top row: as every screen's */
 .room-bar { display: flex; align-items: flex-start; gap: var(--space-3); }
+// The arrow alone with its gold wash from the window's top-left edge, as on every screen (erasSweep wash)
 .back {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+  --sweep-size: 2.5rem;
+  --sweep-wash-start: calc(var(--layout-gutter) - var(--space-2));
+  --sweep-wash-top: var(--page-top);
+  --sweep-wash-bottom: var(--space-5);
+  margin-inline-start: calc(-1 * var(--space-2));
 }
-.back eras-icon { inline-size: 1.2rem; block-size: 1.2rem; }
-.back:hover { border-color: var(--color-hub-accent); color: var(--color-text); transform: translateX(-2px); }
+.back:hover,
+.back:focus-visible { transform: translateX(-3px); }
 // A one-line title centered beside "back"; the accent bar on the title itself, as on every screen
 .heading { display: flex; align-items: center; min-block-size: 2.5rem; min-inline-size: 0; }
 .title {
@@ -192,24 +187,15 @@
 .picker { display: grid; gap: var(--space-3); }
 .picker-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }
 .picker-title { margin: 0; padding-inline-start: var(--space-2); border-inline-start: 3px solid var(--color-hub-accent); font-family: var(--font-family-display); font-size: var(--font-size-lg); font-weight: var(--font-weight-regular); letter-spacing: 0.05em; text-transform: uppercase; }
-.search {
-  inline-size: min(100%, 16rem);
-  padding: var(--space-1) 0;
-  border: 0;
-  border-block-end: 1px solid var(--color-border);
-  border-radius: 0;
-  outline: none;
-  background: transparent;
-  color: var(--color-text);
-  font: inherit;
-}
-.search:focus { border-block-end-color: var(--color-hub-accent); }
+.search { inline-size: min(100%, 18rem); }
 .starters { --game-card-width: 6rem; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pick { padding: var(--space-1); border: 2px solid transparent; border-radius: var(--radius-md); background: none; cursor: pointer; }
 .pick:hover { border-color: var(--color-border); }
 .pick:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.pick.chosen, .deck.chosen { border-color: var(--color-hub-accent); }
-.deck { border: 3px solid transparent; border-radius: var(--radius-md); }
+.pick.chosen { border-color: var(--color-hub-accent); }
+// The chosen deck: its card ringed, not the note under it (a deck with a note would get a longer ring)
+.deck eras-deck-cover { border-radius: var(--radius-lg); outline: 3px solid transparent; outline-offset: 2px; }
+.deck.chosen eras-deck-cover { outline-color: var(--color-hub-accent); }
 // A deck with cards the simulator does not run: shown, but it cannot be chosen
 .deck.blocked { position: relative; opacity: 0.55; filter: grayscale(0.6); }
 .deck.blocked eras-deck-cover { pointer-events: none; }
@@ -234,23 +220,7 @@
 .pickers { display: contents; }
 
 // Inside a deckbox: back to every deck, and its name (under the title and search)
-.crumbs { display: flex; flex-basis: 100%; align-items: center; gap: var(--space-2); }
-.crumb-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-}
-.crumb-back:hover { border-color: var(--color-hub-accent); color: var(--color-text); }
-.crumb-back eras-icon { inline-size: 1rem; block-size: 1rem; }
-.crumb-here { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-family-display); letter-spacing: 0.04em; text-transform: uppercase; }
+.crumbs { flex-basis: 100%; }
 .crumbs .dot { inline-size: 0.7rem; block-size: 0.7rem; border-radius: 50%; }
 
 /* Landscape (computers, and phones held sideways): two columns, one screen high. The seats and the options on the left,
@@ -320,7 +290,6 @@
     z-index: 2;
     align-items: center;
     padding-block: var(--space-1);
-    background: var(--color-bg);
   }
 }
 
@@ -336,8 +305,7 @@
 
   // The thin top row of every screen on these phones (see eras-page)
   .room-bar { align-items: center; gap: var(--space-2); }
-  .back { inline-size: 2rem; block-size: 2rem; }
-  .back eras-icon { inline-size: 1rem; block-size: 1rem; }
+  .back { --sweep-size: 2rem; --sweep-wash-bottom: var(--space-2); }
   .heading { min-block-size: 2rem; }
   .title {
     overflow: hidden;

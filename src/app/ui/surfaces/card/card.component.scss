@@ -1,9 +1,14 @@
+@use 'mixins/cut-corners';
+
+// A panel in the game's cut (mixins/cut-corners): straight sides, the top-left and bottom-right corners cut off, a
+// see-through surface over the screen's backdrop
 :host {
+  --card-fill: var(--color-surface-glass);
+  --card-edge: var(--color-border);
+
+  @include cut-corners.cut-corners(1rem, var(--card-fill), var(--card-edge));
+
   display: block;
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -22,12 +27,11 @@
 
 :host(.is-interactive) {
   cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+  transition: transform var(--duration-fast) var(--easing-standard);
 }
 
 :host(.is-interactive:hover) {
-  border-color: var(--color-text-muted);
+  --card-edge: var(--color-hub-accent);
+
   transform: translateY(-1px);
 }

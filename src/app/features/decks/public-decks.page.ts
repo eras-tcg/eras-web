@@ -24,10 +24,13 @@ import { DecksStore } from '@data/decks/decks.store';
 import { DeckCoverComponent } from '@ui/domain/deck-cover/deck-cover.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { EmptyStateComponent } from '@ui/feedback/empty-state/empty-state.component';
+import { CrumbsComponent } from '@ui/layout/crumbs/crumbs.component';
+import { SearchFieldComponent } from '@ui/forms/search-field/search-field.component';
 import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { PillComponent } from '@ui/primitives/pill/pill.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { TabItem, TabsComponent } from '@ui/surfaces/tabs/tabs.component';
 import { DeckBoxTileComponent } from './deckbox-tile.component';
@@ -57,7 +60,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
  */
 @Component({
   selector: 'eras-public-decks-page',
-  imports: [PageComponent, TabsComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
+  imports: [PageComponent, CrumbsComponent, SearchFieldComponent, PillComponent, TabsComponent, DeckCoverComponent, DeckBoxTileComponent, GridComponent, AlertComponent, EmptyStateComponent, ButtonComponent, IconComponent, SpinnerComponent],
   template: `
     <eras-page title="Mazos públicos" width="wide">
       @if (store.error(); as error) {
@@ -67,16 +70,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       <eras-tabs class="tabs" label="Origen de los mazos" [tabs]="tabs()" [selected]="search().scope" (selectedChange)="go($any($event), '')" />
 
       <div class="search" role="search">
-        <label class="box">
-          <eras-icon name="search" />
-          <input
-            type="search"
-            [placeholder]="placeholder()"
-            aria-label="Buscar mazos"
-            [value]="search().text"
-            (input)="set('text', $any($event.target).value)"
-          />
-        </label>
+        <eras-search-field label="Buscar mazos" [placeholder]="placeholder()" [value]="search().text" (valueChange)="set('text', $event)" />
         <div class="chips">
           @for (chip of chips(); track chip.key) {
             <label class="chip" [class.on]="!!search()[chip.key]">
@@ -103,10 +97,10 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       </div>
 
       @if (search().folder; as folder) {
-        <nav class="crumbs" aria-label="Ubicación">
-          <button erasButton variant="ghost" size="sm" type="button" (click)="go('system', '')"><eras-icon name="chevron-left" /> Ediciones</button>
-          <span class="here">{{ folderTitle(folder) }}</span>
-        </nav>
+        <eras-crumbs class="crumbs">
+          <button crumbs-back erasButton variant="glass" size="sm" type="button" (click)="go('system', '')"><eras-icon name="chevron-left" /> Ediciones</button>
+          <ng-container crumbs-here>{{ folderTitle(folder) }}</ng-container>
+        </eras-crumbs>
       }
 
       @if (loading()) {
@@ -119,12 +113,12 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
         </eras-grid>
       } @else {
         <div class="results-head">
-          <span class="count">{{ results().length }} {{ results().length === 1 ? 'mazo' : 'mazos' }}</span>
+          <span erasPill>{{ results().length }} {{ results().length === 1 ? 'mazo' : 'mazos' }}</span>
           @for (a of active(); track a.key) {
             <button class="tag" type="button" [attr.aria-label]="'Quitar ' + a.label" (click)="set(a.key, '')">{{ a.label }} <eras-icon name="x" /></button>
           }
           @if (active().length) {
-            <button erasButton variant="ghost" size="sm" type="button" (click)="clear()">Limpiar</button>
+            <button erasButton variant="glass" size="sm" type="button" (click)="clear()"><eras-icon name="x" /> Limpiar filtros</button>
           }
         </div>
         @if (results().length === 0) {
@@ -154,29 +148,6 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       gap: var(--space-3);
       margin-block-end: var(--space-4);
     }
-    .box {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface);
-      color: var(--color-text-muted);
-    }
-    .box:focus-within {
-      border-color: var(--color-hub-accent);
-    }
-    .box input {
-      flex: 1;
-      min-inline-size: 0;
-      border: 0;
-      background: none;
-      color: var(--color-text);
-      font: inherit;
-      font-size: var(--font-size-md);
-      outline: none;
-    }
     .chips {
       display: flex;
       flex-wrap: wrap;
@@ -188,7 +159,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       align-items: center;
       border: 1px solid var(--color-border);
       border-radius: 999px;
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       color: var(--color-text-muted);
     }
     .chip.on {
@@ -217,30 +188,7 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       pointer-events: none;
     }
     .crumbs {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--space-1);
       margin-block-end: var(--space-3);
-    }
-    .sep {
-      color: var(--color-text-muted);
-    }
-    .link {
-      padding: 0;
-      border: 0;
-      background: none;
-      color: var(--color-text-muted);
-      font: inherit;
-      cursor: pointer;
-    }
-    .link:hover,
-    .link:focus-visible {
-      color: var(--color-text);
-      text-decoration: underline;
-    }
-    .here {
-      font-weight: 700;
     }
     .results-head {
       display: flex;
@@ -249,7 +197,6 @@ const COVER_COLUMN = 'var(--cover-column, min(11rem, 40vw, 34dvh))';
       gap: var(--space-2);
       margin-block-end: var(--space-3);
     }
-    .count,
     .note {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);

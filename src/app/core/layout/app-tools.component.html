@@ -68,7 +68,7 @@
     <span class="label">{{ theme.theme() === 'dark' ? 'Tema claro' : 'Tema oscuro' }}</span>
   </button>
 }
-<!-- On every screen, the last one but for sign out (not in the installed app on a phone or tablet: always full screen) -->
+<!-- On every screen, the last one but for sign out (the browser's tab only: the installed app has it in Preferencias) -->
 @if (fullscreenToggle) {
   <button type="button" class="item" role="switch" [attr.aria-checked]="fullscreen()" (click)="toggleFullscreen()">
     <eras-icon [name]="fullscreen() ? 'minimize' : 'maximize'" />

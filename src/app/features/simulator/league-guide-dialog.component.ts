@@ -2,7 +2,6 @@ import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RANK_DIVISIONS, RANK_LABELS, RankTier } from '@data/ranks/rank.model';
 import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 
 /** How each league is played, for the guide (low to high). */
@@ -25,7 +24,7 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
 /** "Guía de ligas" (the info button of "Clasificación"): how ranked games move the rank, league by league. */
 @Component({
   selector: 'eras-league-guide-dialog',
-  imports: [ModalComponent, ButtonComponent, RankEmblemComponent],
+  imports: [ModalComponent, RankEmblemComponent],
   template: `
     <eras-modal title="Guía de ligas" size="lg" (closed)="ref.close()">
       <p class="intro">
@@ -46,12 +45,11 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
           </span>
         </div>
       }
-      <ng-container modal-footer>
-        <button erasButton variant="secondary" type="button" (click)="ref.close()">Cerrar</button>
-      </ng-container>
     </eras-modal>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     .intro { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); }
     .league {
       display: flex;
@@ -59,9 +57,8 @@ const GUIDE: { tiers: RankTier[]; text: string }[] = [
       gap: var(--space-3);
       margin-block-end: var(--space-2);
       padding: var(--space-3) var(--space-4);
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
+
+      @include cut-corners.cut-corners(0.7rem, var(--color-surface), var(--color-border));
     }
     .emblems { display: flex; flex: none; gap: var(--space-2); inline-size: calc(2 * 64px + var(--space-2)); }
     .league-text { display: flex; flex-direction: column; gap: 2px; }

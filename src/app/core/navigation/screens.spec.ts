@@ -20,6 +20,8 @@ describe('parentScreen', () => {
     expect(parentScreen('/roles')?.route).toBe('/admin');
     expect(parentScreen('/cards/collection')?.route).toBe('/library');
     expect(parentScreen('/cards/collection/E1.3')?.route).toBe('/cards/collection');
+    expect(parentScreen('/profile/history')?.route).toBe('/profile');
+    expect(parentScreen('/profile/history/rival-deck')?.route).toBe('/profile/history');
   });
 
   it('ignores query, fragment and a trailing slash', () => {

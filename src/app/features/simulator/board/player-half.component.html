@@ -32,7 +32,7 @@
     <eras-chain-marks ring [links]="pileLinks().lifeStack" [me]="game.myState()?.userId" />
   </eras-game-zone>
   <!-- The player's plate: their icon and name, under their lives (over them on the rival's side) -->
-  <eras-player-plate [username]="p.username" [avatar]="p.avatar" [connected]="p.connected" />
+  <eras-player-plate [username]="p.username" [avatar]="p.avatar" [connected]="p.connected" [flipped]="opponent()" />
   <ng-template #lifeMenu>
     <eras-menu>
       <button erasMenuItem (triggered)="viewLives()">Ver vidas</button>

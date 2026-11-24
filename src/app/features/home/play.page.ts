@@ -63,7 +63,7 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
       <!-- The app for this device, one button (none in the installed app, nor where nothing can be installed) -->
       @if (getApp(); as kind) {
         <div class="extras">
-          <button erasButton variant="float" class="get-app" type="button" (click)="download(kind)">
+          <button erasButton variant="float" type="button" (click)="download(kind)">
             <eras-icon name="download" /> Descargar ERAS
           </button>
         </div>
@@ -95,18 +95,6 @@ export function playMenu(state: { cutOff: boolean; offline: boolean; local?: boo
       flex-wrap: wrap;
       gap: var(--space-2);
       margin-block-start: var(--space-4);
-    }
-    /* The gold floating button (the app's call to action), in the menu's lettering */
-    .extras .get-app {
-      padding-inline: var(--space-5);
-      font-family: var(--font-family-display);
-      font-size: var(--font-size-md);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .extras eras-icon {
-      inline-size: 1.15rem;
-      block-size: 1.15rem;
     }
     /* Upright phones (the browser; the game itself is played in landscape): getting the app is what matters here,
        so its buttons go above the menu, full width, instead of below the fold */

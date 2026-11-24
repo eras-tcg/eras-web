@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { EditModeService } from '@core/auth/edit-mode.service';
@@ -23,6 +23,7 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { TabsComponent } from '@ui/surfaces/tabs/tabs.component';
+import { deckViewLink, fromTierlist } from '@features/decks/deck-links';
 
 const DRAG_TYPE = 'application/x-eras-deck';
 
@@ -54,6 +55,8 @@ export class TierlistPage {
   private readonly editMode = inject(EditModeService);
   private readonly modal = inject(ModalService);
   private readonly router = inject(Router);
+  /** `?tab=` (bound by the router): the page shown first, e.g. on coming back from a deck opened here. */
+  readonly tab = input<string>();
 
   protected readonly canEdit = computed(() => this.editMode.allows('manage_decks'));
   protected readonly list = signal<TierList | null>(null);
@@ -87,8 +90,9 @@ export class TierlistPage {
     });
   }
 
+  /** The deck in full; its "back" returns here, on this page. */
   protected openDeck(id: string): void {
-    void this.router.navigate(['/deck', id]);
+    void this.router.navigate(deckViewLink(id), { state: fromTierlist({ tab: this.pageId() }) });
   }
 
   protected deck(id: string): Deck | null {
@@ -107,7 +111,10 @@ export class TierlistPage {
       const list = normalizeTierList(await firstValueFrom(this.api.getTierList()));
       this.list.set(list);
       this.saved = structuredClone(list);
-      if (!list.pages.some((p) => p.id === this.pageId())) this.pageId.set(list.pages[0].id);
+      if (!list.pages.some((p) => p.id === this.pageId())) {
+        const asked = list.pages.find((p) => p.id === this.tab());
+        this.pageId.set((asked ?? list.pages[0]).id);
+      }
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'No se pudo cargar la tierlist'));
     } finally {

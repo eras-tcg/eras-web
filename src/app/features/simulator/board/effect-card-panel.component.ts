@@ -9,6 +9,7 @@ import { holdToPeek } from './hold-peek';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 import { CardSheetComponent } from './card-sheet.component';
+import { CardBackFrameComponent } from '@ui/surfaces/card-back-frame/card-back-frame.component';
 import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 
 /**
@@ -20,8 +21,10 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [EffectLineComponent, CardSheetComponent, CardFaceComponent],
+  imports: [EffectLineComponent, CardSheetComponent, CardFaceComponent, CardBackFrameComponent],
   template: `
+    <eras-card-back-frame notches="none" />
+    <div class="scroll">
     @if (onTable(); as t) {
       <eras-card-sheet column [slot]="t.slot" [zone]="t.zone" [opponent]="t.opponent" [activeText]="activeText()" />
     } @else {
@@ -41,24 +44,47 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
       <div class="effect active"><eras-effect-line [text]="text" /></div>
     }
     }
+    </div>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
+    /* In the card back's frame, its bevelled corners only (a side panel: no notch); the content scrolls inside it */
     :host {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      inline-size: var(--effect-panel-width, 18rem);
+      max-block-size: 100%;
+      filter: drop-shadow(0 8px 24px rgb(0 0 0 / 45%));
+      isolation: isolate;
+      color: var(--color-text);
+    }
+    /* Clear of the bevelled corners (the scrollbar too: the system's, never past the frame), and what scrolls fades out
+       before the edges instead of being cut by them; at rest both fades lie on the padding */
+    .scroll {
+      --panel-fade: var(--space-5);
+
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      inline-size: var(--effect-panel-width, 18rem);
-      max-block-size: 100%;
-      padding: var(--space-3);
-      overflow-y: auto;
+      min-block-size: 0;
+      margin: var(--space-3) var(--space-1) var(--space-3) 0;
+      padding: var(--space-2) var(--space-2) var(--panel-fade) var(--space-3);
+      overflow: hidden auto;
       overscroll-behavior: none;
-      border-radius: var(--radius-lg);
-      background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-      box-shadow: var(--shadow-lg);
-      color: var(--color-text);
-      scrollbar-width: thin;
+      mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        #000 var(--space-2),
+        #000 calc(100% - var(--panel-fade)),
+        transparent
+      );
     }
-    eras-card-sheet { --card-sheet-width: calc(var(--effect-panel-width, 18rem) - 2 * var(--space-3)); }
+    /* As wide as the scroll's content: the panel less its padding, its margin and the scrollbar (10px, the system's) */
+    eras-card-sheet {
+      --card-sheet-width: calc(var(--effect-panel-width, 18rem) - var(--space-3) - var(--space-2) - var(--space-1) - 10px);
+    }
     .art {
       display: block;
       cursor: zoom-in;
@@ -67,18 +93,38 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
       box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
     }
     .effects { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+    /* Each effect in the game's cut, as the buttons; the one that asks lit in the activating color, its light from the
+       left, breathing slowly */
     .effect {
+      @include cut-corners.cut-corners(0.6rem, var(--color-surface-muted), var(--color-border));
+
       margin: 0;
-      padding: var(--space-2);
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
+      padding: var(--space-2) var(--space-3);
       font-size: var(--font-size-sm);
-      transition: background var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
     }
-    /* The effect that asks: in the color the game marks what is activating */
     .effect.active {
-      background: color-mix(in srgb, var(--color-sim-effect-active) 18%, var(--color-surface));
-      box-shadow: inset 3px 0 0 var(--color-sim-effect-active), 0 0 14px color-mix(in srgb, var(--color-sim-effect-active) 35%, transparent);
+      @include cut-corners.cut-corners(
+        0.6rem,
+        linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--color-sim-effect-active) 34%, var(--color-surface)),
+          color-mix(in srgb, var(--color-sim-effect-active) 10%, var(--color-surface)) 70%
+        ),
+        var(--color-sim-effect-active),
+        1.5px
+      );
+
+      animation: effect-active-breathe 2.4s ease-in-out infinite;
+    }
+    @keyframes effect-active-breathe {
+      50% {
+        filter: brightness(1.18);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .effect.active {
+        animation: none;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,8 +183,11 @@ export class EffectCardPanelComponent {
   }
 
   constructor() {
-    // Held pressed anywhere on it (its picture, numbers or effects): the card in detail
-    inject(DestroyRef).onDestroy(holdToPeek(this.host, () => !!this.slot() || !!this.catalog(), () => this.openDetail()));
+    // Held pressed anywhere on it (its picture, numbers or effects): the card in detail. Not while it shows a card on
+    // the table: its sheet answers the hold on each of its cards itself (both would open a dialog, one over the other)
+    inject(DestroyRef).onDestroy(
+      holdToPeek(this.host, () => !this.onTable() && (!!this.slot() || !!this.catalog()), () => this.openDetail()),
+    );
     // The lit effect in view, on a card with many effects
     afterRenderEffect(() => {
       if (this.active() < 0) return;

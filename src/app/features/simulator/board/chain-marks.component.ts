@@ -9,7 +9,7 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
 }
 
 /**
- * The chain links a card (or a pile: Tributos, Descarte…) has activated, as numbered gems (cyan yours, pink the
+ * The chain links a card (or a pile: Tributos, Descarte…) has activated, as numbered gems (blue yours, red the
  * rival's): one at its center, several on the corners of a regular polygon centered on it. A card is also framed in
  * that color. The chain reads on the table; its explicit list opens from the chain's button.
  */
@@ -36,14 +36,14 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
   `,
   styles: `
     :host {
-      --mark-cyan: #38bdf8;
+      --mark-color: var(--color-sim-link-mine);
       position: absolute;
       inset: 0;
       z-index: 4;
       pointer-events: none;
     }
     :host(:empty) { display: none; }
-    .rival { --mark-cyan: #f472b6; }
+    .rival { --mark-color: var(--color-sim-link-rival); }
     /* The link's number: a cut gem in the chainer's color, ringed in white */
     .mark {
       position: absolute;
@@ -53,8 +53,8 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
       block-size: 1.35rem;
       border: 2px solid #f0fdff;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mark-cyan) 55%, #fff), var(--mark-cyan) 55%, color-mix(in srgb, var(--mark-cyan) 45%, #000));
-      box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 10px 2px color-mix(in srgb, var(--mark-cyan) 70%, transparent);
+      background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mark-color) 55%, #fff), var(--mark-color) 55%, color-mix(in srgb, var(--mark-color) 45%, #000));
+      box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 10px 2px color-mix(in srgb, var(--mark-color) 70%, transparent);
       color: #fff;
       font: 700 0.8rem/1 var(--font-family-display);
       text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
@@ -77,9 +77,9 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     .frame {
       position: absolute;
       inset: -2px;
-      border: 2px solid var(--mark-cyan);
+      border: 2px solid var(--mark-color);
       border-radius: var(--radius-sm);
-      box-shadow: 0 0 12px 2px color-mix(in srgb, var(--mark-cyan) 65%, transparent), inset 0 0 10px color-mix(in srgb, var(--mark-cyan) 40%, transparent);
+      box-shadow: 0 0 12px 2px color-mix(in srgb, var(--mark-color) 65%, transparent), inset 0 0 10px color-mix(in srgb, var(--mark-color) 40%, transparent);
       animation: frame-in 0.35s ease backwards;
     }
     /* An exhausted card lies sideways in a square box: the frame lies with it (the card's height across, its width up) */
@@ -94,8 +94,8 @@ export function chainLinksOf(chain: readonly PendingEffect[] | null | undefined,
     .frame.resolving { animation: frame-in 0.35s ease backwards, frame-pulse 0.9s ease-in-out infinite alternate; }
     @keyframes mark-in { from { opacity: 0; scale: 1.8; } }
     @keyframes frame-in { from { opacity: 0; } }
-    @keyframes pulse { to { box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 18px 6px var(--mark-cyan); } }
-    @keyframes frame-pulse { to { box-shadow: 0 0 22px 6px var(--mark-cyan), inset 0 0 14px var(--mark-cyan); } }
+    @keyframes pulse { to { box-shadow: 0 1px 3px rgb(0 0 0 / 55%), 0 0 18px 6px var(--mark-color); } }
+    @keyframes frame-pulse { to { box-shadow: 0 0 22px 6px var(--mark-color), inset 0 0 14px var(--mark-color); } }
     @media (prefers-reduced-motion: reduce) {
       .mark, .mark.resolving, .frame, .frame.resolving { animation: none; }
     }
@@ -109,7 +109,7 @@ export class ChainMarksComponent {
   readonly ring = input(false, { transform: booleanAttribute });
   /** On the rival's card, turned round: the marks go up its other edge. */
   readonly upsideDown = input(false, { transform: booleanAttribute });
-  /** The player looking: their links are cyan, the rival's pink. */
+  /** The player looking: their links are blue, the rival's red. */
   readonly me = input<string | null | undefined>(null);
 
   /** The card's highest link (the next of its own to resolve). */

@@ -20,6 +20,8 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
     }
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     /* The tray */
     :host {
       --pip: 0.95rem;
@@ -105,25 +107,45 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       :host { --pip: 0.6rem; --btn: 1.05rem; gap: 2px; padding: 2px; }
       .pip.on { box-shadow: 0 0 0 1px rgb(255 255 255 / 55%), 0 0 5px 1px rgb(34 197 94 / 55%); }
     }
-    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): a stone tray edged in gold, gold-edged buttons */
+    /* "Estilo de la mesa: arcano" (the table sets --arcane-*): the tray and its − and + in the game's cut
+       (mixins/cut-corners), the gems the ERAS gem (the site's icon): lit in gold, dull and dark when spent */
     :host-context(.arcane) {
-      border-color: var(--arcane-gold-soft);
-      background: linear-gradient(180deg, var(--arcane-stone-dark), #1a1d23);
-      box-shadow: inset 0 2px 4px rgb(0 0 0 / 70%), 0 1px 0 rgb(255 255 255 / 5%);
+      @include cut-corners.cut-corners(
+        0.45rem,
+        linear-gradient(180deg, color-mix(in srgb, var(--arcane-stone-dark) 85%, transparent), color-mix(in srgb, #1a1d23 75%, transparent)),
+        var(--arcane-gold-soft)
+      );
+
+      box-shadow: none;
     }
-    :host-context(.arcane) .pip:not(.on) {
-      background: conic-gradient(from 0deg at 50% 50%, #4a4f5a 0 25%, #2f343d 25% 50%, #15181d 50% 75%, #23272f 75% 100%);
-      box-shadow: 0 0 0 1px rgb(201 162 75 / 30%), inset 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 60%);
+    :host-context(.arcane) .pips { gap: calc(var(--pip) * 0.2); padding: calc(var(--pip) * 0.1) calc(var(--pip) * 0.25); }
+    // Big enough to read at a glance: the gems are what the tray is about
+    :host-context(.arcane) .pip {
+      inline-size: calc(var(--pip) * 1.9);
+      block-size: calc(var(--pip) * 1.9);
+      border-radius: 0;
+      background: url('/favicon.svg') center / contain no-repeat;
+      box-shadow: none;
+      opacity: 0.4;
+      filter: grayscale(1) brightness(0.55);
+      transform: none;
+      transition: filter var(--duration-fast, 120ms) ease, opacity var(--duration-fast, 120ms) ease;
     }
     :host-context(.arcane) .pip.on {
-      box-shadow: 0 0 0 1px var(--arcane-gold), 0 0 8px 2px rgb(34 197 94 / 50%);
+      background: url('/favicon.svg') center / contain no-repeat;
+      box-shadow: none;
+      opacity: 1;
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--arcane-gold) 70%, transparent));
     }
+    :host-context(.arcane) .pip.on::after { display: none; }
     :host-context(.arcane) .step {
-      border-color: var(--arcane-gold-soft);
-      background: linear-gradient(180deg, #2a2620, #17140f);
+      --step-edge: var(--arcane-gold-soft);
+
+      @include cut-corners.cut-corners(0.3rem, linear-gradient(180deg, #2a2620, #17140f), var(--step-edge));
+
       color: var(--arcane-gold-light);
     }
-    :host-context(.arcane) .step:hover:not(:disabled) { border-color: var(--arcane-gold); color: var(--arcane-gold-light); }
+    :host-context(.arcane) .step:hover:not(:disabled) { --step-edge: var(--arcane-gold); color: var(--arcane-gold-light); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

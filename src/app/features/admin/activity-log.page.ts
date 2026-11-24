@@ -13,6 +13,7 @@ import { GridComponent } from '@ui/layout/grid/grid.component';
 import { PageComponent } from '@ui/layout/page/page.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
+import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { CardComponent } from '@ui/surfaces/card/card.component';
 import { feedbackState } from './admin-feedback';
@@ -41,12 +42,13 @@ const PERIODS: (ToggleOption & { days: number })[] = [
     AlertComponent,
     EmptyStateComponent,
     ButtonComponent,
+    IconComponent,
     SpinnerComponent,
   ],
   template: `
     <eras-page title="Registro de actividad" subtitle="Ingresos, compras, mazos y partidas de los jugadores" width="wide">
       <ng-container ngProjectAs="[page-actions]">
-        <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="search()">Recargar</button>
+        <button erasButton variant="glass" type="button" [disabled]="loading()" (click)="search()"><eras-icon name="refresh" /> Recargar</button>
       </ng-container>
 
       @if (fb.feedback(); as f) {

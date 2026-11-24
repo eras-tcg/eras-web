@@ -46,6 +46,9 @@
 eras-player-plate {
   position: relative;
   z-index: var(--z-sim-hud);
+  // As wide as the name needs (over the table if it must), not the side column's width
+  inline-size: max-content;
+  max-inline-size: min(20rem, 40vw);
   margin-block-end: var(--space-4);
   transition: opacity var(--duration-fast) var(--easing-standard);
 }

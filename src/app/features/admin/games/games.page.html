@@ -1,7 +1,7 @@
 <eras-page title="Registro de partidas" width="wide">
   <ng-container ngProjectAs="[page-actions]">
-    <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
-    <button erasButton variant="secondary" type="button" [attr.aria-expanded]="showStats()" (click)="showStats.set(!showStats())">
+    <button erasButton variant="glass" type="button" [disabled]="loading()" (click)="load()"><eras-icon name="refresh" /> Recargar</button>
+    <button erasButton variant="glass" type="button" [attr.aria-expanded]="showStats()" (click)="showStats.set(!showStats())">
       {{ showStats() ? 'Ocultar estadísticas' : 'Estadísticas por mazo' }}
     </button>
   </ng-container>

@@ -20,10 +20,11 @@
   >
     <!-- Inside a deckbox: back to the shelf (a deck dropped there is taken out), its name and its settings -->
     @if (openBox(); as open) {
-      <nav deck-boxes class="crumbs" aria-label="Ubicación">
+      <eras-crumbs deck-boxes>
         <button
+          crumbs-back
           erasButton
-          variant="ghost"
+          variant="glass"
           size="sm"
           type="button"
           class="shelf"
@@ -35,15 +36,14 @@
         >
           <eras-icon name="chevron-left" /> Mazos
         </button>
-        <span class="sep" aria-hidden="true">/</span>
-        <span class="here" aria-current="page"><span class="dot" [style.background]="openColor()" aria-hidden="true"></span>{{ open.name }}</span>
+        <ng-container crumbs-here><span class="dot" [style.background]="openColor()" aria-hidden="true"></span>{{ open.name }}</ng-container>
         @if (canManage()) {
-          <button erasButton variant="secondary" size="sm" type="button" class="edit" (click)="configureBox(open)"><eras-icon name="edit" /> Editar deckbox</button>
+          <button erasButton variant="glass" size="sm" type="button" class="edit" (click)="configureBox(open)"><eras-icon name="edit" /> Editar deckbox</button>
         }
         @if (dragged()?.kind === 'deck') {
           <span class="hint">Suelta el mazo en «Mazos» para sacarlo de la deckbox</span>
         }
-      </nav>
+      </eras-crumbs>
     }
 
     @if (canManage()) {

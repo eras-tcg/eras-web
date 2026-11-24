@@ -1,9 +1,12 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { PlaymatStore } from '@core/auth/playmat.store';
 import { apiErrorMessage } from '@core/http/api-error';
 import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardBackService } from '@core/theme/card-back.service';
+import { AppFullscreen } from '@core/pwa/app-fullscreen';
+import { BackdropService } from '@core/theme/backdrop.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { frameImage } from '@ui/domain/image-framer/frame-image';
@@ -21,7 +24,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
  */
 @Component({
   selector: 'eras-game-preferences-panel',
-  imports: [IconComponent],
+  imports: [IconComponent, NgTemplateOutlet],
   template: `
     <div class="tabs" role="tablist" aria-label="Secciones">
       @for (t of sections(); track t.id) {
@@ -39,6 +42,8 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Tema</strong><small>Los colores de todo el sitio</small></span>
             <span class="state">{{ theme.theme() === 'dark' ? 'Oscuro' : 'Claro' }}</span>
           </button>
+          <ng-container [ngTemplateOutlet]="backdropPref" />
+          <ng-container [ngTemplateOutlet]="appFullscreenPref" />
         }
         @case ('table') {
           @if (withPlaymat()) {
@@ -70,6 +75,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
               </span>
             </div>
           }
+          <ng-container [ngTemplateOutlet]="backdropPref" />
           <!-- Each click: limpio ↔ arcano -->
           <button type="button" class="pref" (click)="prefs.tableStyle.set((prefs.tableStyle() + 1) % 2)">
             <eras-icon name="sparkles" />
@@ -141,8 +147,10 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
           </label>
         }
         @case ('screen') {
-          <!-- In a game only (the browser's full screen); the installed app on a phone is always full screen (AppScreen) -->
-          @if (screen && screen.fullscreenToggle && (screen.canFullscreen || !screen.installed)) {
+          <!-- In a game only (the browser's full screen); the installed app on a phone is always full screen (AppScreen),
+               on a computer it is the app's own preference -->
+          <ng-container [ngTemplateOutlet]="appFullscreenPref" />
+          @if (screen && screen.fullscreenToggle && !appFullscreen.available && (screen.canFullscreen || !screen.installed)) {
             <button type="button" class="pref" role="switch" [attr.aria-checked]="screen.fullView()" (click)="screen.toggleFullscreen()">
               <eras-icon [name]="screen.fullView() ? 'minimize' : 'maximize'" />
               <span class="text"><strong>Pantalla completa</strong><small>Toda la mesa crece con el alto de la pantalla</small></span>
@@ -185,17 +193,37 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
         }
       }
     </div>
+    <!-- The installed app on a computer (the Windows one too): opens in full screen -->
+    <ng-template #appFullscreenPref>
+      @if (appFullscreen.available) {
+        <button type="button" class="pref" role="switch" [attr.aria-checked]="appFullscreen.on()" (click)="appFullscreen.set(!appFullscreen.on())">
+          <eras-icon [name]="appFullscreen.on() ? 'minimize' : 'maximize'" />
+          <span class="text"><strong>Pantalla completa</strong><small>La aplicación se abre ocupando toda la pantalla</small></span>
+          <span class="state">{{ appFullscreen.on() ? 'Sí' : 'No' }}</span>
+        </button>
+      }
+    </ng-template>
+    <!-- The background behind the screens and the arcane table. Each click: animado → estático → plano -->
+    <ng-template #backdropPref>
+      <button type="button" class="pref" (click)="backdrop.cycle()">
+        <eras-icon name="image" />
+        <span class="text"><strong>Fondo</strong><small>El vórtice detrás de las pantallas; con tapete, la mesa queda lisa</small></span>
+        <span class="state">{{ backdrop.label() }}</span>
+      </button>
+    </ng-template>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     :host { display: block; }
+    /* The game's cut on the tabs, their row and every option (mixins/cut-corners) */
     .tabs {
+      @include cut-corners.cut-corners(0.6rem, var(--color-surface-muted), var(--color-border));
+
       display: flex;
       gap: var(--space-1);
       margin-block-end: var(--space-3);
-      padding: 2px;
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-pill);
-      background: var(--color-surface-muted);
+      padding: 3px;
     }
     .tab {
       display: inline-flex;
@@ -203,10 +231,13 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       align-items: center;
       justify-content: center;
       gap: var(--space-1);
+      --tab-fill: transparent;
+      --tab-cut: 0px;
+      --tab-cut-end: 0px;
+
+      @include cut-corners.cut-corners(var(--tab-cut), var(--tab-fill), $cut-end: var(--tab-cut-end));
+
       padding: var(--space-1) var(--space-2);
-      border: 0;
-      border-radius: var(--radius-pill);
-      background: none;
       color: var(--color-text-muted);
       font: inherit;
       font-size: var(--font-size-sm);
@@ -215,13 +246,18 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       cursor: pointer;
     }
     .tab eras-icon { flex: none; inline-size: 1rem; block-size: 1rem; }
-    .tab.on { background: var(--color-primary); color: var(--color-on-primary); }
-    .tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    /* Square inside the row: only the ends meet its cut corners */
+    .tab:first-child { --tab-cut: 0.45rem; }
+    .tab:last-child { --tab-cut-end: 0.45rem; }
+    .tab.on { --tab-fill: var(--color-hub-accent); color: var(--color-on-gold); }
+    .tab:focus-visible { outline: none; color: var(--color-text); }
     /* The same height on every section (the box keeps its size); a longer one scrolls inside */
+    /* One column, or --prefs-columns where there is room (the game's dialog) */
     .prefs {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
+      display: grid;
+      grid-template-columns: repeat(var(--prefs-columns, 1), minmax(0, 1fr));
+      align-content: start;
+      gap: var(--prefs-gap, var(--space-1));
       block-size: var(--prefs-height, min(27rem, calc(100dvh - 14rem)));
       /* When the host is a column (the profile), the list takes what is left under the tabs */
       flex: 1 1 auto;
@@ -229,26 +265,27 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       overflow-y: auto;
       overscroll-behavior: contain;
     }
-    .prefs > * { flex: none; }
     .pref {
+      --pref-fill: var(--color-surface);
+      --pref-edge: var(--color-border);
+
+      @include cut-corners.cut-corners(0.7rem, var(--pref-fill), var(--pref-edge));
+
       display: flex;
       align-items: center;
       gap: var(--space-3);
       inline-size: 100%;
-      padding: var(--space-2) var(--space-3);
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
+      padding: var(--pref-padding, var(--space-2) var(--space-3));
       color: var(--color-text);
       font: inherit;
       text-align: start;
       cursor: pointer;
     }
-    .pref:hover { background: var(--color-surface-muted); }
-    .pref:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .pref:hover { --pref-fill: var(--color-surface-muted); }
+    .pref:focus-visible { --pref-edge: var(--color-focus); outline: none; }
     .pref[aria-checked='true'] {
-      border-color: var(--color-primary);
-      background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+      --pref-edge: var(--color-primary);
+      --pref-fill: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
     }
     .pref > eras-icon { flex: none; inline-size: 1.25rem; block-size: 1.25rem; }
     .text { display: flex; flex: 1; flex-direction: column; gap: 0.1rem; min-inline-size: 0; }
@@ -257,7 +294,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     .tilt { cursor: default; }
     .tilt input { inline-size: 100%; margin-block-start: var(--space-1); accent-color: var(--color-primary); cursor: pointer; }
     .static { cursor: default; }
-    .static:hover { background: var(--color-surface); }
+    .static:hover { --pref-fill: var(--color-surface); }
     .stepper { display: inline-flex; flex: none; align-items: center; gap: var(--space-1); }
     .stepper b { min-inline-size: 4rem; font-size: var(--font-size-sm); text-align: center; }
     .stepper button {
@@ -344,6 +381,8 @@ export class GamePreferencesPanelComponent {
 
   protected readonly prefs = inject(BoardPreferences);
   protected readonly theme = inject(ThemeService);
+  protected readonly backdrop = inject(BackdropService);
+  protected readonly appFullscreen = inject(AppFullscreen);
   protected readonly game = inject(GameStore);
   /** Only under the board (the game's dialog). */
   protected readonly screen = inject(BoardScreen, { optional: true });

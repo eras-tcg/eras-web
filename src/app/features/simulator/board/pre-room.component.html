@@ -1,7 +1,7 @@
 <div class="pre-room">
-  <!-- The same top row as every screen: a round "back" (leaving the room) and the title with its accent bar -->
+  <!-- The same top row as every screen: the "back" arrow (leaving the room) and the title with its accent bar -->
   <header class="room-bar">
-    <button type="button" class="back" aria-label="Salir de la sala" title="Salir de la sala" (click)="leave()"><eras-icon name="chevron-left" /></button>
+    <button type="button" class="back" erasSweep="chevron-left" wash aria-label="Salir de la sala" title="Salir de la sala" (click)="leave()"></button>
     <div class="heading">
       <h1 class="title">{{ game.editorRoom() ? 'Sala de pruebas' : game.local() ? 'Modo solo sin conexión' : game.botRoom() ? 'Modo solo' : game.queuedRoom() ? 'Ranked' : 'Sala ' + game.roomId() }}</h1>
     </div>
@@ -177,13 +177,13 @@
   <section class="picker">
     <div class="picker-head">
       <h2 class="picker-title">{{ pickingBot() ? 'Mazo del bot' : game.editorRoom() ? 'Mazo de ' + mine()?.username : 'Tu mazo' }}</h2>
-      <input class="search" type="search" aria-label="Buscar mazo" placeholder="Buscar mazo…" [value]="search()" (input)="search.set($any($event.target).value)" />
+      <eras-search-field class="search" label="Buscar mazo" placeholder="Buscar mazo…" [(value)]="search" />
       <!-- Inside a deckbox: back to every deck, and its name -->
       @if (openBox(); as open) {
-        <nav class="crumbs" aria-label="Ubicación">
-          <button type="button" class="crumb-back" (click)="openBoxId.set(null)"><eras-icon name="chevron-left" /> Todos</button>
-          <span class="crumb-here" aria-current="page"><span class="dot" [style.background]="boxColor(open)" aria-hidden="true"></span>{{ open.name }}</span>
-        </nav>
+        <eras-crumbs class="crumbs">
+          <button crumbs-back erasButton variant="glass" size="sm" type="button" (click)="openBoxId.set(null)"><eras-icon name="chevron-left" /> Todos</button>
+          <ng-container crumbs-here><span class="dot" [style.background]="boxColor(open)" aria-hidden="true"></span>{{ open.name }}</ng-container>
+        </eras-crumbs>
       }
     </div>
     @if (allDecks().length === 0) {

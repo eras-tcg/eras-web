@@ -57,7 +57,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       padding: var(--space-6);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
       box-shadow: var(--shadow-md);
     }
     .heading {

@@ -26,8 +26,8 @@ type Draft = { mode: 'create' } | { mode: 'edit'; role: RoleRecord };
   template: `
     <eras-page title="Roles">
       <ng-container ngProjectAs="[page-actions]">
-        <button erasButton variant="secondary" type="button" [disabled]="loading()" (click)="load()">Recargar</button>
-        <button erasButton type="button" (click)="startCreate()"><eras-icon name="plus" /> Nuevo rol</button>
+        <button erasButton variant="glass" type="button" [disabled]="loading()" (click)="load()"><eras-icon name="refresh" /> Recargar</button>
+        <button erasButton variant="float" type="button" (click)="startCreate()"><eras-icon name="plus" /> Nuevo rol</button>
       </ng-container>
 
       @if (fb.feedback(); as f) {

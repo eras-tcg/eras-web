@@ -64,7 +64,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
       padding: var(--space-4);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
     }
     .head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
     .turn { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-success); color: #fff; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }

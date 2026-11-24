@@ -3,6 +3,10 @@
   --duration-base: 200ms;
   // A panel folding or unfolding (a split's aside)
   --duration-slow: 320ms;
+  // Gold sweeping across an icon (erasSweep)
+  --duration-sweep: 450ms;
+  // A dialog's gold frame tracing itself as it opens
+  --duration-trace: 900ms;
   --easing-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --z-header: 100;
@@ -57,5 +61,7 @@
     --duration-fast: 0ms;
     --duration-base: 0ms;
     --duration-slow: 0ms;
+    --duration-sweep: 0ms;
+    --duration-trace: 0ms;
   }
 }

@@ -1,3 +1,6 @@
+<!-- Behind every screen: the card back's vortex and its gem dust (it hides itself while a game is on) -->
+<ng-container *ngComponentOutlet="ambientBackdrop(); inputs: { eye: artScreen() ? 'start' : 'end' }" />
+
 <!-- No navigation bar: each screen draws its own top strip. The header only carries the banners (version, no connection). -->
 <header class="header">
   @switch (versionBanner()) {

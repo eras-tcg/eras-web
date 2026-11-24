@@ -28,7 +28,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       padding: var(--space-4);
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      background: var(--color-surface-glass);
     }
     .start { grid-area: start; }
     .main { grid-area: main; }

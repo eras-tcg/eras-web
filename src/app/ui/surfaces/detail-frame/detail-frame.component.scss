@@ -16,11 +16,10 @@
   position: relative;
   align-self: stretch;
   min-block-size: 0;
-  padding: var(--space-7) var(--space-5) var(--space-5);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-lg);
+  // Clear of both notches of the card back's frame (eras-card-back-frame, behind the content)
+  padding: var(--space-7) var(--space-5) var(--space-6);
+  filter: drop-shadow(0 12px 32px rgb(0 0 0 / 45%));
+  isolation: isolate;
 }
 
 // Big round arrows to move through the list
@@ -50,9 +49,11 @@
 }
 
 .close {
+  --sweep-size: 1.5rem;
+
   position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-2);
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
 }
 
 // A phone held upright: the panel over the whole width, the arrows under it

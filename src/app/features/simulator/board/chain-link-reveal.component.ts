@@ -89,7 +89,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
 
 /**
  * Each effect that joins the chain, shown big for a moment with the two links before it: one on each side, chained
- * in diagonal, the new one landing with its number glowing in cyan while the older ones move up. When the chain is
+ * in diagonal, the new one landing with its number glowing in its player's color while the older ones move up. When the chain is
  * built and starts resolving, "Resolución" says so. The game waits for them (the next choice opens after), so a
  * chain builds at a pace that can be followed. Then each link that resolves is shown the same way, from the last
  * one down: it lights up and breaks away from the chain. One after another; a click skips the current one.
@@ -156,7 +156,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
   styles: `
     /* A popover: in the browser's top layer, above the chain panel and any choice open */
     .reveal {
-      --link-cyan: var(--color-sim-link-mine);
+      --link-color: var(--color-sim-link-mine);
       position: fixed;
       inset: 0;
       inline-size: auto;
@@ -177,7 +177,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       cursor: pointer;
       animation: fade var(--sim-chain-show, 2.1s) ease forwards;
     }
-    .reveal.rival { --link-cyan: var(--color-sim-link-rival); }
+    .reveal.rival { --link-color: var(--color-sim-link-rival); }
     .reveal:focus-visible { outline: none; }
     /* The stage, sized in --u so the three cards fit the screen */
     .stage {
@@ -199,11 +199,11 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       filter: brightness(0.8);
       animation: shift 0.45s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
     }
-    .card.rival { --link-cyan: var(--color-sim-link-rival); }
-    .card > eras-card-with-source { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-cyan) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-cyan) 40%, transparent); }
+    .card.rival { --link-color: var(--color-sim-link-rival); }
+    .card > eras-card-with-source { box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-color) 70%, transparent), 0 0 18px 3px color-mix(in srgb, var(--link-color) 40%, transparent); }
     /* The new link lands from above and larger, with a flash, after the others made room */
     .card.new { z-index: 3; filter: none; animation: land 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.25s backwards; }
-    .card.new > eras-card-with-source { box-shadow: 0 0 0 2px var(--link-cyan), 0 0 26px 6px color-mix(in srgb, var(--link-cyan) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
+    .card.new > eras-card-with-source { box-shadow: 0 0 0 2px var(--link-color), 0 0 26px 6px color-mix(in srgb, var(--link-color) 55%, transparent); animation: flash 0.8s ease 0.7s backwards; }
     /* The oldest of four goes up and away */
     .card.leaving { z-index: 1; animation: leave 0.45s ease forwards; }
     /* A chain from one card's center to the next: steel links in diagonal, behind the cards */
@@ -215,7 +215,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       inline-size: calc(var(--u) * var(--len));
       block-size: calc(var(--u) * 1.1);
       background: radial-gradient(ellipse calc(var(--u) * 0.6) calc(var(--u) * 0.42) at center, transparent 55%, #e2e8f0 58%, #64748b 78%, transparent 82%) 0 0 / calc(var(--u) * 1.2) 100% repeat-x;
-      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--link-cyan) 70%, transparent));
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--link-color) 70%, transparent));
       transform: translateY(-50%) rotate(var(--angle));
       transform-origin: left center;
       animation: appear 0.3s ease 0.4s backwards;
@@ -230,24 +230,24 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       inset-inline-end: -0.3em;
       color: #ecfeff;
       font: 700 calc(var(--u) * 3.6)/1 var(--font-family-display);
-      text-shadow: 0 0 6px var(--link-cyan), 0 0 18px var(--link-cyan), 0 0 36px var(--link-cyan);
-      -webkit-text-stroke: 2px var(--link-cyan);
+      text-shadow: 0 0 6px var(--link-color), 0 0 18px var(--link-color), 0 0 36px var(--link-color);
+      -webkit-text-stroke: 2px var(--link-color);
     }
     .card:not(.new) .number { font-size: calc(var(--u) * 2.8); }
     .card.new .number { animation: number-in 0.5s ease 0.6s backwards; }
     .caption { display: grid; justify-items: center; gap: var(--space-1); text-shadow: 0 2px 8px rgb(0 0 0 / 80%); animation: caption-in 0.4s ease 0.6s backwards; }
-    .caption strong { color: var(--link-cyan); font: 700 var(--font-size-xl, 1.5rem)/1.1 var(--font-family-display); letter-spacing: 0.04em; }
+    .caption strong { color: var(--link-color); font: 700 var(--font-size-xl, 1.5rem)/1.1 var(--font-family-display); letter-spacing: 0.04em; }
     .caption span { font-size: var(--font-size-sm); }
     /* Resolving: the cards stay put; the link resolving glows, then breaks away and its chain snaps */
     .resolve .card, .resolve .card.new, .resolve .card > eras-card-with-source, .resolve .chain, .resolve .number { animation: none; }
     .resolve .card.resolving { z-index: 3; filter: none; animation: resolve-out 1.3s ease 0.55s forwards; }
-    .resolve .card.resolving > eras-card-with-source { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-cyan); animation: glow 0.55s ease-in-out alternate 2; }
+    .resolve .card.resolving > eras-card-with-source { box-shadow: 0 0 0 3px #fff, 0 0 40px 12px var(--link-color); animation: glow 0.55s ease-in-out alternate 2; }
     .resolve .chain.new { animation: snap 0.45s ease 0.8s forwards; }
     @keyframes resolve-out {
       25% { scale: 1.08; filter: brightness(1.5); }
       100% { opacity: 0; scale: 1.3; filter: brightness(2.2) blur(6px); }
     }
-    @keyframes glow { to { box-shadow: 0 0 0 4px #fff, 0 0 60px 22px var(--link-cyan); } }
+    @keyframes glow { to { box-shadow: 0 0 0 4px #fff, 0 0 60px 22px var(--link-color); } }
     @keyframes snap { to { opacity: 0; transform: translateY(-50%) rotate(var(--angle)) scaleX(0.15); } }
     /* Resolución: a band across the screen that sweeps in, holds and goes */
     .resolution { background: rgb(0 0 0 / 35%); animation-duration: var(--sim-chain-resolution, 1.5s); }
@@ -257,8 +257,8 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       gap: var(--space-1);
       inline-size: 100vw;
       padding: var(--space-4) 0;
-      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--link-cyan) 30%, #08141f) 20%, color-mix(in srgb, var(--link-cyan) 30%, #08141f) 80%, transparent);
-      box-shadow: 0 0 0 1px color-mix(in srgb, var(--link-cyan) 50%, transparent);
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--link-color) 30%, #08141f) 20%, color-mix(in srgb, var(--link-color) 30%, #08141f) 80%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--link-color) 50%, transparent);
       animation: sweep 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
     }
     .band strong {
@@ -266,7 +266,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
       font: 700 clamp(2rem, 6vw, 3.5rem)/1 var(--font-family-display);
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      text-shadow: 0 0 8px var(--link-cyan), 0 0 24px var(--link-cyan);
+      text-shadow: 0 0 8px var(--link-color), 0 0 24px var(--link-color);
     }
     .band span { font-size: var(--font-size-sm); text-shadow: 0 2px 6px rgb(0 0 0 / 80%); }
     @keyframes sweep { from { opacity: 0; transform: scaleY(0.2); letter-spacing: 0.6em; } }
@@ -276,7 +276,7 @@ function layout(links: number[]): Map<number, { x: number; y: number; tilt: numb
     @keyframes leave { to { opacity: 0; translate: -50% calc(-50% - var(--u) * 8); } }
     @keyframes appear { from { opacity: 0; } }
     @keyframes chain-out { from { transform: translateY(-50%) rotate(var(--angle)) scaleX(0); } }
-    @keyframes flash { from { box-shadow: 0 0 0 4px #fff, 0 0 60px 24px var(--link-cyan); } }
+    @keyframes flash { from { box-shadow: 0 0 0 4px #fff, 0 0 60px 24px var(--link-color); } }
     @keyframes number-in { from { opacity: 0; transform: scale(2.2); } }
     @keyframes caption-in { from { opacity: 0; transform: translateY(0.75rem); } }
     @media (prefers-reduced-motion: reduce) {

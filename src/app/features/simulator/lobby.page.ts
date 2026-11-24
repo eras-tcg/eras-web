@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, timeout } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { apiErrorMessage } from '@core/http/api-error';
 import { LOCAL_ROOM_ID } from '@data/simulator/engine-protocol';
@@ -27,6 +28,9 @@ const LOBBY_ACTIONS: HubMenuItem[] = [
 
 /** How often the search for a ranked rival is asked about (it keeps the player in the queue). */
 const QUEUE_POLL_MS = 1500;
+
+/** How long the lobby waits for a room's first state before opening the board anyway. */
+const ROOM_ANSWER_MS = 8000;
 
 /** Which open rooms are listed. */
 type RoomFilter = 'all' | 'friendly' | 'ranked';
@@ -62,6 +66,7 @@ export class LobbyPage {
   protected readonly game = inject(GameStore);
   private readonly router = inject(Router);
   private readonly queueApi = inject(QueueApi);
+  private readonly injector = inject(Injector);
 
   /** The search for a ranked rival under way (null: not searching). */
   protected readonly search = signal<QueueStatus | null>(null);
@@ -271,6 +276,8 @@ export class LobbyPage {
     try {
       await this.game.connect(room);
       this.game.joinRoom(null);
+      // The room's first state before leaving: until it comes the loading stays here, no table sketched without it
+      await this.roomAnswered();
       // From a link the lobby is left out of the history, so going back does not join again
       await this.router.navigate(['/simulator', room, 'board'], { replaceUrl: !!this.roomId() });
     } catch {
@@ -279,6 +286,16 @@ export class LobbyPage {
     } finally {
       this.busy.set(null);
     }
+  }
+
+  /** Resolves when the room has sent its state or an error (or after a while: the board then waits for it itself). */
+  private roomAnswered(): Promise<unknown> {
+    return firstValueFrom(
+      toObservable(computed(() => !!this.game.state() || !!this.game.error()), { injector: this.injector }).pipe(
+        filter(Boolean),
+        timeout({ first: ROOM_ANSWER_MS, with: () => [true] }),
+      ),
+    );
   }
 
   protected playersOf(room: RoomInfo): string {

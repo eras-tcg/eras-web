@@ -1,3 +1,5 @@
+@use 'mixins/gold-wash';
+
 // Wide screens: big words with a bar on the left; the first one (the main action) larger
 :host {
   display: block;
@@ -28,14 +30,21 @@
   cursor: pointer;
   transition:
     color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard),
     border-color var(--duration-fast) var(--easing-standard);
 }
 
-.item:hover,
-.item:focus-visible {
-  border-inline-start-width: 6px;
-  transform: translateX(0.35rem);
+// On hover the gold bar spills out to the right: solid at the bar, fading out, straight above and below; nothing
+// moves. Over the option's own background where it has one (the cards of upright phones)
+.item {
+  isolation: isolate;
+
+  // From under the bar itself, so no seam shows between them
+  @include gold-wash.gold-wash(
+    $start: 3px,
+    $width: min(100%, 36rem),
+    $background: gold-wash.$gold-wash-spill,
+    $from: 0
+  );
 }
 
 .item:disabled {
@@ -96,12 +105,15 @@
     gap: var(--space-1);
   }
 
+  :host(.main) .item::before {
+    display: none;
+  }
+
   :host(.main) .item {
     flex-direction: column;
     gap: var(--space-1);
     padding: 0;
     border: 0;
-    transform: none;
   }
 
   :host(.main) .ring {
@@ -147,7 +159,6 @@
     border-inline-start: 4px solid var(--color-hub-accent);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    transform: none;
   }
 
   :host(.sub) .ring {

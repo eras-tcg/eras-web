@@ -1,5 +1,5 @@
-// A solid theme background with the edition artwork on the right, at the card's own proportion and the full
-// height (the whole image shows, nothing scrolls); its left edge fades into the background.
+// Over the vortex behind every screen (AmbientBackdrop), the edition artwork on the right, at the card's own
+// proportion and the full height (the whole image shows, nothing scrolls); its left edge fades into the backdrop.
 // What sits on the artwork (quick buttons, credit) uses the --color-hub-* tokens, the same in every theme.
 :host {
   // Proportion of the card images (744 × 1039)
@@ -13,12 +13,12 @@
     'top top' auto
     'side .' minmax(0, 1fr)
     / minmax(22rem, 36%) 1fr;
-  gap: var(--space-4) var(--space-6);
+  // The same room under the top row as on every other screen (eras-page)
+  gap: var(--space-6);
   block-size: calc(var(--app-height, 100dvh) - var(--app-header-height, 0px));
   padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--layout-gutter), env(safe-area-inset-right))
     max(var(--space-5), env(safe-area-inset-bottom)) max(var(--layout-gutter), env(safe-area-inset-left));
   overflow: hidden;
-  background: var(--color-bg);
   color: var(--color-text);
   isolation: isolate;
 }
@@ -35,19 +35,29 @@
   // artwork until the change ends
   view-transition-name: hub-art;
   aspect-ratio: var(--hub-card-ratio);
-  // Until the artwork loads, the same color as the column: no box shows against it
-  background-color: var(--color-bg);
   background-position: center;
   background-size: cover;
+  // Its left edge fades out into the backdrop over most of its width, on an eased ramp, and curved: an ellipse from
+  // its right side makes the fade reach further in at the top and the bottom, so no straight edge shows
+  mask-image:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(0 0 0 / 6%) 10%,
+      rgb(0 0 0 / 22%) 22%,
+      rgb(0 0 0 / 48%) 34%,
+      rgb(0 0 0 / 76%) 46%,
+      #000 60%
+    ),
+    radial-gradient(130% 110% at 100% 50%, #000 60%, transparent 100%);
+  mask-composite: intersect;
 }
 
+// The quick buttons' scrim at the top
 .art::after {
   position: absolute;
   inset: 0;
-  background:
-    // Solid at the very edge so the card never shows a seam against the background
-    linear-gradient(90deg, var(--color-bg) 0%, var(--color-bg) 2%, color-mix(in srgb, var(--color-bg) 65%, transparent) 18%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 16%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 16%);
   content: '';
 }
 
@@ -167,31 +177,18 @@
   min-inline-size: 0;
 }
 
+// As in <eras-screen-bar>: the arrow alone (erasSweep), leaning back
 .back {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  transition:
-    color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+  --sweep-size: 2.5rem;
+  --sweep-wash-start: calc(max(var(--layout-gutter), env(safe-area-inset-left)) - var(--space-2));
+  --sweep-wash-top: max(var(--space-5), env(safe-area-inset-top));
+  --sweep-wash-bottom: var(--space-6);
+  margin-inline-start: calc(-1 * var(--space-2));
 }
 
-.back eras-icon {
-  inline-size: 1.2rem;
-  block-size: 1.2rem;
-}
-
-.back:hover {
-  border-color: var(--color-hub-accent);
-  color: var(--color-text);
-  transform: translateX(-2px);
+.back:hover,
+.back:focus-visible {
+  transform: translateX(-3px);
 }
 
 .title {
@@ -271,11 +268,16 @@
     margin-inline: auto;
   }
 
+  // Faded out at the bottom and at both sides
+  .art {
+    mask-image:
+      linear-gradient(0deg, transparent 4%, rgb(0 0 0 / 40%) 30%, #000 60%),
+      linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-composite: intersect;
+  }
+
   .art::after {
-    background:
-      linear-gradient(0deg, var(--color-bg) 0%, var(--color-bg) 4%, color-mix(in srgb, var(--color-bg) 60%, transparent) 30%, transparent 60%),
-      linear-gradient(90deg, var(--color-bg) 0%, transparent 10%, transparent 90%, var(--color-bg) 100%),
-      linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 20%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-hub-scrim) 45%, transparent) 0%, transparent 20%);
   }
 
   // The nameplate keeps room for the name; with many quick buttons (an administrator's) they go to a second line
@@ -318,6 +320,11 @@
 
 /* Short windows (a phone held sideways): the two columns, tighter, so the menu fits beside the artwork */
 @media (max-height: 30rem) and (orientation: landscape) {
+  // Little height: the gold wash of "back" ends where the content starts
+  .back {
+    --sweep-wash-bottom: var(--space-2);
+  }
+
   :host {
     grid-template-columns: minmax(18rem, 48%) 1fr;
     gap: var(--space-2) var(--space-4);

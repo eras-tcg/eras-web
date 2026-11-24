@@ -4,7 +4,7 @@
     <div class="strip" [class.with-gems]="gems">
       <eras-stack direction="row" [gap]="3" align="center" wrap>
         @if (inProgress()) {
-          <span class="turn" [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
+          <span class="turn" [class.my-turn]="game.isMyTurn()"><span class="turn-dot" aria-hidden="true"></span>{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
         }
         @if (!game.connected()) {
           <span class="warn">Sin conexión, reintentando…</span>
@@ -43,7 +43,7 @@
     (cdkMenuClosed)="game.holdBots(false)"
   ></button>
   <ng-template #gameMenu>
-    <eras-menu aria-label="Menú de partida">
+    <eras-menu floating aria-label="Menú de partida">
       <button erasMenuItem (triggered)="dialogs.log()"><eras-icon name="list" />Historial</button>
       <button erasMenuItem (triggered)="dialogs.decklist()"><eras-icon name="cards" />Ver mi mazo</button>
       <button erasMenuItem (triggered)="dialogs.preferences()"><eras-icon name="sliders" />Preferencias de partida</button>
@@ -53,7 +53,7 @@
         <button erasMenuItem class="danger" (triggered)="surrender()"><eras-icon name="flag" />Rendirse</button>
       } @else {
         <!-- The Sala de pruebas, a replay or a game already over: just leave -->
-        <button erasMenuItem (triggered)="exit()"><eras-icon name="logout" />Salir</button>
+        <button erasMenuItem class="danger" (triggered)="exit()"><eras-icon name="logout" />Salir</button>
       }
     </eras-menu>
   </ng-template>
@@ -107,6 +107,9 @@
   @if (game.status() === 'WAITING') {
     <!-- Before a game: decks, starters, who goes first and both confirm -->
     <eras-pre-room />
+  } @else if (!game.state() && !game.error()) {
+    <!-- The room has not answered yet: its loading alone, no table sketched before it is known -->
+    <eras-empty-state class="room-loading" title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
   } @else {
   <!-- Phones upright: the table does not fit, it asks to turn the phone (shown by the styles only) -->
   <div class="rotate-hint" role="alert">
@@ -157,7 +160,7 @@
           <eras-icon class="caret" name="chevron-down" />
         </button>
         @if (chainOpen()) {
-          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-chain-list /></div>
+          <div class="chain-panel" [class.see-through]="seeThrough()"><eras-card-back-frame notches="top" /><eras-chain-list /></div>
         }
       }
       @if (engineNotice(); as notice) {

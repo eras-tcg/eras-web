@@ -11,6 +11,7 @@ import { AvatarComponent } from '@ui/domain/avatar/avatar.component';
 import { RankEmblemComponent } from '@ui/domain/rank-emblem/rank-emblem.component';
 import { RankProgressComponent } from '@ui/domain/rank-emblem/rank-progress.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { SweepIconComponent } from '@ui/primitives/sweep-icon/sweep-icon.component';
 import { pickBackground } from './hub-rules';
 
 const BACKGROUND_KEY = 'eras-hub-background';
@@ -24,7 +25,7 @@ const BACKGROUND_KEY = 'eras-hub-background';
  */
 @Component({
   selector: 'eras-hub-screen',
-  imports: [RouterLink, AppToolsComponent, AvatarComponent, IconComponent, RankEmblemComponent, RankProgressComponent],
+  imports: [RouterLink, AppToolsComponent, AvatarComponent, IconComponent, SweepIconComponent, RankEmblemComponent, RankProgressComponent],
   templateUrl: './hub-screen.component.html',
   styleUrl: './hub-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

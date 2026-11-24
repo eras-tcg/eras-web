@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { IconComponent } from '@ui/primitives/icon/icon.component';
+import { SweepIconComponent } from '@ui/primitives/sweep-icon/sweep-icon.component';
 import { ScreenLink, isAdminScreen, parentScreen } from '../navigation/screens';
 import { AppToolsComponent } from './app-tools.component';
 
@@ -11,12 +11,10 @@ import { AppToolsComponent } from './app-tools.component';
  */
 @Component({
   selector: 'eras-screen-bar',
-  imports: [RouterLink, IconComponent, AppToolsComponent],
+  imports: [RouterLink, SweepIconComponent, AppToolsComponent],
   template: `
     @if (parent(); as back) {
-      <a class="back" [routerLink]="back.route" [queryParams]="back.queryParams ?? null" [state]="back.state" [attr.aria-label]="'Volver a ' + back.label">
-        <eras-icon name="chevron-left" />
-      </a>
+      <a class="back" erasSweep="chevron-left" wash [routerLink]="back.route" [queryParams]="back.queryParams ?? null" [state]="back.state" [attr.aria-label]="'Volver a ' + back.label"></a>
     }
     <div class="middle"><ng-content /></div>
     @if (!admin) {
@@ -31,29 +29,17 @@ import { AppToolsComponent } from './app-tools.component';
       align-items: flex-start;
       gap: var(--space-3);
     }
+    /* The arrow alone, big; gold sweeps over it and washes the row from the window's left edge (erasSweep wash) */
     .back {
-      display: grid;
-      flex-shrink: 0;
-      place-items: center;
-      inline-size: 2.5rem;
-      block-size: 2.5rem;
-      border: var(--border-width) solid var(--color-border);
-      border-radius: 50%;
-      background: var(--color-surface);
-      color: var(--color-text-muted);
-      transition:
-        color var(--duration-fast) var(--easing-standard),
-        border-color var(--duration-fast) var(--easing-standard),
-        transform var(--duration-fast) var(--easing-standard);
+      --sweep-size: 2.5rem;
+      --sweep-wash-start: calc(var(--page-gutter-start, var(--layout-gutter)) - var(--space-2));
+      --sweep-wash-top: var(--page-top, var(--space-5));
+      --sweep-wash-bottom: var(--screen-bar-gap, var(--space-6));
+      margin-inline-start: calc(-1 * var(--space-2));
     }
-    .back eras-icon {
-      inline-size: 1.2rem;
-      block-size: 1.2rem;
-    }
-    .back:hover {
-      border-color: var(--color-hub-accent);
-      color: var(--color-text);
-      transform: translateX(-2px);
+    .back:hover,
+    .back:focus-visible {
+      transform: translateX(-3px);
     }
     .middle {
       display: flex;
@@ -75,12 +61,7 @@ import { AppToolsComponent } from './app-tools.component';
         gap: var(--space-2);
       }
       .back {
-        inline-size: 2rem;
-        block-size: 2rem;
-      }
-      .back eras-icon {
-        inline-size: 1rem;
-        block-size: 1rem;
+        --sweep-size: 2rem;
       }
       .middle {
         flex-wrap: nowrap;

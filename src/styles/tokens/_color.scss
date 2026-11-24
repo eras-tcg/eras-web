@@ -18,6 +18,9 @@
   --color-on-success: #fff;
   --color-warning: var(--theme-warning);
   --color-overlay: var(--theme-overlay);
+  // A panel that sits on the screen's backdrop (tier rows, cards, tables, filter panels): the surface, a little
+  // see-through, so the vortex behind every screen shows faintly. Dialogs, menus and controls stay solid.
+  --color-surface-glass: color-mix(in srgb, var(--color-surface) 70%, transparent);
 
   // Game palette (same in every theme)
   --color-rarity-c: #9ca3af;
@@ -57,9 +60,9 @@
   // A special summon (ritual, materialización…): set apart from playing or summoning a card
   --color-sim-special: var(--color-card-p);
   --color-sim-gold: #f5b301;
-  /* The chain and the effects' targets: whose they are (cyan: mine, pink: the rival's) */
-  --color-sim-link-mine: #38bdf8;
-  --color-sim-link-rival: #f472b6;
+  /* The chain and the effects' targets: whose they are (blue: mine, red: the rival's) */
+  --color-sim-link-mine: #3b82f6;
+  --color-sim-link-rival: #ef4444;
   --color-sim-glow: #fde68a;
   --color-sim-moment: #f59e0b;
   /** Text on those colors */
@@ -67,7 +70,7 @@
   --color-sim-on-rival: #fff;
   /** The effect that is activating now (the side panel of a choice): the chain's own color */
   --color-sim-effect-active: var(--color-sim-link-mine);
-  --color-sim-on-effect-active: #04202e;
+  --color-sim-on-effect-active: #fff;
   // Home hub: light text and dark glass over the edition artwork (same in every theme)
   --color-hub-text: #f5f6fa;
   --color-hub-muted: rgb(245 246 250 / 72%);
@@ -76,6 +79,19 @@
   --color-hub-line: rgb(255 255 255 / 20%);
   --color-hub-accent: var(--color-sim-gold);
   --color-hub-glow: var(--color-sim-glow);
+
+  // The card back's own frame, drawn around the dialogs: gold running to pale gold, the small gems on its notches
+  --color-frame-gold: var(--color-sim-gold);
+  --color-frame-gold-pale: #fff1c2;
+  --color-frame-gold-deep: #d9a52a;
+  --color-frame-gem-edge: #2a1a03;
+  // Text on the brand's gold (the primary and floating buttons)
+  --color-on-gold: #2a1a03;
+  // Behind the screens (AmbientBackdrop): the card back's vortex, its blue motes and the gold gem dust
+  --color-ambient-vortex-opacity: var(--theme-ambient-vortex);
+  --color-ambient-glow: var(--theme-ambient-glow);
+  --color-ambient-mote: #6eaaff;
+  --color-ambient-dust: var(--color-sim-gold);
 
   /**
    * The back of a card: the game's card back art (a `background` value). It covers the card's border too, and the

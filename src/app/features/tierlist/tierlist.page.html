@@ -2,10 +2,10 @@
   <ng-container ngProjectAs="[page-actions]">
     @if (canEdit()) {
       @if (editing()) {
-        <button erasButton variant="secondary" type="button" [disabled]="saving()" (click)="cancel()">Cancelar</button>
-        <button erasButton type="button" [loading]="saving()" [disabled]="saving()" (click)="save()">Guardar tierlist</button>
+        <button erasButton variant="glass" type="button" [disabled]="saving()" (click)="cancel()">Cancelar</button>
+        <button erasButton variant="float" type="button" [loading]="saving()" [disabled]="saving()" (click)="save()">Guardar tierlist</button>
       } @else {
-        <button erasButton variant="secondary" type="button" [disabled]="!list()" (click)="editing.set(true)"><eras-icon name="edit" /> Editar</button>
+        <button erasButton variant="glass" type="button" [disabled]="!list()" (click)="editing.set(true)"><eras-icon name="edit" /> Editar</button>
       }
     }
   </ng-container>

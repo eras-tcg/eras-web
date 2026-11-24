@@ -10,7 +10,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
   template: `
     <eras-page title="Página no encontrada" width="narrow">
       <eras-empty-state title="Esta página no existe" description="Puede que todavía no se haya migrado a la nueva versión.">
-        <a erasButton routerLink="/">Volver al inicio</a>
+        <a erasButton variant="float" routerLink="/">Volver al inicio</a>
       </eras-empty-state>
     </eras-page>
   `,

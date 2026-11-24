@@ -11,9 +11,23 @@ import { GamePreferencesPanelComponent } from '../game-preferences-panel.compone
   selector: 'eras-game-preferences-dialog',
   imports: [ModalComponent, GamePreferencesPanelComponent],
   template: `
-    <eras-modal title="Preferencias de partida" (closed)="ref.close()">
+    <eras-modal title="Preferencias de partida" size="xl" (closed)="ref.close()">
       <eras-game-preferences-panel inGame />
     </eras-modal>
+  `,
+  styles: `
+    /* The room of a big dialog: two columns of options, roomier, tall enough to show a whole section at once */
+    eras-game-preferences-panel {
+      --prefs-columns: 2;
+      --prefs-gap: var(--space-2);
+      --pref-padding: var(--space-3) var(--space-4);
+      --prefs-height: min(34rem, calc(100dvh - 14rem));
+    }
+    @media (max-width: 48rem) {
+      eras-game-preferences-panel {
+        --prefs-columns: 1;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

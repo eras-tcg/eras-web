@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
-import { ButtonComponent } from '../../primitives/button/button.component';
-import { IconComponent } from '../../primitives/icon/icon.component';
+import { SweepIconComponent } from '../../primitives/sweep-icon/sweep-icon.component';
+import { CardBackFrameComponent } from '../card-back-frame/card-back-frame.component';
 
 /**
- * Visual frame of a dialog (header, body, footer). Opening/closing and focus
- * handling come from ModalService (Angular CDK Dialog).
+ * Visual frame of a dialog (header, body, footer), in the card back's own frame: bevelled corners, a notch at the
+ * top and at the bottom with a small gold gem, and a gold line that traces itself from the top gem outwards as the
+ * dialog opens. Opening/closing and focus handling come from ModalService (Angular CDK Dialog).
  *
  * <eras-modal title="Simular apertura" (closed)="ref.close()">
  *   ...body...
@@ -13,19 +14,18 @@ import { IconComponent } from '../../primitives/icon/icon.component';
  */
 @Component({
   selector: 'eras-modal',
-  imports: [ButtonComponent, IconComponent],
+  imports: [SweepIconComponent, CardBackFrameComponent],
   template: `
+    <eras-card-back-frame />
     <header class="header">
-      <div>
+      <div class="heading">
         <h2 class="title">{{ title() }}</h2>
         @if (subtitle()) {
           <p class="subtitle">{{ subtitle() }}</p>
         }
       </div>
       @if (closable()) {
-        <button erasButton variant="ghost" size="sm" type="button" aria-label="Cerrar" (click)="closed.emit()">
-          <eras-icon name="x" />
-        </button>
+        <button erasSweep="x" class="close" type="button" aria-label="Cerrar" (click)="closed.emit()"></button>
       }
     </header>
     <div class="body"><ng-content /></div>

@@ -44,6 +44,8 @@ export interface ToggleOption {
     </div>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     :host {
       display: flex;
       flex-direction: column;
@@ -59,12 +61,17 @@ export interface ToggleOption {
       inline-size: 100%;
       padding: 3px;
       gap: 3px;
-      border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
+
+      @include cut-corners.cut-corners(0.6rem, var(--color-surface-muted), var(--color-border));
     }
     .segment {
       --segment-color: var(--color-text);
+      --segment-fill: transparent;
+      --segment-edge: transparent;
+      --segment-cut: 0px;
+      --segment-cut-end: 0px;
+
+      @include cut-corners.cut-corners(var(--segment-cut), var(--segment-fill), var(--segment-edge), $cut-end: var(--segment-cut-end));
 
       display: inline-flex;
       flex: 1;
@@ -73,9 +80,6 @@ export interface ToggleOption {
       gap: var(--space-1);
       min-block-size: 2.1rem;
       padding: var(--space-1) var(--space-2);
-      border: 1px solid transparent;
-      border-radius: calc(var(--radius-md) - 3px);
-      background: transparent;
       color: var(--color-text-subtle);
       font: inherit;
       font-size: var(--font-size-sm);
@@ -88,20 +92,24 @@ export interface ToggleOption {
         color var(--duration-fast) var(--easing-standard),
         opacity var(--duration-fast) var(--easing-standard);
     }
+    /* Square inside the row: only the ends meet its cut corners */
+    .segment:first-child { --segment-cut: 0.45rem; }
+    .segment:last-child { --segment-cut-end: 0.45rem; }
     .segment:hover {
       color: var(--color-text-muted);
     }
     .segment:focus-visible {
-      outline: 2px solid var(--color-focus);
-      outline-offset: 1px;
+      --segment-edge: var(--color-focus);
+
+      outline: none;
     }
     /* On: tinted with its color, outlined, full-strength text */
     .segment.on {
-      border-color: color-mix(in srgb, var(--segment-color) 70%, transparent);
-      background: color-mix(in srgb, var(--segment-color) 18%, var(--color-surface));
+      --segment-edge: color-mix(in srgb, var(--segment-color) 70%, transparent);
+      --segment-fill: color-mix(in srgb, var(--segment-color) 18%, var(--color-surface));
+
       color: var(--color-text);
       font-weight: var(--font-weight-bold);
-      box-shadow: var(--shadow-sm);
     }
     .dot {
       inline-size: 0.6rem;
@@ -115,8 +123,7 @@ export interface ToggleOption {
     }
     /* Swatches: the whole button takes the color when on; off ones are faint and crossed out */
     .segment.swatch {
-      position: relative;
-      background: color-mix(in srgb, var(--segment-color) 14%, transparent);
+      --segment-fill: color-mix(in srgb, var(--segment-color) 14%, transparent);
     }
     .segment.swatch::after {
       position: absolute;
@@ -128,12 +135,11 @@ export interface ToggleOption {
       content: '';
     }
     .segment.swatch:hover {
-      background: color-mix(in srgb, var(--segment-color) 35%, transparent);
+      --segment-fill: color-mix(in srgb, var(--segment-color) 35%, transparent);
     }
     .segment.swatch.on {
-      border-color: color-mix(in srgb, var(--segment-color) 60%, #000);
-      background: var(--segment-color);
-      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), var(--shadow-sm);
+      --segment-edge: color-mix(in srgb, var(--segment-color) 60%, #000);
+      --segment-fill: var(--segment-color);
     }
     .segment.swatch.on::after {
       display: none;

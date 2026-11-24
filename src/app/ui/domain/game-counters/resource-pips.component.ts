@@ -135,7 +135,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
       background: url('/favicon.svg') center / contain no-repeat;
       box-shadow: none;
       opacity: 1;
-      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--arcane-gold) 70%, transparent));
+      filter: drop-shadow(0 0 4px rgb(56 189 248 / 70%)); /* the blue gem's own light */
     }
     :host-context(.arcane) .pip.on::after { display: none; }
     :host-context(.arcane) .step {

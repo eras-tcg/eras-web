@@ -1,8 +1,9 @@
 """The ERAS gem «Espiral» (the card back's, design/cardback/build_cardback.py) as the site's icons: favicon.svg (vector:
 each face a gold gradient by its light, the table glowing from its heart, the edges cut out by a mask) and the raster
-icons (logo, PWA "any" and "maskable", Apple touch), drawn with the card back's own renderer.
+icons (logo, PWA "any" and "maskable", Apple touch), drawn with the card back's own renderer. The site's icons are the
+blue gem («Vórtice azul»'s); without --blue, the gold one.
 
-    python render_espiral.py <public_dir>
+    python render_espiral.py <public_dir> --blue
 """
 import math
 import os
@@ -73,6 +74,8 @@ def raster(size, scale=1.0, background=None):
 
 if __name__ == '__main__':
     pub = sys.argv[1]
+    if '--blue' in sys.argv[2:]:
+        cb.GEM_RAMP = cb.BLUE_RAMP
     with open(f'{pub}/favicon.svg', 'w', encoding='utf-8', newline='\n') as f:
         f.write(svg())
     raster(512).save(f'{pub}/logo.png', optimize=True)

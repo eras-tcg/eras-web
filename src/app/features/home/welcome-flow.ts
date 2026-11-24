@@ -3,8 +3,9 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ProgressionBoard } from '@core/missions/progression.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
-import { StructurePickerDialogComponent } from './structure-picker-dialog.component';
-import { WelcomeDialogComponent } from './welcome-dialog.component';
+import { StructurePickerData, StructurePickerDialogComponent } from './structure-picker-dialog.component';
+
+const WIDTH = 'min(64rem, 96vw)';
 
 /**
  * The first step of the "Bienvenida", told rather than only paid: the greeting leads straight to choosing one of
@@ -26,23 +27,21 @@ export class WelcomeFlow {
     void this.start();
   }
 
-  /** The greeting, then the structure deck picker. */
+  /** The greeting, which turns into the structure deck picker in the same dialog. */
   async start(): Promise<void> {
     this.greeted = true;
-    const next = await firstValueFrom(this.modal.open<'pick'>(WelcomeDialogComponent, { width: 'min(40rem, 96vw)' }).closed);
-    if (next === 'pick') await this.pickStructure();
+    await this.pickStructure({ greet: true });
   }
 
   /** Both again from "Progreso", only to look at: no deck is taken. */
   async replay(): Promise<void> {
-    const data = { replay: true };
-    const next = await firstValueFrom(this.modal.open<'pick'>(WelcomeDialogComponent, { width: 'min(40rem, 96vw)', data }).closed);
-    if (next === 'pick') this.modal.open(StructurePickerDialogComponent, { width: 'min(64rem, 96vw)', data });
+    const data: StructurePickerData = { greet: true, replay: true };
+    this.modal.open(StructurePickerDialogComponent, { width: WIDTH, data });
   }
 
   /** The structure deck picker; the deck chosen opens on the booster result page. */
-  async pickStructure(): Promise<void> {
-    const editionId = await firstValueFrom(this.modal.open<string>(StructurePickerDialogComponent, { width: 'min(64rem, 96vw)' }).closed);
+  async pickStructure(data: StructurePickerData = {}): Promise<void> {
+    const editionId = await firstValueFrom(this.modal.open<string>(StructurePickerDialogComponent, { width: WIDTH, data }).closed);
     if (editionId) await this.router.navigate(['/booster-result'], { queryParams: { edition: editionId, mode: 'structure' } });
   }
 }

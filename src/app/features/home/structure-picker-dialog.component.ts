@@ -18,22 +18,32 @@ import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
 import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-dialog.component';
+import { WelcomeGreetingComponent } from './welcome-greeting.component';
+
+/** What the picker opens with: `greet` shows the greeting first; `replay`, the decks only to look at. */
+export interface StructurePickerData {
+  greet?: boolean;
+  replay?: boolean;
+}
 
 /**
  * The "Elige tu structure deck" step: the covers of ST1–ST4; one opens its philosophy, its story and its card list (a
  * card opens its detail). Choosing one (after confirming) takes it free in the shop (the first of ST1–ST4 costs
- * nothing) and closes with its edition id so the caller can open it.
+ * nothing) and closes with its edition id so the caller can open it. With `greet` it opens on the greeting, which
+ * turns into the covers in the same dialog (it widens, and each view fades in) instead of closing and opening another.
  */
 @Component({
   selector: 'eras-structure-picker-dialog',
-  imports: [ModalComponent, ButtonComponent, IconComponent, AlertComponent, GridComponent, CardThumbComponent, SpinnerComponent],
+  imports: [ModalComponent, ButtonComponent, IconComponent, AlertComponent, GridComponent, CardThumbComponent, SpinnerComponent, WelcomeGreetingComponent],
   template: `
-    <eras-modal [title]="current() ? (current()!.editionName ?? current()!.editionId) : 'Elige tu structure deck'" [subtitle]="subtitle()" size="xl" (closed)="ref.close()">
+    <eras-modal [title]="title()" [subtitle]="subtitle()" [size]="greeting() ? 'lg' : 'xl'" (closed)="ref.close()">
       @if (wallet.error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }
-      @if (current(); as edition) {
-        <div class="detail">
+      @if (greeting()) {
+        <eras-welcome-greeting class="view" />
+      } @else if (current(); as edition) {
+        <div class="detail view">
           <img class="cover" [src]="edition.editionImage" [alt]="'Portada de ' + (edition.editionName ?? edition.editionId)" />
           <div class="about">
             @if (style(edition); as s) {
@@ -51,11 +61,11 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
             }
           </div>
         </div>
-        <h3 class="list-title">Lista del mazo · {{ total() }} cartas</h3>
+        <h3 class="list-title view">Lista del mazo · {{ total() }} cartas</h3>
         @if (list().length === 0) {
           <eras-spinner />
         } @else {
-          <eras-grid minColumn="min(7rem, 26vw)" [gap]="2">
+          <eras-grid class="view" minColumn="min(7rem, 26vw)" [gap]="2">
             @for (entry of list(); track entry.card.id) {
               <eras-card-thumb [name]="entry.card.name ?? ''" [imageUrl]="imageUrl(entry.card)" [count]="entry.copies" showSingleCount (selected)="openCard(entry.card)" />
             }
@@ -63,11 +73,11 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
         }
       } @else {
         @if (replay) {
-          <p class="intro">Ya elegiste tu structure deck gratis. Aquí puedes volver a mirarlos todos; los demás están en la tienda.</p>
+          <p class="intro view">Ya elegiste tu structure deck gratis. Aquí puedes volver a mirarlos todos; los demás están en la tienda.</p>
         } @else {
-          <p class="intro">Este será el mazo con el que empieces tu viaje. Mira cada uno con calma: es gratis, pero solo puedes elegir uno.</p>
+          <p class="intro view">Este será el mazo con el que empieces tu viaje. Mira cada uno con calma: es gratis, pero solo puedes elegir uno.</p>
         }
-        <div class="covers">
+        <div class="covers view">
           @for (edition of options(); track edition.editionId) {
             <button type="button" class="option" (click)="viewing.set(edition.editionId)">
               <img [src]="edition.editionImage" alt="" />
@@ -82,7 +92,11 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
         </div>
       }
       <ng-container modal-footer>
-        @if (current(); as edition) {
+        @if (greeting()) {
+          <button erasButton type="button" (click)="greeting.set(false)">
+            <eras-icon name="sparkles" /> {{ replay ? 'Continuar' : 'Elegir mi mazo' }}
+          </button>
+        } @else if (current(); as edition) {
           <button erasButton variant="secondary" type="button" [disabled]="taking()" (click)="viewing.set(null)">
             <eras-icon name="chevron-left" /> Ver los otros
           </button>
@@ -94,6 +108,10 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
     </eras-modal>
   `,
   styles: `
+    /* Each view (the greeting, the covers, a deck) fades in where the last one was */
+    .view { animation: view-in 320ms var(--easing-standard) both; }
+    @keyframes view-in { from { opacity: 0; transform: translateY(0.5rem); } }
+    @media (prefers-reduced-motion: reduce) { .view { animation: none; } }
     .intro { margin: 0 0 var(--space-3); color: var(--color-text-muted); }
     .covers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(11rem, 40vw), 1fr)); gap: var(--space-3); }
     .option {
@@ -146,8 +164,11 @@ import { openCardDetailDialog } from '../cards/card-detail-dialog/card-detail-di
 })
 export class StructurePickerDialogComponent {
   protected readonly ref = inject<DialogRef<string>>(DialogRef);
+  private readonly data = inject<StructurePickerData | null>(DIALOG_DATA, { optional: true });
   /** Seen again from "Progreso": every structure deck (owned ones too), only to look at. */
-  protected readonly replay = inject<{ replay?: boolean } | null>(DIALOG_DATA, { optional: true })?.replay ?? false;
+  protected readonly replay = this.data?.replay ?? false;
+  /** The greeting is showing (it comes first when asked for). */
+  protected readonly greeting = signal(this.data?.greet ?? false);
   protected readonly wallet = inject(WalletStore);
   private readonly editions = inject(EditionsStore);
   private readonly decks = inject(DecksStore);
@@ -165,7 +186,12 @@ export class StructurePickerDialogComponent {
       .sort((a, b) => a.editionId.localeCompare(b.editionId)),
   );
   protected readonly current = computed(() => this.options().find((e) => e.editionId === this.viewing()) ?? null);
-  protected readonly subtitle = computed(() => (this.current() || this.replay ? null : 'Un regalo para empezar'));
+  protected readonly title = computed(() => {
+    const edition = this.current();
+    if (this.greeting()) return 'Bienvenida';
+    return edition ? (edition.editionName ?? edition.editionId) : 'Elige tu structure deck';
+  });
+  protected readonly subtitle = computed(() => (this.greeting() || this.current() || this.replay ? null : 'Un regalo para empezar'));
   protected readonly list = computed(() => {
     const edition = this.current();
     const deck = edition ? structureDeck(this.decks.publicDecks(), edition.editionId) : null;

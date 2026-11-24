@@ -1,43 +1,34 @@
-import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { EditionsStore } from '@data/editions/editions.store';
 import { isStarter } from '@data/shop/shop-rules';
-import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
-import { ModalComponent } from '@ui/surfaces/modal/modal.component';
 
 /**
- * The greeting of a new player: the four structure decks' artwork, a few words about the world and what the
- * "Bienvenida" gives. Its button closes with 'pick', so the structure deck picker comes next.
+ * The greeting of a new player, the first view of the structure deck picker's dialog (StructurePickerDialog): the
+ * four structure decks' artwork, a few words about the world and what the "Bienvenida" gives.
  */
 @Component({
-  selector: 'eras-welcome-dialog',
-  imports: [ModalComponent, ButtonComponent, IconComponent],
+  selector: 'eras-welcome-greeting',
+  imports: [IconComponent],
   template: `
-    <eras-modal title="Bienvenida" size="lg" (closed)="ref.close()">
-      <div class="hero" aria-hidden="true">
-        @for (art of covers(); track art) {
-          <span class="art" [style.background-image]="'url(' + art + ')'"></span>
-        }
-      </div>
-      <h2 class="title">¡Bienvenido a ERAS{{ name() ? ', ' + name() : '' }}!</h2>
-      <p class="lore">
-        Las eras chocan. Entes que cruzan el tiempo, dragones de tierras inexploradas, bestias del inframundo y caballeros
-        de la era dorada luchan por el mismo mundo. Hoy empieza tu historia: elige tu bando, arma tu mazo y deja tu marca.
-      </p>
-      <ul class="gifts">
-        <li><eras-icon name="structure" /> <span><strong>Un structure deck gratis</strong> a tu elección</span></li>
-        <li><eras-icon name="target" /> <span><strong>Misiones de bienvenida</strong> que te guían y premian paso a paso</span></li>
-      </ul>
-      <ng-container modal-footer>
-        <button erasButton type="button" (click)="ref.close('pick')">
-          <eras-icon name="sparkles" /> {{ replay ? 'Continuar' : 'Elegir mi mazo' }}
-        </button>
-      </ng-container>
-    </eras-modal>
+    <div class="hero" aria-hidden="true">
+      @for (art of covers(); track art) {
+        <span class="art" [style.background-image]="'url(' + art + ')'"></span>
+      }
+    </div>
+    <h2 class="title">¡Bienvenido a ERAS{{ name() ? ', ' + name() : '' }}!</h2>
+    <p class="lore">
+      Las eras chocan. Entes que cruzan el tiempo, dragones de tierras inexploradas, bestias del inframundo y caballeros
+      de la era dorada luchan por el mismo mundo. Hoy empieza tu historia: elige tu bando, arma tu mazo y deja tu marca.
+    </p>
+    <ul class="gifts">
+      <li><eras-icon name="structure" /> <span><strong>Un structure deck gratis</strong> a tu elección</span></li>
+      <li><eras-icon name="target" /> <span><strong>Misiones de bienvenida</strong> que te guían y premian paso a paso</span></li>
+    </ul>
   `,
   styles: `
+    :host { display: block; }
     .hero {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -73,10 +64,7 @@ import { ModalComponent } from '@ui/surfaces/modal/modal.component';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WelcomeDialogComponent {
-  protected readonly ref = inject<DialogRef<'pick'>>(DialogRef);
-  /** Seen again from "Progreso": the structure decks come next only to look at. */
-  protected readonly replay = inject<{ replay?: boolean } | null>(DIALOG_DATA, { optional: true })?.replay ?? false;
+export class WelcomeGreetingComponent {
   private readonly auth = inject(AuthService);
   private readonly editions = inject(EditionsStore);
 

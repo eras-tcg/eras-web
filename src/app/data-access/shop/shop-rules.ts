@@ -11,7 +11,7 @@ export const PACK_PRICE = 100;
 export const BOX_PRICE = 2400;
 export const SUB_EDITION_BOX_PRICE = 1200;
 /** A structure deck (ST1, ST2…), whole. */
-export const STRUCTURE_PRICE = 500;
+export const STRUCTURE_PRICE = 1000;
 /** The first four structure decks: the first of them an account takes is free, each of the others costs this. */
 export const STARTERS: readonly string[] = ['ST1', 'ST2', 'ST3', 'ST4'];
 export const STARTER_PRICE = 250;

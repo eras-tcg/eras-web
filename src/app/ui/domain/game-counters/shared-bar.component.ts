@@ -209,14 +209,18 @@ const THEIRS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
         clip-path: var(--channel-in);
         content: '';
       }
-      // The outermost step ends straight, as the channel: upright, cut on the slant only at its inner side
+      // The outermost step ends straight, as the channel: upright, cut on the slant only at its inner side. Its
+      // neighbour, skewed about its middle, leans half a slant further at the top and half nearer at the bottom: pulled
+      // that half in, the gap between them is the same as between the others
       :host-context(.arcane) .step:last-child {
         --step-slant: calc(var(--channel-h) * 0.6 * 0.445);
 
+        margin-inline-end: calc(var(--step-slant) / -2);
         transform: none;
         clip-path: polygon(0 0, 100% 0, calc(100% - var(--step-slant)) 100%, 0 100%);
       }
       :host-context(.arcane) .side.theirs .step:last-child {
+        margin-inline: calc(var(--step-slant) / -2) 0;
         clip-path: polygon(0 0, 100% 0, 100% 100%, var(--step-slant) 100%);
       }
       :host-context(.arcane) .step {

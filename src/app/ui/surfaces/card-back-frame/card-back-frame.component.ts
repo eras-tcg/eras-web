@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterNextRender,
+  booleanAttribute,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { FrameHalves, FrameNotches, frameHalves } from './card-back-frame-shape';
 
 let nextFrameId = 0;
@@ -8,7 +20,8 @@ let nextFrameId = 0;
  * bottom, a gold line along that edge with a small gem floating in each notch. As it appears the line traces itself
  * from the top gem outwards to the bottom one (not at a game's table, where a dialog is just there). Put it first in a
  * positioned, isolated box (the dialog's panel): it fills it, under its content, and follows its size. `notches`:
- * `both` (centered dialogs), `top` (a panel rising from the bottom edge, the mulligan) or `none` (a side panel).
+ * `both` (centered dialogs), `top` (the mulligan) or `none` (a side panel); `openBottom`: it rises from the bottom
+ * edge of the screen (a sheet), its sides running straight down with no bottom edge.
  * <div class="panel"><eras-card-back-frame /> …content… </div>
  */
 @Component({
@@ -31,18 +44,25 @@ let nextFrameId = 0;
       @if (notches() !== 'none') {
         <span class="gem top"></span>
       }
-      @if (notches() === 'both') {
+      @if (notches() === 'both' && !openBottom()) {
         <span class="gem bottom"></span>
       }
     }
   `,
   styleUrl: './card-back-frame.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { 'aria-hidden': 'true', '[class.no-top]': "notches() === 'none'", '[class.no-bottom]': "notches() !== 'both'" },
+  host: {
+    'aria-hidden': 'true',
+    '[class.no-top]': "notches() === 'none'",
+    '[class.no-bottom]': "notches() !== 'both' || openBottom()",
+    '[class.open-bottom]': 'openBottom()',
+  },
 })
 export class CardBackFrameComponent {
   /** Which edges have a notch with its gem. */
   readonly notches = input<FrameNotches>('both');
+  /** Rises from the bottom edge: no bottom edge of its own. */
+  readonly openBottom = input(false, { transform: booleanAttribute });
 
   private readonly gradientId = `eras-card-back-frame-${nextFrameId++}`;
   protected readonly stroke = `url(#${this.gradientId})`;
@@ -56,13 +76,14 @@ export class CardBackFrameComponent {
     // Other notches: the same size, drawn again
     effect(() => {
       this.notches();
+      this.openBottom();
       untracked(() => measure?.());
     });
     afterNextRender(() => {
       measure = () => {
         const width = host.offsetWidth;
         const height = host.offsetHeight;
-        if (width > 0 && height > 0) this.frame.set({ width, height, halves: frameHalves(width, height, this.notches()) });
+        if (width > 0 && height > 0) this.frame.set({ width, height, halves: frameHalves(width, height, this.notches(), this.openBottom()) });
       };
       measure();
       if (typeof ResizeObserver === 'undefined') return;

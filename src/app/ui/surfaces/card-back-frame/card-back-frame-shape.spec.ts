@@ -19,6 +19,12 @@ describe('frameHalves', () => {
     expect(none.right.endsWith('L200 300')).toBe(true);
   });
 
+  it('runs its sides straight down, with no bottom edge, when it rises from the bottom', () => {
+    const { right, left } = frameHalves(400, 300, 'top', true);
+    expect(right.endsWith(`L${400 - FRAME.corner} 0 L400 ${FRAME.corner} L400 300`)).toBe(true);
+    expect(left.endsWith(`L${FRAME.corner} 0 L0 ${FRAME.corner} L0 300`)).toBe(true);
+  });
+
   it('rounds to tenths', () => {
     expect(frameHalves(333.333, 100).right).toContain('166.7');
   });

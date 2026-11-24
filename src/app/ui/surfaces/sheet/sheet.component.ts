@@ -19,7 +19,7 @@ import { IconComponent } from '../../primitives/icon/icon.component';
   selector: 'eras-sheet',
   imports: [ButtonComponent, IconComponent, CardBackFrameComponent],
   template: `
-    <eras-card-back-frame notches="top" />
+    <eras-card-back-frame notches="top" openBottom />
     <!-- Full width on top: the arrow stays at the upper left corner, lowered or not -->
     <header class="header">
       <button

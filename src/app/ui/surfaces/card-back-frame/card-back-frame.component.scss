@@ -8,7 +8,8 @@
   --frame-notch-outer: 58px;
   --frame-notch-inner: 40px;
   --frame-notch-depth: 12px;
-  // Each edge's notch (none: the edge runs straight)
+  // Each edge's notch (none: the edge runs straight), and the bottom corners' bevel (none: rising from the bottom)
+  --frame-bottom-corner: var(--frame-corner);
   --frame-top-depth: var(--frame-notch-depth);
   --frame-bottom-depth: var(--frame-notch-depth);
 
@@ -26,6 +27,10 @@
   --frame-bottom-depth: 0px;
 }
 
+:host(.open-bottom) {
+  --frame-bottom-corner: 0px;
+}
+
 // The surface, cut along the gold line: bevelled corners and both notches, nothing of it outside the frame; a breath
 // of the vortex's blue at the top
 .surface {
@@ -39,14 +44,14 @@
     calc(50% + var(--frame-notch-outer)) 0,
     calc(100% - var(--frame-corner)) 0,
     100% var(--frame-corner),
-    100% calc(100% - var(--frame-corner)),
-    calc(100% - var(--frame-corner)) 100%,
+    100% calc(100% - var(--frame-bottom-corner)),
+    calc(100% - var(--frame-bottom-corner)) 100%,
     calc(50% + var(--frame-notch-outer)) 100%,
     calc(50% + var(--frame-notch-inner)) calc(100% - var(--frame-bottom-depth)),
     calc(50% - var(--frame-notch-inner)) calc(100% - var(--frame-bottom-depth)),
     calc(50% - var(--frame-notch-outer)) 100%,
-    var(--frame-corner) 100%,
-    0 calc(100% - var(--frame-corner)),
+    var(--frame-bottom-corner) 100%,
+    0 calc(100% - var(--frame-bottom-corner)),
     0 var(--frame-corner)
   );
   background:

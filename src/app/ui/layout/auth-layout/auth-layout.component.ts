@@ -28,9 +28,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       place-items: center;
       min-block-size: calc(100vh - 4rem);
       padding: var(--space-6) var(--layout-gutter);
-      background:
-        radial-gradient(60rem 30rem at 50% -10%, color-mix(in srgb, var(--color-text) 7%, transparent), transparent 70%),
-        var(--color-bg);
+      /* No background of its own: the app's ambient backdrop (the vortex and its dust) shows behind the form */
     }
     .frame {
       display: flex;

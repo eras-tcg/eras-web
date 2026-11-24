@@ -14,11 +14,21 @@ import {
 import { FrameHalves, FrameNotches, frameHalves } from './card-back-frame-shape';
 
 let nextFrameId = 0;
+/** The page (its path) whose first frame already traced itself: the next ones there show already built. */
+let tracedOn: string | null = null;
+
+/** True the first time a frame appears on the page at `path` (it traces itself), false after that. */
+export function firstFrameOn(path: string): boolean {
+  if (tracedOn === path) return false;
+  tracedOn = path;
+  return true;
+}
 
 /**
  * The card back's own frame behind a dialog: its surface cut with bevelled corners and a notch at the top and at the
- * bottom, a gold line along that edge with a small gem floating in each notch. As it appears the line traces itself
- * from the top gem outwards to the bottom one (not at a game's table, where a dialog is just there). Put it first in a
+ * bottom, a gold line along that edge with a small gem floating in each notch. The first frame of each page traces
+ * its line from the top gem outwards to the bottom one; the next ones on that page appear already built (and none
+ * traces at a game's table, where a dialog is just there). Put it first in a
  * positioned, isolated box (the dialog's panel): it fills it, under its content, and follows its size. `notches`:
  * `both` (centered dialogs), `top` (the mulligan) or `none` (a side panel); `openBottom`: it rises from the bottom
  * edge of the screen (a sheet), its sides running straight down with no bottom edge.
@@ -56,6 +66,7 @@ let nextFrameId = 0;
     '[class.no-top]': "notches() === 'none'",
     '[class.no-bottom]': "notches() !== 'both' || openBottom()",
     '[class.open-bottom]': 'openBottom()',
+    '[class.built]': 'built',
   },
 })
 export class CardBackFrameComponent {
@@ -64,6 +75,8 @@ export class CardBackFrameComponent {
   /** Rises from the bottom edge: no bottom edge of its own. */
   readonly openBottom = input(false, { transform: booleanAttribute });
 
+  /** Another frame already traced itself on this page: this one shows built. */
+  protected readonly built = typeof location !== 'undefined' && !firstFrameOn(location.pathname);
   private readonly gradientId = `eras-card-back-frame-${nextFrameId++}`;
   protected readonly stroke = `url(#${this.gradientId})`;
   /** The frame follows the box's size; drawn once it is measured, so it traces itself from then on. */

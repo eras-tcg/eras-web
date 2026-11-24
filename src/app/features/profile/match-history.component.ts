@@ -13,7 +13,7 @@ import { CardComponent } from '@ui/surfaces/card/card.component';
 import { BadgeComponent } from '@ui/primitives/badge/badge.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { SpinnerComponent } from '@ui/primitives/spinner/spinner.component';
-import type { RivalDeckData } from './rival-deck-dialog.component';
+import { RIVAL_DECK_ROUTE, RivalDeckData, RivalDeckState } from './rival-deck-link';
 
 const PAGE = 20;
 
@@ -229,10 +229,10 @@ export class MatchHistoryComponent {
     }
   }
 
-  /** The list the rival played (its dialog is loaded on first use). */
-  protected async showRivalDeck(deck: RivalDeckData): Promise<void> {
-    const { RivalDeckDialogComponent } = await import('./rival-deck-dialog.component');
-    this.modal.open(RivalDeckDialogComponent, { data: deck });
+  /** The deck the rival played, shown as a deck (its "back" returns to this history). */
+  protected showRivalDeck(deck: RivalDeckData): void {
+    const state: RivalDeckState = { rivalDeck: deck };
+    void this.router.navigate([RIVAL_DECK_ROUTE], { state });
   }
 
   protected next(): void {

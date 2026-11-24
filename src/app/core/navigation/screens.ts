@@ -18,6 +18,7 @@ const COLLECTION: ScreenLink = { route: '/cards/collection', label: 'Colección'
 const MY_DECKS: ScreenLink = { route: '/my-decks', label: 'Mazos' };
 const ADMIN: ScreenLink = { route: '/admin', label: 'Administración' };
 const PROFILE: ScreenLink = { route: '/profile', label: 'Mi perfil' };
+const MATCH_HISTORY: ScreenLink = { route: '/profile/history', label: 'Historial de partidas' };
 
 /** Administration's tools (not /admin itself, which hangs from the home). */
 const ADMIN_SCREENS = /^\/(?:users-manager|activity-log|roles|permissions|card-ref|games-manager|card-meta)$/;
@@ -38,6 +39,7 @@ const PARENTS: [RegExp, ScreenLink | null][] = [
   [/^\/(?:deck\/[^/]+|deck-builder)$/, MY_DECKS],
   [ADMIN_SCREENS, ADMIN],
   [/^\/profile\/history$/, PROFILE],
+  [/^\/profile\/history\/rival-deck$/, MATCH_HISTORY],
 ];
 
 /** Path of a router URL, without query or fragment. */

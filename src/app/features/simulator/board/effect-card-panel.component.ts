@@ -58,17 +58,31 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
       isolation: isolate;
       color: var(--color-text);
     }
+    /* Clear of the bevelled corners (the scrollbar too: the system's, never past the frame), and what scrolls fades out
+       before the edges instead of being cut by them; at rest both fades lie on the padding */
     .scroll {
+      --panel-fade: var(--space-5);
+
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
       min-block-size: 0;
-      padding: var(--space-3);
-      overflow-y: auto;
+      margin: var(--space-3) var(--space-1) var(--space-3) 0;
+      padding: var(--space-2) var(--space-2) var(--panel-fade) var(--space-3);
+      overflow: hidden auto;
       overscroll-behavior: none;
-      scrollbar-width: thin;
+      mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        #000 var(--space-2),
+        #000 calc(100% - var(--panel-fade)),
+        transparent
+      );
     }
-    eras-card-sheet { --card-sheet-width: calc(var(--effect-panel-width, 18rem) - 2 * var(--space-3)); }
+    /* As wide as the scroll's content: the panel less its padding, its margin and the scrollbar (10px, the system's) */
+    eras-card-sheet {
+      --card-sheet-width: calc(var(--effect-panel-width, 18rem) - var(--space-3) - var(--space-2) - var(--space-1) - 10px);
+    }
     .art {
       display: block;
       cursor: zoom-in;

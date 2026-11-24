@@ -1,0 +1,30 @@
+// The game's cut: straight sides, the top-left and bottom-right corners cut off on a diagonal — the buttons, the effect
+// cards. The edge follows the cut too: the element is painted in `$edge` and cut, and its fill (`$fill`, on its
+// ::before) lies over it `$edge-width` in, cut the same way a hair smaller. Any CSS value (a custom property, say), so
+// a state can change them. The element's content sits over its ::before (it is isolated); a shadow outside it would be
+// cut away, so a glow goes inside the fill.
+@mixin cut-corners($cut: 0.55rem, $fill: transparent, $edge: transparent, $edge-width: var(--border-width)) {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  background: $edge;
+  clip-path: polygon(#{$cut} 0, 100% 0, 100% calc(100% - #{$cut}), calc(100% - #{$cut}) 100%, 0 100%, 0 #{$cut});
+  isolation: isolate;
+
+  &::before {
+    position: absolute;
+    inset: $edge-width;
+    z-index: -1;
+    background: $fill;
+    clip-path: polygon(
+      calc(#{$cut} - 0.4 * #{$edge-width}) 0,
+      100% 0,
+      100% calc(100% - #{$cut} + 0.4 * #{$edge-width}),
+      calc(100% - #{$cut} + 0.4 * #{$edge-width}) 100%,
+      0 100%,
+      0 calc(#{$cut} - 0.4 * #{$edge-width})
+    );
+    content: '';
+    transition: background var(--duration-fast) var(--easing-standard);
+  }
+}

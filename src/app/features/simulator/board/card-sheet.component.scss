@@ -1,3 +1,5 @@
+@use 'mixins/cut-corners';
+
 :host { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6); align-items: start; }
 // A side panel: the card on top, as wide as the panel, its effects under it
 :host(.column) { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
@@ -50,13 +52,13 @@
   font-size: var(--font-size-sm);
 }
 .unprogrammed eras-icon { flex: none; inline-size: 1rem; block-size: 1rem; }
+// Each group of effects (and the modifiers, the Materiales) in the game's cut, as the buttons
 .panel {
+  @include cut-corners.cut-corners(0.75rem, color-mix(in srgb, var(--color-surface-muted) 55%, transparent), var(--color-border));
+
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-surface-muted) 55%, transparent);
 }
 .panel h4 {
   display: flex;
@@ -71,13 +73,39 @@
 .panel h4 eras-icon { inline-size: 1rem; block-size: 1rem; color: var(--color-primary); }
 .panel p { margin: 0; line-height: 1.5; }
 .effect { padding-block-start: var(--space-2); border-block-start: 1px dashed var(--color-border); }
-/* The effect that asks: in the color the game marks what is activating */
+/* The effect that asks: lit in the color the game marks what is activating, in the same cut, its light coming from the
+   left and breathing slowly */
 .effect.active {
+  @include cut-corners.cut-corners(
+    0.6rem,
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-sim-effect-active) 34%, var(--color-surface)),
+      color-mix(in srgb, var(--color-sim-effect-active) 10%, var(--color-surface)) 70%
+    ),
+    var(--color-sim-effect-active),
+    1.5px
+  );
+
   margin-inline: calc(-1 * var(--space-2));
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-sim-effect-active) 18%, var(--color-surface));
-  box-shadow: inset 3px 0 0 var(--color-sim-effect-active), 0 0 14px color-mix(in srgb, var(--color-sim-effect-active) 35%, transparent);
+  padding: var(--space-2) var(--space-3);
+  border-block-start: 0;
+  animation: effect-active-breathe 2.4s ease-in-out infinite;
+}
+.panel h4 + .effect.active,
+.effect + .effect.active,
+.effect.active + .effect {
+  margin-block-start: var(--space-1);
+}
+@keyframes effect-active-breathe {
+  50% {
+    filter: brightness(1.18);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .effect.active {
+    animation: none;
+  }
 }
 .panel h4 + .effect { padding-block-start: 0; border-block-start: none; }
 // One Material per line, whatever their names' length

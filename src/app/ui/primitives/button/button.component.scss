@@ -1,56 +1,28 @@
-// Every button has the same cut: straight sides, the top-left and bottom-right corners cut off on a diagonal. Its edge
-// follows the cut too: the button itself is painted in the edge's color, cut, and its fill (::before) lies over it
-// one border-width in, cut the same way. Each variant only sets --button-fill, --button-edge and its text color.
+@use 'mixins/cut-corners';
+
+// Every button has the same cut (mixins/cut-corners): straight sides, the top-left and bottom-right corners cut off,
+// its edge following the cut. Each variant only sets --button-fill, --button-edge and its text color.
 :host {
   --button-cut: 0.55rem;
   --button-fill: transparent;
   --button-edge: transparent;
   --button-edge-width: var(--border-width);
 
-  position: relative;
+  @include cut-corners.cut-corners(var(--button-cut), var(--button-fill), var(--button-edge), var(--button-edge-width));
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  border: 0;
-  border-radius: 0;
-  background: var(--button-edge);
-  clip-path: polygon(
-    var(--button-cut) 0,
-    100% 0,
-    100% calc(100% - var(--button-cut)),
-    calc(100% - var(--button-cut)) 100%,
-    0 100%,
-    0 var(--button-cut)
-  );
   font-weight: var(--font-weight-medium);
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  isolation: isolate;
   transition:
     background-color var(--duration-fast) var(--easing-standard),
     color var(--duration-fast) var(--easing-standard),
     filter var(--duration-fast) var(--easing-standard);
-}
-
-:host::before {
-  position: absolute;
-  inset: var(--button-edge-width);
-  z-index: -1;
-  background: var(--button-fill);
-  // The same cut, a hair smaller, so the edge keeps its width along the diagonal too
-  clip-path: polygon(
-    calc(var(--button-cut) - 0.4 * var(--button-edge-width)) 0,
-    100% 0,
-    100% calc(100% - var(--button-cut) + 0.4 * var(--button-edge-width)),
-    calc(100% - var(--button-cut) + 0.4 * var(--button-edge-width)) 100%,
-    0 100%,
-    0 calc(var(--button-cut) - 0.4 * var(--button-edge-width))
-  );
-  content: '';
-  transition: background var(--duration-fast) var(--easing-standard);
 }
 
 // The outline would be cut away with the corners: the edge itself lights up instead

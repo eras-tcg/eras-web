@@ -47,6 +47,8 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
     </div>
   `,
   styles: `
+    @use 'mixins/cut-corners';
+
     /* In the card back's frame, its bevelled corners only (a side panel: no notch); the content scrolls inside it */
     :host {
       position: relative;
@@ -91,18 +93,38 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
       box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
     }
     .effects { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+    /* Each effect in the game's cut, as the buttons; the one that asks lit in the activating color, its light from the
+       left, breathing slowly */
     .effect {
+      @include cut-corners.cut-corners(0.6rem, var(--color-surface-muted), var(--color-border));
+
       margin: 0;
-      padding: var(--space-2);
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
+      padding: var(--space-2) var(--space-3);
       font-size: var(--font-size-sm);
-      transition: background var(--duration-fast, 120ms) ease, box-shadow var(--duration-fast, 120ms) ease;
     }
-    /* The effect that asks: in the color the game marks what is activating */
     .effect.active {
-      background: color-mix(in srgb, var(--color-sim-effect-active) 18%, var(--color-surface));
-      box-shadow: inset 3px 0 0 var(--color-sim-effect-active), 0 0 14px color-mix(in srgb, var(--color-sim-effect-active) 35%, transparent);
+      @include cut-corners.cut-corners(
+        0.6rem,
+        linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--color-sim-effect-active) 34%, var(--color-surface)),
+          color-mix(in srgb, var(--color-sim-effect-active) 10%, var(--color-surface)) 70%
+        ),
+        var(--color-sim-effect-active),
+        1.5px
+      );
+
+      animation: effect-active-breathe 2.4s ease-in-out infinite;
+    }
+    @keyframes effect-active-breathe {
+      50% {
+        filter: brightness(1.18);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .effect.active {
+        animation: none;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

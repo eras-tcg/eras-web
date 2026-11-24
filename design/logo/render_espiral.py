@@ -1,7 +1,7 @@
 """The ERAS gem «Espiral» (the card back's, design/cardback/build_cardback.py) as the site's icons: favicon.svg (vector:
 each face a gold gradient by its light, the table glowing from its heart, the edges cut out by a mask) and the raster
 icons (logo, PWA "any" and "maskable", Apple touch), drawn with the card back's own renderer. The site's icons are the
-blue gem («Vórtice azul»'s); without --blue, the gold one.
+blue gem («Vórtice»'s); without --blue, the gold one («Campeón»'s).
 
     python render_espiral.py <public_dir> --blue
 """

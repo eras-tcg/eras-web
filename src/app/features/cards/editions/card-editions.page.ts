@@ -136,8 +136,15 @@ interface EditionForm {
       @if (error()) {
         <eras-alert tone="danger">{{ error() }}</eras-alert>
       }
-      @if (edition()?.hidden && !collection()) {
-        <eras-alert>Edición en desarrollo: solo la ven los administradores y los testers.</eras-alert>
+      @if (edition(); as e) {
+        @if (!collection() && editions.isHidden(e.editionId)) {
+          <eras-alert>
+            Edición en desarrollo: solo la ven los administradores y los testers.
+            @if (!e.hidden) {
+              La oculta su edición base.
+            }
+          </eras-alert>
+        }
       }
 
       @if (form(); as f) {
@@ -215,7 +222,7 @@ interface EditionForm {
               [frame]="f.coverFrame ?? edition()?.coverFrame"
               [code]="f.editionId || '—'"
               [name]="f.editionName"
-              [hidden]="f.hidden"
+              [inDevelopment]="f.hidden"
             />
             <button erasButton variant="secondary" type="button" (click)="editCover()">
               Editar portada
@@ -442,7 +449,7 @@ interface EditionForm {
                 "
                 [dimmed]="collection() && !e.complete"
                 [foil]="e.shine"
-                [hidden]="!collection() && !!e.edition.hidden"
+                [inDevelopment]="!collection() && editions.isHidden(e.edition.editionId)"
               />
             </a>
           }

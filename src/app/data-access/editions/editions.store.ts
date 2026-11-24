@@ -4,7 +4,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { ServerAccess } from '@core/server/server-access';
 import { firstValueFrom } from 'rxjs';
 import { Edition, EditionSaveRequest } from './edition.model';
-import { isTestEdition, sortEditions } from './edition-rules';
+import { isHiddenEdition, isTestEdition, sortEditions } from './edition-rules';
 import { EditionsApi } from './editions.api';
 import { SharedLoad } from '../shared/shared-load';
 
@@ -43,6 +43,11 @@ export class EditionsStore {
   /** Every edition the player may filter the cards by: the released ones and, for a tester, the testing ones (T1…). */
   readonly catalogEditions = computed(() => sortEditions(this.items()));
   readonly releaseDates = computed(() => new Map(this.items().map((e) => [e.editionId, e.releaseDate ?? ''])));
+
+  /** Whether an admin hid the edition (in development), by itself or by its base edition. */
+  isHidden(editionId: string): boolean {
+    return isHiddenEdition(editionId, this.items());
+  }
 
   /** Loads it unless already loaded; a load already on its way is shared (a page opened during the prefetch waits for it). */
   load(force = false): Promise<void> {

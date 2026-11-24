@@ -5,7 +5,7 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
 /**
  * An edition as a card-shaped tile, as in the shop: its cover behind (placed by its framing), its code, name and
  * an optional line at the bottom over a scrim. `foil` makes the cover shine as a foil or prism card does; `dimmed`
- * puts it in grey; `hidden` marks an edition an admin hid (in development).
+ * puts it in grey; `inDevelopment` marks an edition an admin hid (in development).
  */
 @Component({
   selector: 'eras-edition-tile',
@@ -24,7 +24,7 @@ import { coverFrameStyle } from '@data/editions/edition-rules';
     @if (foil()) {
       <span class="shine" [class.prism]="foil() === 'prism'"></span>
     }
-    @if (hidden()) {
+    @if (inDevelopment()) {
       <span class="hidden-mark">En desarrollo</span>
     }
     <span class="info">
@@ -138,7 +138,7 @@ export class EditionTileComponent {
   readonly detail = input<string | null>(null);
   readonly foil = input<'foil' | 'prism' | null>(null);
   readonly dimmed = input(false);
-  readonly hidden = input(false);
+  readonly inDevelopment = input(false);
 
   protected readonly place = computed(() => coverFrameStyle(this.frame()));
 }

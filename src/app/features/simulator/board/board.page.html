@@ -4,7 +4,7 @@
     <div class="strip" [class.with-gems]="gems">
       <eras-stack direction="row" [gap]="3" align="center" wrap>
         @if (inProgress()) {
-          <span class="turn" [class.my-turn]="game.isMyTurn()">{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
+          <span class="turn" [class.my-turn]="game.isMyTurn()"><span class="turn-dot" aria-hidden="true"></span>{{ game.isMyTurn() ? 'Turno aliado' : 'Turno oponente' }}</span>
         }
         @if (!game.connected()) {
           <span class="warn">Sin conexión, reintentando…</span>

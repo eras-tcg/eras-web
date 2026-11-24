@@ -1,3 +1,5 @@
+@use 'mixins/cut-corners';
+
 // "Estilo de la mesa: arcano" (the game's preferences, the default): the table over the vortex behind every screen
 // (AmbientBackdrop), its edges in shadow, engraved in the brand's gold, with cut gems. The colors are the table's own,
 // the same in both themes. The halves and the counters read the --arcane-* colors (see player-half, shared-bar,
@@ -11,8 +13,9 @@
   --arcane-gold-soft: color-mix(in srgb, var(--color-sim-gold) 28%, transparent);
   --arcane-stone: #1a1e25;
   --arcane-stone-dark: #0c0e12;
-  --arcane-ally: #22c55e;
-  --arcane-rival: #e5484d;
+  // Whose it is: blue yours, red the rival's, as everywhere at the table
+  --arcane-ally: var(--color-sim-ally);
+  --arcane-rival: var(--color-sim-rival);
   --color-surface: #1c1f26;
   --color-surface-muted: #262a33;
   --color-border: var(--arcane-gold-soft);
@@ -45,59 +48,78 @@
 }
 
 .table.arcane .strip .turn {
+  // Whose turn: the ERAS gem, glowing in that side's color, and a tag coming out of it, washed in that color, its tip
+  // cut on a slant and a line of gold along its foot (the players' nameplates' tag)
+  --turn-color: var(--arcane-rival);
+
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.2rem var(--space-4);
+  padding: 0.2rem 1.6rem 0.2rem 0.35rem;
   border: 0;
-  // The plaque's own shape (below): none of the clean style's rounded pill under it
   border-radius: 0;
-  background: linear-gradient(180deg, #2a2620, #17140f);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--turn-color) 42%, #17140f),
+    color-mix(in srgb, var(--turn-color) 12%, #17140f) 55%,
+    color-mix(in srgb, #17140f 85%, transparent)
+  );
   backdrop-filter: none;
   box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
   color: var(--arcane-gold-light);
   font-family: var(--font-family-display);
   font-weight: var(--font-weight-regular);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
-  // A plaque with cut corners, edged in gold (the outline is the plaque's own drop shadow)
-  clip-path: polygon(0.6rem 0, calc(100% - 0.6rem) 0, 100% 50%, calc(100% - 0.6rem) 100%, 0.6rem 100%, 0 50%);
-  filter: drop-shadow(0 0 0.5px var(--arcane-gold)) drop-shadow(0 0 0.5px var(--arcane-gold));
+}
+
+.table.arcane .strip .turn.my-turn {
+  --turn-color: var(--arcane-ally);
+}
+
+.table.arcane .strip .turn::after {
+  position: absolute;
+  inset-inline: 0 1rem;
+  inset-block-end: 0;
+  block-size: 2px;
+  background: linear-gradient(90deg, var(--arcane-gold), transparent);
+  content: '';
 }
 
 // The plaque fills the strip's side with the clean style's letters (the display face is too wide for it), so the turn
 // takes the same room in both styles
 @media all {
   .table.arcane .strip .turn {
-    padding-block: var(--space-2);
-    padding-inline: var(--space-3);
     font-family: inherit;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.04em;
   }
 }
 
-// Phones in landscape: the plaque as low as the strip there
+// The ERAS gem, glowing in the color of whose turn it is
+.table.arcane .strip .turn-dot {
+  inline-size: 1.7rem;
+  block-size: 1.7rem;
+  border-radius: 0;
+  background: url('/favicon.svg') center / contain no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 0 5px var(--turn-color));
+  transform: none;
+}
+
+// Phones in landscape: as low as the strip there
 @media (orientation: landscape) and (max-height: 30rem) {
   .table.arcane .strip .turn {
-    padding-block: 0.2rem;
+    padding-block: 0;
   }
-}
 
-.table.arcane .strip .turn::before {
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 1px;
-  background: var(--arcane-rival);
-  box-shadow: 0 0 6px var(--arcane-rival);
-  transform: rotate(45deg);
-  content: '';
-}
-
-.table.arcane .strip .turn.my-turn::before {
-  background: var(--arcane-ally);
-  box-shadow: 0 0 6px var(--arcane-ally);
+  .table.arcane .strip .turn-dot {
+    inline-size: 1.2rem;
+    block-size: 1.2rem;
+  }
 }
 
 // Menú de partida (beside the table, not in it): a gold-ringed stone button

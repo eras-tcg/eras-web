@@ -83,13 +83,14 @@
   white-space: nowrap;
 }
 
-.strip .turn::before {
+// Whose turn: a dot in the side's color
+.strip .turn-dot {
+  flex: none;
   inline-size: 0.5rem;
   block-size: 0.5rem;
   border-radius: 50%;
   background: var(--color-danger);
   box-shadow: 0 0 6px var(--color-danger);
-  content: '';
 }
 
 .strip .turn.my-turn {
@@ -97,7 +98,7 @@
   color: var(--color-text);
 }
 
-.strip .turn.my-turn::before {
+.strip .turn.my-turn .turn-dot {
   background: var(--color-success);
   box-shadow: 0 0 6px var(--color-success);
 }

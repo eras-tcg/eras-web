@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RotateOverlayComponent } from '@core/layout/rotate-overlay.component';
 import { NativeApp } from '@core/native/native-app';
+import { AppFullscreen } from '@core/pwa/app-fullscreen';
 import { AppScreen } from '@core/pwa/app-screen';
 import { ConnectionService } from '@core/server/connection.service';
 import { ServerWarmupService } from '@core/server/server-warmup.service';
@@ -69,6 +70,8 @@ export class App {
     this.connection.start();
     // The installed app: landscape, full screen, a layout that does not jump with the system bars
     this.screen.start();
+    // A computer's installed app (the Windows one too): in full screen if the player chose it in Preferencias
+    inject(AppFullscreen).start();
     // The Android app (only there): back button, updates, the card pictures' worker
     inject(NativeApp).start();
   }

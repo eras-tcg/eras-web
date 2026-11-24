@@ -5,6 +5,7 @@ import { apiErrorMessage } from '@core/http/api-error';
 import { BOT_EDGE_MAX, botEdgeText } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { CardBackService } from '@core/theme/card-back.service';
+import { AppFullscreen } from '@core/pwa/app-fullscreen';
 import { BackdropService } from '@core/theme/backdrop.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
@@ -42,6 +43,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="state">{{ theme.theme() === 'dark' ? 'Oscuro' : 'Claro' }}</span>
           </button>
           <ng-container [ngTemplateOutlet]="backdropPref" />
+          <ng-container [ngTemplateOutlet]="appFullscreenPref" />
         }
         @case ('table') {
           @if (withPlaymat()) {
@@ -145,8 +147,10 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
           </label>
         }
         @case ('screen') {
-          <!-- In a game only (the browser's full screen); the installed app on a phone is always full screen (AppScreen) -->
-          @if (screen && screen.fullscreenToggle && (screen.canFullscreen || !screen.installed)) {
+          <!-- In a game only (the browser's full screen); the installed app on a phone is always full screen (AppScreen),
+               on a computer it is the app's own preference -->
+          <ng-container [ngTemplateOutlet]="appFullscreenPref" />
+          @if (screen && screen.fullscreenToggle && !appFullscreen.available && (screen.canFullscreen || !screen.installed)) {
             <button type="button" class="pref" role="switch" [attr.aria-checked]="screen.fullView()" (click)="screen.toggleFullscreen()">
               <eras-icon [name]="screen.fullView() ? 'minimize' : 'maximize'" />
               <span class="text"><strong>Pantalla completa</strong><small>Toda la mesa crece con el alto de la pantalla</small></span>
@@ -189,6 +193,16 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
         }
       }
     </div>
+    <!-- The installed app on a computer (the Windows one too): opens in full screen -->
+    <ng-template #appFullscreenPref>
+      @if (appFullscreen.available) {
+        <button type="button" class="pref" role="switch" [attr.aria-checked]="appFullscreen.on()" (click)="appFullscreen.set(!appFullscreen.on())">
+          <eras-icon [name]="appFullscreen.on() ? 'minimize' : 'maximize'" />
+          <span class="text"><strong>Pantalla completa</strong><small>La aplicación se abre ocupando toda la pantalla</small></span>
+          <span class="state">{{ appFullscreen.on() ? 'Sí' : 'No' }}</span>
+        </button>
+      }
+    </ng-template>
     <!-- The background behind the screens and the arcane table. Each click: animado → estático → plano -->
     <ng-template #backdropPref>
       <button type="button" class="pref" (click)="backdrop.cycle()">
@@ -368,6 +382,7 @@ export class GamePreferencesPanelComponent {
   protected readonly prefs = inject(BoardPreferences);
   protected readonly theme = inject(ThemeService);
   protected readonly backdrop = inject(BackdropService);
+  protected readonly appFullscreen = inject(AppFullscreen);
   protected readonly game = inject(GameStore);
   /** Only under the board (the game's dialog). */
   protected readonly screen = inject(BoardScreen, { optional: true });

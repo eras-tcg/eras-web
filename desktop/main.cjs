@@ -1,7 +1,7 @@
 // ERAS for Windows: a window of its own over the site (https://www.erastcg.com), the same code the browser runs.
 // The site itself (its service worker) keeps the game for playing offline and updates it; this shell only opens it,
 // so a new installer is needed only when this folder changes (README, "La app de Windows").
-const { app, BrowserWindow, shell, Menu } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('node:path');
 
 /** The site it opens (ERAS_URL: another one, for staging or a local build). */
@@ -41,7 +41,15 @@ if (!app.requestSingleInstanceLock()) {
     win.maximize();
     win.once('ready-to-show', () => win.show());
 
-    // F11 puts it in full screen and takes it out (the site's own button does it too)
+    // Full screen as the site's Preferencias say (it asks as it opens), and the site told when it changes here
+    ipcMain.on('eras:set-full-screen', (event, on) => {
+      if (win && event.sender === win.webContents && win.isFullScreen() !== (on === true)) win.setFullScreen(on === true);
+    });
+    const tellFullScreen = () => win && win.webContents.send('eras:full-screen', win.isFullScreen());
+    win.on('enter-full-screen', tellFullScreen);
+    win.on('leave-full-screen', tellFullScreen);
+
+    // F11 puts it in full screen and takes it out (the site's own preference does it too)
     win.webContents.on('before-input-event', (event, input) => {
       if (input.type === 'keyDown' && input.key === 'F11') {
         win.setFullScreen(!win.isFullScreen());

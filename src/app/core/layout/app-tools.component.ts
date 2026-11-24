@@ -19,8 +19,8 @@ import { WalletStore } from '../wallet/wallet.store';
  * Quick buttons at the top right of every screen (icon over a label): the simulated gems (to the shop) and edit mode
  * (administrators only), the missions (their screen on the hub menus, a dialog anywhere else); on the hub screens (`hub`: home, play, social…) also administration (administrators only) and sign out, so the
  * buttons do not change between them;
- * full screen on every screen (with or without a session), only ever followed by sign out (not in the installed app on
- * a phone or tablet: it is always full screen). The installed app has, first, "Conectar" with the state of its
+ * full screen on every screen (with or without a session), only ever followed by sign out (in the browser's tab only:
+ * the installed app is always full screen on a phone or tablet, and on a computer it is set in Preferencias). The installed app has, first, "Conectar" with the state of its
  * connection to the server (local-first: Sin conectar / Conectando… / Conectado / Sin internet); the gems and the
  * missions need the server, and say so until it connects.
  * The sections are reached from the home hub; the theme is in the profile's preferences. Without a session only the theme shows. `onArt`: light text with a shadow, over the hub's artwork.
@@ -51,8 +51,9 @@ export class AppToolsComponent {
   private readonly missionsDialog = inject(MISSIONS_DIALOG, { optional: true });
   private readonly newsDialog = inject(NEWS_LOG_DIALOG, { optional: true });
   protected readonly connection = inject(ConnectionService);
-  /** Not in the installed app on a phone or tablet: it is always full screen. */
-  protected readonly fullscreenToggle = inject(AppScreen).fullscreenToggle;
+  /** The browser's tab only: the installed app on a phone or tablet is always full screen, and on a computer (the
+   * Windows app too) it is a preference (Preferencias, AppFullscreen). */
+  protected readonly fullscreenToggle = !inject(AppScreen).installed;
 
   readonly onArt = input(false, { transform: booleanAttribute });
   /** The hub screens: the only ones with administration and sign out. */

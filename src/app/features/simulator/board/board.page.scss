@@ -130,6 +130,12 @@
 }
 
 // Opponent half / shared bar / own half; both halves share the height left
+// Before the room answers: its loading in the middle of the screen
+.room-loading {
+  flex: 1;
+  align-content: center;
+}
+
 .table {
   position: relative;
   display: grid;

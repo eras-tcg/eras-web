@@ -107,6 +107,9 @@
   @if (game.status() === 'WAITING') {
     <!-- Before a game: decks, starters, who goes first and both confirm -->
     <eras-pre-room />
+  } @else if (!game.state() && !game.error()) {
+    <!-- The room has not answered yet: its loading alone, no table sketched before it is known -->
+    <eras-empty-state class="room-loading" title="Entrando a la sala…"><eras-spinner /></eras-empty-state>
   } @else {
   <!-- Phones upright: the table does not fit, it asks to turn the phone (shown by the styles only) -->
   <div class="rotate-hint" role="alert">

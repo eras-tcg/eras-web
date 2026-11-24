@@ -14,24 +14,18 @@ export interface FrameHalves {
  */
 export const FRAME = { corner: 14, notchOuter: 58, notchInner: 40, notchDepth: 12 } as const;
 
-export function frameHalves(width: number, height: number): FrameHalves {
+/** Which edges have a notch with its gem: both, only the top one, or none (only the bevelled corners). */
+export type FrameNotches = 'both' | 'top' | 'none';
+
+export function frameHalves(width: number, height: number, notches: FrameNotches = 'both'): FrameHalves {
   const { corner: c, notchOuter: no, notchInner: ni, notchDepth: d } = FRAME;
   const m = width / 2;
   const w = width;
   const h = height;
-  // The right half, from the top gem clockwise to the bottom gem; the left one is its mirror
-  const points: [number, number][] = [
-    [m, d],
-    [m + ni, d],
-    [m + no, 0],
-    [w - c, 0],
-    [w, c],
-    [w, h - c],
-    [w - c, h],
-    [m + no, h],
-    [m + ni, h - d],
-    [m, h - d],
-  ];
+  const top: [number, number][] = notches === 'none' ? [[m, 0]] : [[m, d], [m + ni, d], [m + no, 0]];
+  const bottom: [number, number][] = notches === 'both' ? [[m + no, h], [m + ni, h - d], [m, h - d]] : [[m, h]];
+  // The right half, from the top middle clockwise to the bottom middle; the left one is its mirror
+  const points: [number, number][] = [...top, [w - c, 0], [w, c], [w, h - c], [w - c, h], ...bottom];
   const path = (mirror: boolean) => 'M' + points.map(([x, y]) => `${round(mirror ? w - x : x)} ${round(y)}`).join(' L');
   return { right: path(false), left: path(true) };
 }

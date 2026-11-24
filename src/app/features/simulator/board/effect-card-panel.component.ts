@@ -9,6 +9,7 @@ import { holdToPeek } from './hold-peek';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 import { CardSheetComponent } from './card-sheet.component';
+import { CardBackFrameComponent } from '@ui/surfaces/card-back-frame/card-back-frame.component';
 import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
 
 /**
@@ -20,8 +21,10 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
  */
 @Component({
   selector: 'eras-effect-card-panel',
-  imports: [EffectLineComponent, CardSheetComponent, CardFaceComponent],
+  imports: [EffectLineComponent, CardSheetComponent, CardFaceComponent, CardBackFrameComponent],
   template: `
+    <eras-card-back-frame notches="none" />
+    <div class="scroll">
     @if (onTable(); as t) {
       <eras-card-sheet column [slot]="t.slot" [zone]="t.zone" [opponent]="t.opponent" [activeText]="activeText()" />
     } @else {
@@ -41,21 +44,28 @@ import { CardFaceComponent } from '@ui/domain/card-face/card-face.component';
       <div class="effect active"><eras-effect-line [text]="text" /></div>
     }
     }
+    </div>
   `,
   styles: `
+    /* In the card back's frame, its bevelled corners only (a side panel: no notch); the content scrolls inside it */
     :host {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      inline-size: var(--effect-panel-width, 18rem);
+      max-block-size: 100%;
+      filter: drop-shadow(0 8px 24px rgb(0 0 0 / 45%));
+      isolation: isolate;
+      color: var(--color-text);
+    }
+    .scroll {
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      inline-size: var(--effect-panel-width, 18rem);
-      max-block-size: 100%;
+      min-block-size: 0;
       padding: var(--space-3);
       overflow-y: auto;
       overscroll-behavior: none;
-      border-radius: var(--radius-lg);
-      background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-      box-shadow: var(--shadow-lg);
-      color: var(--color-text);
       scrollbar-width: thin;
     }
     eras-card-sheet { --card-sheet-width: calc(var(--effect-panel-width, 18rem) - 2 * var(--space-3)); }

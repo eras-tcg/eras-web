@@ -230,10 +230,12 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     .tab.on { background: var(--color-primary); color: var(--color-on-primary); }
     .tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
     /* The same height on every section (the box keeps its size); a longer one scrolls inside */
+    /* One column, or --prefs-columns where there is room (the game's dialog) */
     .prefs {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
+      display: grid;
+      grid-template-columns: repeat(var(--prefs-columns, 1), minmax(0, 1fr));
+      align-content: start;
+      gap: var(--prefs-gap, var(--space-1));
       block-size: var(--prefs-height, min(27rem, calc(100dvh - 14rem)));
       /* When the host is a column (the profile), the list takes what is left under the tabs */
       flex: 1 1 auto;
@@ -241,13 +243,12 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
       overflow-y: auto;
       overscroll-behavior: contain;
     }
-    .prefs > * { flex: none; }
     .pref {
       display: flex;
       align-items: center;
       gap: var(--space-3);
       inline-size: 100%;
-      padding: var(--space-2) var(--space-3);
+      padding: var(--pref-padding, var(--space-2) var(--space-3));
       border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-md);
       background: var(--color-surface);

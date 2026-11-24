@@ -8,11 +8,22 @@
   --frame-notch-outer: 58px;
   --frame-notch-inner: 40px;
   --frame-notch-depth: 12px;
+  // Each edge's notch (none: the edge runs straight)
+  --frame-top-depth: var(--frame-notch-depth);
+  --frame-bottom-depth: var(--frame-notch-depth);
 
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+}
+
+:host(.no-top) {
+  --frame-top-depth: 0px;
+}
+
+:host(.no-bottom) {
+  --frame-bottom-depth: 0px;
 }
 
 // The surface, cut along the gold line: bevelled corners and both notches, nothing of it outside the frame; a breath
@@ -23,16 +34,16 @@
   clip-path: polygon(
     var(--frame-corner) 0,
     calc(50% - var(--frame-notch-outer)) 0,
-    calc(50% - var(--frame-notch-inner)) var(--frame-notch-depth),
-    calc(50% + var(--frame-notch-inner)) var(--frame-notch-depth),
+    calc(50% - var(--frame-notch-inner)) var(--frame-top-depth),
+    calc(50% + var(--frame-notch-inner)) var(--frame-top-depth),
     calc(50% + var(--frame-notch-outer)) 0,
     calc(100% - var(--frame-corner)) 0,
     100% var(--frame-corner),
     100% calc(100% - var(--frame-corner)),
     calc(100% - var(--frame-corner)) 100%,
     calc(50% + var(--frame-notch-outer)) 100%,
-    calc(50% + var(--frame-notch-inner)) calc(100% - var(--frame-notch-depth)),
-    calc(50% - var(--frame-notch-inner)) calc(100% - var(--frame-notch-depth)),
+    calc(50% + var(--frame-notch-inner)) calc(100% - var(--frame-bottom-depth)),
+    calc(50% - var(--frame-notch-inner)) calc(100% - var(--frame-bottom-depth)),
     calc(50% - var(--frame-notch-outer)) 100%,
     var(--frame-corner) 100%,
     0 calc(100% - var(--frame-corner)),

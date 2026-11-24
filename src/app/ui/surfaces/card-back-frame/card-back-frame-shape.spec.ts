@@ -10,6 +10,15 @@ describe('frameHalves', () => {
     expect(left).toContain(`L${FRAME.corner} 0 L0 ${FRAME.corner}`);
   });
 
+  it('leaves out the notches it does not have', () => {
+    const top = frameHalves(400, 300, 'top');
+    expect(top.right.startsWith(`M200 ${FRAME.notchDepth} L`)).toBe(true);
+    expect(top.right.endsWith(`L${400 - FRAME.corner} 300 L200 300`)).toBe(true);
+    const none = frameHalves(400, 300, 'none');
+    expect(none.right.startsWith(`M200 0 L${400 - FRAME.corner} 0`)).toBe(true);
+    expect(none.right.endsWith('L200 300')).toBe(true);
+  });
+
   it('rounds to tenths', () => {
     expect(frameHalves(333.333, 100).right).toContain('166.7');
   });

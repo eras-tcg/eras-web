@@ -6,18 +6,19 @@ import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { StackComponent } from '@ui/layout/stack/stack.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
-import { CardComponent } from '@ui/surfaces/card/card.component';
+import { CardBackFrameComponent } from '@ui/surfaces/card-back-frame/card-back-frame.component';
 import { CardPeekComponent } from './card-peek.component';
 
 /** Phase-gated panels over the board: starter choice (older rooms) and mulligan. The pre-room has its own view; the post-game is the end screen (eras-match-banner). */
 @Component({
   selector: 'eras-status-panels',
-  imports: [CardComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent, CardPeekComponent, PickCardComponent],
+  imports: [CardBackFrameComponent, StackComponent, GameCardComponent, AlertComponent, ButtonComponent, CardPeekComponent, PickCardComponent],
   template: `
     <!-- A side played by a bot (or a replay) has nothing to choose here -->
     @switch (game.sideByBot() ? null : game.status()) {
       @case ('SELECTING_STARTER') {
-        <eras-card>
+        <section class="box">
+          <eras-card-back-frame notches="top" />
           <eras-stack [gap]="3">
             <strong>Elige tu criatura iniciadora</strong>
             @if (starterChosen()) {
@@ -37,10 +38,11 @@ import { CardPeekComponent } from './card-peek.component';
               </div>
             }
           </eras-stack>
-        </eras-card>
+        </section>
       }
       @case ('MULLIGAN') {
-        <eras-card class="mulligan">
+        <section class="box mulligan">
+          <eras-card-back-frame notches="top" />
           <div class="panel">
             <header class="head">
               <h2 class="title">Mulligan</h2>
@@ -66,20 +68,28 @@ import { CardPeekComponent } from './card-peek.component';
               </footer>
             }
           </div>
-        </eras-card>
+        </section>
       }
       @case ('FINISHED') {
-        <eras-card>
+        <section class="box">
+          <eras-card-back-frame notches="top" />
           <eras-stack [gap]="3">
             <strong>La sala se cerró</strong>
             <div><button erasButton type="button" (click)="leave.emit()">Volver al simulador</button></div>
           </eras-stack>
-        </eras-card>
+        </section>
       }
     }
   `,
   styles: `
     :host { display: block; }
+    /* Each panel in the card back's frame, with the notch and its gem on top */
+    .box {
+      position: relative;
+      isolation: isolate;
+      padding: calc(var(--space-5) + var(--space-2)) var(--space-5) var(--space-5);
+      filter: drop-shadow(0 12px 32px rgb(0 0 0 / 45%));
+    }
     /* Wider for the mulligan's five cards in one row (the board reads it) */
     :host:has(.mulligan) { --status-width: 48rem; }
     :host:empty { display: none; }
@@ -103,6 +113,7 @@ import { CardPeekComponent } from './card-peek.component';
     /* Phones in landscape: a smaller panel, clear of the game menu's button at the table's top left */
     @media (orientation: landscape) and (max-height: 30rem) {
       :host:has(.mulligan) { --status-width: min(34rem, 62vw); }
+      .box { padding: calc(var(--space-3) + var(--space-2)) var(--space-3) var(--space-3); }
       .panel { gap: var(--space-2); }
       .title { font-size: 1rem; line-height: 1.5rem; }
       .subtitle { font-size: var(--font-size-xs); }

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, effect, inject, i
 import { DOCUMENT } from '@angular/common';
 import { ButtonComponent } from '../../primitives/button/button.component';
 import { SheetState } from './sheet-state';
+import { CardBackFrameComponent } from '../card-back-frame/card-back-frame.component';
 import { IconComponent } from '../../primitives/icon/icon.component';
 
 /**
@@ -16,8 +17,9 @@ import { IconComponent } from '../../primitives/icon/icon.component';
  */
 @Component({
   selector: 'eras-sheet',
-  imports: [ButtonComponent, IconComponent],
+  imports: [ButtonComponent, IconComponent, CardBackFrameComponent],
   template: `
+    <eras-card-back-frame notches="top" />
     <!-- Full width on top: the arrow stays at the upper left corner, lowered or not -->
     <header class="header">
       <button

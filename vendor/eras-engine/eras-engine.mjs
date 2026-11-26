@@ -16536,6 +16536,9 @@ protoOf(Answers).q2g = function (room, prompt, player, picks) {
       player.x1e_1.f(card_9);
       EffectEngine_getInstance().g2e(room, 'SEND', userId, card_9, 'hand', 'lifeStack', null, frozenMapOf_0('reinforce', true), plus(player.g1e_1, ' refuerza con ') + EffectEngine_getInstance().q2c(card_9) + ': va bocarriba al fondo de su pila de vidas');
     }
+    if (player.x1e_1.m()) {
+      EffectEngine_getInstance().d2h(room, player);
+    }
     Chain_instance.z1l(room);
     return '';
   }
@@ -16552,6 +16555,9 @@ protoOf(Answers).q2g = function (room, prompt, player, picks) {
         player.u1e_1.f(card_10);
         EffectEngine_getInstance().g2e(room, 'SEND', userId, card_10, 'lifeStack', 'hand', null, null, EffectEngine_getInstance().q2c(card_10) + ' va a la mano de ' + player.g1e_1);
       }
+    }
+    if (player.x1e_1.m()) {
+      EffectEngine_getInstance().d2h(room, player);
     }
     Chain_instance.z1l(room);
     return '';
@@ -19702,20 +19708,52 @@ protoOf(Chain).o2r = function (room, result, script, event, source, controllerId
   }
   result.f(e);
 };
+protoOf(Chain).x2r = function (room, e) {
+  if (!equals_0(EffectEngine_getInstance().z2g(e).o1w_1, Moment_ON_PLAY_getInstance()))
+    return Unit_instance;
+  var tmp0 = plus_0(room.q18_1, room.s18_1);
+  var tmp$ret$0;
+  $l$block_0: {
+    // Inline function 'kotlin.collections.any' call
+    var tmp;
+    if (isInterface(tmp0, Collection)) {
+      tmp = tmp0.m();
+    } else {
+      tmp = false;
+    }
+    if (tmp) {
+      tmp$ret$0 = false;
+      break $l$block_0;
+    }
+    var _iterator__ex2g4s = tmp0.h();
+    while (_iterator__ex2g4s.i()) {
+      var element = _iterator__ex2g4s.j();
+      if (!(element === e) && element.n21_1 == e.n21_1 && equals_0(EffectEngine_getInstance().z2g(element).o1w_1, Moment_ON_PLAY_getInstance())) {
+        tmp$ret$0 = true;
+        break $l$block_0;
+      }
+    }
+    tmp$ret$0 = false;
+  }
+  var waiting = tmp$ret$0;
+  if (!waiting) {
+    Resolution_getInstance().y2r(room, e);
+  }
+};
 protoOf(Chain).r2q = function (room, e, script) {
   if (equals_0(script.x1w_1, Limit_DEFINITIVE_getInstance()) && room.c19_1)
     return true;
-  return Companion_instance_15.z2r(script.x1w_1, room.a19_1, this.x2r(e, script));
+  return Companion_instance_15.b2s(script.x1w_1, room.a19_1, this.z2r(e, script));
 };
 protoOf(Chain).q2q = function (room, e, script) {
   var tmp0_safe_receiver = script.x1w_1;
-  if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.c2s_1) === 2)
+  if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.e2s_1) === 2)
     return 'su efecto ya se us\xF3 2 veces este turno';
   if (!equals_0(script.x1w_1, Limit_DEFINITIVE_getInstance()))
     return 'su efecto ya se us\xF3 este turno';
   return room.c19_1 ? 'no se pueden activar Efectos Definitivos en el primer turno de la partida' : 'ya activaste un Efecto Definitivo este turno (solo 1 por turno)';
 };
-protoOf(Chain).e2s = function (room, userId, card) {
+protoOf(Chain).g2s = function (room, userId, card) {
   if (!('utility' === card.o1c_1))
     return null;
   // Inline function 'kotlin.collections.filter' call
@@ -19786,7 +19824,7 @@ protoOf(Chain).e2s = function (room, userId, card) {
     }
   }
 };
-protoOf(Chain).x2r = function (e, script) {
+protoOf(Chain).z2r = function (e, script) {
   if (equals_0(script.x1w_1, Limit_DEFINITIVE_getInstance()))
     return plus(e.m21_1, '|') + 'definitive';
   if (equals_0(script.x1w_1, Limit_ONE_EFFECT_OF_NAME_PER_TURN_getInstance())) {
@@ -19811,7 +19849,7 @@ protoOf(Chain).x2r = function (e, script) {
   var id = plus(tmp_0, tmp_1);
   var tmp_2;
   var tmp4_safe_receiver = script.x1w_1;
-  if ((tmp4_safe_receiver == null ? null : tmp4_safe_receiver.d2s_1) === true) {
+  if ((tmp4_safe_receiver == null ? null : tmp4_safe_receiver.f2s_1) === true) {
     tmp_2 = plus(e.m21_1, '|') + id;
   } else {
     tmp_2 = plus(e.m21_1, '|') + e.n21_1 + '@' + e.o21_1.toString() + '|' + id;
@@ -19841,6 +19879,7 @@ protoOf(Chain).c2r = function (room) {
   var script = EffectEngine_getInstance().z2g(effect);
   if (this.r2q(room, effect, script)) {
     room.s18_1.f2(0);
+    this.x2r(room, effect);
     return Unit_instance;
   }
   var active = room.c18_1;
@@ -19855,10 +19894,10 @@ protoOf(Chain).c2r = function (room) {
     }
     var alone = tmp;
     if (group.k() > 1 || (room.y17_1 && !alone)) {
-      var sources = this.f2s(room, group);
+      var sources = this.h2s(room, group);
       var instruction = group.k() > 1 ? 'Estos efectos son obligatorios: se encadenan todos. Elige cu\xE1l entra ahora como Cadena ' + (room.q18_1.k() + 1 | 0) + '; despu\xE9s eliges el siguiente. La cadena se resuelve al rev\xE9s: ' + 'el \xFAltimo eslab\xF3n se resuelve primero.' : 'Este efecto es obligatorio: conf\xEDrmalo para encadenarlo como Cadena ' + (room.q18_1.k() + 1 | 0) + '.';
-      EffectEngine_getInstance().h2s(room, effect.m21_1, PromptPurpose_ORDER_getInstance().g2s(), group.k() > 1 ? 'Encadenar efectos obligatorios' : 'Efecto obligatorio', instruction, 'Encadenar', sources, sources);
-      this.i2s(room, ensureNotNull(room.r18_1), group);
+      EffectEngine_getInstance().j2s(room, effect.m21_1, PromptPurpose_ORDER_getInstance().i2s(), group.k() > 1 ? 'Encadenar efectos obligatorios' : 'Efecto obligatorio', instruction, 'Encadenar', sources, sources);
+      this.k2s(room, ensureNotNull(room.r18_1), group);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       ensureNotNull(room.r18_1).s1m_1 = 1;
       return Unit_instance;
@@ -19884,18 +19923,19 @@ protoOf(Chain).c2r = function (room) {
       var e_0 = _iterator__ex2g4s_0.j();
       var s = EffectEngine_getInstance().z2g(e_0);
       var used = this.r2q(room, e_0, s);
-      if (used || !this.j2s(room, e_0, s)) {
+      if (used || !this.l2s(room, e_0, s)) {
         room.s18_1.y1(e_0);
+        this.x2r(room, e_0);
         EffectEngine_getInstance().h2e(room, plus(e_0.p21_1, ': ') + e_0.q21_1 + (used ? ': ' + this.q2q(room, e_0, s) : ' no puede activarse (no se puede pagar su coste o no hay objetivos v\xE1lidos)'), null);
         dropped = true;
       }
     }
     if (dropped)
       return Unit_instance;
-    var sources_0 = this.f2s(room, group);
+    var sources_0 = this.h2s(room, group);
     if (!sources_0.m()) {
-      EffectEngine_getInstance().h2s(room, effect.m21_1, PromptPurpose_OPTIONAL_getInstance().g2s(), 'Encadenar efectos', 'Elige 1 efecto para encadenarlo como Cadena ' + (room.q18_1.k() + 1 | 0) + (group.k() > 1 ? ' (despu\xE9s podr\xE1s elegir otro)' : '') + ', o no encadenes m\xE1s. ' + 'La cadena se resuelve al rev\xE9s: el \xFAltimo eslab\xF3n se resuelve primero.', 'Encadenar', sources_0, sources_0);
-      this.i2s(room, ensureNotNull(room.r18_1), group);
+      EffectEngine_getInstance().j2s(room, effect.m21_1, PromptPurpose_OPTIONAL_getInstance().i2s(), 'Encadenar efectos', 'Elige 1 efecto para encadenarlo como Cadena ' + (room.q18_1.k() + 1 | 0) + (group.k() > 1 ? ' (despu\xE9s podr\xE1s elegir otro)' : '') + ', o no encadenes m\xE1s. ' + 'La cadena se resuelve al rev\xE9s: el \xFAltimo eslab\xF3n se resuelve primero.', 'Encadenar', sources_0, sources_0);
+      this.k2s(room, ensureNotNull(room.r18_1), group);
       return Unit_instance;
     }
   }
@@ -19906,22 +19946,21 @@ protoOf(Chain).c2r = function (room) {
       var step = _iterator__ex2g4s_1.j();
       if (!Resolution_getInstance().n2e(room, effect, step)) {
         EffectEngine_getInstance().h2e(room, plus(effect.p21_1, ': ') + effect.q21_1 + ' no puede activarse (no hay objetivos v\xE1lidos)', null);
-        if (equals_0(script.o1w_1, Moment_ON_PLAY_getInstance())) {
-          Resolution_getInstance().k2s(room, effect);
-        }
+        this.x2r(room, effect);
         return Unit_instance;
       }
     }
     this.x2g(room, effect);
     return Unit_instance;
   }
-  if (!this.j2s(room, effect, script)) {
+  if (!this.l2s(room, effect, script)) {
     room.s18_1.f2(0);
+    this.x2r(room, effect);
     return Unit_instance;
   }
   var link = room.q18_1.k() + 1 | 0;
-  var prompt = StepHelpers_getInstance().l2s(room, effect, Kind_CONFIRM_getInstance(), (link === 1 ? '\xBFActivas este efecto como Cadena 1? ' : '\xBFLo encadenas como Cadena ' + link + '? Se resolver\xE1 antes que los eslabones que ya est\xE1n en la cadena. ') + effect.r21_1);
-  var source = EffectEngine_getInstance().m2s(room, effect.m21_1, effect.n21_1);
+  var prompt = StepHelpers_getInstance().m2s(room, effect, Kind_CONFIRM_getInstance(), (link === 1 ? '\xBFActivas este efecto como Cadena 1? ' : '\xBFLo encadenas como Cadena ' + link + '? Se resolver\xE1 antes que los eslabones que ya est\xE1n en la cadena. ') + effect.r21_1);
+  var source = EffectEngine_getInstance().n2s(room, effect.m21_1, effect.n21_1);
   if (!(source == null)) {
     prompt.p1m_1 = ArrayList_init_$Create$_0(frozenListOf([source]));
     prompt.q1m_1 = ArrayList_init_$Create$_0(frozenListOf([source.g1c_1]));
@@ -19931,20 +19970,20 @@ protoOf(Chain).c2r = function (room) {
   prompt.o1m_1 = 'Activar';
   room.r18_1 = prompt;
 };
-protoOf(Chain).f2s = function (room, group) {
+protoOf(Chain).h2s = function (room, group) {
   var sources = ArrayList_init_$Create$();
   var _iterator__ex2g4s = group.h();
   while (_iterator__ex2g4s.i()) {
     var e = _iterator__ex2g4s.j();
-    var source = EffectEngine_getInstance().m2s(room, e.m21_1, e.n21_1);
+    var source = EffectEngine_getInstance().n2s(room, e.m21_1, e.n21_1);
     if (!(source == null) && !sources.n(source)) {
       sources.f(source);
     }
   }
   return sources;
 };
-protoOf(Chain).i2s = function (room, prompt, group) {
-  prompt.x1m_1 = this.n2s(group);
+protoOf(Chain).k2s = function (room, prompt, group) {
+  prompt.x1m_1 = this.o2s(group);
   var tmp = prompt;
   // Inline function 'kotlin.collections.map' call
   // Inline function 'kotlin.collections.mapTo' call
@@ -19960,7 +19999,7 @@ protoOf(Chain).i2s = function (room, prompt, group) {
 protoOf(Chain).r2g = function (e, pick) {
   return e.k21_1 == pick || e.n21_1 == pick;
 };
-protoOf(Chain).n2s = function (group) {
+protoOf(Chain).o2s = function (group) {
   var labels = LinkedHashMap_init_$Create$();
   var _iterator__ex2g4s = group.h();
   while (_iterator__ex2g4s.i()) {
@@ -19973,7 +20012,7 @@ protoOf(Chain).n2s = function (group) {
 };
 protoOf(Chain).x2g = function (room, effect) {
   var script = EffectEngine_getInstance().z2g(effect);
-  Companion_instance_15.o2s(script.x1w_1, room.a19_1, this.x2r(effect, script));
+  Companion_instance_15.p2s(script.x1w_1, room.a19_1, this.z2r(effect, script));
   effect.t21_1 = room.q18_1.k() + 1 | 0;
   EffectEngine_getInstance().g2e(room, 'EFFECT_ACTIVATED', effect.m21_1, null, null, null, effect, frozenMapOf_4('label', effect.q21_1, 'link', effect.t21_1, 'sourceId', effect.n21_1, 'sourceName', effect.p21_1, 'scriptId', effect.l21_1), 'Cadena ' + effect.t21_1 + ': se activa el efecto ' + effect.q21_1 + ' de ' + effect.p21_1);
   room.q18_1.f(effect);
@@ -19981,28 +20020,28 @@ protoOf(Chain).x2g = function (room, effect) {
 protoOf(Chain).y2g = function (effect) {
   return effect.w21_1 < ensureNotNull(EffectEngine_getInstance().z2g(effect).s1w_1).k();
 };
-protoOf(Chain).p2s = function (step) {
+protoOf(Chain).q2s = function (step) {
   var tmp;
   if (step instanceof IfDone) {
-    tmp = step.z2s_1;
+    tmp = step.a2t_1;
   } else {
     if (step instanceof IfNotDone) {
-      tmp = step.y2s_1;
+      tmp = step.z2s_1;
     } else {
       if (step instanceof IfTributed) {
-        tmp = step.x2s_1;
+        tmp = step.y2s_1;
       } else {
         if (step instanceof IfCondition) {
-          tmp = step.u2s_1;
+          tmp = step.v2s_1;
         } else {
           if (step instanceof IfChosenGone) {
-            tmp = step.s2s_1;
+            tmp = step.t2s_1;
           } else {
             if (step instanceof IfSaved) {
               tmp = step.h2r_1;
             } else {
               if (step instanceof MayDo) {
-                tmp = step.r2s_1;
+                tmp = step.s2s_1;
               } else {
                 tmp = 0;
               }
@@ -20014,7 +20053,7 @@ protoOf(Chain).p2s = function (step) {
   }
   return tmp;
 };
-protoOf(Chain).j2s = function (room, effect, script) {
+protoOf(Chain).l2s = function (room, effect, script) {
   var _iterator__ex2g4s = ensureNotNull(script.s1w_1).h();
   while (_iterator__ex2g4s.i()) {
     var step = _iterator__ex2g4s.j();
@@ -20023,7 +20062,7 @@ protoOf(Chain).j2s = function (room, effect, script) {
   }
   if (!ensureNotNull(script.s1w_1).m())
     return true;
-  if (!Resolution_getInstance().a2t(room, effect, script.t1w_1, 0))
+  if (!Resolution_getInstance().b2t(room, effect, script.t1w_1, 0))
     return false;
   var tmp0 = ensureNotNull(script.t1w_1);
   var tmp$ret$0;
@@ -20057,7 +20096,7 @@ protoOf(Chain).j2s = function (room, effect, script) {
     var tmp_0 = steps.l(i);
     if (tmp_0 instanceof IfPossible)
       return true;
-    var covers = this.p2s(steps.l(i));
+    var covers = this.q2s(steps.l(i));
     if (covers > 0) {
       i = i + covers | 0;
       i = i + 1 | 0;
@@ -20070,7 +20109,7 @@ protoOf(Chain).j2s = function (room, effect, script) {
     } else {
       var tmp_2;
       if (s instanceof Do) {
-        tmp_2 = ensureNotNull(s.b2t_1).c2t();
+        tmp_2 = ensureNotNull(s.c2t_1).d2t();
       } else {
         tmp_2 = false;
       }
@@ -20183,7 +20222,7 @@ protoOf(Chain).a2r = function (room) {
       }
     }
     var sources = distinct(destination);
-    EffectEngine_getInstance().h2s(room, playerId, PromptPurpose_PRIORITY_getInstance().g2s(), 'Responder a ' + top.p21_1, 'Puedes activar un efecto en respuesta a ' + top.q21_1 + ' de ' + top.p21_1 + ', o pasar.', 'Activar', sources, sources);
+    EffectEngine_getInstance().j2s(room, playerId, PromptPurpose_PRIORITY_getInstance().i2s(), 'Responder a ' + top.p21_1, 'Puedes activar un efecto en respuesta a ' + top.q21_1 + ' de ' + top.p21_1 + ', o pasar.', 'Activar', sources, sources);
     return true;
   }
   // Inline function 'kotlin.collections.forEach' call
@@ -20233,7 +20272,7 @@ protoOf(Chain).x2k = function (room, playerId, top) {
         var e_0 = this.p2q(script, playerId, card, tmp2_elvis_lhs == null ? room.p18_1 : tmp2_elvis_lhs, room);
         if (this.r2q(room, e_0, script))
           continue $l$loop_3;
-        if (this.j2s(room, e_0, script)) {
+        if (this.l2s(room, e_0, script)) {
           result.f(e_0);
         }
       }
@@ -20241,8 +20280,8 @@ protoOf(Chain).x2k = function (room, playerId, top) {
   }
   return result;
 };
-protoOf(Chain).d2t = function (room, userId) {
-  var tmp0 = this.e2t(room, userId);
+protoOf(Chain).e2t = function (room, userId) {
+  var tmp0 = this.f2t(room, userId);
   // Inline function 'kotlin.collections.mapTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -20253,7 +20292,7 @@ protoOf(Chain).d2t = function (room, userId) {
   }
   return destination;
 };
-protoOf(Chain).e2t = function (room, userId) {
+protoOf(Chain).f2t = function (room, userId) {
   if (!room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()) || !('MAIN' === room.d18_1) || room.e1j())
     return frozenListOf([]);
   var tmp0_elvis_lhs = room.a1e(userId);
@@ -20285,7 +20324,7 @@ protoOf(Chain).e2t = function (room, userId) {
         var e = this.p2q(script, userId, card, room.p18_1, room);
         if (this.r2q(room, e, script))
           continue $l$loop_3;
-        if (this.j2s(room, e, script)) {
+        if (this.l2s(room, e, script)) {
           result.f(e);
         }
       }
@@ -20298,7 +20337,7 @@ protoOf(Chain).o1j = function (room, userId, instanceId, scriptId) {
     return 'La partida no est\xE1 en curso';
   if (room.e1j())
     return !(room.y18_1 == null) ? 'Hay un combate en curso' : 'Hay un efecto resolvi\xE9ndose';
-  var tmp0 = this.e2t(room, userId);
+  var tmp0 = this.f2t(room, userId);
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
@@ -20371,7 +20410,7 @@ function ClassChanges$classes$lambda($parts) {
 function ClassChanges() {
   this.y2d_1 = 'tipo:';
 }
-protoOf(ClassChanges).f2t = function (f) {
+protoOf(ClassChanges).g2t = function (f) {
   return !(f.b1k_1 == null) && startsWith(f.b1k_1, 'tipo:');
 };
 protoOf(ClassChanges).l2q = function (card) {
@@ -20388,7 +20427,7 @@ protoOf(ClassChanges).l2q = function (card) {
     var _iterator__ex2g4s = tmp1_safe_receiver.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (ClassChanges_instance.f2t(element)) {
+      if (ClassChanges_instance.g2t(element)) {
         destination.f(element);
       }
     }
@@ -20592,7 +20631,7 @@ protoOf(Combat).equals = function (other) {
     return true;
   if (!(other instanceof Combat))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.a20_1 === other.a20_1))
     return false;
@@ -20628,7 +20667,7 @@ protoOf(Combat).equals = function (other) {
     return false;
   return true;
 };
-protoOf(Combat).g2t = function (other) {
+protoOf(Combat).h2t = function (other) {
   return other instanceof Combat;
 };
 protoOf(Combat).hashCode = function () {
@@ -20705,12 +20744,12 @@ function CombatRules() {
   this.i1j_1 = 'Bloqueo obligatorio';
 }
 protoOf(CombatRules).j1j = function (room, userId, attackerId, targetId) {
-  var error = Summons_instance.h2t(room, userId, 'atacar');
+  var error = Summons_instance.i2t(room, userId, 'atacar');
   if (!(error == null))
     return error;
   var player = room.a1e(userId);
   var attacker = player == null ? null : EffectEngine_getInstance().s2c(player.a1f_1, attackerId);
-  error = this.i2t(room, userId, attacker);
+  error = this.j2t(room, userId, attacker);
   if (!(error == null))
     return error;
   if (!(targetId == null)) {
@@ -20720,7 +20759,7 @@ protoOf(CombatRules).j1j = function (room, userId, attackerId, targetId) {
       return 'Solo puedes atacar a criaturas enemigas';
     if (!EffectEngine_getInstance().e1p(target))
       return 'No puedes atacar a criaturas de la retaguardia';
-    if (!target.k1c_1 && !this.j2t(attacker, target))
+    if (!target.k1c_1 && !this.k2t(attacker, target))
       return 'Solo puedes atacar a criaturas agotadas';
   }
   ensureNotNull(attacker).k1c_1 = true;
@@ -20728,7 +20767,7 @@ protoOf(CombatRules).j1j = function (room, userId, attackerId, targetId) {
   Chain_instance.z1l(room);
   return null;
 };
-protoOf(CombatRules).i2t = function (room, userId, attacker) {
+protoOf(CombatRules).j2t = function (room, userId, attacker) {
   if (attacker == null || !('creature' === attacker.o1c_1))
     return 'Solo tus criaturas del campo pueden atacar';
   if (!EffectEngine_getInstance().e1p(attacker))
@@ -20739,20 +20778,20 @@ protoOf(CombatRules).i2t = function (room, userId, attacker) {
     return EffectEngine_getInstance().q2c(attacker) + ' no puede declarar ataque';
   if (EffectEngine_getInstance().c1p(attacker).n('No puede agotarse'))
     return EffectEngine_getInstance().q2c(attacker) + ' no puede agotarse para declarar ataque';
-  if (!this.l2t(room, userId, attacker)) {
-    var furia = this.k2t(attacker);
+  if (!this.m2t(room, userId, attacker)) {
+    var furia = this.l2t(attacker);
     return furia == null ? 'Para declarar un ataque necesitas 0 o m\xE1s gemas' : 'Con Furia ' + furia + ' puedes declarar ataque mientras tu rival tenga ' + furia + ' o menos gemas';
   }
   return null;
 };
-protoOf(CombatRules).l2t = function (room, userId, attacker) {
+protoOf(CombatRules).m2t = function (room, userId, attacker) {
   var gems = EffectEngine_getInstance().z1r(room, userId);
   if (gems >= 0)
     return true;
-  var furia = this.k2t(attacker);
+  var furia = this.l2t(attacker);
   return !(furia == null) && (furia < 0 || gems >= (-furia | 0));
 };
-protoOf(CombatRules).k2t = function (card) {
+protoOf(CombatRules).l2t = function (card) {
   var best = null;
   var _iterator__ex2g4s = EffectEngine_getInstance().c1p(card).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
@@ -20799,7 +20838,7 @@ protoOf(CombatRules).n2j = function (room, userId, attacker, targetId, byEffect,
   }
   ensureNotNull(attacker.d1d_1).a2();
   var target = targetId == null || opponent == null ? null : EffectEngine_getInstance().s2c(opponent.a1f_1, targetId);
-  var data = Platform_instance.m2t();
+  var data = Platform_instance.n2t();
   // Inline function 'kotlin.collections.set' call
   var key = 'byEffect';
   data.g2(key, byEffect);
@@ -20822,27 +20861,27 @@ protoOf(CombatRules).z2q = function (room) {
   var attacker = owner == null ? null : EffectEngine_getInstance().s2c(owner.a1f_1, c.t1z_1);
   if (attacker == null || defender == null) {
     room.y18_1 = null;
-    this.n2t(room, c);
+    this.o2t(room, c);
     EffectEngine_getInstance().h2e(room, 'El combate termina: el atacante dej\xF3 el campo', null);
     return Unit_instance;
   }
   switch (ensureNotNull(c.z1z_1).k2_1) {
     case 0:
       if (equals_0(c.y1z_1, Step_END_getInstance())) {
-        this.o2t(room);
+        this.p2t(room);
         return Unit_instance;
       }
 
-      EffectEngine_getInstance().g2e(room, 'COMBAT_STEP', ensureNotNull(owner).f1e_1, attacker, null, null, null, frozenMapOf_1('step', ensureNotNull(c.y1z_1).j2_1, 'moment', 'ENTER'), 'Paso de ' + this.p2t(c.y1z_1));
+      EffectEngine_getInstance().g2e(room, 'COMBAT_STEP', ensureNotNull(owner).f1e_1, attacker, null, null, null, frozenMapOf_1('step', ensureNotNull(c.y1z_1).j2_1, 'moment', 'ENTER'), 'Paso de ' + this.q2t(c.y1z_1));
       c.z1z_1 = Phase_ACT_getInstance();
       break;
     case 1:
-      if (this.q2t(room, c, ensureNotNull(owner), defender, attacker))
+      if (this.r2t(room, c, ensureNotNull(owner), defender, attacker))
         c.z1z_1 = Phase_EXIT_getInstance();
       break;
     case 2:
       EffectEngine_getInstance().g2e(room, 'COMBAT_STEP', ensureNotNull(owner).f1e_1, attacker, null, null, null, frozenMapOf_1('step', ensureNotNull(c.y1z_1).j2_1, 'moment', 'EXIT'), null);
-      c.y1z_1 = this.r2t(c, defender, attacker);
+      c.y1z_1 = this.s2t(c, defender, attacker);
       c.z1z_1 = Phase_ENTER_getInstance();
       break;
     default:
@@ -20850,7 +20889,7 @@ protoOf(CombatRules).z2q = function (room) {
       break;
   }
 };
-protoOf(CombatRules).s2t = function (defender, c, attacker) {
+protoOf(CombatRules).t2t = function (defender, c, attacker) {
   var tmp0_elvis_lhs = c.w1z_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -20931,7 +20970,7 @@ protoOf(CombatRules).s2t = function (defender, c, attacker) {
   }
   return tmp$ret$0;
 };
-protoOf(CombatRules).r2t = function (c, defender, attacker) {
+protoOf(CombatRules).s2t = function (c, defender, attacker) {
   var tmp;
   switch (ensureNotNull(c.y1z_1).k2_1) {
     case 0:
@@ -20941,7 +20980,7 @@ protoOf(CombatRules).r2t = function (c, defender, attacker) {
       tmp = !(c.x1z_1 == null) && !(EffectEngine_getInstance().s2c(defender.a1f_1, c.x1z_1) == null) ? Step_CLASH_getInstance() : Step_DAMAGE_getInstance();
       break;
     case 2:
-      tmp = !(EffectEngine_getInstance().t2t(attacker, 'Perforante') == null) && EffectEngine_getInstance().s2c(defender.a1f_1, c.x1z_1) == null ? Step_DAMAGE_getInstance() : Step_END_getInstance();
+      tmp = !(EffectEngine_getInstance().u2t(attacker, 'Perforante') == null) && EffectEngine_getInstance().s2c(defender.a1f_1, c.x1z_1) == null ? Step_DAMAGE_getInstance() : Step_END_getInstance();
       break;
     case 3:
     case 4:
@@ -20953,7 +20992,7 @@ protoOf(CombatRules).r2t = function (c, defender, attacker) {
   }
   return tmp;
 };
-protoOf(CombatRules).p2t = function (step) {
+protoOf(CombatRules).q2t = function (step) {
   var tmp;
   switch (ensureNotNull(step).k2_1) {
     case 0:
@@ -20977,27 +21016,27 @@ protoOf(CombatRules).p2t = function (step) {
   }
   return tmp;
 };
-protoOf(CombatRules).q2t = function (room, c, owner, defender, attacker) {
+protoOf(CombatRules).r2t = function (room, c, owner, defender, attacker) {
   switch (ensureNotNull(c.y1z_1).k2_1) {
     case 1:
       if (!c.b20_1) {
         c.b20_1 = true;
-        var provoke = EffectEngine_getInstance().t2t(attacker, 'Provocar');
-        if (!(provoke == null) && c.x1z_1 == null && !this.s2t(defender, c, attacker)) {
+        var provoke = EffectEngine_getInstance().u2t(attacker, 'Provocar');
+        if (!(provoke == null) && c.x1z_1 == null && !this.t2t(defender, c, attacker)) {
           // Inline function 'kotlin.collections.filter' call
-          var tmp0 = this.u2t(defender);
+          var tmp0 = this.v2t(defender);
           // Inline function 'kotlin.collections.filterTo' call
           var destination = ArrayList_init_$Create$();
           var _iterator__ex2g4s = tmp0.h();
           while (_iterator__ex2g4s.i()) {
             var element = _iterator__ex2g4s.j();
-            if (!(element.g1c_1 == c.w1z_1) && (provoke === 0 || (!(element.p1u() == null) && ensureNotNull(element.p1u()) <= provoke)) && !EffectEngine_getInstance().v2t(element, attacker.p1u() == null ? 0 : ensureNotNull(attacker.p1u()))) {
+            if (!(element.g1c_1 == c.w1z_1) && (provoke === 0 || (!(element.p1u() == null) && ensureNotNull(element.p1u()) <= provoke)) && !EffectEngine_getInstance().w2t(element, attacker.p1u() == null ? 0 : ensureNotNull(attacker.p1u()))) {
               destination.f(element);
             }
           }
           var options = destination;
           if (!options.m()) {
-            EffectEngine_getInstance().h2s(room, owner.f1e_1, PromptPurpose_PROVOKE_getInstance().g2s(), EffectEngine_getInstance().q2c(attacker) + ' \xB7 Provocar', 'Puedes elegir 1 enemigo' + (provoke > 0 ? ' nivel ' + provoke + ' o menor' : '') + ': deber\xE1 bloquear este ataque.', 'Provocar', options, defender.a1f_1);
+            EffectEngine_getInstance().j2s(room, owner.f1e_1, PromptPurpose_PROVOKE_getInstance().i2s(), EffectEngine_getInstance().q2c(attacker) + ' \xB7 Provocar', 'Puedes elegir 1 enemigo' + (provoke > 0 ? ' nivel ' + provoke + ' o menor' : '') + ': deber\xE1 bloquear este ataque.', 'Provocar', options, defender.a1f_1);
             return false;
           }
         }
@@ -21006,11 +21045,11 @@ protoOf(CombatRules).q2t = function (room, c, owner, defender, attacker) {
       if (c.x1z_1 == null && !c.c20_1) {
         c.c20_1 = true;
         var tmp;
-        if (!(EffectEngine_getInstance().t2t(attacker, 'Imbloqueable') == null) || this.s2t(defender, c, attacker)) {
+        if (!(EffectEngine_getInstance().u2t(attacker, 'Imbloqueable') == null) || this.t2t(defender, c, attacker)) {
           tmp = frozenListOf([]);
         } else {
           // Inline function 'kotlin.collections.filter' call
-          var tmp0_0 = this.u2t(defender);
+          var tmp0_0 = this.v2t(defender);
           // Inline function 'kotlin.collections.filterTo' call
           var destination_0 = ArrayList_init_$Create$();
           var _iterator__ex2g4s_0 = tmp0_0.h();
@@ -21025,7 +21064,7 @@ protoOf(CombatRules).q2t = function (room, c, owner, defender, attacker) {
         var options_0 = tmp;
         if (!options_0.m()) {
           var forced = EffectEngine_getInstance().c1p(attacker).n('Bloqueo obligatorio');
-          EffectEngine_getInstance().h2s(room, defender.f1e_1, PromptPurpose_BLOCK_getInstance().g2s(), EffectEngine_getInstance().q2c(attacker) + ' ataca', forced ? 'Debes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota).' : 'Puedes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota), o ninguna.', 'Bloquear', options_0, defender.a1f_1);
+          EffectEngine_getInstance().j2s(room, defender.f1e_1, PromptPurpose_BLOCK_getInstance().i2s(), EffectEngine_getInstance().q2c(attacker) + ' ataca', forced ? 'Debes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota).' : 'Puedes elegir 1 criatura activa de tu l\xEDnea frontal para bloquear (se agota), o ninguna.', 'Bloquear', options_0, defender.a1f_1);
           if (forced)
             ensureNotNull(room.r18_1).r1m_1 = 1;
           return false;
@@ -21048,18 +21087,18 @@ protoOf(CombatRules).q2t = function (room, c, owner, defender, attacker) {
         Removals_getInstance().w2e(room, blocker, defender, false, 'BATTLE', owner.f1e_1, attacker.g1c_1, null);
       }
 
-      if (a <= b && EffectEngine_getInstance().t2t(attacker, 'Alcance') == null && !EffectEngine_getInstance().c1p(blocker).n('No inflige da\xF1o directo ni destruye al enfrentar') && !EffectEngine_getInstance().c1p(attacker).n('No puede ser destruida por enfrentamiento')) {
+      if (a <= b && EffectEngine_getInstance().u2t(attacker, 'Alcance') == null && !EffectEngine_getInstance().c1p(blocker).n('No inflige da\xF1o directo ni destruye al enfrentar') && !EffectEngine_getInstance().c1p(attacker).n('No puede ser destruida por enfrentamiento')) {
         Removals_getInstance().w2e(room, attacker, owner, false, 'BATTLE', defender.f1e_1, blocker.g1c_1, null);
       }
 
       return true;
     case 3:
-      return this.w2t(room, c, owner, defender, attacker);
+      return this.x2t(room, c, owner, defender, attacker);
     default:
       return true;
   }
 };
-protoOf(CombatRules).u2t = function (defender) {
+protoOf(CombatRules).v2t = function (defender) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = defender.a1f_1;
   // Inline function 'kotlin.collections.filterTo' call
@@ -21073,16 +21112,16 @@ protoOf(CombatRules).u2t = function (defender) {
   }
   return destination;
 };
-protoOf(CombatRules).x2t = function (room, defender, life) {
-  return ('utility' === life.o1c_1 || 'structure' === life.o1c_1) && Chain_instance.e2s(room, defender.f1e_1, life) == null && EffectEngine_getInstance().x2h(room, defender.f1e_1, CardEffects_getInstance().s2k(life));
+protoOf(CombatRules).y2t = function (room, defender, life) {
+  return ('utility' === life.o1c_1 || 'structure' === life.o1c_1) && Chain_instance.g2s(room, defender.f1e_1, life) == null && EffectEngine_getInstance().x2h(room, defender.f1e_1, CardEffects_getInstance().s2k(life));
 };
-protoOf(CombatRules).w2t = function (room, c, owner, defender, attacker) {
+protoOf(CombatRules).x2t = function (room, c, owner, defender, attacker) {
   if (EffectEngine_getInstance().c1p(attacker).n('No inflige da\xF1o directo ni destruye al enfrentar')) {
     EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(attacker) + ' no inflige da\xF1o directo', null);
     return true;
   }
   if (c.d20_1 == null) {
-    var lethality = EffectEngine_getInstance().t2t(attacker, 'Letalidad');
+    var lethality = EffectEngine_getInstance().u2t(attacker, 'Letalidad');
     var tmp = c;
     tmp.d20_1 = 1 + (lethality == null ? 0 : lethality) | 0;
     if (room.a19_1.y1('extra-hit|' + owner.f1e_1)) {
@@ -21092,33 +21131,33 @@ protoOf(CombatRules).w2t = function (room, c, owner, defender, attacker) {
     }
   }
   var damage = EffectEngine_getInstance().b1p(attacker);
-  if (this.y2t(room, c, defender, damage))
+  if (this.z2t(room, c, defender, damage))
     return false;
   while (ensureNotNull(c.d20_1) > 0 && !defender.x1e_1.m()) {
-    if (!(c.d20_1 == c.i20_1) && !this.a2u(defender).m()) {
+    if (!(c.d20_1 == c.i20_1) && !this.b2u(defender).m()) {
       c.i20_1 = c.d20_1;
-      this.z2t(room, defender, damage, 'combat');
+      this.a2u(room, defender, damage, 'combat');
       return false;
     }
     c.d20_1 = ensureNotNull(c.d20_1) - 1 | 0;
     var revealedNow = defender.x1e_1.l(0).j1c_1;
-    var playable = this.x2t(room, defender, defender.x1e_1.l(0));
+    var playable = defender.x1e_1.k() > 1 && this.y2t(room, defender, defender.x1e_1.l(0));
     var text = EffectEngine_getInstance().q2c(attacker) + ' inflige ' + damage + ' de da\xF1o directo: ' + defender.g1e_1 + ' ';
-    var _destruct__k2r9zo = playable ? EffectEngine_getInstance().b2u(room, defender, damage, owner.f1e_1, null, attacker.g1c_1, text) : EffectEngine_getInstance().c2h(room, defender, damage, owner.f1e_1, null, attacker.g1c_1, text);
+    var _destruct__k2r9zo = playable ? EffectEngine_getInstance().c2u(room, defender, damage, owner.f1e_1, null, attacker.g1c_1, text) : EffectEngine_getInstance().c2h(room, defender, damage, owner.f1e_1, null, attacker.g1c_1, text);
     var life = _destruct__k2r9zo.kd();
     var tribute = _destruct__k2r9zo.ld();
     var creature = 'creature' === life.o1c_1;
-    var quickStrike = !(EffectEngine_getInstance().t2t(attacker, 'Golpe r\xE1pido') == null);
+    var quickStrike = !(EffectEngine_getInstance().u2t(attacker, 'Golpe r\xE1pido') == null);
     if (creature && !tribute && revealedNow && quickStrike) {
       EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(attacker) + ' tiene Golpe r\xE1pido: ' + EffectEngine_getInstance().q2c(life) + ' no puede reforzar', null);
     }
     if (creature && !tribute && revealedNow && !quickStrike) {
-      this.e2u(room, defender, life, PromptPurpose_REINFORCE_getInstance().g2s(), 'Reforzar', EffectEngine_getInstance().q2c(life) + ' tiene m\xE1s fuerza que el da\xF1o y va a tu mano. \xBFRefuerzas con ella? Se coloca bocarriba al fondo de tu pila de vidas.', 'Reforzar');
+      this.f2u(room, defender, life, PromptPurpose_REINFORCE_getInstance().i2s(), 'Reforzar', EffectEngine_getInstance().q2c(life) + ' tiene m\xE1s fuerza que el da\xF1o y va a tu mano. \xBFRefuerzas con ella? Se coloca bocarriba al fondo de tu pila de vidas.', 'Reforzar');
       return false;
     }
     if (playable) {
       var lifeCost = CardEffects_getInstance().s2k(life);
-      this.e2u(room, defender, life, PromptPurpose_LIFE_PLAY_getInstance().g2s(), 'Vida revelada', '\xBFJuegas ' + EffectEngine_getInstance().q2c(life) + ' desde tus vidas' + (lifeCost > 0 ? ' pagando ' + EffectEngine_getInstance().p2k(lifeCost) : ' sin pagar su coste') + '? Si no, va a tu mano.', 'Jugar');
+      this.f2u(room, defender, life, PromptPurpose_LIFE_PLAY_getInstance().i2s(), 'Vida revelada', '\xBFJuegas ' + EffectEngine_getInstance().q2c(life) + ' desde tus vidas' + (lifeCost > 0 ? ' pagando ' + EffectEngine_getInstance().p2k(lifeCost) : ' sin pagar su coste') + '? Si no, va a tu mano.', 'Jugar');
       return false;
     }
     if (ensureNotNull(c.d20_1) > 0 && !defender.x1e_1.m())
@@ -21162,7 +21201,7 @@ protoOf(CombatRules).w2g = function (room, defender, blocker) {
   var others = destination;
   if (others.m())
     return false;
-  EffectEngine_getInstance().h2s(room, defender.f1e_1, PromptPurpose_BLOCK_SWAP_getInstance().g2s(), EffectEngine_getInstance().q2c(holder) + ' \xB7 Turno Oponente', 'En lugar de ' + EffectEngine_getInstance().q2c(blocker) + ', puedes reactivarlo y elegir otro aliado para que bloquee. O ninguno.', 'Bloquea', others, defender.a1f_1);
+  EffectEngine_getInstance().j2s(room, defender.f1e_1, PromptPurpose_BLOCK_SWAP_getInstance().i2s(), EffectEngine_getInstance().q2c(holder) + ' \xB7 Turno Oponente', 'En lugar de ' + EffectEngine_getInstance().q2c(blocker) + ', puedes reactivarlo y elegir otro aliado para que bloquee. O ninguno.', 'Bloquea', others, defender.a1f_1);
   ensureNotNull(room.r18_1).v1m_1 = blocker.g1c_1;
   ensureNotNull(room.r18_1).r1m_1 = 0;
   return true;
@@ -21179,7 +21218,7 @@ protoOf(CombatRules).v2g = function (room, defender, prompt, picks) {
   EffectEngine_getInstance().g2e(room, 'UNTAP', defender.f1e_1, first, null, null, null, null, plus(defender.g1e_1, ' reactiva a ') + EffectEngine_getInstance().q2c(first));
   EffectEngine_getInstance().g2e(room, 'BLOCK', defender.f1e_1, other, null, null, null, frozenMapOf_0('forced', false), EffectEngine_getInstance().q2c(other) + ' bloquea el ataque en lugar de ' + EffectEngine_getInstance().q2c(first));
 };
-protoOf(CombatRules).y2t = function (room, c, defender, damage) {
+protoOf(CombatRules).z2t = function (room, c, defender, damage) {
   if (c.h20_1)
     return false;
   c.h20_1 = true;
@@ -21209,7 +21248,7 @@ protoOf(CombatRules).y2t = function (room, c, defender, damage) {
   var options = destination;
   if (options.m())
     return false;
-  EffectEngine_getInstance().h2s(room, defender.f1e_1, PromptPurpose_DAMAGE_REPLACE_getInstance().g2s(), 'Da\xF1o directo: ' + damage, 'En lugar de recibir el da\xF1o, puedes invocar 1 de estas cartas agotada en tu l\xEDnea frontal reduciendo su coste. O ninguna.', 'Invocar', options, options);
+  EffectEngine_getInstance().j2s(room, defender.f1e_1, PromptPurpose_DAMAGE_REPLACE_getInstance().i2s(), 'Da\xF1o directo: ' + damage, 'En lugar de recibir el da\xF1o, puedes invocar 1 de estas cartas agotada en tu l\xEDnea frontal reduciendo su coste. O ninguna.', 'Invocar', options, options);
   ensureNotNull(room.r18_1).r1m_1 = 0;
   return true;
 };
@@ -21225,12 +21264,12 @@ protoOf(CombatRules).u2g = function (room, defender, picks) {
   effect.m21_1 = defender.f1e_1;
   effect.n21_1 = card.g1c_1;
   effect.p21_1 = EffectEngine_getInstance().q2c(card);
-  Summons_instance.f2u(room, effect, defender, card, 'hand', r.k2n_1, true);
+  Summons_instance.g2u(room, effect, defender, card, 'hand', r.k2n_1, true);
   card.k1c_1 = true;
   c.d20_1 = 0;
   EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(card) + ' entra en lugar del da\xF1o directo: ' + defender.g1e_1 + ' no recibe da\xF1o', null);
 };
-protoOf(CombatRules).a2u = function (defender) {
+protoOf(CombatRules).b2u = function (defender) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = defender.u1e_1;
   // Inline function 'kotlin.collections.filterTo' call
@@ -21248,7 +21287,7 @@ protoOf(CombatRules).a2u = function (defender) {
       var _iterator__ex2g4s_0 = tmp0_0.h();
       while (_iterator__ex2g4s_0.i()) {
         var element_0 = _iterator__ex2g4s_0.j();
-        if (!(element_0 === element) && CombatRules_instance.g2u(element_0) && !(element_0.p1u() == null) && !(element_0.p1u() == element.p1u())) {
+        if (!(element_0 === element) && CombatRules_instance.h2u(element_0) && !(element_0.p1u() == null) && !(element_0.p1u() == element.p1u())) {
           destination_0.f(element_0);
         }
       }
@@ -21309,7 +21348,7 @@ protoOf(CombatRules).a2u = function (defender) {
   }
   return destination;
 };
-protoOf(CombatRules).g2u = function (card) {
+protoOf(CombatRules).h2u = function (card) {
   var tmp;
   if (!(card.w1c_1 == null)) {
     var tmp0 = ensureNotNull(card.w1c_1);
@@ -21342,7 +21381,7 @@ protoOf(CombatRules).g2u = function (card) {
   }
   return tmp;
 };
-protoOf(CombatRules).z2t = function (room, defender, damage, context) {
+protoOf(CombatRules).a2u = function (room, defender, damage, context) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = defender.u1e_1;
   // Inline function 'kotlin.collections.filterTo' call
@@ -21350,12 +21389,12 @@ protoOf(CombatRules).z2t = function (room, defender, damage, context) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (CardEffects_getInstance().l2p(element) || CombatRules_instance.g2u(element)) {
+    if (CardEffects_getInstance().l2p(element) || CombatRules_instance.h2u(element)) {
       destination.f(element);
     }
   }
   var valid = destination;
-  EffectEngine_getInstance().h2s(room, defender.f1e_1, PromptPurpose_DAMAGE_TRIBUTE_getInstance().g2s(), 'Vas a recibir ' + damage + ' de da\xF1o', 'En su lugar, puedes tributar Estoque De Los Guerreros Jurados y 2 [retador] m\xE1s de tu mano, los 3 de distinto nivel. O ninguna.', 'Tributar', valid, defender.u1e_1);
+  EffectEngine_getInstance().j2s(room, defender.f1e_1, PromptPurpose_DAMAGE_TRIBUTE_getInstance().i2s(), 'Vas a recibir ' + damage + ' de da\xF1o', 'En su lugar, puedes tributar Estoque De Los Guerreros Jurados y 2 [retador] m\xE1s de tu mano, los 3 de distinto nivel. O ninguna.', 'Tributar', valid, defender.u1e_1);
   ensureNotNull(room.r18_1).r1m_1 = 0;
   ensureNotNull(room.r18_1).s1m_1 = 3;
   ensureNotNull(room.r18_1).b1n_1 = true;
@@ -21455,7 +21494,7 @@ protoOf(CombatRules).h2h = function (room, prompt, player, picks) {
         var _iterator__ex2g4s_2 = cards.h();
         while (_iterator__ex2g4s_2.i()) {
           var element_1 = _iterator__ex2g4s_2.j();
-          if (!CombatRules_instance.g2u(ensureNotNull(element_1))) {
+          if (!CombatRules_instance.h2u(ensureNotNull(element_1))) {
             tmp$ret$7 = false;
             break $l$block_3;
           }
@@ -21502,7 +21541,7 @@ protoOf(CombatRules).h2h = function (room, prompt, player, picks) {
       var effect = tmp$ret$12;
       var controller = room.a1e(p[2]);
       if (!(effect == null) && !(controller == null)) {
-        StepHelpers_getInstance().h2u(room, effect, controller, toInt(p[1]), false);
+        StepHelpers_getInstance().i2u(room, effect, controller, toInt(p[1]), false);
       }
     }
     Chain_instance.z1l(room);
@@ -21527,22 +21566,22 @@ protoOf(CombatRules).h2h = function (room, prompt, player, picks) {
   Chain_instance.z1l(room);
   return null;
 };
-protoOf(CombatRules).e2u = function (room, defender, life, purpose, title, instruction, label) {
-  EffectEngine_getInstance().h2s(room, defender.f1e_1, purpose, title, instruction, label, frozenListOf([life]), frozenListOf([life]));
+protoOf(CombatRules).f2u = function (room, defender, life, purpose, title, instruction, label) {
+  EffectEngine_getInstance().j2s(room, defender.f1e_1, purpose, title, instruction, label, frozenListOf([life]), frozenListOf([life]));
   ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.r18_1).v1m_1 = life.g1c_1;
 };
-protoOf(CombatRules).o2t = function (room) {
+protoOf(CombatRules).p2t = function (room) {
   var c = ensureNotNull(room.y18_1);
   room.y18_1 = null;
-  this.n2t(room, c);
+  this.o2t(room, c);
   var owner = room.a1e(c.u1z_1);
   var attacker = owner == null ? null : EffectEngine_getInstance().l2e(room, owner.f1e_1, c.t1z_1);
   if (!(owner == null)) {
     EffectEngine_getInstance().g2e(room, 'ATTACK_ENDED', owner.f1e_1, attacker, null, null, null, frozenMapOf_0('enemyDestroyed', c.f20_1), 'Termina el combate');
   }
 };
-protoOf(CombatRules).n2t = function (room, c) {
+protoOf(CombatRules).o2t = function (room, c) {
   var _iterator__ex2g4s = ArrayList_init_$Create$_0(room.a19_1).h();
   $l$loop_0: while (_iterator__ex2g4s.i()) {
     var mark = _iterator__ex2g4s.j();
@@ -21596,11 +21635,11 @@ protoOf(CombatRules).n2t = function (room, c) {
   }
   c.e20_1.a2();
 };
-protoOf(CombatRules).j2t = function (attacker, target) {
-  var level = attacker == null ? null : EffectEngine_getInstance().t2t(attacker, 'Enfrentar');
+protoOf(CombatRules).k2t = function (attacker, target) {
+  var level = attacker == null ? null : EffectEngine_getInstance().u2t(attacker, 'Enfrentar');
   return !(level == null) && (level === 0 || (!(target.p1u() == null) && ensureNotNull(target.p1u()) <= level));
 };
-protoOf(CombatRules).i2u = function (room, userId, attacker) {
+protoOf(CombatRules).j2u = function (room, userId, attacker) {
   var tmp0_elvis_lhs = room.a1e(room.l1i(userId));
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -21616,13 +21655,13 @@ protoOf(CombatRules).i2u = function (room, userId, attacker) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if ('creature' === element.o1c_1 && EffectEngine_getInstance().e1p(element) && (element.k1c_1 || CombatRules_instance.j2t(attacker, element))) {
+    if ('creature' === element.o1c_1 && EffectEngine_getInstance().e1p(element) && (element.k1c_1 || CombatRules_instance.k2t(attacker, element))) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(CombatRules).j2u = function (room, effect, opponentOnly, creaturesOnly, activeToo, at) {
+protoOf(CombatRules).k2u = function (room, effect, opponentOnly, creaturesOnly, activeToo, at) {
   var userId = effect.m21_1;
   var tmp0_elvis_lhs = StepHelpers_getInstance().p2d(room, effect);
   var tmp;
@@ -21669,7 +21708,7 @@ protoOf(CombatRules).j2u = function (room, effect, opponentOnly, creaturesOnly, 
     var tmp3_elvis_lhs = tmp_1;
     tmp_0 = tmp3_elvis_lhs == null ? frozenListOf([]) : tmp3_elvis_lhs;
   } else {
-    tmp_0 = this.i2u(room, userId, subject);
+    tmp_0 = this.j2u(room, userId, subject);
   }
   var targets = tmp_0;
   if (!(at == null)) {
@@ -21703,7 +21742,7 @@ protoOf(CombatRules).j2u = function (room, effect, opponentOnly, creaturesOnly, 
     return false;
   }
   var opponent = room.a1e(room.l1i(userId));
-  var prompt = StepHelpers_getInstance().l2s(room, effect, Kind_PICK_getInstance(), EffectEngine_getInstance().q2c(subject) + ' declara ataque: elige una criatura ' + (activeToo ? 'enemiga' : 'agotada') + ' a la que atacar' + (creaturesOnly ? '.' : ', o ninguna para atacar a tu rival.'));
+  var prompt = StepHelpers_getInstance().m2s(room, effect, Kind_PICK_getInstance(), EffectEngine_getInstance().q2c(subject) + ' declara ataque: elige una criatura ' + (activeToo ? 'enemiga' : 'agotada') + ' a la que atacar' + (creaturesOnly ? '.' : ', o ninguna para atacar a tu rival.'));
   prompt.p1m_1 = ArrayList_init_$Create$_0(ensureNotNull(opponent).a1f_1);
   prompt.q1m_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().a2e(targets));
   prompt.r1m_1 = creaturesOnly ? 1 : 0;
@@ -21725,7 +21764,7 @@ protoOf(CombatSteps).r2c = function (room, effect, step) {
   var player = ensureNotNull(room.a1e(effect.m21_1));
   var tmp;
   if (step instanceof TributesToDeckBottomForKeyword) {
-    var f = ensureNotNull(step.p2u_1);
+    var f = ensureNotNull(step.q2u_1);
     var tmp0 = player.y1e_1;
     var tmp$ret$0;
     $l$block: {
@@ -21751,10 +21790,10 @@ protoOf(CombatSteps).r2c = function (room, effect, step) {
       }
       tmp$ret$0 = count;
     }
-    tmp = tmp$ret$0 >= step.o2u_1;
+    tmp = tmp$ret$0 >= step.p2u_1;
   } else {
     if (step instanceof ChooseWeakestEnemy) {
-      tmp = !StepHelpers_getInstance().k2u(room, effect, step.n2u_1).m();
+      tmp = !StepHelpers_getInstance().l2u(room, effect, step.o2u_1).m();
     } else {
       if (step instanceof PickAllyUpToSacrificedLevel) {
         var tmp0_0 = EffectEngine_getInstance().u2c(player);
@@ -21787,7 +21826,7 @@ protoOf(CombatSteps).r2c = function (room, effect, step) {
           tmp = (!(room.y18_1 == null) && equals_0(ensureNotNull(room.y18_1).y1z_1, Step_DAMAGE_getInstance()));
         } else {
           if (step instanceof ChooseEnemiesLevelSum) {
-            tmp = StepHelpers_getInstance().m2u(StepHelpers_getInstance().k2u(room, effect, Companion_instance_11.r2f()), step.l2u_1);
+            tmp = StepHelpers_getInstance().n2u(StepHelpers_getInstance().l2u(room, effect, Companion_instance_11.r2f()), step.m2u_1);
           } else {
             tmp = true;
           }
@@ -21839,10 +21878,10 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
         if (valid.m() || room.y18_1 == null)
           return false;
         var tmp_0 = StepHelpers_getInstance();
-        var tmp_1 = 'Agrupar: puedes agotar hasta ' + step.b2v_1 + ' ' + EffectEngine_getInstance().f2e(step.b2v_1, 'aliado', 'aliados') + '; ' + EffectEngine_getInstance().q2c(self_1) + ' gana su fuerza durante el ataque e inflige da\xF1o 1 vez extra por cada uno.';
+        var tmp_1 = 'Agrupar: puedes agotar hasta ' + step.c2v_1 + ' ' + EffectEngine_getInstance().f2e(step.c2v_1, 'aliado', 'aliados') + '; ' + EffectEngine_getInstance().q2c(self_1) + ' gana su fuerza durante el ataque e inflige da\xF1o 1 vez extra por cada uno.';
         var tmp_2 = player.a1f_1;
         var tmp_3 = EffectEngine_getInstance().a2e(valid);
-        var tmp0_0 = step.b2v_1;
+        var tmp0_0 = step.c2v_1;
         // Inline function 'kotlin.math.min' call
         var b = valid.k();
         var tmp$ret$3 = Math.min(tmp0_0, b);
@@ -21851,18 +21890,18 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
         return true;
       } else {
         if (step instanceof ChooseEnemiesLevelSum) {
-          var valid_0 = StepHelpers_getInstance().k2u(room, effect, Companion_instance_11.r2f());
-          if (!StepHelpers_getInstance().m2u(valid_0, step.l2u_1))
+          var valid_0 = StepHelpers_getInstance().l2u(room, effect, Companion_instance_11.r2f());
+          if (!StepHelpers_getInstance().n2u(valid_0, step.m2u_1))
             return false;
           var opponent = room.a1e(room.l1i(userId));
-          StepHelpers_getInstance().b2e(room, effect, 'Elige enemigos que sumen ' + step.l2u_1 + ' en nivel.', 'Objetivo', EffectEngine_getInstance().r2u(ensureNotNull(opponent).a1f_1), EffectEngine_getInstance().a2e(valid_0), valid_0.k());
+          StepHelpers_getInstance().b2e(room, effect, 'Elige enemigos que sumen ' + step.m2u_1 + ' en nivel.', 'Objetivo', EffectEngine_getInstance().s2u(ensureNotNull(opponent).a1f_1), EffectEngine_getInstance().a2e(valid_0), valid_0.k());
           ensureNotNull(room.r18_1).r1m_1 = 1;
           return true;
         } else {
           if (step instanceof AlliesGain) {
-            var until = 'nextTurn' === step.z2u_1 ? 'hasta el final del turno oponente' : 'hasta el final del turno';
-            var except = step.a2v_1 ? effect.n21_1 : null;
-            room.z18_1.f(new FieldGrant(userId, step.x2u_1, step.y2u_1, step.z2u_1, effect.p21_1, except));
+            var until = 'nextTurn' === step.a2v_1 ? 'hasta el final del turno oponente' : 'hasta el final del turno';
+            var except = step.b2v_1 ? effect.n21_1 : null;
+            room.z18_1.f(new FieldGrant(userId, step.y2u_1, step.z2u_1, step.a2v_1, effect.p21_1, except));
             EffectEngine_getInstance().y1l(room);
             var tmp0_1 = EffectEngine_getInstance().u2c(player);
             var tmp$ret$4;
@@ -21882,7 +21921,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
               var _iterator__ex2g4s_0 = tmp0_1.h();
               while (_iterator__ex2g4s_0.i()) {
                 var element_0 = _iterator__ex2g4s_0.j();
-                if (ensureNotNull(step.x2u_1).p2c(element_0) && !(element_0.g1c_1 == except)) {
+                if (ensureNotNull(step.y2u_1).p2c(element_0) && !(element_0.g1c_1 == except)) {
                   count = count + 1 | 0;
                   checkCountOverflow(count);
                 }
@@ -21890,12 +21929,12 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
               tmp$ret$4 = count;
             }
             var n = tmp$ret$4;
-            EffectEngine_getInstance().g2e(room, 'GAIN', userId, null, null, null, effect, frozenMapOf_1('keyword', step.y2u_1, 'count', n), plus(player.g1e_1, ': sus ') + (step.a2v_1 ? 'otros ' : '') + 'aliados ganan ' + step.y2u_1 + ' ' + until + ', tambi\xE9n los que entren despu\xE9s (' + effect.p21_1 + ')');
+            EffectEngine_getInstance().g2e(room, 'GAIN', userId, null, null, null, effect, frozenMapOf_1('keyword', step.z2u_1, 'count', n), plus(player.g1e_1, ': sus ') + (step.b2v_1 ? 'otros ' : '') + 'aliados ganan ' + step.z2u_1 + ' ' + until + ', tambi\xE9n los que entren despu\xE9s (' + effect.p21_1 + ')');
             return false;
           } else {
             if (step instanceof PickAllyUpToSacrificedLevel) {
               var sacrificed = effect.m22_1.m() ? null : EffectEngine_getInstance().l2e(room, userId, effect.m22_1.l(0));
-              var max = StepHelpers_getInstance().v2u(room, sacrificed) + step.w2u_1 | 0;
+              var max = StepHelpers_getInstance().w2u(room, sacrificed) + step.x2u_1 | 0;
               // Inline function 'kotlin.collections.filter' call
               var tmp0_2 = EffectEngine_getInstance().u2c(player);
               // Inline function 'kotlin.collections.filterTo' call
@@ -21941,18 +21980,18 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                       tmp_5 = step.i2r_1;
                     }
                     var total = tmp_5;
-                    var valid_2 = StepHelpers_getInstance().k2u(room, effect, Companion_instance_11.r2f());
+                    var valid_2 = StepHelpers_getInstance().l2u(room, effect, Companion_instance_11.r2f());
                     if (effect.y21_1 >= total || valid_2.m()) {
                       effect.y21_1 = 0;
                       return false;
                     }
                     var opponent_0 = room.a1e(room.l1i(userId));
-                    StepHelpers_getInstance().b2e(room, effect, 'Elige 1 enemigo: reduce en ' + step.j2r_1 + ' su fuerza' + ('attack' === step.k2r_1 ? ' hasta el final del ataque' : '') + ' (' + (effect.y21_1 + 1 | 0) + ' de ' + total + ').' + (step.l2r_1 ? '' : ' Puedes no elegir m\xE1s.'), 'Reducir', EffectEngine_getInstance().r2u(ensureNotNull(opponent_0).a1f_1), EffectEngine_getInstance().a2e(valid_2), 1);
+                    StepHelpers_getInstance().b2e(room, effect, 'Elige 1 enemigo: reduce en ' + step.j2r_1 + ' su fuerza' + ('attack' === step.k2r_1 ? ' hasta el final del ataque' : '') + ' (' + (effect.y21_1 + 1 | 0) + ' de ' + total + ').' + (step.l2r_1 ? '' : ' Puedes no elegir m\xE1s.'), 'Reducir', EffectEngine_getInstance().s2u(ensureNotNull(opponent_0).a1f_1), EffectEngine_getInstance().a2e(valid_2), 1);
                     ensureNotNull(room.r18_1).r1m_1 = step.l2r_1 ? 1 : 0;
                     return true;
                   } else {
                     if (step instanceof TributesToDeckBottomForKeyword) {
-                      var f = ensureNotNull(step.p2u_1);
+                      var f = ensureNotNull(step.q2u_1);
                       // Inline function 'kotlin.collections.filter' call
                       var tmp0_3 = player.y1e_1;
                       // Inline function 'kotlin.collections.filterTo' call
@@ -21965,9 +22004,9 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                         }
                       }
                       var valid_3 = destination_1;
-                      if (valid_3.k() < step.o2u_1)
+                      if (valid_3.k() < step.p2u_1)
                         return false;
-                      StepHelpers_getInstance().b2e(room, effect, 'Puedes enviar ' + step.o2u_1 + ' tributos ' + step.p2u_1.e2e() + ' al fondo de tu mazo para que ' + effect.p21_1 + ' gane ' + step.q2u_1 + ' 1 hasta el final del ataque (tantas veces como quieras). Elige ninguno para terminar.', 'Al fondo del mazo', player.y1e_1, EffectEngine_getInstance().a2e(valid_3), step.o2u_1);
+                      StepHelpers_getInstance().b2e(room, effect, 'Puedes enviar ' + step.p2u_1 + ' tributos ' + step.q2u_1.e2e() + ' al fondo de tu mazo para que ' + effect.p21_1 + ' gane ' + step.r2u_1 + ' 1 hasta el final del ataque (tantas veces como quieras). Elige ninguno para terminar.', 'Al fondo del mazo', player.y1e_1, EffectEngine_getInstance().a2e(valid_3), step.p2u_1);
                       ensureNotNull(room.r18_1).r1m_1 = 0;
                       ensureNotNull(room.r18_1).b1n_1 = true;
                       return true;
@@ -21980,7 +22019,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                         if (step instanceof BounceChosen) {
                           var opponent_1 = room.a1e(room.l1i(userId));
                           var any = false;
-                          var _iterator__ex2g4s_3 = StepHelpers_getInstance().t2u(room, effect, opponent_1).h();
+                          var _iterator__ex2g4s_3 = StepHelpers_getInstance().u2u(room, effect, opponent_1).h();
                           $l$loop_0: while (_iterator__ex2g4s_3.i()) {
                             var target = _iterator__ex2g4s_3.j();
                             any = true;
@@ -21988,7 +22027,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                               EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(target) + ' no puede ser removida por efectos oponentes', null);
                               continue $l$loop_0;
                             }
-                            if (Removals_getInstance().u2u(room, target, opponent_1, false, 'EFFECT', userId, effect.n21_1, effect))
+                            if (Removals_getInstance().v2u(room, target, opponent_1, false, 'EFFECT', userId, effect.n21_1, effect))
                               continue $l$loop_0;
                             Removals_getInstance().a2f(room, opponent_1, target);
                             ensureNotNull(opponent_1).u1e_1.f(target);
@@ -22011,7 +22050,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                               }
                               var target_0 = tmp_6;
                               var turns = ensureNotNull(opponent_2).f1e_1 == room.c18_1 ? 3 : 2;
-                              if (step.s2u_1) {
+                              if (step.t2u_1) {
                                 target_0.m1d_1 = turns;
                                 EffectEngine_getInstance().y2e(target_0, effect, 'No se puede reactivar durante el pr\xF3ximo turno de ' + opponent_2.g1e_1, 'nextTurn', 0, null);
                                 EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(target_0) + ' no se podr\xE1 reactivar durante el pr\xF3ximo turno de ' + opponent_2.g1e_1 + ' (' + effect.p21_1 + ')', null);
@@ -22024,7 +22063,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                             return false;
                           } else {
                             if (step instanceof ChooseWeakestEnemy) {
-                              var valid_4 = StepHelpers_getInstance().k2u(room, effect, step.n2u_1);
+                              var valid_4 = StepHelpers_getInstance().l2u(room, effect, step.o2u_1);
                               if (valid_4.m())
                                 return false;
                               // Inline function 'kotlin.collections.minOf' call
@@ -22058,7 +22097,7 @@ protoOf(CombatSteps).o2d = function (room, effect, step) {
                                 return false;
                               }
                               var opponent_3 = room.a1e(room.l1i(userId));
-                              StepHelpers_getInstance().b2e(room, effect, 'Varios enemigos ' + ensureNotNull(step.n2u_1).e2e() + ' tienen la menor fuerza (' + min + '): elige 1.', 'Objetivo', EffectEngine_getInstance().r2u(ensureNotNull(opponent_3).a1f_1), EffectEngine_getInstance().a2e(ties), 1);
+                              StepHelpers_getInstance().b2e(room, effect, 'Varios enemigos ' + ensureNotNull(step.o2u_1).e2e() + ' tienen la menor fuerza (' + min + '): elige 1.', 'Objetivo', EffectEngine_getInstance().s2u(ensureNotNull(opponent_3).a1f_1), EffectEngine_getInstance().a2e(ties), 1);
                               return true;
                             } else {
                               throw IllegalStateException_init_$Create$('Paso de otra familia: ' + toString(step));
@@ -22114,7 +22153,7 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
       var _iterator__ex2g4s_0 = picks.h();
       while (_iterator__ex2g4s_0.i()) {
         var item = _iterator__ex2g4s_0.j();
-        var tmp$ret$2 = opponent == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().r2u(opponent.a1f_1), item);
+        var tmp$ret$2 = opponent == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().s2u(opponent.a1f_1), item);
         destination.f(tmp$ret$2);
       }
       var chosen = destination;
@@ -22128,8 +22167,8 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
         var tmp = sum;
         sum = tmp + (ensureNotNull(element).p1u() == null ? 0 : ensureNotNull(element.p1u())) | 0;
       }
-      if (!(sum === step.l2u_1))
-        return 'Sus niveles deben sumar ' + step.l2u_1;
+      if (!(sum === step.m2u_1))
+        return 'Sus niveles deben sumar ' + step.m2u_1;
       effect.x21_1.r(picks);
       var tmp_0 = EffectEngine_getInstance();
       var tmp_1 = chosen.l(0);
@@ -22148,7 +22187,7 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
             return null;
           }
           var opponent_0 = room.a1e(room.l1i(userId));
-          var tmp1_elvis_lhs = opponent_0 == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().r2u(opponent_0.a1f_1), picks.l(0));
+          var tmp1_elvis_lhs = opponent_0 == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().s2u(opponent_0.a1f_1), picks.l(0));
           var tmp_4;
           if (tmp1_elvis_lhs == null) {
             return 'Ese enemigo ya no est\xE1 en la l\xEDnea frontal';
@@ -22156,7 +22195,7 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
             tmp_4 = tmp1_elvis_lhs;
           }
           var target = tmp_4;
-          StepHelpers_getInstance().d2v(room, effect, opponent_0, target, step.j2r_1, false);
+          StepHelpers_getInstance().e2v(room, effect, opponent_0, target, step.j2r_1, false);
           if ('attack' === step.k2r_1 && !(room.y18_1 == null) && !(EffectEngine_getInstance().s2c(ensureNotNull(opponent_0).a1f_1, target.g1c_1) == null)) {
             ensureNotNull(room.y18_1).e20_1.f(plus(target.g1c_1, '|') + 'fuerza:' + (-step.j2r_1 | 0));
           }
@@ -22166,9 +22205,9 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
           if (step instanceof TributesToDeckBottomForKeyword) {
             if (picks.m())
               return null;
-            if (!(picks.k() === step.o2u_1))
-              return 'Elige exactamente ' + step.o2u_1 + ' tributos, o ninguno';
-            if (!StepHelpers_getInstance().c2v(player.y1e_1, picks))
+            if (!(picks.k() === step.p2u_1))
+              return 'Elige exactamente ' + step.p2u_1 + ' tributos, o ninguno';
+            if (!StepHelpers_getInstance().d2v(player.y1e_1, picks))
               return 'Esas cartas ya no est\xE1n en tus tributos';
             var discarded = ArrayList_init_$Create$();
             var _iterator__ex2g4s_2 = picks.h();
@@ -22184,20 +22223,20 @@ protoOf(CombatSteps).v2e = function (room, effect, step, player, picks, order, r
             }
             var self_1 = EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1);
             if (!(self_1 == null)) {
-              var had = EffectEngine_getInstance().t2t(self_1, step.q2u_1);
-              var tmp_5 = plus(step.q2u_1, ' ');
+              var had = EffectEngine_getInstance().u2t(self_1, step.r2u_1);
+              var tmp_5 = plus(step.r2u_1, ' ');
               var gained_0 = tmp_5 + ((had == null ? 0 : had) + 1 | 0);
               ensureNotNull(self_1.b1d_1).f(gained_0);
               if (!(room.y18_1 == null)) {
                 ensureNotNull(room.y18_1).e20_1.f(plus(self_1.g1c_1, '|') + gained_0);
               }
-              EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' descarta ') + step.o2u_1 + ' tributos (' + substring_0(EffectEngine_getInstance().n2k(discarded), 2) + '): ' + EffectEngine_getInstance().q2c(self_1) + ' tiene ' + gained_0 + ' hasta el final del ataque', room.p18_1);
+              EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' descarta ') + step.p2u_1 + ' tributos (' + substring_0(EffectEngine_getInstance().n2k(discarded), 2) + '): ' + EffectEngine_getInstance().q2c(self_1) + ' tiene ' + gained_0 + ' hasta el final del ataque', room.p18_1);
             }
             repeat[0] = true;
           } else {
             if (step instanceof ChooseWeakestEnemy) {
               var opponent_1 = room.a1e(room.l1i(userId));
-              var tmp3_elvis_lhs = opponent_1 == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().r2u(opponent_1.a1f_1), picks.l(0));
+              var tmp3_elvis_lhs = opponent_1 == null ? null : EffectEngine_getInstance().s2c(EffectEngine_getInstance().s2u(opponent_1.a1f_1), picks.l(0));
               var tmp_6;
               if (tmp3_elvis_lhs == null) {
                 return 'Ese enemigo ya no est\xE1 en la l\xEDnea frontal';
@@ -22229,16 +22268,16 @@ function act($this, action) {
 }
 function Compose() {
   Compose_instance = this;
-  this.o2n_1 = Companion_instance_26.e2v('targets');
-  this.p2n_1 = Companion_instance_26.e2v('summoned');
-  this.q2n_1 = Companion_instance_26.f2v('subjectOrSelf', Companion_instance_11.c2q());
+  this.o2n_1 = Companion_instance_26.f2v('targets');
+  this.p2n_1 = Companion_instance_26.f2v('summoned');
+  this.q2n_1 = Companion_instance_26.g2v('subjectOrSelf', Companion_instance_11.c2q());
   this.r2n_1 = 1000;
   this.s2n_1 = 'hand,deck,tributeZone,discardPile,lifeStack';
 }
 protoOf(Compose).t2n = function () {
-  return move(this, Companion_instance_26.g2v('backLine'), 'frontLine');
+  return move(this, Companion_instance_26.h2v('backLine'), 'frontLine');
 };
-protoOf(Compose).h2v = function (count) {
+protoOf(Compose).i2v = function (count) {
   return act(this, new Gems_0(new Fixed(count)));
 };
 var Compose_instance;
@@ -22374,10 +22413,10 @@ function ownerOf($this, event) {
   return EffectEngine_getInstance().m2r(event);
 }
 function All(all) {
-  this.i2v_1 = all;
+  this.j2v_1 = all;
 }
 protoOf(All).l2g = function (room, event, source, controller) {
-  var tmp0 = ensureNotNull(this.i2v_1);
+  var tmp0 = ensureNotNull(this.j2v_1);
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.all' call
@@ -22404,38 +22443,38 @@ protoOf(All).l2g = function (room, event, source, controller) {
   return tmp$ret$0;
 };
 protoOf(All).toString = function () {
-  return 'All(all=' + toString_0(this.i2v_1) + ')';
+  return 'All(all=' + toString_0(this.j2v_1) + ')';
 };
 protoOf(All).hashCode = function () {
-  return this.i2v_1 == null ? 0 : hashCode(this.i2v_1);
+  return this.j2v_1 == null ? 0 : hashCode(this.j2v_1);
 };
 protoOf(All).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof All))
     return false;
-  if (!equals_0(this.i2v_1, other.i2v_1))
+  if (!equals_0(this.j2v_1, other.j2v_1))
     return false;
   return true;
 };
 function Not(condition) {
-  this.j2v_1 = condition;
+  this.k2v_1 = condition;
 }
 protoOf(Not).l2g = function (room, event, source, controller) {
-  return !ensureNotNull(this.j2v_1).l2g(room, event, source, controller);
+  return !ensureNotNull(this.k2v_1).l2g(room, event, source, controller);
 };
 protoOf(Not).toString = function () {
-  return 'Not(condition=' + toString_0(this.j2v_1) + ')';
+  return 'Not(condition=' + toString_0(this.k2v_1) + ')';
 };
 protoOf(Not).hashCode = function () {
-  return this.j2v_1 == null ? 0 : hashCode(this.j2v_1);
+  return this.k2v_1 == null ? 0 : hashCode(this.k2v_1);
 };
 protoOf(Not).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Not))
     return false;
-  if (!equals_0(this.j2v_1, other.j2v_1))
+  if (!equals_0(this.k2v_1, other.k2v_1))
     return false;
   return true;
 };
@@ -22462,10 +22501,10 @@ function Always_getInstance() {
   return Always_instance;
 }
 function Any(any) {
-  this.k2v_1 = any;
+  this.l2v_1 = any;
 }
 protoOf(Any).l2g = function (room, event, source, controller) {
-  var tmp0 = ensureNotNull(this.k2v_1);
+  var tmp0 = ensureNotNull(this.l2v_1);
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.any' call
@@ -22492,38 +22531,38 @@ protoOf(Any).l2g = function (room, event, source, controller) {
   return tmp$ret$0;
 };
 protoOf(Any).toString = function () {
-  return 'Any(any=' + toString_0(this.k2v_1) + ')';
+  return 'Any(any=' + toString_0(this.l2v_1) + ')';
 };
 protoOf(Any).hashCode = function () {
-  return this.k2v_1 == null ? 0 : hashCode(this.k2v_1);
+  return this.l2v_1 == null ? 0 : hashCode(this.l2v_1);
 };
 protoOf(Any).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Any))
     return false;
-  if (!equals_0(this.k2v_1, other.k2v_1))
+  if (!equals_0(this.l2v_1, other.l2v_1))
     return false;
   return true;
 };
 function Immediately(condition) {
-  this.l2v_1 = condition;
+  this.m2v_1 = condition;
 }
 protoOf(Immediately).l2g = function (room, event, source, controller) {
-  return !(event == null) && ensureNotNull(this.l2v_1).l2g(room, event, source, controller) && EffectEngine_getInstance().m2v(room, event);
+  return !(event == null) && ensureNotNull(this.m2v_1).l2g(room, event, source, controller) && EffectEngine_getInstance().n2v(room, event);
 };
 protoOf(Immediately).toString = function () {
-  return 'Immediately(condition=' + toString_0(this.l2v_1) + ')';
+  return 'Immediately(condition=' + toString_0(this.m2v_1) + ')';
 };
 protoOf(Immediately).hashCode = function () {
-  return this.l2v_1 == null ? 0 : hashCode(this.l2v_1);
+  return this.m2v_1 == null ? 0 : hashCode(this.m2v_1);
 };
 protoOf(Immediately).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Immediately))
     return false;
-  if (!equals_0(this.l2v_1, other.l2v_1))
+  if (!equals_0(this.m2v_1, other.m2v_1))
     return false;
   return true;
 };
@@ -22531,28 +22570,28 @@ function Side_0(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
 function Destroyed(owner, by, filter, byCard, byThis, cause, exceptAttacker) {
-  this.n2v_1 = owner;
-  this.o2v_1 = by;
-  this.p2v_1 = filter;
-  this.q2v_1 = byCard;
-  this.r2v_1 = byThis;
-  this.s2v_1 = cause;
-  this.t2v_1 = exceptAttacker;
+  this.o2v_1 = owner;
+  this.p2v_1 = by;
+  this.q2v_1 = filter;
+  this.r2v_1 = byCard;
+  this.s2v_1 = byThis;
+  this.t2v_1 = cause;
+  this.u2v_1 = exceptAttacker;
 }
 protoOf(Destroyed).l2g = function (room, event, source, controller) {
   if (event == null || !isDestruction(Companion_instance_13, event))
     return false;
-  if (!sideIs(Companion_instance_13, this.n2v_1, ownerOf(Companion_instance_13, event), controller) || !sideIs(Companion_instance_13, this.o2v_1, event.q24_1, controller))
+  if (!sideIs(Companion_instance_13, this.o2v_1, ownerOf(Companion_instance_13, event), controller) || !sideIs(Companion_instance_13, this.p2v_1, event.q24_1, controller))
     return false;
-  if ('effect' === this.s2v_1 && !destroyedByEffect(Companion_instance_13, event))
+  if ('effect' === this.t2v_1 && !destroyedByEffect(Companion_instance_13, event))
     return false;
-  if ('battle' === this.s2v_1 && !(!(event.x24_1 == null) && equals_0('BATTLE', ensureNotNull(event.x24_1).u1('cause'))))
+  if ('battle' === this.t2v_1 && !(!(event.x24_1 == null) && equals_0('BATTLE', ensureNotNull(event.x24_1).u1('cause'))))
     return false;
-  if (this.r2v_1 && !(!(event.x24_1 == null) && equals_0(ensureNotNull(source).g1c_1, ensureNotNull(event.x24_1).u1('byCard'))))
+  if (this.s2v_1 && !(!(event.x24_1 == null) && equals_0(ensureNotNull(source).g1c_1, ensureNotNull(event.x24_1).u1('byCard'))))
     return false;
-  if (this.t2v_1 && !(event.x24_1 == null) && equals_0(ensureNotNull(event.x24_1).u1('asAttacker'), true))
+  if (this.u2v_1 && !(event.x24_1 == null) && equals_0(ensureNotNull(event.x24_1).u1('asAttacker'), true))
     return false;
-  if (!(this.q2v_1 == null)) {
+  if (!(this.r2v_1 == null)) {
     var id = event.x24_1 == null ? null : ensureNotNull(event.x24_1).u1('byCard');
     var tmp;
     if (id == null) {
@@ -22562,25 +22601,25 @@ protoOf(Destroyed).l2g = function (room, event, source, controller) {
       tmp = tmp_0.y24(room, typeof id === 'string' ? id : THROW_CCE());
     }
     var card = tmp;
-    if (card == null || !this.q2v_1.p2c(card))
+    if (card == null || !this.r2v_1.p2c(card))
       return false;
   }
-  if (this.p2v_1 == null)
+  if (this.q2v_1 == null)
     return true;
-  var destroyed = EffectEngine_getInstance().u2v(room, event);
-  return !(destroyed == null) && this.p2v_1.p2c(destroyed);
+  var destroyed = EffectEngine_getInstance().v2v(room, event);
+  return !(destroyed == null) && this.q2v_1.p2c(destroyed);
 };
 protoOf(Destroyed).toString = function () {
-  return 'Destroyed(owner=' + toString_0(this.n2v_1) + ', by=' + toString_0(this.o2v_1) + ', filter=' + toString_0(this.p2v_1) + ', byCard=' + toString_0(this.q2v_1) + ', byThis=' + this.r2v_1 + ', cause=' + this.s2v_1 + ', exceptAttacker=' + this.t2v_1 + ')';
+  return 'Destroyed(owner=' + toString_0(this.o2v_1) + ', by=' + toString_0(this.p2v_1) + ', filter=' + toString_0(this.q2v_1) + ', byCard=' + toString_0(this.r2v_1) + ', byThis=' + this.s2v_1 + ', cause=' + this.t2v_1 + ', exceptAttacker=' + this.u2v_1 + ')';
 };
 protoOf(Destroyed).hashCode = function () {
-  var result = this.n2v_1 == null ? 0 : this.n2v_1.hashCode();
-  result = imul(result, 31) + (this.o2v_1 == null ? 0 : this.o2v_1.hashCode()) | 0;
+  var result = this.o2v_1 == null ? 0 : this.o2v_1.hashCode();
   result = imul(result, 31) + (this.p2v_1 == null ? 0 : this.p2v_1.hashCode()) | 0;
   result = imul(result, 31) + (this.q2v_1 == null ? 0 : this.q2v_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.r2v_1) | 0;
-  result = imul(result, 31) + (this.s2v_1 == null ? 0 : getStringHashCode(this.s2v_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.t2v_1) | 0;
+  result = imul(result, 31) + (this.r2v_1 == null ? 0 : this.r2v_1.hashCode()) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.s2v_1) | 0;
+  result = imul(result, 31) + (this.t2v_1 == null ? 0 : getStringHashCode(this.t2v_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.u2v_1) | 0;
   return result;
 };
 protoOf(Destroyed).equals = function (other) {
@@ -22588,34 +22627,34 @@ protoOf(Destroyed).equals = function (other) {
     return true;
   if (!(other instanceof Destroyed))
     return false;
-  if (!equals_0(this.n2v_1, other.n2v_1))
-    return false;
   if (!equals_0(this.o2v_1, other.o2v_1))
     return false;
   if (!equals_0(this.p2v_1, other.p2v_1))
     return false;
   if (!equals_0(this.q2v_1, other.q2v_1))
     return false;
-  if (!(this.r2v_1 === other.r2v_1))
+  if (!equals_0(this.r2v_1, other.r2v_1))
     return false;
-  if (!(this.s2v_1 == other.s2v_1))
+  if (!(this.s2v_1 === other.s2v_1))
     return false;
-  if (!(this.t2v_1 === other.t2v_1))
+  if (!(this.t2v_1 == other.t2v_1))
+    return false;
+  if (!(this.u2v_1 === other.u2v_1))
     return false;
   return true;
 };
 function Summoned(side, other, filter, how, kind) {
-  this.v2v_1 = side;
-  this.w2v_1 = other;
-  this.x2v_1 = filter;
-  this.y2v_1 = how;
-  this.z2v_1 = kind;
+  this.w2v_1 = side;
+  this.x2v_1 = other;
+  this.y2v_1 = filter;
+  this.z2v_1 = how;
+  this.a2w_1 = kind;
 }
 protoOf(Summoned).l2g = function (room, event, source, controller) {
   if (event == null)
     return false;
   var type = event.p24_1;
-  var tmp0_elvis_lhs = this.y2v_1;
+  var tmp0_elvis_lhs = this.z2v_1;
   var matches;
   switch (tmp0_elvis_lhs == null ? '' : tmp0_elvis_lhs) {
     case 'effect':
@@ -22628,26 +22667,26 @@ protoOf(Summoned).l2g = function (room, event, source, controller) {
       matches = 'NORMAL_SUMMON' === type || 'SPECIAL_SUMMON' === type || 'EFFECT_SUMMON' === type;
       break;
   }
-  if (!matches || !sideIs(Companion_instance_13, this.v2v_1, event.q24_1, controller))
+  if (!matches || !sideIs(Companion_instance_13, this.w2v_1, event.q24_1, controller))
     return false;
-  if (this.w2v_1 && ensureNotNull(source).g1c_1 == event.r24_1)
+  if (this.x2v_1 && ensureNotNull(source).g1c_1 == event.r24_1)
     return false;
-  if (!(this.z2v_1 == null) && (event.x24_1 == null || !equals_0(this.z2v_1, ensureNotNull(event.x24_1).u1('summonType'))))
+  if (!(this.a2w_1 == null) && (event.x24_1 == null || !equals_0(this.a2w_1, ensureNotNull(event.x24_1).u1('summonType'))))
     return false;
-  if (this.x2v_1 == null)
+  if (this.y2v_1 == null)
     return true;
-  var summoned = EffectEngine_getInstance().u2v(room, event);
-  return !(summoned == null) && this.x2v_1.p2c(summoned);
+  var summoned = EffectEngine_getInstance().v2v(room, event);
+  return !(summoned == null) && this.y2v_1.p2c(summoned);
 };
 protoOf(Summoned).toString = function () {
-  return 'Summoned(side=' + toString_0(this.v2v_1) + ', other=' + this.w2v_1 + ', filter=' + toString_0(this.x2v_1) + ', how=' + this.y2v_1 + ', kind=' + this.z2v_1 + ')';
+  return 'Summoned(side=' + toString_0(this.w2v_1) + ', other=' + this.x2v_1 + ', filter=' + toString_0(this.y2v_1) + ', how=' + this.z2v_1 + ', kind=' + this.a2w_1 + ')';
 };
 protoOf(Summoned).hashCode = function () {
-  var result = this.v2v_1 == null ? 0 : this.v2v_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.w2v_1) | 0;
-  result = imul(result, 31) + (this.x2v_1 == null ? 0 : this.x2v_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.y2v_1 == null ? 0 : getStringHashCode(this.y2v_1)) | 0;
+  var result = this.w2v_1 == null ? 0 : this.w2v_1.hashCode();
+  result = imul(result, 31) + getBooleanHashCode(this.x2v_1) | 0;
+  result = imul(result, 31) + (this.y2v_1 == null ? 0 : this.y2v_1.hashCode()) | 0;
   result = imul(result, 31) + (this.z2v_1 == null ? 0 : getStringHashCode(this.z2v_1)) | 0;
+  result = imul(result, 31) + (this.a2w_1 == null ? 0 : getStringHashCode(this.a2w_1)) | 0;
   return result;
 };
 protoOf(Summoned).equals = function (other) {
@@ -22655,43 +22694,43 @@ protoOf(Summoned).equals = function (other) {
     return true;
   if (!(other instanceof Summoned))
     return false;
-  if (!equals_0(this.v2v_1, other.v2v_1))
+  if (!equals_0(this.w2v_1, other.w2v_1))
     return false;
-  if (!(this.w2v_1 === other.w2v_1))
+  if (!(this.x2v_1 === other.x2v_1))
     return false;
-  if (!equals_0(this.x2v_1, other.x2v_1))
-    return false;
-  if (!(this.y2v_1 == other.y2v_1))
+  if (!equals_0(this.y2v_1, other.y2v_1))
     return false;
   if (!(this.z2v_1 == other.z2v_1))
+    return false;
+  if (!(this.a2w_1 == other.a2w_1))
     return false;
   return true;
 };
 function Happened(eventType, actor, owner, thisCard, filter, from, to, byEffect, data, byCard) {
   byCard = byCard === VOID ? null : byCard;
-  this.a2w_1 = eventType;
-  this.b2w_1 = actor;
-  this.c2w_1 = owner;
-  this.d2w_1 = thisCard;
-  this.e2w_1 = filter;
-  this.f2w_1 = from;
-  this.g2w_1 = to;
-  this.h2w_1 = byEffect;
-  this.i2w_1 = data;
-  this.j2w_1 = byCard;
+  this.b2w_1 = eventType;
+  this.c2w_1 = actor;
+  this.d2w_1 = owner;
+  this.e2w_1 = thisCard;
+  this.f2w_1 = filter;
+  this.g2w_1 = from;
+  this.h2w_1 = to;
+  this.i2w_1 = byEffect;
+  this.j2w_1 = data;
+  this.k2w_1 = byCard;
 }
 protoOf(Happened).l2g = function (room, event, source, controller) {
-  if (event == null || (!(this.a2w_1 == null) && !(this.a2w_1 == event.p24_1)))
+  if (event == null || (!(this.b2w_1 == null) && !(this.b2w_1 == event.p24_1)))
     return false;
-  if (!sideIs(Companion_instance_13, this.b2w_1, event.q24_1, controller) || !sideIs(Companion_instance_13, this.c2w_1, ownerOf(Companion_instance_13, event), controller))
+  if (!sideIs(Companion_instance_13, this.c2w_1, event.q24_1, controller) || !sideIs(Companion_instance_13, this.d2w_1, ownerOf(Companion_instance_13, event), controller))
     return false;
-  if (this.d2w_1 && !(ensureNotNull(source).g1c_1 == event.r24_1))
+  if (this.e2w_1 && !(ensureNotNull(source).g1c_1 == event.r24_1))
     return false;
-  if (!(this.f2w_1 == null) && !(this.f2w_1 == event.t24_1) || (!(this.g2w_1 == null) && !(this.g2w_1 == event.u24_1)))
+  if (!(this.g2w_1 == null) && !(this.g2w_1 == event.t24_1) || (!(this.h2w_1 == null) && !(this.h2w_1 == event.u24_1)))
     return false;
-  if (this.h2w_1 && event.v24_1 == null)
+  if (this.i2w_1 && event.v24_1 == null)
     return false;
-  var _iterator__ex2g4s = ensureNotNull(this.i2w_1).h();
+  var _iterator__ex2g4s = ensureNotNull(this.j2w_1).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var pair = _iterator__ex2g4s.j();
     var at = indexOf(pair, _Char___init__impl__6a9atx(61));
@@ -22709,38 +22748,38 @@ protoOf(Happened).l2g = function (room, event, source, controller) {
     if (value == null || !(ensureNotNull(wanted) === toString(value)))
       return false;
   }
-  if (!(this.j2w_1 == null)) {
+  if (!(this.k2w_1 == null)) {
     var byId = event.x24_1 == null ? null : ensureNotNull(event.x24_1).u1('byCard');
     var tmp;
     if (byId == null) {
       tmp = null;
     } else {
       var tmp_0 = EffectEngine_getInstance();
-      tmp = tmp_0.k2w(room, typeof byId === 'string' ? byId : THROW_CCE());
+      tmp = tmp_0.l2w(room, typeof byId === 'string' ? byId : THROW_CCE());
     }
     var acting = tmp;
-    if (acting == null || !this.j2w_1.p2c(acting))
+    if (acting == null || !this.k2w_1.p2c(acting))
       return false;
   }
-  if (this.e2w_1 == null)
+  if (this.f2w_1 == null)
     return true;
-  var card = EffectEngine_getInstance().u2v(room, event);
-  return !(card == null) && this.e2w_1.p2c(card);
+  var card = EffectEngine_getInstance().v2v(room, event);
+  return !(card == null) && this.f2w_1.p2c(card);
 };
 protoOf(Happened).toString = function () {
-  return 'Happened(eventType=' + this.a2w_1 + ', actor=' + toString_0(this.b2w_1) + ', owner=' + toString_0(this.c2w_1) + ', thisCard=' + this.d2w_1 + ', filter=' + toString_0(this.e2w_1) + ', from=' + this.f2w_1 + ', to=' + this.g2w_1 + ', byEffect=' + this.h2w_1 + ', data=' + toString_0(this.i2w_1) + ', byCard=' + toString_0(this.j2w_1) + ')';
+  return 'Happened(eventType=' + this.b2w_1 + ', actor=' + toString_0(this.c2w_1) + ', owner=' + toString_0(this.d2w_1) + ', thisCard=' + this.e2w_1 + ', filter=' + toString_0(this.f2w_1) + ', from=' + this.g2w_1 + ', to=' + this.h2w_1 + ', byEffect=' + this.i2w_1 + ', data=' + toString_0(this.j2w_1) + ', byCard=' + toString_0(this.k2w_1) + ')';
 };
 protoOf(Happened).hashCode = function () {
-  var result = this.a2w_1 == null ? 0 : getStringHashCode(this.a2w_1);
-  result = imul(result, 31) + (this.b2w_1 == null ? 0 : this.b2w_1.hashCode()) | 0;
+  var result = this.b2w_1 == null ? 0 : getStringHashCode(this.b2w_1);
   result = imul(result, 31) + (this.c2w_1 == null ? 0 : this.c2w_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.d2w_1) | 0;
-  result = imul(result, 31) + (this.e2w_1 == null ? 0 : this.e2w_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.f2w_1 == null ? 0 : getStringHashCode(this.f2w_1)) | 0;
+  result = imul(result, 31) + (this.d2w_1 == null ? 0 : this.d2w_1.hashCode()) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.e2w_1) | 0;
+  result = imul(result, 31) + (this.f2w_1 == null ? 0 : this.f2w_1.hashCode()) | 0;
   result = imul(result, 31) + (this.g2w_1 == null ? 0 : getStringHashCode(this.g2w_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.h2w_1) | 0;
-  result = imul(result, 31) + (this.i2w_1 == null ? 0 : hashCode(this.i2w_1)) | 0;
-  result = imul(result, 31) + (this.j2w_1 == null ? 0 : this.j2w_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.h2w_1 == null ? 0 : getStringHashCode(this.h2w_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.i2w_1) | 0;
+  result = imul(result, 31) + (this.j2w_1 == null ? 0 : hashCode(this.j2w_1)) | 0;
+  result = imul(result, 31) + (this.k2w_1 == null ? 0 : this.k2w_1.hashCode()) | 0;
   return result;
 };
 protoOf(Happened).equals = function (other) {
@@ -22748,25 +22787,25 @@ protoOf(Happened).equals = function (other) {
     return true;
   if (!(other instanceof Happened))
     return false;
-  if (!(this.a2w_1 == other.a2w_1))
-    return false;
-  if (!equals_0(this.b2w_1, other.b2w_1))
+  if (!(this.b2w_1 == other.b2w_1))
     return false;
   if (!equals_0(this.c2w_1, other.c2w_1))
     return false;
-  if (!(this.d2w_1 === other.d2w_1))
+  if (!equals_0(this.d2w_1, other.d2w_1))
     return false;
-  if (!equals_0(this.e2w_1, other.e2w_1))
+  if (!(this.e2w_1 === other.e2w_1))
     return false;
-  if (!(this.f2w_1 == other.f2w_1))
+  if (!equals_0(this.f2w_1, other.f2w_1))
     return false;
   if (!(this.g2w_1 == other.g2w_1))
     return false;
-  if (!(this.h2w_1 === other.h2w_1))
+  if (!(this.h2w_1 == other.h2w_1))
     return false;
-  if (!equals_0(this.i2w_1, other.i2w_1))
+  if (!(this.i2w_1 === other.i2w_1))
     return false;
   if (!equals_0(this.j2w_1, other.j2w_1))
+    return false;
+  if (!equals_0(this.k2w_1, other.k2w_1))
     return false;
   return true;
 };
@@ -22774,15 +22813,15 @@ function Op(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
 function Compare(left, op, right) {
-  this.l2w_1 = left;
-  this.m2w_1 = op;
-  this.n2w_1 = right;
+  this.m2w_1 = left;
+  this.n2w_1 = op;
+  this.o2w_1 = right;
 }
 protoOf(Compare).l2g = function (room, event, source, controller) {
-  var a = ensureNotNull(this.l2w_1).d1p(room, controller);
-  var b = ensureNotNull(this.n2w_1).d1p(room, controller);
+  var a = ensureNotNull(this.m2w_1).d1p(room, controller);
+  var b = ensureNotNull(this.o2w_1).d1p(room, controller);
   var tmp;
-  switch (ensureNotNull(this.m2w_1).k2_1) {
+  switch (ensureNotNull(this.n2w_1).k2_1) {
     case 0:
       tmp = a >= b;
       break;
@@ -22802,12 +22841,12 @@ protoOf(Compare).l2g = function (room, event, source, controller) {
   return tmp;
 };
 protoOf(Compare).toString = function () {
-  return 'Compare(left=' + toString_0(this.l2w_1) + ', op=' + toString_0(this.m2w_1) + ', right=' + toString_0(this.n2w_1) + ')';
+  return 'Compare(left=' + toString_0(this.m2w_1) + ', op=' + toString_0(this.n2w_1) + ', right=' + toString_0(this.o2w_1) + ')';
 };
 protoOf(Compare).hashCode = function () {
-  var result = this.l2w_1 == null ? 0 : hashCode(this.l2w_1);
-  result = imul(result, 31) + (this.m2w_1 == null ? 0 : this.m2w_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.n2w_1 == null ? 0 : hashCode(this.n2w_1)) | 0;
+  var result = this.m2w_1 == null ? 0 : hashCode(this.m2w_1);
+  result = imul(result, 31) + (this.n2w_1 == null ? 0 : this.n2w_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.o2w_1 == null ? 0 : hashCode(this.o2w_1)) | 0;
   return result;
 };
 protoOf(Compare).equals = function (other) {
@@ -22815,11 +22854,11 @@ protoOf(Compare).equals = function (other) {
     return true;
   if (!(other instanceof Compare))
     return false;
-  if (!equals_0(this.l2w_1, other.l2w_1))
-    return false;
   if (!equals_0(this.m2w_1, other.m2w_1))
     return false;
   if (!equals_0(this.n2w_1, other.n2w_1))
+    return false;
+  if (!equals_0(this.o2w_1, other.o2w_1))
     return false;
   return true;
 };
@@ -22827,11 +22866,11 @@ function CardState(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
 function ThisIs(state) {
-  this.o2w_1 = state;
+  this.p2w_1 = state;
 }
 protoOf(ThisIs).l2g = function (room, event, source, controller) {
   var tmp;
-  switch (ensureNotNull(this.o2w_1).k2_1) {
+  switch (ensureNotNull(this.p2w_1).k2_1) {
     case 0:
       tmp = EffectEngine_getInstance().e1p(source);
       break;
@@ -22880,17 +22919,17 @@ protoOf(ThisIs).l2g = function (room, event, source, controller) {
   return tmp;
 };
 protoOf(ThisIs).toString = function () {
-  return 'ThisIs(state=' + toString_0(this.o2w_1) + ')';
+  return 'ThisIs(state=' + toString_0(this.p2w_1) + ')';
 };
 protoOf(ThisIs).hashCode = function () {
-  return this.o2w_1 == null ? 0 : this.o2w_1.hashCode();
+  return this.p2w_1 == null ? 0 : this.p2w_1.hashCode();
 };
 protoOf(ThisIs).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ThisIs))
     return false;
-  if (!equals_0(this.o2w_1, other.o2w_1))
+  if (!equals_0(this.p2w_1, other.p2w_1))
     return false;
   return true;
 };
@@ -22898,11 +22937,11 @@ function GameState(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
 function GameIs(state) {
-  this.p2w_1 = state;
+  this.q2w_1 = state;
 }
 protoOf(GameIs).l2g = function (room, event, source, controller) {
   var tmp;
-  switch (ensureNotNull(this.p2w_1).k2_1) {
+  switch (ensureNotNull(this.q2w_1).k2_1) {
     case 0:
       tmp = ensureNotNull(controller) === room.c18_1;
       break;
@@ -22922,45 +22961,45 @@ protoOf(GameIs).l2g = function (room, event, source, controller) {
   return tmp;
 };
 protoOf(GameIs).toString = function () {
-  return 'GameIs(state=' + toString_0(this.p2w_1) + ')';
+  return 'GameIs(state=' + toString_0(this.q2w_1) + ')';
 };
 protoOf(GameIs).hashCode = function () {
-  return this.p2w_1 == null ? 0 : this.p2w_1.hashCode();
+  return this.q2w_1 == null ? 0 : this.q2w_1.hashCode();
 };
 protoOf(GameIs).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof GameIs))
     return false;
-  if (!equals_0(this.p2w_1, other.p2w_1))
+  if (!equals_0(this.q2w_1, other.q2w_1))
     return false;
   return true;
 };
 function ByEffect(by) {
-  this.q2w_1 = by;
+  this.r2w_1 = by;
 }
 protoOf(ByEffect).l2g = function (room, event, source, controller) {
-  if (event == null || !sideIs(Companion_instance_13, this.q2w_1, event.q24_1, controller))
+  if (event == null || !sideIs(Companion_instance_13, this.r2w_1, event.q24_1, controller))
     return false;
   return destroyedByEffect(Companion_instance_13, event) || (!(event.x24_1 == null) && equals_0('EFFECT', ensureNotNull(event.x24_1).u1('cause')) && !(ensureNotNull(event.x24_1).u1('byCard') == null));
 };
 protoOf(ByEffect).toString = function () {
-  return 'ByEffect(by=' + toString_0(this.q2w_1) + ')';
+  return 'ByEffect(by=' + toString_0(this.r2w_1) + ')';
 };
 protoOf(ByEffect).hashCode = function () {
-  return this.q2w_1 == null ? 0 : this.q2w_1.hashCode();
+  return this.r2w_1 == null ? 0 : this.r2w_1.hashCode();
 };
 protoOf(ByEffect).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ByEffect))
     return false;
-  if (!equals_0(this.q2w_1, other.q2w_1))
+  if (!equals_0(this.r2w_1, other.r2w_1))
     return false;
   return true;
 };
 function Targeted(thisCard) {
-  this.r2w_1 = thisCard;
+  this.s2w_1 = thisCard;
 }
 protoOf(Targeted).l2g = function (room, event, source, controller) {
   if (event == null || !('TARGET' === event.p24_1) || event.x24_1 == null)
@@ -22974,7 +23013,7 @@ protoOf(Targeted).l2g = function (room, event, source, controller) {
     tmp_0 = tmp0_elvis_lhs;
   }
   var ids = tmp_0;
-  if (this.r2w_1)
+  if (this.s2w_1)
     return ids.n(ensureNotNull(source).g1c_1);
   var player = room.a1e(controller);
   var tmp_1;
@@ -23011,22 +23050,22 @@ protoOf(Targeted).l2g = function (room, event, source, controller) {
   return tmp_1;
 };
 protoOf(Targeted).toString = function () {
-  return 'Targeted(thisCard=' + this.r2w_1 + ')';
+  return 'Targeted(thisCard=' + this.s2w_1 + ')';
 };
 protoOf(Targeted).hashCode = function () {
-  return getBooleanHashCode(this.r2w_1);
+  return getBooleanHashCode(this.s2w_1);
 };
 protoOf(Targeted).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Targeted))
     return false;
-  if (!(this.r2w_1 === other.r2w_1))
+  if (!(this.s2w_1 === other.s2w_1))
     return false;
   return true;
 };
 function AllyDealtDirectDamage(filter) {
-  this.s2w_1 = filter;
+  this.t2w_1 = filter;
 }
 protoOf(AllyDealtDirectDamage).l2g = function (room, event, source, controller) {
   if (event == null || !('LIFE_DAMAGE' === event.p24_1) || !(ensureNotNull(controller) === event.q24_1) || event.x24_1 == null)
@@ -23034,27 +23073,27 @@ protoOf(AllyDealtDirectDamage).l2g = function (room, event, source, controller) 
   var tmp = EffectEngine_getInstance();
   var tmp_0 = ensureNotNull(event.x24_1).u1('attackerId');
   var attacker = tmp.y24(room, (tmp_0 == null ? true : typeof tmp_0 === 'string') ? tmp_0 : THROW_CCE());
-  return !(attacker == null) && ensureNotNull(this.s2w_1).p2c(attacker);
+  return !(attacker == null) && ensureNotNull(this.t2w_1).p2c(attacker);
 };
 protoOf(AllyDealtDirectDamage).toString = function () {
-  return 'AllyDealtDirectDamage(filter=' + toString_0(this.s2w_1) + ')';
+  return 'AllyDealtDirectDamage(filter=' + toString_0(this.t2w_1) + ')';
 };
 protoOf(AllyDealtDirectDamage).hashCode = function () {
-  return this.s2w_1 == null ? 0 : this.s2w_1.hashCode();
+  return this.t2w_1 == null ? 0 : this.t2w_1.hashCode();
 };
 protoOf(AllyDealtDirectDamage).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof AllyDealtDirectDamage))
     return false;
-  if (!equals_0(this.s2w_1, other.s2w_1))
+  if (!equals_0(this.t2w_1, other.t2w_1))
     return false;
   return true;
 };
 function ThisTributed(fromZone, exceptZone, by) {
-  this.t2w_1 = fromZone;
-  this.u2w_1 = exceptZone;
-  this.v2w_1 = by;
+  this.u2w_1 = fromZone;
+  this.v2w_1 = exceptZone;
+  this.w2w_1 = by;
 }
 protoOf(ThisTributed).l2g = function (room, event, source, controller) {
   if (event == null)
@@ -23072,26 +23111,26 @@ protoOf(ThisTributed).l2g = function (room, event, source, controller) {
   }
   if (!tributed || !(ensureNotNull(source).g1c_1 == event.r24_1))
     return false;
-  if (!(this.t2w_1 == null) && !(this.t2w_1 == event.t24_1))
+  if (!(this.u2w_1 == null) && !(this.u2w_1 == event.t24_1))
     return false;
-  if (!(this.u2w_1 == null) && this.u2w_1 == event.t24_1)
+  if (!(this.v2w_1 == null) && this.v2w_1 == event.t24_1)
     return false;
-  if (this.v2w_1 == null)
+  if (this.w2w_1 == null)
     return true;
   var byId = event.x24_1 == null ? null : ensureNotNull(event.x24_1).u1('byCard');
   if (event.v24_1 == null || byId == null)
     return false;
   var tmp = EffectEngine_getInstance();
-  var byCard = tmp.k2w(room, typeof byId === 'string' ? byId : THROW_CCE());
-  return !(byCard == null) && this.v2w_1.p2c(byCard);
+  var byCard = tmp.l2w(room, typeof byId === 'string' ? byId : THROW_CCE());
+  return !(byCard == null) && this.w2w_1.p2c(byCard);
 };
 protoOf(ThisTributed).toString = function () {
-  return 'ThisTributed(fromZone=' + this.t2w_1 + ', exceptZone=' + this.u2w_1 + ', by=' + toString_0(this.v2w_1) + ')';
+  return 'ThisTributed(fromZone=' + this.u2w_1 + ', exceptZone=' + this.v2w_1 + ', by=' + toString_0(this.w2w_1) + ')';
 };
 protoOf(ThisTributed).hashCode = function () {
-  var result = this.t2w_1 == null ? 0 : getStringHashCode(this.t2w_1);
-  result = imul(result, 31) + (this.u2w_1 == null ? 0 : getStringHashCode(this.u2w_1)) | 0;
-  result = imul(result, 31) + (this.v2w_1 == null ? 0 : this.v2w_1.hashCode()) | 0;
+  var result = this.u2w_1 == null ? 0 : getStringHashCode(this.u2w_1);
+  result = imul(result, 31) + (this.v2w_1 == null ? 0 : getStringHashCode(this.v2w_1)) | 0;
+  result = imul(result, 31) + (this.w2w_1 == null ? 0 : this.w2w_1.hashCode()) | 0;
   return result;
 };
 protoOf(ThisTributed).equals = function (other) {
@@ -23099,31 +23138,31 @@ protoOf(ThisTributed).equals = function (other) {
     return true;
   if (!(other instanceof ThisTributed))
     return false;
-  if (!(this.t2w_1 == other.t2w_1))
-    return false;
   if (!(this.u2w_1 == other.u2w_1))
     return false;
-  if (!equals_0(this.v2w_1, other.v2w_1))
+  if (!(this.v2w_1 == other.v2w_1))
+    return false;
+  if (!equals_0(this.w2w_1, other.w2w_1))
     return false;
   return true;
 };
 function YouReducedStrength(toAtMost, enemyStillThere, byAnyone) {
   byAnyone = byAnyone === VOID ? false : byAnyone;
-  this.w2w_1 = toAtMost;
-  this.x2w_1 = enemyStillThere;
-  this.y2w_1 = byAnyone;
+  this.x2w_1 = toAtMost;
+  this.y2w_1 = enemyStillThere;
+  this.z2w_1 = byAnyone;
 }
 protoOf(YouReducedStrength).l2g = function (room, event, source, controller) {
   if (event == null || !('STRENGTH_REDUCED' === event.p24_1))
     return false;
-  if (this.y2w_1 ? ensureNotNull(controller) === ownerOf(Companion_instance_13, event) : !(ensureNotNull(controller) === event.q24_1))
+  if (this.z2w_1 ? ensureNotNull(controller) === ownerOf(Companion_instance_13, event) : !(ensureNotNull(controller) === event.q24_1))
     return false;
   var to = event.x24_1 == null ? null : ensureNotNull(event.x24_1).u1('to');
   var tmp;
-  if (!(this.w2w_1 == null)) {
+  if (!(this.x2w_1 == null)) {
     var tmp_0;
     if (isNumber(to)) {
-      tmp_0 = numberToInt(to) <= this.w2w_1;
+      tmp_0 = numberToInt(to) <= this.x2w_1;
     } else {
       tmp_0 = false;
     }
@@ -23133,18 +23172,18 @@ protoOf(YouReducedStrength).l2g = function (room, event, source, controller) {
   }
   if (tmp)
     return false;
-  if (!this.x2w_1)
+  if (!this.y2w_1)
     return true;
   var target = EffectEngine_getInstance().n2r(room, ownerOf(Companion_instance_13, event), 'field', event.r24_1);
   return !(target == null) && EffectEngine_getInstance().b1p(target) > 0;
 };
 protoOf(YouReducedStrength).toString = function () {
-  return 'YouReducedStrength(toAtMost=' + this.w2w_1 + ', enemyStillThere=' + this.x2w_1 + ', byAnyone=' + this.y2w_1 + ')';
+  return 'YouReducedStrength(toAtMost=' + this.x2w_1 + ', enemyStillThere=' + this.y2w_1 + ', byAnyone=' + this.z2w_1 + ')';
 };
 protoOf(YouReducedStrength).hashCode = function () {
-  var result = this.w2w_1 == null ? 0 : this.w2w_1;
-  result = imul(result, 31) + getBooleanHashCode(this.x2w_1) | 0;
+  var result = this.x2w_1 == null ? 0 : this.x2w_1;
   result = imul(result, 31) + getBooleanHashCode(this.y2w_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.z2w_1) | 0;
   return result;
 };
 protoOf(YouReducedStrength).equals = function (other) {
@@ -23152,22 +23191,22 @@ protoOf(YouReducedStrength).equals = function (other) {
     return true;
   if (!(other instanceof YouReducedStrength))
     return false;
-  if (!(this.w2w_1 == other.w2w_1))
-    return false;
-  if (!(this.x2w_1 === other.x2w_1))
+  if (!(this.x2w_1 == other.x2w_1))
     return false;
   if (!(this.y2w_1 === other.y2w_1))
+    return false;
+  if (!(this.z2w_1 === other.z2w_1))
     return false;
   return true;
 };
 function SummonedWithoutMaterial(material) {
-  this.z2w_1 = material;
+  this.a2x_1 = material;
 }
 protoOf(SummonedWithoutMaterial).l2g = function (room, event, source, controller) {
-  var summoned = event == null ? null : EffectEngine_getInstance().u2v(room, event);
+  var summoned = event == null ? null : EffectEngine_getInstance().v2v(room, event);
   if (summoned == null)
     return false;
-  var m = ensureNotNull(this.z2w_1);
+  var m = ensureNotNull(this.a2x_1);
   var tmp0 = ensureNotNull(summoned.o1d_1);
   var tmp$ret$0;
   $l$block_0: {
@@ -23195,23 +23234,23 @@ protoOf(SummonedWithoutMaterial).l2g = function (room, event, source, controller
   return tmp$ret$0;
 };
 protoOf(SummonedWithoutMaterial).toString = function () {
-  return 'SummonedWithoutMaterial(material=' + toString_0(this.z2w_1) + ')';
+  return 'SummonedWithoutMaterial(material=' + toString_0(this.a2x_1) + ')';
 };
 protoOf(SummonedWithoutMaterial).hashCode = function () {
-  return this.z2w_1 == null ? 0 : this.z2w_1.hashCode();
+  return this.a2x_1 == null ? 0 : this.a2x_1.hashCode();
 };
 protoOf(SummonedWithoutMaterial).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof SummonedWithoutMaterial))
     return false;
-  if (!equals_0(this.z2w_1, other.z2w_1))
+  if (!equals_0(this.a2x_1, other.a2x_1))
     return false;
   return true;
 };
 function EntersFrontLine(enemy, filter) {
-  this.a2x_1 = enemy;
-  this.b2x_1 = filter;
+  this.b2x_1 = enemy;
+  this.c2x_1 = filter;
 }
 protoOf(EntersFrontLine).l2g = function (room, event, source, controller) {
   if (event == null || event.r24_1 == null)
@@ -23232,17 +23271,17 @@ protoOf(EntersFrontLine).l2g = function (room, event, source, controller) {
     tmp = event.q24_1;
   }
   var owner = tmp;
-  if (this.a2x_1 === (ensureNotNull(controller) === owner))
+  if (this.b2x_1 === (ensureNotNull(controller) === owner))
     return false;
   var card_0 = EffectEngine_getInstance().y24(room, event.r24_1);
-  return !(card_0 == null) && ensureNotNull(this.b2x_1).p2c(card_0);
+  return !(card_0 == null) && ensureNotNull(this.c2x_1).p2c(card_0);
 };
 protoOf(EntersFrontLine).toString = function () {
-  return 'EntersFrontLine(enemy=' + this.a2x_1 + ', filter=' + toString_0(this.b2x_1) + ')';
+  return 'EntersFrontLine(enemy=' + this.b2x_1 + ', filter=' + toString_0(this.c2x_1) + ')';
 };
 protoOf(EntersFrontLine).hashCode = function () {
-  var result = getBooleanHashCode(this.a2x_1);
-  result = imul(result, 31) + (this.b2x_1 == null ? 0 : this.b2x_1.hashCode()) | 0;
+  var result = getBooleanHashCode(this.b2x_1);
+  result = imul(result, 31) + (this.c2x_1 == null ? 0 : this.c2x_1.hashCode()) | 0;
   return result;
 };
 protoOf(EntersFrontLine).equals = function (other) {
@@ -23250,35 +23289,35 @@ protoOf(EntersFrontLine).equals = function (other) {
     return true;
   if (!(other instanceof EntersFrontLine))
     return false;
-  if (!(this.a2x_1 === other.a2x_1))
+  if (!(this.b2x_1 === other.b2x_1))
     return false;
-  if (!equals_0(this.b2x_1, other.b2x_1))
+  if (!equals_0(this.c2x_1, other.c2x_1))
     return false;
   return true;
 };
 function ThisClashes(enemy, asAttacker) {
-  this.c2x_1 = enemy;
-  this.d2x_1 = asAttacker;
+  this.d2x_1 = enemy;
+  this.e2x_1 = asAttacker;
 }
 protoOf(ThisClashes).l2g = function (room, event, source, controller) {
-  if (event == null || !Companion_instance_13.e2x(Step_CLASH_getInstance(), Phase_ENTER_getInstance()).l2g(room, event, source, controller))
+  if (event == null || !Companion_instance_13.f2x(Step_CLASH_getInstance(), Phase_ENTER_getInstance()).l2g(room, event, source, controller))
     return false;
   var c = room.y18_1;
   if (c == null || c.x1z_1 == null)
     return false;
   var id = ensureNotNull(source).g1c_1;
-  var other = id == c.t1z_1 ? c.x1z_1 : !this.d2x_1 && id == c.x1z_1 ? c.t1z_1 : null;
+  var other = id == c.t1z_1 ? c.x1z_1 : !this.e2x_1 && id == c.x1z_1 ? c.t1z_1 : null;
   if (other == null)
     return false;
   var card = EffectEngine_getInstance().y24(room, other);
-  return !(card == null) && ensureNotNull(this.c2x_1).p2c(card);
+  return !(card == null) && ensureNotNull(this.d2x_1).p2c(card);
 };
 protoOf(ThisClashes).toString = function () {
-  return 'ThisClashes(enemy=' + toString_0(this.c2x_1) + ', asAttacker=' + this.d2x_1 + ')';
+  return 'ThisClashes(enemy=' + toString_0(this.d2x_1) + ', asAttacker=' + this.e2x_1 + ')';
 };
 protoOf(ThisClashes).hashCode = function () {
-  var result = this.c2x_1 == null ? 0 : this.c2x_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.d2x_1) | 0;
+  var result = this.d2x_1 == null ? 0 : this.d2x_1.hashCode();
+  result = imul(result, 31) + getBooleanHashCode(this.e2x_1) | 0;
   return result;
 };
 protoOf(ThisClashes).equals = function (other) {
@@ -23286,30 +23325,30 @@ protoOf(ThisClashes).equals = function (other) {
     return true;
   if (!(other instanceof ThisClashes))
     return false;
-  if (!equals_0(this.c2x_1, other.c2x_1))
+  if (!equals_0(this.d2x_1, other.d2x_1))
     return false;
-  if (!(this.d2x_1 === other.d2x_1))
+  if (!(this.e2x_1 === other.e2x_1))
     return false;
   return true;
 };
 function ThisMatches(filter) {
-  this.f2x_1 = filter;
+  this.g2x_1 = filter;
 }
 protoOf(ThisMatches).l2g = function (room, event, source, controller) {
-  return !(source == null) && ensureNotNull(this.f2x_1).p2c(source);
+  return !(source == null) && ensureNotNull(this.g2x_1).p2c(source);
 };
 protoOf(ThisMatches).toString = function () {
-  return 'ThisMatches(filter=' + toString_0(this.f2x_1) + ')';
+  return 'ThisMatches(filter=' + toString_0(this.g2x_1) + ')';
 };
 protoOf(ThisMatches).hashCode = function () {
-  return this.f2x_1 == null ? 0 : this.f2x_1.hashCode();
+  return this.g2x_1 == null ? 0 : this.g2x_1.hashCode();
 };
 protoOf(ThisMatches).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ThisMatches))
     return false;
-  if (!equals_0(this.f2x_1, other.f2x_1))
+  if (!equals_0(this.g2x_1, other.g2x_1))
     return false;
   return true;
 };
@@ -23357,10 +23396,10 @@ function AddedAsResource_getInstance() {
   return AddedAsResource_instance;
 }
 function AllyClashes(filter) {
-  this.g2x_1 = filter;
+  this.h2x_1 = filter;
 }
 protoOf(AllyClashes).l2g = function (room, event, source, controller) {
-  if (event == null || !Companion_instance_13.e2x(Step_CLASH_getInstance(), Phase_ENTER_getInstance()).l2g(room, event, source, controller))
+  if (event == null || !Companion_instance_13.f2x(Step_CLASH_getInstance(), Phase_ENTER_getInstance()).l2g(room, event, source, controller))
     return false;
   var c = room.y18_1;
   if (c == null || c.x1z_1 == null)
@@ -23391,7 +23430,7 @@ protoOf(AllyClashes).l2g = function (room, event, source, controller) {
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
       var card = EffectEngine_getInstance().s2c(player.a1f_1, element);
-      if (!(card == null) && 'creature' === card.o1c_1 && (this.g2x_1 == null || this.g2x_1.p2c(card))) {
+      if (!(card == null) && 'creature' === card.o1c_1 && (this.h2x_1 == null || this.h2x_1.p2c(card))) {
         tmp$ret$0 = true;
         break $l$block_0;
       }
@@ -23401,17 +23440,17 @@ protoOf(AllyClashes).l2g = function (room, event, source, controller) {
   return tmp$ret$0;
 };
 protoOf(AllyClashes).toString = function () {
-  return 'AllyClashes(filter=' + toString_0(this.g2x_1) + ')';
+  return 'AllyClashes(filter=' + toString_0(this.h2x_1) + ')';
 };
 protoOf(AllyClashes).hashCode = function () {
-  return this.g2x_1 == null ? 0 : this.g2x_1.hashCode();
+  return this.h2x_1 == null ? 0 : this.h2x_1.hashCode();
 };
 protoOf(AllyClashes).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof AllyClashes))
     return false;
-  if (!equals_0(this.g2x_1, other.g2x_1))
+  if (!equals_0(this.h2x_1, other.h2x_1))
     return false;
   return true;
 };
@@ -23466,7 +23505,7 @@ protoOf(Companion_12).v2n = function (condition) {
 protoOf(Companion_12).u2n = function () {
   return new ThisIs(CardState_IN_FRONT_LINE_getInstance());
 };
-protoOf(Companion_12).e2x = function (step, phase) {
+protoOf(Companion_12).f2x = function (step, phase) {
   return happened(this, 'COMBAT_STEP', false, ['step=' + ensureNotNull(step).j2_1, 'moment=' + ensureNotNull(phase).j2_1]);
 };
 var Companion_instance_13;
@@ -23642,7 +23681,7 @@ protoOf(Payment).k2k = function (paid) {
 protoOf(Payment).m2k = function () {
   return this.r2j_1 == null || this.r2j_1.q2b_1 == null ? 0 : this.r2j_1.q2b_1;
 };
-protoOf(Payment).h2x = function () {
+protoOf(Payment).i2x = function () {
   return equals_0(this.p2j_1, PaymentKind_TRIBUTES_TO_DECK_BOTTOM_getInstance()) || equals_0(this.p2j_1, PaymentKind_TRIBUTE_AS_RESOURCE_getInstance()) || equals_0(this.p2j_1, PaymentKind_TAP_CARD_getInstance()) || equals_0(this.p2j_1, PaymentKind_SELF_DAMAGE_getInstance()) || equals_0(this.p2j_1, PaymentKind_TRIBUTES_TO_DECK_TOP_getInstance()) || equals_0(this.p2j_1, PaymentKind_SUMMONER_RESOURCES_TO_TRIBUTES_getInstance());
 };
 protoOf(Payment).toString = function () {
@@ -23774,6 +23813,18 @@ function of($this, card) {
   if (card == null || card.n1c_1 == null)
     return frozenListOf([]);
   return valueOr($this.d2i_1, CardEffects_getInstance().e1t(card.n1c_1), frozenListOf([]));
+}
+function appliesTo($this, m, event) {
+  if (equals_0(m.v2j_1, event))
+    return true;
+  var tmp;
+  if (equals_0(event, Event_EFFECT_SUMMON_getInstance()) && equals_0(m.v2j_1, Event_SUMMON_getInstance()) && equals_0(m.x2j_1, Holder_SELF_getInstance())) {
+    var tmp0_safe_receiver = m.a2k_1;
+    tmp = equals_0(tmp0_safe_receiver == null ? null : tmp0_safe_receiver.p2j_1, PaymentKind_NONE_getInstance());
+  } else {
+    tmp = false;
+  }
+  return tmp;
 }
 function payable($this, player, payment, holder, card, summoner) {
   var tmp;
@@ -23972,7 +24023,7 @@ function CostModifiers() {
   this.d2i_1 = HashMap_init_$Create$_0();
   CardEffects_getInstance().a2o();
 }
-protoOf(CostModifiers).i2x = function (player, use) {
+protoOf(CostModifiers).j2x = function (player, use) {
   if (equals_0(use.h2k_1.c2k_1, Limit_DEFINITIVE_getInstance()))
     return plus(player.f1e_1, '|') + 'definitive';
   var tmp = plus(player.f1e_1, '|cost-modifier|');
@@ -24005,7 +24056,7 @@ protoOf(CostModifiers).i2x = function (player, use) {
   return tmp + toString(tmp$ret$1).toLowerCase();
 };
 protoOf(CostModifiers).l2k = function (room, player, use) {
-  Companion_instance_15.o2s(use.h2k_1.c2k_1, room.a19_1, this.i2x(player, use));
+  Companion_instance_15.p2s(use.h2k_1.c2k_1, room.a19_1, this.j2x(player, use));
 };
 protoOf(CostModifiers).n2n = function (cardName, modifiers) {
   var tmp0 = this.d2i_1;
@@ -24050,7 +24101,7 @@ protoOf(CostModifiers).n2n = function (cardName, modifiers) {
 protoOf(CostModifiers).m1w = function (name) {
   return valueOr(this.d2i_1, name, frozenListOf([]));
 };
-protoOf(CostModifiers).j2x = function (room, player, event, kind, card, summoner) {
+protoOf(CostModifiers).k2x = function (room, player, event, kind, card, summoner) {
   if (player == null)
     return frozenListOf([]);
   var uses = ArrayList_init_$Create$();
@@ -24109,7 +24160,7 @@ protoOf(CostModifiers).j2x = function (room, player, event, kind, card, summoner
     var _iterator__ex2g4s_2 = of(this, holder).h();
     $l$loop_9: while (_iterator__ex2g4s_2.i()) {
       var m = _iterator__ex2g4s_2.j();
-      if (!equals_0(m.v2j_1, event) || (!ensureNotNull(m.w2j_1).m() && !contains(m.w2j_1, kind)))
+      if (!appliesTo(this, m, event) || (!ensureNotNull(m.w2j_1).m() && !contains(m.w2j_1, kind)))
         continue $l$loop_9;
       if (!(m.d2k_1 == null) && (card == null || !m.d2k_1.p2c(card)))
         continue $l$loop_9;
@@ -24184,7 +24235,7 @@ protoOf(CostModifiers).j2x = function (room, player, event, kind, card, summoner
       var use = new Use(m, holder);
       if (equals_0(m.c2k_1, Limit_DEFINITIVE_getInstance()) && room.c19_1)
         continue $l$loop_9;
-      if (Companion_instance_15.z2r(m.c2k_1, room.a19_1, this.i2x(player, use)))
+      if (Companion_instance_15.b2s(m.c2k_1, room.a19_1, this.j2x(player, use)))
         continue $l$loop_9;
       uses.f(use);
     }
@@ -24194,7 +24245,7 @@ protoOf(CostModifiers).j2x = function (room, player, event, kind, card, summoner
 protoOf(CostModifiers).k2j = function (room, player, event, kind, card, summoner) {
   // Inline function 'kotlin.collections.sumOf' call
   var sum = 0;
-  var _iterator__ex2g4s = this.j2x(room, player, event, kind, card, summoner).h();
+  var _iterator__ex2g4s = this.k2x(room, player, event, kind, card, summoner).h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
     var tmp = sum;
@@ -24258,10 +24309,10 @@ protoOf(CostModifiers).k2j = function (room, player, event, kind, card, summoner
 protoOf(CostModifiers).e2i = function (holder, card, yes) {
   return (yes ? 'cost-tap|' : 'cost-tap-no|') + holder.g1c_1 + '|' + card.g1c_1;
 };
-protoOf(CostModifiers).k2x = function (room, player, event, kind, card, cost) {
-  if (!(cost == null) && this.l2x(room, player, event, kind, card, null, cost))
+protoOf(CostModifiers).l2x = function (room, player, event, kind, card, cost) {
+  if (!(cost == null) && this.m2x(room, player, event, kind, card, null, cost))
     return null;
-  var tmp0 = this.j2x(room, player, event, kind, card, null);
+  var tmp0 = this.k2x(room, player, event, kind, card, null);
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
@@ -24277,16 +24328,16 @@ protoOf(CostModifiers).k2x = function (room, player, event, kind, card, cost) {
   }
   return tmp$ret$0;
 };
-protoOf(CostModifiers).m2x = function (room, player, event, kind, card, summoner, cost) {
-  return this.n2x(room, player, event, kind, card, summoner, cost, true);
+protoOf(CostModifiers).n2x = function (room, player, event, kind, card, summoner, cost) {
+  return this.o2x(room, player, event, kind, card, summoner, cost, true);
 };
-protoOf(CostModifiers).n2x = function (room, player, event, kind, card, summoner, cost, taps) {
+protoOf(CostModifiers).o2x = function (room, player, event, kind, card, summoner, cost, taps) {
   var reduced = 0;
-  var _iterator__ex2g4s = this.j2x(room, player, event, kind, card, summoner).h();
+  var _iterator__ex2g4s = this.k2x(room, player, event, kind, card, summoner).h();
   $l$loop_1: while (_iterator__ex2g4s.i()) {
     var use = _iterator__ex2g4s.j();
     ensureNotNull(player);
-    if (ensureNotNull(use.h2k_1.a2k_1).h2x())
+    if (ensureNotNull(use.h2k_1.a2k_1).i2x())
       continue $l$loop_1;
     if (!taps && equals_0(use.h2k_1.a2k_1.p2j_1, PaymentKind_TAP_SELF_getInstance()))
       continue $l$loop_1;
@@ -24311,11 +24362,11 @@ protoOf(CostModifiers).n2x = function (room, player, event, kind, card, summoner
   var b = Math.max(0, cost);
   return Math.min(tmp0, b);
 };
-protoOf(CostModifiers).l2x = function (room, player, event, kind, card, summoner, cost) {
+protoOf(CostModifiers).m2x = function (room, player, event, kind, card, summoner, cost) {
   if (player == null || card == null || !player.r1e_1 || player.q1e_1)
     return false;
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = this.j2x(room, player, event, kind, card, summoner);
+  var tmp0 = this.k2x(room, player, event, kind, card, summoner);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -24337,18 +24388,18 @@ protoOf(CostModifiers).l2x = function (room, player, event, kind, card, summoner
   var decided = sum;
   return (cost - decided | 0) <= 0;
 };
-protoOf(CostModifiers).o2x = function (room, player, use, paid) {
+protoOf(CostModifiers).p2x = function (room, player, use, paid) {
   return imul(use.h2k_1.j2k(room, player.f1e_1), ensureNotNull(use.h2k_1.a2k_1).k2k(paid));
 };
 protoOf(CostModifiers).o2j = function (room, player, event, kind, card, summoner) {
-  var tmp0 = this.j2x(room, player, event, kind, card, summoner);
+  var tmp0 = this.k2x(room, player, event, kind, card, summoner);
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (ensureNotNull(element.h2k_1.a2k_1).h2x()) {
+      if (ensureNotNull(element.h2k_1.a2k_1).i2x()) {
         tmp$ret$0 = element;
         break $l$block;
       }
@@ -24357,10 +24408,10 @@ protoOf(CostModifiers).o2j = function (room, player, event, kind, card, summoner
   }
   return tmp$ret$0;
 };
-protoOf(CostModifiers).p2x = function (player, use, card) {
-  return this.q2x(player, use, card, null);
+protoOf(CostModifiers).q2x = function (player, use, card) {
+  return this.r2x(player, use, card, null);
 };
-protoOf(CostModifiers).q2x = function (player, use, card, summoner) {
+protoOf(CostModifiers).r2x = function (player, use, card, summoner) {
   var payment = ensureNotNull(use.h2k_1.a2k_1);
   if (equals_0(payment.p2j_1, PaymentKind_SUMMONER_RESOURCES_TO_TRIBUTES_getInstance())) {
     // Inline function 'kotlin.collections.orEmpty' call
@@ -24389,9 +24440,9 @@ protoOf(CostModifiers).q2x = function (player, use, card, summoner) {
     var tmp$ret$4 = Math.min(tmp0_0, b);
     return tmp.p1(0, tmp$ret$4);
   }
-  return payment.h2x() ? tributesFor(this, player, payment, card) : frozenListOf([]);
+  return payment.i2x() ? tributesFor(this, player, payment, card) : frozenListOf([]);
 };
-protoOf(CostModifiers).r2x = function (use) {
+protoOf(CostModifiers).s2x = function (use) {
   var payment = ensureNotNull(use.h2k_1.a2k_1);
   if (equals_0(payment.p2j_1, PaymentKind_TRIBUTE_AS_RESOURCE_getInstance())) {
     return 'Puedes a\xF1adir 1 de tus tributos ' + ensureNotNull(payment.r2j_1).e2e() + ' como recurso de ' + use.i2k_1.n1c_1 + ' antes de la invocaci\xF3n. Elige 1, o ninguna.';
@@ -24423,21 +24474,21 @@ function CostModifiers_getInstance() {
   return CostModifiers_instance;
 }
 function LifeLost(life, tribute) {
-  this.c2u_1 = life;
-  this.d2u_1 = tribute;
+  this.d2u_1 = life;
+  this.e2u_1 = tribute;
 }
 protoOf(LifeLost).kd = function () {
-  return this.c2u_1;
-};
-protoOf(LifeLost).ld = function () {
   return this.d2u_1;
 };
+protoOf(LifeLost).ld = function () {
+  return this.e2u_1;
+};
 protoOf(LifeLost).toString = function () {
-  return 'LifeLost(life=' + this.c2u_1.toString() + ', tribute=' + this.d2u_1 + ')';
+  return 'LifeLost(life=' + this.d2u_1.toString() + ', tribute=' + this.e2u_1 + ')';
 };
 protoOf(LifeLost).hashCode = function () {
-  var result = this.c2u_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.d2u_1) | 0;
+  var result = this.d2u_1.hashCode();
+  result = imul(result, 31) + getBooleanHashCode(this.e2u_1) | 0;
   return result;
 };
 protoOf(LifeLost).equals = function (other) {
@@ -24445,9 +24496,9 @@ protoOf(LifeLost).equals = function (other) {
     return true;
   if (!(other instanceof LifeLost))
     return false;
-  if (!this.c2u_1.equals(other.c2u_1))
+  if (!this.d2u_1.equals(other.d2u_1))
     return false;
-  if (!(this.d2u_1 === other.d2u_1))
+  if (!(this.e2u_1 === other.e2u_1))
     return false;
   return true;
 };
@@ -24544,8 +24595,8 @@ protoOf(EffectEngine).z20 = function (card) {
   var looker = tmp;
   var tmp_0;
   var tmp1_safe_receiver = CardEffects_getInstance().i2p(looker);
-  var tmp2_safe_receiver = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.e2y_1;
-  if ((tmp2_safe_receiver == null ? null : tmp2_safe_receiver.n2y_1) === true) {
+  var tmp2_safe_receiver = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.f2y_1;
+  if ((tmp2_safe_receiver == null ? null : tmp2_safe_receiver.o2y_1) === true) {
     tmp_0 = plus_1(levels, cost);
   } else {
     tmp_0 = levels;
@@ -24570,10 +24621,10 @@ protoOf(EffectEngine).k2q = function (card) {
     return null;
   return CardEffects_getInstance().o2p(card);
 };
-protoOf(EffectEngine).q2y = function (card, level) {
+protoOf(EffectEngine).r2y = function (card, level) {
   return this.z20(card).n(level);
 };
-protoOf(EffectEngine).r2y = function (card, effect) {
+protoOf(EffectEngine).s2y = function (card, effect) {
   return !(effect == null) && !(card == null) && this.c1p(card).n('Solo la afectan sus copias') && !(card.n1c_1 == null) && !equals(ensureNotNull(card.n1c_1), effect.p21_1, true);
 };
 protoOf(EffectEngine).g2e = function (room, type, playerId, card, from, to, effect, data, logText) {
@@ -24658,7 +24709,7 @@ protoOf(EffectEngine).g2e = function (room, type, playerId, card, from, to, effe
     tmp_0 = false;
   }
   if (tmp_0) {
-    data_0 = data_0 == null ? Platform_instance.m2t() : Platform_instance.s2y(data_0);
+    data_0 = data_0 == null ? Platform_instance.n2t() : Platform_instance.t2y(data_0);
     var tmp0_1 = data_0;
     var tmp2 = 'formation';
     // Inline function 'kotlin.collections.set' call
@@ -24670,7 +24721,7 @@ protoOf(EffectEngine).g2e = function (room, type, playerId, card, from, to, effe
     e.v24_1 = effect.k21_1;
     e.w24_1 = effect.z21_1;
     if ('TRIBUTE' === type && (data_0 == null || !data_0.s1('byCard')) && !(effect.n21_1 == null)) {
-      data_0 = data_0 == null ? Platform_instance.m2t() : Platform_instance.s2y(data_0);
+      data_0 = data_0 == null ? Platform_instance.n2t() : Platform_instance.t2y(data_0);
       var tmp0_2 = data_0;
       // Inline function 'kotlin.collections.set' call
       var value_0 = effect.n21_1;
@@ -24691,7 +24742,7 @@ protoOf(EffectEngine).g2e = function (room, type, playerId, card, from, to, effe
 };
 protoOf(EffectEngine).h2e = function (room, text, seq) {
   var entry = GameLogEntry_init_$Create$_0(Clocks_getInstance().u1l(), text, seq);
-  HistoryDescriber_getInstance().u2y(room, entry);
+  HistoryDescriber_getInstance().v2y(room, entry);
   room.n18_1.f(entry);
   if (room.n18_1.k() > 300) {
     room.n18_1.f2(0);
@@ -24700,10 +24751,10 @@ protoOf(EffectEngine).h2e = function (room, text, seq) {
 protoOf(EffectEngine).p1l = function (room, playerId) {
   var loser = room.a1e(playerId);
   if (!(loser == null)) {
-    this.v2y(room, loser, 'deck', plus(loser.g1e_1, ' no puede robar al inicio de su turno: pierde la partida'));
+    this.w2y(room, loser, 'deck', plus(loser.g1e_1, ' no puede robar al inicio de su turno: pierde la partida'));
   }
 };
-protoOf(EffectEngine).b2u = function (room, defender, damage, actorId, effect, attackerId, message) {
+protoOf(EffectEngine).c2u = function (room, defender, damage, actorId, effect, attackerId, message) {
   var life = defender.x1e_1.l(0);
   life.j1c_1 = false;
   this.g2e(room, 'LIFE_DAMAGE', actorId, life, 'lifeStack', 'lifeStack', effect, frozenMapOf_2('damage', damage, 'attackerId', attackerId, 'defenderId', defender.f1e_1), message + 'pierde la vida ' + this.q2c(life) + ', que queda revelada en sus vidas');
@@ -24718,9 +24769,9 @@ protoOf(EffectEngine).c2h = function (room, defender, damage, actorId, effect, a
   return new LifeLost(life, tribute);
 };
 protoOf(EffectEngine).d2h = function (room, loser) {
-  this.v2y(room, ensureNotNull(loser), 'lives', plus(loser.g1e_1, ' se qued\xF3 sin vidas: pierde la partida'));
+  this.w2y(room, ensureNotNull(loser), 'lives', plus(loser.g1e_1, ' se qued\xF3 sin vidas: pierde la partida'));
 };
-protoOf(EffectEngine).v2y = function (room, loser, reason, text) {
+protoOf(EffectEngine).w2y = function (room, loser, reason, text) {
   this.g2e(room, 'GAME_LOST', loser.f1e_1, null, null, null, null, frozenMapOf_0('reason', reason), text);
   room.g19_1 = room.l1i(loser.f1e_1);
   room.h19_1 = reason;
@@ -24732,9 +24783,9 @@ protoOf(EffectEngine).v2y = function (room, loser, reason, text) {
   room.z17_1 = RoomStatus_POST_GAME_getInstance();
 };
 protoOf(EffectEngine).m2d = function (room, effect) {
-  return this.w2y(room, ensureNotNull(effect).s21_1);
+  return this.x2y(room, ensureNotNull(effect).s21_1);
 };
-protoOf(EffectEngine).w2y = function (room, seq) {
+protoOf(EffectEngine).x2y = function (room, seq) {
   if (seq == null)
     return null;
   var timeline = room.o18_1;
@@ -24752,13 +24803,13 @@ protoOf(EffectEngine).w2y = function (room, seq) {
   }
   return null;
 };
-protoOf(EffectEngine).x2y = function (player, instanceId) {
-  return player == null ? null : this.s2c(this.r2u(player.a1f_1), instanceId);
+protoOf(EffectEngine).y2y = function (player, instanceId) {
+  return player == null ? null : this.s2c(this.s2u(player.a1f_1), instanceId);
 };
 protoOf(EffectEngine).y24 = function (room, instanceId) {
-  return CardLocator_getInstance().y2y(room, instanceId, CardLocator_getInstance().r1h_1, true);
+  return CardLocator_getInstance().z2y(room, instanceId, CardLocator_getInstance().r1h_1, true);
 };
-protoOf(EffectEngine).k2w = function (room, instanceId) {
+protoOf(EffectEngine).l2w = function (room, instanceId) {
   if (instanceId == null)
     return null;
   var _iterator__ex2g4s = room.a18_1.w1().h();
@@ -24827,8 +24878,8 @@ protoOf(EffectEngine).k2w = function (room, instanceId) {
   }
   return this.y24(room, instanceId);
 };
-protoOf(EffectEngine).z2y = function (room) {
-  return CardLocator_getInstance().a2z(room, CardLocator_getInstance().r1h_1, true);
+protoOf(EffectEngine).a2z = function (room) {
+  return CardLocator_getInstance().b2z(room, CardLocator_getInstance().r1h_1, true);
 };
 protoOf(EffectEngine).z2g = function (effect) {
   var tmp0_elvis_lhs = CardEffects_getInstance().g2p(ensureNotNull(ensureNotNull(effect).l21_1));
@@ -24840,7 +24891,7 @@ protoOf(EffectEngine).z2g = function (effect) {
   }
   return tmp;
 };
-protoOf(EffectEngine).m2v = function (room, event) {
+protoOf(EffectEngine).n2v = function (room, event) {
   var _iterator__ex2g4s = room.o18_1.h();
   $l$loop_1: while (_iterator__ex2g4s.i()) {
     var later = _iterator__ex2g4s.j();
@@ -24854,7 +24905,7 @@ protoOf(EffectEngine).m2v = function (room, event) {
   }
   return true;
 };
-protoOf(EffectEngine).u2v = function (room, event) {
+protoOf(EffectEngine).v2v = function (room, event) {
   var owner = !(this.m2r(ensureNotNull(event)) == null) ? this.m2r(event) : event.q24_1;
   var zone = !(event.u24_1 == null) ? event.u24_1 : 'field';
   return this.n2r(room, owner, zone, event.r24_1);
@@ -24906,7 +24957,7 @@ protoOf(EffectEngine).c1p = function (card) {
   return all;
 };
 protoOf(EffectEngine).y1l = function (room) {
-  Formations_instance.b2z(room);
+  Formations_instance.c2z(room);
   var _iterator__ex2g4s = room.a18_1.w1().h();
   while (_iterator__ex2g4s.i()) {
     var p = _iterator__ex2g4s.j();
@@ -24922,7 +24973,7 @@ protoOf(EffectEngine).y1l = function (room) {
         var c = _iterator__ex2g4s_1.j();
         if (c.b2m_1 == null || c.c2m_1 || !c.j2m(room, source, ensureNotNull(p.f1e_1)))
           continue $l$loop_0;
-        var pool = c.d2m_1 ? Formations_instance.c2z(p, source) : p.a1f_1;
+        var pool = c.d2m_1 ? Formations_instance.d2z(p, source) : p.a1f_1;
         var _iterator__ex2g4s_2 = pool.h();
         while (_iterator__ex2g4s_2.i()) {
           var ally = _iterator__ex2g4s_2.j();
@@ -25019,15 +25070,15 @@ protoOf(EffectEngine).y1l = function (room) {
   }
 };
 protoOf(EffectEngine).t2c = function (player, instanceId) {
-  var found = CardLocator_getInstance().d2z(player, instanceId, CardLocator_getInstance().r1h_1, false);
-  return found == null ? null : new Located(found.e2z_1, ensureNotNull(found.f2z_1).g2s());
+  var found = CardLocator_getInstance().e2z(player, instanceId, CardLocator_getInstance().r1h_1, false);
+  return found == null ? null : new Located(found.f2z_1, ensureNotNull(found.g2z_1).i2s());
 };
 protoOf(EffectEngine).l2e = function (room, playerId, instanceId) {
   var p = room.a1e(playerId);
   var at = p == null ? null : this.t2c(p, instanceId);
   return at == null ? null : at.v2c_1;
 };
-protoOf(EffectEngine).m2s = function (room, playerId, instanceId) {
+protoOf(EffectEngine).n2s = function (room, playerId, instanceId) {
   var tmp0_elvis_lhs = this.l2e(room, playerId, instanceId);
   return tmp0_elvis_lhs == null ? CardLocator_getInstance().t1h(room.a1e(playerId), instanceId, frozenListOf([Zone_FIELD_getInstance()]), true) : tmp0_elvis_lhs;
 };
@@ -25043,8 +25094,8 @@ protoOf(EffectEngine).d2f = function (player, zone) {
   var tmp1_elvis_lhs = tmp;
   return tmp1_elvis_lhs == null ? frozenListOf([]) : tmp1_elvis_lhs;
 };
-protoOf(EffectEngine).g2z = function (zone) {
-  return Companion_instance_34.h2z(zone);
+protoOf(EffectEngine).h2z = function (zone) {
+  return Companion_instance_34.i2z(zone);
 };
 protoOf(EffectEngine).a2e = function (cards) {
   // Inline function 'kotlin.collections.map' call
@@ -25125,7 +25176,7 @@ protoOf(EffectEngine).e1p = function (card) {
   var y = ensureNotNull(card).m1c_1;
   return !(y == null) && y < 50;
 };
-protoOf(EffectEngine).r2u = function (field) {
+protoOf(EffectEngine).s2u = function (field) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = ensureNotNull(field);
   // Inline function 'kotlin.collections.filterTo' call
@@ -25243,7 +25294,7 @@ protoOf(EffectEngine).s2f = function (room, playerId, filter) {
   }
   return sum;
 };
-protoOf(EffectEngine).v2t = function (card, sourceLevel) {
+protoOf(EffectEngine).w2t = function (card, sourceLevel) {
   var _iterator__ex2g4s = this.c1p(card).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var k = _iterator__ex2g4s.j();
@@ -25274,7 +25325,7 @@ protoOf(EffectEngine).x2h = function (room, userId, cost) {
 protoOf(EffectEngine).t2k = function (room, userId, cost) {
   room.e18_1 = this.s1t(room.e18_1 - imul(cost, this.o2k(room, userId)) | 0);
 };
-protoOf(EffectEngine).h2s = function (room, playerId, purpose, title, instruction, chosenLabel, options, shown) {
+protoOf(EffectEngine).j2s = function (room, playerId, purpose, title, instruction, chosenLabel, options, shown) {
   var p = new Prompt();
   p.f1m_1 = room.y2k('prompt');
   p.g1m_1 = Kind_PICK_getInstance();
@@ -25290,7 +25341,7 @@ protoOf(EffectEngine).h2s = function (room, playerId, purpose, title, instructio
   p.s1m_1 = 1;
   room.r18_1 = p;
 };
-protoOf(EffectEngine).t2t = function (card, keyword) {
+protoOf(EffectEngine).u2t = function (card, keyword) {
   var best = null;
   var _iterator__ex2g4s = this.c1p(card).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
@@ -25317,7 +25368,7 @@ protoOf(EffectEngine).t2t = function (card, keyword) {
   }
   return best;
 };
-protoOf(EffectEngine).i2z = function (card) {
+protoOf(EffectEngine).j2z = function (card) {
   return 'creature' === ensureNotNull(card).o1c_1 && card.k1c_1 && !(card.m1d_1 === 1);
 };
 protoOf(EffectEngine).u2c = function (player) {
@@ -25406,13 +25457,13 @@ var Limit_TWICE_PER_TURN_BETWEEN_COPIES_instance;
 var Limit_DEFINITIVE_instance;
 var Limit_ONE_EFFECT_OF_NAME_PER_TURN_instance;
 function Companion_14() {
-  this.y2r_1 = '#2';
+  this.a2s_1 = '#2';
 }
-protoOf(Companion_14).z2r = function (limit, used, key) {
+protoOf(Companion_14).b2s = function (limit, used, key) {
   var tmp;
   if (!equals_0(limit, Limit_NONE_getInstance()) && used.n(key)) {
     var tmp_0;
-    var tmp1_elvis_lhs = limit == null ? null : limit.c2s_1;
+    var tmp1_elvis_lhs = limit == null ? null : limit.e2s_1;
     if ((tmp1_elvis_lhs == null ? 1 : tmp1_elvis_lhs) < 2) {
       tmp_0 = true;
     } else {
@@ -25424,10 +25475,10 @@ protoOf(Companion_14).z2r = function (limit, used, key) {
   }
   return tmp;
 };
-protoOf(Companion_14).o2s = function (limit, used, key) {
+protoOf(Companion_14).p2s = function (limit, used, key) {
   var tmp;
   if (!equals_0(limit, Limit_NONE_getInstance()) && !used.f(key)) {
-    var tmp1_elvis_lhs = limit == null ? null : limit.c2s_1;
+    var tmp1_elvis_lhs = limit == null ? null : limit.e2s_1;
     tmp = (tmp1_elvis_lhs == null ? 1 : tmp1_elvis_lhs) > 1;
   } else {
     tmp = false;
@@ -25465,8 +25516,8 @@ function Limit(name, ordinal, uses, betweenCopies) {
   uses = uses === VOID ? 1 : uses;
   betweenCopies = betweenCopies === VOID ? false : betweenCopies;
   Enum.call(this, name, ordinal);
-  this.c2s_1 = uses;
-  this.d2s_1 = betweenCopies;
+  this.e2s_1 = uses;
+  this.f2s_1 = betweenCopies;
 }
 function Moment_ON_SUMMON_getInstance() {
   static_init_10();
@@ -25552,7 +25603,7 @@ function EffectScript(id, moment, mandatory, label, text, cost, steps, condition
 protoOf(EffectScript).w2n = function (condition) {
   return new EffectScript(this.n1w_1, this.o1w_1, this.p1w_1, this.q1w_1, this.r1w_1, this.s1w_1, this.t1w_1, condition, this.v1w_1, this.w1w_1, this.x1w_1);
 };
-protoOf(EffectScript).j2z = function (id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit) {
+protoOf(EffectScript).k2z = function (id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit) {
   return new EffectScript(id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit);
 };
 protoOf(EffectScript).d2p = function (id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit, $super) {
@@ -25567,7 +25618,7 @@ protoOf(EffectScript).d2p = function (id, moment, mandatory, label, text, cost, 
   sourceZone = sourceZone === VOID ? this.v1w_1 : sourceZone;
   allyTurn = allyTurn === VOID ? this.w1w_1 : allyTurn;
   limit = limit === VOID ? this.x1w_1 : limit;
-  return $super === VOID ? this.j2z(id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit) : $super.j2z.call(this, id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit);
+  return $super === VOID ? this.k2z(id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit) : $super.k2z.call(this, id, moment, mandatory, label, text, cost, steps, condition, sourceZone, allyTurn, limit);
 };
 protoOf(EffectScript).toString = function () {
   return 'EffectScript(id=' + this.n1w_1 + ', moment=' + toString_0(this.o1w_1) + ', mandatory=' + this.p1w_1 + ', label=' + this.q1w_1 + ', text=' + this.r1w_1 + ', cost=' + toString_0(this.s1w_1) + ', steps=' + toString_0(this.t1w_1) + ', condition=' + toString_0(this.u1w_1) + ', sourceZone=' + this.v1w_1 + ', allyTurn=' + this.w1w_1 + ', limit=' + toString_0(this.x1w_1) + ')';
@@ -25623,20 +25674,20 @@ function SacrificeAlly_init_$Create$() {
   return SacrificeAlly_init_$Init$(objectCreate(protoOf(SacrificeAlly)));
 }
 function Do(action) {
-  this.b2t_1 = action;
+  this.c2t_1 = action;
 }
 protoOf(Do).toString = function () {
-  return 'Do(action=' + toString_0(this.b2t_1) + ')';
+  return 'Do(action=' + toString_0(this.c2t_1) + ')';
 };
 protoOf(Do).hashCode = function () {
-  return this.b2t_1 == null ? 0 : hashCode(this.b2t_1);
+  return this.c2t_1 == null ? 0 : hashCode(this.c2t_1);
 };
 protoOf(Do).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Do))
     return false;
-  if (!equals_0(this.b2t_1, other.b2t_1))
+  if (!equals_0(this.c2t_1, other.c2t_1))
     return false;
   return true;
 };
@@ -25662,51 +25713,51 @@ function BounceChosen_getInstance() {
   return BounceChosen_instance;
 }
 function NoUntapChosen(wholeTurn) {
-  this.s2u_1 = wholeTurn;
+  this.t2u_1 = wholeTurn;
 }
 protoOf(NoUntapChosen).toString = function () {
-  return 'NoUntapChosen(wholeTurn=' + this.s2u_1 + ')';
+  return 'NoUntapChosen(wholeTurn=' + this.t2u_1 + ')';
 };
 protoOf(NoUntapChosen).hashCode = function () {
-  return getBooleanHashCode(this.s2u_1);
+  return getBooleanHashCode(this.t2u_1);
 };
 protoOf(NoUntapChosen).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof NoUntapChosen))
     return false;
-  if (!(this.s2u_1 === other.s2u_1))
+  if (!(this.t2u_1 === other.t2u_1))
     return false;
   return true;
 };
 function ChooseWeakestEnemy(filter) {
-  this.n2u_1 = filter;
+  this.o2u_1 = filter;
 }
 protoOf(ChooseWeakestEnemy).toString = function () {
-  return 'ChooseWeakestEnemy(filter=' + toString_0(this.n2u_1) + ')';
+  return 'ChooseWeakestEnemy(filter=' + toString_0(this.o2u_1) + ')';
 };
 protoOf(ChooseWeakestEnemy).hashCode = function () {
-  return this.n2u_1 == null ? 0 : this.n2u_1.hashCode();
+  return this.o2u_1 == null ? 0 : this.o2u_1.hashCode();
 };
 protoOf(ChooseWeakestEnemy).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ChooseWeakestEnemy))
     return false;
-  if (!equals_0(this.n2u_1, other.n2u_1))
+  if (!equals_0(this.o2u_1, other.o2u_1))
     return false;
   return true;
 };
 function IfTributed(filter, covers) {
-  this.w2s_1 = filter;
-  this.x2s_1 = covers;
+  this.x2s_1 = filter;
+  this.y2s_1 = covers;
 }
 protoOf(IfTributed).toString = function () {
-  return 'IfTributed(filter=' + toString_0(this.w2s_1) + ', covers=' + this.x2s_1 + ')';
+  return 'IfTributed(filter=' + toString_0(this.x2s_1) + ', covers=' + this.y2s_1 + ')';
 };
 protoOf(IfTributed).hashCode = function () {
-  var result = this.w2s_1 == null ? 0 : this.w2s_1.hashCode();
-  result = imul(result, 31) + this.x2s_1 | 0;
+  var result = this.x2s_1 == null ? 0 : this.x2s_1.hashCode();
+  result = imul(result, 31) + this.y2s_1 | 0;
   return result;
 };
 protoOf(IfTributed).equals = function (other) {
@@ -25714,9 +25765,9 @@ protoOf(IfTributed).equals = function (other) {
     return true;
   if (!(other instanceof IfTributed))
     return false;
-  if (!equals_0(this.w2s_1, other.w2s_1))
+  if (!equals_0(this.x2s_1, other.x2s_1))
     return false;
-  if (!(this.x2s_1 === other.x2s_1))
+  if (!(this.y2s_1 === other.y2s_1))
     return false;
   return true;
 };
@@ -25740,15 +25791,15 @@ function IfPossible_getInstance() {
   return IfPossible_instance;
 }
 function SummonLikeSubject(zone, filter) {
-  this.k2z_1 = zone;
-  this.l2z_1 = filter;
+  this.l2z_1 = zone;
+  this.m2z_1 = filter;
 }
 protoOf(SummonLikeSubject).toString = function () {
-  return 'SummonLikeSubject(zone=' + this.k2z_1 + ', filter=' + toString_0(this.l2z_1) + ')';
+  return 'SummonLikeSubject(zone=' + this.l2z_1 + ', filter=' + toString_0(this.m2z_1) + ')';
 };
 protoOf(SummonLikeSubject).hashCode = function () {
-  var result = this.k2z_1 == null ? 0 : getStringHashCode(this.k2z_1);
-  result = imul(result, 31) + (this.l2z_1 == null ? 0 : this.l2z_1.hashCode()) | 0;
+  var result = this.l2z_1 == null ? 0 : getStringHashCode(this.l2z_1);
+  result = imul(result, 31) + (this.m2z_1 == null ? 0 : this.m2z_1.hashCode()) | 0;
   return result;
 };
 protoOf(SummonLikeSubject).equals = function (other) {
@@ -25756,9 +25807,9 @@ protoOf(SummonLikeSubject).equals = function (other) {
     return true;
   if (!(other instanceof SummonLikeSubject))
     return false;
-  if (!(this.k2z_1 == other.k2z_1))
+  if (!(this.l2z_1 == other.l2z_1))
     return false;
-  if (!equals_0(this.l2z_1, other.l2z_1))
+  if (!equals_0(this.m2z_1, other.m2z_1))
     return false;
   return true;
 };
@@ -25824,20 +25875,20 @@ protoOf(KeepOnField).equals = function (other) {
   return true;
 };
 function TakeFromLookedLikeSubject(max) {
-  this.m2z_1 = max;
+  this.n2z_1 = max;
 }
 protoOf(TakeFromLookedLikeSubject).toString = function () {
-  return 'TakeFromLookedLikeSubject(max=' + this.m2z_1 + ')';
+  return 'TakeFromLookedLikeSubject(max=' + this.n2z_1 + ')';
 };
 protoOf(TakeFromLookedLikeSubject).hashCode = function () {
-  return this.m2z_1;
+  return this.n2z_1;
 };
 protoOf(TakeFromLookedLikeSubject).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof TakeFromLookedLikeSubject))
     return false;
-  if (!(this.m2z_1 === other.m2z_1))
+  if (!(this.n2z_1 === other.n2z_1))
     return false;
   return true;
 };
@@ -25880,20 +25931,20 @@ function OpponentMovesOneToFront_getInstance() {
   return OpponentMovesOneToFront_instance;
 }
 function OpponentMayTap(filter) {
-  this.n2z_1 = filter;
+  this.o2z_1 = filter;
 }
 protoOf(OpponentMayTap).toString = function () {
-  return 'OpponentMayTap(filter=' + toString_0(this.n2z_1) + ')';
+  return 'OpponentMayTap(filter=' + toString_0(this.o2z_1) + ')';
 };
 protoOf(OpponentMayTap).hashCode = function () {
-  return this.n2z_1 == null ? 0 : this.n2z_1.hashCode();
+  return this.o2z_1 == null ? 0 : this.o2z_1.hashCode();
 };
 protoOf(OpponentMayTap).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof OpponentMayTap))
     return false;
-  if (!equals_0(this.n2z_1, other.n2z_1))
+  if (!equals_0(this.o2z_1, other.o2z_1))
     return false;
   return true;
 };
@@ -25949,17 +26000,17 @@ protoOf(ReduceRepeatedly).equals = function (other) {
   return true;
 };
 function TributesToDeckBottomForKeyword(count, filter, keyword) {
-  this.o2u_1 = count;
-  this.p2u_1 = filter;
-  this.q2u_1 = keyword;
+  this.p2u_1 = count;
+  this.q2u_1 = filter;
+  this.r2u_1 = keyword;
 }
 protoOf(TributesToDeckBottomForKeyword).toString = function () {
-  return 'TributesToDeckBottomForKeyword(count=' + this.o2u_1 + ', filter=' + toString_0(this.p2u_1) + ', keyword=' + this.q2u_1 + ')';
+  return 'TributesToDeckBottomForKeyword(count=' + this.p2u_1 + ', filter=' + toString_0(this.q2u_1) + ', keyword=' + this.r2u_1 + ')';
 };
 protoOf(TributesToDeckBottomForKeyword).hashCode = function () {
-  var result = this.o2u_1;
-  result = imul(result, 31) + (this.p2u_1 == null ? 0 : this.p2u_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.q2u_1 == null ? 0 : getStringHashCode(this.q2u_1)) | 0;
+  var result = this.p2u_1;
+  result = imul(result, 31) + (this.q2u_1 == null ? 0 : this.q2u_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.r2u_1 == null ? 0 : getStringHashCode(this.r2u_1)) | 0;
   return result;
 };
 protoOf(TributesToDeckBottomForKeyword).equals = function (other) {
@@ -25967,11 +26018,11 @@ protoOf(TributesToDeckBottomForKeyword).equals = function (other) {
     return true;
   if (!(other instanceof TributesToDeckBottomForKeyword))
     return false;
-  if (!(this.o2u_1 === other.o2u_1))
+  if (!(this.p2u_1 === other.p2u_1))
     return false;
-  if (!equals_0(this.p2u_1, other.p2u_1))
+  if (!equals_0(this.q2u_1, other.q2u_1))
     return false;
-  if (!(this.q2u_1 == other.q2u_1))
+  if (!(this.r2u_1 == other.r2u_1))
     return false;
   return true;
 };
@@ -26090,19 +26141,19 @@ protoOf(ActivateMaterialSummonEffects).equals = function (other) {
   return true;
 };
 function OpponentMaySummon(zone, filter, reduce, toFront) {
-  this.o2z_1 = zone;
-  this.p2z_1 = filter;
-  this.q2z_1 = reduce;
-  this.r2z_1 = toFront;
+  this.p2z_1 = zone;
+  this.q2z_1 = filter;
+  this.r2z_1 = reduce;
+  this.s2z_1 = toFront;
 }
 protoOf(OpponentMaySummon).toString = function () {
-  return 'OpponentMaySummon(zone=' + this.o2z_1 + ', filter=' + toString_0(this.p2z_1) + ', reduce=' + this.q2z_1 + ', toFront=' + this.r2z_1 + ')';
+  return 'OpponentMaySummon(zone=' + this.p2z_1 + ', filter=' + toString_0(this.q2z_1) + ', reduce=' + this.r2z_1 + ', toFront=' + this.s2z_1 + ')';
 };
 protoOf(OpponentMaySummon).hashCode = function () {
-  var result = this.o2z_1 == null ? 0 : getStringHashCode(this.o2z_1);
-  result = imul(result, 31) + (this.p2z_1 == null ? 0 : this.p2z_1.hashCode()) | 0;
-  result = imul(result, 31) + this.q2z_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.r2z_1) | 0;
+  var result = this.p2z_1 == null ? 0 : getStringHashCode(this.p2z_1);
+  result = imul(result, 31) + (this.q2z_1 == null ? 0 : this.q2z_1.hashCode()) | 0;
+  result = imul(result, 31) + this.r2z_1 | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.s2z_1) | 0;
   return result;
 };
 protoOf(OpponentMaySummon).equals = function (other) {
@@ -26110,28 +26161,28 @@ protoOf(OpponentMaySummon).equals = function (other) {
     return true;
   if (!(other instanceof OpponentMaySummon))
     return false;
-  if (!(this.o2z_1 == other.o2z_1))
+  if (!(this.p2z_1 == other.p2z_1))
     return false;
-  if (!equals_0(this.p2z_1, other.p2z_1))
-    return false;
-  if (!(this.q2z_1 === other.q2z_1))
+  if (!equals_0(this.q2z_1, other.q2z_1))
     return false;
   if (!(this.r2z_1 === other.r2z_1))
+    return false;
+  if (!(this.s2z_1 === other.s2z_1))
     return false;
   return true;
 };
 function SummonFreeLevelSum(zone, filter, maxLevelSum) {
-  this.s2z_1 = zone;
-  this.t2z_1 = filter;
-  this.u2z_1 = maxLevelSum;
+  this.t2z_1 = zone;
+  this.u2z_1 = filter;
+  this.v2z_1 = maxLevelSum;
 }
 protoOf(SummonFreeLevelSum).toString = function () {
-  return 'SummonFreeLevelSum(zone=' + this.s2z_1 + ', filter=' + toString_0(this.t2z_1) + ', maxLevelSum=' + this.u2z_1 + ')';
+  return 'SummonFreeLevelSum(zone=' + this.t2z_1 + ', filter=' + toString_0(this.u2z_1) + ', maxLevelSum=' + this.v2z_1 + ')';
 };
 protoOf(SummonFreeLevelSum).hashCode = function () {
-  var result = this.s2z_1 == null ? 0 : getStringHashCode(this.s2z_1);
-  result = imul(result, 31) + (this.t2z_1 == null ? 0 : this.t2z_1.hashCode()) | 0;
-  result = imul(result, 31) + this.u2z_1 | 0;
+  var result = this.t2z_1 == null ? 0 : getStringHashCode(this.t2z_1);
+  result = imul(result, 31) + (this.u2z_1 == null ? 0 : this.u2z_1.hashCode()) | 0;
+  result = imul(result, 31) + this.v2z_1 | 0;
   return result;
 };
 protoOf(SummonFreeLevelSum).equals = function (other) {
@@ -26139,11 +26190,11 @@ protoOf(SummonFreeLevelSum).equals = function (other) {
     return true;
   if (!(other instanceof SummonFreeLevelSum))
     return false;
-  if (!(this.s2z_1 == other.s2z_1))
+  if (!(this.t2z_1 == other.t2z_1))
     return false;
-  if (!equals_0(this.t2z_1, other.t2z_1))
+  if (!equals_0(this.u2z_1, other.u2z_1))
     return false;
-  if (!(this.u2z_1 === other.u2z_1))
+  if (!(this.v2z_1 === other.v2z_1))
     return false;
   return true;
 };
@@ -26167,38 +26218,38 @@ function DestroyFaceUpLife_getInstance() {
   return DestroyFaceUpLife_instance;
 }
 function IfDone(covers) {
-  this.z2s_1 = covers;
+  this.a2t_1 = covers;
 }
 protoOf(IfDone).toString = function () {
-  return 'IfDone(covers=' + this.z2s_1 + ')';
+  return 'IfDone(covers=' + this.a2t_1 + ')';
 };
 protoOf(IfDone).hashCode = function () {
-  return this.z2s_1;
+  return this.a2t_1;
 };
 protoOf(IfDone).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof IfDone))
     return false;
-  if (!(this.z2s_1 === other.z2s_1))
+  if (!(this.a2t_1 === other.a2t_1))
     return false;
   return true;
 };
 function IfNotDone(covers) {
-  this.y2s_1 = covers;
+  this.z2s_1 = covers;
 }
 protoOf(IfNotDone).toString = function () {
-  return 'IfNotDone(covers=' + this.y2s_1 + ')';
+  return 'IfNotDone(covers=' + this.z2s_1 + ')';
 };
 protoOf(IfNotDone).hashCode = function () {
-  return this.y2s_1;
+  return this.z2s_1;
 };
 protoOf(IfNotDone).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof IfNotDone))
     return false;
-  if (!(this.y2s_1 === other.y2s_1))
+  if (!(this.z2s_1 === other.z2s_1))
     return false;
   return true;
 };
@@ -26264,15 +26315,15 @@ function SubjectFromTrigger_getInstance() {
   return SubjectFromTrigger_instance;
 }
 function MayDo(question, covers) {
-  this.q2s_1 = question;
-  this.r2s_1 = covers;
+  this.r2s_1 = question;
+  this.s2s_1 = covers;
 }
 protoOf(MayDo).toString = function () {
-  return 'MayDo(question=' + this.q2s_1 + ', covers=' + this.r2s_1 + ')';
+  return 'MayDo(question=' + this.r2s_1 + ', covers=' + this.s2s_1 + ')';
 };
 protoOf(MayDo).hashCode = function () {
-  var result = this.q2s_1 == null ? 0 : getStringHashCode(this.q2s_1);
-  result = imul(result, 31) + this.r2s_1 | 0;
+  var result = this.r2s_1 == null ? 0 : getStringHashCode(this.r2s_1);
+  result = imul(result, 31) + this.s2s_1 | 0;
   return result;
 };
 protoOf(MayDo).equals = function (other) {
@@ -26280,9 +26331,9 @@ protoOf(MayDo).equals = function (other) {
     return true;
   if (!(other instanceof MayDo))
     return false;
-  if (!(this.q2s_1 == other.q2s_1))
+  if (!(this.r2s_1 == other.r2s_1))
     return false;
-  if (!(this.r2s_1 === other.r2s_1))
+  if (!(this.s2s_1 === other.s2s_1))
     return false;
   return true;
 };
@@ -26311,17 +26362,17 @@ protoOf(IfSaved).equals = function (other) {
 };
 function IfCondition(condition, covers, ofTrigger) {
   ofTrigger = ofTrigger === VOID ? false : ofTrigger;
-  this.t2s_1 = condition;
-  this.u2s_1 = covers;
-  this.v2s_1 = ofTrigger;
+  this.u2s_1 = condition;
+  this.v2s_1 = covers;
+  this.w2s_1 = ofTrigger;
 }
 protoOf(IfCondition).toString = function () {
-  return 'IfCondition(condition=' + toString_0(this.t2s_1) + ', covers=' + this.u2s_1 + ', ofTrigger=' + this.v2s_1 + ')';
+  return 'IfCondition(condition=' + toString_0(this.u2s_1) + ', covers=' + this.v2s_1 + ', ofTrigger=' + this.w2s_1 + ')';
 };
 protoOf(IfCondition).hashCode = function () {
-  var result = this.t2s_1 == null ? 0 : hashCode(this.t2s_1);
-  result = imul(result, 31) + this.u2s_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.v2s_1) | 0;
+  var result = this.u2s_1 == null ? 0 : hashCode(this.u2s_1);
+  result = imul(result, 31) + this.v2s_1 | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.w2s_1) | 0;
   return result;
 };
 protoOf(IfCondition).equals = function (other) {
@@ -26329,28 +26380,28 @@ protoOf(IfCondition).equals = function (other) {
     return true;
   if (!(other instanceof IfCondition))
     return false;
-  if (!equals_0(this.t2s_1, other.t2s_1))
-    return false;
-  if (!(this.u2s_1 === other.u2s_1))
+  if (!equals_0(this.u2s_1, other.u2s_1))
     return false;
   if (!(this.v2s_1 === other.v2s_1))
+    return false;
+  if (!(this.w2s_1 === other.w2s_1))
     return false;
   return true;
 };
 function AlliesGain(filter, keyword, until, others) {
-  this.x2u_1 = filter;
-  this.y2u_1 = keyword;
-  this.z2u_1 = until;
-  this.a2v_1 = others;
+  this.y2u_1 = filter;
+  this.z2u_1 = keyword;
+  this.a2v_1 = until;
+  this.b2v_1 = others;
 }
 protoOf(AlliesGain).toString = function () {
-  return 'AlliesGain(filter=' + toString_0(this.x2u_1) + ', keyword=' + this.y2u_1 + ', until=' + this.z2u_1 + ', others=' + this.a2v_1 + ')';
+  return 'AlliesGain(filter=' + toString_0(this.y2u_1) + ', keyword=' + this.z2u_1 + ', until=' + this.a2v_1 + ', others=' + this.b2v_1 + ')';
 };
 protoOf(AlliesGain).hashCode = function () {
-  var result = this.x2u_1 == null ? 0 : this.x2u_1.hashCode();
-  result = imul(result, 31) + (this.y2u_1 == null ? 0 : getStringHashCode(this.y2u_1)) | 0;
+  var result = this.y2u_1 == null ? 0 : this.y2u_1.hashCode();
   result = imul(result, 31) + (this.z2u_1 == null ? 0 : getStringHashCode(this.z2u_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.a2v_1) | 0;
+  result = imul(result, 31) + (this.a2v_1 == null ? 0 : getStringHashCode(this.a2v_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.b2v_1) | 0;
   return result;
 };
 protoOf(AlliesGain).equals = function (other) {
@@ -26358,13 +26409,13 @@ protoOf(AlliesGain).equals = function (other) {
     return true;
   if (!(other instanceof AlliesGain))
     return false;
-  if (!equals_0(this.x2u_1, other.x2u_1))
-    return false;
-  if (!(this.y2u_1 == other.y2u_1))
+  if (!equals_0(this.y2u_1, other.y2u_1))
     return false;
   if (!(this.z2u_1 == other.z2u_1))
     return false;
-  if (!(this.a2v_1 === other.a2v_1))
+  if (!(this.a2v_1 == other.a2v_1))
+    return false;
+  if (!(this.b2v_1 === other.b2v_1))
     return false;
   return true;
 };
@@ -26445,38 +26496,38 @@ function SkipBlockStep_getInstance() {
   return SkipBlockStep_instance;
 }
 function IfChosenGone(covers) {
-  this.s2s_1 = covers;
+  this.t2s_1 = covers;
 }
 protoOf(IfChosenGone).toString = function () {
-  return 'IfChosenGone(covers=' + this.s2s_1 + ')';
+  return 'IfChosenGone(covers=' + this.t2s_1 + ')';
 };
 protoOf(IfChosenGone).hashCode = function () {
-  return this.s2s_1;
+  return this.t2s_1;
 };
 protoOf(IfChosenGone).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof IfChosenGone))
     return false;
-  if (!(this.s2s_1 === other.s2s_1))
+  if (!(this.t2s_1 === other.t2s_1))
     return false;
   return true;
 };
 function PickAllyUpToSacrificedLevel(plus) {
-  this.w2u_1 = plus;
+  this.x2u_1 = plus;
 }
 protoOf(PickAllyUpToSacrificedLevel).toString = function () {
-  return 'PickAllyUpToSacrificedLevel(plus=' + this.w2u_1 + ')';
+  return 'PickAllyUpToSacrificedLevel(plus=' + this.x2u_1 + ')';
 };
 protoOf(PickAllyUpToSacrificedLevel).hashCode = function () {
-  return this.w2u_1;
+  return this.x2u_1;
 };
 protoOf(PickAllyUpToSacrificedLevel).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof PickAllyUpToSacrificedLevel))
     return false;
-  if (!(this.w2u_1 === other.w2u_1))
+  if (!(this.x2u_1 === other.x2u_1))
     return false;
   return true;
 };
@@ -26556,15 +26607,15 @@ function ExtraHit_getInstance() {
   return ExtraHit_instance;
 }
 function TakeFromLookedDistinctLevels(max, filter) {
-  this.v2z_1 = max;
-  this.w2z_1 = filter;
+  this.w2z_1 = max;
+  this.x2z_1 = filter;
 }
 protoOf(TakeFromLookedDistinctLevels).toString = function () {
-  return 'TakeFromLookedDistinctLevels(max=' + this.v2z_1 + ', filter=' + toString_0(this.w2z_1) + ')';
+  return 'TakeFromLookedDistinctLevels(max=' + this.w2z_1 + ', filter=' + toString_0(this.x2z_1) + ')';
 };
 protoOf(TakeFromLookedDistinctLevels).hashCode = function () {
-  var result = this.v2z_1;
-  result = imul(result, 31) + (this.w2z_1 == null ? 0 : this.w2z_1.hashCode()) | 0;
+  var result = this.w2z_1;
+  result = imul(result, 31) + (this.x2z_1 == null ? 0 : this.x2z_1.hashCode()) | 0;
   return result;
 };
 protoOf(TakeFromLookedDistinctLevels).equals = function (other) {
@@ -26572,23 +26623,23 @@ protoOf(TakeFromLookedDistinctLevels).equals = function (other) {
     return true;
   if (!(other instanceof TakeFromLookedDistinctLevels))
     return false;
-  if (!(this.v2z_1 === other.v2z_1))
+  if (!(this.w2z_1 === other.w2z_1))
     return false;
-  if (!equals_0(this.w2z_1, other.w2z_1))
+  if (!equals_0(this.x2z_1, other.x2z_1))
     return false;
   return true;
 };
 function RevealFromHand(filters, withAllyOfLevel) {
   withAllyOfLevel = withAllyOfLevel === VOID ? false : withAllyOfLevel;
-  this.x2z_1 = filters;
-  this.y2z_1 = withAllyOfLevel;
+  this.y2z_1 = filters;
+  this.z2z_1 = withAllyOfLevel;
 }
 protoOf(RevealFromHand).toString = function () {
-  return 'RevealFromHand(filters=' + toString_0(this.x2z_1) + ', withAllyOfLevel=' + this.y2z_1 + ')';
+  return 'RevealFromHand(filters=' + toString_0(this.y2z_1) + ', withAllyOfLevel=' + this.z2z_1 + ')';
 };
 protoOf(RevealFromHand).hashCode = function () {
-  var result = this.x2z_1 == null ? 0 : hashCode(this.x2z_1);
-  result = imul(result, 31) + getBooleanHashCode(this.y2z_1) | 0;
+  var result = this.y2z_1 == null ? 0 : hashCode(this.y2z_1);
+  result = imul(result, 31) + getBooleanHashCode(this.z2z_1) | 0;
   return result;
 };
 protoOf(RevealFromHand).equals = function (other) {
@@ -26596,22 +26647,22 @@ protoOf(RevealFromHand).equals = function (other) {
     return true;
   if (!(other instanceof RevealFromHand))
     return false;
-  if (!equals_0(this.x2z_1, other.x2z_1))
+  if (!equals_0(this.y2z_1, other.y2z_1))
     return false;
-  if (!(this.y2z_1 === other.y2z_1))
+  if (!(this.z2z_1 === other.z2z_1))
     return false;
   return true;
 };
 function LivesFaceDown(all, shuffle) {
-  this.z2z_1 = all;
-  this.a30_1 = shuffle;
+  this.a30_1 = all;
+  this.b30_1 = shuffle;
 }
 protoOf(LivesFaceDown).toString = function () {
-  return 'LivesFaceDown(all=' + this.z2z_1 + ', shuffle=' + this.a30_1 + ')';
+  return 'LivesFaceDown(all=' + this.a30_1 + ', shuffle=' + this.b30_1 + ')';
 };
 protoOf(LivesFaceDown).hashCode = function () {
-  var result = getBooleanHashCode(this.z2z_1);
-  result = imul(result, 31) + getBooleanHashCode(this.a30_1) | 0;
+  var result = getBooleanHashCode(this.a30_1);
+  result = imul(result, 31) + getBooleanHashCode(this.b30_1) | 0;
   return result;
 };
 protoOf(LivesFaceDown).equals = function (other) {
@@ -26619,27 +26670,27 @@ protoOf(LivesFaceDown).equals = function (other) {
     return true;
   if (!(other instanceof LivesFaceDown))
     return false;
-  if (!(this.z2z_1 === other.z2z_1))
-    return false;
   if (!(this.a30_1 === other.a30_1))
+    return false;
+  if (!(this.b30_1 === other.b30_1))
     return false;
   return true;
 };
 function EachPlayerDiscards(count) {
-  this.b30_1 = count;
+  this.c30_1 = count;
 }
 protoOf(EachPlayerDiscards).toString = function () {
-  return 'EachPlayerDiscards(count=' + this.b30_1 + ')';
+  return 'EachPlayerDiscards(count=' + this.c30_1 + ')';
 };
 protoOf(EachPlayerDiscards).hashCode = function () {
-  return this.b30_1;
+  return this.c30_1;
 };
 protoOf(EachPlayerDiscards).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof EachPlayerDiscards))
     return false;
-  if (!(this.b30_1 === other.b30_1))
+  if (!(this.c30_1 === other.c30_1))
     return false;
   return true;
 };
@@ -26709,38 +26760,38 @@ protoOf(AddResourceToHigherAlly).equals = function (other) {
   return true;
 };
 function RevealOpponentHandSendOneToBottom(count) {
-  this.c30_1 = count;
+  this.d30_1 = count;
 }
 protoOf(RevealOpponentHandSendOneToBottom).toString = function () {
-  return 'RevealOpponentHandSendOneToBottom(count=' + this.c30_1 + ')';
+  return 'RevealOpponentHandSendOneToBottom(count=' + this.d30_1 + ')';
 };
 protoOf(RevealOpponentHandSendOneToBottom).hashCode = function () {
-  return this.c30_1;
+  return this.d30_1;
 };
 protoOf(RevealOpponentHandSendOneToBottom).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof RevealOpponentHandSendOneToBottom))
     return false;
-  if (!(this.c30_1 === other.c30_1))
+  if (!(this.d30_1 === other.d30_1))
     return false;
   return true;
 };
 function ChooseEnemiesLevelSum(sum) {
-  this.l2u_1 = sum;
+  this.m2u_1 = sum;
 }
 protoOf(ChooseEnemiesLevelSum).toString = function () {
-  return 'ChooseEnemiesLevelSum(sum=' + this.l2u_1 + ')';
+  return 'ChooseEnemiesLevelSum(sum=' + this.m2u_1 + ')';
 };
 protoOf(ChooseEnemiesLevelSum).hashCode = function () {
-  return this.l2u_1;
+  return this.m2u_1;
 };
 protoOf(ChooseEnemiesLevelSum).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ChooseEnemiesLevelSum))
     return false;
-  if (!(this.l2u_1 === other.l2u_1))
+  if (!(this.m2u_1 === other.m2u_1))
     return false;
   return true;
 };
@@ -26821,20 +26872,20 @@ function AttachSelfAsResourceToAlly_getInstance() {
   return AttachSelfAsResourceToAlly_instance;
 }
 function ChooseOpponentTribute(filter) {
-  this.d30_1 = filter;
+  this.e30_1 = filter;
 }
 protoOf(ChooseOpponentTribute).toString = function () {
-  return 'ChooseOpponentTribute(filter=' + toString_0(this.d30_1) + ')';
+  return 'ChooseOpponentTribute(filter=' + toString_0(this.e30_1) + ')';
 };
 protoOf(ChooseOpponentTribute).hashCode = function () {
-  return this.d30_1 == null ? 0 : this.d30_1.hashCode();
+  return this.e30_1 == null ? 0 : this.e30_1.hashCode();
 };
 protoOf(ChooseOpponentTribute).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ChooseOpponentTribute))
     return false;
-  if (!equals_0(this.d30_1, other.d30_1))
+  if (!equals_0(this.e30_1, other.e30_1))
     return false;
   return true;
 };
@@ -26858,38 +26909,38 @@ function PlaceChosenTributeAndSelf_getInstance() {
   return PlaceChosenTributeAndSelf_instance;
 }
 function GroupUp(allies) {
-  this.b2v_1 = allies;
+  this.c2v_1 = allies;
 }
 protoOf(GroupUp).toString = function () {
-  return 'GroupUp(allies=' + this.b2v_1 + ')';
+  return 'GroupUp(allies=' + this.c2v_1 + ')';
 };
 protoOf(GroupUp).hashCode = function () {
-  return this.b2v_1;
+  return this.c2v_1;
 };
 protoOf(GroupUp).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof GroupUp))
     return false;
-  if (!(this.b2v_1 === other.b2v_1))
+  if (!(this.c2v_1 === other.c2v_1))
     return false;
   return true;
 };
 function TakeFromLookedEachRestToBottom(filters) {
-  this.e30_1 = filters;
+  this.f30_1 = filters;
 }
 protoOf(TakeFromLookedEachRestToBottom).toString = function () {
-  return 'TakeFromLookedEachRestToBottom(filters=' + toString_0(this.e30_1) + ')';
+  return 'TakeFromLookedEachRestToBottom(filters=' + toString_0(this.f30_1) + ')';
 };
 protoOf(TakeFromLookedEachRestToBottom).hashCode = function () {
-  return this.e30_1 == null ? 0 : hashCode(this.e30_1);
+  return this.f30_1 == null ? 0 : hashCode(this.f30_1);
 };
 protoOf(TakeFromLookedEachRestToBottom).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof TakeFromLookedEachRestToBottom))
     return false;
-  if (!equals_0(this.e30_1, other.e30_1))
+  if (!equals_0(this.f30_1, other.f30_1))
     return false;
   return true;
 };
@@ -26912,20 +26963,20 @@ protoOf(MaterialOfExhaustedAllyToBack).equals = function (other) {
   return true;
 };
 function ReduceOpponentLivesBy(amount) {
-  this.f30_1 = amount;
+  this.g30_1 = amount;
 }
 protoOf(ReduceOpponentLivesBy).toString = function () {
-  return 'ReduceOpponentLivesBy(amount=' + toString_0(this.f30_1) + ')';
+  return 'ReduceOpponentLivesBy(amount=' + toString_0(this.g30_1) + ')';
 };
 protoOf(ReduceOpponentLivesBy).hashCode = function () {
-  return this.f30_1 == null ? 0 : hashCode(this.f30_1);
+  return this.g30_1 == null ? 0 : hashCode(this.g30_1);
 };
 protoOf(ReduceOpponentLivesBy).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof ReduceOpponentLivesBy))
     return false;
-  if (!equals_0(this.f30_1, other.f30_1))
+  if (!equals_0(this.g30_1, other.g30_1))
     return false;
   return true;
 };
@@ -27006,38 +27057,38 @@ function EachPlayerKeepsOneInFrontLine_getInstance() {
   return EachPlayerKeepsOneInFrontLine_instance;
 }
 function EachPlayerLowersMarker(count) {
-  this.g30_1 = count;
+  this.h30_1 = count;
 }
 protoOf(EachPlayerLowersMarker).toString = function () {
-  return 'EachPlayerLowersMarker(count=' + this.g30_1 + ')';
+  return 'EachPlayerLowersMarker(count=' + this.h30_1 + ')';
 };
 protoOf(EachPlayerLowersMarker).hashCode = function () {
-  return this.g30_1;
+  return this.h30_1;
 };
 protoOf(EachPlayerLowersMarker).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof EachPlayerLowersMarker))
     return false;
-  if (!(this.g30_1 === other.g30_1))
+  if (!(this.h30_1 === other.h30_1))
     return false;
   return true;
 };
 function SpecialSelfDeclaredSummoner(zones) {
-  this.h30_1 = zones;
+  this.i30_1 = zones;
 }
 protoOf(SpecialSelfDeclaredSummoner).toString = function () {
-  return 'SpecialSelfDeclaredSummoner(zones=' + this.h30_1 + ')';
+  return 'SpecialSelfDeclaredSummoner(zones=' + this.i30_1 + ')';
 };
 protoOf(SpecialSelfDeclaredSummoner).hashCode = function () {
-  return this.h30_1 == null ? 0 : getStringHashCode(this.h30_1);
+  return this.i30_1 == null ? 0 : getStringHashCode(this.i30_1);
 };
 protoOf(SpecialSelfDeclaredSummoner).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof SpecialSelfDeclaredSummoner))
     return false;
-  if (!(this.h30_1 == other.h30_1))
+  if (!(this.i30_1 == other.i30_1))
     return false;
   return true;
 };
@@ -27102,17 +27153,17 @@ protoOf(GrantEffect).equals = function (other) {
   return true;
 };
 function AllySpecialSummonsSameLevel(ally, zone, filter) {
-  this.i30_1 = ally;
-  this.j30_1 = zone;
-  this.k30_1 = filter;
+  this.j30_1 = ally;
+  this.k30_1 = zone;
+  this.l30_1 = filter;
 }
 protoOf(AllySpecialSummonsSameLevel).toString = function () {
-  return 'AllySpecialSummonsSameLevel(ally=' + toString_0(this.i30_1) + ', zone=' + this.j30_1 + ', filter=' + toString_0(this.k30_1) + ')';
+  return 'AllySpecialSummonsSameLevel(ally=' + toString_0(this.j30_1) + ', zone=' + this.k30_1 + ', filter=' + toString_0(this.l30_1) + ')';
 };
 protoOf(AllySpecialSummonsSameLevel).hashCode = function () {
-  var result = this.i30_1 == null ? 0 : this.i30_1.hashCode();
-  result = imul(result, 31) + (this.j30_1 == null ? 0 : getStringHashCode(this.j30_1)) | 0;
-  result = imul(result, 31) + (this.k30_1 == null ? 0 : this.k30_1.hashCode()) | 0;
+  var result = this.j30_1 == null ? 0 : this.j30_1.hashCode();
+  result = imul(result, 31) + (this.k30_1 == null ? 0 : getStringHashCode(this.k30_1)) | 0;
+  result = imul(result, 31) + (this.l30_1 == null ? 0 : this.l30_1.hashCode()) | 0;
   return result;
 };
 protoOf(AllySpecialSummonsSameLevel).equals = function (other) {
@@ -27120,11 +27171,11 @@ protoOf(AllySpecialSummonsSameLevel).equals = function (other) {
     return true;
   if (!(other instanceof AllySpecialSummonsSameLevel))
     return false;
-  if (!equals_0(this.i30_1, other.i30_1))
+  if (!equals_0(this.j30_1, other.j30_1))
     return false;
-  if (!(this.j30_1 == other.j30_1))
+  if (!(this.k30_1 == other.k30_1))
     return false;
-  if (!equals_0(this.k30_1, other.k30_1))
+  if (!equals_0(this.l30_1, other.l30_1))
     return false;
   return true;
 };
@@ -27132,19 +27183,19 @@ function SwapInFormation(withSelf, other, anyFormation, exceptTargets) {
   other = other === VOID ? null : other;
   anyFormation = anyFormation === VOID ? false : anyFormation;
   exceptTargets = exceptTargets === VOID ? false : exceptTargets;
-  this.l30_1 = withSelf;
-  this.m30_1 = other;
-  this.n30_1 = anyFormation;
-  this.o30_1 = exceptTargets;
+  this.m30_1 = withSelf;
+  this.n30_1 = other;
+  this.o30_1 = anyFormation;
+  this.p30_1 = exceptTargets;
 }
 protoOf(SwapInFormation).toString = function () {
-  return 'SwapInFormation(withSelf=' + this.l30_1 + ', other=' + toString_0(this.m30_1) + ', anyFormation=' + this.n30_1 + ', exceptTargets=' + this.o30_1 + ')';
+  return 'SwapInFormation(withSelf=' + this.m30_1 + ', other=' + toString_0(this.n30_1) + ', anyFormation=' + this.o30_1 + ', exceptTargets=' + this.p30_1 + ')';
 };
 protoOf(SwapInFormation).hashCode = function () {
-  var result = getBooleanHashCode(this.l30_1);
-  result = imul(result, 31) + (this.m30_1 == null ? 0 : this.m30_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.n30_1) | 0;
+  var result = getBooleanHashCode(this.m30_1);
+  result = imul(result, 31) + (this.n30_1 == null ? 0 : this.n30_1.hashCode()) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.o30_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.p30_1) | 0;
   return result;
 };
 protoOf(SwapInFormation).equals = function (other) {
@@ -27152,13 +27203,13 @@ protoOf(SwapInFormation).equals = function (other) {
     return true;
   if (!(other instanceof SwapInFormation))
     return false;
-  if (!(this.l30_1 === other.l30_1))
+  if (!(this.m30_1 === other.m30_1))
     return false;
-  if (!equals_0(this.m30_1, other.m30_1))
-    return false;
-  if (!(this.n30_1 === other.n30_1))
+  if (!equals_0(this.n30_1, other.n30_1))
     return false;
   if (!(this.o30_1 === other.o30_1))
+    return false;
+  if (!(this.p30_1 === other.p30_1))
     return false;
   return true;
 };
@@ -27260,30 +27311,30 @@ function EngineContext_init_$Create$(room, effect) {
   return EngineContext_init_$Init$(room, effect, objectCreate(protoOf(EngineContext)));
 }
 function Companion_15() {
-  this.p30_1 = 'summonedAll';
-  this.q30_1 = 'specialMaterials';
-  this.r30_1 = 'specialCard';
-  this.s30_1 = 'specialSummoner';
-  this.t30_1 = 'lookedOpponent';
+  this.q30_1 = 'summonedAll';
+  this.r30_1 = 'specialMaterials';
+  this.s30_1 = 'specialCard';
+  this.t30_1 = 'specialSummoner';
+  this.u30_1 = 'lookedOpponent';
 }
 var Companion_instance_16;
 function Companion_getInstance_15() {
   return Companion_instance_16;
 }
 function Origin(owner, zone, host, looked) {
-  this.u30_1 = owner;
-  this.v30_1 = zone;
-  this.w30_1 = host;
-  this.x30_1 = looked;
+  this.v30_1 = owner;
+  this.w30_1 = zone;
+  this.x30_1 = host;
+  this.y30_1 = looked;
 }
 protoOf(Origin).toString = function () {
-  return 'Origin(owner=' + toString_0(this.u30_1) + ', zone=' + this.v30_1 + ', host=' + toString_0(this.w30_1) + ', looked=' + this.x30_1 + ')';
+  return 'Origin(owner=' + toString_0(this.v30_1) + ', zone=' + this.w30_1 + ', host=' + toString_0(this.x30_1) + ', looked=' + this.y30_1 + ')';
 };
 protoOf(Origin).hashCode = function () {
-  var result = this.u30_1 == null ? 0 : this.u30_1.hashCode();
-  result = imul(result, 31) + (this.v30_1 == null ? 0 : getStringHashCode(this.v30_1)) | 0;
-  result = imul(result, 31) + (this.w30_1 == null ? 0 : this.w30_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.x30_1) | 0;
+  var result = this.v30_1 == null ? 0 : this.v30_1.hashCode();
+  result = imul(result, 31) + (this.w30_1 == null ? 0 : getStringHashCode(this.w30_1)) | 0;
+  result = imul(result, 31) + (this.x30_1 == null ? 0 : this.x30_1.hashCode()) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.y30_1) | 0;
   return result;
 };
 protoOf(Origin).equals = function (other) {
@@ -27291,23 +27342,23 @@ protoOf(Origin).equals = function (other) {
     return true;
   if (!(other instanceof Origin))
     return false;
-  if (!equals_0(this.u30_1, other.u30_1))
+  if (!equals_0(this.v30_1, other.v30_1))
     return false;
-  if (!(this.v30_1 == other.v30_1))
+  if (!(this.w30_1 == other.w30_1))
     return false;
-  if (!equals_0(this.w30_1, other.w30_1))
+  if (!equals_0(this.x30_1, other.x30_1))
     return false;
-  if (!(this.x30_1 === other.x30_1))
+  if (!(this.y30_1 === other.y30_1))
     return false;
   return true;
 };
 function origin($this, card) {
-  if (!(EffectEngine_getInstance().s2c($this.z30_1.h22_1, card.g1c_1) == null))
-    return new Origin($this.b31(), 'deck', null, true);
-  var _iterator__ex2g4s = frozenListOf([$this.z30_1.m21_1, $this.y30_1.l1i($this.z30_1.m21_1) == null ? '' : $this.y30_1.l1i($this.z30_1.m21_1)]).h();
+  if (!(EffectEngine_getInstance().s2c($this.a31_1.h22_1, card.g1c_1) == null))
+    return new Origin($this.c31(), 'deck', null, true);
+  var _iterator__ex2g4s = frozenListOf([$this.a31_1.m21_1, $this.z30_1.l1i($this.a31_1.m21_1) == null ? '' : $this.z30_1.l1i($this.a31_1.m21_1)]).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
-    var tmp0_elvis_lhs = $this.y30_1.a1e(id);
+    var tmp0_elvis_lhs = $this.z30_1.a1e(id);
     var tmp;
     if (tmp0_elvis_lhs == null) {
       continue $l$loop;
@@ -27335,21 +27386,21 @@ function hostIn($this, to) {
   var who = substring_0(ensureNotNull(to), indexOf(to, _Char___init__impl__6a9atx(58)) + 1 | 0);
   switch (who) {
     case 'self':
-      return EffectEngine_getInstance().s2c(ensureNotNull($this.b31()).a1f_1, $this.z30_1.n21_1);
+      return EffectEngine_getInstance().s2c(ensureNotNull($this.c31()).a1f_1, $this.a31_1.n21_1);
     case 'subject':
-      return $this.z30_1.d22_1 == null ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.b31()).a1f_1, $this.z30_1.d22_1);
+      return $this.a31_1.d22_1 == null ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.c31()).a1f_1, $this.a31_1.d22_1);
     case 'last':
-      return $this.z30_1.m22_1.m() ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.b31()).a1f_1, $this.z30_1.m22_1.l(0));
+      return $this.a31_1.m22_1.m() ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.c31()).a1f_1, $this.a31_1.m22_1.l(0));
     case 'event':
-      return $this.c31();
+      return $this.d31();
     case 'summoned':
-      return $this.z30_1.g22_1 == null ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.b31()).a1f_1, $this.z30_1.g22_1);
+      return $this.a31_1.g22_1 == null ? null : EffectEngine_getInstance().s2c(ensureNotNull($this.c31()).a1f_1, $this.a31_1.g22_1);
     default:
       return null;
   }
 }
 function ownerOnField($this, card) {
-  var _iterator__ex2g4s = $this.y30_1.a18_1.w1().h();
+  var _iterator__ex2g4s = $this.z30_1.a18_1.w1().h();
   while (_iterator__ex2g4s.i()) {
     var p = _iterator__ex2g4s.j();
     if (!(EffectEngine_getInstance().s2c(p.a1f_1, card.g1c_1) == null))
@@ -27359,24 +27410,24 @@ function ownerOnField($this, card) {
 }
 function reduce($this, card, owner, amount, until) {
   if (equals_0(until, Until_AS_EVENT_getInstance())) {
-    var trigger = EffectEngine_getInstance().m2d($this.y30_1, $this.z30_1);
+    var trigger = EffectEngine_getInstance().m2d($this.z30_1, $this.a31_1);
     var later = !(trigger == null) && !(trigger.x24_1 == null) && equals_0(ensureNotNull(trigger.x24_1).u1('untilNextTurn'), true);
-    StepHelpers_getInstance().d2v($this.y30_1, $this.z30_1, owner, card, amount, later);
+    StepHelpers_getInstance().e2v($this.z30_1, $this.a31_1, owner, card, amount, later);
     return Unit_instance;
   }
   if (!equals_0(until, Until_ATTACK_getInstance())) {
-    StepHelpers_getInstance().d2v($this.y30_1, $this.z30_1, owner, card, amount, equals_0(until, Until_NEXT_TURN_getInstance()));
+    StepHelpers_getInstance().e2v($this.z30_1, $this.a31_1, owner, card, amount, equals_0(until, Until_NEXT_TURN_getInstance()));
     return Unit_instance;
   }
   card.f1d_1 = card.f1d_1 - amount | 0;
-  EffectEngine_getInstance().y2e(card, $this.z30_1, 'Pierde ' + amount + ' de fuerza hasta el final del ataque', 'attack', -amount | 0, null);
-  if (!($this.y30_1.y18_1 == null)) {
-    ensureNotNull($this.y30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + 'fuerza:' + (-amount | 0));
+  EffectEngine_getInstance().y2e(card, $this.a31_1, 'Pierde ' + amount + ' de fuerza hasta el final del ataque', 'attack', -amount | 0, null);
+  if (!($this.z30_1.y18_1 == null)) {
+    ensureNotNull($this.z30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + 'fuerza:' + (-amount | 0));
   }
   var now = $this.b1p(card);
-  EffectEngine_getInstance().g2e($this.y30_1, 'STRENGTH_REDUCED', $this.z30_1.m21_1, card, null, null, $this.z30_1, frozenMapOf_3('amount', amount, 'to', now, 'ownerId', ensureNotNull(owner).f1e_1, 'untilNextTurn', false), EffectEngine_getInstance().q2c(card) + ' pierde ' + amount + ' de fuerza hasta el final del ataque (' + $this.z30_1.p21_1 + '): queda en ' + now);
+  EffectEngine_getInstance().g2e($this.z30_1, 'STRENGTH_REDUCED', $this.a31_1.m21_1, card, null, null, $this.a31_1, frozenMapOf_3('amount', amount, 'to', now, 'ownerId', ensureNotNull(owner).f1e_1, 'untilNextTurn', false), EffectEngine_getInstance().q2c(card) + ' pierde ' + amount + ' de fuerza hasta el final del ataque (' + $this.a31_1.p21_1 + '): queda en ' + now);
   if (now <= 0) {
-    Removals_getInstance().w2e($this.y30_1, card, owner, false, 'EFFECT', $this.z30_1.m21_1, null, $this.z30_1);
+    Removals_getInstance().w2e($this.z30_1, card, owner, false, 'EFFECT', $this.a31_1.m21_1, null, $this.a31_1);
   }
 }
 function detach($this, card) {
@@ -27388,65 +27439,65 @@ function detach($this, card) {
     tmp = tmp0_elvis_lhs;
   }
   var origin_0 = tmp;
-  if (origin_0.w30_1 == null && !origin_0.x30_1)
-    return origin_0.v30_1;
-  (!(origin_0.w30_1 == null) ? 'materials' === origin_0.v30_1 ? ensureNotNull(origin_0.w30_1.o1d_1) : ensureNotNull(origin_0.w30_1.p1d_1) : $this.z30_1.h22_1).y1(card);
-  ensureNotNull($this.b31()).u1e_1.f(card);
+  if (origin_0.x30_1 == null && !origin_0.y30_1)
+    return origin_0.w30_1;
+  (!(origin_0.x30_1 == null) ? 'materials' === origin_0.w30_1 ? ensureNotNull(origin_0.x30_1.o1d_1) : ensureNotNull(origin_0.x30_1.p1d_1) : $this.a31_1.h22_1).y1(card);
+  ensureNotNull($this.c31()).u1e_1.f(card);
   return 'hand';
 }
 function EngineContext(room, effect, repeat) {
-  this.y30_1 = room;
-  this.z30_1 = effect;
-  this.a31_1 = repeat;
+  this.z30_1 = room;
+  this.a31_1 = effect;
+  this.b31_1 = repeat;
 }
-protoOf(EngineContext).d31 = function () {
-  return this.y30_1.i19_1;
-};
 protoOf(EngineContext).e31 = function () {
-  return this.z30_1.b22_1;
+  return this.z30_1.i19_1;
 };
-protoOf(EngineContext).f31 = function (index) {
-  this.z30_1.b22_1 = index;
+protoOf(EngineContext).f31 = function () {
+  return this.a31_1.b22_1;
 };
-protoOf(EngineContext).g31 = function (levels) {
-  ensureNotNull(this.y30_1.r18_1).a1n_1 = levels;
+protoOf(EngineContext).g31 = function (index) {
+  this.a31_1.b22_1 = index;
 };
-protoOf(EngineContext).h31 = function (zone) {
+protoOf(EngineContext).h31 = function (levels) {
+  ensureNotNull(this.z30_1.r18_1).a1n_1 = levels;
+};
+protoOf(EngineContext).i31 = function (zone) {
   switch (ensureNotNull(zone)) {
     case 'attackers':
-      return StepHelpers_getInstance().i31(this.b31(), Companion_instance_11.c2q());
+      return StepHelpers_getInstance().j31(this.c31(), Companion_instance_11.c2q());
     case 'pickableAttackers':
-      return StepHelpers_getInstance().j31(this.y30_1, this.z30_1, this.b31(), true);
+      return StepHelpers_getInstance().k31(this.z30_1, this.a31_1, this.c31(), true);
     default:
-      return StepHelpers_getInstance().j31(this.y30_1, this.z30_1, this.b31(), false);
+      return StepHelpers_getInstance().k31(this.z30_1, this.a31_1, this.c31(), false);
   }
-};
-protoOf(EngineContext).k31 = function () {
-  this.z30_1.a22_1 = ensureNotNull(EffectEngine_getInstance().z2g(this.z30_1).t1w_1).k() - 1 | 0;
 };
 protoOf(EngineContext).l31 = function () {
-  ensureNotNull(this.y30_1.r18_1).t1m_1 = true;
-  ensureNotNull(this.y30_1.r18_1).e1n_1 = true;
+  this.a31_1.a22_1 = ensureNotNull(EffectEngine_getInstance().z2g(this.a31_1).t1w_1).k() - 1 | 0;
 };
-protoOf(EngineContext).m31 = function (opponentOnly, creaturesOnly, activeToo, at) {
-  return CombatRules_instance.j2u(this.y30_1, this.z30_1, opponentOnly, creaturesOnly, activeToo, at == null ? null : toSet(this.e2v(at)));
+protoOf(EngineContext).m31 = function () {
+  ensureNotNull(this.z30_1.r18_1).t1m_1 = true;
+  ensureNotNull(this.z30_1.r18_1).e1n_1 = true;
 };
-protoOf(EngineContext).n31 = function (picks) {
-  var subject = StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
-  if (!(subject == null) && this.y30_1.y18_1 == null) {
-    CombatRules_instance.n2j(this.y30_1, ensureNotNull(this.b31()).f1e_1, subject, ensureNotNull(picks).m() ? null : picks.l(0), true, this.z30_1);
+protoOf(EngineContext).n31 = function (opponentOnly, creaturesOnly, activeToo, at) {
+  return CombatRules_instance.k2u(this.z30_1, this.a31_1, opponentOnly, creaturesOnly, activeToo, at == null ? null : toSet(this.f2v(at)));
+};
+protoOf(EngineContext).o31 = function (picks) {
+  var subject = StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
+  if (!(subject == null) && this.z30_1.y18_1 == null) {
+    CombatRules_instance.n2j(this.z30_1, ensureNotNull(this.c31()).f1e_1, subject, ensureNotNull(picks).m() ? null : picks.l(0), true, this.a31_1);
   }
 };
-protoOf(EngineContext).o31 = function (script) {
-  var all = this.z30_1.c22_1.u1('summonedAll');
+protoOf(EngineContext).p31 = function (script) {
+  var all = this.a31_1.c22_1.u1('summonedAll');
   var tmp;
   if (!(all == null) && all.k() > 1) {
     tmp = joinToString(all, ',');
   } else {
-    var tmp0_elvis_lhs = this.z30_1.g22_1;
+    var tmp0_elvis_lhs = this.a31_1.g22_1;
     var tmp_0;
     if (tmp0_elvis_lhs == null) {
-      var tmp1_elvis_lhs = this.z30_1.d22_1;
+      var tmp1_elvis_lhs = this.a31_1.d22_1;
       tmp_0 = tmp1_elvis_lhs == null ? '' : tmp1_elvis_lhs;
     } else {
       tmp_0 = tmp0_elvis_lhs;
@@ -27454,62 +27505,62 @@ protoOf(EngineContext).o31 = function (script) {
     tmp = tmp_0;
   }
   var subject = tmp;
-  this.y30_1.a19_1.f('delayed|' + ensureNotNull(this.b31()).f1e_1 + '|' + this.z30_1.n21_1 + '|' + script + '|' + subject);
-  EffectEngine_getInstance().h2e(this.y30_1, plus(this.z30_1.p21_1, ': al final del turno se resolver\xE1 el resto de su efecto'), null);
+  this.z30_1.a19_1.f('delayed|' + ensureNotNull(this.c31()).f1e_1 + '|' + this.a31_1.n21_1 + '|' + script + '|' + subject);
+  EffectEngine_getInstance().h2e(this.z30_1, plus(this.a31_1.p21_1, ': al final del turno se resolver\xE1 el resto de su efecto'), null);
 };
-protoOf(EngineContext).p31 = function (cards, effect, untilTurnEnd) {
-  var source = this.q31(this.z30_1.n21_1);
+protoOf(EngineContext).q31 = function (cards, effect, untilTurnEnd) {
+  var source = this.r31(this.a31_1.n21_1);
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
     if (untilTurnEnd || source == null) {
-      this.y30_1.a19_1.f(Watches_instance.s31(ensureNotNull(this.b31()).f1e_1, this.z30_1.n21_1, effect, card.g1c_1));
+      this.z30_1.a19_1.f(Watches_instance.t31(ensureNotNull(this.c31()).f1e_1, this.a31_1.n21_1, effect, card.g1c_1));
     } else {
-      EffectEngine_getInstance().y2e(source, this.z30_1, 'Sigue a ' + EffectEngine_getInstance().q2c(card), 'field', 0, Watches_instance.r31(effect, card.g1c_1));
+      EffectEngine_getInstance().y2e(source, this.a31_1, 'Sigue a ' + EffectEngine_getInstance().q2c(card), 'field', 0, Watches_instance.s31(effect, card.g1c_1));
     }
   }
 };
-protoOf(EngineContext).t31 = function () {
-  ensureNotNull(this.a31_1)[0] = true;
+protoOf(EngineContext).u31 = function () {
+  ensureNotNull(this.b31_1)[0] = true;
 };
-protoOf(EngineContext).u31 = function (special) {
-  return SpecialProcedure_getInstance().w31(this.y30_1, this.z30_1, special);
+protoOf(EngineContext).v31 = function (special) {
+  return SpecialProcedure_getInstance().x31(this.z30_1, this.a31_1, special);
 };
-protoOf(EngineContext).x31 = function (special) {
-  return SpecialProcedure_getInstance().y31(this.y30_1, this.z30_1, special);
+protoOf(EngineContext).y31 = function (special) {
+  return SpecialProcedure_getInstance().z31(this.z30_1, this.a31_1, special);
 };
-protoOf(EngineContext).z31 = function (special, available) {
-  return SpecialProcedure_getInstance().a32(this.y30_1, this.z30_1, special, available);
+protoOf(EngineContext).a32 = function (special, available) {
+  return SpecialProcedure_getInstance().b32(this.z30_1, this.a31_1, special, available);
 };
-protoOf(EngineContext).b32 = function (special) {
-  return SpecialProcedure_getInstance().c32(this.y30_1, this.z30_1, special);
+protoOf(EngineContext).c32 = function (special) {
+  return SpecialProcedure_getInstance().d32(this.z30_1, this.a31_1, special);
 };
-protoOf(EngineContext).d32 = function (special, picks) {
-  return SpecialProcedure_getInstance().e32(this.y30_1, this.z30_1, special, picks);
+protoOf(EngineContext).e32 = function (special, picks) {
+  return SpecialProcedure_getInstance().f32(this.z30_1, this.a31_1, special, picks);
 };
-protoOf(EngineContext).f32 = function (rule) {
-  SpecialProcedure_getInstance().g32(this.y30_1, this.z30_1, rule);
+protoOf(EngineContext).g32 = function (rule) {
+  SpecialProcedure_getInstance().h32(this.z30_1, this.a31_1, rule);
 };
-protoOf(EngineContext).b31 = function () {
-  return this.y30_1.a1e(this.z30_1.m21_1);
+protoOf(EngineContext).c31 = function () {
+  return this.z30_1.a1e(this.a31_1.m21_1);
 };
-protoOf(EngineContext).h32 = function () {
-  return this.y30_1.a1e(this.y30_1.l1i(this.z30_1.m21_1));
-};
-protoOf(EngineContext).i32 = function (card) {
-  return ensureNotNull(card).g1c_1 == this.z30_1.n21_1;
+protoOf(EngineContext).i32 = function () {
+  return this.z30_1.a1e(this.z30_1.l1i(this.a31_1.m21_1));
 };
 protoOf(EngineContext).j32 = function (card) {
-  var opponent = this.h32();
-  return !(opponent == null) && !(EffectEngine_getInstance().s2c(opponent.a1f_1, ensureNotNull(card).g1c_1) == null);
+  return ensureNotNull(card).g1c_1 == this.a31_1.n21_1;
 };
 protoOf(EngineContext).k32 = function (card) {
+  var opponent = this.i32();
+  return !(opponent == null) && !(EffectEngine_getInstance().s2c(opponent.a1f_1, ensureNotNull(card).g1c_1) == null);
+};
+protoOf(EngineContext).l32 = function (card) {
   return 'creature' === ensureNotNull(card).o1c_1;
 };
-protoOf(EngineContext).l32 = function (zone) {
+protoOf(EngineContext).m32 = function (zone) {
   if (zone === 'materials:allies') {
     // Inline function 'kotlin.collections.filter' call
-    var tmp0 = ensureNotNull(this.b31()).a1f_1;
+    var tmp0 = ensureNotNull(this.c31()).a1f_1;
     // Inline function 'kotlin.collections.filterTo' call
     var destination = ArrayList_init_$Create$();
     var _iterator__ex2g4s = tmp0.h();
@@ -27534,27 +27585,27 @@ protoOf(EngineContext).l32 = function (zone) {
   var tmp;
   switch (whose) {
     case 'subject':
-      tmp = StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
+      tmp = StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
       break;
     case 'self':
-      tmp = EffectEngine_getInstance().s2c(ensureNotNull(this.b31()).a1f_1, this.z30_1.n21_1);
+      tmp = EffectEngine_getInstance().s2c(ensureNotNull(this.c31()).a1f_1, this.a31_1.n21_1);
       break;
     default:
-      var tmp0_0 = this.e2v(whose);
+      var tmp0_0 = this.f2v(whose);
       var tmp$ret$6;
       $l$block: {
         // Inline function 'kotlin.collections.firstNotNullOfOrNull' call
         var _iterator__ex2g4s_1 = tmp0_0.h();
         while (_iterator__ex2g4s_1.i()) {
           var element_1 = _iterator__ex2g4s_1.j();
-          var tmp0_safe_receiver = this.q31(element_1);
+          var tmp0_safe_receiver = this.r31(element_1);
           var tmp_0;
           if (tmp0_safe_receiver == null) {
             tmp_0 = null;
           } else {
             // Inline function 'kotlin.takeIf' call
             var tmp_1;
-            if (this.m32(tmp0_safe_receiver)) {
+            if (this.n32(tmp0_safe_receiver)) {
               tmp_1 = tmp0_safe_receiver;
             } else {
               tmp_1 = null;
@@ -27578,7 +27629,7 @@ protoOf(EngineContext).l32 = function (zone) {
     return frozenListOf([]);
   return startsWith(zone, 'materials') ? ensureNotNull(host.o1d_1) : ensureNotNull(host.p1d_1);
 };
-protoOf(EngineContext).n32 = function (zones) {
+protoOf(EngineContext).o32 = function (zones) {
   var names = ArrayList_init_$Create$();
   var indexedObject = JavaText_instance.r1s(Platform_instance.s1s(','), ensureNotNull(zones));
   var inductionVariable = 0;
@@ -27617,11 +27668,11 @@ protoOf(EngineContext).n32 = function (zones) {
     else if (zone === 'lifeStack' || zone === 'livesBelowTop')
       names.f('tus vidas');
     else
-      names.f(Zone_HAND_getInstance().q1f(zone) || Zone_DECK_getInstance().q1f(zone) ? 'tu ' + EffectEngine_getInstance().g2z(zone) : 'tus ' + EffectEngine_getInstance().g2z(zone));
+      names.f(Zone_HAND_getInstance().q1f(zone) || Zone_DECK_getInstance().q1f(zone) ? 'tu ' + EffectEngine_getInstance().h2z(zone) : 'tus ' + EffectEngine_getInstance().h2z(zone));
   }
   return joinToString(names, ' o ');
 };
-protoOf(EngineContext).o32 = function (card, to) {
+protoOf(EngineContext).p32 = function (card, to) {
   var tmp0_elvis_lhs = origin(this, ensureNotNull(card));
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -27630,15 +27681,15 @@ protoOf(EngineContext).o32 = function (card, to) {
     tmp = tmp0_elvis_lhs;
   }
   var origin_0 = tmp;
-  if (Zone_FIELD_getInstance().q1f(origin_0.v30_1)) {
+  if (Zone_FIELD_getInstance().q1f(origin_0.w30_1)) {
     if ('frontLine' === to)
       return EffectEngine_getInstance().e1p(card);
     if ('backLine' === to)
       return !EffectEngine_getInstance().e1p(card);
   }
-  return !origin_0.x30_1 && origin_0.v30_1 == destination(Companion_instance_16, to);
+  return !origin_0.y30_1 && origin_0.w30_1 == destination(Companion_instance_16, to);
 };
-protoOf(EngineContext).p32 = function (cards, to, exhausted, faceDown, withResources) {
+protoOf(EngineContext).q32 = function (cards, to, exhausted, faceDown, withResources) {
   var zone = destination(Companion_instance_16, to);
   var done = ArrayList_init_$Create$();
   var from = null;
@@ -27656,15 +27707,15 @@ protoOf(EngineContext).p32 = function (cards, to, exhausted, faceDown, withResou
     var host = hostIn(this, to);
     if (isAttachment(Companion_instance_16, to) && (host == null || host === card))
       continue $l$loop_2;
-    from = origin_0.v30_1;
-    var enemy = !(ensureNotNull(origin_0.u30_1).f1e_1 == this.z30_1.m21_1);
+    from = origin_0.w30_1;
+    var enemy = !(ensureNotNull(origin_0.v30_1).f1e_1 == this.a31_1.m21_1);
     if (enemy && Zone_FIELD_getInstance().q1f(from) && EffectEngine_getInstance().c1p(card).n('Irremovible por efectos oponentes')) {
-      EffectEngine_getInstance().h2e(this.y30_1, EffectEngine_getInstance().q2c(card) + ' no puede ser removida por efectos oponentes', null);
+      EffectEngine_getInstance().h2e(this.z30_1, EffectEngine_getInstance().q2c(card) + ' no puede ser removida por efectos oponentes', null);
       continue $l$loop_2;
     }
     if (Zone_FIELD_getInstance().q1f(from) && ('frontLine' === to || 'backLine' === to)) {
       card.m1c_1 = 'frontLine' === to ? 25.0 : 75.0;
-      EffectEngine_getInstance().g2e(this.y30_1, 'MOVE', ensureNotNull(this.b31()).f1e_1, card, null, to, this.z30_1, frozenMapOf_0('reason', 'effect'), null);
+      EffectEngine_getInstance().g2e(this.z30_1, 'MOVE', ensureNotNull(this.c31()).f1e_1, card, null, to, this.a31_1, frozenMapOf_0('reason', 'effect'), null);
       done.f(card);
       continue $l$loop_2;
     }
@@ -27672,21 +27723,21 @@ protoOf(EngineContext).p32 = function (cards, to, exhausted, faceDown, withResou
     // Inline function 'kotlin.collections.isNotEmpty' call
     if (!carried.m())
       card.p1d_1 = ArrayList_init_$Create$();
-    if (origin_0.x30_1)
-      this.z30_1.h22_1.y1(card);
-    else if (!(origin_0.w30_1 == null))
-      ('materials' === from ? ensureNotNull(origin_0.w30_1.o1d_1) : ensureNotNull(origin_0.w30_1.p1d_1)).y1(card);
+    if (origin_0.y30_1)
+      this.a31_1.h22_1.y1(card);
+    else if (!(origin_0.x30_1 == null))
+      ('materials' === from ? ensureNotNull(origin_0.x30_1.o1d_1) : ensureNotNull(origin_0.x30_1.p1d_1)).y1(card);
     else if (Zone_FIELD_getInstance().q1f(from)) {
-      Removals_getInstance().a2f(this.y30_1, origin_0.u30_1, card);
+      Removals_getInstance().a2f(this.z30_1, origin_0.v30_1, card);
     } else
-      EffectEngine_getInstance().d2f(origin_0.u30_1, from).y1(card);
+      EffectEngine_getInstance().d2f(origin_0.v30_1, from).y1(card);
     card.j1c_1 = Zone_DECK_getInstance().q1f(zone) || faceDown;
-    var data = Platform_instance.m2t();
+    var data = Platform_instance.n2t();
     // Inline function 'kotlin.collections.set' call
-    var value = !(origin_0.w30_1 == null) ? origin_0.w30_1.g1c_1 : this.z30_1.n21_1;
+    var value = !(origin_0.x30_1 == null) ? origin_0.x30_1.g1c_1 : this.a31_1.n21_1;
     data.g2('byCard', value);
     // Inline function 'kotlin.collections.set' call
-    var value_0 = origin_0.u30_1.f1e_1;
+    var value_0 = origin_0.v30_1.f1e_1;
     data.g2('ownerId', value_0);
     if (Zone_DECK_getInstance().q1f(zone)) {
       var tmp2 = 'position';
@@ -27709,11 +27760,11 @@ protoOf(EngineContext).p32 = function (cards, to, exhausted, faceDown, withResou
       card.k1c_1 = exhausted;
       card.l1c_1 = 50.0;
       card.m1c_1 = 'frontLine' === to ? 25.0 : 75.0;
-      origin_0.u30_1.a1f_1.f(card);
-      this.z30_1.g22_1 = card.g1c_1;
+      origin_0.v30_1.a1f_1.f(card);
+      this.a31_1.g22_1 = card.g1c_1;
       arrives = 'field';
     } else {
-      var into = EffectEngine_getInstance().d2f(origin_0.u30_1, zone);
+      var into = EffectEngine_getInstance().d2f(origin_0.v30_1, zone);
       switch (to) {
         case 'deckTop':
         case 'lifeTop':
@@ -27727,34 +27778,34 @@ protoOf(EngineContext).p32 = function (cards, to, exhausted, faceDown, withResou
     if (Zone_LIFE_STACK_getInstance().q1f(from)) {
       var tmp2_0 = 'defenderId';
       // Inline function 'kotlin.collections.set' call
-      var value_3 = origin_0.u30_1.f1e_1;
+      var value_3 = origin_0.v30_1.f1e_1;
       data.g2(tmp2_0, value_3);
     }
-    EffectEngine_getInstance().g2e(this.y30_1, eventOf(Companion_instance_16, arrives, from), ensureNotNull(this.b31()).f1e_1, card, from, arrives, this.z30_1, data, null);
+    EffectEngine_getInstance().g2e(this.z30_1, eventOf(Companion_instance_16, arrives, from), ensureNotNull(this.c31()).f1e_1, card, from, arrives, this.a31_1, data, null);
     done.f(card);
-    if (Zone_LIFE_STACK_getInstance().q1f(from) && origin_0.u30_1.x1e_1.m()) {
-      EffectEngine_getInstance().d2h(this.y30_1, origin_0.u30_1);
+    if (Zone_LIFE_STACK_getInstance().q1f(from) && origin_0.v30_1.x1e_1.m()) {
+      EffectEngine_getInstance().d2h(this.z30_1, origin_0.v30_1);
     }
   }
   if (done.m())
     return done;
   var hidden = faceDown || (Zone_DECK_getInstance().q1f(zone) && (Zone_HAND_getInstance().q1f(from) || Zone_DECK_getInstance().q1f(from)));
-  var origin_1 = Zone_DECK_getInstance().q1f(from) && !this.z30_1.h22_1.m() ? '' : Zone_DECK_getInstance().q1f(from) ? ' del tope de su mazo' : '';
-  EffectEngine_getInstance().h2e(this.y30_1, plus(ensureNotNull(this.b31()).g1e_1, ' ') + verb(Companion_instance_16, to) + ' ' + done.k() + ' ' + (done.k() === 1 ? 'carta' : 'cartas') + origin_1 + ' (' + this.z30_1.p21_1 + ')' + (hidden ? '' : EffectEngine_getInstance().n2k(done)), this.y30_1.p18_1);
+  var origin_1 = Zone_DECK_getInstance().q1f(from) && !this.a31_1.h22_1.m() ? '' : Zone_DECK_getInstance().q1f(from) ? ' del tope de su mazo' : '';
+  EffectEngine_getInstance().h2e(this.z30_1, plus(ensureNotNull(this.c31()).g1e_1, ' ') + verb(Companion_instance_16, to) + ' ' + done.k() + ' ' + (done.k() === 1 ? 'carta' : 'cartas') + origin_1 + ' (' + this.a31_1.p21_1 + ')' + (hidden ? '' : EffectEngine_getInstance().n2k(done)), this.z30_1.p18_1);
   return done;
 };
-protoOf(EngineContext).q32 = function () {
-  return this.z30_1.h22_1;
+protoOf(EngineContext).r32 = function () {
+  return this.a31_1.h22_1;
 };
-protoOf(EngineContext).r32 = function (to, order) {
-  var rest = StepHelpers_getInstance().s32(this.z30_1.h22_1, order);
+protoOf(EngineContext).s32 = function (to, order) {
+  var rest = StepHelpers_getInstance().t32(this.a31_1.h22_1, order);
   // Inline function 'kotlin.collections.forEach' call
   var _iterator__ex2g4s = rest.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
     element.j1c_1 = true;
   }
-  var tmp0_elvis_lhs = this.z30_1.c22_1.h2('lookedOpponent');
+  var tmp0_elvis_lhs = this.a31_1.c22_1.h2('lookedOpponent');
   var theirs = tmp0_elvis_lhs == null ? frozenListOf([]) : tmp0_elvis_lhs;
   var tmp;
   var tmp_0;
@@ -27788,22 +27839,22 @@ protoOf(EngineContext).r32 = function (to, order) {
     tmp_0 = false;
   }
   if (tmp_0) {
-    tmp = this.y30_1.a1e(this.y30_1.l1i(this.z30_1.m21_1));
+    tmp = this.z30_1.a1e(this.z30_1.l1i(this.a31_1.m21_1));
   } else {
-    tmp = this.b31();
+    tmp = this.c31();
   }
   var owner = tmp;
   if ('deckTop' === to)
     ensureNotNull(owner).v1e_1.b2(0, rest);
   else
     ensureNotNull(owner).v1e_1.r(rest);
-  this.z30_1.h22_1.a2();
+  this.a31_1.h22_1.a2();
   if (!rest.m()) {
-    EffectEngine_getInstance().h2e(this.y30_1, plus(ensureNotNull(this.b31()).g1e_1, ' ') + verb(Companion_instance_16, to) + ' ' + rest.k() + ' ' + (rest.k() === 1 ? 'carta' : 'cartas') + (!(owner === this.b31()) ? ' (mazo de ' + owner.g1e_1 + ')' : ''), null);
+    EffectEngine_getInstance().h2e(this.z30_1, plus(ensureNotNull(this.c31()).g1e_1, ' ') + verb(Companion_instance_16, to) + ' ' + rest.k() + ' ' + (rest.k() === 1 ? 'carta' : 'cartas') + (!(owner === this.c31()) ? ' (mazo de ' + owner.g1e_1 + ')' : ''), null);
   }
 };
-protoOf(EngineContext).t32 = function () {
-  var tmp0_elvis_lhs = this.z30_1.c22_1.u1('lookedOpponent');
+protoOf(EngineContext).u32 = function () {
+  var tmp0_elvis_lhs = this.a31_1.c22_1.u1('lookedOpponent');
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return false;
@@ -27813,8 +27864,8 @@ protoOf(EngineContext).t32 = function () {
   var theirs = tmp;
   var tmp_0;
   // Inline function 'kotlin.collections.isNotEmpty' call
-  if (!this.z30_1.h22_1.m()) {
-    var tmp0 = this.z30_1.h22_1;
+  if (!this.a31_1.h22_1.m()) {
+    var tmp0 = this.a31_1.h22_1;
     var tmp$ret$1;
     $l$block_0: {
       // Inline function 'kotlin.collections.all' call
@@ -27844,27 +27895,27 @@ protoOf(EngineContext).t32 = function () {
   }
   return tmp_0;
 };
-protoOf(EngineContext).u32 = function () {
-  var trigger = EffectEngine_getInstance().m2d(this.y30_1, this.z30_1);
-  var at = trigger == null ? null : EffectEngine_getInstance().t2c(this.b31(), trigger.r24_1);
+protoOf(EngineContext).v32 = function () {
+  var trigger = EffectEngine_getInstance().m2d(this.z30_1, this.a31_1);
+  var at = trigger == null ? null : EffectEngine_getInstance().t2c(this.c31(), trigger.r24_1);
   return at == null || Zone_FIELD_getInstance().q1f(at.w2c_1) ? null : at.v2c_1;
 };
-protoOf(EngineContext).v32 = function (card) {
-  return EffectEngine_getInstance().r2y(card, this.z30_1);
+protoOf(EngineContext).w32 = function (card) {
+  return EffectEngine_getInstance().s2y(card, this.a31_1);
 };
-protoOf(EngineContext).w32 = function (toTop) {
-  var prompt = this.y30_1.r18_1;
+protoOf(EngineContext).x32 = function (toTop) {
+  var prompt = this.z30_1.r18_1;
   ensureNotNull(prompt).g1m_1 = Kind_TAKE_REVEALED_REST_BOTTOM_getInstance();
   prompt.t1m_1 = true;
   prompt.u1m_1 = toTop;
 };
-protoOf(EngineContext).x32 = function (cards) {
-  this.z30_1.l22_1 = ensureNotNull(cards).k();
-  this.z30_1.m22_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().a2e(cards));
-  this.y32(!cards.m());
+protoOf(EngineContext).y32 = function (cards) {
+  this.a31_1.l22_1 = ensureNotNull(cards).k();
+  this.a31_1.m22_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().a2e(cards));
+  this.z32(!cards.m());
 };
-protoOf(EngineContext).z32 = function (count, bothPlayers) {
-  var _iterator__ex2g4s = (bothPlayers ? frozenListCopy(this.y30_1.a18_1.w1()) : frozenListOf([this.b31()])).h();
+protoOf(EngineContext).a33 = function (count, bothPlayers) {
+  var _iterator__ex2g4s = (bothPlayers ? frozenListCopy(this.z30_1.a18_1.w1()) : frozenListOf([this.c31()])).h();
   while (_iterator__ex2g4s.i()) {
     var p = _iterator__ex2g4s.j();
     // Inline function 'kotlin.math.min' call
@@ -27875,30 +27926,30 @@ protoOf(EngineContext).z32 = function (count, bothPlayers) {
       do {
         var i = inductionVariable;
         inductionVariable = inductionVariable + 1 | 0;
-        Summons_instance.a33(this.y30_1, p, this.z30_1, false);
+        Summons_instance.b33(this.z30_1, p, this.a31_1, false);
       }
        while (inductionVariable < n);
     if (!bothPlayers) {
-      this.y32(n > 0);
+      this.z32(n > 0);
     }
     if (n > 0 || count > 0) {
-      EffectEngine_getInstance().h2e(this.y30_1, plus(p.g1e_1, ' roba ') + n + ' ' + (n === 1 ? 'carta' : 'cartas') + ' (' + this.z30_1.p21_1 + ')' + (n < count ? ': su mazo no ten\xEDa m\xE1s' : ''), this.y30_1.p18_1);
+      EffectEngine_getInstance().h2e(this.z30_1, plus(p.g1e_1, ' roba ') + n + ' ' + (n === 1 ? 'carta' : 'cartas') + ' (' + this.a31_1.p21_1 + ')' + (n < count ? ': su mazo no ten\xEDa m\xE1s' : ''), this.z30_1.p18_1);
     }
   }
 };
-protoOf(EngineContext).b33 = function (count) {
-  var userId = ensureNotNull(this.b31()).f1e_1;
-  this.y30_1.e18_1 = EffectEngine_getInstance().s1t(this.y30_1.e18_1 + imul(count, EffectEngine_getInstance().o2k(this.y30_1, userId)) | 0);
-  EffectEngine_getInstance().g2e(this.y30_1, 'GAIN_GEMS', userId, null, null, null, this.z30_1, frozenMapOf_0('count', count), plus(ensureNotNull(this.b31()).g1e_1, count < 0 ? ' paga ' + EffectEngine_getInstance().p2k(-count | 0) : ' gana ' + EffectEngine_getInstance().p2k(count)) + ' (' + this.z30_1.p21_1 + ')');
-};
 protoOf(EngineContext).c33 = function (count) {
-  return EffectEngine_getInstance().x2h(this.y30_1, ensureNotNull(this.b31()).f1e_1, count);
+  var userId = ensureNotNull(this.c31()).f1e_1;
+  this.z30_1.e18_1 = EffectEngine_getInstance().s1t(this.z30_1.e18_1 + imul(count, EffectEngine_getInstance().o2k(this.z30_1, userId)) | 0);
+  EffectEngine_getInstance().g2e(this.z30_1, 'GAIN_GEMS', userId, null, null, null, this.a31_1, frozenMapOf_0('count', count), plus(ensureNotNull(this.c31()).g1e_1, count < 0 ? ' paga ' + EffectEngine_getInstance().p2k(-count | 0) : ' gana ' + EffectEngine_getInstance().p2k(count)) + ' (' + this.a31_1.p21_1 + ')');
 };
-protoOf(EngineContext).d33 = function (amount) {
-  StepHelpers_getInstance().e33(this.y30_1, this.z30_1, this.b31(), amount);
+protoOf(EngineContext).d33 = function (count) {
+  return EffectEngine_getInstance().x2h(this.z30_1, ensureNotNull(this.c31()).f1e_1, count);
 };
-protoOf(EngineContext).f33 = function (count, opponent) {
-  var tmp0_elvis_lhs = opponent ? this.y30_1.a1e(this.y30_1.l1i(this.z30_1.m21_1)) : this.b31();
+protoOf(EngineContext).e33 = function (amount) {
+  StepHelpers_getInstance().f33(this.z30_1, this.a31_1, this.c31(), amount);
+};
+protoOf(EngineContext).g33 = function (count, opponent) {
+  var tmp0_elvis_lhs = opponent ? this.z30_1.a1e(this.z30_1.l1i(this.a31_1.m21_1)) : this.c31();
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -27915,9 +27966,9 @@ protoOf(EngineContext).f33 = function (count, opponent) {
       var i = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
       var card = owner.v1e_1.f2(0);
-      this.z30_1.h22_1.f(card);
+      this.a31_1.h22_1.f(card);
       if (opponent) {
-        var tmp0 = this.z30_1.c22_1;
+        var tmp0 = this.a31_1.c22_1;
         // Inline function 'kotlin.collections.getOrPut' call
         var key = 'lookedOpponent';
         var value = tmp0.u1(key);
@@ -27934,12 +27985,12 @@ protoOf(EngineContext).f33 = function (count, opponent) {
     }
      while (inductionVariable < n);
   if (!opponent)
-    EffectEngine_getInstance().g2e(this.y30_1, 'LOOK_TOP', ensureNotNull(this.b31()).f1e_1, null, 'deck', null, this.z30_1, frozenMapOf_0('count', n), plus(ensureNotNull(this.b31()).g1e_1, ' mira las primeras ') + n + ' cartas de su mazo (' + this.z30_1.p21_1 + ')');
+    EffectEngine_getInstance().g2e(this.z30_1, 'LOOK_TOP', ensureNotNull(this.c31()).f1e_1, null, 'deck', null, this.a31_1, frozenMapOf_0('count', n), plus(ensureNotNull(this.c31()).g1e_1, ' mira las primeras ') + n + ' cartas de su mazo (' + this.a31_1.p21_1 + ')');
   else
-    EffectEngine_getInstance().g2e(this.y30_1, 'LOOK_TOP', ensureNotNull(this.b31()).f1e_1, null, 'deck', null, this.z30_1, frozenMapOf_1('count', n, 'ownerId', owner.f1e_1), plus(ensureNotNull(this.b31()).g1e_1, ' mira ') + (n === 1 ? 'la carta del tope' : 'las primeras ' + n + ' cartas') + ' del mazo de ' + owner.g1e_1 + ' (' + this.z30_1.p21_1 + ')');
+    EffectEngine_getInstance().g2e(this.z30_1, 'LOOK_TOP', ensureNotNull(this.c31()).f1e_1, null, 'deck', null, this.a31_1, frozenMapOf_1('count', n, 'ownerId', owner.f1e_1), plus(ensureNotNull(this.c31()).g1e_1, ' mira ') + (n === 1 ? 'la carta del tope' : 'las primeras ' + n + ' cartas') + ' del mazo de ' + owner.g1e_1 + ' (' + this.a31_1.p21_1 + ')');
 };
-protoOf(EngineContext).g33 = function (count, until) {
-  var player = ensureNotNull(this.b31());
+protoOf(EngineContext).h33 = function (count, until) {
+  var player = ensureNotNull(this.c31());
   var revealed = ArrayList_init_$Create$();
   $l$loop_0: while (true) {
     var tmp;
@@ -27954,15 +28005,15 @@ protoOf(EngineContext).g33 = function (count, until) {
     }
     var card = player.v1e_1.f2(0);
     revealed.f(card);
-    this.z30_1.h22_1.f(card);
+    this.a31_1.h22_1.f(card);
     if (!(until == null) && until.p2c(card))
       break $l$loop_0;
   }
   if (revealed.m())
     return Unit_instance;
-  EffectEngine_getInstance().g2e(this.y30_1, 'EXCAVATE', player.f1e_1, null, 'deck', null, this.z30_1, frozenMapOf_0('count', revealed.k()), plus(player.g1e_1, ' excava ') + revealed.k() + ' ' + (revealed.k() === 1 ? 'carta' : 'cartas') + ' de su mazo (' + this.z30_1.p21_1 + ')' + EffectEngine_getInstance().n2k(revealed));
+  EffectEngine_getInstance().g2e(this.z30_1, 'EXCAVATE', player.f1e_1, null, 'deck', null, this.a31_1, frozenMapOf_0('count', revealed.k()), plus(player.g1e_1, ' excava ') + revealed.k() + ' ' + (revealed.k() === 1 ? 'carta' : 'cartas') + ' de su mazo (' + this.a31_1.p21_1 + ')' + EffectEngine_getInstance().n2k(revealed));
 };
-protoOf(EngineContext).h33 = function (card, faceUp) {
+protoOf(EngineContext).i33 = function (card, faceUp) {
   var tmp;
   if (card == null) {
     return Unit_instance;
@@ -27974,7 +28025,7 @@ protoOf(EngineContext).h33 = function (card, faceUp) {
   if (c.j1c_1 === !up)
     return Unit_instance;
   c.j1c_1 = !up;
-  var tmp0 = this.y30_1.a18_1.w1();
+  var tmp0 = this.z30_1.a18_1.w1();
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
@@ -27991,7 +28042,7 @@ protoOf(EngineContext).h33 = function (card, faceUp) {
   var tmp2_elvis_lhs = tmp$ret$0;
   var tmp_0;
   if (tmp2_elvis_lhs == null) {
-    var tmp0_0 = this.y30_1.a18_1.w1();
+    var tmp0_0 = this.z30_1.a18_1.w1();
     var tmp$ret$2;
     $l$block_0: {
       // Inline function 'kotlin.collections.firstOrNull' call
@@ -28011,39 +28062,39 @@ protoOf(EngineContext).h33 = function (card, faceUp) {
   }
   var owner = tmp_0;
   var inLives = !(owner == null) && !(EffectEngine_getInstance().s2c(owner.x1e_1, c.g1c_1) == null);
-  var whose = owner == null || owner.f1e_1 == ensureNotNull(this.b31()).f1e_1 ? 'una de sus vidas' : 'una vida de ' + owner.g1e_1;
+  var whose = owner == null || owner.f1e_1 == ensureNotNull(this.c31()).f1e_1 ? 'una de sus vidas' : 'una vida de ' + owner.g1e_1;
   if (inLives && up) {
-    EffectEngine_getInstance().g2e(this.y30_1, 'LIFE_REVEALED', ensureNotNull(this.b31()).f1e_1, c, 'lifeStack', 'lifeStack', this.z30_1, frozenMapOf_0('ownerId', ensureNotNull(owner).f1e_1), plus(ensureNotNull(this.b31()).g1e_1, ' revela ') + whose + ': ' + EffectEngine_getInstance().q2c(c) + ' (' + this.z30_1.p21_1 + ')');
+    EffectEngine_getInstance().g2e(this.z30_1, 'LIFE_REVEALED', ensureNotNull(this.c31()).f1e_1, c, 'lifeStack', 'lifeStack', this.a31_1, frozenMapOf_0('ownerId', ensureNotNull(owner).f1e_1), plus(ensureNotNull(this.c31()).g1e_1, ' revela ') + whose + ': ' + EffectEngine_getInstance().q2c(c) + ' (' + this.a31_1.p21_1 + ')');
   } else {
-    EffectEngine_getInstance().h2e(this.y30_1, plus(ensureNotNull(this.b31()).g1e_1, up ? ' voltea bocarriba ' : ' coloca bocabajo ') + (inLives ? whose : EffectEngine_getInstance().q2c(c)) + ' (' + this.z30_1.p21_1 + ')', null);
+    EffectEngine_getInstance().h2e(this.z30_1, plus(ensureNotNull(this.c31()).g1e_1, up ? ' voltea bocarriba ' : ' coloca bocabajo ') + (inLives ? whose : EffectEngine_getInstance().q2c(c)) + ' (' + this.a31_1.p21_1 + ')', null);
   }
 };
-protoOf(EngineContext).i33 = function () {
-  ensureNotNull(this.y30_1.r18_1).c1n_1 = true;
-};
-protoOf(EngineContext).j33 = function (card) {
-  return !(EffectEngine_getInstance().s2c(ensureNotNull(this.b31()).u1e_1, ensureNotNull(card).g1c_1) == null);
-};
-protoOf(EngineContext).m32 = function (card) {
-  return !(ownerOnField(this, ensureNotNull(card)) == null);
+protoOf(EngineContext).j33 = function () {
+  ensureNotNull(this.z30_1.r18_1).c1n_1 = true;
 };
 protoOf(EngineContext).k33 = function (card) {
-  return !ensureNotNull(card).k1c_1 && !EffectEngine_getInstance().c1p(card).n('No puede agotarse');
+  return !(EffectEngine_getInstance().s2c(ensureNotNull(this.c31()).u1e_1, ensureNotNull(card).g1c_1) == null);
+};
+protoOf(EngineContext).n32 = function (card) {
+  return !(ownerOnField(this, ensureNotNull(card)) == null);
 };
 protoOf(EngineContext).l33 = function (card) {
+  return !ensureNotNull(card).k1c_1 && !EffectEngine_getInstance().c1p(card).n('No puede agotarse');
+};
+protoOf(EngineContext).m33 = function (card) {
   return ensureNotNull(card).k1c_1 && !(card.m1d_1 === 1);
 };
-protoOf(EngineContext).m33 = function (card, tapped) {
+protoOf(EngineContext).n33 = function (card, tapped) {
   var owner = ownerOnField(this, ensureNotNull(card));
   card.k1c_1 = tapped;
-  EffectEngine_getInstance().g2e(this.y30_1, tapped ? 'TAP' : 'UNTAP', ensureNotNull(this.b31()).f1e_1, card, null, null, this.z30_1, frozenMapOf_0('ownerId', ensureNotNull(owner).f1e_1), plus(ensureNotNull(this.b31()).g1e_1, tapped ? ' agota a ' : ' reactiva a ') + EffectEngine_getInstance().q2c(card) + ' (' + this.z30_1.p21_1 + ')');
+  EffectEngine_getInstance().g2e(this.z30_1, tapped ? 'TAP' : 'UNTAP', ensureNotNull(this.c31()).f1e_1, card, null, null, this.a31_1, frozenMapOf_0('ownerId', ensureNotNull(owner).f1e_1), plus(ensureNotNull(this.c31()).g1e_1, tapped ? ' agota a ' : ' reactiva a ') + EffectEngine_getInstance().q2c(card) + ' (' + this.a31_1.p21_1 + ')');
 };
 protoOf(EngineContext).b1p = function (card) {
   // Inline function 'kotlin.math.max' call
   var b = EffectEngine_getInstance().b1p(card);
   return Math.max(0, b);
 };
-protoOf(EngineContext).n33 = function (card, amount, until) {
+protoOf(EngineContext).o33 = function (card, amount, until) {
   if (amount === 0)
     return Unit_instance;
   var owner = ownerOnField(this, ensureNotNull(card));
@@ -28058,8 +28109,8 @@ protoOf(EngineContext).n33 = function (card, amount, until) {
       break;
     case 2:
       card.f1d_1 = card.f1d_1 + amount | 0;
-      if (!(this.y30_1.y18_1 == null)) {
-        ensureNotNull(this.y30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + 'fuerza:' + amount);
+      if (!(this.z30_1.y18_1 == null)) {
+        ensureNotNull(this.z30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + 'fuerza:' + amount);
       }
 
       break;
@@ -28075,18 +28126,18 @@ protoOf(EngineContext).n33 = function (card, amount, until) {
       noWhenBranchMatchedException();
       break;
   }
-  EffectEngine_getInstance().y2e(card, this.z30_1, 'Gana fuerza ' + amount + text, floatingUntil(Companion_instance_16, until), amount, null);
-  EffectEngine_getInstance().g2e(this.y30_1, 'GAIN', this.z30_1.m21_1, card, null, null, this.z30_1, frozenMapOf_0('strength', amount), EffectEngine_getInstance().q2c(card) + ' gana fuerza ' + amount + text);
+  EffectEngine_getInstance().y2e(card, this.a31_1, 'Gana fuerza ' + amount + text, floatingUntil(Companion_instance_16, until), amount, null);
+  EffectEngine_getInstance().g2e(this.z30_1, 'GAIN', this.a31_1.m21_1, card, null, null, this.a31_1, frozenMapOf_0('strength', amount), EffectEngine_getInstance().q2c(card) + ' gana fuerza ' + amount + text);
 };
-protoOf(EngineContext).o33 = function (card, keyword, until) {
+protoOf(EngineContext).p33 = function (card, keyword, until) {
   switch (ensureNotNull(until).k2_1) {
     case 1:
       ensureNotNull(ensureNotNull(card).c1d_1).f(ensureNotNull(keyword));
       break;
     case 2:
       ensureNotNull(ensureNotNull(card).b1d_1).f(ensureNotNull(keyword));
-      if (!(this.y30_1.y18_1 == null)) {
-        ensureNotNull(this.y30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + keyword);
+      if (!(this.z30_1.y18_1 == null)) {
+        ensureNotNull(this.z30_1.y18_1).e20_1.f(plus(card.g1c_1, '|') + keyword);
       }
 
       break;
@@ -28103,12 +28154,12 @@ protoOf(EngineContext).o33 = function (card, keyword, until) {
       break;
   }
   var what = (startsWith(keyword, 'No puede') ? keyword : 'Gana ' + keyword) + untilText(Companion_instance_16, until);
-  EffectEngine_getInstance().y2e(card, this.z30_1, what, floatingUntil(Companion_instance_16, until), 0, keyword);
-  EffectEngine_getInstance().g2e(this.y30_1, 'GAIN', this.z30_1.m21_1, card, null, null, this.z30_1, frozenMapOf_0('keyword', keyword), EffectEngine_getInstance().q2c(card) + ': ' + what);
+  EffectEngine_getInstance().y2e(card, this.a31_1, what, floatingUntil(Companion_instance_16, until), 0, keyword);
+  EffectEngine_getInstance().g2e(this.z30_1, 'GAIN', this.a31_1.m21_1, card, null, null, this.a31_1, frozenMapOf_0('keyword', keyword), EffectEngine_getInstance().q2c(card) + ': ' + what);
 };
-protoOf(EngineContext).p33 = function (card, sacrifice) {
-  if (sacrifice && this.j33(card)) {
-    Removals_getInstance().q33(this.y30_1, ensureNotNull(this.b31()), ensureNotNull(card), this.z30_1);
+protoOf(EngineContext).q33 = function (card, sacrifice) {
+  if (sacrifice && this.k33(card)) {
+    Removals_getInstance().r33(this.z30_1, ensureNotNull(this.c31()), ensureNotNull(card), this.a31_1);
     return Unit_instance;
   }
   var tmp0_elvis_lhs = ownerOnField(this, ensureNotNull(card));
@@ -28119,13 +28170,13 @@ protoOf(EngineContext).p33 = function (card, sacrifice) {
     tmp = tmp0_elvis_lhs;
   }
   var owner = tmp;
-  Removals_getInstance().w2e(this.y30_1, card, owner, sacrifice, 'EFFECT', this.z30_1.m21_1, sacrifice ? this.z30_1.n21_1 : null, this.z30_1);
-};
-protoOf(EngineContext).r33 = function () {
-  return StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
+  Removals_getInstance().w2e(this.z30_1, card, owner, sacrifice, 'EFFECT', this.a31_1.m21_1, sacrifice ? this.a31_1.n21_1 : null, this.a31_1);
 };
 protoOf(EngineContext).s33 = function () {
-  var tmp0_elvis_lhs = this.b31();
+  return StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
+};
+protoOf(EngineContext).t33 = function () {
+  var tmp0_elvis_lhs = this.c31();
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return frozenListOf([]);
@@ -28133,7 +28184,7 @@ protoOf(EngineContext).s33 = function () {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  var tmp1_elvis_lhs = EffectEngine_getInstance().s2c(player.a1f_1, this.z30_1.n21_1);
+  var tmp1_elvis_lhs = EffectEngine_getInstance().s2c(player.a1f_1, this.a31_1.n21_1);
   var tmp_0;
   if (tmp1_elvis_lhs == null) {
     return frozenListOf([]);
@@ -28142,7 +28193,7 @@ protoOf(EngineContext).s33 = function () {
   }
   var self_0 = tmp_0;
   var used = ArrayList_init_$Create$();
-  var timeline = this.y30_1.o18_1;
+  var timeline = this.z30_1.o18_1;
   var i = timeline.k() - 1 | 0;
   while (i >= 0 && !('SPECIAL_SUMMON' === timeline.l(i).p24_1 && self_0.g1c_1 == timeline.l(i).r24_1)) {
     i = i - 1 | 0;
@@ -28156,7 +28207,7 @@ protoOf(EngineContext).s33 = function () {
     var cause = tmp2_safe_receiver == null ? null : tmp2_safe_receiver.u1('cause');
     var usedForIt = 'SACRIFICE' === e.p24_1 && equals_0('RITUAL', cause) || ('TRIBUTE' === e.p24_1 && equals_0(cause, 'promotion'));
     if (usedForIt) {
-      var card = EffectEngine_getInstance().y24(this.y30_1, e.r24_1);
+      var card = EffectEngine_getInstance().y24(this.z30_1, e.r24_1);
       if (!(card == null) && !(card === self_0) && !used.n(card)) {
         used.e2(0, card);
       }
@@ -28182,8 +28233,8 @@ protoOf(EngineContext).s33 = function () {
   }
   return destination;
 };
-protoOf(EngineContext).t33 = function () {
-  var tmp0_elvis_lhs = this.b31();
+protoOf(EngineContext).u33 = function () {
+  var tmp0_elvis_lhs = this.c31();
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return frozenListOf([]);
@@ -28191,7 +28242,7 @@ protoOf(EngineContext).t33 = function () {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  var tmp1_elvis_lhs = EffectEngine_getInstance().s2c(player.a1f_1, this.z30_1.n21_1);
+  var tmp1_elvis_lhs = EffectEngine_getInstance().s2c(player.a1f_1, this.a31_1.n21_1);
   var tmp_0;
   if (tmp1_elvis_lhs == null) {
     return frozenListOf([]);
@@ -28199,7 +28250,7 @@ protoOf(EngineContext).t33 = function () {
     tmp_0 = tmp1_elvis_lhs;
   }
   var self_0 = tmp_0;
-  var tmp2_elvis_lhs = Formations_instance.u33(player, self_0.g1c_1);
+  var tmp2_elvis_lhs = Formations_instance.v33(player, self_0.g1c_1);
   var tmp_1;
   if (tmp2_elvis_lhs == null) {
     return frozenListOf([]);
@@ -28208,7 +28259,7 @@ protoOf(EngineContext).t33 = function () {
   }
   var members = tmp_1;
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Formations_instance.v33(player);
+  var tmp0 = Formations_instance.w33(player);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -28220,8 +28271,8 @@ protoOf(EngineContext).t33 = function () {
   }
   return destination;
 };
-protoOf(EngineContext).w33 = function () {
-  var tmp0_elvis_lhs = EffectEngine_getInstance().m2d(this.y30_1, this.z30_1);
+protoOf(EngineContext).x33 = function () {
+  var tmp0_elvis_lhs = EffectEngine_getInstance().m2d(this.z30_1, this.a31_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -28239,39 +28290,39 @@ protoOf(EngineContext).w33 = function () {
     tmp_1 = tmp2_elvis_lhs;
   }
   var id = tmp_1;
-  return EffectEngine_getInstance().s2c(ensureNotNull(this.b31()).a1f_1, id);
+  return EffectEngine_getInstance().s2c(ensureNotNull(this.c31()).a1f_1, id);
 };
-protoOf(EngineContext).c31 = function () {
-  var chosen = this.z30_1.c22_1.u1('eventCard');
+protoOf(EngineContext).d31 = function () {
+  var chosen = this.a31_1.c22_1.u1('eventCard');
   // Inline function 'kotlin.collections.isNullOrEmpty' call
   if (!(chosen == null || chosen.m()))
-    return this.q31(chosen.l(0));
-  var trigger = EffectEngine_getInstance().m2d(this.y30_1, this.z30_1);
-  return trigger == null ? null : this.q31(trigger.r24_1);
+    return this.r31(chosen.l(0));
+  var trigger = EffectEngine_getInstance().m2d(this.z30_1, this.a31_1);
+  return trigger == null ? null : this.r31(trigger.r24_1);
 };
-protoOf(EngineContext).x33 = function (to) {
+protoOf(EngineContext).y33 = function (to) {
   var tmp;
   switch (ensureNotNull(to)) {
     case 'self':
-      tmp = this.q31(this.z30_1.n21_1);
+      tmp = this.r31(this.a31_1.n21_1);
       break;
     case 'subject':
-      tmp = this.z30_1.d22_1 == null ? null : this.q31(this.z30_1.d22_1);
+      tmp = this.a31_1.d22_1 == null ? null : this.r31(this.a31_1.d22_1);
       break;
     case 'last':
-      tmp = this.z30_1.m22_1.m() ? null : this.q31(this.z30_1.m22_1.l(0));
+      tmp = this.a31_1.m22_1.m() ? null : this.r31(this.a31_1.m22_1.l(0));
       break;
     case 'event':
-      tmp = this.c31();
+      tmp = this.d31();
       break;
     default:
-      var tmp1_safe_receiver = firstOrNull(this.e2v(to));
+      var tmp1_safe_receiver = firstOrNull(this.f2v(to));
       var tmp_0;
       if (tmp1_safe_receiver == null) {
         tmp_0 = null;
       } else {
         // Inline function 'kotlin.let' call
-        tmp_0 = this.q31(tmp1_safe_receiver);
+        tmp_0 = this.r31(tmp1_safe_receiver);
       }
 
       tmp = tmp_0;
@@ -28279,33 +28330,33 @@ protoOf(EngineContext).x33 = function (to) {
   }
   return tmp;
 };
-protoOf(EngineContext).y33 = function (card) {
+protoOf(EngineContext).z33 = function (card) {
   return ensureNotNull(card).p1u() == null ? 0 : ensureNotNull(card.p1u());
 };
-protoOf(EngineContext).z33 = function () {
-  return StepHelpers_getInstance().a34(this.y30_1, this.z30_1);
-};
-protoOf(EngineContext).b34 = function () {
-  return this.z30_1.n21_1;
+protoOf(EngineContext).a34 = function () {
+  return StepHelpers_getInstance().b34(this.z30_1, this.a31_1);
 };
 protoOf(EngineContext).c34 = function () {
-  var ally = StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
-  var replaced = ally == null || (!(this.z30_1.d22_1 == null) && EffectEngine_getInstance().s2c(ensureNotNull(this.b31()).a1f_1, this.z30_1.d22_1) == null);
-  return replaced && !(this.z30_1.g22_1 == null) ? EffectEngine_getInstance().s2c(ensureNotNull(this.b31()).a1f_1, this.z30_1.g22_1) : ally;
+  return this.a31_1.n21_1;
 };
-protoOf(EngineContext).d34 = function (cost) {
-  return EffectEngine_getInstance().x2h(this.y30_1, this.z30_1.m21_1, cost);
+protoOf(EngineContext).d34 = function () {
+  var ally = StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
+  var replaced = ally == null || (!(this.a31_1.d22_1 == null) && EffectEngine_getInstance().s2c(ensureNotNull(this.c31()).a1f_1, this.a31_1.d22_1) == null);
+  return replaced && !(this.a31_1.g22_1 == null) ? EffectEngine_getInstance().s2c(ensureNotNull(this.c31()).a1f_1, this.a31_1.g22_1) : ally;
 };
-protoOf(EngineContext).e34 = function (card) {
-  return Chain_instance.e2s(this.y30_1, this.z30_1.m21_1, ensureNotNull(card)) == null;
+protoOf(EngineContext).e34 = function (cost) {
+  return EffectEngine_getInstance().x2h(this.z30_1, this.a31_1.m21_1, cost);
 };
-protoOf(EngineContext).f34 = function () {
-  return !(this.z30_1.l21_1 == null) && equals_0(EffectEngine_getInstance().z2g(this.z30_1).o1w_1, Moment_DELAYED_getInstance());
+protoOf(EngineContext).f34 = function (card) {
+  return Chain_instance.g2s(this.z30_1, this.a31_1.m21_1, ensureNotNull(card)) == null;
 };
-protoOf(EngineContext).g34 = function (message) {
-  EffectEngine_getInstance().h2e(this.y30_1, plus(message, ' (') + this.z30_1.p21_1 + ')', null);
+protoOf(EngineContext).g34 = function () {
+  return !(this.a31_1.l21_1 == null) && equals_0(EffectEngine_getInstance().z2g(this.a31_1).o1w_1, Moment_DELAYED_getInstance());
 };
-protoOf(EngineContext).h34 = function (card, reduce, toFront) {
+protoOf(EngineContext).h34 = function (message) {
+  EffectEngine_getInstance().h2e(this.z30_1, plus(message, ' (') + this.a31_1.p21_1 + ')', null);
+};
+protoOf(EngineContext).i34 = function (card, reduce, toFront) {
   var tmp0_elvis_lhs = detach(this, ensureNotNull(card));
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -28314,9 +28365,9 @@ protoOf(EngineContext).h34 = function (card, reduce, toFront) {
     tmp = tmp0_elvis_lhs;
   }
   var from = tmp;
-  Summons_instance.f2u(this.y30_1, this.z30_1, this.b31(), card, from, reduce, toFront);
-  this.z30_1.g22_1 = card.g1c_1;
-  var tmp0 = this.z30_1.c22_1;
+  Summons_instance.g2u(this.z30_1, this.a31_1, this.c31(), card, from, reduce, toFront);
+  this.a31_1.g22_1 = card.g1c_1;
+  var tmp0 = this.a31_1.c22_1;
   // Inline function 'kotlin.collections.getOrPut' call
   var key = 'summonedAll';
   var value = tmp0.u1(key);
@@ -28330,7 +28381,7 @@ protoOf(EngineContext).h34 = function (card, reduce, toFront) {
   }
   tmp_0.f(card.g1c_1);
 };
-protoOf(EngineContext).i34 = function (card) {
+protoOf(EngineContext).j34 = function (card) {
   var tmp0_elvis_lhs = card.t1c_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -28340,15 +28391,15 @@ protoOf(EngineContext).i34 = function (card) {
   }
   var cost = tmp;
   // Inline function 'kotlin.math.max' call
-  var b = cost - CostModifiers_getInstance().k2j(this.y30_1, this.b31(), Event_EFFECT_SUMMON_getInstance(), null, card, null) | 0;
+  var b = cost - CostModifiers_getInstance().k2j(this.z30_1, this.c31(), Event_EFFECT_SUMMON_getInstance(), null, card, null) | 0;
   return Math.max(0, b);
 };
-protoOf(EngineContext).j34 = function (card) {
-  return CardEffects_getInstance().h2p(this.y30_1, this.z30_1.m21_1, card);
+protoOf(EngineContext).k34 = function (card) {
+  return CardEffects_getInstance().h2p(this.z30_1, this.a31_1.m21_1, card);
 };
-protoOf(EngineContext).k34 = function (card, reduce) {
+protoOf(EngineContext).l34 = function (card, reduce) {
   // Inline function 'kotlin.math.max' call
-  var b = this.j34(ensureNotNull(card)) - reduce | 0;
+  var b = this.k34(ensureNotNull(card)) - reduce | 0;
   var cost = Math.max(0, b);
   var tmp0_elvis_lhs = detach(this, card);
   var tmp;
@@ -28358,28 +28409,28 @@ protoOf(EngineContext).k34 = function (card, reduce) {
     tmp = tmp0_elvis_lhs;
   }
   var from = tmp;
-  EffectEngine_getInstance().t2k(this.y30_1, this.z30_1.m21_1, cost);
+  EffectEngine_getInstance().t2k(this.z30_1, this.a31_1.m21_1, cost);
   if (!Zone_HAND_getInstance().q1f(from)) {
-    EffectEngine_getInstance().d2f(this.b31(), from).y1(card);
-    ensureNotNull(this.b31()).u1e_1.f(card);
+    EffectEngine_getInstance().d2f(this.c31(), from).y1(card);
+    ensureNotNull(this.c31()).u1e_1.f(card);
   }
-  Summons_instance.l34(this.y30_1, this.b31(), card, cost, null, null, this.z30_1);
+  Summons_instance.m34(this.z30_1, this.c31(), card, cost, null, null, this.a31_1);
 };
-protoOf(EngineContext).m34 = function (count) {
-  this.z30_1.l22_1 = count;
+protoOf(EngineContext).n34 = function (count) {
+  this.a31_1.l22_1 = count;
 };
-protoOf(EngineContext).y32 = function (done) {
-  if (this.z30_1.l21_1 == null || !Chain_instance.y2g(this.z30_1))
-    this.z30_1.k22_1 = done;
-};
-protoOf(EngineContext).n34 = function (card) {
-  ensureNotNull(this.y30_1.r18_1).d1n_1 = frozenListOf([ensureNotNull(ensureNotNull(card).g1c_1)]);
+protoOf(EngineContext).z32 = function (done) {
+  if (this.a31_1.l21_1 == null || !Chain_instance.y2g(this.a31_1))
+    this.a31_1.k22_1 = done;
 };
 protoOf(EngineContext).o34 = function (card) {
-  return EffectEngine_getInstance().v2t(card, StepHelpers_getInstance().p34(this.y30_1, this.z30_1));
+  ensureNotNull(this.z30_1.r18_1).d1n_1 = frozenListOf([ensureNotNull(ensureNotNull(card).g1c_1)]);
 };
-protoOf(EngineContext).q34 = function () {
-  return StepHelpers_getInstance().r34(this.y30_1, this.z30_1);
+protoOf(EngineContext).p34 = function (card) {
+  return EffectEngine_getInstance().w2t(card, StepHelpers_getInstance().q34(this.z30_1, this.a31_1));
+};
+protoOf(EngineContext).r34 = function () {
+  return StepHelpers_getInstance().s34(this.z30_1, this.a31_1);
 };
 protoOf(EngineContext).e1p = function (card) {
   return EffectEngine_getInstance().e1p(card);
@@ -28387,29 +28438,29 @@ protoOf(EngineContext).e1p = function (card) {
 protoOf(EngineContext).d2f = function (player, zone) {
   return EffectEngine_getInstance().d2f(player, zone);
 };
-protoOf(EngineContext).s34 = function (amount) {
+protoOf(EngineContext).t34 = function (amount) {
   if (amount instanceof LastCount)
-    return this.z30_1.l22_1;
+    return this.a31_1.l22_1;
   if (amount instanceof Times)
-    return imul(this.s34(amount.g2g_1), amount.h2g_1);
+    return imul(this.t34(amount.g2g_1), amount.h2g_1);
   if (amount instanceof Scaled)
-    return (this.s34(amount.d2g_1) / amount.e2g_1 | 0) + amount.f2g_1 | 0;
+    return (this.t34(amount.d2g_1) / amount.e2g_1 | 0) + amount.f2g_1 | 0;
   if (amount instanceof TriggerSourceLevel)
-    return SpecialRequirements_getInstance().t34(this.y30_1, this.z30_1);
+    return SpecialRequirements_getInstance().u34(this.z30_1, this.a31_1);
   if (amount instanceof CardsIn)
-    return Selection_instance.u34(this, ensureNotNull(amount.j2f_1), false).k();
+    return Selection_instance.v34(this, ensureNotNull(amount.j2f_1), false).k();
   if (amount instanceof Targetable)
-    return Selection_instance.u34(this, ensureNotNull(amount.m2f_1), true).k();
+    return Selection_instance.v34(this, ensureNotNull(amount.m2f_1), true).k();
   if (amount instanceof Least) {
     // Inline function 'kotlin.collections.minOf' call
     var iterator = ensureNotNull(amount.n2f_1).h();
     if (!iterator.i())
       throw NoSuchElementException_init_$Create$_0();
     var it = iterator.j();
-    var minValue = this.s34(it);
+    var minValue = this.t34(it);
     while (iterator.i()) {
       var it_0 = iterator.j();
-      var v = this.s34(it_0);
+      var v = this.t34(it_0);
       if (compareTo(minValue, v) > 0) {
         minValue = v;
       }
@@ -28417,7 +28468,7 @@ protoOf(EngineContext).s34 = function (amount) {
     return minValue;
   }
   if (amount instanceof SumOf) {
-    var cards = Selection_instance.u34(this, ensureNotNull(amount.k2f_1), false);
+    var cards = Selection_instance.v34(this, ensureNotNull(amount.k2f_1), false);
     // Inline function 'kotlin.collections.sumOf' call
     var sum = 0;
     var _iterator__ex2g4s = cards.h();
@@ -28436,10 +28487,10 @@ protoOf(EngineContext).s34 = function (amount) {
           break;
         default:
           var tmp_1;
-          if (this.m32(element)) {
+          if (this.n32(element)) {
             tmp_1 = this.b1p(element);
           } else {
-            var tmp3_elvis_lhs = Removals_getInstance().v34(this.y30_1, element.g1c_1);
+            var tmp3_elvis_lhs = Removals_getInstance().w34(this.z30_1, element.g1c_1);
             var tmp_2;
             if (tmp3_elvis_lhs == null) {
               var tmp4_elvis_lhs = element.p1c_1;
@@ -28463,14 +28514,14 @@ protoOf(EngineContext).s34 = function (amount) {
     var tmp0_elvis_lhs = amount.i2f_1;
     var filter = tmp0_elvis_lhs == null ? Companion_instance_11.c2q() : tmp0_elvis_lhs;
     // Inline function 'kotlin.collections.mapNotNull' call
-    var tmp0 = this.z30_1.m22_1;
+    var tmp0 = this.a31_1.m22_1;
     // Inline function 'kotlin.collections.mapNotNullTo' call
     var destination = ArrayList_init_$Create$();
     // Inline function 'kotlin.collections.forEach' call
     var _iterator__ex2g4s_0 = tmp0.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      var tmp0_safe_receiver = EffectEngine_getInstance().y24(this.y30_1, element_0);
+      var tmp0_safe_receiver = EffectEngine_getInstance().y24(this.z30_1, element_0);
       if (tmp0_safe_receiver == null)
         null;
       else {
@@ -28505,28 +28556,28 @@ protoOf(EngineContext).s34 = function (amount) {
     return tmp$ret$13;
   }
   if (amount instanceof TriggerStrengthBeforeRemoval) {
-    var chosen = this.z30_1.c22_1.u1('eventCard');
+    var chosen = this.a31_1.c22_1.u1('eventCard');
     var tmp_4;
     // Inline function 'kotlin.collections.isNullOrEmpty' call
     if (!(chosen == null || chosen.m())) {
       tmp_4 = chosen.l(0);
     } else {
-      var tmp1_safe_receiver = EffectEngine_getInstance().m2d(this.y30_1, this.z30_1);
+      var tmp1_safe_receiver = EffectEngine_getInstance().m2d(this.z30_1, this.a31_1);
       tmp_4 = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.r24_1;
     }
     var id = tmp_4;
-    var known = Removals_getInstance().v34(this.y30_1, id);
+    var known = Removals_getInstance().w34(this.z30_1, id);
     if (!(known == null))
       return known;
-    var card = id == null ? null : EffectEngine_getInstance().y24(this.y30_1, id);
+    var card = id == null ? null : EffectEngine_getInstance().y24(this.z30_1, id);
     return card == null ? 0 : EffectEngine_getInstance().b1p(card);
   }
   if (amount instanceof SubjectLevel) {
-    var subject = StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
+    var subject = StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
     return subject == null || subject.p1u() == null ? 0 : ensureNotNull(subject.p1u());
   }
   if (amount instanceof UsedToSummon) {
-    var trigger = EffectEngine_getInstance().m2d(this.y30_1, this.z30_1);
+    var trigger = EffectEngine_getInstance().m2d(this.z30_1, this.a31_1);
     var used = !(trigger == null) && !(trigger.x24_1 == null) ? ensureNotNull(trigger.x24_1).u1('used') : null;
     var tmp_5;
     if (isNumber(used)) {
@@ -28537,26 +28588,26 @@ protoOf(EngineContext).s34 = function (amount) {
     return tmp_5;
   }
   if (amount instanceof SourceStrength) {
-    var self_0 = StepHelpers_getInstance().p2d(this.y30_1, this.z30_1);
-    if (self_0 == null && this.z30_1.d22_1 == null)
-      self_0 = EffectEngine_getInstance().l2e(this.y30_1, this.z30_1.m21_1, this.z30_1.n21_1);
+    var self_0 = StepHelpers_getInstance().p2d(this.z30_1, this.a31_1);
+    if (self_0 == null && this.a31_1.d22_1 == null)
+      self_0 = EffectEngine_getInstance().l2e(this.z30_1, this.a31_1.m21_1, this.a31_1.n21_1);
     return self_0 == null ? 0 : EffectEngine_getInstance().b1p(self_0);
   }
-  return ensureNotNull(amount).d1p(this.y30_1, this.z30_1.m21_1);
+  return ensureNotNull(amount).d1p(this.z30_1, this.a31_1.m21_1);
 };
-protoOf(EngineContext).w34 = function (selector) {
+protoOf(EngineContext).x34 = function (selector) {
   var tmp;
-  if (equals_0(ensureNotNull(selector).y34_1, Owner_OPPONENT_getInstance())) {
+  if (equals_0(ensureNotNull(selector).z34_1, Owner_OPPONENT_getInstance())) {
     tmp = 'enemigo';
   } else {
     var tmp_0;
     // Inline function 'kotlin.text.lowercase' call
     // Inline function 'kotlin.js.asDynamic' call
-    var tmp$ret$0 = ensureNotNull(selector.x34_1).toLowerCase();
+    var tmp$ret$0 = ensureNotNull(selector.y34_1).toLowerCase();
     if (contains_0(tmp$ret$0, 'allies')) {
       tmp_0 = true;
     } else {
-      tmp_0 = contains_0(selector.x34_1, 'ttackers');
+      tmp_0 = contains_0(selector.y34_1, 'ttackers');
     }
     if (tmp_0) {
       tmp = 'aliado';
@@ -28565,7 +28616,7 @@ protoOf(EngineContext).w34 = function (selector) {
     }
   }
   var who = tmp;
-  var filter = selector.g35().e2e();
+  var filter = selector.h35().e2e();
   var tmp_1;
   var tmp$ret$2;
   $l$block: {
@@ -28591,60 +28642,60 @@ protoOf(EngineContext).w34 = function (selector) {
 protoOf(EngineContext).q2c = function (card) {
   return EffectEngine_getInstance().q2c(card);
 };
-protoOf(EngineContext).q31 = function (instanceId) {
-  var mine = EffectEngine_getInstance().l2e(this.y30_1, this.z30_1.m21_1, instanceId);
-  return mine == null ? EffectEngine_getInstance().l2e(this.y30_1, this.y30_1.l1i(this.z30_1.m21_1), instanceId) : mine;
+protoOf(EngineContext).r31 = function (instanceId) {
+  var mine = EffectEngine_getInstance().l2e(this.z30_1, this.a31_1.m21_1, instanceId);
+  return mine == null ? EffectEngine_getInstance().l2e(this.z30_1, this.z30_1.l1i(this.a31_1.m21_1), instanceId) : mine;
 };
-protoOf(EngineContext).h35 = function (instruction, chosenLabel, shown, valid, min, max) {
-  StepHelpers_getInstance().b2e(this.y30_1, this.z30_1, instruction, chosenLabel, shown, EffectEngine_getInstance().a2e(valid), max);
-  ensureNotNull(this.y30_1.r18_1).r1m_1 = min;
+protoOf(EngineContext).i35 = function (instruction, chosenLabel, shown, valid, min, max) {
+  StepHelpers_getInstance().b2e(this.z30_1, this.a31_1, instruction, chosenLabel, shown, EffectEngine_getInstance().a2e(valid), max);
+  ensureNotNull(this.z30_1.r18_1).r1m_1 = min;
 };
-protoOf(EngineContext).e2v = function (name) {
+protoOf(EngineContext).f2v = function (name) {
   var tmp;
   switch (ensureNotNull(name)) {
     case 'targets':
-      tmp = this.z30_1.x21_1;
+      tmp = this.a31_1.x21_1;
       break;
     case 'last':
-      tmp = this.z30_1.m22_1;
+      tmp = this.a31_1.m22_1;
       break;
     case 'subject':
-      tmp = this.z30_1.d22_1 == null ? frozenListOf([]) : frozenListOf([this.z30_1.d22_1]);
+      tmp = this.a31_1.d22_1 == null ? frozenListOf([]) : frozenListOf([this.a31_1.d22_1]);
       break;
     case 'summoned':
-      tmp = this.z30_1.g22_1 == null ? frozenListOf([]) : frozenListOf([this.z30_1.g22_1]);
+      tmp = this.a31_1.g22_1 == null ? frozenListOf([]) : frozenListOf([this.a31_1.g22_1]);
       break;
     default:
-      var saved = this.z30_1.c22_1;
+      var saved = this.a31_1.c22_1;
       tmp = valueOr(saved, name, frozenListOf([]));
       break;
   }
   return tmp;
 };
-protoOf(EngineContext).i35 = function (name, instanceIds) {
+protoOf(EngineContext).j35 = function (name, instanceIds) {
   switch (ensureNotNull(name)) {
     case 'specialCard':
       if (!ensureNotNull(instanceIds).m())
-        this.z30_1.e22_1 = instanceIds.l(0);
+        this.a31_1.e22_1 = instanceIds.l(0);
       break;
     case 'specialSummoner':
       if (!ensureNotNull(instanceIds).m())
-        this.z30_1.f22_1 = instanceIds.l(0);
+        this.a31_1.f22_1 = instanceIds.l(0);
       break;
     case 'targets':
-      this.z30_1.x21_1.r(ensureNotNull(instanceIds));
+      this.a31_1.x21_1.r(ensureNotNull(instanceIds));
       break;
     case 'last':
-      this.z30_1.m22_1 = ArrayList_init_$Create$_0(ensureNotNull(instanceIds));
+      this.a31_1.m22_1 = ArrayList_init_$Create$_0(ensureNotNull(instanceIds));
       break;
     case 'subject':
       if (!ensureNotNull(instanceIds).m())
-        this.z30_1.d22_1 = instanceIds.l(0);
+        this.a31_1.d22_1 = instanceIds.l(0);
       break;
     default:
       // Inline function 'kotlin.collections.getOrPut' call
 
-      var this_0 = this.z30_1.c22_1;
+      var this_0 = this.a31_1.c22_1;
       var value = this_0.u1(name);
       var tmp;
       if (value == null) {
@@ -28659,10 +28710,10 @@ protoOf(EngineContext).i35 = function (name, instanceIds) {
       break;
   }
 };
-protoOf(EngineContext).j35 = function (type, card, data, message) {
+protoOf(EngineContext).k35 = function (type, card, data, message) {
   var tmp = EffectEngine_getInstance();
-  var tmp_0 = this.z30_1.m21_1;
-  tmp.g2e(this.y30_1, type, tmp_0, card, null, null, this.z30_1, (data == null ? true : isInterface(data, KtMutableMap)) ? data : THROW_CCE(), plus(message, ' (') + this.z30_1.p21_1 + ')');
+  var tmp_0 = this.a31_1.m21_1;
+  tmp.g2e(this.z30_1, type, tmp_0, card, null, null, this.a31_1, (data == null ? true : isInterface(data, KtMutableMap)) ? data : THROW_CCE(), plus(message, ' (') + this.a31_1.p21_1 + ')');
 };
 function FieldGrant(controllerId, filter, keyword, until, source, exceptId) {
   this.c1k_1 = controllerId;
@@ -28712,22 +28763,22 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
   var player = ensureNotNull(room.a1e(effect.m21_1));
   var userId = player.f1e_1;
   if (step instanceof IfSaved) {
-    if (EngineContext_init_$Create$(room, effect).e2v(step.g2r_1).m())
+    if (EngineContext_init_$Create$(room, effect).f2v(step.g2r_1).m())
       effect.a22_1 = effect.a22_1 + step.h2r_1 | 0;
     return false;
   } else {
     if (step instanceof IfCondition) {
       var source = EffectEngine_getInstance().l2e(room, userId, effect.n21_1);
-      var condition = ensureNotNull(step.t2s_1);
+      var condition = ensureNotNull(step.u2s_1);
       var tmp;
       if (!(source == null)) {
         var tmp_0;
         if (condition instanceof Compare) {
           var context = EngineContext_init_$Create$(room, effect);
-          var a = context.s34(condition.l2w_1);
-          var b = context.s34(condition.n2w_1);
+          var a = context.t34(condition.m2w_1);
+          var b = context.t34(condition.o2w_1);
           var tmp_1;
-          switch (ensureNotNull(condition.m2w_1).k2_1) {
+          switch (ensureNotNull(condition.n2w_1).k2_1) {
             case 0:
               tmp_1 = a >= b;
               break;
@@ -28746,7 +28797,7 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
           }
           tmp_0 = tmp_1;
         } else {
-          tmp_0 = condition.l2g(room, step.v2s_1 ? EffectEngine_getInstance().m2d(room, effect) : null, source, userId);
+          tmp_0 = condition.l2g(room, step.w2s_1 ? EffectEngine_getInstance().m2d(room, effect) : null, source, userId);
         }
         tmp = tmp_0;
       } else {
@@ -28754,7 +28805,7 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
       }
       var holds = tmp;
       if (!holds)
-        effect.a22_1 = effect.a22_1 + step.u2s_1 | 0;
+        effect.a22_1 = effect.a22_1 + step.v2s_1 | 0;
       return false;
     } else {
       if (step instanceof IfChosenGone) {
@@ -28814,7 +28865,7 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
         }
         var gone = tmp$ret$0;
         if (!gone)
-          effect.a22_1 = effect.a22_1 + step.s2s_1 | 0;
+          effect.a22_1 = effect.a22_1 + step.t2s_1 | 0;
         return false;
       } else {
         if (step instanceof EndYourTurn) {
@@ -28845,7 +28896,7 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
                 while (_iterator__ex2g4s_1.i()) {
                   var element_1 = _iterator__ex2g4s_1.j();
                   var c = EffectEngine_getInstance().l2e(room, userId, element_1);
-                  if (!(c == null) && ensureNotNull(step.w2s_1).p2c(c)) {
+                  if (!(c == null) && ensureNotNull(step.x2s_1).p2c(c)) {
                     tmp$ret$4 = true;
                     break $l$block_4;
                   }
@@ -28854,11 +28905,11 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
               }
               var match = tmp$ret$4;
               if (!match)
-                effect.a22_1 = effect.a22_1 + step.x2s_1 | 0;
+                effect.a22_1 = effect.a22_1 + step.y2s_1 | 0;
               return false;
             } else {
               if (step instanceof IfPossible) {
-                if (!Resolution_getInstance().a2t(room, effect, ensureNotNull(EffectEngine_getInstance().z2g(effect).t1w_1), effect.a22_1)) {
+                if (!Resolution_getInstance().b2t(room, effect, ensureNotNull(EffectEngine_getInstance().z2g(effect).t1w_1), effect.a22_1)) {
                   EffectEngine_getInstance().h2e(room, plus(effect.p21_1, ': ') + effect.q21_1 + ' no se resuelve (ya no puede hacerse todo lo que pide)', null);
                   effect.a22_1 = ensureNotNull(EffectEngine_getInstance().z2g(effect).t1w_1).k() - 1 | 0;
                 }
@@ -28881,13 +28932,13 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
                 } else {
                   if (step instanceof IfDone) {
                     if (!effect.k22_1)
-                      effect.a22_1 = effect.a22_1 + step.z2s_1 | 0;
+                      effect.a22_1 = effect.a22_1 + step.a2t_1 | 0;
                     effect.k22_1 = false;
                     return false;
                   } else {
                     if (step instanceof IfNotDone) {
                       if (effect.k22_1)
-                        effect.a22_1 = effect.a22_1 + step.y2s_1 | 0;
+                        effect.a22_1 = effect.a22_1 + step.z2s_1 | 0;
                       effect.k22_1 = false;
                       return false;
                     } else {
@@ -28909,7 +28960,7 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
                               var tmp_7 = i;
                               var tmp0_2 = steps.k();
                               // Inline function 'kotlin.math.min' call
-                              var b_0 = next + step.r2s_1 | 0;
+                              var b_0 = next + step.s2s_1 | 0;
                               tmp_6 = tmp_7 < Math.min(tmp0_2, b_0);
                             } else {
                               tmp_6 = false;
@@ -28929,10 +28980,10 @@ protoOf(FlowSteps).o2d = function (room, effect, step) {
                             i = i + 1 | 0;
                           }
                           if (!can) {
-                            effect.a22_1 = effect.a22_1 + step.r2s_1 | 0;
+                            effect.a22_1 = effect.a22_1 + step.s2s_1 | 0;
                             return false;
                           }
-                          var prompt = StepHelpers_getInstance().l2s(room, effect, Kind_CONFIRM_getInstance(), step.q2s_1);
+                          var prompt = StepHelpers_getInstance().m2s(room, effect, Kind_CONFIRM_getInstance(), step.r2s_1);
                           var source_0 = EffectEngine_getInstance().l2e(room, userId, effect.n21_1);
                           if (!(source_0 == null)) {
                             prompt.p1m_1 = ArrayList_init_$Create$_0(frozenListOf([source_0]));
@@ -28964,7 +29015,7 @@ protoOf(FlowSteps).v2e = function (room, effect, step, player, picks, order, rep
   var userId = player.f1e_1;
   if (step instanceof MayDo) {
     if (picks.m())
-      effect.a22_1 = effect.a22_1 + step.r2s_1 | 0;
+      effect.a22_1 = effect.a22_1 + step.s2s_1 | 0;
   } else {
     return 'Este paso no espera ninguna elecci\xF3n';
   }
@@ -29089,7 +29140,7 @@ function dropLeavers($this, room, p) {
   removeAll(tmp, Formations$dropLeavers$lambda_0);
 }
 function grantsOf($this, room, p, order, card) {
-  var tmp0_elvis_lhs = $this.u33(p, card.g1c_1);
+  var tmp0_elvis_lhs = $this.v33(p, card.g1c_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -29102,7 +29153,7 @@ function grantsOf($this, room, p, order, card) {
   var _iterator__ex2g4s = listOfNotNull([getOrNull(order, at - 1 | 0), getOrNull(order, at + 1 | 0)]).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var source = _iterator__ex2g4s.j();
-    if (!contains(formation, source.g1c_1) || !$this.k35(order, source, card))
+    if (!contains(formation, source.g1c_1) || !$this.l35(order, source, card))
       continue $l$loop;
     var tmp1_safe_receiver = card.x1d_1;
     var tmp_0;
@@ -29165,15 +29216,15 @@ protoOf(Grant).equals = function (other) {
   return true;
 };
 function splits($this, player, card) {
-  var order = $this.v33(player);
+  var order = $this.w33(player);
   var at = order.s(card);
   var tmp0_safe_receiver = getOrNull(order, at - 1 | 0);
-  var left = $this.u33(player, tmp0_safe_receiver == null ? null : tmp0_safe_receiver.g1c_1);
+  var left = $this.v33(player, tmp0_safe_receiver == null ? null : tmp0_safe_receiver.g1c_1);
   var tmp;
   var tmp_0;
   if (!(left == null)) {
     var tmp1_safe_receiver = getOrNull(order, at + 1 | 0);
-    tmp_0 = left === $this.u33(player, tmp1_safe_receiver == null ? null : tmp1_safe_receiver.g1c_1);
+    tmp_0 = left === $this.v33(player, tmp1_safe_receiver == null ? null : tmp1_safe_receiver.g1c_1);
   } else {
     tmp_0 = false;
   }
@@ -29188,21 +29239,21 @@ function entryPrompt($this, room, player, card, options) {
   var p = new Prompt();
   p.f1m_1 = room.y2k('prompt');
   p.g1m_1 = Kind_PICK_getInstance();
-  p.j1m_1 = PromptPurpose_FORMATION_ENTRY_getInstance().g2s();
+  p.j1m_1 = PromptPurpose_FORMATION_ENTRY_getInstance().i2s();
   p.h1m_1 = player.f1e_1;
   p.k1m_1 = EffectEngine_getInstance().q2c(card);
   p.l1m_1 = card.i1c_1;
   p.m1m_1 = EffectEngine_getInstance().q2c(card) + ' \xB7 L\xEDnea frontal';
   p.n1m_1 = 'Elige la posici\xF3n de ' + EffectEngine_getInstance().q2c(card) + ' en tu l\xEDnea frontal y si se enlaza a una formaci\xF3n, o d\xE9jala donde est\xE1.';
   p.o1m_1 = 'Colocar';
-  p.p1m_1 = ArrayList_init_$Create$_0($this.v33(player));
+  p.p1m_1 = ArrayList_init_$Create$_0($this.w33(player));
   p.q1m_1 = ArrayList_init_$Create$_0(options);
   p.v1m_1 = card.g1c_1;
   p.r1m_1 = 0;
   p.s1m_1 = 1;
   var labels = LinkedHashMap_init_$Create$();
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = $this.v33(player);
+  var tmp0 = $this.w33(player);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -29243,7 +29294,7 @@ function optionText($this, player, others, option) {
     tmp$ret$0 = null;
   }
   var with_0 = tmp$ret$0;
-  return !($this.u33(player, parts.l(2)) == null) ? where + ', se une a la formaci\xF3n de ' + EffectEngine_getInstance().q2c(with_0) : where + ', forma una formaci\xF3n con ' + EffectEngine_getInstance().q2c(with_0);
+  return !($this.v33(player, parts.l(2)) == null) ? where + ', se une a la formaci\xF3n de ' + EffectEngine_getInstance().q2c(with_0) : where + ', forma una formaci\xF3n con ' + EffectEngine_getInstance().q2c(with_0);
 }
 function Formations$ordered$lambda(it) {
   var tmp0_elvis_lhs = it.zc_1.l1c_1;
@@ -29280,7 +29331,7 @@ function Formations() {
   this.q1j_1 = 'right';
   this.r1j_1 = '~via:';
 }
-protoOf(Formations).v33 = function (player) {
+protoOf(Formations).w33 = function (player) {
   var front = ArrayList_init_$Create$();
   // Inline function 'kotlin.collections.forEachIndexed' call
   var index = 0;
@@ -29307,9 +29358,9 @@ protoOf(Formations).v33 = function (player) {
   }
   return destination;
 };
-protoOf(Formations).l35 = function (player, card, index) {
+protoOf(Formations).m35 = function (player, card, index) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = this.v33(player);
+  var tmp0 = this.w33(player);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -29323,7 +29374,7 @@ protoOf(Formations).l35 = function (player, card, index) {
   order.e2(coerceIn(index, 0, order.k()), card);
   spread(this, order);
 };
-protoOf(Formations).k35 = function (order, from, to) {
+protoOf(Formations).l35 = function (order, from, to) {
   if (from.k1c_1 || from.j1c_1)
     return false;
   var a = order.s(from);
@@ -29340,7 +29391,7 @@ protoOf(Formations).k35 = function (order, from, to) {
   var arrows = tmp;
   return b === (a + 1 | 0) && arrows.n('right') || (b === (a - 1 | 0) && arrows.n('left'));
 };
-protoOf(Formations).u33 = function (player, instanceId) {
+protoOf(Formations).v33 = function (player, instanceId) {
   if (instanceId == null)
     return null;
   var tmp0 = player.b1f_1;
@@ -29359,8 +29410,8 @@ protoOf(Formations).u33 = function (player, instanceId) {
   }
   return tmp$ret$0;
 };
-protoOf(Formations).c2z = function (player, card) {
-  var tmp0_elvis_lhs = this.u33(player, card.g1c_1);
+protoOf(Formations).d2z = function (player, card) {
+  var tmp0_elvis_lhs = this.v33(player, card.g1c_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return emptyList();
@@ -29368,7 +29419,7 @@ protoOf(Formations).c2z = function (player, card) {
     tmp = tmp0_elvis_lhs;
   }
   var formation = tmp;
-  var order = this.v33(player);
+  var order = this.w33(player);
   var at = order.s(card);
   if (at < 0)
     return emptyList();
@@ -29385,7 +29436,7 @@ protoOf(Formations).c2z = function (player, card) {
   }
   return destination;
 };
-protoOf(Formations).m35 = function (room, card) {
+protoOf(Formations).n35 = function (room, card) {
   var tmp0 = room.a18_1.w1();
   var tmp$ret$0;
   $l$block_1: {
@@ -29426,7 +29477,7 @@ protoOf(Formations).m35 = function (room, card) {
   }
   return tmp$ret$0;
 };
-protoOf(Formations).n35 = function (order, members, card) {
+protoOf(Formations).o35 = function (order, members, card) {
   var at = order.s(card);
   if (at < 0 || contains(members, card.g1c_1))
     return false;
@@ -29458,7 +29509,7 @@ protoOf(Formations).n35 = function (order, members, card) {
     var _iterator__ex2g4s_0 = next.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      if (Formations_instance.k35(order, element_0, card) || Formations_instance.k35(order, card, element_0)) {
+      if (Formations_instance.l35(order, element_0, card) || Formations_instance.l35(order, card, element_0)) {
         tmp$ret$3 = false;
         break $l$block_0;
       }
@@ -29482,12 +29533,12 @@ protoOf(Formations).n35 = function (order, members, card) {
   }
   return (members.k() + 1 | 0) <= highest;
 };
-protoOf(Formations).b2z = function (room) {
+protoOf(Formations).c2z = function (room) {
   var _iterator__ex2g4s = room.a18_1.w1().h();
   while (_iterator__ex2g4s.i()) {
     var p = _iterator__ex2g4s.j();
-    noteEntries(this, room, p, this.v33(p));
-    var order = this.v33(p);
+    noteEntries(this, room, p, this.w33(p));
+    var order = this.w33(p);
     if (!p.b1f_1.m()) {
       dropLeavers(this, room, p);
     }
@@ -29528,9 +29579,9 @@ protoOf(Formations).x2o = function (entries) {
 protoOf(Formations).c2p = function (baseId, grant) {
   return plus(baseId, '~via:') + grant.y2o_1 + '@' + grant.z2o_1;
 };
-protoOf(Formations).o35 = function (player, card) {
+protoOf(Formations).p35 = function (player, card) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = this.v33(player);
+  var tmp0 = this.w33(player);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -29554,15 +29605,15 @@ protoOf(Formations).o35 = function (player, card) {
       var this_0 = ArrayList_init_$Create$_0(others);
       this_0.e2(i, card);
       var order = this_0;
-      var leftFormation = this.u33(player, left == null ? null : left.g1c_1);
+      var leftFormation = this.v33(player, left == null ? null : left.g1c_1);
       var tmp;
       if (!(leftFormation == null)) {
-        tmp = leftFormation === this.u33(player, right == null ? null : right.g1c_1);
+        tmp = leftFormation === this.v33(player, right == null ? null : right.g1c_1);
       } else {
         tmp = false;
       }
       if (tmp) {
-        if (this.n35(order, leftFormation, card)) {
+        if (this.o35(order, leftFormation, card)) {
           out.f('pos:' + i + ':' + ensureNotNull(left).g1c_1);
         }
         continue $l$loop;
@@ -29571,8 +29622,8 @@ protoOf(Formations).o35 = function (player, card) {
       var _iterator__ex2g4s_0 = listOfNotNull([left, right]).h();
       while (_iterator__ex2g4s_0.i()) {
         var n = _iterator__ex2g4s_0.j();
-        var tmp2_elvis_lhs = this.u33(player, n.g1c_1);
-        if (this.n35(order, tmp2_elvis_lhs == null ? listOf(ensureNotNull(n.g1c_1)) : tmp2_elvis_lhs, card)) {
+        var tmp2_elvis_lhs = this.v33(player, n.g1c_1);
+        if (this.o35(order, tmp2_elvis_lhs == null ? listOf(ensureNotNull(n.g1c_1)) : tmp2_elvis_lhs, card)) {
           out.f('pos:' + i + ':' + n.g1c_1);
         }
       }
@@ -29582,7 +29633,7 @@ protoOf(Formations).o35 = function (player, card) {
 };
 protoOf(Formations).x1l = function (player, card) {
   if (EffectEngine_getInstance().e1p(card) && splits(this, player, card)) {
-    this.l35(player, card, this.v33(player).k());
+    this.m35(player, card, this.w33(player).k());
   }
 };
 protoOf(Formations).a1m = function (room) {
@@ -29644,9 +29695,9 @@ protoOf(Formations).y2q = function (room) {
   }
   var card = tmp$ret$2;
   player.d1f_1.f2(0);
-  if (card == null || !EffectEngine_getInstance().e1p(card) || !('creature' === card.o1c_1) || !(this.u33(player, card.g1c_1) == null))
+  if (card == null || !EffectEngine_getInstance().e1p(card) || !('creature' === card.o1c_1) || !(this.v33(player, card.g1c_1) == null))
     return Unit_instance;
-  var options = this.o35(player, card);
+  var options = this.p35(player, card);
   var tmp$ret$4;
   $l$block_2: {
     // Inline function 'kotlin.collections.none' call
@@ -29682,15 +29733,15 @@ protoOf(Formations).y2q = function (room) {
   }
   if (tmp$ret$4) {
     if (splits(this, player, card)) {
-      this.l35(player, card, this.v33(player).k());
+      this.m35(player, card, this.w33(player).k());
     }
     return Unit_instance;
   }
   room.r18_1 = entryPrompt(this, room, player, card, options);
 };
-protoOf(Formations).p35 = function (player, card) {
+protoOf(Formations).q35 = function (player, card) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = this.o35(player, card);
+  var tmp0 = this.p35(player, card);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -29737,14 +29788,14 @@ protoOf(Formations).s2g = function (room, player, prompt, picks) {
   var card = tmp;
   if (!EffectEngine_getInstance().e1p(card))
     return Unit_instance;
-  if (picks.m() || !this.o35(player, card).n(picks.l(0))) {
+  if (picks.m() || !this.p35(player, card).n(picks.l(0))) {
     if (splits(this, player, card)) {
-      this.l35(player, card, this.v33(player).k());
+      this.m35(player, card, this.w33(player).k());
     }
     return Unit_instance;
   }
   var parts = split(picks.l(0), [':']);
-  this.l35(player, card, toInt(parts.l(1)));
+  this.m35(player, card, toInt(parts.l(1)));
   if (parts.k() < 3)
     return Unit_instance;
   var tmp0_0 = player.a1f_1;
@@ -29769,17 +29820,17 @@ protoOf(Formations).s2g = function (room, player, prompt, picks) {
     tmp_0 = tmp1_elvis_lhs;
   }
   var with_0 = tmp_0;
-  this.q35(room, player, card, with_0);
+  this.r35(room, player, card, with_0);
 };
-protoOf(Formations).q35 = function (room, player, card, with_0) {
-  var formation = this.u33(player, with_0.g1c_1);
+protoOf(Formations).r35 = function (room, player, card, with_0) {
+  var formation = this.v33(player, with_0.g1c_1);
   if (!(formation == null))
     formation.f(ensureNotNull(card.g1c_1));
   else
     player.b1f_1.f(arrayListOf([ensureNotNull(with_0.g1c_1), ensureNotNull(card.g1c_1)]));
   EffectEngine_getInstance().g2e(room, 'FORMATION', player.f1e_1, card, null, null, null, frozenMapOf_0('with', with_0.g1c_1), !(formation == null) ? EffectEngine_getInstance().q2c(card) + ' se une a la formaci\xF3n de ' + EffectEngine_getInstance().q2c(with_0) : EffectEngine_getInstance().q2c(card) + ' y ' + EffectEngine_getInstance().q2c(with_0) + ' forman una formaci\xF3n');
 };
-protoOf(Formations).r35 = function (room, userId) {
+protoOf(Formations).s35 = function (room, userId) {
   var out = LinkedHashMap_init_$Create$();
   var tmp0_elvis_lhs = room.a1e(userId);
   var tmp;
@@ -29791,13 +29842,13 @@ protoOf(Formations).r35 = function (room, userId) {
   var player = tmp;
   if (!room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()) || !(userId == room.c18_1) || !('MAIN' === room.d18_1) || room.e1j())
     return out;
-  var _iterator__ex2g4s = this.v33(player).h();
+  var _iterator__ex2g4s = this.w33(player).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var c = _iterator__ex2g4s.j();
-    if (!(this.u33(player, c.g1c_1) == null))
+    if (!(this.v33(player, c.g1c_1) == null))
       continue $l$loop;
     // Inline function 'kotlin.collections.map' call
-    var this_0 = this.p35(player, c);
+    var this_0 = this.q35(player, c);
     // Inline function 'kotlin.collections.mapTo' call
     var destination = ArrayList_init_$Create$_1(collectionSizeOrDefault(this_0, 10));
     var _iterator__ex2g4s_0 = this_0.h();
@@ -29834,7 +29885,7 @@ protoOf(Formations).s1j = function (room, userId, instanceId, targetId) {
   }
   var player = tmp;
   // Inline function 'kotlin.collections.get' call
-  var this_0 = this.r35(room, userId);
+  var this_0 = this.s35(room, userId);
   var tmp1_elvis_lhs = (isInterface(this_0, KtMap) ? this_0 : THROW_CCE()).u1(instanceId);
   var tmp_0;
   if (tmp1_elvis_lhs == null) {
@@ -29859,7 +29910,7 @@ protoOf(Formations).s1j = function (room, userId, instanceId, targetId) {
   }
   var card = tmp$ret$1;
   if (targetId == null) {
-    room.r18_1 = entryPrompt(this, room, player, card, this.p35(player, card));
+    room.r18_1 = entryPrompt(this, room, player, card, this.q35(player, card));
     return null;
   }
   if (!options.n(targetId))
@@ -29879,9 +29930,9 @@ protoOf(Formations).s1j = function (room, userId, instanceId, targetId) {
     throw NoSuchElementException_init_$Create$('Collection contains no element matching the predicate.');
   }
   var with_0 = tmp$ret$3;
-  var here = this.v33(player).s(card);
+  var here = this.w33(player).s(card);
   // Inline function 'kotlin.collections.filter' call
-  var tmp0_1 = this.p35(player, card);
+  var tmp0_1 = this.q35(player, card);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s_1 = tmp0_1.h();
@@ -29915,20 +29966,20 @@ protoOf(Formations).s1j = function (room, userId, instanceId, targetId) {
   }
   var option = tmp_1;
   if (!(option === 'pos:' + here + ':' + targetId)) {
-    this.l35(player, card, toInt(split(option, [':']).l(1)));
+    this.m35(player, card, toInt(split(option, [':']).l(1)));
   }
-  this.q35(room, player, card, with_0);
+  this.r35(room, player, card, with_0);
   Chain_instance.z1l(room);
   return null;
 };
-protoOf(Formations).s35 = function (room, player) {
+protoOf(Formations).t35 = function (room, player) {
   if (player.b1f_1.m())
     return Unit_instance;
   player.b1f_1.a2();
   EffectEngine_getInstance().h2e(room, 'Se desarman las formaciones de ' + player.g1e_1, null);
 };
-protoOf(Formations).t35 = function (room, target, summoner) {
-  var tmp0_elvis_lhs = this.m35(room, summoner);
+protoOf(Formations).u35 = function (room, target, summoner) {
+  var tmp0_elvis_lhs = this.n35(room, summoner);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -29960,7 +30011,7 @@ protoOf(Formations).t35 = function (room, target, summoner) {
       f.d2(at, to);
     }
   }
-  var order = this.v33(player);
+  var order = this.w33(player);
   var tmp_2;
   if (order.n(summoner)) {
     var tmp_3;
@@ -30009,8 +30060,8 @@ protoOf(Formations).t35 = function (room, target, summoner) {
     }
   }
 };
-protoOf(Formations).u35 = function (room, effect, player, a, b) {
-  var order = ArrayList_init_$Create$_0(this.v33(player));
+protoOf(Formations).v35 = function (room, effect, player, a, b) {
+  var order = ArrayList_init_$Create$_0(this.w33(player));
   var i = order.s(a);
   var j = order.s(b);
   if (i < 0 || j < 0 || i === j)
@@ -30020,26 +30071,26 @@ protoOf(Formations).u35 = function (room, effect, player, a, b) {
   spread(this, order);
   EffectEngine_getInstance().g2e(room, 'POSITION_SWAP', player.f1e_1, a, null, null, effect, frozenMapOf_0('with', b.g1c_1), EffectEngine_getInstance().q2c(a) + ' y ' + EffectEngine_getInstance().q2c(b) + ' intercambian sus posiciones' + (!(effect == null) ? ' (' + effect.p21_1 + ')' : ''));
 };
-protoOf(Formations).v35 = function (player, a, b) {
-  var f = this.u33(player, a.g1c_1);
+protoOf(Formations).w35 = function (player, a, b) {
+  var f = this.v33(player, a.g1c_1);
   return !(a === b) && !(f == null) && contains(f, b.g1c_1);
 };
-protoOf(Formations).w35 = function (player) {
+protoOf(Formations).x35 = function (player) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = this.v33(player);
+  var tmp0 = this.w33(player);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!(Formations_instance.u33(player, element.g1c_1) == null)) {
+    if (!(Formations_instance.v33(player, element.g1c_1) == null)) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(Formations).x35 = function (player, card) {
-  var tmp0_safe_receiver = this.u33(player, card.g1c_1);
+protoOf(Formations).y35 = function (player, card) {
+  var tmp0_safe_receiver = this.v33(player, card.g1c_1);
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.k();
   return tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
 };
@@ -30062,7 +30113,7 @@ function frozenListOf(elements) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = elements.slice();
-  return tmp.y35(tmp$ret$0);
+  return tmp.z35(tmp$ret$0);
 }
 function frozenListCopy(elements) {
   var tmp;
@@ -30072,7 +30123,7 @@ function frozenListCopy(elements) {
     var tmp_0 = Companion_instance_17;
     // Inline function 'kotlin.collections.toTypedArray' call
     var tmp$ret$0 = copyToArray(elements);
-    tmp = tmp_0.y35(tmp$ret$0);
+    tmp = tmp_0.z35(tmp$ret$0);
   }
   return tmp;
 }
@@ -30114,7 +30165,7 @@ function frozenMapOfEntries(entries) {
       kv[imul(2, i) + 1 | 0] = entries[i].jd_1;
     }
      while (inductionVariable <= last);
-  return Companion_instance_18.z35(kv);
+  return Companion_instance_18.a36(kv);
 }
 function frozenMapOf() {
   var tmp = Companion_instance_18;
@@ -30122,7 +30173,7 @@ function frozenMapOf() {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function frozenMapOf_0(k1, v1) {
   var tmp = Companion_instance_18;
@@ -30130,7 +30181,7 @@ function frozenMapOf_0(k1, v1) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [k1, v1];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function frozenMapOf_1(k1, v1, k2, v2) {
   var tmp = Companion_instance_18;
@@ -30138,7 +30189,7 @@ function frozenMapOf_1(k1, v1, k2, v2) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [k1, v1, k2, v2];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function frozenMapOf_2(k1, v1, k2, v2, k3, v3) {
   var tmp = Companion_instance_18;
@@ -30146,7 +30197,7 @@ function frozenMapOf_2(k1, v1, k2, v2, k3, v3) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [k1, v1, k2, v2, k3, v3];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function frozenMapOf_3(k1, v1, k2, v2, k3, v3, k4, v4) {
   var tmp = Companion_instance_18;
@@ -30154,7 +30205,7 @@ function frozenMapOf_3(k1, v1, k2, v2, k3, v3, k4, v4) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [k1, v1, k2, v2, k3, v3, k4, v4];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function frozenMapOf_4(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5) {
   var tmp = Companion_instance_18;
@@ -30162,11 +30213,11 @@ function frozenMapOf_4(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5) {
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
   var tmp$ret$0 = [k1, v1, k2, v2, k3, v3, k4, v4, k5, v5];
-  return tmp.z35(tmp$ret$0);
+  return tmp.a36(tmp$ret$0);
 }
 function Companion_16() {
 }
-protoOf(Companion_16).y35 = function (items) {
+protoOf(Companion_16).z35 = function (items) {
   var inductionVariable = 0;
   var last = items.length;
   while (inductionVariable < last) {
@@ -30182,25 +30233,25 @@ function Companion_getInstance_16() {
 }
 function FrozenList(items) {
   AbstractMutableList.call(this);
-  this.b36_1 = items;
+  this.c36_1 = items;
 }
 protoOf(FrozenList).k = function () {
-  return this.b36_1.length;
+  return this.c36_1.length;
 };
 protoOf(FrozenList).l = function (index) {
-  if (index < 0 || index >= this.b36_1.length)
-    throw IndexOutOfBoundsException_init_$Create$('Index ' + index + ' out of bounds for length ' + this.b36_1.length);
-  return this.b36_1[index];
+  if (index < 0 || index >= this.c36_1.length)
+    throw IndexOutOfBoundsException_init_$Create$('Index ' + index + ' out of bounds for length ' + this.c36_1.length);
+  return this.c36_1[index];
 };
 protoOf(FrozenList).s = function (element) {
   nonNull(element);
   var inductionVariable = 0;
-  var last = this.b36_1.length - 1 | 0;
+  var last = this.c36_1.length - 1 | 0;
   if (inductionVariable <= last)
     do {
       var i = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
-      if (equals_0(element, this.b36_1[i]))
+      if (equals_0(element, this.c36_1[i]))
         return i;
     }
      while (inductionVariable <= last);
@@ -30210,7 +30261,7 @@ protoOf(FrozenList).n = function (element) {
   return this.s(element) >= 0;
 };
 protoOf(FrozenList).h = function () {
-  var tmp = this.b36_1;
+  var tmp = this.c36_1;
   return new FrozenIterator(arrayIterator(isArray(tmp) ? tmp : THROW_CCE()));
 };
 protoOf(FrozenList).d2 = function (index, element) {
@@ -30242,16 +30293,16 @@ protoOf(FrozenList).a2 = function () {
 };
 function FrozenSet(items) {
   AbstractMutableSet.call(this);
-  this.c36_1 = items;
+  this.d36_1 = items;
 }
 protoOf(FrozenSet).k = function () {
-  return this.c36_1.k();
+  return this.d36_1.k();
 };
 protoOf(FrozenSet).n = function (element) {
-  return this.c36_1.n(nonNull(element));
+  return this.d36_1.n(nonNull(element));
 };
 protoOf(FrozenSet).h = function () {
-  return new FrozenIterator(this.c36_1.h());
+  return new FrozenIterator(this.d36_1.h());
 };
 protoOf(FrozenSet).f = function (element) {
   throw UnsupportedOperationException_init_$Create$();
@@ -30270,7 +30321,7 @@ protoOf(FrozenSet).a2 = function () {
 };
 function Companion_17() {
 }
-protoOf(Companion_17).z35 = function (kv) {
+protoOf(Companion_17).a36 = function (kv) {
   var map = LinkedHashMap_init_$Create$();
   var i = 0;
   while (i < kv.length) {
@@ -30289,7 +30340,7 @@ function Companion_getInstance_17() {
   return Companion_instance_18;
 }
 function _get_entrySet__gktem3($this) {
-  var tmp0 = $this.i36_1;
+  var tmp0 = $this.j36_1;
   var tmp = KProperty1;
   // Inline function 'kotlin.getValue' call
   getPropertyCallableRef('entrySet', 1, tmp, FrozenMap$_get_entrySet_$ref_15iq0e(), null);
@@ -30298,7 +30349,7 @@ function _get_entrySet__gktem3($this) {
 function FrozenMap$entrySet$delegate$lambda(this$0) {
   return function () {
     var all = LinkedHashSet_init_$Create$();
-    var _iterator__ex2g4s = this$0.h36_1.x1().h();
+    var _iterator__ex2g4s = this$0.i36_1.x1().h();
     while (_iterator__ex2g4s.i()) {
       var e = _iterator__ex2g4s.j();
       all.f(new FrozenEntry(e.q1(), e.r1()));
@@ -30313,21 +30364,21 @@ function FrozenMap$_get_entrySet_$ref_15iq0e() {
 }
 function FrozenMap(map) {
   AbstractMutableMap.call(this);
-  this.h36_1 = map;
+  this.i36_1 = map;
   var tmp = this;
-  tmp.i36_1 = lazy(FrozenMap$entrySet$delegate$lambda(this));
+  tmp.j36_1 = lazy(FrozenMap$entrySet$delegate$lambda(this));
 }
 protoOf(FrozenMap).k = function () {
-  return this.h36_1.k();
+  return this.i36_1.k();
 };
 protoOf(FrozenMap).u1 = function (key) {
-  return this.h36_1.u1(nonNull(key));
+  return this.i36_1.u1(nonNull(key));
 };
 protoOf(FrozenMap).s1 = function (key) {
-  return this.h36_1.s1(nonNull(key));
+  return this.i36_1.s1(nonNull(key));
 };
 protoOf(FrozenMap).t1 = function (value) {
-  return this.h36_1.t1(nonNull(value));
+  return this.i36_1.t1(nonNull(value));
 };
 protoOf(FrozenMap).x1 = function () {
   return _get_entrySet__gktem3(this);
@@ -30345,65 +30396,65 @@ protoOf(FrozenMap).a2 = function () {
   throw UnsupportedOperationException_init_$Create$();
 };
 function FrozenIterator(inner) {
-  this.j36_1 = inner;
+  this.k36_1 = inner;
 }
 protoOf(FrozenIterator).i = function () {
-  return this.j36_1.i();
+  return this.k36_1.i();
 };
 protoOf(FrozenIterator).j = function () {
-  return this.j36_1.j();
+  return this.k36_1.j();
 };
 protoOf(FrozenIterator).h3 = function () {
   throw UnsupportedOperationException_init_$Create$();
 };
 function FrozenEntry(key, value) {
-  this.k36_1 = key;
-  this.l36_1 = value;
+  this.l36_1 = key;
+  this.m36_1 = value;
 }
 protoOf(FrozenEntry).q1 = function () {
-  return this.k36_1;
+  return this.l36_1;
 };
 protoOf(FrozenEntry).r1 = function () {
-  return this.l36_1;
+  return this.m36_1;
 };
 protoOf(FrozenEntry).equals = function (other) {
   var tmp;
   var tmp_0;
   if (!(other == null) ? isInterface(other, Entry) : false) {
-    tmp_0 = equals_0(this.k36_1, other.q1());
+    tmp_0 = equals_0(this.l36_1, other.q1());
   } else {
     tmp_0 = false;
   }
   if (tmp_0) {
-    tmp = equals_0(this.l36_1, other.r1());
+    tmp = equals_0(this.m36_1, other.r1());
   } else {
     tmp = false;
   }
   return tmp;
 };
 protoOf(FrozenEntry).hashCode = function () {
-  var tmp0_safe_receiver = this.k36_1;
+  var tmp0_safe_receiver = this.l36_1;
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : hashCode(tmp0_safe_receiver);
   var tmp = tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
-  var tmp2_safe_receiver = this.l36_1;
+  var tmp2_safe_receiver = this.m36_1;
   var tmp3_elvis_lhs = tmp2_safe_receiver == null ? null : hashCode(tmp2_safe_receiver);
   return tmp ^ (tmp3_elvis_lhs == null ? 0 : tmp3_elvis_lhs);
 };
 protoOf(FrozenEntry).toString = function () {
-  return toString_0(this.k36_1) + '=' + toString_0(this.l36_1);
+  return toString_0(this.l36_1) + '=' + toString_0(this.m36_1);
 };
 function unmodifiableMapOf(map) {
   return new UnmodifiableMap(map);
 }
 function UnmodifiableMap$Entries$iterator$1($i) {
-  this.m36_1 = $i;
+  this.n36_1 = $i;
 }
 protoOf(UnmodifiableMap$Entries$iterator$1).i = function () {
-  return this.m36_1.i();
+  return this.n36_1.i();
 };
 protoOf(UnmodifiableMap$Entries$iterator$1).j = function () {
   // Inline function 'kotlin.let' call
-  var it = this.m36_1.j();
+  var it = this.n36_1.j();
   return new FrozenEntry(it.q1(), it.r1());
 };
 protoOf(UnmodifiableMap$Entries$iterator$1).h3 = function () {
@@ -30411,70 +30462,70 @@ protoOf(UnmodifiableMap$Entries$iterator$1).h3 = function () {
 };
 function Entries(inner) {
   AbstractMutableSet.call(this);
-  this.n36_1 = inner;
+  this.o36_1 = inner;
 }
 protoOf(Entries).k = function () {
-  return this.n36_1.k();
+  return this.o36_1.k();
 };
-protoOf(Entries).o36 = function (element) {
-  return this.n36_1.n(element);
+protoOf(Entries).p36 = function (element) {
+  return this.o36_1.n(element);
 };
 protoOf(Entries).n = function (element) {
   if (!(!(element == null) ? isInterface(element, MutableEntry) : false))
     return false;
-  return this.o36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
+  return this.p36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
 };
 protoOf(Entries).h = function () {
-  var i = this.n36_1.h();
+  var i = this.o36_1.h();
   return new UnmodifiableMap$Entries$iterator$1(i);
 };
-protoOf(Entries).p36 = function (element) {
+protoOf(Entries).q36 = function (element) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(Entries).f = function (element) {
-  return this.p36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
+  return this.q36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
 };
-protoOf(Entries).q36 = function (elements) {
+protoOf(Entries).r36 = function (elements) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(Entries).r = function (elements) {
-  return this.q36(elements);
+  return this.r36(elements);
 };
-protoOf(Entries).r36 = function (element) {
+protoOf(Entries).s36 = function (element) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(Entries).y1 = function (element) {
   if (!(!(element == null) ? isInterface(element, MutableEntry) : false))
     return false;
-  return this.r36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
+  return this.s36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
 };
-protoOf(Entries).s36 = function (elements) {
+protoOf(Entries).t36 = function (elements) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(Entries).z1 = function (elements) {
-  return this.s36(elements);
+  return this.t36(elements);
 };
 protoOf(Entries).a2 = function () {
   throw UnsupportedOperationException_init_$Create$();
 };
 function UnmodifiableMap(inner) {
   AbstractMutableMap.call(this);
-  this.x36_1 = inner;
+  this.y36_1 = inner;
 }
 protoOf(UnmodifiableMap).k = function () {
-  return this.x36_1.k();
+  return this.y36_1.k();
 };
 protoOf(UnmodifiableMap).u1 = function (key) {
-  return this.x36_1.u1(key);
+  return this.y36_1.u1(key);
 };
 protoOf(UnmodifiableMap).s1 = function (key) {
-  return this.x36_1.s1(key);
+  return this.y36_1.s1(key);
 };
 protoOf(UnmodifiableMap).t1 = function (value) {
-  return this.x36_1.t1(value);
+  return this.y36_1.t1(value);
 };
 protoOf(UnmodifiableMap).x1 = function () {
-  return new Entries(this.x36_1.x1());
+  return new Entries(this.y36_1.x1());
 };
 protoOf(UnmodifiableMap).g2 = function (key, value) {
   throw UnsupportedOperationException_init_$Create$();
@@ -30496,42 +30547,42 @@ function GameEvent_init_$Create$() {
   return GameEvent_init_$Init$(objectCreate(protoOf(GameEvent)));
 }
 function Companion_18() {
-  this.y36_1 = 'NORMAL_SUMMON';
-  this.z36_1 = 'EFFECT_TRIGGERED';
-  this.a37_1 = 'EFFECT_ACTIVATED';
-  this.b37_1 = 'EFFECT_RESOLVED';
-  this.c37_1 = 'LOOK_TOP';
-  this.d37_1 = 'EXCAVATE';
-  this.e37_1 = 'LIFE_REVEALED';
-  this.f37_1 = 'ADD_TO_HAND';
-  this.g37_1 = 'TRIBUTE';
-  this.h37_1 = 'EFFECT_DECLINED';
-  this.i37_1 = 'DRAW';
-  this.j37_1 = 'DESTROY';
-  this.k37_1 = 'SACRIFICE';
-  this.l37_1 = 'EFFECT_SUMMON';
-  this.m37_1 = 'SPECIAL_SUMMON';
-  this.n37_1 = 'SEND';
-  this.o37_1 = 'UNTAP';
-  this.p37_1 = 'GAIN';
-  this.q37_1 = 'PLAY';
-  this.r37_1 = 'ATTACK_DECLARED';
-  this.s37_1 = 'BLOCK';
-  this.t37_1 = 'CLASH';
-  this.u37_1 = 'LIFE_DAMAGE';
-  this.v37_1 = 'ATTACK_ENDED';
-  this.w37_1 = 'COMBAT_STEP';
-  this.x37_1 = 'GAME_LOST';
-  this.y37_1 = 'TAP';
-  this.z37_1 = 'TARGET';
-  this.a38_1 = 'TURN_START';
-  this.b38_1 = 'TURN_END';
-  this.c38_1 = 'STRENGTH_REDUCED';
-  this.d38_1 = 'MOVE';
-  this.e38_1 = 'GAIN_GEMS';
-  this.f38_1 = 'FORMATION';
-  this.g38_1 = 'POSITION_SWAP';
-  this.h38_1 = 'manual';
+  this.z36_1 = 'NORMAL_SUMMON';
+  this.a37_1 = 'EFFECT_TRIGGERED';
+  this.b37_1 = 'EFFECT_ACTIVATED';
+  this.c37_1 = 'EFFECT_RESOLVED';
+  this.d37_1 = 'LOOK_TOP';
+  this.e37_1 = 'EXCAVATE';
+  this.f37_1 = 'LIFE_REVEALED';
+  this.g37_1 = 'ADD_TO_HAND';
+  this.h37_1 = 'TRIBUTE';
+  this.i37_1 = 'EFFECT_DECLINED';
+  this.j37_1 = 'DRAW';
+  this.k37_1 = 'DESTROY';
+  this.l37_1 = 'SACRIFICE';
+  this.m37_1 = 'EFFECT_SUMMON';
+  this.n37_1 = 'SPECIAL_SUMMON';
+  this.o37_1 = 'SEND';
+  this.p37_1 = 'UNTAP';
+  this.q37_1 = 'GAIN';
+  this.r37_1 = 'PLAY';
+  this.s37_1 = 'ATTACK_DECLARED';
+  this.t37_1 = 'BLOCK';
+  this.u37_1 = 'CLASH';
+  this.v37_1 = 'LIFE_DAMAGE';
+  this.w37_1 = 'ATTACK_ENDED';
+  this.x37_1 = 'COMBAT_STEP';
+  this.y37_1 = 'GAME_LOST';
+  this.z37_1 = 'TAP';
+  this.a38_1 = 'TARGET';
+  this.b38_1 = 'TURN_START';
+  this.c38_1 = 'TURN_END';
+  this.d38_1 = 'STRENGTH_REDUCED';
+  this.e38_1 = 'MOVE';
+  this.f38_1 = 'GAIN_GEMS';
+  this.g38_1 = 'FORMATION';
+  this.h38_1 = 'POSITION_SWAP';
+  this.i38_1 = 'manual';
 }
 var Companion_instance_19;
 function Companion_getInstance_18() {
@@ -30542,7 +30593,7 @@ protoOf(GameEvent).equals = function (other) {
     return true;
   if (!(other instanceof GameEvent))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!equalsLong(this.n24_1, other.n24_1))
     return false;
@@ -30568,7 +30619,7 @@ protoOf(GameEvent).equals = function (other) {
     return false;
   return true;
 };
-protoOf(GameEvent).g2t = function (other) {
+protoOf(GameEvent).h2t = function (other) {
   return other instanceof GameEvent;
 };
 protoOf(GameEvent).hashCode = function () {
@@ -30634,7 +30685,7 @@ function scramble($this, seed) {
   return bitwiseAnd(bitwiseXor(seed, new Long(-554899859, 5)), new Long(-1, 65535));
 }
 function GameRandom_init_$Init$($this) {
-  GameRandom.call($this, Platform_instance.i38());
+  GameRandom.call($this, Platform_instance.j38());
   return $this;
 }
 function GameRandom_init_$Create$() {
@@ -30696,7 +30747,7 @@ function GrantedEffects() {
   GrantedEffects_instance = this;
   this.r2d_1 = HashMap_init_$Create$_0();
 }
-protoOf(GrantedEffects).j38 = function (effect) {
+protoOf(GrantedEffects).k38 = function (effect) {
   return '\xAB' + effect.r1w_1 + '\xBB';
 };
 protoOf(GrantedEffects).m2n = function (scripts) {
@@ -30717,7 +30768,7 @@ protoOf(GrantedEffects).m2n = function (scripts) {
       }
       if (tmp_0) {
         var tmp0 = this.r2d_1;
-        var tmp2 = this.j38(step.q2d_1);
+        var tmp2 = this.k38(step.q2d_1);
         // Inline function 'kotlin.collections.set' call
         var value = step.q2d_1;
         tmp0.g2(tmp2, value);
@@ -30745,7 +30796,7 @@ protoOf(GrantedEffects).g2p = function (id) {
   }
   return tmp$ret$0;
 };
-protoOf(GrantedEffects).k38 = function (card) {
+protoOf(GrantedEffects).l38 = function (card) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = EffectEngine_getInstance().c1p(card);
   // Inline function 'kotlin.collections.filterTo' call
@@ -30760,7 +30811,7 @@ protoOf(GrantedEffects).k38 = function (card) {
   return destination;
 };
 protoOf(GrantedEffects).s2d = function (room, effect, card, granted) {
-  EngineContext_init_$Create$(room, effect).o33(card, this.j38(granted), Until_TURN_getInstance());
+  EngineContext_init_$Create$(room, effect).p33(card, this.k38(granted), Until_TURN_getInstance());
 };
 var GrantedEffects_instance;
 function GrantedEffects_getInstance() {
@@ -30769,17 +30820,17 @@ function GrantedEffects_getInstance() {
   return GrantedEffects_instance;
 }
 function Whose(sourceId, sourceName, scriptId) {
-  this.l38_1 = sourceId;
-  this.m38_1 = sourceName;
-  this.n38_1 = scriptId;
+  this.m38_1 = sourceId;
+  this.n38_1 = sourceName;
+  this.o38_1 = scriptId;
 }
 protoOf(Whose).toString = function () {
-  return 'Whose(sourceId=' + this.l38_1 + ', sourceName=' + this.m38_1 + ', scriptId=' + this.n38_1 + ')';
+  return 'Whose(sourceId=' + this.m38_1 + ', sourceName=' + this.n38_1 + ', scriptId=' + this.o38_1 + ')';
 };
 protoOf(Whose).hashCode = function () {
-  var result = this.l38_1 == null ? 0 : getStringHashCode(this.l38_1);
-  result = imul(result, 31) + (this.m38_1 == null ? 0 : getStringHashCode(this.m38_1)) | 0;
+  var result = this.m38_1 == null ? 0 : getStringHashCode(this.m38_1);
   result = imul(result, 31) + (this.n38_1 == null ? 0 : getStringHashCode(this.n38_1)) | 0;
+  result = imul(result, 31) + (this.o38_1 == null ? 0 : getStringHashCode(this.o38_1)) | 0;
   return result;
 };
 protoOf(Whose).equals = function (other) {
@@ -30787,11 +30838,11 @@ protoOf(Whose).equals = function (other) {
     return true;
   if (!(other instanceof Whose))
     return false;
-  if (!(this.l38_1 == other.l38_1))
-    return false;
   if (!(this.m38_1 == other.m38_1))
     return false;
   if (!(this.n38_1 == other.n38_1))
+    return false;
+  if (!(this.o38_1 == other.o38_1))
     return false;
   return true;
 };
@@ -30858,7 +30909,7 @@ function inheritedFrom($this, room, entry, card, scriptId) {
   }
   var resource = tmp_0;
   if (resource == null) {
-    var tmp0_0 = EffectEngine_getInstance().z2y(room);
+    var tmp0_0 = EffectEngine_getInstance().a2z(room);
     var tmp$ret$2;
     $l$block_0: {
       // Inline function 'kotlin.sequences.firstOrNull' call
@@ -30880,10 +30931,10 @@ function inheritedFrom($this, room, entry, card, scriptId) {
 }
 function HistoryDescriber() {
   HistoryDescriber_instance = this;
-  this.t2y_1 = frozenSetOf(['EFFECT_ACTIVATED', 'EFFECT_RESOLVED', 'EFFECT_DECLINED']);
+  this.u2y_1 = frozenSetOf(['EFFECT_ACTIVATED', 'EFFECT_RESOLVED', 'EFFECT_DECLINED']);
 }
-protoOf(HistoryDescriber).u2y = function (room, entry) {
-  var event = EffectEngine_getInstance().w2y(room, entry.q27_1);
+protoOf(HistoryDescriber).v2y = function (room, entry) {
+  var event = EffectEngine_getInstance().x2y(room, entry.q27_1);
   if (event == null) {
     var top = room.q18_1.m() ? null : room.q18_1.l(room.q18_1.k() - 1 | 0);
     if (!(top == null)) {
@@ -30899,12 +30950,12 @@ protoOf(HistoryDescriber).u2y = function (room, entry) {
   if (!(event.v24_1 == null)) {
     var whose_0 = whose(this, room, ensureNotNull(event.v24_1));
     if (!(whose_0 == null)) {
-      sourceId = whose_0.l38_1;
-      sourceName = whose_0.m38_1;
-      scriptId = whose_0.n38_1;
+      sourceId = whose_0.m38_1;
+      sourceName = whose_0.n38_1;
+      scriptId = whose_0.o38_1;
     }
     var regulatory = !(event.x24_1 == null) && equals_0(ensureNotNull(event.x24_1).u1('regulatory'), true);
-    entry.x27_1 = (!regulatory && !this.t2y_1.n(ensureNotNull(event.p24_1)));
+    entry.x27_1 = (!regulatory && !this.u2y_1.n(ensureNotNull(event.p24_1)));
   }
   var card = source(this, room, entry, sourceId, sourceName);
   inheritedFrom(this, room, entry, card, scriptId);
@@ -31188,32 +31239,32 @@ protoOf(LegalActions).d1p = function (room, userId) {
   if (player == null || !room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()) || !('MAIN' === room.d18_1) || room.e1j()) {
     return isInterface(legal, KtMutableMap) ? legal : THROW_CCE();
   }
-  var _iterator__ex2g4s = Chain_instance.d2t(room, userId).h();
+  var _iterator__ex2g4s = Chain_instance.e2t(room, userId).h();
   while (_iterator__ex2g4s.i()) {
     var effect = _iterator__ex2g4s.j();
     add_1(this, legal, effect.s2q_1, 'activate');
   }
-  if (!(Summons_instance.h2t(room, userId, '') == null)) {
+  if (!(Summons_instance.i2t(room, userId, '') == null)) {
     return isInterface(legal, KtMutableMap) ? legal : THROW_CCE();
   }
   var _iterator__ex2g4s_0 = ArrayList_init_$Create$_0(player.a1f_1).h();
   while (_iterator__ex2g4s_0.i()) {
     var card = _iterator__ex2g4s_0.j();
-    if (CombatRules_instance.i2t(room, userId, card) == null) {
+    if (CombatRules_instance.j2t(room, userId, card) == null) {
       add_1(this, legal, card.g1c_1, 'attack');
     }
   }
   var _iterator__ex2g4s_1 = ArrayList_init_$Create$_0(player.u1e_1).h();
   while (_iterator__ex2g4s_1.i()) {
     var card_0 = _iterator__ex2g4s_1.j();
-    if (Summons_instance.o38(room, userId, player, card_0) == null) {
+    if (Summons_instance.p38(room, userId, player, card_0) == null) {
       add_1(this, legal, card_0.g1c_1, 'summon');
     }
-    if (Summons_instance.p38(room, userId, card_0) == null) {
+    if (Summons_instance.q38(room, userId, card_0) == null) {
       add_1(this, legal, card_0.g1c_1, 'play');
     }
   }
-  var _iterator__ex2g4s_2 = SpecialRequirements_getInstance().q38(room, userId).h();
+  var _iterator__ex2g4s_2 = SpecialRequirements_getInstance().r38(room, userId).h();
   while (_iterator__ex2g4s_2.i()) {
     var id = _iterator__ex2g4s_2.j();
     add_1(this, legal, id, 'ritual');
@@ -31235,7 +31286,7 @@ protoOf(LegalActions).r1z = function (room, userId) {
     var card = _iterator__ex2g4s.j();
     if (!('creature' === card.o1c_1))
       continue $l$loop;
-    var enemies = EffectEngine_getInstance().a2e(CombatRules_instance.i2u(room, userId, card));
+    var enemies = EffectEngine_getInstance().a2e(CombatRules_instance.j2u(room, userId, card));
     if (!enemies.m()) {
       var tmp2 = card.g1c_1;
       // Inline function 'kotlin.collections.set' call
@@ -31250,12 +31301,12 @@ function LegalActions_getInstance() {
   return LegalActions_instance;
 }
 function Watch(room, onUpdate) {
-  this.r38_1 = room;
-  this.s38_1 = onUpdate;
-  this.t38_1 = this.r38_1.p18_1;
+  this.s38_1 = room;
+  this.t38_1 = onUpdate;
+  this.u38_1 = this.s38_1.p18_1;
 }
 function tell($this, room, event) {
-  var tmp0_elvis_lhs = $this.u38_1.j1r();
+  var tmp0_elvis_lhs = $this.v38_1.j1r();
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -31263,10 +31314,10 @@ function tell($this, room, event) {
     tmp = tmp0_elvis_lhs;
   }
   var watch = tmp;
-  if (!(watch.r38_1 === room) || room.j19_1)
+  if (!(watch.s38_1 === room) || room.j19_1)
     return Unit_instance;
-  watch.t38_1 = room.p18_1;
-  watch.s38_1(room, event);
+  watch.u38_1 = room.p18_1;
+  watch.t38_1(room, event);
 }
 function LinkWatch$current$lambda() {
   return null;
@@ -31274,22 +31325,22 @@ function LinkWatch$current$lambda() {
 function LinkWatch() {
   LinkWatch_instance = this;
   var tmp = this;
-  tmp.u38_1 = new LocalValue(LinkWatch$current$lambda);
+  tmp.v38_1 = new LocalValue(LinkWatch$current$lambda);
 }
-protoOf(LinkWatch).v38 = function (room, onUpdate, block) {
-  var before = this.u38_1.j1r();
-  this.u38_1.w2a(new Watch(room, onUpdate));
+protoOf(LinkWatch).w38 = function (room, onUpdate, block) {
+  var before = this.v38_1.j1r();
+  this.v38_1.w2a(new Watch(room, onUpdate));
   try {
     return block();
   }finally {
-    this.u38_1.w2a(before);
+    this.v38_1.w2a(before);
   }
 };
-protoOf(LinkWatch).w38 = function (room) {
+protoOf(LinkWatch).x38 = function (room) {
   return tell(this, room, 'LINK_STEP');
 };
-protoOf(LinkWatch).x38 = function (room) {
-  var tmp0_elvis_lhs = this.u38_1.j1r();
+protoOf(LinkWatch).y38 = function (room) {
+  var tmp0_elvis_lhs = this.v38_1.j1r();
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -31297,11 +31348,11 @@ protoOf(LinkWatch).x38 = function (room) {
     tmp = tmp0_elvis_lhs;
   }
   var watch = tmp;
-  if (watch.r38_1 === room && !equalsLong(room.p18_1, watch.t38_1)) {
+  if (watch.s38_1 === room && !equalsLong(room.p18_1, watch.u38_1)) {
     tell(this, room, 'LINK_STEP');
   }
 };
-protoOf(LinkWatch).y38 = function (room) {
+protoOf(LinkWatch).z38 = function (room) {
   return tell(this, room, 'LINK_RESOLVED');
 };
 var LinkWatch_instance;
@@ -31312,7 +31363,7 @@ function LinkWatch_getInstance() {
 }
 function withAlly($this, player, step, card) {
   var tmp;
-  if (!step.y2z_1) {
+  if (!step.z2z_1) {
     tmp = true;
   } else {
     var tmp0 = EffectEngine_getInstance().u2c(player);
@@ -31345,7 +31396,7 @@ function withAlly($this, player, step, card) {
 }
 function LookSteps$runStep$lambda($step) {
   return function (c) {
-    var tmp0 = ensureNotNull($step.e30_1);
+    var tmp0 = ensureNotNull($step.f30_1);
     var tmp$ret$0;
     $l$block_0: {
       // Inline function 'kotlin.collections.any' call
@@ -31472,7 +31523,7 @@ protoOf(LookSteps).r2c = function (room, effect, step) {
         destination.f(element);
       }
     }
-    tmp = tmp_0.z38(destination, step.x2z_1);
+    tmp = tmp_0.a39(destination, step.y2z_1);
   } else {
     tmp = true;
   }
@@ -31485,7 +31536,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
     if (effect.h22_1.m())
       return false;
     var tmp = SearchHope_instance;
-    tmp.a39(room, effect, player, LookSteps$runStep$lambda(step), ensureNotNull(step.e30_1).k());
+    tmp.b39(room, effect, player, LookSteps$runStep$lambda(step), ensureNotNull(step.f30_1).k());
     // Inline function 'kotlin.collections.filter' call
     var tmp0 = effect.h22_1;
     // Inline function 'kotlin.collections.filterTo' call
@@ -31493,7 +31544,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      var tmp0_0 = ensureNotNull(step.e30_1);
+      var tmp0_0 = ensureNotNull(step.f30_1);
       var tmp$ret$3;
       $l$block_0: {
         // Inline function 'kotlin.collections.any' call
@@ -31533,13 +31584,13 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
     var valid = destination_0;
     var tmp_1 = StepHelpers_getInstance();
     var tmp_2 = Kind_TAKE_REVEALED_REST_BOTTOM_getInstance();
-    var tmp_3 = ensureNotNull(step.e30_1);
-    var prompt = tmp_1.l2s(room, effect, tmp_2, 'Toma ' + joinToString(tmp_3, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_0) + ' para tu mano.');
+    var tmp_3 = ensureNotNull(step.f30_1);
+    var prompt = tmp_1.m2s(room, effect, tmp_2, 'Toma ' + joinToString(tmp_3, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_0) + ' para tu mano.');
     prompt.p1m_1 = ArrayList_init_$Create$_0(effect.h22_1);
     prompt.q1m_1 = ArrayList_init_$Create$_0(valid);
     prompt.r1m_1 = 0;
     var tmp_4 = prompt;
-    var tmp0_1 = ensureNotNull(step.e30_1).k();
+    var tmp0_1 = ensureNotNull(step.f30_1).k();
     // Inline function 'kotlin.math.min' call
     var b = valid.k();
     tmp_4.s1m_1 = Math.min(tmp0_1, b);
@@ -31551,9 +31602,9 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
     if (step instanceof TakeFromLookedDistinctLevels) {
       if (effect.h22_1.m())
         return false;
-      var filter = ensureNotNull(step.w2z_1);
+      var filter = ensureNotNull(step.x2z_1);
       var tmp_5 = SearchHope_instance;
-      tmp_5.a39(room, effect, player, LookSteps$runStep$lambda_1(filter), step.v2z_1);
+      tmp_5.b39(room, effect, player, LookSteps$runStep$lambda_1(filter), step.w2z_1);
       // Inline function 'kotlin.collections.filter' call
       var tmp0_2 = effect.h22_1;
       // Inline function 'kotlin.collections.filterTo' call
@@ -31575,12 +31626,12 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
         destination_2.f(tmp$ret$14);
       }
       var valid_0 = destination_2;
-      var prompt_0 = StepHelpers_getInstance().l2s(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.v2z_1 + ' cartas ' + ensureNotNull(step.w2z_1).e2e() + ' con distinto nivel para tu mano.');
+      var prompt_0 = StepHelpers_getInstance().m2s(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.w2z_1 + ' cartas ' + ensureNotNull(step.x2z_1).e2e() + ' con distinto nivel para tu mano.');
       prompt_0.p1m_1 = ArrayList_init_$Create$_0(effect.h22_1);
       prompt_0.q1m_1 = ArrayList_init_$Create$_0(valid_0);
       prompt_0.r1m_1 = 0;
       var tmp_6 = prompt_0;
-      var tmp0_3 = step.v2z_1;
+      var tmp0_3 = step.w2z_1;
       // Inline function 'kotlin.math.min' call
       var b_0 = valid_0.k();
       tmp_6.s1m_1 = Math.min(tmp0_3, b_0);
@@ -31601,7 +31652,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
           var tmp_7;
           var tmp_8;
           if (!(ensureNotNull(element_2.g1c_1) === effect.n21_1)) {
-            var tmp0_5 = ensureNotNull(step.x2z_1);
+            var tmp0_5 = ensureNotNull(step.y2z_1);
             var tmp$ret$19;
             $l$block_2: {
               // Inline function 'kotlin.collections.any' call
@@ -31639,13 +31690,13 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
           }
         }
         var valid_1 = destination_3;
-        if (!StepHelpers_getInstance().z38(valid_1, step.x2z_1))
+        if (!StepHelpers_getInstance().a39(valid_1, step.y2z_1))
           return false;
         var tmp_10 = StepHelpers_getInstance();
-        var tmp_11 = ensureNotNull(step.x2z_1);
-        tmp_10.b2e(room, effect, 'Revela de tu mano: ' + joinToString(tmp_11, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_2) + '.', 'Revelar', player.u1e_1, EffectEngine_getInstance().a2e(valid_1), ensureNotNull(step.x2z_1).k());
+        var tmp_11 = ensureNotNull(step.y2z_1);
+        tmp_10.b2e(room, effect, 'Revela de tu mano: ' + joinToString(tmp_11, ' y ', VOID, VOID, VOID, VOID, LookSteps$runStep$lambda_2) + '.', 'Revelar', player.u1e_1, EffectEngine_getInstance().a2e(valid_1), ensureNotNull(step.y2z_1).k());
         // Inline function 'kotlin.collections.map' call
-        var this_0 = ensureNotNull(step.x2z_1);
+        var this_0 = ensureNotNull(step.y2z_1);
         // Inline function 'kotlin.collections.mapTo' call
         var destination_4 = ArrayList_init_$Create$_1(collectionSizeOrDefault(this_0, 10));
         var _iterator__ex2g4s_6 = this_0.h();
@@ -31694,7 +31745,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
             return false;
           var hand = ArrayList_init_$Create$_0(opponent.u1e_1);
           Companion_getInstance_19().j1i(hand, room.i19_1);
-          var tmp0_6 = step.c30_1;
+          var tmp0_6 = step.d30_1;
           // Inline function 'kotlin.math.min' call
           var b_1 = hand.k();
           var tmp$ret$26 = Math.min(tmp0_6, b_1);
@@ -31711,7 +31762,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
             var subject = StepHelpers_getInstance().p2d(room, effect);
             var classes = subject == null || subject.w1c_1 == null ? frozenListOf([]) : ensureNotNull(subject.w1c_1);
             var tmp_16 = SearchHope_instance;
-            tmp_16.a39(room, effect, player, LookSteps$runStep$lambda_4(classes), step.m2z_1);
+            tmp_16.b39(room, effect, player, LookSteps$runStep$lambda_4(classes), step.n2z_1);
             // Inline function 'kotlin.collections.filter' call
             var tmp0_7 = effect.h22_1;
             // Inline function 'kotlin.collections.filterTo' call
@@ -31786,7 +31837,7 @@ protoOf(LookSteps).o2d = function (room, effect, step) {
               destination_6.f(tmp$ret$36);
             }
             var valid_2 = destination_6;
-            StepHelpers_getInstance().b39(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.m2z_1 + ' ' + EffectEngine_getInstance().f2e(step.m2z_1, 'carta', 'cartas') + ' que comparta tipo con ' + EffectEngine_getInstance().q2c(subject) + ' para tu mano. El resto va al fondo de tu mazo en orden aleatorio.', valid_2, step.m2z_1);
+            StepHelpers_getInstance().c39(room, effect, Kind_TAKE_REVEALED_REST_BOTTOM_getInstance(), 'Toma hasta ' + step.n2z_1 + ' ' + EffectEngine_getInstance().f2e(step.n2z_1, 'carta', 'cartas') + ' que comparta tipo con ' + EffectEngine_getInstance().q2c(subject) + ' para tu mano. El resto va al fondo de tu mazo en orden aleatorio.', valid_2, step.n2z_1);
             return true;
           } else {
             throw IllegalStateException_init_$Create$('Paso de otra familia: ' + toString(step));
@@ -31811,12 +31862,12 @@ protoOf(LookSteps).v2e = function (room, effect, step, player, picks, order, rep
     var chosen = destination;
     if (chosen.n(null))
       return 'Esa carta ya no est\xE1';
-    if (!StepHelpers_getInstance().d39(step.e30_1, chosen)) {
-      var tmp = ensureNotNull(step.e30_1);
+    if (!StepHelpers_getInstance().e39(step.f30_1, chosen)) {
+      var tmp = ensureNotNull(step.f30_1);
       return 'Elige ' + joinToString(tmp, ' y ', VOID, VOID, VOID, VOID, LookSteps$applyStep$lambda);
     }
-    StepHelpers_getInstance().c39(room, effect, player, picks);
-    var rest = StepHelpers_getInstance().s32(effect.h22_1, order);
+    StepHelpers_getInstance().d39(room, effect, player, picks);
+    var rest = StepHelpers_getInstance().t32(effect.h22_1, order);
     // Inline function 'kotlin.collections.forEach' call
     var _iterator__ex2g4s_0 = rest.h();
     while (_iterator__ex2g4s_0.i()) {
@@ -31848,8 +31899,8 @@ protoOf(LookSteps).v2e = function (room, effect, step, player, picks, order, rep
       var levels = destination_1;
       if (HashSet_init_$Create$_0(levels).k() < levels.k())
         return 'Las cartas deben tener distinto nivel';
-      StepHelpers_getInstance().c39(room, effect, player, picks);
-      var rest_0 = StepHelpers_getInstance().s32(effect.h22_1, order);
+      StepHelpers_getInstance().d39(room, effect, player, picks);
+      var rest_0 = StepHelpers_getInstance().t32(effect.h22_1, order);
       // Inline function 'kotlin.collections.forEach' call
       var _iterator__ex2g4s_3 = rest_0.h();
       while (_iterator__ex2g4s_3.i()) {
@@ -31875,8 +31926,8 @@ protoOf(LookSteps).v2e = function (room, effect, step, player, picks, order, rep
         var cards = destination_2;
         if (cards.n(null))
           return 'Esa carta ya no est\xE1 en tu mano';
-        if (!StepHelpers_getInstance().z38(cards, step.x2z_1)) {
-          var tmp_0 = ensureNotNull(step.x2z_1);
+        if (!StepHelpers_getInstance().a39(cards, step.y2z_1)) {
+          var tmp_0 = ensureNotNull(step.y2z_1);
           return 'Revela ' + joinToString(tmp_0, ' y ', VOID, VOID, VOID, VOID, LookSteps$applyStep$lambda_0);
         }
         var tmp$ret$16;
@@ -31966,7 +32017,7 @@ function LookSteps_getInstance() {
 function NameChanges() {
   this.u2d_1 = 'nombre:';
 }
-protoOf(NameChanges).f2t = function (f) {
+protoOf(NameChanges).g2t = function (f) {
   return !(f.b1k_1 == null) && startsWith(f.b1k_1, 'nombre:');
 };
 protoOf(NameChanges).a2q = function (card) {
@@ -31984,7 +32035,7 @@ protoOf(NameChanges).a2q = function (card) {
       var i = inductionVariable;
       inductionVariable = inductionVariable + -1 | 0;
       var f = floating.l(i);
-      if (this.f2t(f))
+      if (this.g2t(f))
         return substring_0(ensureNotNull(f.b1k_1), 7);
     }
      while (0 <= inductionVariable);
@@ -32000,19 +32051,19 @@ function NameChanges_getInstance() {
   return NameChanges_instance;
 }
 function PendingAscension(playerId, cardId, summonerId, fromZone) {
-  this.e39_1 = playerId;
-  this.f39_1 = cardId;
-  this.g39_1 = summonerId;
-  this.h39_1 = fromZone;
+  this.f39_1 = playerId;
+  this.g39_1 = cardId;
+  this.h39_1 = summonerId;
+  this.i39_1 = fromZone;
 }
 protoOf(PendingAscension).toString = function () {
-  return 'PendingAscension(playerId=' + this.e39_1 + ', cardId=' + this.f39_1 + ', summonerId=' + this.g39_1 + ', fromZone=' + this.h39_1 + ')';
+  return 'PendingAscension(playerId=' + this.f39_1 + ', cardId=' + this.g39_1 + ', summonerId=' + this.h39_1 + ', fromZone=' + this.i39_1 + ')';
 };
 protoOf(PendingAscension).hashCode = function () {
-  var result = this.e39_1 == null ? 0 : getStringHashCode(this.e39_1);
-  result = imul(result, 31) + (this.f39_1 == null ? 0 : getStringHashCode(this.f39_1)) | 0;
+  var result = this.f39_1 == null ? 0 : getStringHashCode(this.f39_1);
   result = imul(result, 31) + (this.g39_1 == null ? 0 : getStringHashCode(this.g39_1)) | 0;
   result = imul(result, 31) + (this.h39_1 == null ? 0 : getStringHashCode(this.h39_1)) | 0;
+  result = imul(result, 31) + (this.i39_1 == null ? 0 : getStringHashCode(this.i39_1)) | 0;
   return result;
 };
 protoOf(PendingAscension).equals = function (other) {
@@ -32020,13 +32071,13 @@ protoOf(PendingAscension).equals = function (other) {
     return true;
   if (!(other instanceof PendingAscension))
     return false;
-  if (!(this.e39_1 == other.e39_1))
-    return false;
   if (!(this.f39_1 == other.f39_1))
     return false;
   if (!(this.g39_1 == other.g39_1))
     return false;
   if (!(this.h39_1 == other.h39_1))
+    return false;
+  if (!(this.i39_1 == other.i39_1))
     return false;
   return true;
 };
@@ -32049,7 +32100,7 @@ function PendingEffect() {
   this.z21_1 = null;
   this.a22_1 = 0;
   this.b22_1 = 0;
-  this.c22_1 = Platform_instance.m2t();
+  this.c22_1 = Platform_instance.n2t();
   this.d22_1 = null;
   this.e22_1 = null;
   this.f22_1 = null;
@@ -32069,7 +32120,7 @@ protoOf(PendingEffect).equals = function (other) {
     return true;
   if (!(other instanceof PendingEffect))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!equalsLong(this.o21_1, other.o21_1))
     return false;
@@ -32137,7 +32188,7 @@ protoOf(PendingEffect).equals = function (other) {
     return false;
   return true;
 };
-protoOf(PendingEffect).g2t = function (other) {
+protoOf(PendingEffect).h2t = function (other) {
   return other instanceof PendingEffect;
 };
 protoOf(PendingEffect).hashCode = function () {
@@ -32223,25 +32274,25 @@ protoOf(PendingEffect).toString = function () {
   return 'PendingEffect(id=' + this.k21_1 + ', scriptId=' + this.l21_1 + ', controllerId=' + this.m21_1 + ', sourceInstanceId=' + this.n21_1 + ', sourceFieldSeq=' + this.o21_1.toString() + ', sourceName=' + this.p21_1 + ', label=' + this.q21_1 + ', text=' + this.r21_1 + ', triggerSeq=' + this.s21_1.toString() + ', link=' + this.t21_1 + ', inheritedFromName=' + this.u21_1 + ', inheritedFromImage=' + this.v21_1 + ', costIndex=' + this.w21_1 + ', targetIds=' + toString(this.x21_1) + ', repeatsDone=' + this.y21_1 + ', resolutionId=' + this.z21_1 + ', stepIndex=' + this.a22_1 + ', sequenceIndex=' + this.b22_1 + ', saved=' + toString(this.c22_1) + ', subjectId=' + this.d22_1 + ', ritualTargetId=' + this.e22_1 + ', ritualSummonerId=' + this.f22_1 + ', summonedId=' + this.g22_1 + ', looked=' + toString(this.h22_1) + ', ordered=' + this.i22_1 + ', confirmed=' + this.j22_1 + ', lastDone=' + this.k22_1 + ', lastCount=' + this.l22_1 + ', lastTributed=' + toString(this.m22_1) + ', keepOnField=' + this.n22_1 + ', passed=' + toString(this.o22_1) + ', priorityDone=' + this.p22_1 + ')';
 };
 function PendingRemoval(cardId, ownerId, destroy, cause, byId, byCard, effectId) {
-  this.i39_1 = cardId;
-  this.j39_1 = ownerId;
-  this.k39_1 = destroy;
-  this.l39_1 = cause;
-  this.m39_1 = byId;
-  this.n39_1 = byCard;
-  this.o39_1 = effectId;
+  this.j39_1 = cardId;
+  this.k39_1 = ownerId;
+  this.l39_1 = destroy;
+  this.m39_1 = cause;
+  this.n39_1 = byId;
+  this.o39_1 = byCard;
+  this.p39_1 = effectId;
 }
 protoOf(PendingRemoval).toString = function () {
-  return 'PendingRemoval(cardId=' + this.i39_1 + ', ownerId=' + this.j39_1 + ', destroy=' + this.k39_1 + ', cause=' + this.l39_1 + ', byId=' + this.m39_1 + ', byCard=' + this.n39_1 + ', effectId=' + this.o39_1 + ')';
+  return 'PendingRemoval(cardId=' + this.j39_1 + ', ownerId=' + this.k39_1 + ', destroy=' + this.l39_1 + ', cause=' + this.m39_1 + ', byId=' + this.n39_1 + ', byCard=' + this.o39_1 + ', effectId=' + this.p39_1 + ')';
 };
 protoOf(PendingRemoval).hashCode = function () {
-  var result = this.i39_1 == null ? 0 : getStringHashCode(this.i39_1);
-  result = imul(result, 31) + (this.j39_1 == null ? 0 : getStringHashCode(this.j39_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.k39_1) | 0;
-  result = imul(result, 31) + (this.l39_1 == null ? 0 : getStringHashCode(this.l39_1)) | 0;
+  var result = this.j39_1 == null ? 0 : getStringHashCode(this.j39_1);
+  result = imul(result, 31) + (this.k39_1 == null ? 0 : getStringHashCode(this.k39_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.l39_1) | 0;
   result = imul(result, 31) + (this.m39_1 == null ? 0 : getStringHashCode(this.m39_1)) | 0;
   result = imul(result, 31) + (this.n39_1 == null ? 0 : getStringHashCode(this.n39_1)) | 0;
   result = imul(result, 31) + (this.o39_1 == null ? 0 : getStringHashCode(this.o39_1)) | 0;
+  result = imul(result, 31) + (this.p39_1 == null ? 0 : getStringHashCode(this.p39_1)) | 0;
   return result;
 };
 protoOf(PendingRemoval).equals = function (other) {
@@ -32249,13 +32300,11 @@ protoOf(PendingRemoval).equals = function (other) {
     return true;
   if (!(other instanceof PendingRemoval))
     return false;
-  if (!(this.i39_1 == other.i39_1))
-    return false;
   if (!(this.j39_1 == other.j39_1))
     return false;
-  if (!(this.k39_1 === other.k39_1))
+  if (!(this.k39_1 == other.k39_1))
     return false;
-  if (!(this.l39_1 == other.l39_1))
+  if (!(this.l39_1 === other.l39_1))
     return false;
   if (!(this.m39_1 == other.m39_1))
     return false;
@@ -32263,15 +32312,17 @@ protoOf(PendingRemoval).equals = function (other) {
     return false;
   if (!(this.o39_1 == other.o39_1))
     return false;
+  if (!(this.p39_1 == other.p39_1))
+    return false;
   return true;
 };
 function playableNow($this, room, userId, card) {
   try {
     var player = room.a1e(userId);
     if ('creature' === card.o1c_1) {
-      return Summons_instance.o38(room, userId, player, card) == null || SpecialRequirements_getInstance().p39(room, userId, card);
+      return Summons_instance.p38(room, userId, player, card) == null || SpecialRequirements_getInstance().q39(room, userId, card);
     }
-    return Summons_instance.p38(room, userId, card) == null;
+    return Summons_instance.q38(room, userId, card) == null;
   } catch ($p) {
     if ($p instanceof RuntimeException) {
       var e = $p;
@@ -32417,7 +32468,7 @@ protoOf(Prompt).equals = function (other) {
     return true;
   if (!(other instanceof Prompt))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.r1m_1 === other.r1m_1))
     return false;
@@ -32473,7 +32524,7 @@ protoOf(Prompt).equals = function (other) {
     return false;
   return true;
 };
-protoOf(Prompt).g2t = function (other) {
+protoOf(Prompt).h2t = function (other) {
   return other instanceof Prompt;
 };
 protoOf(Prompt).hashCode = function () {
@@ -32666,7 +32717,7 @@ var $ENTRIES_9;
 function PromptPurpose(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
-protoOf(PromptPurpose).g2s = function () {
+protoOf(PromptPurpose).i2s = function () {
   return this.j2_1;
 };
 protoOf(PromptPurpose).q1f = function (purpose) {
@@ -32899,21 +32950,21 @@ protoOf(GainBeforeAscended).equals = function (other) {
   return true;
 };
 function ReplacementOption(key, source, replacement, label, text) {
-  this.q39_1 = key;
-  this.r39_1 = source;
-  this.s39_1 = replacement;
-  this.t39_1 = label;
-  this.u39_1 = text;
+  this.r39_1 = key;
+  this.s39_1 = source;
+  this.t39_1 = replacement;
+  this.u39_1 = label;
+  this.v39_1 = text;
 }
 protoOf(ReplacementOption).toString = function () {
-  return 'ReplacementOption(key=' + this.q39_1 + ', source=' + this.r39_1.toString() + ', replacement=' + toString_0(this.s39_1) + ', label=' + this.t39_1 + ', text=' + this.u39_1 + ')';
+  return 'ReplacementOption(key=' + this.r39_1 + ', source=' + this.s39_1.toString() + ', replacement=' + toString_0(this.t39_1) + ', label=' + this.u39_1 + ', text=' + this.v39_1 + ')';
 };
 protoOf(ReplacementOption).hashCode = function () {
-  var result = getStringHashCode(this.q39_1);
-  result = imul(result, 31) + this.r39_1.hashCode() | 0;
-  result = imul(result, 31) + (this.s39_1 == null ? 0 : this.s39_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.t39_1 == null ? 0 : getStringHashCode(this.t39_1)) | 0;
+  var result = getStringHashCode(this.r39_1);
+  result = imul(result, 31) + this.s39_1.hashCode() | 0;
+  result = imul(result, 31) + (this.t39_1 == null ? 0 : this.t39_1.hashCode()) | 0;
   result = imul(result, 31) + (this.u39_1 == null ? 0 : getStringHashCode(this.u39_1)) | 0;
+  result = imul(result, 31) + (this.v39_1 == null ? 0 : getStringHashCode(this.v39_1)) | 0;
   return result;
 };
 protoOf(ReplacementOption).equals = function (other) {
@@ -32921,15 +32972,15 @@ protoOf(ReplacementOption).equals = function (other) {
     return true;
   if (!(other instanceof ReplacementOption))
     return false;
-  if (!(this.q39_1 === other.q39_1))
+  if (!(this.r39_1 === other.r39_1))
     return false;
-  if (!this.r39_1.equals(other.r39_1))
+  if (!this.s39_1.equals(other.s39_1))
     return false;
-  if (!equals_0(this.s39_1, other.s39_1))
-    return false;
-  if (!(this.t39_1 == other.t39_1))
+  if (!equals_0(this.t39_1, other.t39_1))
     return false;
   if (!(this.u39_1 == other.u39_1))
+    return false;
+  if (!(this.v39_1 == other.v39_1))
     return false;
   return true;
 };
@@ -32938,7 +32989,7 @@ function decided($this, room) {
   return isInterface(tmp, KtMutableSet) ? tmp : THROW_CCE();
 }
 function linkedAllies($this, owner, card) {
-  var tmp0_elvis_lhs = Formations_instance.u33(owner, card.g1c_1);
+  var tmp0_elvis_lhs = Formations_instance.v33(owner, card.g1c_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return frozenListOf([]);
@@ -33001,7 +33052,7 @@ function applies($this, room, owner, holder, r, destroy, byOpponent) {
     return false;
   if (equals_0(r.p2m_1, Limit_DEFINITIVE_getInstance()) && room.c19_1)
     return false;
-  return !Companion_instance_15.z2r(r.p2m_1, room.a19_1, $this.v39(owner, holder, r));
+  return !Companion_instance_15.b2s(r.p2m_1, room.a19_1, $this.w39(owner, holder, r));
 }
 function payable_0($this, owner, card, r) {
   var tmp;
@@ -33211,7 +33262,7 @@ function otherAllies($this, owner, card) {
 }
 function Removals$answerRemoval$lambda($player) {
   return function (p) {
-    return EffectEngine_getInstance().q2c(EffectEngine_getInstance().s2c($player.a1f_1, p.i39_1));
+    return EffectEngine_getInstance().q2c(EffectEngine_getInstance().s2c($player.a1f_1, p.j39_1));
   };
 }
 function Removals() {
@@ -33221,7 +33272,7 @@ function Removals() {
   this.g1f_1 = Platform_instance.s1s('[\\[\\]]');
 }
 protoOf(Removals).f1j = function (room, userId, ownerId, instanceId) {
-  var error = this.w39(room);
+  var error = this.x39(room);
   if (!(error == null))
     return error;
   var owner = room.a1e(ownerId == null ? userId : ownerId);
@@ -33233,7 +33284,7 @@ protoOf(Removals).f1j = function (room, userId, ownerId, instanceId) {
   return null;
 };
 protoOf(Removals).g1j = function (room, userId, instanceId) {
-  var error = this.w39(room);
+  var error = this.x39(room);
   if (!(error == null))
     return error;
   var owner = room.a1e(userId);
@@ -33254,12 +33305,12 @@ protoOf(Removals).h1f = function (room, userId, owner, card) {
   this.w2e(room, card, owner, false, 'EFFECT', userId, null, null);
   Chain_instance.z1l(room);
 };
-protoOf(Removals).q33 = function (room, player, card, effect) {
+protoOf(Removals).r33 = function (room, player, card, effect) {
   if (!player.u1e_1.y1(card))
     return Unit_instance;
   card.j1c_1 = false;
   player.y1e_1.f(card);
-  var data = Platform_instance.m2t();
+  var data = Platform_instance.n2t();
   // Inline function 'kotlin.collections.set' call
   var value = player.f1e_1;
   data.g2('ownerId', value);
@@ -33273,7 +33324,7 @@ protoOf(Removals).q33 = function (room, player, card, effect) {
   }
   EffectEngine_getInstance().g2e(room, 'TRIBUTE', player.f1e_1, card, 'hand', 'tributeZone', effect, data, plus(player.g1e_1, ' sacrifica ') + EffectEngine_getInstance().q2c(card) + ' de su mano' + (!(effect == null) ? ' (' + effect.p21_1 + ')' : ''));
 };
-protoOf(Removals).x39 = function (room, card) {
+protoOf(Removals).y39 = function (room, card) {
   var id = card.g1c_1;
   if (card.p1c_1 == null || id == null)
     return Unit_instance;
@@ -33282,10 +33333,10 @@ protoOf(Removals).x39 = function (room, card) {
   var value = EffectEngine_getInstance().b1p(card);
   tmp0.g2(id, value);
 };
-protoOf(Removals).v34 = function (room, instanceId) {
+protoOf(Removals).w34 = function (room, instanceId) {
   return instanceId == null ? null : room.l19_1.u1(instanceId);
 };
-protoOf(Removals).w39 = function (room) {
+protoOf(Removals).x39 = function (room) {
   if (!room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()))
     return 'La partida no est\xE1 en curso';
   if (room.e1j())
@@ -33294,7 +33345,7 @@ protoOf(Removals).w39 = function (room) {
 };
 protoOf(Removals).w2e = function (room, card, owner, sacrifice, cause, byId, byCard, effect) {
   var byCard_0 = byCard;
-  if (EffectEngine_getInstance().r2y(card, effect)) {
+  if (EffectEngine_getInstance().s2y(card, effect)) {
     EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(card) + ' solo puede ser afectada por sus copias: ' + ensureNotNull(effect).p21_1 + ' no le hace nada', null);
     return null;
   }
@@ -33304,15 +33355,15 @@ protoOf(Removals).w2e = function (room, card, owner, sacrifice, cause, byId, byC
       return this.w2e(room, card, owner, false, 'RULES', null, null, null);
     return null;
   }
-  if (!sacrifice && this.u2u(room, card, owner, true, cause, byId, byCard_0, effect))
+  if (!sacrifice && this.v2u(room, card, owner, true, cause, byId, byCard_0, effect))
     return null;
   var levelThere = ensureNotNull(card).p1u();
-  this.x39(room, card);
+  this.y39(room, card);
   ensureNotNull(owner).a1f_1.y1(card);
   var combat = room.y18_1;
   if (!(combat == null) && owner.f1e_1 == combat.v1z_1)
     combat.f20_1 = true;
-  this.y39(room, owner, card, byId);
+  this.z39(room, owner, card, byId);
   // Inline function 'kotlin.collections.mapNotNull' call
   var tmp0 = ensureNotNull(card.p1d_1);
   // Inline function 'kotlin.collections.mapNotNullTo' call
@@ -33330,13 +33381,13 @@ protoOf(Removals).w2e = function (room, card, owner, sacrifice, cause, byId, byC
     }
   }
   var inherited = destination;
-  var granted = GrantedEffects_getInstance().k38(card);
+  var granted = GrantedEffects_getInstance().l38(card);
   var materials = ArrayList_init_$Create$_0(ensureNotNull(card.o1d_1));
   var hadMaterials = !materials.m();
   if (!(byId == null) && !(byId == owner.f1e_1) && 'creature' === card.o1c_1) {
     room.a19_1.f('ally-destroyed-by-opponent|' + owner.f1e_1);
   }
-  this.z39(owner, card);
+  this.a3a(owner, card);
   var toZone = sacrifice ? 'tributeZone' : 'discardPile';
   (sacrifice ? owner.y1e_1 : owner.z1e_1).f(card);
   var by = room.a1e(byId);
@@ -33344,7 +33395,7 @@ protoOf(Removals).w2e = function (room, card, owner, sacrifice, cause, byId, byC
   var whose = !(by == null) && !(by === owner) ? ' de ' + owner.g1e_1 : '';
   var why = !(effect == null) ? ' (' + effect.p21_1 + ')' : 'BATTLE' === cause ? ' en el enfrentamiento' : 'RITUAL' === cause ? ' para el Ritual' : 'EFFECT' === cause ? ' (fuerza 0)' : 'RULES' === cause ? ' por tener fuerza 0' : '';
   var text = sacrifice ? plus(who, ' sacrifica ') + EffectEngine_getInstance().q2c(card) + why : plus(who, ' destruye ') + EffectEngine_getInstance().q2c(card) + whose + why;
-  var data = Platform_instance.m2t();
+  var data = Platform_instance.n2t();
   // Inline function 'kotlin.collections.set' call
   data.g2('cause', cause);
   // Inline function 'kotlin.collections.set' call
@@ -33388,7 +33439,7 @@ protoOf(Removals).w2e = function (room, card, owner, sacrifice, cause, byId, byC
   }
   return removed;
 };
-protoOf(Removals).y39 = function (room, owner, card, byId) {
+protoOf(Removals).z39 = function (room, owner, card, byId) {
   var byOpponent = !(byId == null) && !(byId == owner.f1e_1);
   var _iterator__ex2g4s = ArrayList_init_$Create$_0(ensureNotNull(card.p1d_1)).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
@@ -33450,12 +33501,12 @@ protoOf(Removals).i1f = function (card) {
   card.l1c_1 = null;
   card.m1c_1 = null;
 };
-protoOf(Removals).u2u = function (room, card, owner, destroy, cause, byId, byCard, effect) {
+protoOf(Removals).v2u = function (room, card, owner, destroy, cause, byId, byCard, effect) {
   if ('MANUAL' === cause || card == null)
     return false;
   if (decided(this, room).y1(card.g1c_1))
     return false;
-  if (this.a3a(room, card, ensureNotNull(owner), destroy, byId, !(effect == null)).m())
+  if (this.b3a(room, card, ensureNotNull(owner), destroy, byId, !(effect == null)).m())
     return false;
   var tmp0 = room.v18_1;
   var tmp$ret$0;
@@ -33474,7 +33525,7 @@ protoOf(Removals).u2u = function (room, card, owner, destroy, cause, byId, byCar
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (element.i39_1 == card.g1c_1) {
+      if (element.j39_1 == card.g1c_1) {
         tmp$ret$0 = true;
         break $l$block_0;
       }
@@ -33489,7 +33540,7 @@ protoOf(Removals).u2u = function (room, card, owner, destroy, cause, byId, byCar
   tmp_0.f(new PendingRemoval(tmp_1, tmp_2, destroy, cause, byId, byCard, effect == null ? null : effect.k21_1));
   return true;
 };
-protoOf(Removals).a3a = function (room, card, owner, destroy, byId, byEffect) {
+protoOf(Removals).b3a = function (room, card, owner, destroy, byId, byEffect) {
   var options = ArrayList_init_$Create$();
   var byOpponent = !(byId == null) && !(byId == owner.f1e_1);
   var _iterator__ex2g4s = CardEffects_getInstance().s2p(card).h();
@@ -33518,9 +33569,9 @@ protoOf(Removals).a3a = function (room, card, owner, destroy, byId, byEffect) {
         var r_0 = ensureNotNull(s.c2n_1);
         if (r_0.n2m_1 && !destroy)
           continue $l$loop_5;
-        if (Companion_instance_15.z2r(r_0.p2m_1, room.a19_1, this.v39(owner, c, r_0)))
+        if (Companion_instance_15.b2s(r_0.p2m_1, room.a19_1, this.w39(owner, c, r_0)))
           continue $l$loop_5;
-        if (!SpecialSummons_instance.b3a(room, owner, c, card, s.b2n_1))
+        if (!SpecialSummons_instance.c3a(room, owner, c, card, s.b2n_1))
           continue $l$loop_5;
         options.f(new ReplacementOption(plus(r_0.k2m_1, '@') + c.g1c_1, c, r_0, r_0.l2m_1, plus(r_0.m2m_1, ' ') + EffectEngine_getInstance().q2c(card) + ' es su invocador.'));
       }
@@ -33669,12 +33720,12 @@ protoOf(Removals).a3a = function (room, card, owner, destroy, byId, byEffect) {
   }
   return options;
 };
-protoOf(Removals).v39 = function (owner, card, r) {
+protoOf(Removals).w39 = function (owner, card, r) {
   if (equals_0(r.p2m_1, Limit_DEFINITIVE_getInstance()))
     return plus(owner.f1e_1, '|') + 'definitive';
   var tmp;
   var tmp0_safe_receiver = r.p2m_1;
-  if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.d2s_1) === true) {
+  if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.f2s_1) === true) {
     tmp = plus(owner.f1e_1, '|') + r.k2m_1;
   } else {
     tmp = plus(owner.f1e_1, '|') + card.g1c_1 + '@' + card.e1d_1.toString() + '|' + r.k2m_1;
@@ -33683,13 +33734,13 @@ protoOf(Removals).v39 = function (owner, card, r) {
 };
 protoOf(Removals).x2q = function (room) {
   var pending = room.v18_1.l(0);
-  var owner = room.a1e(pending.j39_1);
-  var card = owner == null ? null : EffectEngine_getInstance().s2c(owner.a1f_1, pending.i39_1);
-  var options = card == null ? frozenListOf([]) : this.a3a(room, card, ensureNotNull(owner), pending.k39_1, pending.m39_1, !(pending.o39_1 == null));
+  var owner = room.a1e(pending.k39_1);
+  var card = owner == null ? null : EffectEngine_getInstance().s2c(owner.a1f_1, pending.j39_1);
+  var options = card == null ? frozenListOf([]) : this.b3a(room, card, ensureNotNull(owner), pending.l39_1, pending.n39_1, !(pending.p39_1 == null));
   if (options.m()) {
     room.v18_1.f2(0);
     if (!(card == null)) {
-      this.c3a(room, pending, ensureNotNull(owner), card);
+      this.d3a(room, pending, ensureNotNull(owner), card);
     }
     return Unit_instance;
   }
@@ -33699,11 +33750,11 @@ protoOf(Removals).x2q = function (room) {
   var _iterator__ex2g4s = options.h();
   while (_iterator__ex2g4s.i()) {
     var item = _iterator__ex2g4s.j();
-    var tmp$ret$2 = item.r39_1;
+    var tmp$ret$2 = item.s39_1;
     destination.f(tmp$ret$2);
   }
   var sources = distinct(destination);
-  EffectEngine_getInstance().h2s(room, ensureNotNull(owner).f1e_1, PromptPurpose_REPLACE_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + (pending.k39_1 ? ' va a ser destruida' : ' va a ser removida'), 'Puedes usar 1 de estos efectos, o dejar que ' + (pending.k39_1 ? 'sea destruida.' : 'sea removida.'), 'Usar', sources, sources);
+  EffectEngine_getInstance().j2s(room, ensureNotNull(owner).f1e_1, PromptPurpose_REPLACE_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + (pending.l39_1 ? ' va a ser destruida' : ' va a ser removida'), 'Puedes usar 1 de estos efectos, o dejar que ' + (pending.l39_1 ? 'sea destruida.' : 'sea removida.'), 'Usar', sources, sources);
   ensureNotNull(room.r18_1).v1m_1 = ensureNotNull(card).g1c_1;
   var tmp = ensureNotNull(room.r18_1);
   // Inline function 'kotlin.collections.map' call
@@ -33712,11 +33763,11 @@ protoOf(Removals).x2q = function (room) {
   var _iterator__ex2g4s_0 = options.h();
   while (_iterator__ex2g4s_0.i()) {
     var item_0 = _iterator__ex2g4s_0.j();
-    var giver = item_0.s39_1 == null ? null : CardEffects_getInstance().t2p(item_0.r39_1, item_0.s39_1);
-    var tmp_0 = item_0.r39_1.g1c_1;
-    var tmp_1 = EffectEngine_getInstance().q2c(item_0.r39_1);
+    var giver = item_0.t39_1 == null ? null : CardEffects_getInstance().t2p(item_0.s39_1, item_0.t39_1);
+    var tmp_0 = item_0.s39_1.g1c_1;
+    var tmp_1 = EffectEngine_getInstance().q2c(item_0.s39_1);
     var tmp_2 = giver == null ? null : giver.n1c_1;
-    var tmp$ret$5 = new OfferedEffect(item_0.q39_1, tmp_0, tmp_1, item_0.t39_1, item_0.u39_1, tmp_2, giver == null ? null : giver.i1c_1);
+    var tmp$ret$5 = new OfferedEffect(item_0.r39_1, tmp_0, tmp_1, item_0.u39_1, item_0.v39_1, tmp_2, giver == null ? null : giver.i1c_1);
     destination_0.f(tmp$ret$5);
   }
   tmp.y1m_1 = destination_0;
@@ -33727,7 +33778,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     return null;
   }
   var pending = room.v18_1.l(0);
-  var card = EffectEngine_getInstance().s2c(player.a1f_1, pending.i39_1);
+  var card = EffectEngine_getInstance().s2c(player.a1f_1, pending.j39_1);
   if (PromptPurpose_REPLACE_MATERIALS_getInstance().q1f(prompt.j1m_1)) {
     room.r18_1 = null;
     room.v18_1.f2(0);
@@ -33752,7 +33803,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       player.a1f_1.f(m);
       EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, m, 'materials', 'field', null, frozenMapOf_0('from', card.g1c_1), plus(player.g1e_1, ' coloca ') + EffectEngine_getInstance().q2c(m) + ' (material de ' + EffectEngine_getInstance().q2c(card) + ') en su retaguardia');
     }
-    this.c3a(room, pending, player, card);
+    this.d3a(room, pending, player, card);
     return null;
   }
   if (PromptPurpose_REPLACE_RESOURCES_getInstance().q1f(prompt.j1m_1)) {
@@ -33771,7 +33822,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     taken.j1c_1 = false;
     player.u1e_1.f(taken);
     EffectEngine_getInstance().g2e(room, 'ADD_TO_HAND', player.f1e_1, taken, 'resources', 'hand', null, null, plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(tributed) + ' y a\xF1ade ' + EffectEngine_getInstance().q2c(taken) + ' a su mano antes de que ' + EffectEngine_getInstance().q2c(card) + ' sea removida');
-    this.c3a(room, pending, player, card);
+    this.d3a(room, pending, player, card);
     return null;
   }
   if (PromptPurpose_REPLACE_GUARD_getInstance().q1f(prompt.j1m_1)) {
@@ -33852,16 +33903,16 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       ensureNotNull(ensureNotNull(guard).o1d_1).y1(material);
       material.j1c_1 = false;
       player.y1e_1.f(material);
-      EffectEngine_getInstance().g2e(room, 'TRIBUTE', player.f1e_1, material, 'materials', 'tributeZone', null, frozenMapOf_0('byCard', guard.g1c_1), plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(material) + ' de los materiales de ' + EffectEngine_getInstance().q2c(guard) + ': no es ' + (pending.k39_1 ? 'destruida' : 'removida'));
+      EffectEngine_getInstance().g2e(room, 'TRIBUTE', player.f1e_1, material, 'materials', 'tributeZone', null, frozenMapOf_0('byCard', guard.g1c_1), plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(material) + ' de los materiales de ' + EffectEngine_getInstance().q2c(guard) + ': no es ' + (pending.l39_1 ? 'destruida' : 'removida'));
       this.w2e(room, sacrificed, player, true, 'EFFECT', player.f1e_1, guard.g1c_1, null);
-      this.d3a(room, pending, player, guard);
+      this.e3a(room, pending, player, guard);
       return null;
     }
     if (g == null) {
       room.r18_1 = null;
       room.v18_1.f2(0);
       if (!(card == null)) {
-        this.c3a(room, pending, player, card);
+        this.d3a(room, pending, player, card);
       }
       return null;
     }
@@ -33925,7 +33976,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     var _iterator__ex2g4s_9 = tmp0_0.h();
     while (_iterator__ex2g4s_9.i()) {
       var element_4 = _iterator__ex2g4s_9.j();
-      if (element_4.j39_1 == player.f1e_1 && element_4.o39_1 == pending.o39_1 && !(EffectEngine_getInstance().s2c(player.a1f_1, element_4.i39_1) == null) && ensureNotNull(g.d2n_1).p2c(ensureNotNull(EffectEngine_getInstance().s2c(player.a1f_1, element_4.i39_1)))) {
+      if (element_4.k39_1 == player.f1e_1 && element_4.p39_1 == pending.p39_1 && !(EffectEngine_getInstance().s2c(player.a1f_1, element_4.j39_1) == null) && ensureNotNull(g.d2n_1).p2c(ensureNotNull(EffectEngine_getInstance().s2c(player.a1f_1, element_4.j39_1)))) {
         destination_3.f(element_4);
       }
     }
@@ -33946,9 +33997,9 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     this.a2f(room, player, ally);
     ally.j1c_1 = true;
     player.x1e_1.e2(0, ally);
-    EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, ally, 'field', 'lifeStack', null, null, plus(player.g1e_1, ' coloca ') + EffectEngine_getInstance().q2c(ally) + ' al tope de sus vidas bocabajo: ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.k39_1 ? 'destruida' : 'removida'));
+    EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, ally, 'field', 'lifeStack', null, null, plus(player.g1e_1, ' coloca ') + EffectEngine_getInstance().q2c(ally) + ' al tope de sus vidas bocabajo: ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.l39_1 ? 'destruida' : 'removida'));
     if (!(card == null)) {
-      this.d3a(room, pending, player, card);
+      this.e3a(room, pending, player, card);
     }
     return null;
   }
@@ -33989,10 +34040,10 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     while (_iterator__ex2g4s_12.i()) {
       var tapped = _iterator__ex2g4s_12.j();
       tapped.k1c_1 = true;
-      EffectEngine_getInstance().g2e(room, 'TAP', player.f1e_1, tapped, null, null, null, frozenMapOf_0('ownerId', player.f1e_1), plus(player.g1e_1, ' agota ') + EffectEngine_getInstance().q2c(tapped) + ': ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.k39_1 ? 'destruida' : 'removida'));
+      EffectEngine_getInstance().g2e(room, 'TAP', player.f1e_1, tapped, null, null, null, frozenMapOf_0('ownerId', player.f1e_1), plus(player.g1e_1, ' agota ') + EffectEngine_getInstance().q2c(tapped) + ': ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.l39_1 ? 'destruida' : 'removida'));
     }
     if (!(card == null)) {
-      this.d3a(room, pending, player, card);
+      this.e3a(room, pending, player, card);
     }
     return null;
   }
@@ -34010,8 +34061,8 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     ensureNotNull(ensureNotNull(card).o1d_1).y1(material_1);
     material_1.j1c_1 = false;
     player.z1e_1.f(material_1);
-    EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, material_1, 'materials', 'discardPile', null, frozenMapOf_0('from', card.g1c_1), plus(player.g1e_1, ' descarta ') + EffectEngine_getInstance().q2c(material_1) + ' (material de ' + EffectEngine_getInstance().q2c(card) + '): ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.k39_1 ? 'destruida' : 'removida'));
-    this.d3a(room, pending, player, card);
+    EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, material_1, 'materials', 'discardPile', null, frozenMapOf_0('from', card.g1c_1), plus(player.g1e_1, ' descarta ') + EffectEngine_getInstance().q2c(material_1) + ' (material de ' + EffectEngine_getInstance().q2c(card) + '): ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.l39_1 ? 'destruida' : 'removida'));
+    this.e3a(room, pending, player, card);
     return null;
   }
   if (PromptPurpose_REPLACE_SACRIFICE_getInstance().q1f(prompt.j1m_1)) {
@@ -34051,7 +34102,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     var tmp_5 = EffectEngine_getInstance();
     var tmp_6 = plus(player.g1e_1, ' sacrifica ');
     var tmp_7 = EffectEngine_getInstance();
-    tmp_5.h2e(room, tmp_6 + tmp_7.q2c(ally_0 == null ? inHand : ally_0) + ': ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.k39_1 ? 'destruida' : 'removida') + (holder == null || holder === card ? '' : ' (' + EffectEngine_getInstance().q2c(holder) + ')'), null);
+    tmp_5.h2e(room, tmp_6 + tmp_7.q2c(ally_0 == null ? inHand : ally_0) + ': ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es ' + (pending.l39_1 ? 'destruida' : 'removida') + (holder == null || holder === card ? '' : ' (' + EffectEngine_getInstance().q2c(holder) + ')'), null);
     if (!(ally_0 == null)) {
       var tmp_8 = player.f1e_1;
       var tmp4_elvis_lhs = holder == null ? null : holder.g1c_1;
@@ -34063,10 +34114,10 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       }
       this.w2e(room, ally_0, player, true, 'EFFECT', tmp_8, tmp_9, null);
     } else {
-      this.q33(room, player, ensureNotNull(inHand), null);
+      this.r33(room, player, ensureNotNull(inHand), null);
     }
     if (!(card == null)) {
-      this.d3a(room, pending, player, card);
+      this.e3a(room, pending, player, card);
     }
     return null;
   }
@@ -34104,7 +34155,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     room.v18_1.f2(0);
     EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' destruye ') + EffectEngine_getInstance().q2c(ally_1) + ': ' + EffectEngine_getInstance().q2c(card) + ' no es destruida', null);
     this.w2e(room, ally_1, player, false, 'EFFECT', player.f1e_1, ensureNotNull(card).g1c_1, null);
-    this.d3a(room, pending, player, card);
+    this.e3a(room, pending, player, card);
     return null;
   }
   if (PromptPurpose_REPLACE_HAND_getInstance().q1f(prompt.j1m_1)) {
@@ -34122,7 +34173,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     player.y1e_1.f(paid);
     EffectEngine_getInstance().g2e(room, 'TRIBUTE', player.f1e_1, paid, 'hand', 'tributeZone', null, null, plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(paid) + ' de su mano: ' + (card == null ? 'la carta' : EffectEngine_getInstance().q2c(card)) + ' no es destruida');
     if (!(card == null)) {
-      this.d3a(room, pending, player, card);
+      this.e3a(room, pending, player, card);
     }
     return null;
   }
@@ -34131,7 +34182,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     room.v18_1.f2(0);
     return null;
   }
-  var options = this.a3a(room, card, player, pending.k39_1, pending.m39_1, !(pending.o39_1 == null));
+  var options = this.b3a(room, card, player, pending.l39_1, pending.n39_1, !(pending.p39_1 == null));
   var tmp_13;
   if (picks.m()) {
     tmp_13 = null;
@@ -34142,7 +34193,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       var _iterator__ex2g4s_15 = options.h();
       while (_iterator__ex2g4s_15.i()) {
         var element_9 = _iterator__ex2g4s_15.j();
-        if (element_9.q39_1 === picks.l(0) || element_9.r39_1.g1c_1 === picks.l(0)) {
+        if (element_9.r39_1 === picks.l(0) || element_9.s39_1.g1c_1 === picks.l(0)) {
           tmp$ret$39 = element_9;
           break $l$block_7;
         }
@@ -34154,26 +34205,26 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
   var chosen_0 = tmp_13;
   if (chosen_0 == null) {
     room.v18_1.f2(0);
-    this.c3a(room, pending, player, card);
-    return null;
-  }
-  if (chosen_0.s39_1 == null) {
-    room.v18_1.f2(0);
-    EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(chosen_0.r39_1) + ' protege a ' + EffectEngine_getInstance().q2c(card) + ': es destruida en su lugar', null);
-    this.w2e(room, chosen_0.r39_1, player, false, 'EFFECT', player.f1e_1, card.g1c_1, null);
     this.d3a(room, pending, player, card);
     return null;
   }
-  var r = chosen_0.s39_1;
-  Companion_instance_15.o2s(r.p2m_1, room.a19_1, this.v39(player, chosen_0.r39_1, r));
+  if (chosen_0.t39_1 == null) {
+    room.v18_1.f2(0);
+    EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(chosen_0.s39_1) + ' protege a ' + EffectEngine_getInstance().q2c(card) + ': es destruida en su lugar', null);
+    this.w2e(room, chosen_0.s39_1, player, false, 'EFFECT', player.f1e_1, card.g1c_1, null);
+    this.e3a(room, pending, player, card);
+    return null;
+  }
+  var r = chosen_0.t39_1;
+  Companion_instance_15.p2s(r.p2m_1, room.a19_1, this.w39(player, chosen_0.s39_1, r));
   switch (ensureNotNull(r.q2m_1).k2_1) {
     case 7:
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_RESOURCES_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Elige primero el recurso que tributas y despu\xE9s el que a\xF1ades a tu mano; luego ' + EffectEngine_getInstance().q2c(card) + ' es removida.', 'Elegir', card.p1d_1, card.p1d_1);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_RESOURCES_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Elige primero el recurso que tributas y despu\xE9s el que a\xF1ades a tu mano; luego ' + EffectEngine_getInstance().q2c(card) + ' es removida.', 'Elegir', card.p1d_1, card.p1d_1);
       ensureNotNull(room.r18_1).r1m_1 = 2;
       ensureNotNull(room.r18_1).s1m_1 = 2;
       return null;
     case 6:
-      var guard_0 = chosen_0.r39_1;
+      var guard_0 = chosen_0.s39_1;
       var valid_0 = ArrayList_init_$Create$_0(ensureNotNull(guard_0.o1d_1));
       // Inline function 'kotlin.collections.filter' call
 
@@ -34192,7 +34243,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       valid_0.r(destination_6);
       var tmp_14 = EffectEngine_getInstance();
       var tmp_15 = player.f1e_1;
-      var tmp_16 = PromptPurpose_REPLACE_GUARD_getInstance().g2s();
+      var tmp_16 = PromptPurpose_REPLACE_GUARD_getInstance().i2s();
       var tmp_17 = EffectEngine_getInstance().q2c(guard_0) + ' \xB7 ' + r.l2m_1;
       var tmp_18 = 'Tributa 1 material de ' + EffectEngine_getInstance().q2c(guard_0) + ' y sacrifica 1 ' + ensureNotNull(r.r2m_1).e2e() + ' bajo tu control: ';
       var tmp9_safe_receiver = CardEffects_getInstance().k2p(guard_0);
@@ -34205,15 +34256,15 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       }
 
       var tmp10_elvis_lhs = tmp_19;
-      tmp_14.h2s(room, tmp_15, tmp_16, tmp_17, tmp_18 + (tmp10_elvis_lhs == null ? EffectEngine_getInstance().q2c(guard_0) + ' no es ' + (pending.k39_1 ? 'destruida.' : 'removida.') : tmp10_elvis_lhs), 'Pagar', valid_0, valid_0);
+      tmp_14.j2s(room, tmp_15, tmp_16, tmp_17, tmp_18 + (tmp10_elvis_lhs == null ? EffectEngine_getInstance().q2c(guard_0) + ' no es ' + (pending.l39_1 ? 'destruida.' : 'removida.') : tmp10_elvis_lhs), 'Pagar', valid_0, valid_0);
       ensureNotNull(room.r18_1).r1m_1 = 2;
       ensureNotNull(room.r18_1).s1m_1 = 2;
       ensureNotNull(room.r18_1).v1m_1 = guard_0.g1c_1;
       return null;
     case 5:
       room.v18_1.f2(0);
-      EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(card) + ' no es removida: en su lugar, invoca especialmente a ' + EffectEngine_getInstance().q2c(chosen_0.r39_1), null);
-      SpecialSummons_instance.e3a(room, player, chosen_0.r39_1, card);
+      EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(card) + ' no es removida: en su lugar, invoca especialmente a ' + EffectEngine_getInstance().q2c(chosen_0.s39_1), null);
+      SpecialSummons_instance.f3a(room, player, chosen_0.s39_1, card);
       return null;
     case 0:
       var i = 0;
@@ -34252,7 +34303,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
         player.y1e_1.f(c);
       }
 
-      EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' tributa ') + paid_0.k() + ' ' + EffectEngine_getInstance().f2e(paid_0.k(), 'recurso', 'recursos') + ' de ' + EffectEngine_getInstance().q2c(card) + ': no es ' + (pending.k39_1 ? 'destruida' : 'removida') + EffectEngine_getInstance().n2k(paid_0), null);
+      EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' tributa ') + paid_0.k() + ' ' + EffectEngine_getInstance().f2e(paid_0.k(), 'recurso', 'recursos') + ' de ' + EffectEngine_getInstance().q2c(card) + ': no es ' + (pending.l39_1 ? 'destruida' : 'removida') + EffectEngine_getInstance().n2k(paid_0), null);
       break;
     case 12:
       var tmp0_5 = ensureNotNull(card.p1d_1);
@@ -34282,7 +34333,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       this.a2f(room, player, card);
       card.j1c_1 = false;
       player.u1e_1.f(card);
-      EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, card, 'field', 'hand', null, frozenMapOf_0('ownerId', player.f1e_1), plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(paid_1) + ' y sube a ' + EffectEngine_getInstance().q2c(card) + ' a su mano: no es ' + (pending.k39_1 ? 'destruida' : 'removida'));
+      EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, card, 'field', 'hand', null, frozenMapOf_0('ownerId', player.f1e_1), plus(player.g1e_1, ' tributa ') + EffectEngine_getInstance().q2c(paid_1) + ' y sube a ' + EffectEngine_getInstance().q2c(card) + ' a su mano: no es ' + (pending.l39_1 ? 'destruida' : 'removida'));
       return null;
     case 4:
       var filter_0 = ensureNotNull(r.r2m_1);
@@ -34310,9 +34361,9 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
         EffectEngine_getInstance().g2e(room, 'TRIBUTE', player.f1e_1, c_0, 'resources', 'tributeZone', null, frozenMapOf_0('byCard', card.g1c_1), null);
       }
 
-      EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' tributa ') + paid_2.k() + ' ' + EffectEngine_getInstance().f2e(paid_2.k(), 'recurso', 'recursos') + ' de ' + EffectEngine_getInstance().q2c(card) + ' antes de que sea ' + (pending.k39_1 ? 'destruida' : 'removida') + EffectEngine_getInstance().n2k(paid_2), null);
+      EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' tributa ') + paid_2.k() + ' ' + EffectEngine_getInstance().f2e(paid_2.k(), 'recurso', 'recursos') + ' de ' + EffectEngine_getInstance().q2c(card) + ' antes de que sea ' + (pending.l39_1 ? 'destruida' : 'removida') + EffectEngine_getInstance().n2k(paid_2), null);
       room.v18_1.f2(0);
-      this.c3a(room, pending, player, card);
+      this.d3a(room, pending, player, card);
       return null;
     case 3:
       // Inline function 'kotlin.collections.filter' call
@@ -34330,7 +34381,7 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       }
 
       var valid_1 = destination_9;
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_MATERIALS_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Coloca hasta 2 de estas criaturas en tu retaguardia; luego ' + EffectEngine_getInstance().q2c(card) + ' es destruida.', 'A la retaguardia', valid_1, card.o1d_1);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_MATERIALS_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Coloca hasta 2 de estas criaturas en tu retaguardia; luego ' + EffectEngine_getInstance().q2c(card) + ' es destruida.', 'A la retaguardia', valid_1, card.o1d_1);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       var tmp_20 = ensureNotNull(room.r18_1);
       // Inline function 'kotlin.math.min' call
@@ -34354,13 +34405,13 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       }
 
       var allies = destination_10;
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_LIFE_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Coloca 1 aliado al tope de tus vidas bocabajo: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.k39_1 ? 'destruida.' : 'removida.'), 'A tus vidas', allies, allies);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_LIFE_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Coloca 1 aliado al tope de tus vidas bocabajo: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.l39_1 ? 'destruida.' : 'removida.'), 'A tus vidas', allies, allies);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
       return null;
     case 10:
       var structures = tappableStructures(this, player);
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_TAP_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Agota 1 de tus estructuras: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.k39_1 ? 'destruida.' : 'removida.'), 'Agotar', structures, structures);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_TAP_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Agota 1 de tus estructuras: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.l39_1 ? 'destruida.' : 'removida.'), 'Agotar', structures, structures);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       return null;
     case 16:
@@ -34368,14 +34419,14 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
       var count = tapCount(this, r);
       var tmp_21 = EffectEngine_getInstance();
       var tmp_22 = player.f1e_1;
-      var tmp_23 = PromptPurpose_REPLACE_TAP_getInstance().g2s();
+      var tmp_23 = PromptPurpose_REPLACE_TAP_getInstance().i2s();
       var tmp_24 = EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1;
       var tmp_25 = 'Agota ' + count + ' ' + (count === 1 ? 'carta ' : 'cartas ');
       // Inline function 'kotlin.text.trim' call
 
       var this_0 = ensureNotNull(r.r2m_1).e2e();
       var tmp$ret$61 = toString(trim(isCharSequence(this_0) ? this_0 : THROW_CCE()));
-      tmp_21.h2s(room, tmp_22, tmp_23, tmp_24, tmp_25 + tmp$ret$61 + ' bajo tu control: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.k39_1 ? 'destruida.' : 'removida.'), 'Agotar', cards, cards);
+      tmp_21.j2s(room, tmp_22, tmp_23, tmp_24, tmp_25 + tmp$ret$61 + ' bajo tu control: ' + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.l39_1 ? 'destruida.' : 'removida.'), 'Agotar', cards, cards);
       ensureNotNull(room.r18_1).r1m_1 = count;
       ensureNotNull(room.r18_1).s1m_1 = count;
       return null;
@@ -34383,33 +34434,33 @@ protoOf(Removals).i2h = function (room, prompt, player, picks) {
     case 11:
       var withHand_0 = equals_0(r.q2m_1, ReplacementCost_SACRIFICE_OTHER_ALLY_OR_HAND_getInstance());
       var valid_2 = plus_0(otherAllies(this, player, card), withHand_0 ? player.u1e_1 : frozenListOf([]));
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_SACRIFICE_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, (withHand_0 ? 'Sacrifica otro aliado o 1 carta de tu mano: ' : 'Sacrifica otro aliado: ') + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.k39_1 ? 'destruida.' : 'removida.'), 'Sacrificar', valid_2, valid_2);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_SACRIFICE_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, (withHand_0 ? 'Sacrifica otro aliado o 1 carta de tu mano: ' : 'Sacrifica otro aliado: ') + EffectEngine_getInstance().q2c(card) + ' no es ' + (pending.l39_1 ? 'destruida.' : 'removida.'), 'Sacrificar', valid_2, valid_2);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
-      ensureNotNull(room.r18_1).w1m_1 = chosen_0.r39_1.g1c_1;
+      ensureNotNull(room.r18_1).w1m_1 = chosen_0.s39_1.g1c_1;
       return null;
     case 14:
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_DISCARD_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Descarta 1 material de ' + EffectEngine_getInstance().q2c(card) + ': no es ' + (pending.k39_1 ? 'destruida.' : 'removida.'), 'Descartar', card.o1d_1, card.o1d_1);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_DISCARD_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Descarta 1 material de ' + EffectEngine_getInstance().q2c(card) + ': no es ' + (pending.l39_1 ? 'destruida.' : 'removida.'), 'Descartar', card.o1d_1, card.o1d_1);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       return null;
     case 13:
       var linked = linkedAllies(this, player, card);
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_DESTROY_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Destruye 1 aliado enlazado a ' + EffectEngine_getInstance().q2c(card) + ': ' + EffectEngine_getInstance().q2c(card) + ' no es destruida.', 'Destruir', linked, linked);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_DESTROY_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Destruye 1 aliado enlazado a ' + EffectEngine_getInstance().q2c(card) + ': ' + EffectEngine_getInstance().q2c(card) + ' no es destruida.', 'Destruir', linked, linked);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
       return null;
     case 1:
-      EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_HAND_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Tributa 1 carta de tu mano: ' + EffectEngine_getInstance().q2c(card) + ' no es destruida.', 'Tributar', player.u1e_1, player.u1e_1);
+      EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_HAND_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + r.l2m_1, 'Tributa 1 carta de tu mano: ' + EffectEngine_getInstance().q2c(card) + ' no es destruida.', 'Tributar', player.u1e_1, player.u1e_1);
       ensureNotNull(room.r18_1).r1m_1 = 1;
       return null;
     default:
       break;
   }
   room.v18_1.f2(0);
-  this.d3a(room, pending, player, card);
+  this.e3a(room, pending, player, card);
   return null;
 };
-protoOf(Removals).d3a = function (room, pending, owner, card) {
+protoOf(Removals).e3a = function (room, pending, owner, card) {
   if (!('creature' === card.o1c_1) || card.p1c_1 == null || EffectEngine_getInstance().b1p(card) > 0)
     return Unit_instance;
   if (EffectEngine_getInstance().s2c(owner.a1f_1, card.g1c_1) == null)
@@ -34417,9 +34468,9 @@ protoOf(Removals).d3a = function (room, pending, owner, card) {
   EffectEngine_getInstance().h2e(room, EffectEngine_getInstance().q2c(card) + ' sigue con fuerza 0: es destruida', null);
   this.w2e(room, card, owner, false, 'RULES', null, null, null);
 };
-protoOf(Removals).c3a = function (room, pending, owner, card) {
+protoOf(Removals).d3a = function (room, pending, owner, card) {
   var tmp;
-  if (pending.o39_1 == null) {
+  if (pending.p39_1 == null) {
     tmp = null;
   } else {
     var tmp0 = room.q18_1;
@@ -34429,7 +34480,7 @@ protoOf(Removals).c3a = function (room, pending, owner, card) {
       var _iterator__ex2g4s = tmp0.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (pending.o39_1 == element.k21_1) {
+        if (pending.p39_1 == element.k21_1) {
           tmp$ret$0 = element;
           break $l$block;
         }
@@ -34440,21 +34491,21 @@ protoOf(Removals).c3a = function (room, pending, owner, card) {
   }
   var effect = tmp;
   decided(this, room).f(card.g1c_1);
-  if (pending.k39_1) {
-    this.w2e(room, card, owner, false, pending.l39_1, pending.m39_1, pending.n39_1, effect);
+  if (pending.l39_1) {
+    this.w2e(room, card, owner, false, pending.m39_1, pending.n39_1, pending.o39_1, effect);
     return Unit_instance;
   }
   decided(this, room).y1(card.g1c_1);
   this.a2f(room, owner, card);
   owner.u1e_1.f(card);
-  var by = room.a1e(pending.m39_1);
-  EffectEngine_getInstance().g2e(room, 'SEND', pending.m39_1, card, 'field', 'hand', effect, frozenMapOf_0('ownerId', owner.f1e_1), (by == null ? '' : plus(by.g1e_1, ' ')) + 'sube a ' + EffectEngine_getInstance().q2c(card) + ' a la mano de ' + owner.g1e_1);
+  var by = room.a1e(pending.n39_1);
+  EffectEngine_getInstance().g2e(room, 'SEND', pending.n39_1, card, 'field', 'hand', effect, frozenMapOf_0('ownerId', owner.f1e_1), (by == null ? '' : plus(by.g1e_1, ' ')) + 'sube a ' + EffectEngine_getInstance().q2c(card) + ' a la mano de ' + owner.g1e_1);
 };
 protoOf(Removals).a2f = function (room, owner, card) {
-  this.x39(room, card);
-  this.z39(owner, card);
+  this.y39(room, card);
+  this.a3a(owner, card);
 };
-protoOf(Removals).z39 = function (owner, card) {
+protoOf(Removals).a3a = function (owner, card) {
   ensureNotNull(owner).a1f_1.y1(card);
   var _iterator__ex2g4s = EffectEngine_getInstance().z2e(card.o1d_1, card.p1d_1).h();
   while (_iterator__ex2g4s.i()) {
@@ -34473,37 +34524,37 @@ function Removals_getInstance() {
   return Removals_instance;
 }
 function RequirementSpec(summoner, materials, alliesSum, alliesSumByCost, alone, aloneAtLevel, strongest, formationSize, formationAtLeast, condition, conditionText, alternative, ritual) {
-  this.s2x_1 = summoner;
-  this.t2x_1 = materials;
-  this.u2x_1 = alliesSum;
-  this.v2x_1 = alliesSumByCost;
-  this.w2x_1 = alone;
-  this.x2x_1 = aloneAtLevel;
-  this.y2x_1 = strongest;
-  this.z2x_1 = formationSize;
-  this.a2y_1 = formationAtLeast;
-  this.b2y_1 = condition;
-  this.c2y_1 = conditionText;
-  this.d2y_1 = alternative;
-  this.e2y_1 = ritual;
+  this.t2x_1 = summoner;
+  this.u2x_1 = materials;
+  this.v2x_1 = alliesSum;
+  this.w2x_1 = alliesSumByCost;
+  this.x2x_1 = alone;
+  this.y2x_1 = aloneAtLevel;
+  this.z2x_1 = strongest;
+  this.a2y_1 = formationSize;
+  this.b2y_1 = formationAtLeast;
+  this.c2y_1 = condition;
+  this.d2y_1 = conditionText;
+  this.e2y_1 = alternative;
+  this.f2y_1 = ritual;
 }
 protoOf(RequirementSpec).toString = function () {
-  return 'RequirementSpec(summoner=' + toString_0(this.s2x_1) + ', materials=' + toString_0(this.t2x_1) + ', alliesSum=' + this.u2x_1 + ', alliesSumByCost=' + this.v2x_1 + ', alone=' + this.w2x_1 + ', aloneAtLevel=' + this.x2x_1 + ', strongest=' + this.y2x_1 + ', formationSize=' + this.z2x_1 + ', formationAtLeast=' + this.a2y_1 + ', condition=' + toString_0(this.b2y_1) + ', conditionText=' + this.c2y_1 + ', alternative=' + toString_0(this.d2y_1) + ', ritual=' + toString_0(this.e2y_1) + ')';
+  return 'RequirementSpec(summoner=' + toString_0(this.t2x_1) + ', materials=' + toString_0(this.u2x_1) + ', alliesSum=' + this.v2x_1 + ', alliesSumByCost=' + this.w2x_1 + ', alone=' + this.x2x_1 + ', aloneAtLevel=' + this.y2x_1 + ', strongest=' + this.z2x_1 + ', formationSize=' + this.a2y_1 + ', formationAtLeast=' + this.b2y_1 + ', condition=' + toString_0(this.c2y_1) + ', conditionText=' + this.d2y_1 + ', alternative=' + toString_0(this.e2y_1) + ', ritual=' + toString_0(this.f2y_1) + ')';
 };
 protoOf(RequirementSpec).hashCode = function () {
-  var result = this.s2x_1 == null ? 0 : this.s2x_1.hashCode();
-  result = imul(result, 31) + (this.t2x_1 == null ? 0 : this.t2x_1.hashCode()) | 0;
-  result = imul(result, 31) + this.u2x_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.v2x_1) | 0;
+  var result = this.t2x_1 == null ? 0 : this.t2x_1.hashCode();
+  result = imul(result, 31) + (this.u2x_1 == null ? 0 : this.u2x_1.hashCode()) | 0;
+  result = imul(result, 31) + this.v2x_1 | 0;
   result = imul(result, 31) + getBooleanHashCode(this.w2x_1) | 0;
-  result = imul(result, 31) + this.x2x_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.y2x_1) | 0;
-  result = imul(result, 31) + this.z2x_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.a2y_1) | 0;
-  result = imul(result, 31) + (this.b2y_1 == null ? 0 : hashCode(this.b2y_1)) | 0;
-  result = imul(result, 31) + (this.c2y_1 == null ? 0 : getStringHashCode(this.c2y_1)) | 0;
-  result = imul(result, 31) + (this.d2y_1 == null ? 0 : this.d2y_1.hashCode()) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.x2x_1) | 0;
+  result = imul(result, 31) + this.y2x_1 | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.z2x_1) | 0;
+  result = imul(result, 31) + this.a2y_1 | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.b2y_1) | 0;
+  result = imul(result, 31) + (this.c2y_1 == null ? 0 : hashCode(this.c2y_1)) | 0;
+  result = imul(result, 31) + (this.d2y_1 == null ? 0 : getStringHashCode(this.d2y_1)) | 0;
   result = imul(result, 31) + (this.e2y_1 == null ? 0 : this.e2y_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.f2y_1 == null ? 0 : this.f2y_1.hashCode()) | 0;
   return result;
 };
 protoOf(RequirementSpec).equals = function (other) {
@@ -34511,11 +34562,9 @@ protoOf(RequirementSpec).equals = function (other) {
     return true;
   if (!(other instanceof RequirementSpec))
     return false;
-  if (!equals_0(this.s2x_1, other.s2x_1))
-    return false;
   if (!equals_0(this.t2x_1, other.t2x_1))
     return false;
-  if (!(this.u2x_1 === other.u2x_1))
+  if (!equals_0(this.u2x_1, other.u2x_1))
     return false;
   if (!(this.v2x_1 === other.v2x_1))
     return false;
@@ -34529,36 +34578,38 @@ protoOf(RequirementSpec).equals = function (other) {
     return false;
   if (!(this.a2y_1 === other.a2y_1))
     return false;
-  if (!equals_0(this.b2y_1, other.b2y_1))
+  if (!(this.b2y_1 === other.b2y_1))
     return false;
-  if (!(this.c2y_1 == other.c2y_1))
+  if (!equals_0(this.c2y_1, other.c2y_1))
     return false;
-  if (!equals_0(this.d2y_1, other.d2y_1))
+  if (!(this.d2y_1 == other.d2y_1))
     return false;
   if (!equals_0(this.e2y_1, other.e2y_1))
+    return false;
+  if (!equals_0(this.f2y_1, other.f2y_1))
     return false;
   return true;
 };
 function SummonerSpec(level, maxLevel, atLeast, orLess, filter, zones, none) {
-  this.f3a_1 = level;
-  this.g3a_1 = maxLevel;
-  this.h3a_1 = atLeast;
-  this.i3a_1 = orLess;
-  this.j3a_1 = filter;
-  this.k3a_1 = zones;
-  this.l3a_1 = none;
+  this.g3a_1 = level;
+  this.h3a_1 = maxLevel;
+  this.i3a_1 = atLeast;
+  this.j3a_1 = orLess;
+  this.k3a_1 = filter;
+  this.l3a_1 = zones;
+  this.m3a_1 = none;
 }
 protoOf(SummonerSpec).toString = function () {
-  return 'SummonerSpec(level=' + this.f3a_1 + ', maxLevel=' + this.g3a_1 + ', atLeast=' + this.h3a_1 + ', orLess=' + this.i3a_1 + ', filter=' + toString_0(this.j3a_1) + ', zones=' + toString_0(this.k3a_1) + ', none=' + this.l3a_1 + ')';
+  return 'SummonerSpec(level=' + this.g3a_1 + ', maxLevel=' + this.h3a_1 + ', atLeast=' + this.i3a_1 + ', orLess=' + this.j3a_1 + ', filter=' + toString_0(this.k3a_1) + ', zones=' + toString_0(this.l3a_1) + ', none=' + this.m3a_1 + ')';
 };
 protoOf(SummonerSpec).hashCode = function () {
-  var result = this.f3a_1;
-  result = imul(result, 31) + (this.g3a_1 == null ? 0 : this.g3a_1) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.h3a_1) | 0;
+  var result = this.g3a_1;
+  result = imul(result, 31) + (this.h3a_1 == null ? 0 : this.h3a_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.i3a_1) | 0;
-  result = imul(result, 31) + (this.j3a_1 == null ? 0 : this.j3a_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.k3a_1 == null ? 0 : hashCode(this.k3a_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.l3a_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.j3a_1) | 0;
+  result = imul(result, 31) + (this.k3a_1 == null ? 0 : this.k3a_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.l3a_1 == null ? 0 : hashCode(this.l3a_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.m3a_1) | 0;
   return result;
 };
 protoOf(SummonerSpec).equals = function (other) {
@@ -34566,53 +34617,51 @@ protoOf(SummonerSpec).equals = function (other) {
     return true;
   if (!(other instanceof SummonerSpec))
     return false;
-  if (!(this.f3a_1 === other.f3a_1))
+  if (!(this.g3a_1 === other.g3a_1))
     return false;
-  if (!(this.g3a_1 == other.g3a_1))
-    return false;
-  if (!(this.h3a_1 === other.h3a_1))
+  if (!(this.h3a_1 == other.h3a_1))
     return false;
   if (!(this.i3a_1 === other.i3a_1))
     return false;
-  if (!equals_0(this.j3a_1, other.j3a_1))
+  if (!(this.j3a_1 === other.j3a_1))
     return false;
   if (!equals_0(this.k3a_1, other.k3a_1))
     return false;
-  if (!(this.l3a_1 === other.l3a_1))
+  if (!equals_0(this.l3a_1, other.l3a_1))
+    return false;
+  if (!(this.m3a_1 === other.m3a_1))
     return false;
   return true;
 };
 function MaterialSpec(count, more, level, orLess, levelSum, zones, filter, maxCount) {
   maxCount = maxCount === VOID ? null : maxCount;
-  this.m3a_1 = count;
-  this.n3a_1 = more;
-  this.o3a_1 = level;
-  this.p3a_1 = orLess;
-  this.q3a_1 = levelSum;
-  this.r3a_1 = zones;
-  this.s3a_1 = filter;
-  this.t3a_1 = maxCount;
+  this.n3a_1 = count;
+  this.o3a_1 = more;
+  this.p3a_1 = level;
+  this.q3a_1 = orLess;
+  this.r3a_1 = levelSum;
+  this.s3a_1 = zones;
+  this.t3a_1 = filter;
+  this.u3a_1 = maxCount;
 }
 protoOf(MaterialSpec).toString = function () {
-  return 'MaterialSpec(count=' + this.m3a_1 + ', more=' + this.n3a_1 + ', level=' + this.o3a_1 + ', orLess=' + this.p3a_1 + ', levelSum=' + this.q3a_1 + ', zones=' + toString_0(this.r3a_1) + ', filter=' + toString_0(this.s3a_1) + ', maxCount=' + this.t3a_1 + ')';
+  return 'MaterialSpec(count=' + this.n3a_1 + ', more=' + this.o3a_1 + ', level=' + this.p3a_1 + ', orLess=' + this.q3a_1 + ', levelSum=' + this.r3a_1 + ', zones=' + toString_0(this.s3a_1) + ', filter=' + toString_0(this.t3a_1) + ', maxCount=' + this.u3a_1 + ')';
 };
 protoOf(MaterialSpec).hashCode = function () {
-  var result = this.m3a_1;
-  result = imul(result, 31) + getBooleanHashCode(this.n3a_1) | 0;
-  result = imul(result, 31) + this.o3a_1 | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.p3a_1) | 0;
-  result = imul(result, 31) + this.q3a_1 | 0;
-  result = imul(result, 31) + (this.r3a_1 == null ? 0 : hashCode(this.r3a_1)) | 0;
-  result = imul(result, 31) + (this.s3a_1 == null ? 0 : this.s3a_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.t3a_1 == null ? 0 : this.t3a_1) | 0;
+  var result = this.n3a_1;
+  result = imul(result, 31) + getBooleanHashCode(this.o3a_1) | 0;
+  result = imul(result, 31) + this.p3a_1 | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.q3a_1) | 0;
+  result = imul(result, 31) + this.r3a_1 | 0;
+  result = imul(result, 31) + (this.s3a_1 == null ? 0 : hashCode(this.s3a_1)) | 0;
+  result = imul(result, 31) + (this.t3a_1 == null ? 0 : this.t3a_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.u3a_1 == null ? 0 : this.u3a_1) | 0;
   return result;
 };
 protoOf(MaterialSpec).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof MaterialSpec))
-    return false;
-  if (!(this.m3a_1 === other.m3a_1))
     return false;
   if (!(this.n3a_1 === other.n3a_1))
     return false;
@@ -34622,11 +34671,13 @@ protoOf(MaterialSpec).equals = function (other) {
     return false;
   if (!(this.q3a_1 === other.q3a_1))
     return false;
-  if (!equals_0(this.r3a_1, other.r3a_1))
+  if (!(this.r3a_1 === other.r3a_1))
     return false;
   if (!equals_0(this.s3a_1, other.s3a_1))
     return false;
-  if (!(this.t3a_1 == other.t3a_1))
+  if (!equals_0(this.t3a_1, other.t3a_1))
+    return false;
+  if (!(this.u3a_1 == other.u3a_1))
     return false;
   return true;
 };
@@ -34636,33 +34687,33 @@ function RitualSpec(sum, level, maxLevel, atLeast, maxStrength, extra, eachMaxLe
   orCost = orCost === VOID ? false : orCost;
   filter = filter === VOID ? null : filter;
   summonerLevel = summonerLevel === VOID ? null : summonerLevel;
-  this.f2y_1 = sum;
-  this.g2y_1 = level;
-  this.h2y_1 = maxLevel;
-  this.i2y_1 = atLeast;
-  this.j2y_1 = maxStrength;
-  this.k2y_1 = extra;
-  this.l2y_1 = eachMaxLevel;
-  this.m2y_1 = parts;
-  this.n2y_1 = orCost;
-  this.o2y_1 = filter;
-  this.p2y_1 = summonerLevel;
+  this.g2y_1 = sum;
+  this.h2y_1 = level;
+  this.i2y_1 = maxLevel;
+  this.j2y_1 = atLeast;
+  this.k2y_1 = maxStrength;
+  this.l2y_1 = extra;
+  this.m2y_1 = eachMaxLevel;
+  this.n2y_1 = parts;
+  this.o2y_1 = orCost;
+  this.p2y_1 = filter;
+  this.q2y_1 = summonerLevel;
 }
 protoOf(RitualSpec).toString = function () {
-  return 'RitualSpec(sum=' + this.f2y_1 + ', level=' + this.g2y_1 + ', maxLevel=' + this.h2y_1 + ', atLeast=' + this.i2y_1 + ', maxStrength=' + this.j2y_1 + ', extra=' + this.k2y_1 + ', eachMaxLevel=' + this.l2y_1 + ', parts=' + toString_0(this.m2y_1) + ', orCost=' + this.n2y_1 + ', filter=' + toString_0(this.o2y_1) + ', summonerLevel=' + this.p2y_1 + ')';
+  return 'RitualSpec(sum=' + this.g2y_1 + ', level=' + this.h2y_1 + ', maxLevel=' + this.i2y_1 + ', atLeast=' + this.j2y_1 + ', maxStrength=' + this.k2y_1 + ', extra=' + this.l2y_1 + ', eachMaxLevel=' + this.m2y_1 + ', parts=' + toString_0(this.n2y_1) + ', orCost=' + this.o2y_1 + ', filter=' + toString_0(this.p2y_1) + ', summonerLevel=' + this.q2y_1 + ')';
 };
 protoOf(RitualSpec).hashCode = function () {
-  var result = getBooleanHashCode(this.f2y_1);
-  result = imul(result, 31) + this.g2y_1 | 0;
-  result = imul(result, 31) + (this.h2y_1 == null ? 0 : this.h2y_1) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.i2y_1) | 0;
-  result = imul(result, 31) + (this.j2y_1 == null ? 0 : this.j2y_1) | 0;
-  result = imul(result, 31) + this.k2y_1 | 0;
-  result = imul(result, 31) + (this.l2y_1 == null ? 0 : this.l2y_1) | 0;
-  result = imul(result, 31) + (this.m2y_1 == null ? 0 : hashCode(this.m2y_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.n2y_1) | 0;
-  result = imul(result, 31) + (this.o2y_1 == null ? 0 : this.o2y_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.p2y_1 == null ? 0 : this.p2y_1) | 0;
+  var result = getBooleanHashCode(this.g2y_1);
+  result = imul(result, 31) + this.h2y_1 | 0;
+  result = imul(result, 31) + (this.i2y_1 == null ? 0 : this.i2y_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.j2y_1) | 0;
+  result = imul(result, 31) + (this.k2y_1 == null ? 0 : this.k2y_1) | 0;
+  result = imul(result, 31) + this.l2y_1 | 0;
+  result = imul(result, 31) + (this.m2y_1 == null ? 0 : this.m2y_1) | 0;
+  result = imul(result, 31) + (this.n2y_1 == null ? 0 : hashCode(this.n2y_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.o2y_1) | 0;
+  result = imul(result, 31) + (this.p2y_1 == null ? 0 : this.p2y_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.q2y_1 == null ? 0 : this.q2y_1) | 0;
   return result;
 };
 protoOf(RitualSpec).equals = function (other) {
@@ -34670,27 +34721,27 @@ protoOf(RitualSpec).equals = function (other) {
     return true;
   if (!(other instanceof RitualSpec))
     return false;
-  if (!(this.f2y_1 === other.f2y_1))
-    return false;
   if (!(this.g2y_1 === other.g2y_1))
     return false;
-  if (!(this.h2y_1 == other.h2y_1))
+  if (!(this.h2y_1 === other.h2y_1))
     return false;
-  if (!(this.i2y_1 === other.i2y_1))
+  if (!(this.i2y_1 == other.i2y_1))
     return false;
-  if (!(this.j2y_1 == other.j2y_1))
+  if (!(this.j2y_1 === other.j2y_1))
     return false;
-  if (!(this.k2y_1 === other.k2y_1))
+  if (!(this.k2y_1 == other.k2y_1))
     return false;
-  if (!(this.l2y_1 == other.l2y_1))
+  if (!(this.l2y_1 === other.l2y_1))
     return false;
-  if (!equals_0(this.m2y_1, other.m2y_1))
+  if (!(this.m2y_1 == other.m2y_1))
     return false;
-  if (!(this.n2y_1 === other.n2y_1))
+  if (!equals_0(this.n2y_1, other.n2y_1))
     return false;
-  if (!equals_0(this.o2y_1, other.o2y_1))
+  if (!(this.o2y_1 === other.o2y_1))
     return false;
-  if (!(this.p2y_1 == other.p2y_1))
+  if (!equals_0(this.p2y_1, other.p2y_1))
+    return false;
+  if (!(this.q2y_1 == other.q2y_1))
     return false;
   return true;
 };
@@ -34708,21 +34759,21 @@ function familyOf($this, step) {
   return ensureNotNull($this.m2e_1.u1(getKClassFromExpression(step)));
 }
 function asLooker($this, room, effect, body) {
-  return !(effect.e22_1 == null) ? EffectEngine_getInstance().e2h($this.u3a(room, effect), body) : EffectEngine_getInstance().f2h($this.u3a(room, effect), body);
+  return !(effect.e22_1 == null) ? EffectEngine_getInstance().e2h($this.v3a(room, effect), body) : EffectEngine_getInstance().f2h($this.v3a(room, effect), body);
 }
 function Resolution$possible$lambda($room, $effect, $step) {
-  return function () {
-    return Resolution_getInstance().v3a($room, $effect, $step);
-  };
-}
-function Resolution$run$lambda($room, $effect, $step) {
   return function () {
     return Resolution_getInstance().w3a($room, $effect, $step);
   };
 }
+function Resolution$run$lambda($room, $effect, $step) {
+  return function () {
+    return Resolution_getInstance().x3a($room, $effect, $step);
+  };
+}
 function Resolution$apply$lambda($room, $effect, $step, $player, $picks, $order, $repeat) {
   return function () {
-    return Resolution_getInstance().x3a($room, $effect, $step, $player, $picks, $order, $repeat);
+    return Resolution_getInstance().y3a($room, $effect, $step, $player, $picks, $order, $repeat);
   };
 }
 function Resolution() {
@@ -34738,7 +34789,7 @@ function Resolution() {
 protoOf(Resolution).b2r = function (room) {
   var effect = room.q18_1.l(room.q18_1.k() - 1 | 0);
   if (effect.z21_1 == null) {
-    LinkWatch_getInstance().x38(room);
+    LinkWatch_getInstance().y38(room);
     effect.z21_1 = room.y2k('res');
   }
   var script = EffectEngine_getInstance().z2g(effect);
@@ -34747,9 +34798,9 @@ protoOf(Resolution).b2r = function (room) {
     EffectEngine_getInstance().g2e(room, 'EFFECT_RESOLVED', effect.m21_1, null, null, null, effect, null, 'Se resuelve ' + (effect.t21_1 > 0 ? 'la Cadena ' + effect.t21_1 + ': ' : '') + effect.q21_1 + ' de ' + effect.p21_1);
     room.q18_1.f2(room.q18_1.k() - 1 | 0);
     if (equals_0(script.o1w_1, Moment_ON_PLAY_getInstance())) {
-      this.k2s(room, effect);
+      this.y2r(room, effect);
     }
-    LinkWatch_getInstance().y38(room);
+    LinkWatch_getInstance().z38(room);
     return Unit_instance;
   }
   var seen = room.p18_1;
@@ -34758,10 +34809,10 @@ protoOf(Resolution).b2r = function (room) {
     return Unit_instance;
   effect.a22_1 = effect.a22_1 + 1 | 0;
   if (!equalsLong(room.p18_1, seen)) {
-    LinkWatch_getInstance().w38(room);
+    LinkWatch_getInstance().x38(room);
   }
 };
-protoOf(Resolution).k2s = function (room, effect) {
+protoOf(Resolution).y2r = function (room, effect) {
   var player = room.a1e(effect.m21_1);
   var card = player == null ? null : EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1);
   if (card == null || !('utility' === card.o1c_1) || effect.n22_1)
@@ -34771,7 +34822,7 @@ protoOf(Resolution).k2s = function (room, effect) {
   player.z1e_1.f(card);
   EffectEngine_getInstance().g2e(room, 'SEND', player.f1e_1, card, 'field', 'discardPile', null, null, EffectEngine_getInstance().q2c(card) + ' va al descarte tras resolverse');
 };
-protoOf(Resolution).a2t = function (room, effect, steps, from) {
+protoOf(Resolution).b2t = function (room, effect, steps, from) {
   var inductionVariable = from;
   var last = ensureNotNull(steps).k();
   if (inductionVariable < last)
@@ -34789,33 +34840,33 @@ protoOf(Resolution).a2t = function (room, effect, steps, from) {
 protoOf(Resolution).n2e = function (room, effect, step) {
   return asLooker(this, room, effect, Resolution$possible$lambda(room, effect, step));
 };
-protoOf(Resolution).u3a = function (room, effect) {
+protoOf(Resolution).v3a = function (room, effect) {
   var target = effect.e22_1 == null ? null : EffectEngine_getInstance().l2e(room, effect.m21_1, effect.e22_1);
   return target == null ? EffectEngine_getInstance().l2e(room, effect.m21_1, effect.n21_1) : target;
-};
-protoOf(Resolution).v3a = function (room, effect, step) {
-  if (room.a1e(effect.m21_1) == null)
-    return false;
-  if (step instanceof Do)
-    return Actions_getInstance().z3a(EngineContext_init_$Create$(room, effect), ensureNotNull(step.b2t_1));
-  return familyOf(this, step).r2c(room, effect, step);
-};
-protoOf(Resolution).e2r = function (room, effect, step) {
-  return asLooker(this, room, effect, Resolution$run$lambda(room, effect, step));
 };
 protoOf(Resolution).w3a = function (room, effect, step) {
   if (room.a1e(effect.m21_1) == null)
     return false;
   if (step instanceof Do)
-    return Actions_getInstance().a3b(EngineContext_init_$Create$(room, effect), ensureNotNull(step.b2t_1));
+    return Actions_getInstance().a3b(EngineContext_init_$Create$(room, effect), ensureNotNull(step.c2t_1));
+  return familyOf(this, step).r2c(room, effect, step);
+};
+protoOf(Resolution).e2r = function (room, effect, step) {
+  return asLooker(this, room, effect, Resolution$run$lambda(room, effect, step));
+};
+protoOf(Resolution).x3a = function (room, effect, step) {
+  if (room.a1e(effect.m21_1) == null)
+    return false;
+  if (step instanceof Do)
+    return Actions_getInstance().b3b(EngineContext_init_$Create$(room, effect), ensureNotNull(step.c2t_1));
   return familyOf(this, step).o2d(room, effect, step);
 };
 protoOf(Resolution).a2h = function (room, effect, step, player, picks, order, repeat) {
   return asLooker(this, room, effect, Resolution$apply$lambda(room, effect, step, player, picks, order, repeat));
 };
-protoOf(Resolution).x3a = function (room, effect, step, player, picks, order, repeat) {
+protoOf(Resolution).y3a = function (room, effect, step, player, picks, order, repeat) {
   if (step instanceof Do)
-    return Actions_getInstance().b3b(new EngineContext(room, effect, repeat), ensureNotNull(step.b2t_1), new Answer(picks, order));
+    return Actions_getInstance().c3b(new EngineContext(room, effect, repeat), ensureNotNull(step.c2t_1), new Answer(picks, order));
   return familyOf(this, step).v2e(room, effect, step, player, picks, order, repeat);
 };
 var Resolution_instance;
@@ -34827,15 +34878,15 @@ function Resolution_getInstance() {
 function Part(level, orLess, type, summoner, maxLevel) {
   summoner = summoner === VOID ? false : summoner;
   maxLevel = maxLevel === VOID ? null : maxLevel;
-  this.c3b_1 = level;
-  this.d3b_1 = orLess;
-  this.e3b_1 = type;
-  this.f3b_1 = summoner;
-  this.g3b_1 = maxLevel;
+  this.d3b_1 = level;
+  this.e3b_1 = orLess;
+  this.f3b_1 = type;
+  this.g3b_1 = summoner;
+  this.h3b_1 = maxLevel;
 }
-protoOf(Part).h3b = function (card, asType) {
+protoOf(Part).i3b = function (card, asType) {
   var tmp;
-  if (this.c3b_1 > 0) {
+  if (this.d3b_1 > 0) {
     var tmp0 = EffectEngine_getInstance().z20(card);
     var tmp$ret$0;
     $l$block_0: {
@@ -34854,13 +34905,13 @@ protoOf(Part).h3b = function (card, asType) {
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
         var tmp_1;
-        if (this.d3b_1) {
-          tmp_1 = element <= this.c3b_1;
-        } else if (!(this.g3b_1 == null)) {
-          var containsLower = this.c3b_1;
-          tmp_1 = element <= this.g3b_1 ? containsLower <= element : false;
+        if (this.e3b_1) {
+          tmp_1 = element <= this.d3b_1;
+        } else if (!(this.h3b_1 == null)) {
+          var containsLower = this.d3b_1;
+          tmp_1 = element <= this.h3b_1 ? containsLower <= element : false;
         } else {
-          tmp_1 = element === this.c3b_1;
+          tmp_1 = element === this.d3b_1;
         }
         if (tmp_1) {
           tmp$ret$0 = false;
@@ -34875,7 +34926,7 @@ protoOf(Part).h3b = function (card, asType) {
   }
   if (tmp)
     return false;
-  if (this.e3b_1 == null)
+  if (this.f3b_1 == null)
     return true;
   var tmp_2;
   var tmp0_0 = ClassChanges_instance.l2q(card);
@@ -34895,7 +34946,7 @@ protoOf(Part).h3b = function (card, asType) {
     var _iterator__ex2g4s_0 = tmp0_0.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      if (equals(element_0, this.e3b_1, true)) {
+      if (equals(element_0, this.f3b_1, true)) {
         tmp$ret$2 = true;
         break $l$block_2;
       }
@@ -34905,22 +34956,22 @@ protoOf(Part).h3b = function (card, asType) {
   if (tmp$ret$2) {
     tmp_2 = true;
   } else {
-    tmp_2 = equals(this.e3b_1, asType, true);
+    tmp_2 = equals(this.f3b_1, asType, true);
   }
   return tmp_2;
 };
 protoOf(Part).e2e = function () {
-  return 'criatura' + (this.e3b_1 == null ? '' : ' [' + this.e3b_1 + ']') + (this.c3b_1 === 0 ? '' : ' nivel ' + this.c3b_1 + (this.d3b_1 ? ' o menor' : !(this.g3b_1 == null) ? ' a ' + this.g3b_1 : ''));
+  return 'criatura' + (this.f3b_1 == null ? '' : ' [' + this.f3b_1 + ']') + (this.d3b_1 === 0 ? '' : ' nivel ' + this.d3b_1 + (this.e3b_1 ? ' o menor' : !(this.h3b_1 == null) ? ' a ' + this.h3b_1 : ''));
 };
 protoOf(Part).toString = function () {
-  return 'Part(level=' + this.c3b_1 + ', orLess=' + this.d3b_1 + ', type=' + this.e3b_1 + ', summoner=' + this.f3b_1 + ', maxLevel=' + this.g3b_1 + ')';
+  return 'Part(level=' + this.d3b_1 + ', orLess=' + this.e3b_1 + ', type=' + this.f3b_1 + ', summoner=' + this.g3b_1 + ', maxLevel=' + this.h3b_1 + ')';
 };
 protoOf(Part).hashCode = function () {
-  var result = this.c3b_1;
-  result = imul(result, 31) + getBooleanHashCode(this.d3b_1) | 0;
-  result = imul(result, 31) + (this.e3b_1 == null ? 0 : getStringHashCode(this.e3b_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.f3b_1) | 0;
-  result = imul(result, 31) + (this.g3b_1 == null ? 0 : this.g3b_1) | 0;
+  var result = this.d3b_1;
+  result = imul(result, 31) + getBooleanHashCode(this.e3b_1) | 0;
+  result = imul(result, 31) + (this.f3b_1 == null ? 0 : getStringHashCode(this.f3b_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.g3b_1) | 0;
+  result = imul(result, 31) + (this.h3b_1 == null ? 0 : this.h3b_1) | 0;
   return result;
 };
 protoOf(Part).equals = function (other) {
@@ -34928,15 +34979,15 @@ protoOf(Part).equals = function (other) {
     return true;
   if (!(other instanceof Part))
     return false;
-  if (!(this.c3b_1 === other.c3b_1))
-    return false;
   if (!(this.d3b_1 === other.d3b_1))
     return false;
-  if (!(this.e3b_1 == other.e3b_1))
+  if (!(this.e3b_1 === other.e3b_1))
     return false;
-  if (!(this.f3b_1 === other.f3b_1))
+  if (!(this.f3b_1 == other.f3b_1))
     return false;
-  if (!(this.g3b_1 == other.g3b_1))
+  if (!(this.g3b_1 === other.g3b_1))
+    return false;
+  if (!(this.h3b_1 == other.h3b_1))
     return false;
   return true;
 };
@@ -34958,7 +35009,7 @@ function assign($this, parts, cards, i, used, enemies, asType) {
       if (used[p])
         continue $l$loop_0;
       var part = parts.l(p);
-      var ok = enemy ? !(part.e3b_1 == null) && equals(part.e3b_1, asType, true) && part.h3b(card, asType) : part.h3b(card, null);
+      var ok = enemy ? !(part.f3b_1 == null) && equals(part.f3b_1, asType, true) && part.i3b(card, asType) : part.i3b(card, null);
       if (!ok)
         continue $l$loop_0;
       used[p] = true;
@@ -34974,7 +35025,7 @@ function completes($this, parts, fixed, pool, enemies, asType) {
   if (missing < 0)
     return false;
   if (missing === 0)
-    return $this.i3b(parts, fixed, enemies, asType);
+    return $this.j3b(parts, fixed, enemies, asType);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
@@ -35031,7 +35082,7 @@ function choose($this, pool, from, left, picked, test) {
 }
 function RitualParts$completes$lambda($parts, $enemies, $asType) {
   return function (it) {
-    return RitualParts_instance.i3b($parts, it, $enemies, $asType);
+    return RitualParts_instance.j3b($parts, it, $enemies, $asType);
   };
 }
 function RitualParts$check$lambda(it) {
@@ -35048,7 +35099,7 @@ function RitualParts$summonerInstruction$lambda(it) {
 }
 function RitualParts() {
 }
-protoOf(RitualParts).j3b = function (room, player, target) {
+protoOf(RitualParts).k3b = function (room, player, target) {
   var tmp0_elvis_lhs = CardEffects_getInstance().w2p(target);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -35080,14 +35131,14 @@ protoOf(RitualParts).j3b = function (room, player, target) {
   }
   return destination;
 };
-protoOf(RitualParts).i3b = function (parts, cards, enemies, asType) {
+protoOf(RitualParts).j3b = function (parts, cards, enemies, asType) {
   if (!(cards.k() === parts.k()))
     return false;
   return assign(this, parts, cards, 0, booleanArray(parts.k()), enemies, asType);
 };
-protoOf(RitualParts).k3b = function (room, player, target, parts) {
-  var own = Rituals_instance.l3b(player, target);
-  var enemies = this.j3b(room, player, target);
+protoOf(RitualParts).l3b = function (room, player, target, parts) {
+  var own = Rituals_instance.m3b(player, target);
+  var enemies = this.k3b(room, player, target);
   var asType = enemyType(this, target);
   var tmp$ret$0;
   $l$block: {
@@ -35096,7 +35147,7 @@ protoOf(RitualParts).k3b = function (room, player, target, parts) {
     var _iterator__ex2g4s = parts.h();
     while (_iterator__ex2g4s.i()) {
       var item = _iterator__ex2g4s.j();
-      if (item.f3b_1) {
+      if (item.g3b_1) {
         tmp$ret$0 = index;
         break $l$block;
       }
@@ -35128,7 +35179,7 @@ protoOf(RitualParts).k3b = function (room, player, target, parts) {
     while (_iterator__ex2g4s_1.i()) {
       var element = _iterator__ex2g4s_1.j();
       var tmp;
-      if (parts.l(lead).h3b(element, null)) {
+      if (parts.l(lead).i3b(element, null)) {
         var tmp_0 = RitualParts_instance;
         var tmp_1 = frozenListOf([]);
         // Inline function 'kotlin.collections.filter' call
@@ -35164,9 +35215,9 @@ protoOf(RitualParts).k3b = function (room, player, target, parts) {
   }
   return destination_2;
 };
-protoOf(RitualParts).m3b = function (room, player, target, parts, summoner) {
-  var pool = plus_0(Rituals_instance.l3b(player, target), this.j3b(room, player, target));
-  var enemies = this.j3b(room, player, target);
+protoOf(RitualParts).n3b = function (room, player, target, parts, summoner) {
+  var pool = plus_0(Rituals_instance.m3b(player, target), this.k3b(room, player, target));
+  var enemies = this.k3b(room, player, target);
   var asType = enemyType(this, target);
   var tmp$ret$0;
   $l$block: {
@@ -35175,7 +35226,7 @@ protoOf(RitualParts).m3b = function (room, player, target, parts, summoner) {
     var _iterator__ex2g4s = parts.h();
     while (_iterator__ex2g4s.i()) {
       var item = _iterator__ex2g4s.j();
-      if (item.f3b_1) {
+      if (item.g3b_1) {
         tmp$ret$0 = index;
         break $l$block;
       }
@@ -35236,7 +35287,7 @@ protoOf(RitualParts).m3b = function (room, player, target, parts, summoner) {
   return destination_2;
 };
 protoOf(RitualParts).t2h = function (room, player, target, parts, summoner, others) {
-  var pool = plus_0(Rituals_instance.l3b(player, target), this.j3b(room, player, target));
+  var pool = plus_0(Rituals_instance.m3b(player, target), this.k3b(room, player, target));
   var tmp;
   var tmp$ret$0;
   $l$block_2: {
@@ -35321,7 +35372,7 @@ protoOf(RitualParts).t2h = function (room, player, target, parts, summoner, othe
     var _iterator__ex2g4s_2 = parts.h();
     while (_iterator__ex2g4s_2.i()) {
       var item = _iterator__ex2g4s_2.j();
-      if (item.f3b_1) {
+      if (item.g3b_1) {
         tmp$ret$6 = index;
         break $l$block_5;
       }
@@ -35347,7 +35398,7 @@ protoOf(RitualParts).t2h = function (room, player, target, parts, summoner, othe
     }
     var rest = destination;
     var tmp_3;
-    if (parts.l(lead).h3b(summoner, null) && this.i3b(rest, others, this.j3b(room, player, target), enemyType(this, target))) {
+    if (parts.l(lead).i3b(summoner, null) && this.j3b(rest, others, this.k3b(room, player, target), enemyType(this, target))) {
       tmp_3 = null;
     } else {
       var tmp_4 = 'El invocador debe ser ' + parts.l(lead).e2e() + '; adem\xE1s: ';
@@ -35358,7 +35409,7 @@ protoOf(RitualParts).t2h = function (room, player, target, parts, summoner, othe
   var all = ArrayList_init_$Create$_0(frozenListOf([summoner]));
   all.r(others);
   var tmp_5;
-  if (this.i3b(parts, all, this.j3b(room, player, target), enemyType(this, target))) {
+  if (this.j3b(parts, all, this.k3b(room, player, target), enemyType(this, target))) {
     tmp_5 = null;
   } else {
     var tmp_6 = 'Deben ser ' + parts.k() + ' criaturas: ';
@@ -35366,18 +35417,18 @@ protoOf(RitualParts).t2h = function (room, player, target, parts, summoner, othe
   }
   return tmp_5;
 };
-protoOf(RitualParts).n3b = function (parts, summoner) {
+protoOf(RitualParts).o3b = function (parts, summoner) {
   var tmp = 'Elige ' + (parts.k() === 2 ? 'la otra criatura' : 'las otras ' + (parts.k() - 1 | 0) + ' criaturas') + ' que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner) + '. Entre todas: ';
   return tmp + joinToString(parts, ', ', VOID, VOID, VOID, VOID, RitualParts$instruction$lambda) + '.';
 };
-protoOf(RitualParts).o3b = function (parts, target) {
+protoOf(RitualParts).p3b = function (parts, target) {
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
     var _iterator__ex2g4s = parts.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (element.f3b_1) {
+      if (element.g3b_1) {
         tmp$ret$0 = element;
         break $l$block;
       }
@@ -35398,11 +35449,11 @@ function RitualParts_getInstance() {
   return RitualParts_instance;
 }
 function partsByPlayer($this, room, player, card, parts, summonerId, missing) {
-  var summoners = RitualParts_instance.k3b(room, player, card, parts);
+  var summoners = RitualParts_instance.l3b(room, player, card, parts);
   if (summonerId == null) {
     if (summoners.m())
       return missing;
-    $this.p3b(room, player, card, null, summoners, RitualParts_instance.o3b(parts, card), 1);
+    $this.q3b(room, player, card, null, summoners, RitualParts_instance.p3b(parts, card), 1);
     ensureNotNull(room.r18_1).o1m_1 = 'Invocador';
     return null;
   }
@@ -35416,8 +35467,8 @@ function partsByPlayer($this, room, player, card, parts, summonerId, missing) {
   var summoner = tmp;
   if (!summoners.n(summoner))
     return missing;
-  var others = RitualParts_instance.m3b(room, player, card, parts, summoner);
-  $this.p3b(room, player, card, summoner, others, RitualParts_instance.n3b(parts, summoner), parts.k() - 1 | 0);
+  var others = RitualParts_instance.n3b(room, player, card, parts, summoner);
+  $this.q3b(room, player, card, summoner, others, RitualParts_instance.o3b(parts, summoner), parts.k() - 1 | 0);
   ensureNotNull(room.r18_1).r1m_1 = parts.k() - 1 | 0;
   var _iterator__ex2g4s = others.h();
   while (_iterator__ex2g4s.i()) {
@@ -35442,7 +35493,7 @@ function Requirement(sum, level, atLeast, maxStrength, maxLevel, extra, parts, s
   this.r2h_1 = parts;
   this.s2h_1 = summonerLevel;
 }
-protoOf(Requirement).q3b = function (c) {
+protoOf(Requirement).r3b = function (c) {
   var tmp;
   if (this.s2h_1 == null) {
     tmp = EffectEngine_getInstance().z20(c);
@@ -35462,54 +35513,27 @@ protoOf(Requirement).q3b = function (c) {
   }
   return tmp;
 };
-protoOf(Requirement).r3b = function (c) {
-  return this.s2h_1 == null || EffectEngine_getInstance().q2y(c, this.s2h_1);
+protoOf(Requirement).s3b = function (c) {
+  return this.s2h_1 == null || EffectEngine_getInstance().r2y(c, this.s2h_1);
 };
-protoOf(Requirement).s3b = function () {
+protoOf(Requirement).t3b = function () {
   var tmp0 = this.m2h_1;
   // Inline function 'kotlin.math.max' call
   var b = this.p2h_1;
   var tmp$ret$0 = Math.max(tmp0, b);
   return toList(numberRangeToNumber(this.m2h_1, tmp$ret$0));
 };
-protoOf(Requirement).t3b = function () {
+protoOf(Requirement).u3b = function () {
   var tmp0 = this.m2h_1;
   // Inline function 'kotlin.math.max' call
   var b = this.p2h_1;
   return Math.max(tmp0, b);
 };
 protoOf(Requirement).u2h = function () {
-  return this.t3b() === this.m2h_1 ? '' + this.m2h_1 : this.t3b() === (this.m2h_1 + 1 | 0) ? '' + this.m2h_1 + ' o ' + this.t3b() : 'entre ' + this.m2h_1 + ' y ' + this.t3b();
+  return this.u3b() === this.m2h_1 ? '' + this.m2h_1 : this.u3b() === (this.m2h_1 + 1 | 0) ? '' + this.m2h_1 + ' o ' + this.u3b() : 'entre ' + this.m2h_1 + ' y ' + this.u3b();
 };
-protoOf(Requirement).u3b = function (cards) {
-  var tmp0 = this.s3b();
-  var tmp$ret$0;
-  $l$block_0: {
-    // Inline function 'kotlin.collections.any' call
-    var tmp;
-    if (isInterface(tmp0, Collection)) {
-      tmp = tmp0.m();
-    } else {
-      tmp = false;
-    }
-    if (tmp) {
-      tmp$ret$0 = false;
-      break $l$block_0;
-    }
-    var _iterator__ex2g4s = tmp0.h();
-    while (_iterator__ex2g4s.i()) {
-      var element = _iterator__ex2g4s.j();
-      if (Rituals_instance.v3b(cards, element)) {
-        tmp$ret$0 = true;
-        break $l$block_0;
-      }
-    }
-    tmp$ret$0 = false;
-  }
-  return tmp$ret$0;
-};
-protoOf(Requirement).v2h = function (cards) {
-  var tmp0 = this.s3b();
+protoOf(Requirement).v3b = function (cards) {
+  var tmp0 = this.t3b();
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.any' call
@@ -35535,8 +35559,8 @@ protoOf(Requirement).v2h = function (cards) {
   }
   return tmp$ret$0;
 };
-protoOf(Requirement).x3b = function (summoner) {
-  var tmp0 = this.s3b();
+protoOf(Requirement).v2h = function (cards) {
+  var tmp0 = this.t3b();
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.any' call
@@ -35553,7 +35577,7 @@ protoOf(Requirement).x3b = function (summoner) {
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (EffectEngine_getInstance().q2y(summoner, element) && (this.s2h_1 == null || this.s2h_1 === element)) {
+      if (Rituals_instance.x3b(cards, element)) {
         tmp$ret$0 = true;
         break $l$block_0;
       }
@@ -35562,7 +35586,34 @@ protoOf(Requirement).x3b = function (summoner) {
   }
   return tmp$ret$0;
 };
-protoOf(Requirement).y3b = function (c) {
+protoOf(Requirement).y3b = function (summoner) {
+  var tmp0 = this.t3b();
+  var tmp$ret$0;
+  $l$block_0: {
+    // Inline function 'kotlin.collections.any' call
+    var tmp;
+    if (isInterface(tmp0, Collection)) {
+      tmp = tmp0.m();
+    } else {
+      tmp = false;
+    }
+    if (tmp) {
+      tmp$ret$0 = false;
+      break $l$block_0;
+    }
+    var _iterator__ex2g4s = tmp0.h();
+    while (_iterator__ex2g4s.i()) {
+      var element = _iterator__ex2g4s.j();
+      if (EffectEngine_getInstance().r2y(summoner, element) && (this.s2h_1 == null || this.s2h_1 === element)) {
+        tmp$ret$0 = true;
+        break $l$block_0;
+      }
+    }
+    tmp$ret$0 = false;
+  }
+  return tmp$ret$0;
+};
+protoOf(Requirement).z3b = function (c) {
   var tmp0 = EffectEngine_getInstance().z20(c);
   var tmp$ret$0;
   $l$block_0: {
@@ -35629,17 +35680,17 @@ protoOf(Requirement).equals = function (other) {
 };
 function Rituals$ritualByPlayer$lambda($room, $userId, $instanceId, $summonerId) {
   return function () {
-    return Rituals_instance.z3b($room, $userId, $instanceId, $summonerId);
+    return Rituals_instance.a3c($room, $userId, $instanceId, $summonerId);
   };
 }
 function Rituals$canRitual$lambda($room, $userId, $card) {
   return function () {
-    return Rituals_instance.a3c($room, $userId, $card);
+    return Rituals_instance.b3c($room, $userId, $card);
   };
 }
 function Rituals$ritualTargets$lambda($room, $effect, $ritual, $player, $c) {
   return function () {
-    return Rituals_instance.b3c($room, $effect, $ritual, $player, $c);
+    return Rituals_instance.c3c($room, $effect, $ritual, $player, $c);
   };
 }
 function Rituals() {
@@ -35650,8 +35701,8 @@ protoOf(Rituals).j2h = function (room, userId, instanceId, summonerId) {
   var tmp_0 = who == null ? null : EffectEngine_getInstance().s2c(who.u1e_1, instanceId);
   return tmp.e2h(tmp_0, Rituals$ritualByPlayer$lambda(room, userId, instanceId, summonerId));
 };
-protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
-  var error = Summons_instance.h2t(room, userId, 'invocar');
+protoOf(Rituals).a3c = function (room, userId, instanceId, summonerId) {
+  var error = Summons_instance.i2t(room, userId, 'invocar');
   if (!(error == null))
     return error;
   var player = room.a1e(userId);
@@ -35668,12 +35719,12 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
   if (!equals('ritual', card.q1c_1, true) || req == null || card.x1c_1 == null) {
     return equals('ritual', card.q1c_1, true) && !(card.x1c_1 == null) ? EffectEngine_getInstance().q2c(card) + ' no tiene su Requerimiento de Ritual programado' : EffectEngine_getInstance().q2c(card) + ' no se invoca por Ritual';
   }
-  if (Summons_instance.c3c(room, player, card, 'ritual', summonerId))
+  if (Summons_instance.d3c(room, player, card, 'ritual', summonerId))
     return null;
   var cost = this.w2h(room, userId, card);
   if (!EffectEngine_getInstance().x2h(room, userId, cost))
     return 'No tienes gemas suficientes: tienes ' + EffectEngine_getInstance().z1r(room, userId) + ' y el coste especial es ' + cost;
-  var materials = this.l3b(player, card);
+  var materials = this.m3b(player, card);
   var tmp_0 = 'Tus criaturas no cumplen el Requerimiento de ' + EffectEngine_getInstance().q2c(card) + ': ';
   var tmp1_elvis_lhs = card.y1c_1;
   // Inline function 'kotlin.text.trim' call
@@ -35716,7 +35767,7 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
     if (!materials.n(summoner))
       return EffectEngine_getInstance().q2c(summoner) + ' no comparte tipo ni color con ' + EffectEngine_getInstance().q2c(card);
     if (!req.l2h_1) {
-      if (!req.y3b(summoner))
+      if (!req.z3b(summoner))
         return missing;
       if (req.q2h_1 > 0) {
         // Inline function 'kotlin.collections.filter' call
@@ -35732,16 +35783,16 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
         var others = destination;
         if (others.k() < req.q2h_1)
           return missing;
-        this.p3b(room, player, card, summoner, others, 'Elige los dem\xE1s aliados que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner) + ': ' + req.q2h_1 + ' o m\xE1s.', others.k());
+        this.q3b(room, player, card, summoner, others, 'Elige los dem\xE1s aliados que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner) + ': ' + req.q2h_1 + ' o m\xE1s.', others.k());
         ensureNotNull(room.r18_1).r1m_1 = req.q2h_1;
         return null;
       }
       this.y2h(room, player, card, summoner, frozenListOf([]));
       return null;
     }
-    if (!req.r3b(summoner))
+    if (!req.s3b(summoner))
       return missing;
-    if (req.x3b(summoner)) {
+    if (req.y3b(summoner)) {
       this.y2h(room, player, card, summoner, frozenListOf([]));
       return null;
     }
@@ -35757,14 +35808,14 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
     }
     var others_0 = destination_0;
     var tmp_2;
-    if (req.t3b() === req.m2h_1) {
+    if (req.u3b() === req.m2h_1) {
       var tmp3_elvis_lhs = req.s2h_1;
-      var left = req.m2h_1 - (tmp3_elvis_lhs == null ? this.e3c(summoner, others_0, req.m2h_1) : tmp3_elvis_lhs) | 0;
-      if (left < 0 || !this.v3b(others_0, left))
+      var left = req.m2h_1 - (tmp3_elvis_lhs == null ? this.f3c(summoner, others_0, req.m2h_1) : tmp3_elvis_lhs) | 0;
+      if (left < 0 || !this.w3b(others_0, left))
         return missing;
       tmp_2 = frozenListOf([left]);
     } else {
-      tmp_2 = this.d3c(req, summoner, others_0);
+      tmp_2 = this.e3c(req, summoner, others_0);
     }
     var remaining = tmp_2;
     if (remaining.m())
@@ -35775,17 +35826,17 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
     var _iterator__ex2g4s_1 = remaining.h();
     while (_iterator__ex2g4s_1.i()) {
       var element_1 = _iterator__ex2g4s_1.j();
-      var list = Rituals_instance.f3c(others_0, element_1);
+      var list = Rituals_instance.g3c(others_0, element_1);
       addAll(destination_1, list);
     }
     var fitting = distinct(destination_1);
-    this.p3b(room, player, card, summoner, fitting, 'Elige las dem\xE1s criaturas que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner) + ': con el invocador, sus niveles deben sumar exactamente ' + req.u2h() + '.', fitting.k());
+    this.q3b(room, player, card, summoner, fitting, 'Elige las dem\xE1s criaturas que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner) + ': con el invocador, sus niveles deben sumar exactamente ' + req.u2h() + '.', fitting.k());
     ensureNotNull(room.r18_1).a1n_1 = max(remaining);
     return null;
   }
   var tmp_3;
   if (req.l2h_1) {
-    tmp_3 = this.g3c(materials, req);
+    tmp_3 = this.h3c(materials, req);
   } else {
     // Inline function 'kotlin.collections.filter' call
     // Inline function 'kotlin.collections.filterTo' call
@@ -35793,7 +35844,7 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
     var _iterator__ex2g4s_2 = materials.h();
     while (_iterator__ex2g4s_2.i()) {
       var element_2 = _iterator__ex2g4s_2.j();
-      if (req.y3b(element_2)) {
+      if (req.z3b(element_2)) {
         destination_2.f(element_2);
       }
     }
@@ -35802,15 +35853,15 @@ protoOf(Rituals).z3b = function (room, userId, instanceId, summonerId) {
   var valid = tmp_3;
   if (valid.m())
     return missing;
-  this.p3b(room, player, card, null, valid, 'Elige el invocador' + (req.l2h_1 ? '' : ': 1 criatura nivel ' + req.m2h_1 + (req.n2h_1 ? ' o mayor' : '')) + '. Se sacrifica y ' + EffectEngine_getInstance().q2c(card) + ' ocupa su lugar y hereda su estado.', 1);
+  this.q3b(room, player, card, null, valid, 'Elige el invocador' + (req.l2h_1 ? '' : ': 1 criatura nivel ' + req.m2h_1 + (req.n2h_1 ? ' o mayor' : '')) + '. Se sacrifica y ' + EffectEngine_getInstance().q2c(card) + ' ocupa su lugar y hereda su estado.', 1);
   ensureNotNull(room.r18_1).o1m_1 = 'Invocador';
   return null;
 };
-protoOf(Rituals).h3c = function (room, userId, card) {
+protoOf(Rituals).i3c = function (room, userId, card) {
   var tmp = EffectEngine_getInstance();
   return tmp.e2h(card, Rituals$canRitual$lambda(room, userId, card));
 };
-protoOf(Rituals).a3c = function (room, userId, card) {
+protoOf(Rituals).b3c = function (room, userId, card) {
   var player = room.a1e(userId);
   var req = this.k2h(card);
   if (player == null || req == null || ensureNotNull(card).x1c_1 == null || !equals('ritual', card.q1c_1, true))
@@ -35820,12 +35871,12 @@ protoOf(Rituals).a3c = function (room, userId, card) {
   // Inline function 'kotlin.collections.isNotEmpty' call
   if (!req.r2h_1.m()) {
     // Inline function 'kotlin.collections.isNotEmpty' call
-    return !RitualParts_instance.k3b(room, player, card, req.r2h_1).m();
+    return !RitualParts_instance.l3b(room, player, card, req.r2h_1).m();
   }
-  var materials = this.l3b(player, card);
+  var materials = this.m3b(player, card);
   var tmp;
   if (req.l2h_1) {
-    tmp = this.i3c(materials, req);
+    tmp = this.j3c(materials, req);
   } else {
     var tmp$ret$2;
     $l$block_1: {
@@ -35844,7 +35895,7 @@ protoOf(Rituals).a3c = function (room, userId, card) {
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
         var tmp_1;
-        if (req.y3b(element)) {
+        if (req.z3b(element)) {
           var tmp$ret$4;
           $l$block_0: {
             // Inline function 'kotlin.collections.count' call
@@ -35885,7 +35936,7 @@ protoOf(Rituals).a3c = function (room, userId, card) {
   return tmp;
 };
 protoOf(Rituals).w2h = function (room, userId, card) {
-  var cost = ensureNotNull(ensureNotNull(card).x1c_1) - (Summons_instance.j3c(room, userId, card, card.x1c_1) ? 1 : 0) | 0;
+  var cost = ensureNotNull(ensureNotNull(card).x1c_1) - (Summons_instance.k3c(room, userId, card, card.x1c_1) ? 1 : 0) | 0;
   var player = room.a1e(userId);
   var tmp;
   if (player == null) {
@@ -35897,8 +35948,8 @@ protoOf(Rituals).w2h = function (room, userId, card) {
   }
   return tmp;
 };
-protoOf(Rituals).p3b = function (room, player, card, summoner, valid, instruction, max) {
-  EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_RITUAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 Ritual', instruction + ' Si no eliges ninguna, no se invoca.', 'Sacrificar', valid, player.a1f_1);
+protoOf(Rituals).q3b = function (room, player, card, summoner, valid, instruction, max) {
+  EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_RITUAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 Ritual', instruction + ' Si no eliges ninguna, no se invoca.', 'Sacrificar', valid, player.a1f_1);
   ensureNotNull(room.r18_1).s1m_1 = max;
   ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
   if (!(summoner == null))
@@ -35906,11 +35957,11 @@ protoOf(Rituals).p3b = function (room, player, card, summoner, valid, instructio
 };
 protoOf(Rituals).y2h = function (room, player, card, summoner, others) {
   var userId = player.f1e_1;
-  var advantage = Summons_instance.j3c(room, userId, card, card.x1c_1);
+  var advantage = Summons_instance.k3c(room, userId, card, card.x1c_1);
   // Inline function 'kotlin.math.max' call
   var b = ensureNotNull(card.x1c_1) - (advantage ? 1 : 0) | 0;
   var cost = Math.max(0, b);
-  cost = cost - CostModifiers_getInstance().m2x(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', card, summoner, cost) | 0;
+  cost = cost - CostModifiers_getInstance().n2x(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', card, summoner, cost) | 0;
   EffectEngine_getInstance().t2k(room, userId, cost);
   if (advantage)
     room.d19_1 = null;
@@ -35922,24 +35973,24 @@ protoOf(Rituals).y2h = function (room, player, card, summoner, others) {
     var element = _iterator__ex2g4s.j();
     used.f(EffectEngine_getInstance().q2c(element));
   }
-  Summons_instance.k3c(room, player, card, 'hand', cost, summoner, others, null, plus(player.g1e_1, ' invoca por Ritual a ') + EffectEngine_getInstance().q2c(card) + ' usando ' + joinToString(used, ', ') + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + (advantage ? ' (ventaja del iniciador)' : ''));
+  Summons_instance.l3c(room, player, card, 'hand', cost, summoner, others, null, plus(player.g1e_1, ' invoca por Ritual a ') + EffectEngine_getInstance().q2c(card) + ' usando ' + joinToString(used, ', ') + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + (advantage ? ' (ventaja del iniciador)' : ''));
   Chain_instance.z1l(room);
 };
 protoOf(Rituals).k2h = function (card) {
   var tmp0_safe_receiver = CardEffects_getInstance().i2p(card);
-  var r = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.e2y_1;
+  var r = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.f2y_1;
   if (!(r == null)) {
-    var tmp1_elvis_lhs = r.m2y_1;
+    var tmp1_elvis_lhs = r.n2y_1;
     var parts = tmp1_elvis_lhs == null ? frozenListOf([]) : tmp1_elvis_lhs;
     // Inline function 'kotlin.collections.isNotEmpty' call
     if (!parts.m())
-      return new Requirement(false, parts.l(0).c3b_1, false, null, parts.l(0).c3b_1, parts.k() - 1 | 0, parts);
-    var tmp2_elvis_lhs = r.h2y_1;
-    return new Requirement(r.f2y_1, r.g2y_1, r.i2y_1, r.j2y_1, tmp2_elvis_lhs == null ? r.g2y_1 : tmp2_elvis_lhs, r.k2y_1, VOID, r.p2y_1);
+      return new Requirement(false, parts.l(0).d3b_1, false, null, parts.l(0).d3b_1, parts.k() - 1 | 0, parts);
+    var tmp2_elvis_lhs = r.i2y_1;
+    return new Requirement(r.g2y_1, r.h2y_1, r.j2y_1, r.k2y_1, tmp2_elvis_lhs == null ? r.h2y_1 : tmp2_elvis_lhs, r.l2y_1, VOID, r.q2y_1);
   }
   return null;
 };
-protoOf(Rituals).l3c = function (materials, level) {
+protoOf(Rituals).m3c = function (materials, level) {
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
@@ -35976,7 +36027,7 @@ protoOf(Rituals).l3c = function (materials, level) {
               destination_0.f(element_1);
             }
           }
-          tmp_0 = tmp_1.v3b(destination_0, level - element_0 | 0);
+          tmp_0 = tmp_1.w3b(destination_0, level - element_0 | 0);
         } else {
           tmp_0 = false;
         }
@@ -35993,10 +36044,10 @@ protoOf(Rituals).l3c = function (materials, level) {
   }
   return destination;
 };
-protoOf(Rituals).g3c = function (materials, req) {
+protoOf(Rituals).h3c = function (materials, req) {
   if (!(req.s2h_1 == null)) {
     // Inline function 'kotlin.collections.flatMap' call
-    var tmp0 = req.s3b();
+    var tmp0 = req.t3b();
     // Inline function 'kotlin.collections.flatMapTo' call
     var destination = ArrayList_init_$Create$();
     var _iterator__ex2g4s = tmp0.h();
@@ -36008,7 +36059,7 @@ protoOf(Rituals).g3c = function (materials, req) {
       var _iterator__ex2g4s_0 = materials.h();
       while (_iterator__ex2g4s_0.i()) {
         var element_0 = _iterator__ex2g4s_0.j();
-        var tmp0_0 = req.q3b(element_0);
+        var tmp0_0 = req.r3b(element_0);
         var tmp$ret$6;
         $l$block_0: {
           // Inline function 'kotlin.collections.any' call
@@ -36038,7 +36089,7 @@ protoOf(Rituals).g3c = function (materials, req) {
                   destination_1.f(element_2);
                 }
               }
-              tmp_0 = tmp_1.v3b(destination_1, element - element_1 | 0);
+              tmp_0 = tmp_1.w3b(destination_1, element - element_1 | 0);
             } else {
               tmp_0 = false;
             }
@@ -36059,49 +36110,49 @@ protoOf(Rituals).g3c = function (materials, req) {
     return distinct(destination);
   }
   var tmp_2;
-  if (req.t3b() === req.m2h_1) {
-    tmp_2 = this.l3c(materials, req.m2h_1);
+  if (req.u3b() === req.m2h_1) {
+    tmp_2 = this.m3c(materials, req.m2h_1);
   } else {
     // Inline function 'kotlin.collections.flatMap' call
-    var tmp0_1 = req.s3b();
+    var tmp0_1 = req.t3b();
     // Inline function 'kotlin.collections.flatMapTo' call
     var destination_2 = ArrayList_init_$Create$();
     var _iterator__ex2g4s_3 = tmp0_1.h();
     while (_iterator__ex2g4s_3.i()) {
       var element_3 = _iterator__ex2g4s_3.j();
-      var list_0 = Rituals_instance.l3c(materials, element_3);
+      var list_0 = Rituals_instance.m3c(materials, element_3);
       addAll(destination_2, list_0);
     }
     tmp_2 = distinct(destination_2);
   }
   return tmp_2;
 };
-protoOf(Rituals).i3c = function (materials, req) {
+protoOf(Rituals).j3c = function (materials, req) {
   var tmp;
   if (!(req.s2h_1 == null)) {
     // Inline function 'kotlin.collections.isNotEmpty' call
-    tmp = !this.g3c(materials, req).m();
+    tmp = !this.h3c(materials, req).m();
   } else {
-    tmp = req.u3b(materials);
+    tmp = req.v3b(materials);
   }
   return tmp;
 };
-protoOf(Rituals).d3c = function (req, summoner, others) {
+protoOf(Rituals).e3c = function (req, summoner, others) {
   var all = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = req.s3b().h();
+  var _iterator__ex2g4s = req.t3b().h();
   while (_iterator__ex2g4s.i()) {
     var total = _iterator__ex2g4s.j();
-    var _iterator__ex2g4s_0 = req.q3b(summoner).h();
+    var _iterator__ex2g4s_0 = req.r3b(summoner).h();
     while (_iterator__ex2g4s_0.i()) {
       var l = _iterator__ex2g4s_0.j();
-      if (l < total && this.v3b(others, total - l | 0) && !all.n(total - l | 0)) {
+      if (l < total && this.w3b(others, total - l | 0) && !all.n(total - l | 0)) {
         all.f(total - l | 0);
       }
     }
   }
   return all;
 };
-protoOf(Rituals).f3c = function (others, remaining) {
+protoOf(Rituals).g3c = function (others, remaining) {
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
@@ -36142,7 +36193,7 @@ protoOf(Rituals).f3c = function (others, remaining) {
                 destination_0.f(element_1);
               }
             }
-            tmp_1 = tmp_2.v3b(destination_0, remaining - element_0 | 0);
+            tmp_1 = tmp_2.w3b(destination_0, remaining - element_0 | 0);
           }
           tmp_0 = tmp_1;
         } else {
@@ -36161,7 +36212,7 @@ protoOf(Rituals).f3c = function (others, remaining) {
   }
   return destination;
 };
-protoOf(Rituals).v3b = function (cards, target) {
+protoOf(Rituals).w3b = function (cards, target) {
   if (target < 0)
     return false;
   var reachable = booleanArray(target + 1 | 0);
@@ -36190,7 +36241,7 @@ protoOf(Rituals).v3b = function (cards, target) {
   }
   return reachable[target];
 };
-protoOf(Rituals).w3b = function (cards, target) {
+protoOf(Rituals).x3b = function (cards, target) {
   var sums = HashSet_init_$Create$_0(frozenListOf([0]));
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
@@ -36210,16 +36261,16 @@ protoOf(Rituals).w3b = function (cards, target) {
   }
   return sums.n(target);
 };
-protoOf(Rituals).e3c = function (summoner, others, total) {
+protoOf(Rituals).f3c = function (summoner, others, total) {
   var _iterator__ex2g4s = EffectEngine_getInstance().z20(summoner).h();
   while (_iterator__ex2g4s.i()) {
     var l = _iterator__ex2g4s.j();
-    if (l <= total && this.v3b(others, total - l | 0))
+    if (l <= total && this.w3b(others, total - l | 0))
       return l;
   }
   return ensureNotNull(summoner).p1u() == null ? 0 : ensureNotNull(summoner.p1u());
 };
-protoOf(Rituals).m3c = function (used, summoned) {
+protoOf(Rituals).n3c = function (used, summoned) {
   var tmp0 = ensureNotNull(used.v1c_1);
   var tmp2_any_this = ensureNotNull(summoned.v1c_1);
   var tmp$ret$0;
@@ -36297,11 +36348,11 @@ protoOf(Rituals).m3c = function (used, summoned) {
   var type = tmp$ret$2;
   return color || type;
 };
-protoOf(Rituals).l3b = function (player, target) {
+protoOf(Rituals).m3b = function (player, target) {
   var tmp0_safe_receiver = CardEffects_getInstance().i2p(target);
-  var spec = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.e2y_1;
-  var most = spec == null ? null : spec.l2y_1;
-  var filter = spec == null ? null : spec.o2y_1;
+  var spec = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.f2y_1;
+  var most = spec == null ? null : spec.m2y_1;
+  var filter = spec == null ? null : spec.p2y_1;
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = player.a1f_1;
   // Inline function 'kotlin.collections.filterTo' call
@@ -36311,7 +36362,7 @@ protoOf(Rituals).l3b = function (player, target) {
     var element = _iterator__ex2g4s.j();
     var tmp;
     var tmp_0;
-    if ('creature' === element.o1c_1 && !(element.p1u() == null) && Rituals_instance.m3c(element, target)) {
+    if ('creature' === element.o1c_1 && !(element.p1u() == null) && Rituals_instance.n3c(element, target)) {
       var tmp_1;
       if (most == null) {
         tmp_1 = true;
@@ -36357,22 +36408,22 @@ protoOf(Rituals).l3b = function (player, target) {
   }
   return destination;
 };
-protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
+protoOf(Rituals).c3c = function (room, effect, ritual, player, target) {
   var req = this.k2h(target);
   if (req == null || target.x1c_1 == null)
     return false;
   var tmp = EffectEngine_getInstance();
   var tmp_0 = player.f1e_1;
   // Inline function 'kotlin.math.max' call
-  var b = (ensureNotNull(target.x1c_1) - ritual.p3c_1 | 0) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', target, null) | 0;
+  var b = (ensureNotNull(target.x1c_1) - ritual.q3c_1 | 0) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', target, null) | 0;
   var tmp$ret$0 = Math.max(0, b);
   if (!tmp.x2h(room, tmp_0, tmp$ret$0))
     return false;
   // Inline function 'kotlin.collections.isNotEmpty' call
   if (!req.r2h_1.m()) {
-    var summoners = RitualParts_instance.k3b(room, player, target, req.r2h_1);
+    var summoners = RitualParts_instance.l3b(room, player, target, req.r2h_1);
     var tmp_1;
-    if (ritual.w3c()) {
+    if (ritual.x3c()) {
       tmp_1 = !(EffectEngine_getInstance().s2c(summoners, effect.n21_1) == null);
     } else {
       // Inline function 'kotlin.collections.isNotEmpty' call
@@ -36380,8 +36431,8 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
     }
     return tmp_1;
   }
-  var materials = this.l3b(player, target);
-  if (ritual.w3c()) {
+  var materials = this.m3b(player, target);
+  if (ritual.x3c()) {
     var tmp0_elvis_lhs = EffectEngine_getInstance().s2c(materials, effect.n21_1);
     var tmp_2;
     if (tmp0_elvis_lhs == null) {
@@ -36392,7 +36443,7 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
     var self_0 = tmp_2;
     if (!req.l2h_1) {
       var tmp_3;
-      if (req.y3b(self_0)) {
+      if (req.z3b(self_0)) {
         var tmp$ret$3;
         $l$block: {
           // Inline function 'kotlin.collections.count' call
@@ -36423,7 +36474,7 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
       }
       return tmp_3;
     }
-    var tmp0 = req.s3b();
+    var tmp0 = req.t3b();
     var tmp$ret$5;
     $l$block_3: {
       // Inline function 'kotlin.collections.any' call
@@ -36440,7 +36491,7 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
       var _iterator__ex2g4s_0 = tmp0.h();
       while (_iterator__ex2g4s_0.i()) {
         var element_0 = _iterator__ex2g4s_0.j();
-        var tmp0_0 = req.q3b(self_0);
+        var tmp0_0 = req.r3b(self_0);
         var tmp$ret$7;
         $l$block_2: {
           // Inline function 'kotlin.collections.any' call
@@ -36470,7 +36521,7 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
                   destination.f(element_2);
                 }
               }
-              tmp_7 = tmp_8.v3b(destination, element_0 - element_1 | 0);
+              tmp_7 = tmp_8.w3b(destination, element_0 - element_1 | 0);
             } else {
               tmp_7 = false;
             }
@@ -36508,7 +36559,7 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
       while (_iterator__ex2g4s_3.i()) {
         var element_3 = _iterator__ex2g4s_3.j();
         var tmp_10;
-        if (req.y3b(element_3)) {
+        if (req.z3b(element_3)) {
           var tmp$ret$14;
           $l$block_5: {
             // Inline function 'kotlin.collections.count' call
@@ -36546,9 +36597,9 @@ protoOf(Rituals).b3c = function (room, effect, ritual, player, target) {
     }
     return tmp$ret$12;
   }
-  return this.i3c(materials, req);
+  return this.j3c(materials, req);
 };
-protoOf(Rituals).x3c = function (room, effect, ritual) {
+protoOf(Rituals).y3c = function (room, effect, ritual) {
   var tmp0_elvis_lhs = room.a1e(effect.m21_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -36558,14 +36609,14 @@ protoOf(Rituals).x3c = function (room, effect, ritual) {
   }
   var player = tmp;
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = EffectEngine_getInstance().d2f(player, ritual.o3c_1);
+  var tmp0 = EffectEngine_getInstance().d2f(player, ritual.p3c_1);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
     var tmp_0;
-    if ('creature' === element.o1c_1 && equals('ritual', element.q1c_1, true) && (ritual.r3c_1 == null || ritual.r3c_1.p2c(element))) {
+    if ('creature' === element.o1c_1 && equals('ritual', element.q1c_1, true) && (ritual.s3c_1 == null || ritual.s3c_1.p2c(element))) {
       var tmp_1 = EffectEngine_getInstance();
       tmp_0 = tmp_1.e2h(element, Rituals$ritualTargets$lambda(room, effect, ritual, player, element));
     } else {
@@ -36582,16 +36633,16 @@ function Rituals_getInstance() {
   return Rituals_instance;
 }
 function sam$kotlin_Comparator$0_24(function_0) {
-  this.y3c_1 = function_0;
+  this.z3c_1 = function_0;
 }
 protoOf(sam$kotlin_Comparator$0_24).ac = function (a, b) {
-  return this.y3c_1(a, b);
+  return this.z3c_1(a, b);
 };
 protoOf(sam$kotlin_Comparator$0_24).compare = function (a, b) {
   return this.ac(a, b);
 };
 protoOf(sam$kotlin_Comparator$0_24).t2 = function () {
-  return this.y3c_1;
+  return this.z3c_1;
 };
 protoOf(sam$kotlin_Comparator$0_24).equals = function (other) {
   var tmp;
@@ -36630,7 +36681,7 @@ function SearchHope$apply$lambda_1(a, b) {
 }
 function SearchHope() {
 }
-protoOf(SearchHope).a39 = function (room, effect, player, valid, max) {
+protoOf(SearchHope).b39 = function (room, effect, player, valid, max) {
   if (room.k19_1 == null || !(room.k19_1 == player.f1e_1))
     return Unit_instance;
   var looked = effect.h22_1;
@@ -36736,23 +36787,23 @@ function SearchHope_getInstance() {
 }
 function target($this, room, effect, rule) {
   var player = room.a1e(effect.m21_1);
-  return effect.e22_1 == null ? null : EffectEngine_getInstance().s2c(SpecialRequirements_getInstance().z3c(player, rule, effect), effect.e22_1);
+  return effect.e22_1 == null ? null : EffectEngine_getInstance().s2c(SpecialRequirements_getInstance().a3d(player, rule, effect), effect.e22_1);
 }
 function ritual_0($this, room, effect, special) {
-  var kind = 'ofThisCard' === ensureNotNull(special.a3d_1).n3c_1 ? $this.c3d(room, effect, special.a3d_1).n3c_1 : special.a3d_1.n3c_1;
+  var kind = 'ofThisCard' === ensureNotNull(special.b3d_1).o3c_1 ? $this.d3d(room, effect, special.b3d_1).o3c_1 : special.b3d_1.o3c_1;
   if ('ritual' === kind)
     return true;
   if (!('any' === kind))
     return false;
-  var target_0 = target($this, room, effect, $this.c3d(room, effect, special.a3d_1));
+  var target_0 = target($this, room, effect, $this.d3d(room, effect, special.b3d_1));
   return !(target_0 == null) && equals('ritual', target_0.q1c_1, true);
 }
 function asRitual($this, rule) {
-  return SpecialRule_init_$Create$('ritual', rule.o3c_1, rule.p3c_1, rule.q3c_1, rule.r3c_1);
+  return SpecialRule_init_$Create$('ritual', rule.p3c_1, rule.q3c_1, rule.r3c_1, rule.s3c_1);
 }
 function ritualOptions($this, room, effect, rule, stage, player) {
   if (equals_0(stage, Stage_CARD_getInstance()))
-    return !(effect.e22_1 == null) ? frozenListOf([]) : Rituals_instance.x3c(room, effect, rule);
+    return !(effect.e22_1 == null) ? frozenListOf([]) : Rituals_instance.y3c(room, effect, rule);
   var tmp0_elvis_lhs = target($this, room, effect, rule);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -36762,8 +36813,8 @@ function ritualOptions($this, room, effect, rule, stage, player) {
   }
   var target_0 = tmp;
   var req = Rituals_instance.k2h(target_0);
-  var materials = Rituals_instance.l3b(ensureNotNull(player), target_0);
-  var summoner = $this.d3d(room, effect, rule);
+  var materials = Rituals_instance.m3b(ensureNotNull(player), target_0);
+  var summoner = $this.e3d(room, effect, rule);
   var tmp_0;
   if (!(req == null)) {
     // Inline function 'kotlin.collections.isNotEmpty' call
@@ -36773,15 +36824,15 @@ function ritualOptions($this, room, effect, rule, stage, player) {
   }
   if (tmp_0) {
     if (equals_0(stage, Stage_SUMMONER_getInstance()))
-      return !(summoner == null) ? frozenListOf([]) : RitualParts_instance.k3b(room, player, target_0, req.r2h_1);
-    return summoner == null ? frozenListOf([]) : RitualParts_instance.m3b(room, player, target_0, req.r2h_1, summoner);
+      return !(summoner == null) ? frozenListOf([]) : RitualParts_instance.l3b(room, player, target_0, req.r2h_1);
+    return summoner == null ? frozenListOf([]) : RitualParts_instance.n3b(room, player, target_0, req.r2h_1, summoner);
   }
   if (equals_0(stage, Stage_SUMMONER_getInstance())) {
     if (!(summoner == null))
       return frozenListOf([]);
     var tmp_1;
     if (ensureNotNull(req).l2h_1) {
-      tmp_1 = Rituals_instance.g3c(materials, req);
+      tmp_1 = Rituals_instance.h3c(materials, req);
     } else {
       // Inline function 'kotlin.collections.filter' call
       // Inline function 'kotlin.collections.filterTo' call
@@ -36789,7 +36840,7 @@ function ritualOptions($this, room, effect, rule, stage, player) {
       var _iterator__ex2g4s = materials.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (req.y3b(element)) {
+        if (req.z3b(element)) {
           destination.f(element);
         }
       }
@@ -36797,7 +36848,7 @@ function ritualOptions($this, room, effect, rule, stage, player) {
     }
     return tmp_1;
   }
-  if (summoner == null || !ensureNotNull(req).l2h_1 || req.x3b(summoner))
+  if (summoner == null || !ensureNotNull(req).l2h_1 || req.y3b(summoner))
     return frozenListOf([]);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
@@ -36810,23 +36861,23 @@ function ritualOptions($this, room, effect, rule, stage, player) {
     }
   }
   var others = destination_0;
-  if (req.t3b() === req.m2h_1)
-    return Rituals_instance.f3c(others, remaining($this, player, target_0, req, summoner));
+  if (req.u3b() === req.m2h_1)
+    return Rituals_instance.g3c(others, remaining($this, player, target_0, req, summoner));
   // Inline function 'kotlin.collections.flatMap' call
-  var tmp0 = Rituals_instance.d3c(req, summoner, others);
+  var tmp0 = Rituals_instance.e3c(req, summoner, others);
   // Inline function 'kotlin.collections.flatMapTo' call
   var destination_1 = ArrayList_init_$Create$();
   var _iterator__ex2g4s_1 = tmp0.h();
   while (_iterator__ex2g4s_1.i()) {
     var element_1 = _iterator__ex2g4s_1.j();
-    var list = Rituals_instance.f3c(others, element_1);
+    var list = Rituals_instance.g3c(others, element_1);
     addAll(destination_1, list);
   }
   return distinct(destination_1);
 }
 function remaining($this, player, target, req, summoner) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Rituals_instance.l3b(ensureNotNull(player), ensureNotNull(target));
+  var tmp0 = Rituals_instance.m3b(ensureNotNull(player), ensureNotNull(target));
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -36837,11 +36888,11 @@ function remaining($this, player, target, req, summoner) {
     }
   }
   var others = destination;
-  var all = ensureNotNull(req).t3b() === req.m2h_1 ? frozenListOf([]) : Rituals_instance.d3c(req, summoner, others);
+  var all = ensureNotNull(req).u3b() === req.m2h_1 ? frozenListOf([]) : Rituals_instance.e3c(req, summoner, others);
   var tmp;
   if (all.m()) {
     var tmp0_elvis_lhs = req.s2h_1;
-    tmp = req.m2h_1 - (tmp0_elvis_lhs == null ? Rituals_instance.e3c(summoner, others, req.m2h_1) : tmp0_elvis_lhs) | 0;
+    tmp = req.m2h_1 - (tmp0_elvis_lhs == null ? Rituals_instance.f3c(summoner, others, req.m2h_1) : tmp0_elvis_lhs) | 0;
   } else {
     tmp = max(all);
   }
@@ -36849,7 +36900,7 @@ function remaining($this, player, target, req, summoner) {
 }
 function ritualInstruction($this, room, effect, rule, stage) {
   if (equals_0(stage, Stage_CARD_getInstance())) {
-    return 'Elige 1 criatura de tus ' + SpecialRequirements_getInstance().e3d(rule) + ' para invocarla por Ritual pagando su coste especial reducido en ' + rule.p3c_1 + '.';
+    return 'Elige 1 criatura de tus ' + SpecialRequirements_getInstance().f3d(rule) + ' para invocarla por Ritual pagando su coste especial reducido en ' + rule.q3c_1 + '.';
   }
   var target_0 = target($this, room, effect, rule);
   var req = Rituals_instance.k2h(target_0);
@@ -36861,41 +36912,41 @@ function ritualInstruction($this, room, effect, rule, stage) {
     tmp = false;
   }
   if (tmp) {
-    var summoner = $this.d3d(room, effect, rule);
-    return equals_0(stage, Stage_SUMMONER_getInstance()) || summoner == null ? RitualParts_instance.o3b(req.r2h_1, ensureNotNull(target_0)) : RitualParts_instance.n3b(req.r2h_1, summoner);
+    var summoner = $this.e3d(room, effect, rule);
+    return equals_0(stage, Stage_SUMMONER_getInstance()) || summoner == null ? RitualParts_instance.p3b(req.r2h_1, ensureNotNull(target_0)) : RitualParts_instance.o3b(req.r2h_1, summoner);
   }
   if (equals_0(stage, Stage_SUMMONER_getInstance())) {
     return 'Elige el invocador' + (ensureNotNull(req).l2h_1 ? '' : ': 1 criatura nivel ' + req.m2h_1 + (req.n2h_1 ? ' o mayor' : '')) + '. Se sacrifica y ' + EffectEngine_getInstance().q2c(target_0) + ' ocupa su lugar y hereda su estado.';
   }
-  var summoner_0 = $this.d3d(room, effect, rule);
-  if (!(ensureNotNull(req).t3b() === req.m2h_1)) {
+  var summoner_0 = $this.e3d(room, effect, rule);
+  if (!(ensureNotNull(req).u3b() === req.m2h_1)) {
     return 'Elige las dem\xE1s criaturas que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner_0) + ' (el invocador): con \xE9l, sus niveles deben sumar ' + req.u2h() + '.';
   }
   return 'Elige las dem\xE1s criaturas que se sacrifican junto a ' + EffectEngine_getInstance().q2c(summoner_0) + ' (el invocador): sus niveles deben sumar exactamente ' + remaining($this, room.a1e(effect.m21_1), target_0, req, summoner_0) + '.';
 }
 function SpecialProcedure() {
   SpecialProcedure_instance = this;
-  this.v31_1 = Platform_instance.s1s(',');
+  this.w31_1 = Platform_instance.s1s(',');
 }
-protoOf(SpecialProcedure).c3d = function (room, effect, s) {
+protoOf(SpecialProcedure).d3d = function (room, effect, s) {
   var ctx = EngineContext_init_$Create$(room, effect);
-  var reduce = ensureNotNull(s).s3c_1 == null ? s.p3c_1 : ctx.s34(s.s3c_1);
-  var kind = s.n3c_1;
-  var filter = s.r3c_1;
+  var reduce = ensureNotNull(s).t3c_1 == null ? s.q3c_1 : ctx.t34(s.t3c_1);
+  var kind = s.o3c_1;
+  var filter = s.s3c_1;
   if ('ofThisCard' === kind) {
     var self_0 = EffectEngine_getInstance().l2e(room, effect.m21_1, effect.n21_1);
     kind = self_0 == null || self_0.q1c_1 == null ? 'any' : self_0.q1c_1;
     filter = Companion_instance_11.c2q().i2q(effect.p21_1);
   }
-  if (!(s.t3c_1 == null)) {
-    var other = ctx.x33(s.t3c_1.f3d_1);
+  if (!(s.u3c_1 == null)) {
+    var other = ctx.y33(s.u3c_1.g3d_1);
     filter = other == null || other.p1u() == null ? ensureNotNull(filter).h2q(-1) : ensureNotNull(filter).h2q(ensureNotNull(other.p1u())).j2q(other.n1c_1);
   }
-  return new SpecialRule(kind, s.o3c_1, reduce, s.q3c_1, filter, null, null, s.u3c_1, s.v3c_1);
+  return new SpecialRule(kind, s.p3c_1, reduce, s.r3c_1, filter, null, null, s.v3c_1, s.w3c_1);
 };
-protoOf(SpecialProcedure).d3d = function (room, effect, rule) {
+protoOf(SpecialProcedure).e3d = function (room, effect, rule) {
   var player = room.a1e(effect.m21_1);
-  switch (ensureNotNull(rule.q3c_1)) {
+  switch (ensureNotNull(rule.r3c_1)) {
     case 'subject':
       return StepHelpers_getInstance().p2d(room, effect);
     case 'self':
@@ -36904,16 +36955,16 @@ protoOf(SpecialProcedure).d3d = function (room, effect, rule) {
       return EffectEngine_getInstance().s2c(ensureNotNull(player).a1f_1, effect.f22_1);
   }
 };
-protoOf(SpecialProcedure).w31 = function (room, effect, special) {
-  var rule = this.c3d(room, effect, ensureNotNull(special).a3d_1);
+protoOf(SpecialProcedure).x31 = function (room, effect, special) {
+  var rule = this.d3d(room, effect, ensureNotNull(special).b3d_1);
   var player = room.a1e(effect.m21_1);
   if (ritual_0(this, room, effect, special))
-    return ritualOptions(this, room, effect, rule, special.b3d_1, player);
-  if (equals_0(special.b3d_1, Stage_CARD_getInstance())) {
+    return ritualOptions(this, room, effect, rule, special.c3d_1, player);
+  if (equals_0(special.c3d_1, Stage_CARD_getInstance())) {
     if (!(effect.e22_1 == null))
       return frozenListOf([]);
-    var targets = SpecialRequirements_getInstance().p3d(room, effect, rule);
-    return 'any' === rule.n3c_1 ? plus_0(targets, Rituals_instance.x3c(room, effect, asRitual(this, rule))) : targets;
+    var targets = SpecialRequirements_getInstance().q3d(room, effect, rule);
+    return 'any' === rule.o3c_1 ? plus_0(targets, Rituals_instance.y3c(room, effect, asRitual(this, rule))) : targets;
   }
   var tmp0_elvis_lhs = target(this, room, effect, rule);
   var tmp;
@@ -36924,18 +36975,18 @@ protoOf(SpecialProcedure).w31 = function (room, effect, special) {
   }
   var target_0 = tmp;
   var req = SpecialRequirements_getInstance().f2i(target_0);
-  var summoner = this.d3d(room, effect, rule);
-  if (equals_0(special.b3d_1, Stage_SUMMONER_getInstance())) {
+  var summoner = this.e3d(room, effect, rule);
+  if (equals_0(special.c3d_1, Stage_SUMMONER_getInstance())) {
     if (!(summoner == null))
       return frozenListOf([]);
     // Inline function 'kotlin.collections.filter' call
-    var tmp0 = SpecialRequirements_getInstance().q3d(ensureNotNull(player), target_0, ensureNotNull(req));
+    var tmp0 = SpecialRequirements_getInstance().r3d(ensureNotNull(player), target_0, ensureNotNull(req));
     // Inline function 'kotlin.collections.filterTo' call
     var destination = ArrayList_init_$Create$();
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (SpecialRequirements_getInstance().r3d(rule, element, effect) && SpecialRequirements_getInstance().s3d(player, target_0, req, element)) {
+      if (SpecialRequirements_getInstance().s3d(rule, element, effect) && SpecialRequirements_getInstance().t3d(player, target_0, req, element)) {
         destination.f(element);
       }
     }
@@ -36945,7 +36996,7 @@ protoOf(SpecialProcedure).w31 = function (room, effect, special) {
     var _iterator__ex2g4s_0 = destination.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      if (!rule.u3c_1 || !CardEffects_getInstance().z2p(element_0, target_0.n1c_1)) {
+      if (!rule.v3c_1 || !CardEffects_getInstance().z2p(element_0, target_0.n1c_1)) {
         destination_0.f(element_0);
       }
     }
@@ -36953,18 +37004,18 @@ protoOf(SpecialProcedure).w31 = function (room, effect, special) {
   }
   if (summoner == null || !('materialization' === ensureNotNull(req).h2i_1))
     return frozenListOf([]);
-  return SpecialRequirements_getInstance().t3d(ensureNotNull(player), target_0, req, summoner);
+  return SpecialRequirements_getInstance().u3d(ensureNotNull(player), target_0, req, summoner);
 };
-protoOf(SpecialProcedure).y31 = function (room, effect, special) {
+protoOf(SpecialProcedure).z31 = function (room, effect, special) {
   var player = room.a1e(effect.m21_1);
-  if (ritual_0(this, room, effect, ensureNotNull(special)) && !equals_0(special.b3d_1, Stage_CARD_getInstance())) {
-    var target_0 = target(this, room, effect, this.c3d(room, effect, special.a3d_1));
-    return target_0 == null ? ensureNotNull(player).a1f_1 : plus_0(ensureNotNull(player).a1f_1, RitualParts_instance.j3b(room, player, target_0));
+  if (ritual_0(this, room, effect, ensureNotNull(special)) && !equals_0(special.c3d_1, Stage_CARD_getInstance())) {
+    var target_0 = target(this, room, effect, this.d3d(room, effect, special.b3d_1));
+    return target_0 == null ? ensureNotNull(player).a1f_1 : plus_0(ensureNotNull(player).a1f_1, RitualParts_instance.k3b(room, player, target_0));
   }
   var tmp;
-  switch (ensureNotNull(special.b3d_1).k2_1) {
+  switch (ensureNotNull(special.c3d_1).k2_1) {
     case 0:
-      tmp = SpecialRequirements_getInstance().z3c(player, ensureNotNull(special.a3d_1), effect);
+      tmp = SpecialRequirements_getInstance().a3d(player, ensureNotNull(special.b3d_1), effect);
       break;
     case 1:
       tmp = ensureNotNull(player).a1f_1;
@@ -36972,7 +37023,7 @@ protoOf(SpecialProcedure).y31 = function (room, effect, special) {
     case 2:
       var all = ArrayList_init_$Create$_0(ensureNotNull(player).y1e_1);
       all.r(player.a1f_1);
-      var _iterator__ex2g4s = this.w31(room, effect, special).h();
+      var _iterator__ex2g4s = this.x31(room, effect, special).h();
       while (_iterator__ex2g4s.i()) {
         var c = _iterator__ex2g4s.j();
         var tmp$ret$0;
@@ -37011,13 +37062,13 @@ protoOf(SpecialProcedure).y31 = function (room, effect, special) {
   }
   return tmp;
 };
-protoOf(SpecialProcedure).a32 = function (room, effect, special, available) {
+protoOf(SpecialProcedure).b32 = function (room, effect, special, available) {
   if (ritual_0(this, room, effect, ensureNotNull(special))) {
-    if (!equals_0(special.b3d_1, Stage_MATERIAL_getInstance())) {
+    if (!equals_0(special.c3d_1, Stage_MATERIAL_getInstance())) {
       // Inline function 'kotlin.intArrayOf' call
       return new Int32Array([1, 1, 0]);
     }
-    var rule = this.c3d(room, effect, special.a3d_1);
+    var rule = this.d3d(room, effect, special.b3d_1);
     var target_0 = target(this, room, effect, rule);
     var player = room.a1e(effect.m21_1);
     var tmp0_safe_receiver = Rituals_instance.k2h(target_0);
@@ -37029,10 +37080,10 @@ protoOf(SpecialProcedure).a32 = function (room, effect, special, available) {
       return new Int32Array([parts.k() - 1 | 0, parts.k() - 1 | 0, 0]);
     }
     // Inline function 'kotlin.intArrayOf' call
-    return new Int32Array([1, available, remaining(this, player, target_0, Rituals_instance.k2h(target_0), this.d3d(room, effect, rule))]);
+    return new Int32Array([1, available, remaining(this, player, target_0, Rituals_instance.k2h(target_0), this.e3d(room, effect, rule))]);
   }
   var tmp;
-  switch (ensureNotNull(special.b3d_1).k2_1) {
+  switch (ensureNotNull(special.c3d_1).k2_1) {
     case 0:
       // Inline function 'kotlin.intArrayOf' call
 
@@ -37044,7 +37095,7 @@ protoOf(SpecialProcedure).a32 = function (room, effect, special, available) {
       tmp = new Int32Array([1, 1, 0]);
       break;
     case 2:
-      var rule_0 = this.c3d(room, effect, special.a3d_1);
+      var rule_0 = this.d3d(room, effect, special.b3d_1);
       var req = ensureNotNull(SpecialRequirements_getInstance().f2i(target(this, room, effect, rule_0)));
       var tmp_0;
       if (req.l2i_1 > 0) {
@@ -37052,7 +37103,7 @@ protoOf(SpecialProcedure).a32 = function (room, effect, special, available) {
         tmp_0 = new Int32Array([1, available, 0]);
       } else if (req.v2i_1) {
         // Inline function 'kotlin.intArrayOf' call
-        tmp_0 = new Int32Array([1, req.u3d(available), 0]);
+        tmp_0 = new Int32Array([1, req.v3d(available), 0]);
       } else {
         // Inline function 'kotlin.intArrayOf' call
         tmp_0 = new Int32Array([1, 1, 0]);
@@ -37066,26 +37117,26 @@ protoOf(SpecialProcedure).a32 = function (room, effect, special, available) {
   }
   return tmp;
 };
-protoOf(SpecialProcedure).c32 = function (room, effect, special) {
-  var rule = this.c3d(room, effect, ensureNotNull(special).a3d_1);
+protoOf(SpecialProcedure).d32 = function (room, effect, special) {
+  var rule = this.d3d(room, effect, ensureNotNull(special).b3d_1);
   if (ritual_0(this, room, effect, special))
-    return ritualInstruction(this, room, effect, rule, special.b3d_1);
-  if (equals_0(special.b3d_1, Stage_CARD_getInstance())) {
-    return 'Puedes elegir 1 criatura de tu ' + SpecialRequirements_getInstance().e3d(rule) + ' para invocarla por ' + SpecialRequirements_getInstance().v3d(rule.n3c_1) + (rule.p3c_1 > 0 ? ' reduciendo su coste especial en ' + rule.p3c_1 : '') + ', o ninguna.';
+    return ritualInstruction(this, room, effect, rule, special.c3d_1);
+  if (equals_0(special.c3d_1, Stage_CARD_getInstance())) {
+    return 'Puedes elegir 1 criatura de tu ' + SpecialRequirements_getInstance().f3d(rule) + ' para invocarla por ' + SpecialRequirements_getInstance().w3d(rule.o3c_1) + (rule.q3c_1 > 0 ? ' reduciendo su coste especial en ' + rule.q3c_1 : '') + ', o ninguna.';
   }
   var target_0 = target(this, room, effect, rule);
   var req = SpecialRequirements_getInstance().f2i(target_0);
-  if (equals_0(special.b3d_1, Stage_SUMMONER_getInstance())) {
+  if (equals_0(special.c3d_1, Stage_SUMMONER_getInstance())) {
     return 'Elige el invocador: 1 criatura nivel ' + ensureNotNull(req).i2i_1 + (req.m2i_1 ? ' o mayor' : '') + '. ' + EffectEngine_getInstance().q2c(target_0) + ' ocupa su lugar y hereda su estado.';
   }
-  return SpecialRequirements_getInstance().w3d(ensureNotNull(req), target_0, this.d3d(room, effect, rule));
+  return SpecialRequirements_getInstance().x3d(ensureNotNull(req), target_0, this.e3d(room, effect, rule));
 };
-protoOf(SpecialProcedure).e32 = function (room, effect, special, picks) {
-  if (!equals_0(ensureNotNull(special).b3d_1, Stage_MATERIAL_getInstance()))
+protoOf(SpecialProcedure).f32 = function (room, effect, special, picks) {
+  if (!equals_0(ensureNotNull(special).c3d_1, Stage_MATERIAL_getInstance()))
     return null;
-  var rule = this.c3d(room, effect, special.a3d_1);
+  var rule = this.d3d(room, effect, special.b3d_1);
   var target_0 = target(this, room, effect, rule);
-  var summoner = this.d3d(room, effect, rule);
+  var summoner = this.e3d(room, effect, rule);
   if (ritual_0(this, room, effect, special)) {
     var req = Rituals_instance.k2h(target_0);
     var tmp;
@@ -37105,7 +37156,7 @@ protoOf(SpecialProcedure).e32 = function (room, effect, special, picks) {
       var _iterator__ex2g4s = tmp0.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        var tmp0_safe_receiver = EngineContext_init_$Create$(room, effect).q31(element);
+        var tmp0_safe_receiver = EngineContext_init_$Create$(room, effect).r31(element);
         if (tmp0_safe_receiver == null)
           null;
         else {
@@ -37124,7 +37175,7 @@ protoOf(SpecialProcedure).e32 = function (room, effect, special, picks) {
     var _iterator__ex2g4s_0 = tmp0_0.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      var tmp0_safe_receiver_0 = EngineContext_init_$Create$(room, effect).q31(element_0);
+      var tmp0_safe_receiver_0 = EngineContext_init_$Create$(room, effect).r31(element_0);
       if (tmp0_safe_receiver_0 == null)
         null;
       else {
@@ -37152,33 +37203,33 @@ protoOf(SpecialProcedure).e32 = function (room, effect, special, picks) {
   var _iterator__ex2g4s_2 = this_0.h();
   while (_iterator__ex2g4s_2.i()) {
     var item = _iterator__ex2g4s_2.j();
-    var tmp$ret$19 = EngineContext_init_$Create$(room, effect).q31(item);
+    var tmp$ret$19 = EngineContext_init_$Create$(room, effect).r31(item);
     destination_1.f(tmp$ret$19);
   }
   var materials = destination_1;
   return SpecialRequirements_getInstance().i2j(ensureNotNull(SpecialRequirements_getInstance().f2i(target_0)), summoner, materials);
 };
-protoOf(SpecialProcedure).g32 = function (room, effect, raw) {
-  var rule = this.c3d(room, effect, raw);
+protoOf(SpecialProcedure).h32 = function (room, effect, raw) {
+  var rule = this.d3d(room, effect, raw);
   var player = room.a1e(effect.m21_1);
   var target_0 = target(this, room, effect, rule);
   if (target_0 == null) {
     effect.k22_1 = false;
     return Unit_instance;
   }
-  var summoner = this.d3d(room, effect, rule);
+  var summoner = this.e3d(room, effect, rule);
   var materials = ArrayList_init_$Create$();
   var _iterator__ex2g4s = valueOr(effect.c22_1, 'specialMaterials', frozenListOf([])).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
-    var material = EngineContext_init_$Create$(room, effect).q31(id);
+    var material = EngineContext_init_$Create$(room, effect).r31(id);
     if (!(material == null)) {
       materials.f(material);
     }
   }
   effect.c22_1.h2('specialMaterials');
-  if ('ritual' === rule.n3c_1 || ('any' === rule.n3c_1 && equals('ritual', target_0.q1c_1, true))) {
-    Summons_instance.x3d(room, effect, ensureNotNull(player), target_0, asRitual(this, rule), summoner, materials);
+  if ('ritual' === rule.o3c_1 || ('any' === rule.o3c_1 && equals('ritual', target_0.q1c_1, true))) {
+    Summons_instance.y3d(room, effect, ensureNotNull(player), target_0, asRitual(this, rule), summoner, materials);
     effect.f22_1 = null;
     return Unit_instance;
   }
@@ -37218,7 +37269,7 @@ protoOf(SpecialProcedure).g32 = function (room, effect, raw) {
         tmp = 'resources';
       } else {
         // Inline function 'kotlin.text.trim' call
-        var this_0 = JavaText_instance.r1s(this.v31_1, ensureNotNull(rule.o3c_1))[0];
+        var this_0 = JavaText_instance.r1s(this.w31_1, ensureNotNull(rule.p3c_1))[0];
         // Inline function 'kotlin.text.trim' call
         var this_1 = isCharSequence(this_0) ? this_0 : THROW_CCE();
         var startIndex = 0;
@@ -37248,8 +37299,8 @@ protoOf(SpecialProcedure).g32 = function (room, effect, raw) {
   var from = tmp;
   effect.e22_1 = null;
   effect.f22_1 = null;
-  var bonus = rule.v3c_1 > 0 && !(summoner == null) && !(summoner.p1u() == null) && summoner.p1u() == target_0.p1u() ? rule.v3c_1 : 0;
-  SpecialSummons_instance.q2k(room, player, target_0, ensureNotNull(req), summoner, materials, from, rule.p3c_1 + bonus | 0, effect);
+  var bonus = rule.w3c_1 > 0 && !(summoner == null) && !(summoner.p1u() == null) && summoner.p1u() == target_0.p1u() ? rule.w3c_1 : 0;
+  SpecialSummons_instance.q2k(room, player, target_0, ensureNotNull(req), summoner, materials, from, rule.q3c_1 + bonus | 0, effect);
   effect.g22_1 = target_0.g1c_1;
   effect.k22_1 = true;
 };
@@ -37309,7 +37360,7 @@ function SpecialRequirement(kind, level, alliesSum, materialLevel, levelSum, atL
   this.f2j_1 = sumInZones;
   this.g2j_1 = maxMaterials;
 }
-protoOf(SpecialRequirement).u3d = function (available) {
+protoOf(SpecialRequirement).v3d = function (available) {
   var tmp;
   if (this.g2j_1 == null) {
     tmp = available;
@@ -37320,13 +37371,13 @@ protoOf(SpecialRequirement).u3d = function (available) {
   }
   return tmp;
 };
-protoOf(SpecialRequirement).y3d = function (summonerLevel) {
+protoOf(SpecialRequirement).z3d = function (summonerLevel) {
   return this.i2i_1 === 0 || (this.m2i_1 ? summonerLevel >= this.i2i_1 : summonerLevel >= this.i2i_1 && summonerLevel <= this.n2i_1);
 };
-protoOf(SpecialRequirement).z3d = function (c) {
+protoOf(SpecialRequirement).a3e = function (c) {
   return this.a2j_1 == null || this.a2j_1.p2c(c);
 };
-protoOf(SpecialRequirement).a3e = function (c) {
+protoOf(SpecialRequirement).b3e = function (c) {
   if ('creature' === c.o1c_1)
     return true;
   var tmp0_elvis_lhs = this.a2j_1;
@@ -37339,7 +37390,7 @@ protoOf(SpecialRequirement).a3e = function (c) {
   var f = tmp;
   return f.n2b_1 == c.o1c_1 || contains(f.g2q(), c.o1c_1);
 };
-protoOf(SpecialRequirement).b3e = function (c) {
+protoOf(SpecialRequirement).c3e = function (c) {
   var tmp;
   if (!(this.b2j_1 == null)) {
     var tmp_0;
@@ -37390,21 +37441,21 @@ protoOf(SpecialRequirement).b3e = function (c) {
       }
       tmp_2 = tmp$ret$1;
     } else {
-      tmp_2 = EffectEngine_getInstance().q2y(c, this.k2i_1);
+      tmp_2 = EffectEngine_getInstance().r2y(c, this.k2i_1);
     }
     tmp_1 = tmp_2;
   }
   var levelOk = tmp_1;
   return levelOk && (this.b2j_1 == null || this.b2j_1.p2c(c));
 };
-protoOf(SpecialRequirement).c3e = function () {
-  return SpecialRequirements_getInstance().d3e(this.k2i_1) + (this.c2j_1 && !(this.k2i_1 === 0) ? ' o menor' : '');
+protoOf(SpecialRequirement).d3e = function () {
+  return SpecialRequirements_getInstance().e3e(this.k2i_1) + (this.c2j_1 && !(this.k2i_1 === 0) ? ' o menor' : '');
 };
 protoOf(SpecialRequirement).h2j = function () {
   return !(this.u2i_1 == null);
 };
-protoOf(SpecialRequirement).e3e = function (summonerLevel) {
-  return !this.q2i_1 && this.y3d(summonerLevel);
+protoOf(SpecialRequirement).f3e = function (summonerLevel) {
+  return !this.q2i_1 && this.z3d(summonerLevel);
 };
 protoOf(SpecialRequirement).toString = function () {
   return 'SpecialRequirement(kind=' + this.h2i_1 + ', level=' + this.i2i_1 + ', alliesSum=' + this.j2i_1 + ', materialLevel=' + this.k2i_1 + ', levelSum=' + this.l2i_1 + ', atLeast=' + this.m2i_1 + ', maxLevel=' + this.n2i_1 + ', materialCount=' + this.o2i_1 + ', materialZones=' + toString_0(this.p2i_1) + ', noSummoner=' + this.q2i_1 + ', alternative=' + toString_0(this.r2i_1) + ', alone=' + this.s2i_1 + ', strongest=' + this.t2i_1 + ', summonerZones=' + toString_0(this.u2i_1) + ', moreMaterials=' + this.v2i_1 + ', alliesSumByCost=' + this.w2i_1 + ', aloneAtLevel=' + this.x2i_1 + ', formationSize=' + this.y2i_1 + ', formationAtLeast=' + this.z2i_1 + ', summonerFilter=' + toString_0(this.a2j_1) + ', materialFilter=' + toString_0(this.b2j_1) + ', materialOrLess=' + this.c2j_1 + ', condition=' + toString_0(this.d2j_1) + ', conditionText=' + this.e2j_1 + ', sumInZones=' + this.f2j_1 + ', maxMaterials=' + this.g2j_1 + ')';
@@ -37499,7 +37550,7 @@ protoOf(SpecialRequirement).equals = function (other) {
 };
 function SpecialRequirements$canSpecial$lambda($room, $userId, $card) {
   return function () {
-    return SpecialRequirements_getInstance().f3e($room, $userId, $card);
+    return SpecialRequirements_getInstance().g3e($room, $userId, $card);
   };
 }
 function SpecialRequirements$specialTargets$lambda($c, $room, $player, $special, $effect) {
@@ -37513,7 +37564,7 @@ function SpecialRequirements$specialTargets$lambda($c, $room, $player, $special,
       var tmp_1 = EffectEngine_getInstance();
       var tmp_2 = $player.f1e_1;
       // Inline function 'kotlin.math.max' call
-      var b = (ensureNotNull($c.x1c_1) - $special.p3c_1 | 0) - CostModifiers_getInstance().k2j($room, $player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, $c, null) | 0;
+      var b = (ensureNotNull($c.x1c_1) - $special.q3c_1 | 0) - CostModifiers_getInstance().k2j($room, $player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, $c, null) | 0;
       var tmp$ret$0 = Math.max(0, b);
       tmp_0 = !tmp_1.x2h($room, tmp_2, tmp$ret$0);
     }
@@ -37521,14 +37572,14 @@ function SpecialRequirements$specialTargets$lambda($c, $room, $player, $special,
       return false;
     }
     var tmp_3;
-    if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().g3e($player, req)) {
+    if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().h3e($player, req)) {
       return false;
     }
     var tmp_4;
-    if (!SpecialRequirements_getInstance().h3e($room, $player, $c, req)) {
+    if (!SpecialRequirements_getInstance().i3e($room, $player, $c, req)) {
       return false;
     }
-    var tmp0 = SpecialRequirements_getInstance().q3d($player, $c, req);
+    var tmp0 = SpecialRequirements_getInstance().r3d($player, $c, req);
     var tmp$ret$1;
     $l$block_0: {
       // Inline function 'kotlin.collections.any' call
@@ -37545,7 +37596,7 @@ function SpecialRequirements$specialTargets$lambda($c, $room, $player, $special,
       var _iterator__ex2g4s = tmp0.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (SpecialRequirements_getInstance().r3d($special, element, $effect) && SpecialRequirements_getInstance().s3d($player, $c, req, element)) {
+        if (SpecialRequirements_getInstance().s3d($special, element, $effect) && SpecialRequirements_getInstance().t3d($player, $c, req, element)) {
           tmp$ret$1 = true;
           break $l$block_0;
         }
@@ -37561,7 +37612,7 @@ function SpecialRequirements() {
   this.a2i_1 = 0;
   this.b2i_1 = '-';
 }
-protoOf(SpecialRequirements).d3e = function (level) {
+protoOf(SpecialRequirements).e3e = function (level) {
   return level === 0 ? '' : ' nivel ' + level;
 };
 protoOf(SpecialRequirements).f2i = function (card) {
@@ -37584,12 +37635,12 @@ protoOf(SpecialRequirements).f2i = function (card) {
     tmp_0 = tmp0_elvis_lhs;
   }
   var programmed = tmp_0;
-  return programmed.e2y_1 == null ? this.i3e(kind, programmed) : null;
+  return programmed.f2y_1 == null ? this.j3e(kind, programmed) : null;
 };
-protoOf(SpecialRequirements).i3e = function (kind, spec) {
-  var s = spec.s2x_1;
-  var m = spec.t2x_1;
-  var tmp1_safe_receiver = s == null ? null : s.k3a_1;
+protoOf(SpecialRequirements).j3e = function (kind, spec) {
+  var s = spec.t2x_1;
+  var m = spec.u2x_1;
+  var tmp1_safe_receiver = s == null ? null : s.l3a_1;
   var tmp;
   if (tmp1_safe_receiver == null) {
     tmp = null;
@@ -37612,32 +37663,32 @@ protoOf(SpecialRequirements).i3e = function (kind, spec) {
   }
   var declared = tmp;
   var tmp_2;
-  if ((s == null ? null : s.l3a_1) === true) {
+  if ((s == null ? null : s.m3a_1) === true) {
     tmp_2 = true;
   } else {
     tmp_2 = !(declared == null);
   }
   var noSummoner = tmp_2;
-  var level = s == null ? 0 : s.i3a_1 ? 1 : s.f3a_1;
+  var level = s == null ? 0 : s.j3a_1 ? 1 : s.g3a_1;
   var tmp_3;
   if (s == null) {
     tmp_3 = 0;
-  } else if (s.i3a_1) {
-    tmp_3 = s.f3a_1;
+  } else if (s.j3a_1) {
+    tmp_3 = s.g3a_1;
   } else {
-    var tmp3_elvis_lhs = s.g3a_1;
-    tmp_3 = tmp3_elvis_lhs == null ? s.f3a_1 : tmp3_elvis_lhs;
+    var tmp3_elvis_lhs = s.h3a_1;
+    tmp_3 = tmp3_elvis_lhs == null ? s.g3a_1 : tmp3_elvis_lhs;
   }
   var maxLevel = tmp_3;
-  var tmp5_elvis_lhs = m == null ? null : m.o3a_1;
+  var tmp5_elvis_lhs = m == null ? null : m.p3a_1;
   var tmp_4 = tmp5_elvis_lhs == null ? 0 : tmp5_elvis_lhs;
-  var tmp7_elvis_lhs = m == null ? null : m.q3a_1;
+  var tmp7_elvis_lhs = m == null ? null : m.r3a_1;
   var tmp_5 = tmp7_elvis_lhs == null ? 0 : tmp7_elvis_lhs;
-  var tmp9_elvis_lhs = s == null ? null : s.h3a_1;
+  var tmp9_elvis_lhs = s == null ? null : s.i3a_1;
   var tmp_6 = tmp9_elvis_lhs == null ? false : tmp9_elvis_lhs;
-  var tmp11_elvis_lhs = m == null ? null : m.m3a_1;
+  var tmp11_elvis_lhs = m == null ? null : m.n3a_1;
   var tmp_7 = tmp11_elvis_lhs == null ? 0 : tmp11_elvis_lhs;
-  var tmp13_safe_receiver = m == null ? null : m.r3a_1;
+  var tmp13_safe_receiver = m == null ? null : m.s3a_1;
   var tmp_8;
   if (tmp13_safe_receiver == null) {
     tmp_8 = null;
@@ -37654,56 +37705,56 @@ protoOf(SpecialRequirements).i3e = function (kind, spec) {
   }
   var tmp14_elvis_lhs = tmp_8;
   var tmp_10 = tmp14_elvis_lhs == null ? frozenListOf(['tributeZone', 'field']) : tmp14_elvis_lhs;
-  var tmp15_safe_receiver = spec.d2y_1;
+  var tmp15_safe_receiver = spec.e2y_1;
   var tmp_11;
   if (tmp15_safe_receiver == null) {
     tmp_11 = null;
   } else {
     // Inline function 'kotlin.let' call
-    tmp_11 = SpecialRequirements_getInstance().i3e(kind, tmp15_safe_receiver);
+    tmp_11 = SpecialRequirements_getInstance().j3e(kind, tmp15_safe_receiver);
   }
   var tmp_12 = tmp_11;
-  var tmp17_elvis_lhs = m == null ? null : m.n3a_1;
+  var tmp17_elvis_lhs = m == null ? null : m.o3a_1;
   var tmp_13 = tmp17_elvis_lhs == null ? false : tmp17_elvis_lhs;
-  var tmp_14 = s == null ? null : s.j3a_1;
-  var tmp_15 = m == null ? null : m.s3a_1;
-  var tmp21_elvis_lhs = m == null ? null : m.p3a_1;
+  var tmp_14 = s == null ? null : s.k3a_1;
+  var tmp_15 = m == null ? null : m.t3a_1;
+  var tmp21_elvis_lhs = m == null ? null : m.q3a_1;
   var tmp_16 = tmp21_elvis_lhs == null ? false : tmp21_elvis_lhs;
   var tmp_17;
-  var tmp23_elvis_lhs = m == null ? null : m.q3a_1;
+  var tmp23_elvis_lhs = m == null ? null : m.r3a_1;
   if ((tmp23_elvis_lhs == null ? 0 : tmp23_elvis_lhs) > 0) {
     // Inline function 'kotlin.collections.isNullOrEmpty' call
-    var this_0 = m == null ? null : m.r3a_1;
+    var this_0 = m == null ? null : m.s3a_1;
     tmp_17 = !(this_0 == null || this_0.m());
   } else {
     tmp_17 = false;
   }
   var tmp_18 = tmp_17;
-  return new SpecialRequirement(kind, level, spec.u2x_1, tmp_4, tmp_5, tmp_6, maxLevel, tmp_7, tmp_10, noSummoner, tmp_12, spec.w2x_1, spec.y2x_1, declared, tmp_13, spec.v2x_1, spec.x2x_1, spec.z2x_1, spec.a2y_1, tmp_14, tmp_15, tmp_16, spec.b2y_1, spec.c2y_1, tmp_18, m == null ? null : m.t3a_1);
+  return new SpecialRequirement(kind, level, spec.v2x_1, tmp_4, tmp_5, tmp_6, maxLevel, tmp_7, tmp_10, noSummoner, tmp_12, spec.x2x_1, spec.z2x_1, declared, tmp_13, spec.w2x_1, spec.y2x_1, spec.a2y_1, spec.b2y_1, tmp_14, tmp_15, tmp_16, spec.c2y_1, spec.d2y_1, tmp_18, m == null ? null : m.u3a_1);
 };
-protoOf(SpecialRequirements).h3e = function (room, player, card, req) {
+protoOf(SpecialRequirements).i3e = function (room, player, card, req) {
   return req.d2j_1 == null || req.d2j_1.l2g(room, null, card, player.f1e_1);
 };
-protoOf(SpecialRequirements).j3e = function (req, summoner) {
+protoOf(SpecialRequirements).k3e = function (req, summoner) {
   if (summoner == null)
     return ensureNotNull(req).q2i_1 ? req : null;
   var _iterator__ex2g4s = EffectEngine_getInstance().z20(summoner).h();
   while (_iterator__ex2g4s.i()) {
     var level = _iterator__ex2g4s.j();
-    if (ensureNotNull(req).e3e(level) && req.z3d(summoner))
+    if (ensureNotNull(req).f3e(level) && req.a3e(summoner))
       return req;
   }
   if (!(ensureNotNull(req).r2i_1 == null)) {
     var _iterator__ex2g4s_0 = EffectEngine_getInstance().z20(summoner).h();
     while (_iterator__ex2g4s_0.i()) {
       var level_0 = _iterator__ex2g4s_0.j();
-      if (ensureNotNull(req.r2i_1).e3e(level_0) && req.r2i_1.z3d(summoner))
+      if (ensureNotNull(req.r2i_1).f3e(level_0) && req.r2i_1.a3e(summoner))
         return req.r2i_1;
     }
   }
   return null;
 };
-protoOf(SpecialRequirements).v3d = function (kind) {
+protoOf(SpecialRequirements).w3d = function (kind) {
   switch (ensureNotNull(kind)) {
     case 'evolution':
       return 'Evoluci\xF3n';
@@ -37717,7 +37768,7 @@ protoOf(SpecialRequirements).v3d = function (kind) {
       return 'Ritual';
   }
 };
-protoOf(SpecialRequirements).q3d = function (player, card, req) {
+protoOf(SpecialRequirements).r3d = function (player, card, req) {
   var creatures = EffectEngine_getInstance().u2c(player);
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = player.a1f_1;
@@ -37731,9 +37782,9 @@ protoOf(SpecialRequirements).q3d = function (player, card, req) {
     var tmp_1;
     var tmp_2;
     var tmp_3;
-    if (!(element.p1u() == null) && Rituals_instance.m3c(element, card)) {
-      var tmp0_safe_receiver = SpecialRequirements_getInstance().j3e(req, element);
-      tmp_3 = (tmp0_safe_receiver == null ? null : tmp0_safe_receiver.a3e(element)) === true;
+    if (!(element.p1u() == null) && Rituals_instance.n3c(element, card)) {
+      var tmp0_safe_receiver = SpecialRequirements_getInstance().k3e(req, element);
+      tmp_3 = (tmp0_safe_receiver == null ? null : tmp0_safe_receiver.b3e(element)) === true;
     } else {
       tmp_3 = false;
     }
@@ -37840,7 +37891,7 @@ protoOf(SpecialRequirements).q3d = function (player, card, req) {
       tmp_0 = false;
     }
     if (tmp_0) {
-      tmp = SpecialRequirements_getInstance().k3e(player, element, ensureNotNull(SpecialRequirements_getInstance().j3e(req, element)));
+      tmp = SpecialRequirements_getInstance().l3e(player, element, ensureNotNull(SpecialRequirements_getInstance().k3e(req, element)));
     } else {
       tmp = false;
     }
@@ -37850,16 +37901,16 @@ protoOf(SpecialRequirements).q3d = function (player, card, req) {
   }
   return destination;
 };
-protoOf(SpecialRequirements).k3e = function (player, summoner, req) {
+protoOf(SpecialRequirements).l3e = function (player, summoner, req) {
   if (req.y2i_1 <= 0)
     return true;
-  var size = Formations_instance.x35(player, summoner);
+  var size = Formations_instance.y35(player, summoner);
   return req.z2i_1 ? size >= req.y2i_1 : size === req.y2i_1;
 };
-protoOf(SpecialRequirements).t3d = function (player, card, req, summoner) {
+protoOf(SpecialRequirements).u3d = function (player, card, req, summoner) {
   if (req.h2j() && !(summoner == null)) {
     // Inline function 'kotlin.collections.filter' call
-    var tmp0 = this.t3d(player, card, req, null);
+    var tmp0 = this.u3d(player, card, req, null);
     // Inline function 'kotlin.collections.filterTo' call
     var destination = ArrayList_init_$Create$();
     var _iterator__ex2g4s = tmp0.h();
@@ -37871,7 +37922,7 @@ protoOf(SpecialRequirements).t3d = function (player, card, req, summoner) {
     }
     return destination;
   }
-  var tmp0_elvis_lhs = this.j3e(req, summoner);
+  var tmp0_elvis_lhs = this.k3e(req, summoner);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return frozenListOf([]);
@@ -37887,7 +37938,7 @@ protoOf(SpecialRequirements).t3d = function (player, card, req, summoner) {
     var _iterator__ex2g4s_0 = tmp0_0.h();
     while (_iterator__ex2g4s_0.i()) {
       var element_0 = _iterator__ex2g4s_0.j();
-      if (!(element_0 === summoner) && !(element_0 === card) && 'creature' === element_0.o1c_1 && !(element_0.p1u() == null) && Rituals_instance.m3c(element_0, card) && (option.b2j_1 == null || option.b2j_1.p2c(element_0))) {
+      if (!(element_0 === summoner) && !(element_0 === card) && 'creature' === element_0.o1c_1 && !(element_0.p1u() == null) && Rituals_instance.n3c(element_0, card) && (option.b2j_1 == null || option.b2j_1.p2c(element_0))) {
         destination_0.f(element_0);
       }
     }
@@ -37905,16 +37956,16 @@ protoOf(SpecialRequirements).t3d = function (player, card, req, summoner) {
   var _iterator__ex2g4s_2 = all.h();
   while (_iterator__ex2g4s_2.i()) {
     var element_1 = _iterator__ex2g4s_2.j();
-    if (!(element_1 === summoner) && !(element_1 === card) && option.b3e(element_1) && Rituals_instance.m3c(element_1, card)) {
+    if (!(element_1 === summoner) && !(element_1 === card) && option.c3e(element_1) && Rituals_instance.n3c(element_1, card)) {
       destination_1.f(element_1);
     }
   }
   return destination_1;
 };
-protoOf(SpecialRequirements).s3d = function (player, card, req, summoner) {
+protoOf(SpecialRequirements).t3d = function (player, card, req, summoner) {
   if (!('materialization' === req.h2i_1))
     return true;
-  var tmp0_elvis_lhs = this.j3e(req, summoner);
+  var tmp0_elvis_lhs = this.k3e(req, summoner);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return false;
@@ -37922,9 +37973,9 @@ protoOf(SpecialRequirements).s3d = function (player, card, req, summoner) {
     tmp = tmp0_elvis_lhs;
   }
   var option = tmp;
-  var materials = this.t3d(player, card, req, summoner);
+  var materials = this.u3d(player, card, req, summoner);
   if (option.f2j_1)
-    return Rituals_instance.v3b(materials, option.l2i_1);
+    return Rituals_instance.w3b(materials, option.l2i_1);
   var tmp_0;
   if (option.l2i_1 > 0) {
     var tmp0 = EffectEngine_getInstance().z20(summoner);
@@ -37944,7 +37995,7 @@ protoOf(SpecialRequirements).s3d = function (player, card, req, summoner) {
       var _iterator__ex2g4s = tmp0.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (option.l2i_1 > element && Rituals_instance.v3b(materials, option.l2i_1 - element | 0)) {
+        if (option.l2i_1 > element && Rituals_instance.w3b(materials, option.l2i_1 - element | 0)) {
           tmp$ret$0 = true;
           break $l$block_0;
         }
@@ -37957,7 +38008,7 @@ protoOf(SpecialRequirements).s3d = function (player, card, req, summoner) {
   }
   return tmp_0;
 };
-protoOf(SpecialRequirements).l3e = function (player, card, req) {
+protoOf(SpecialRequirements).m3e = function (player, card, req) {
   var all = ArrayList_init_$Create$();
   var _iterator__ex2g4s = ensureNotNull(req.u2i_1).h();
   while (_iterator__ex2g4s.i()) {
@@ -37992,7 +38043,7 @@ protoOf(SpecialRequirements).l3e = function (player, card, req) {
         var _iterator__ex2g4s_1 = tmp0.h();
         while (_iterator__ex2g4s_1.i()) {
           var element_0 = _iterator__ex2g4s_1.j();
-          if (req.y3d(element_0)) {
+          if (req.z3d(element_0)) {
             tmp$ret$3 = true;
             break $l$block_0;
           }
@@ -38004,17 +38055,17 @@ protoOf(SpecialRequirements).l3e = function (player, card, req) {
       tmp_2 = false;
     }
     if (tmp_2) {
-      tmp_1 = req.z3d(element);
+      tmp_1 = req.a3e(element);
     } else {
       tmp_1 = false;
     }
     if (tmp_1) {
-      tmp_0 = Rituals_instance.m3c(element, card);
+      tmp_0 = Rituals_instance.n3c(element, card);
     } else {
       tmp_0 = false;
     }
     if (tmp_0) {
-      tmp = SpecialRequirements_getInstance().t3d(player, card, req, element).k() >= req.o2i_1;
+      tmp = SpecialRequirements_getInstance().u3d(player, card, req, element).k() >= req.o2i_1;
     } else {
       tmp = false;
     }
@@ -38037,7 +38088,7 @@ protoOf(SpecialRequirements).g2i = function (player, req, id) {
 protoOf(SpecialRequirements).i2j = function (req, summoner, materials) {
   if (!('materialization' === req.h2i_1))
     return null;
-  var tmp0_elvis_lhs = this.j3e(req, summoner);
+  var tmp0_elvis_lhs = this.k3e(req, summoner);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return 'Ese invocador no cumple el Requerimiento';
@@ -38048,7 +38099,7 @@ protoOf(SpecialRequirements).i2j = function (req, summoner, materials) {
   if (option.f2j_1) {
     var chosen = filterNotNull_0(materials);
     var tmp_0;
-    if (chosen.k() === materials.k() && Rituals_instance.w3b(chosen, option.l2i_1)) {
+    if (chosen.k() === materials.k() && Rituals_instance.x3b(chosen, option.l2i_1)) {
       tmp_0 = null;
     } else {
       var tmp_1 = 'Los niveles de los materiales deben sumar exactamente ' + option.l2i_1 + ' (suman ';
@@ -38079,7 +38130,7 @@ protoOf(SpecialRequirements).i2j = function (req, summoner, materials) {
     var sum_1 = sum_0;
     var tmp_4;
     var tmp_5 = Rituals_instance;
-    if (tmp_5.w3b(isInterface(all, KtList) ? all : THROW_CCE(), option.l2i_1)) {
+    if (tmp_5.x3b(isInterface(all, KtList) ? all : THROW_CCE(), option.l2i_1)) {
       tmp_4 = null;
     } else {
       tmp_4 = 'Los niveles deben sumar exactamente ' + option.l2i_1 + ' con el invocador (suman ' + sum_1 + ')';
@@ -38088,22 +38139,22 @@ protoOf(SpecialRequirements).i2j = function (req, summoner, materials) {
   }
   return materials.k() === option.o2i_1 || (option.v2i_1 && materials.k() > option.o2i_1 && (option.g2j_1 == null || materials.k() <= option.g2j_1)) ? null : 'Elige ' + option.o2i_1 + ' ' + EffectEngine_getInstance().f2e(option.o2i_1, 'material', 'materiales');
 };
-protoOf(SpecialRequirements).w3d = function (req, card, summoner) {
-  var tmp0_elvis_lhs = this.j3e(req, summoner);
+protoOf(SpecialRequirements).x3d = function (req, card, summoner) {
+  var tmp0_elvis_lhs = this.k3e(req, summoner);
   var option = tmp0_elvis_lhs == null ? req : tmp0_elvis_lhs;
-  var zones = this.m3e(option.p2i_1);
+  var zones = this.n3e(option.p2i_1);
   if (req.h2j() && !(summoner == null)) {
-    return 'Elige ' + req.o2i_1 + ' ' + EffectEngine_getInstance().f2e(req.o2i_1, 'criatura', 'criaturas') + req.c3e() + ' de ' + zones + ': con ' + EffectEngine_getInstance().q2c(summoner) + ' (el invocador) se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ', que entra en tu retaguardia.';
+    return 'Elige ' + req.o2i_1 + ' ' + EffectEngine_getInstance().f2e(req.o2i_1, 'criatura', 'criaturas') + req.d3e() + ' de ' + zones + ': con ' + EffectEngine_getInstance().q2c(summoner) + ' (el invocador) se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ', que entra en tu retaguardia.';
   }
   if (summoner == null) {
-    return 'Elige ' + option.o2i_1 + ' criaturas' + option.c3e() + ' de ' + zones + ': se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ', que entra en tu retaguardia.';
+    return 'Elige ' + option.o2i_1 + ' criaturas' + option.d3e() + ' de ' + zones + ': se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ', que entra en tu retaguardia.';
   }
   if (option.f2j_1) {
     return 'Elige los materiales de ' + EffectEngine_getInstance().q2c(card) + ' de ' + zones + ': sus niveles deben sumar exactamente ' + option.l2i_1 + '. Se convierten en materiales junto a ' + EffectEngine_getInstance().q2c(summoner) + '.';
   }
-  return option.l2i_1 > 0 ? 'Elige los aliados que se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ': con ' + EffectEngine_getInstance().q2c(summoner) + ' (nivel ' + summoner.p1u() + ') sus niveles deben sumar exactamente ' + option.l2i_1 + '.' : 'Elige el material: ' + option.o2i_1 + ' criatura' + option.c3e() + ' de ' + zones + '. Se convierte en material de ' + EffectEngine_getInstance().q2c(card) + ' junto a ' + EffectEngine_getInstance().q2c(summoner) + '.';
+  return option.l2i_1 > 0 ? 'Elige los aliados que se convierten en materiales de ' + EffectEngine_getInstance().q2c(card) + ': con ' + EffectEngine_getInstance().q2c(summoner) + ' (nivel ' + summoner.p1u() + ') sus niveles deben sumar exactamente ' + option.l2i_1 + '.' : 'Elige el material: ' + option.o2i_1 + ' criatura' + option.d3e() + ' de ' + zones + '. Se convierte en material de ' + EffectEngine_getInstance().q2c(card) + ' junto a ' + EffectEngine_getInstance().q2c(summoner) + '.';
 };
-protoOf(SpecialRequirements).m3e = function (zones) {
+protoOf(SpecialRequirements).n3e = function (zones) {
   // Inline function 'kotlin.collections.map' call
   var this_0 = ensureNotNull(zones);
   // Inline function 'kotlin.collections.mapTo' call
@@ -38126,7 +38177,7 @@ protoOf(SpecialRequirements).m3e = function (zones) {
       tmp = tmp_0;
     }
     var tmp1_elvis_lhs = tmp;
-    var tmp$ret$2 = (tmp1_elvis_lhs == null ? Zone_TRIBUTE_ZONE_getInstance() : tmp1_elvis_lhs).n3e();
+    var tmp$ret$2 = (tmp1_elvis_lhs == null ? Zone_TRIBUTE_ZONE_getInstance() : tmp1_elvis_lhs).o3e();
     destination.f(tmp$ret$2);
   }
   return joinToString(destination, ' o ');
@@ -38138,7 +38189,7 @@ protoOf(SpecialRequirements).c2i = function (player, instanceId) {
   card = EffectEngine_getInstance().s2c(player.y1e_1, instanceId);
   return !(card == null) && CardEffects_getInstance().l23(card) ? card : null;
 };
-protoOf(SpecialRequirements).q38 = function (room, userId) {
+protoOf(SpecialRequirements).r38 = function (room, userId) {
   var player = room.a1e(userId);
   if (player == null || !room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()) || !(ensureNotNull(userId) === room.c18_1) || !('MAIN' === room.d18_1) || room.e1j())
     return frozenListOf([]);
@@ -38166,7 +38217,7 @@ protoOf(SpecialRequirements).q38 = function (room, userId) {
   var _iterator__ex2g4s_1 = cards.h();
   while (_iterator__ex2g4s_1.i()) {
     var element_1 = _iterator__ex2g4s_1.j();
-    if ('creature' === element_1.o1c_1 && SpecialRequirements_getInstance().p39(room, userId, element_1)) {
+    if ('creature' === element_1.o1c_1 && SpecialRequirements_getInstance().q39(room, userId, element_1)) {
       destination_0.f(element_1);
     }
   }
@@ -38182,7 +38233,7 @@ protoOf(SpecialRequirements).q38 = function (room, userId) {
   var tmp = destination_1;
   return isInterface(tmp, KtMutableList) ? tmp : THROW_CCE();
 };
-protoOf(SpecialRequirements).g3e = function (player, req) {
+protoOf(SpecialRequirements).h3e = function (player, req) {
   var tmp;
   if (req.w2i_1) {
     // Inline function 'kotlin.collections.sumOf' call
@@ -38209,28 +38260,28 @@ protoOf(SpecialRequirements).g3e = function (player, req) {
   var total = tmp;
   return total >= req.j2i_1;
 };
-protoOf(SpecialRequirements).p39 = function (room, userId, card) {
+protoOf(SpecialRequirements).q39 = function (room, userId, card) {
   var tmp = EffectEngine_getInstance();
   return tmp.e2h(card, SpecialRequirements$canSpecial$lambda(room, userId, card));
 };
-protoOf(SpecialRequirements).f3e = function (room, userId, card) {
+protoOf(SpecialRequirements).g3e = function (room, userId, card) {
   if (equals('ritual', ensureNotNull(card).q1c_1, true))
-    return Rituals_instance.h3c(room, userId, card);
+    return Rituals_instance.i3c(room, userId, card);
   var player = room.a1e(userId);
   var req = this.f2i(card);
   if (player == null || req == null || card.x1c_1 == null)
     return false;
   if (!EffectEngine_getInstance().x2h(room, userId, ensureNotNull(card.x1c_1) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, null) | 0))
     return false;
-  if ('promotion' === req.h2i_1 && !this.g3e(player, req))
+  if ('promotion' === req.h2i_1 && !this.h3e(player, req))
     return false;
-  if (!this.h3e(room, player, card, req))
+  if (!this.i3e(room, player, card, req))
     return false;
   if (req.h2j())
-    return !this.l3e(player, card, req).m();
+    return !this.m3e(player, card, req).m();
   if (req.q2i_1)
-    return this.t3d(player, card, req, null).k() >= req.o2i_1;
-  var tmp0 = this.q3d(player, card, req);
+    return this.u3d(player, card, req, null).k() >= req.o2i_1;
+  var tmp0 = this.r3d(player, card, req);
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.any' call
@@ -38247,7 +38298,7 @@ protoOf(SpecialRequirements).f3e = function (room, userId, card) {
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (SpecialRequirements_getInstance().s3d(player, card, req, element) && SpecialRequirements_getInstance().o3e(room, player, card, req, element)) {
+      if (SpecialRequirements_getInstance().t3d(player, card, req, element) && SpecialRequirements_getInstance().p3e(room, player, card, req, element)) {
         tmp$ret$0 = true;
         break $l$block_0;
       }
@@ -38256,8 +38307,8 @@ protoOf(SpecialRequirements).f3e = function (room, userId, card) {
   }
   return tmp$ret$0;
 };
-protoOf(SpecialRequirements).o3e = function (room, player, card, req, summoner) {
-  var option = this.j3e(req, summoner);
+protoOf(SpecialRequirements).p3e = function (room, player, card, req, summoner) {
+  var option = this.k3e(req, summoner);
   if ('materialization' === req.h2i_1 && (ensureNotNull(option).o2i_1 > 0 || option.l2i_1 > 0))
     return true;
   return EffectEngine_getInstance().x2h(room, player.f1e_1, ensureNotNull(card.x1c_1) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, summoner) | 0);
@@ -38299,11 +38350,11 @@ protoOf(SpecialRequirements).j2j = function (player, card, summoner, materials) 
   var used = add(numberToLong(tmp_0), fromInt(tmp$ret$0));
   return compare(used, fromInt(d.h2n_1)) >= 0 ? d.i2n_1 : 0;
 };
-protoOf(SpecialRequirements).p3e = function (player, card) {
+protoOf(SpecialRequirements).q3e = function (player, card) {
   var d = CardEffects_getInstance().n2p(card);
   return !(d == null) && EffectEngine_getInstance().u2c(player).k() >= d.h2n_1 ? d.i2n_1 : 0;
 };
-protoOf(SpecialRequirements).p3d = function (room, effect, special) {
+protoOf(SpecialRequirements).q3d = function (room, effect, special) {
   var tmp0_elvis_lhs = room.a1e(effect.m21_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -38312,8 +38363,8 @@ protoOf(SpecialRequirements).p3d = function (room, effect, special) {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  var zones = this.z3c(player, special, effect);
-  var filter = ensureNotNull(special.r3c_1);
+  var zones = this.a3d(player, special, effect);
+  var filter = ensureNotNull(special.s3c_1);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
@@ -38321,7 +38372,7 @@ protoOf(SpecialRequirements).p3d = function (room, effect, special) {
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
     var tmp_0;
-    if (!(element === EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1)) && ('any' === special.n3c_1 ? !(element.q1c_1 == null) && !equals('ritual', element.q1c_1, true) : equals(ensureNotNull(special.n3c_1), element.q1c_1, true)) && !(element.x1c_1 == null) && filter.p2c(element)) {
+    if (!(element === EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1)) && ('any' === special.o3c_1 ? !(element.q1c_1 == null) && !equals('ritual', element.q1c_1, true) : equals(ensureNotNull(special.o3c_1), element.q1c_1, true)) && !(element.x1c_1 == null) && filter.p2c(element)) {
       var tmp_1 = EffectEngine_getInstance();
       tmp_0 = tmp_1.e2h(element, SpecialRequirements$specialTargets$lambda(element, room, player, special, effect));
     } else {
@@ -38333,9 +38384,9 @@ protoOf(SpecialRequirements).p3d = function (room, effect, special) {
   }
   return destination;
 };
-protoOf(SpecialRequirements).r3d = function (special, summoner, effect) {
+protoOf(SpecialRequirements).s3d = function (special, summoner, effect) {
   var self_0 = ensureNotNull(summoner.g1c_1) === effect.n21_1;
-  switch (ensureNotNull(special.q3c_1)) {
+  switch (ensureNotNull(special.r3c_1)) {
     case 'self':
       return self_0;
     case 'other':
@@ -38343,10 +38394,10 @@ protoOf(SpecialRequirements).r3d = function (special, summoner, effect) {
     case 'subject':
       return effect.d22_1 == null || ensureNotNull(summoner.g1c_1) === effect.d22_1;
     default:
-      return !startsWith(special.q3c_1, 'level:') || toInt(substring_0(special.q3c_1, 6)) === summoner.p1u();
+      return !startsWith(special.r3c_1, 'level:') || toInt(substring_0(special.r3c_1, 6)) === summoner.p1u();
   }
 };
-protoOf(SpecialRequirements).t34 = function (room, effect) {
+protoOf(SpecialRequirements).u34 = function (room, effect) {
   var trigger = EffectEngine_getInstance().m2d(room, effect);
   var by = trigger == null || trigger.x24_1 == null ? null : ensureNotNull(trigger.x24_1).u1('byCard');
   var tmp;
@@ -38354,14 +38405,14 @@ protoOf(SpecialRequirements).t34 = function (room, effect) {
     tmp = null;
   } else {
     var tmp_0 = EffectEngine_getInstance();
-    tmp = tmp_0.k2w(room, typeof by === 'string' ? by : THROW_CCE());
+    tmp = tmp_0.l2w(room, typeof by === 'string' ? by : THROW_CCE());
   }
   var source = tmp;
   return source == null || source.p1u() == null ? 0 : ensureNotNull(source.p1u());
 };
-protoOf(SpecialRequirements).z3c = function (player, special, effect) {
+protoOf(SpecialRequirements).a3d = function (player, special, effect) {
   var all = ArrayList_init_$Create$();
-  var indexedObject = JavaText_instance.r1s(this.z2h_1, ensureNotNull(special.o3c_1));
+  var indexedObject = JavaText_instance.r1s(this.z2h_1, ensureNotNull(special.p3c_1));
   var inductionVariable = 0;
   var last = indexedObject.length;
   $l$loop_0: while (inductionVariable < last) {
@@ -38402,9 +38453,9 @@ protoOf(SpecialRequirements).z3c = function (player, special, effect) {
   }
   return all;
 };
-protoOf(SpecialRequirements).e3d = function (special) {
+protoOf(SpecialRequirements).f3d = function (special) {
   // Inline function 'kotlin.collections.map' call
-  var this_0 = JavaText_instance.r1s(this.z2h_1, ensureNotNull(special.o3c_1));
+  var this_0 = JavaText_instance.r1s(this.z2h_1, ensureNotNull(special.p3c_1));
   // Inline function 'kotlin.collections.mapTo' call
   var destination = ArrayList_init_$Create$_1(this_0.length);
   var inductionVariable = 0;
@@ -38437,7 +38488,7 @@ protoOf(SpecialRequirements).e3d = function (special) {
     }
     var tmp$ret$4 = charSequenceSubSequence(this_1, startIndex, endIndex + 1 | 0);
     var tmp$ret$3 = toString(tmp$ret$4);
-    var tmp$ret$2 = tmp.g2z(tmp$ret$3);
+    var tmp$ret$2 = tmp.h2z(tmp$ret$3);
     destination.f(tmp$ret$2);
   }
   return joinToString(destination, ' o ');
@@ -38450,7 +38501,7 @@ function SpecialRequirements_getInstance() {
 }
 function SpecialSummons$specialByPlayer$lambda($room, $userId, $instanceId, $summonerId) {
   return function () {
-    return SpecialSummons_instance.q3e($room, $userId, $instanceId, $summonerId);
+    return SpecialSummons_instance.r3e($room, $userId, $instanceId, $summonerId);
   };
 }
 function SpecialSummons$handSpecial$lambda($card) {
@@ -38460,7 +38511,7 @@ function SpecialSummons$handSpecial$lambda($card) {
 }
 function SpecialSummons$canSummonInsteadOfRemoval$lambda($room, $player, $card, $ally, $reduce) {
   return function () {
-    return SpecialSummons_instance.r3e($room, $player, $card, $ally, $reduce);
+    return SpecialSummons_instance.s3e($room, $player, $card, $ally, $reduce);
   };
 }
 function SpecialSummons() {
@@ -38473,12 +38524,12 @@ protoOf(SpecialSummons).n1j = function (room, userId, instanceId, summonerId) {
   var tmp_0 = who == null ? null : SpecialRequirements_getInstance().c2i(who, instanceId);
   return tmp.e2h(tmp_0, SpecialSummons$specialByPlayer$lambda(room, userId, instanceId, summonerId));
 };
-protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
+protoOf(SpecialSummons).r3e = function (room, userId, instanceId, summonerId) {
   var player = room.a1e(userId);
   var card = player == null ? null : SpecialRequirements_getInstance().c2i(player, instanceId);
   if (!(card == null) && equals('ritual', card.q1c_1, true))
     return Rituals_instance.j2h(room, userId, instanceId, summonerId);
-  var error = Summons_instance.h2t(room, userId, 'invocar');
+  var error = Summons_instance.i2t(room, userId, 'invocar');
   if (!(error == null))
     return error;
   if (card == null)
@@ -38489,14 +38540,14 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
   if (req == null || card.x1c_1 == null) {
     return !(card.q1c_1 == null) && !(card.x1c_1 == null) ? EffectEngine_getInstance().q2c(card) + ' no tiene su Requerimiento de invocaci\xF3n especial programado' : EffectEngine_getInstance().q2c(card) + ' no tiene una invocaci\xF3n especial que el motor conozca';
   }
-  var kind = SpecialRequirements_getInstance().v3d(req.h2i_1);
-  if (!EffectEngine_getInstance().x2h(room, userId, (ensureNotNull(card.x1c_1) - SpecialRequirements_getInstance().p3e(player, card) | 0) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, null) | 0))
+  var kind = SpecialRequirements_getInstance().w3d(req.h2i_1);
+  if (!EffectEngine_getInstance().x2h(room, userId, (ensureNotNull(card.x1c_1) - SpecialRequirements_getInstance().q3e(player, card) | 0) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, null) | 0))
     return 'No tienes gemas suficientes: tienes ' + EffectEngine_getInstance().z1r(room, userId) + ' y el coste especial es ' + card.x1c_1;
-  if (Summons_instance.c3c(room, player, card, req.h2i_1, summonerId))
+  if (Summons_instance.d3c(room, player, card, req.h2i_1, summonerId))
     return null;
-  if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().g3e(player, req))
+  if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().h3e(player, req))
     return 'Para el Ascenso tus aliados deben sumar ' + req.j2i_1 + ' o m\xE1s en ' + (req.w2i_1 ? 'coste' : 'nivel');
-  if (!SpecialRequirements_getInstance().h3e(room, player, card, req)) {
+  if (!SpecialRequirements_getInstance().i3e(room, player, card, req)) {
     var tmp = 'Para invocar a ' + EffectEngine_getInstance().q2c(card) + ' debes ';
     var tmp0_elvis_lhs = req.e2j_1;
     var tmp_0;
@@ -38561,7 +38612,7 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
   var missing = tmp_1 + toString(tmp$ret$4);
   if (req.h2j()) {
     if (summonerId == null) {
-      var summoners = SpecialRequirements_getInstance().l3e(player, card, req);
+      var summoners = SpecialRequirements_getInstance().m3e(player, card, req);
       if (summoners.m())
         return missing;
       var shown = ArrayList_init_$Create$();
@@ -38572,12 +38623,12 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
       }
       shown.y1(card);
       var then = req.o2i_1 === 0 ? ' Se tributa y ' + EffectEngine_getInstance().q2c(card) + ' entra en tu retaguardia.' : ' Luego eliges ' + req.o2i_1 + (req.v2i_1 ? ' o m\xE1s ' : ' ') + EffectEngine_getInstance().f2e(req.o2i_1, 'material', 'materiales') + '.';
-      EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SPECIAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, 'Declara el invocador: 1 criatura' + SpecialRequirements_getInstance().d3e(req.i2i_1) + (req.n2i_1 > req.i2i_1 ? ' o ' + req.n2i_1 : '') + ' de ' + SpecialRequirements_getInstance().m3e(req.u2i_1) + '.' + then + ' Si no eliges ninguna, no se invoca.', 'Invocador', summoners, shown);
+      EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SPECIAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, 'Declara el invocador: 1 criatura' + SpecialRequirements_getInstance().e3e(req.i2i_1) + (req.n2i_1 > req.i2i_1 ? ' o ' + req.n2i_1 : '') + ' de ' + SpecialRequirements_getInstance().n3e(req.u2i_1) + '.' + then + ' Si no eliges ninguna, no se invoca.', 'Invocador', summoners, shown);
       ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
       return null;
     }
     var summoner = SpecialRequirements_getInstance().g2i(player, req, summonerId);
-    if (summoner == null || !SpecialRequirements_getInstance().l3e(player, card, req).n(summoner))
+    if (summoner == null || !SpecialRequirements_getInstance().m3e(player, card, req).n(summoner))
       return missing;
     if (req.o2i_1 === 0) {
       this.l2j(room, player, card, req, null, frozenListOf([summoner]), fromZone);
@@ -38591,16 +38642,16 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
     }
     shown_0.y1(card);
     shown_0.y1(summoner);
-    var materialOptions = SpecialRequirements_getInstance().t3d(player, card, req, summoner);
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SPECIAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().w3d(req, card, summoner), 'Material', materialOptions, shown_0);
+    var materialOptions = SpecialRequirements_getInstance().u3d(player, card, req, summoner);
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SPECIAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().x3d(req, card, summoner), 'Material', materialOptions, shown_0);
     ensureNotNull(room.r18_1).r1m_1 = req.o2i_1;
-    ensureNotNull(room.r18_1).s1m_1 = req.v2i_1 ? req.u3d(materialOptions.k()) : req.o2i_1;
+    ensureNotNull(room.r18_1).s1m_1 = req.v2i_1 ? req.v3d(materialOptions.k()) : req.o2i_1;
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = summoner.g1c_1;
     return null;
   }
   if (req.q2i_1) {
-    var materials = SpecialRequirements_getInstance().t3d(player, card, req, null);
+    var materials = SpecialRequirements_getInstance().u3d(player, card, req, null);
     if (materials.k() < req.o2i_1)
       return missing;
     var shown_1 = ArrayList_init_$Create$();
@@ -38609,7 +38660,7 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
       var z_1 = _iterator__ex2g4s_1.j();
       shown_1.r(EffectEngine_getInstance().d2f(player, z_1));
     }
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SPECIAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().w3d(req, card, null), 'Material', materials, shown_1);
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SPECIAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().x3d(req, card, null), 'Material', materials, shown_1);
     ensureNotNull(room.r18_1).r1m_1 = req.o2i_1;
     ensureNotNull(room.r18_1).s1m_1 = req.o2i_1;
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
@@ -38617,13 +38668,13 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
     return null;
   }
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = SpecialRequirements_getInstance().q3d(player, card, req);
+  var tmp0 = SpecialRequirements_getInstance().r3d(player, card, req);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s_2 = tmp0.h();
   while (_iterator__ex2g4s_2.i()) {
     var element = _iterator__ex2g4s_2.j();
-    if (SpecialRequirements_getInstance().s3d(player, card, req, element)) {
+    if (SpecialRequirements_getInstance().t3d(player, card, req, element)) {
       destination.f(element);
     }
   }
@@ -38634,7 +38685,7 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
   var _iterator__ex2g4s_3 = possible.h();
   while (_iterator__ex2g4s_3.i()) {
     var element_0 = _iterator__ex2g4s_3.j();
-    if (SpecialRequirements_getInstance().o3e(room, player, card, req, element_0)) {
+    if (SpecialRequirements_getInstance().p3e(room, player, card, req, element_0)) {
       destination_0.f(element_0);
     }
   }
@@ -38642,7 +38693,7 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
   if (summonerId == null) {
     if (summoners_0.m())
       return possible.m() ? missing : 'No tienes gemas suficientes para invocar a ' + EffectEngine_getInstance().q2c(card) + ' con ninguna de tus criaturas';
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SPECIAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, 'Elige el invocador: 1 criatura nivel ' + req.i2i_1 + (req.m2i_1 ? ' o mayor' : req.n2i_1 > req.i2i_1 ? ' o ' + req.n2i_1 : '') + (!(req.r2i_1 == null) ? ' (o nivel ' + req.r2i_1.i2i_1 + ')' : '') + '. ' + EffectEngine_getInstance().q2c(card) + ' ocupa su lugar y hereda su estado. Si no eliges ninguna, no se invoca.', 'Invocador', summoners_0, player.a1f_1);
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SPECIAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, 'Elige el invocador: 1 criatura nivel ' + req.i2i_1 + (req.m2i_1 ? ' o mayor' : req.n2i_1 > req.i2i_1 ? ' o ' + req.n2i_1 : '') + (!(req.r2i_1 == null) ? ' (o nivel ' + req.r2i_1.i2i_1 + ')' : '') + '. ' + EffectEngine_getInstance().q2c(card) + ' ocupa su lugar y hereda su estado. Si no eliges ninguna, no se invoca.', 'Invocador', summoners_0, player.a1f_1);
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     return null;
   }
@@ -38655,22 +38706,22 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
   }
   var summoner_0 = tmp_2;
   if (!possible.n(summoner_0))
-    return Rituals_instance.m3c(summoner_0, card) ? missing : EffectEngine_getInstance().q2c(summoner_0) + ' no comparte tipo ni color con ' + EffectEngine_getInstance().q2c(card);
-  var option = SpecialRequirements_getInstance().j3e(req, summoner_0);
+    return Rituals_instance.n3c(summoner_0, card) ? missing : EffectEngine_getInstance().q2c(summoner_0) + ' no comparte tipo ni color con ' + EffectEngine_getInstance().q2c(card);
+  var option = SpecialRequirements_getInstance().k3e(req, summoner_0);
   if ('materialization' === req.h2i_1 && (ensureNotNull(option).o2i_1 > 0 || option.l2i_1 > 0)) {
-    var materials_0 = SpecialRequirements_getInstance().t3d(player, card, req, summoner_0);
+    var materials_0 = SpecialRequirements_getInstance().u3d(player, card, req, summoner_0);
     var shown_2 = ArrayList_init_$Create$();
     var _iterator__ex2g4s_4 = ensureNotNull(option.p2i_1).h();
     while (_iterator__ex2g4s_4.i()) {
       var z_2 = _iterator__ex2g4s_4.j();
       shown_2.r(EffectEngine_getInstance().d2f(player, z_2));
     }
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SPECIAL_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().w3d(req, card, summoner_0), 'Material', materials_0, shown_2);
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SPECIAL_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 ' + kind, SpecialRequirements_getInstance().x3d(req, card, summoner_0), 'Material', materials_0, shown_2);
     var tmp_3 = ensureNotNull(room.r18_1);
     // Inline function 'kotlin.math.max' call
     var b = option.o2i_1;
     tmp_3.r1m_1 = Math.max(1, b);
-    ensureNotNull(room.r18_1).s1m_1 = option.l2i_1 > 0 ? materials_0.k() : option.v2i_1 ? option.u3d(materials_0.k()) : option.o2i_1;
+    ensureNotNull(room.r18_1).s1m_1 = option.l2i_1 > 0 ? materials_0.k() : option.v2i_1 ? option.v3d(materials_0.k()) : option.o2i_1;
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = summoner_0.g1c_1;
     return null;
@@ -38684,13 +38735,13 @@ protoOf(SpecialSummons).q3e = function (room, userId, instanceId, summonerId) {
 protoOf(SpecialSummons).l2j = function (room, player, card, req, summoner, materials, fromZone) {
   if ('promotion' === req.h2i_1 && !(summoner == null) && CardEffects_getInstance().u2p(summoner) && room.y18_1 == null && room.w18_1 == null && EffectEngine_getInstance().e1p(summoner)) {
     var options = ArrayList_init_$Create$_0(frozenListOf([summoner]));
-    options.r(CombatRules_instance.i2u(room, player.f1e_1, summoner));
+    options.r(CombatRules_instance.j2u(room, player.f1e_1, summoner));
     var opponent = room.a1e(room.l1i(player.f1e_1));
     var shown = ArrayList_init_$Create$_0(frozenListOf([summoner]));
     if (!(opponent == null)) {
       shown.r(opponent.a1f_1);
     }
-    EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_ASCEND_ATTACK_getInstance().g2s(), EffectEngine_getInstance().q2c(summoner) + ' va a ser ascendida', 'Puede declarar ataque antes: elige ' + EffectEngine_getInstance().q2c(summoner) + ' para atacar al oponente, o una criatura enemiga agotada. ' + 'O ninguna para ascenderla ya.', 'Atacar', options, shown);
+    EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_ASCEND_ATTACK_getInstance().i2s(), EffectEngine_getInstance().q2c(summoner) + ' va a ser ascendida', 'Puede declarar ataque antes: elige ' + EffectEngine_getInstance().q2c(summoner) + ' para atacar al oponente, o una criatura enemiga agotada. ' + 'O ninguna para ascenderla ya.', 'Atacar', options, shown);
     ensureNotNull(room.r18_1).r1m_1 = 0;
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = summoner.g1c_1;
@@ -38698,7 +38749,7 @@ protoOf(SpecialSummons).l2j = function (room, player, card, req, summoner, mater
   }
   var gain = 'promotion' === req.h2i_1 && !(summoner == null) ? CardEffects_getInstance().v2p(summoner) : null;
   if (!(gain == null) && player.f1e_1 == room.c18_1 && room.w18_1 == null && room.a19_1.f('ascend-gain|' + card.g1c_1)) {
-    EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_ASCEND_GAIN_getInstance().g2s(), EffectEngine_getInstance().q2c(ensureNotNull(summoner)) + ' va a ser ascendida', 'Cuando esta carta fuera a ser ascendida: esta carta gana ' + gain + ' hasta el final del turno.', 'Activar', frozenListOf([summoner]), frozenListOf([summoner]));
+    EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_ASCEND_GAIN_getInstance().i2s(), EffectEngine_getInstance().q2c(ensureNotNull(summoner)) + ' va a ser ascendida', 'Cuando esta carta fuera a ser ascendida: esta carta gana ' + gain + ' hasta el final del turno.', 'Activar', frozenListOf([summoner]), frozenListOf([summoner]));
     ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = summoner.g1c_1;
@@ -38714,7 +38765,7 @@ protoOf(SpecialSummons).l2j = function (room, player, card, req, summoner, mater
     // Inline function 'kotlin.math.max' call
     var b = ensureNotNull(card.x1c_1) - SpecialRequirements_getInstance().j2j(player, card, summoner, materials) | 0;
     var tmp$ret$0 = Math.max(0, b);
-    tmp = tmp_0.l2x(room, player, tmp_1, req.h2i_1, card, summoner, tmp$ret$0);
+    tmp = tmp_0.m2x(room, player, tmp_1, req.h2i_1, card, summoner, tmp$ret$0);
   } else {
     tmp = false;
   }
@@ -38727,7 +38778,7 @@ protoOf(SpecialSummons).l2j = function (room, player, card, req, summoner, mater
       room.a19_1.f('discount-materials|' + card.g1c_1 + '|' + joinToString(EffectEngine_getInstance().a2e(materials), ','));
     }
     var fromSummoner = equals_0(ensureNotNull(use.h2k_1.a2k_1).p2j_1, PaymentKind_SUMMONER_RESOURCES_TO_TRIBUTES_getInstance());
-    EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_SUMMONER_DISCOUNT_getInstance().g2s(), EffectEngine_getInstance().q2c(use.i2k_1) + ' \xB7 ' + use.h2k_1.u2j_1, CostModifiers_getInstance().r2x(use), 'Pagar', CostModifiers_getInstance().q2x(player, use, card, summoner), fromSummoner ? ensureNotNull(summoner).p1d_1 : player.y1e_1);
+    EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_SUMMONER_DISCOUNT_getInstance().i2s(), EffectEngine_getInstance().q2c(use.i2k_1) + ' \xB7 ' + use.h2k_1.u2j_1, CostModifiers_getInstance().s2x(use), 'Pagar', CostModifiers_getInstance().r2x(player, use, card, summoner), fromSummoner ? ensureNotNull(summoner).p1d_1 : player.y1e_1);
     ensureNotNull(room.r18_1).s1m_1 = ensureNotNull(use.h2k_1.a2k_1).q2j_1;
     if (equals_0(ensureNotNull(use.h2k_1.a2k_1).p2j_1, PaymentKind_SELF_DAMAGE_getInstance()) || fromSummoner)
       ensureNotNull(room.r18_1).r1m_1 = 0;
@@ -38749,7 +38800,7 @@ protoOf(SpecialSummons).q2k = function (room, player, card, req, summoner, mater
   // Inline function 'kotlin.math.max' call
   var b = (ensureNotNull(card.x1c_1) - reduce | 0) - SpecialRequirements_getInstance().j2j(player, card, summoner, materials) | 0;
   var cost = Math.max(0, b);
-  cost = cost - CostModifiers_getInstance().m2x(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, summoner, cost) | 0;
+  cost = cost - CostModifiers_getInstance().n2x(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, summoner, cost) | 0;
   EffectEngine_getInstance().t2k(room, userId, cost);
   if ('resources' === fromZone) {
     var _iterator__ex2g4s = player.a1f_1.h();
@@ -38773,7 +38824,7 @@ protoOf(SpecialSummons).q2k = function (room, player, card, req, summoner, mater
       EffectEngine_getInstance().y2e(summoner, null, 'Gana ' + gain + ' hasta el final del turno', 'turn', 0, gain);
     }
     Summons_instance.u1j(room, card, summoner);
-    Removals_getInstance().x39(room, summoner);
+    Removals_getInstance().y39(room, summoner);
     player.a1f_1.y1(summoner);
     Removals_getInstance().i1f(summoner);
     used = EffectEngine_getInstance().q2c(summoner);
@@ -38850,30 +38901,30 @@ protoOf(SpecialSummons).q2k = function (room, player, card, req, summoner, mater
       break;
   }
   player.a1f_1.f(card);
-  EffectEngine_getInstance().g2e(room, 'SPECIAL_SUMMON', userId, card, fromZone, 'field', effect, frozenMapOf_2('summonType', req.h2i_1, 'cost', cost, 'used', (summoner == null ? 0 : 1) + materials.k() | 0), plus(player.g1e_1, ' invoca por ') + SpecialRequirements_getInstance().v3d(req.h2i_1) + ' a ' + EffectEngine_getInstance().q2c(card) + ' usando ' + used + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + (!(effect == null) ? ' (' + effect.p21_1 + ')' : ''));
-  Summons_instance.s3e(room, player, card, effect);
+  EffectEngine_getInstance().g2e(room, 'SPECIAL_SUMMON', userId, card, fromZone, 'field', effect, frozenMapOf_2('summonType', req.h2i_1, 'cost', cost, 'used', (summoner == null ? 0 : 1) + materials.k() | 0), plus(player.g1e_1, ' invoca por ') + SpecialRequirements_getInstance().w3d(req.h2i_1) + ' a ' + EffectEngine_getInstance().q2c(card) + ' usando ' + used + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + (!(effect == null) ? ' (' + effect.p21_1 + ')' : ''));
+  Summons_instance.t3e(room, player, card, effect);
 };
-protoOf(SpecialSummons).b3a = function (room, player, card, ally, reduce) {
+protoOf(SpecialSummons).c3a = function (room, player, card, ally, reduce) {
   var tmp = EffectEngine_getInstance();
   return tmp.e2h(card, SpecialSummons$canSummonInsteadOfRemoval$lambda(room, player, card, ally, reduce));
 };
-protoOf(SpecialSummons).r3e = function (room, player, card, ally, reduce) {
+protoOf(SpecialSummons).s3e = function (room, player, card, ally, reduce) {
   var req = SpecialRequirements_getInstance().f2i(card);
   if (req == null || card.x1c_1 == null || 'ritual' === req.h2i_1 || req.h2j() || req.q2i_1)
     return false;
-  if (!SpecialRequirements_getInstance().q3d(player, card, req).n(ally) || !SpecialRequirements_getInstance().s3d(player, card, req, ally))
+  if (!SpecialRequirements_getInstance().r3d(player, card, req).n(ally) || !SpecialRequirements_getInstance().t3d(player, card, req, ally))
     return false;
-  if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().g3e(player, req))
+  if ('promotion' === req.h2i_1 && !SpecialRequirements_getInstance().h3e(player, req))
     return false;
   return EffectEngine_getInstance().x2h(room, player.f1e_1, (ensureNotNull(card.x1c_1) - reduce | 0) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, card, ally) | 0);
 };
-protoOf(SpecialSummons).e3a = function (room, player, card, ally) {
+protoOf(SpecialSummons).f3a = function (room, player, card, ally) {
   var req = SpecialRequirements_getInstance().f2i(card);
   var s = CardEffects_getInstance().r2p(card);
   var from = !(EffectEngine_getInstance().s2c(player.u1e_1, card.g1c_1) == null) ? 'hand' : 'tributeZone';
-  var option = SpecialRequirements_getInstance().j3e(req, ally);
+  var option = SpecialRequirements_getInstance().k3e(req, ally);
   if ('materialization' === ensureNotNull(req).h2i_1 && (ensureNotNull(option).o2i_1 > 0 || option.l2i_1 > 0)) {
-    var materials = SpecialRequirements_getInstance().t3d(player, card, req, ally);
+    var materials = SpecialRequirements_getInstance().u3d(player, card, req, ally);
     var shown = ArrayList_init_$Create$();
     var _iterator__ex2g4s = ensureNotNull(option.p2i_1).h();
     while (_iterator__ex2g4s.i()) {
@@ -38882,12 +38933,12 @@ protoOf(SpecialSummons).e3a = function (room, player, card, ally) {
     }
     shown.y1(card);
     shown.y1(ally);
-    EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_REPLACE_SUMMON_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 en lugar de que ' + EffectEngine_getInstance().q2c(ally) + ' sea removida', SpecialRequirements_getInstance().w3d(req, card, ally), 'Material', materials, shown);
+    EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_REPLACE_SUMMON_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 en lugar de que ' + EffectEngine_getInstance().q2c(ally) + ' sea removida', SpecialRequirements_getInstance().x3d(req, card, ally), 'Material', materials, shown);
     var tmp = ensureNotNull(room.r18_1);
     // Inline function 'kotlin.math.max' call
     var b = option.o2i_1;
     tmp.r1m_1 = Math.max(1, b);
-    ensureNotNull(room.r18_1).s1m_1 = option.l2i_1 > 0 ? materials.k() : option.v2i_1 ? option.u3d(materials.k()) : option.o2i_1;
+    ensureNotNull(room.r18_1).s1m_1 = option.l2i_1 > 0 ? materials.k() : option.v2i_1 ? option.v3d(materials.k()) : option.o2i_1;
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = ally.g1c_1;
     return Unit_instance;
@@ -38945,10 +38996,10 @@ function SpecialSummons_getInstance() {
   return SpecialSummons_instance;
 }
 function declaredMaterialsEnough($this, player, card, req, c) {
-  var materials = $this.t3e(player, card, req, c);
+  var materials = $this.u3e(player, card, req, c);
   var tmp;
   if (req.l2i_1 > 0) {
-    tmp = Rituals_instance.v3b(materials, req.l2i_1);
+    tmp = Rituals_instance.w3b(materials, req.l2i_1);
   } else {
     var tmp_0 = materials.k();
     // Inline function 'kotlin.math.max' call
@@ -38964,7 +39015,7 @@ function StepHelpers() {
   this.z2c_1 = 'return-at-attack-end|';
 }
 protoOf(StepHelpers).g2d = function (effect, player, sacrifice) {
-  var all = sacrifice.c2e_1 ? this.u3e(player) : EffectEngine_getInstance().u2c(player);
+  var all = sacrifice.c2e_1 ? this.v3e(player) : EffectEngine_getInstance().u2c(player);
   var tmp;
   if (sacrifice.d2e_1) {
     // Inline function 'kotlin.collections.filter' call
@@ -38984,7 +39035,7 @@ protoOf(StepHelpers).g2d = function (effect, player, sacrifice) {
   return tmp;
 };
 protoOf(StepHelpers).b2e = function (room, effect, instruction, chosenLabel, cards, validIds, count) {
-  var prompt = this.l2s(room, effect, Kind_PICK_getInstance(), instruction);
+  var prompt = this.m2s(room, effect, Kind_PICK_getInstance(), instruction);
   prompt.p1m_1 = ArrayList_init_$Create$_0(ensureNotNull(cards));
   prompt.q1m_1 = ArrayList_init_$Create$_0(validIds);
   prompt.r1m_1 = count;
@@ -38992,7 +39043,7 @@ protoOf(StepHelpers).b2e = function (room, effect, instruction, chosenLabel, car
   prompt.o1m_1 = chosenLabel;
   room.r18_1 = prompt;
 };
-protoOf(StepHelpers).l2s = function (room, effect, kind, instruction) {
+protoOf(StepHelpers).m2s = function (room, effect, kind, instruction) {
   var p = new Prompt();
   p.f1m_1 = room.y2k('prompt');
   p.g1m_1 = kind;
@@ -39007,8 +39058,8 @@ protoOf(StepHelpers).l2s = function (room, effect, kind, instruction) {
   p.n1m_1 = instruction;
   return p;
 };
-protoOf(StepHelpers).k2u = function (room, effect, filter) {
-  if (this.r34(room, effect))
+protoOf(StepHelpers).l2u = function (room, effect, filter) {
+  if (this.s34(room, effect))
     return frozenListOf([]);
   var tmp0_elvis_lhs = room.a1e(room.l1i(effect.m21_1));
   var tmp;
@@ -39018,8 +39069,8 @@ protoOf(StepHelpers).k2u = function (room, effect, filter) {
     tmp = tmp0_elvis_lhs;
   }
   var opponent = tmp;
-  var level = this.p34(room, effect);
-  var front = EffectEngine_getInstance().r2u(opponent.a1f_1);
+  var level = this.q34(room, effect);
+  var front = EffectEngine_getInstance().s2u(opponent.a1f_1);
   var f = ensureNotNull(filter);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
@@ -39027,13 +39078,13 @@ protoOf(StepHelpers).k2u = function (room, effect, filter) {
   var _iterator__ex2g4s = front.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if ('creature' === element.o1c_1 && f.p2c(element) && !EffectEngine_getInstance().v2t(element, level)) {
+    if ('creature' === element.o1c_1 && f.p2c(element) && !EffectEngine_getInstance().w2t(element, level)) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(StepHelpers).d2v = function (room, effect, owner, target, amount, untilNextTurn) {
+protoOf(StepHelpers).e2v = function (room, effect, owner, target, amount, untilNextTurn) {
   if (untilNextTurn)
     target.g1d_1 = target.g1d_1 - amount | 0;
   else
@@ -39047,16 +39098,16 @@ protoOf(StepHelpers).d2v = function (room, effect, owner, target, amount, untilN
     Removals_getInstance().w2e(room, target, owner, false, 'EFFECT', effect.m21_1, null, effect);
   }
 };
-protoOf(StepHelpers).e33 = function (room, effect, player, damage) {
-  this.h2u(room, effect, player, damage, true);
+protoOf(StepHelpers).f33 = function (room, effect, player, damage) {
+  this.i2u(room, effect, player, damage, true);
 };
-protoOf(StepHelpers).h2u = function (room, effect, player, damage, offer) {
+protoOf(StepHelpers).i2u = function (room, effect, player, damage, offer) {
   var defender = room.a1e(room.l1i(ensureNotNull(player).f1e_1));
   if (defender == null || defender.x1e_1.m())
     return Unit_instance;
-  if (offer && !CombatRules_instance.a2u(defender).m()) {
+  if (offer && !CombatRules_instance.b2u(defender).m()) {
     room.a19_1.f('pending-effect-damage|' + effect.k21_1 + '|' + damage + '|' + player.f1e_1);
-    CombatRules_instance.z2t(room, defender, damage, 'effect');
+    CombatRules_instance.a2u(room, defender, damage, 'effect');
     return Unit_instance;
   }
   EffectEngine_getInstance().c2h(room, defender, damage, player.f1e_1, effect, effect.n21_1, plus(effect.p21_1, ' inflige ') + damage + ' de da\xF1o directo: ' + defender.g1e_1 + ' ');
@@ -39064,31 +39115,31 @@ protoOf(StepHelpers).h2u = function (room, effect, player, damage, offer) {
     EffectEngine_getInstance().d2h(room, defender);
   }
 };
-protoOf(StepHelpers).v3e = function (step) {
+protoOf(StepHelpers).w3e = function (step) {
   var tmp;
   if (!(step instanceof Do)) {
     tmp = true;
   } else {
-    var tmp_0 = step.b2t_1;
+    var tmp_0 = step.c2t_1;
     tmp = !(tmp_0 instanceof Sequence);
   }
   if (tmp)
     return null;
-  var _iterator__ex2g4s = ensureNotNull(step.b2t_1.w3e_1).h();
+  var _iterator__ex2g4s = ensureNotNull(step.c2t_1.x3e_1).h();
   while (_iterator__ex2g4s.i()) {
     var a = _iterator__ex2g4s.j();
     var tmp_1;
     if (a instanceof SummonSpecial) {
-      tmp_1 = 'subject' === ensureNotNull(a.x3e_1).q3c_1;
+      tmp_1 = 'subject' === ensureNotNull(a.y3e_1).r3c_1;
     } else {
       tmp_1 = false;
     }
     if (tmp_1)
-      return a.x3e_1;
+      return a.y3e_1;
   }
   return null;
 };
-protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
+protoOf(StepHelpers).k31 = function (room, effect, player, attacker) {
   var steps = ArrayList_init_$Create$_0(ensureNotNull(EffectEngine_getInstance().z2g(effect).s1w_1));
   steps.r(ensureNotNull(EffectEngine_getInstance().z2g(effect).t1w_1));
   // Inline function 'kotlin.collections.filter' call
@@ -39121,13 +39172,13 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
           var tmp_3;
           var tmp_4;
           if (element_0 instanceof Do) {
-            var tmp_5 = element_0.b2t_1;
+            var tmp_5 = element_0.c2t_1;
             tmp_4 = tmp_5 instanceof Move_0;
           } else {
             tmp_4 = false;
           }
           if (tmp_4) {
-            tmp_3 = 'materials:subject' === element_0.b2t_1.z3e_1;
+            tmp_3 = 'materials:subject' === element_0.c2t_1.a3f_1;
           } else {
             tmp_3 = false;
           }
@@ -39166,7 +39217,7 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
           var element_1 = _iterator__ex2g4s_1.j();
           var tmp_7;
           if (element_1 instanceof SummonLikeSubject) {
-            tmp_7 = StepHelpers_getInstance().j3f(player, element_1, element).m();
+            tmp_7 = StepHelpers_getInstance().k3f(player, element_1, element).m();
           } else {
             tmp_7 = false;
           }
@@ -39193,7 +39244,7 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
     var _iterator__ex2g4s_2 = resolution.h();
     while (_iterator__ex2g4s_2.i()) {
       var element_2 = _iterator__ex2g4s_2.j();
-      if (!(StepHelpers_getInstance().v3e(element_2) == null)) {
+      if (!(StepHelpers_getInstance().w3e(element_2) == null)) {
         tmp$ret$7 = element_2;
         break $l$block_3;
       }
@@ -39201,8 +39252,8 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
     tmp$ret$7 = null;
   }
   var summonStep = tmp$ret$7;
-  var special = summonStep == null ? null : SpecialProcedure_getInstance().c3d(room, effect, this.v3e(summonStep));
-  if (special == null || this.k3f(resolution, indexOf_1(resolution, summonStep)))
+  var special = summonStep == null ? null : SpecialProcedure_getInstance().d3d(room, effect, this.w3e(summonStep));
+  if (special == null || this.l3f(resolution, indexOf_1(resolution, summonStep)))
     return valid;
   var chosen = effect.d22_1;
   // Inline function 'kotlin.collections.filter' call
@@ -39212,7 +39263,7 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
   while (_iterator__ex2g4s_3.i()) {
     var element_3 = _iterator__ex2g4s_3.j();
     effect.d22_1 = element_3.g1c_1;
-    if (!SpecialRequirements_getInstance().p3d(room, effect, special).m()) {
+    if (!SpecialRequirements_getInstance().q3d(room, effect, special).m()) {
       destination_0.f(element_3);
     }
   }
@@ -39220,7 +39271,7 @@ protoOf(StepHelpers).j31 = function (room, effect, player, attacker) {
   effect.d22_1 = chosen;
   return result;
 };
-protoOf(StepHelpers).r34 = function (room, effect) {
+protoOf(StepHelpers).s34 = function (room, effect) {
   var player = room.a1e(effect.m21_1);
   var source = player == null ? null : EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1);
   return !(source == null) && 'creature' === source.o1c_1 && !EffectEngine_getInstance().e1p(source);
@@ -39273,7 +39324,7 @@ protoOf(StepHelpers).f2d = function (player) {
   }
   return destination;
 };
-protoOf(StepHelpers).u3e = function (player) {
+protoOf(StepHelpers).v3e = function (player) {
   var allies = EffectEngine_getInstance().u2c(player);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
@@ -39297,7 +39348,7 @@ protoOf(StepHelpers).u3e = function (player) {
       var _iterator__ex2g4s_0 = allies.h();
       while (_iterator__ex2g4s_0.i()) {
         var element_0 = _iterator__ex2g4s_0.j();
-        if (!(element_0 === element) && EffectEngine_getInstance().i2z(element_0)) {
+        if (!(element_0 === element) && EffectEngine_getInstance().j2z(element_0)) {
           tmp$ret$3 = true;
           break $l$block_0;
         }
@@ -39321,12 +39372,12 @@ protoOf(StepHelpers).p2d = function (room, effect) {
   var player = tmp;
   return EffectEngine_getInstance().s2c(player.a1f_1, !(effect.d22_1 == null) ? effect.d22_1 : effect.n21_1);
 };
-protoOf(StepHelpers).t2u = function (room, effect, opponent) {
+protoOf(StepHelpers).u2u = function (room, effect, opponent) {
   var valid = ArrayList_init_$Create$();
   var _iterator__ex2g4s = effect.x21_1.h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
-    var target = opponent == null ? null : EffectEngine_getInstance().x2y(opponent, id);
+    var target = opponent == null ? null : EffectEngine_getInstance().y2y(opponent, id);
     if (!(target == null))
       valid.f(target);
     else {
@@ -39335,8 +39386,8 @@ protoOf(StepHelpers).t2u = function (room, effect, opponent) {
   }
   return valid;
 };
-protoOf(StepHelpers).b39 = function (room, effect, kind, instruction, valid, max) {
-  var prompt = this.l2s(room, effect, kind, instruction);
+protoOf(StepHelpers).c39 = function (room, effect, kind, instruction, valid, max) {
+  var prompt = this.m2s(room, effect, kind, instruction);
   prompt.p1m_1 = ArrayList_init_$Create$_0(effect.h22_1);
   prompt.q1m_1 = ArrayList_init_$Create$_0(valid);
   prompt.r1m_1 = 0;
@@ -39347,7 +39398,7 @@ protoOf(StepHelpers).b39 = function (room, effect, kind, instruction, valid, max
   prompt.o1m_1 = 'A tu mano';
   room.r18_1 = prompt;
 };
-protoOf(StepHelpers).c39 = function (room, effect, player, picks) {
+protoOf(StepHelpers).d39 = function (room, effect, player, picks) {
   var _iterator__ex2g4s = picks.h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
@@ -39405,20 +39456,20 @@ protoOf(StepHelpers).o2e = function (player, card) {
   }
   return destination;
 };
-protoOf(StepHelpers).k3f = function (steps, index) {
+protoOf(StepHelpers).l3f = function (steps, index) {
   var inductionVariable = 0;
   if (inductionVariable < index)
     do {
       var i = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
-      var covers = Chain_instance.p2s(steps.l(i));
+      var covers = Chain_instance.q2s(steps.l(i));
       if (covers > 0 && index <= (i + covers | 0))
         return true;
     }
      while (inductionVariable < index);
   return false;
 };
-protoOf(StepHelpers).p34 = function (room, effect) {
+protoOf(StepHelpers).q34 = function (room, effect) {
   var source = EffectEngine_getInstance().l2e(room, effect.m21_1, effect.n21_1);
   return source == null || source.p1u() == null ? 0 : ensureNotNull(source.p1u());
 };
@@ -39520,23 +39571,23 @@ protoOf(StepHelpers).c2f = function (player, csv, card) {
   }
   return csv;
 };
-protoOf(StepHelpers).j3f = function (player, like, ally) {
+protoOf(StepHelpers).k3f = function (player, like, ally) {
   if (ally.p1u() == null)
     return frozenListOf([]);
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = EffectEngine_getInstance().d2f(player, like.k2z_1);
+  var tmp0 = EffectEngine_getInstance().d2f(player, like.l2z_1);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if ('creature' === element.o1c_1 && !(element.t1c_1 == null) && ensureNotNull(like.l2z_1).p2c(element) && ally.p1u() == element.p1u() && !equals(EffectEngine_getInstance().q2c(element), EffectEngine_getInstance().q2c(ally), true)) {
+    if ('creature' === element.o1c_1 && !(element.t1c_1 == null) && ensureNotNull(like.m2z_1).p2c(element) && ally.p1u() == element.p1u() && !equals(EffectEngine_getInstance().q2c(element), EffectEngine_getInstance().q2c(ally), true)) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(StepHelpers).l3f = function (room, effect, sum) {
+protoOf(StepHelpers).m3f = function (room, effect, sum) {
   var tmp0_elvis_lhs = room.a1e(effect.m21_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -39545,21 +39596,21 @@ protoOf(StepHelpers).l3f = function (room, effect, sum) {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  var cards = EffectEngine_getInstance().d2f(player, sum.s2z_1);
-  var filter = ensureNotNull(sum.t2z_1);
+  var cards = EffectEngine_getInstance().d2f(player, sum.t2z_1);
+  var filter = ensureNotNull(sum.u2z_1);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!(ensureNotNull(element.g1c_1) === effect.n21_1) && 'creature' === element.o1c_1 && !(element.t1c_1 == null) && !(element.p1u() == null) && filter.p2c(element) && ensureNotNull(element.p1u()) <= sum.u2z_1) {
+    if (!(ensureNotNull(element.g1c_1) === effect.n21_1) && 'creature' === element.o1c_1 && !(element.t1c_1 == null) && !(element.p1u() == null) && filter.p2c(element) && ensureNotNull(element.p1u()) <= sum.v2z_1) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(StepHelpers).c2v = function (cards, ids) {
+protoOf(StepHelpers).d2v = function (cards, ids) {
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.all' call
@@ -39585,7 +39636,7 @@ protoOf(StepHelpers).c2v = function (cards, ids) {
   }
   return tmp$ret$0;
 };
-protoOf(StepHelpers).v2u = function (room, card) {
+protoOf(StepHelpers).w2u = function (room, card) {
   if (card == null)
     return 0;
   var timeline = room.o18_1;
@@ -39606,7 +39657,7 @@ protoOf(StepHelpers).v2u = function (room, card) {
      while (0 <= inductionVariable);
   return card.p1u() == null ? 0 : ensureNotNull(card.p1u());
 };
-protoOf(StepHelpers).s32 = function (cards, order) {
+protoOf(StepHelpers).t32 = function (cards, order) {
   var result = ArrayList_init_$Create$();
   if (!(order == null)) {
     var _iterator__ex2g4s = order.h();
@@ -39670,7 +39721,7 @@ protoOf(StepHelpers).e2f = function (room, effect, owner, card, fromZone, toFron
   owner.a1f_1.f(card);
   EffectEngine_getInstance().g2e(room, 'SEND', effect.m21_1, card, fromZone, 'field', effect, frozenMapOf_1('ownerId', owner.f1e_1, 'frontLine', toFront), plus(owner.g1e_1, ' coloca ') + EffectEngine_getInstance().q2c(card) + ' en su ' + (toFront ? 'l\xEDnea frontal' : 'retaguardia') + (exhausted ? ', agotada' : '') + ' (' + effect.p21_1 + ')');
 };
-protoOf(StepHelpers).i31 = function (player, filter) {
+protoOf(StepHelpers).j31 = function (player, filter) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = EffectEngine_getInstance().u2c(player);
   // Inline function 'kotlin.collections.filterTo' call
@@ -39684,7 +39735,7 @@ protoOf(StepHelpers).i31 = function (player, filter) {
   }
   return destination;
 };
-protoOf(StepHelpers).z38 = function (cards, filters) {
+protoOf(StepHelpers).a39 = function (cards, filters) {
   if (ensureNotNull(filters).m())
     return true;
   var first = filters.l(0);
@@ -39695,7 +39746,7 @@ protoOf(StepHelpers).z38 = function (cards, filters) {
       continue $l$loop;
     var rest = ArrayList_init_$Create$_0(cards);
     rest.y1(c);
-    if (this.z38(rest, filters.p1(1, filters.k())))
+    if (this.a39(rest, filters.p1(1, filters.k())))
       return true;
   }
   return false;
@@ -39715,7 +39766,7 @@ protoOf(StepHelpers).a2d = function (player, a) {
   }
   return destination;
 };
-protoOf(StepHelpers).m2u = function (cards, sum) {
+protoOf(StepHelpers).n2u = function (cards, sum) {
   var reach = booleanArray(sum + 1 | 0);
   reach[0] = true;
   var _iterator__ex2g4s = cards.h();
@@ -39737,7 +39788,7 @@ protoOf(StepHelpers).m2u = function (cards, sum) {
   }
   return reach[sum];
 };
-protoOf(StepHelpers).a34 = function (room, effect) {
+protoOf(StepHelpers).b34 = function (room, effect) {
   var tmp0_elvis_lhs = room.y18_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -39750,7 +39801,7 @@ protoOf(StepHelpers).a34 = function (room, effect) {
   var other = ensureNotNull(self_0) === c.t1z_1 ? c.x1z_1 : self_0 == c.x1z_1 ? c.t1z_1 : null;
   return other == null ? null : EffectEngine_getInstance().y24(room, other);
 };
-protoOf(StepHelpers).d39 = function (filters, cards) {
+protoOf(StepHelpers).e39 = function (filters, cards) {
   if (cards.m())
     return true;
   var first = cards.l(0);
@@ -39764,13 +39815,13 @@ protoOf(StepHelpers).d39 = function (filters, cards) {
         continue $l$loop;
       var rest = ArrayList_init_$Create$_0(filters);
       rest.f2(i);
-      if (this.d39(rest, cards.p1(1, cards.k())))
+      if (this.e39(rest, cards.p1(1, cards.k())))
         return true;
     }
      while (inductionVariable <= last);
   return false;
 };
-protoOf(StepHelpers).m3f = function (player, card, req, zones) {
+protoOf(StepHelpers).n3f = function (player, card, req, zones) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = StepHelpers_getInstance().s2e(player, zones);
   // Inline function 'kotlin.collections.filterTo' call
@@ -39778,13 +39829,13 @@ protoOf(StepHelpers).m3f = function (player, card, req, zones) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!(element === card) && 'creature' === element.o1c_1 && !(SpecialRequirements_getInstance().j3e(req, element) == null) && Rituals_instance.m3c(element, card) && declaredMaterialsEnough(StepHelpers_getInstance(), player, card, req, element)) {
+    if (!(element === card) && 'creature' === element.o1c_1 && !(SpecialRequirements_getInstance().k3e(req, element) == null) && Rituals_instance.n3c(element, card) && declaredMaterialsEnough(StepHelpers_getInstance(), player, card, req, element)) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(StepHelpers).t3e = function (player, card, req, summoner) {
+protoOf(StepHelpers).u3e = function (player, card, req, summoner) {
   var all = ArrayList_init_$Create$();
   var _iterator__ex2g4s = ensureNotNull(req.p2i_1).h();
   while (_iterator__ex2g4s.i()) {
@@ -39797,7 +39848,7 @@ protoOf(StepHelpers).t3e = function (player, card, req, summoner) {
   var _iterator__ex2g4s_0 = all.h();
   while (_iterator__ex2g4s_0.i()) {
     var element = _iterator__ex2g4s_0.j();
-    if (!(element === card) && !(element === summoner) && 'creature' === element.o1c_1 && !(element.p1u() == null) && Rituals_instance.m3c(element, card) && (req.l2i_1 > 0 || EffectEngine_getInstance().q2y(element, req.k2i_1))) {
+    if (!(element === card) && !(element === summoner) && 'creature' === element.o1c_1 && !(element.p1u() == null) && Rituals_instance.n3c(element, card) && (req.l2i_1 > 0 || EffectEngine_getInstance().r2y(element, req.k2i_1))) {
       destination.f(element);
     }
   }
@@ -39838,7 +39889,7 @@ protoOf(StepHelpers).r2e = function (csv) {
     }
     var tmp$ret$4 = charSequenceSubSequence(this_1, startIndex, endIndex + 1 | 0);
     var tmp$ret$3 = toString(tmp$ret$4);
-    var tmp$ret$2 = tmp.g2z(tmp$ret$3);
+    var tmp$ret$2 = tmp.h2z(tmp$ret$3);
     destination.f(tmp$ret$2);
   }
   return joinToString(destination, ' o ');
@@ -39856,19 +39907,19 @@ protoOf(SummonSteps).r2c = function (room, effect, step) {
   var onField = EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1);
   var tmp;
   if (step instanceof SummonFreeLevelSum) {
-    tmp = !StepHelpers_getInstance().l3f(room, effect, step).m();
+    tmp = !StepHelpers_getInstance().m3f(room, effect, step).m();
   } else {
     if (step instanceof SpecialSelfDeclaredSummoner) {
       var self_0 = EffectEngine_getInstance().s2c(player.u1e_1, effect.n21_1);
       var req = self_0 == null ? null : SpecialRequirements_getInstance().f2i(self_0);
-      tmp = (!(req == null) && !(ensureNotNull(self_0).x1c_1 == null) && !StepHelpers_getInstance().m3f(player, self_0, req, step.h30_1).m() && EffectEngine_getInstance().x2h(room, player.f1e_1, ensureNotNull(self_0.x1c_1) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, self_0, null) | 0));
+      tmp = (!(req == null) && !(ensureNotNull(self_0).x1c_1 == null) && !StepHelpers_getInstance().n3f(player, self_0, req, step.i30_1).m() && EffectEngine_getInstance().x2h(room, player.f1e_1, ensureNotNull(self_0.x1c_1) - CostModifiers_getInstance().k2j(room, player, Event_SPECIAL_SUMMON_getInstance(), req.h2i_1, self_0, null) | 0));
     } else {
       if (step instanceof ChooseOpponentTribute) {
         var opponent = room.a1e(room.l1i(player.f1e_1));
         var tmp_0;
         if (!(opponent == null)) {
           // Inline function 'kotlin.let' call
-          var f = ensureNotNull(step.d30_1);
+          var f = ensureNotNull(step.e30_1);
           var tmp0 = opponent.y1e_1;
           var tmp$ret$2;
           $l$block_0: {
@@ -39920,15 +39971,15 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
     var req = tmp;
     ensureNotNull(self_0);
     if (effect.f22_1 == null) {
-      var valid = StepHelpers_getInstance().m3f(player, self_0, req, step.h30_1);
+      var valid = StepHelpers_getInstance().n3f(player, self_0, req, step.i30_1);
       if (valid.m())
         return false;
-      StepHelpers_getInstance().b2e(room, effect, 'Elige la criatura de tu ' + StepHelpers_getInstance().r2e(step.h30_1) + ' que invoca especialmente a ' + EffectEngine_getInstance().q2c(self_0) + ' (nivel ' + req.i2i_1 + '). Se convierte en su material.', 'Invocador', StepHelpers_getInstance().s2e(player, step.h30_1), EffectEngine_getInstance().a2e(valid), 1);
+      StepHelpers_getInstance().b2e(room, effect, 'Elige la criatura de tu ' + StepHelpers_getInstance().r2e(step.i30_1) + ' que invoca especialmente a ' + EffectEngine_getInstance().q2c(self_0) + ' (nivel ' + req.i2i_1 + '). Se convierte en su material.', 'Invocador', StepHelpers_getInstance().s2e(player, step.i30_1), EffectEngine_getInstance().a2e(valid), 1);
       ensureNotNull(room.r18_1).r1m_1 = 0;
       return true;
     }
     var summoner = EffectEngine_getInstance().l2e(room, userId, effect.f22_1);
-    var materials = StepHelpers_getInstance().t3e(player, self_0, req, summoner);
+    var materials = StepHelpers_getInstance().u3e(player, self_0, req, summoner);
     StepHelpers_getInstance().b2e(room, effect, 'Elige los materiales de ' + EffectEngine_getInstance().q2c(self_0) + (req.l2i_1 > 0 ? ': deben sumar exactamente ' + req.l2i_1 + ' en nivel.' : '.'), 'Material', StepHelpers_getInstance().s2e(player, joinToString(ensureNotNull(req.p2i_1), ',')), EffectEngine_getInstance().a2e(materials), materials.k());
     ensureNotNull(room.r18_1).r1m_1 = 1;
     if (req.l2i_1 > 0)
@@ -39937,21 +39988,21 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
   } else {
     if (step instanceof AllySpecialSummonsSameLevel) {
       if (effect.f22_1 == null) {
-        var valid_0 = this.o3f(player, step);
+        var valid_0 = this.p3f(player, step);
         if (valid_0.m()) {
           EffectEngine_getInstance().h2e(room, 'Ning\xFAn aliado puede invocar especialmente con ' + effect.p21_1, null);
           return false;
         }
-        StepHelpers_getInstance().b2e(room, effect, 'Elige el aliado ' + ensureNotNull(step.i30_1).e2e() + ' que invoca especialmente 1 criatura ' + ensureNotNull(step.k30_1).e2e() + ' de su mismo nivel de tus ' + EffectEngine_getInstance().g2z(step.j30_1) + ', ignorando el requerimiento y el coste especial.', 'Invocador', player.a1f_1, EffectEngine_getInstance().a2e(valid_0), 1);
+        StepHelpers_getInstance().b2e(room, effect, 'Elige el aliado ' + ensureNotNull(step.j30_1).e2e() + ' que invoca especialmente 1 criatura ' + ensureNotNull(step.l30_1).e2e() + ' de su mismo nivel de tus ' + EffectEngine_getInstance().h2z(step.k30_1) + ', ignorando el requerimiento y el coste especial.', 'Invocador', player.a1f_1, EffectEngine_getInstance().a2e(valid_0), 1);
         return true;
       }
       var summoner_0 = EffectEngine_getInstance().s2c(player.a1f_1, effect.f22_1);
-      var valid_1 = summoner_0 == null ? frozenListOf([]) : this.p3f(player, step, summoner_0);
+      var valid_1 = summoner_0 == null ? frozenListOf([]) : this.q3f(player, step, summoner_0);
       if (valid_1.m()) {
         effect.f22_1 = null;
         return false;
       }
-      StepHelpers_getInstance().b2e(room, effect, 'Elige la criatura ' + ensureNotNull(step.k30_1).e2e() + ' nivel ' + ensureNotNull(summoner_0).p1u() + ' de tus ' + EffectEngine_getInstance().g2z(step.j30_1) + ' que ' + EffectEngine_getInstance().q2c(summoner_0) + ' invoca especialmente, por su m\xE9todo, ignorando el requerimiento y el coste especial.', 'Invocar', EffectEngine_getInstance().d2f(player, step.j30_1), EffectEngine_getInstance().a2e(valid_1), 1);
+      StepHelpers_getInstance().b2e(room, effect, 'Elige la criatura ' + ensureNotNull(step.l30_1).e2e() + ' nivel ' + ensureNotNull(summoner_0).p1u() + ' de tus ' + EffectEngine_getInstance().h2z(step.k30_1) + ' que ' + EffectEngine_getInstance().q2c(summoner_0) + ' invoca especialmente, por su m\xE9todo, ignorando el requerimiento y el coste especial.', 'Invocar', EffectEngine_getInstance().d2f(player, step.k30_1), EffectEngine_getInstance().a2e(valid_1), 1);
       return true;
     } else {
       if (step instanceof MaterializeSelfOnTriggerAlly) {
@@ -39982,7 +40033,7 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
             tmp_3 = frozenListOf([]);
           } else {
             // Inline function 'kotlin.let' call
-            var f = ensureNotNull(step.d30_1);
+            var f = ensureNotNull(step.e30_1);
             // Inline function 'kotlin.collections.filter' call
             var tmp0 = opponent.y1e_1;
             // Inline function 'kotlin.collections.filterTo' call
@@ -39999,7 +40050,7 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
           var valid_2 = tmp_3;
           if (valid_2.m())
             return false;
-          StepHelpers_getInstance().b2e(room, effect, 'Elige 1 criatura ' + ensureNotNull(step.d30_1).e2e() + ' de los tributos de tu rival.', 'Elegir', ensureNotNull(opponent).y1e_1, EffectEngine_getInstance().a2e(valid_2), 1);
+          StepHelpers_getInstance().b2e(room, effect, 'Elige 1 criatura ' + ensureNotNull(step.e30_1).e2e() + ' de los tributos de tu rival.', 'Elegir', ensureNotNull(opponent).y1e_1, EffectEngine_getInstance().a2e(valid_2), 1);
           return true;
         } else {
           if (step instanceof PlaceChosenTributeAndSelf) {
@@ -40017,12 +40068,12 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
           } else {
             if (step instanceof SummonLikeSubject) {
               var ally_0 = StepHelpers_getInstance().p2d(room, effect);
-              var valid_3 = ally_0 == null ? frozenListOf([]) : StepHelpers_getInstance().j3f(player, step, ally_0);
+              var valid_3 = ally_0 == null ? frozenListOf([]) : StepHelpers_getInstance().k3f(player, step, ally_0);
               if (valid_3.m()) {
                 EffectEngine_getInstance().h2e(room, 'No hay criaturas que ' + effect.p21_1 + ' pueda invocar', null);
                 return false;
               }
-              StepHelpers_getInstance().b2e(room, effect, 'Invoca 1 criatura ' + ensureNotNull(step.l2z_1).e2e() + ' nivel ' + ensureNotNull(ally_0).p1u() + ' distinta de ' + EffectEngine_getInstance().q2c(ally_0) + ' de tus ' + EffectEngine_getInstance().g2z(step.k2z_1) + ' sin pagar su coste. Entra en tu l\xEDnea frontal y robas 1 carta.', 'Invocar', EffectEngine_getInstance().d2f(player, step.k2z_1), EffectEngine_getInstance().a2e(valid_3), 1);
+              StepHelpers_getInstance().b2e(room, effect, 'Invoca 1 criatura ' + ensureNotNull(step.m2z_1).e2e() + ' nivel ' + ensureNotNull(ally_0).p1u() + ' distinta de ' + EffectEngine_getInstance().q2c(ally_0) + ' de tus ' + EffectEngine_getInstance().h2z(step.l2z_1) + ' sin pagar su coste. Entra en tu l\xEDnea frontal y robas 1 carta.', 'Invocar', EffectEngine_getInstance().d2f(player, step.l2z_1), EffectEngine_getInstance().a2e(valid_3), 1);
               return true;
             } else {
               if (step instanceof OpponentMaySummon) {
@@ -40034,24 +40085,24 @@ protoOf(SummonSteps).o2d = function (room, effect, step) {
                   tmp_4 = tmp2_elvis_lhs;
                 }
                 var opponent_1 = tmp_4;
-                var valid_4 = this.n3f(room, opponent_1, step);
+                var valid_4 = this.o3f(room, opponent_1, step);
                 if (valid_4.m()) {
                   EffectEngine_getInstance().h2e(room, plus(opponent_1.g1e_1, ' no tiene criaturas que pueda invocar (') + effect.p21_1 + ')', null);
                   return false;
                 }
-                var filter = ensureNotNull(step.p2z_1).e2e();
-                StepHelpers_getInstance().b2e(room, effect, 'Puedes invocar 1 criatura' + (isBlank(filter) ? '' : ' ' + filter) + ' de tus ' + EffectEngine_getInstance().g2z(step.o2z_1) + (step.q2z_1 > 0 ? ' reduciendo su coste en ' + step.q2z_1 : ' pagando su coste') + ' (' + effect.p21_1 + '). Entra en ' + (step.r2z_1 ? 'tu l\xEDnea frontal' : 'Retaguardia') + ' y robas 1 carta.', 'Invocar', EffectEngine_getInstance().d2f(opponent_1, step.o2z_1), EffectEngine_getInstance().a2e(valid_4), 1);
+                var filter = ensureNotNull(step.q2z_1).e2e();
+                StepHelpers_getInstance().b2e(room, effect, 'Puedes invocar 1 criatura' + (isBlank(filter) ? '' : ' ' + filter) + ' de tus ' + EffectEngine_getInstance().h2z(step.p2z_1) + (step.r2z_1 > 0 ? ' reduciendo su coste en ' + step.r2z_1 : ' pagando su coste') + ' (' + effect.p21_1 + '). Entra en ' + (step.s2z_1 ? 'tu l\xEDnea frontal' : 'Retaguardia') + ' y robas 1 carta.', 'Invocar', EffectEngine_getInstance().d2f(opponent_1, step.p2z_1), EffectEngine_getInstance().a2e(valid_4), 1);
                 ensureNotNull(room.r18_1).r1m_1 = 0;
                 ensureNotNull(room.r18_1).h1m_1 = opponent_1.f1e_1;
                 return true;
               } else {
                 if (step instanceof SummonFreeLevelSum) {
-                  var valid_5 = StepHelpers_getInstance().l3f(room, effect, step);
+                  var valid_5 = StepHelpers_getInstance().m3f(room, effect, step);
                   if (valid_5.m())
                     return false;
-                  StepHelpers_getInstance().b2e(room, effect, 'Puedes invocar criaturas ' + ensureNotNull(step.t2z_1).e2e() + ' de tu ' + EffectEngine_getInstance().g2z(step.s2z_1) + ' que en nivel sumen hasta ' + step.u2z_1 + ', sin pagar sus costes. Entran en Retaguardia y robas 1 carta por cada una.', 'Invocar', EffectEngine_getInstance().d2f(player, step.s2z_1), EffectEngine_getInstance().a2e(valid_5), valid_5.k());
+                  StepHelpers_getInstance().b2e(room, effect, 'Puedes invocar criaturas ' + ensureNotNull(step.u2z_1).e2e() + ' de tu ' + EffectEngine_getInstance().h2z(step.t2z_1) + ' que en nivel sumen hasta ' + step.v2z_1 + ', sin pagar sus costes. Entran en Retaguardia y robas 1 carta por cada una.', 'Invocar', EffectEngine_getInstance().d2f(player, step.t2z_1), EffectEngine_getInstance().a2e(valid_5), valid_5.k());
                   ensureNotNull(room.r18_1).r1m_1 = 0;
-                  ensureNotNull(room.r18_1).a1n_1 = step.u2z_1;
+                  ensureNotNull(room.r18_1).a1n_1 = step.v2z_1;
                   return true;
                 } else {
                   throw IllegalStateException_init_$Create$('Paso de otra familia: ' + toString(step));
@@ -40082,14 +40133,14 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
     var req = tmp;
     ensureNotNull(self_0);
     if (effect.f22_1 == null) {
-      if (EffectEngine_getInstance().s2c(StepHelpers_getInstance().m3f(player, self_0, req, step.h30_1), picks.l(0)) == null)
+      if (EffectEngine_getInstance().s2c(StepHelpers_getInstance().n3f(player, self_0, req, step.i30_1), picks.l(0)) == null)
         return 'Esa criatura no puede ser el invocador';
       effect.f22_1 = picks.l(0);
       repeat[0] = true;
       return null;
     }
     var summoner = EffectEngine_getInstance().l2e(room, userId, effect.f22_1);
-    var valid = StepHelpers_getInstance().t3e(player, self_0, req, summoner);
+    var valid = StepHelpers_getInstance().u3e(player, self_0, req, summoner);
     // Inline function 'kotlin.collections.map' call
     // Inline function 'kotlin.collections.mapTo' call
     var destination = ArrayList_init_$Create$_1(collectionSizeOrDefault(picks, 10));
@@ -40105,7 +40156,7 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
     var materials = isInterface(picked, KtList) ? picked : THROW_CCE();
     var tmp_0;
     if (req.l2i_1 > 0) {
-      tmp_0 = !Rituals_instance.w3b(materials, req.l2i_1);
+      tmp_0 = !Rituals_instance.x3b(materials, req.l2i_1);
     } else {
       var tmp_1 = materials.k();
       // Inline function 'kotlin.math.max' call
@@ -40125,18 +40176,18 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
   } else {
     if (step instanceof AllySpecialSummonsSameLevel) {
       if (effect.f22_1 == null) {
-        if (picks.m() || EffectEngine_getInstance().s2c(this.o3f(player, step), picks.l(0)) == null)
+        if (picks.m() || EffectEngine_getInstance().s2c(this.p3f(player, step), picks.l(0)) == null)
           return 'Ese aliado no puede ser el invocador';
         effect.f22_1 = picks.l(0);
         repeat[0] = true;
         return null;
       }
       var summoner_0 = EffectEngine_getInstance().s2c(player.a1f_1, effect.f22_1);
-      var card = summoner_0 == null || picks.m() ? null : EffectEngine_getInstance().s2c(this.p3f(player, step, summoner_0), picks.l(0));
+      var card = summoner_0 == null || picks.m() ? null : EffectEngine_getInstance().s2c(this.q3f(player, step, summoner_0), picks.l(0));
       effect.f22_1 = null;
       if (card == null)
         return 'Ya no puedes invocar esa criatura';
-      this.q3f(room, effect, player, card, ensureNotNull(summoner_0), ensureNotNull(step.j30_1));
+      this.r3f(room, effect, player, card, ensureNotNull(summoner_0), ensureNotNull(step.k30_1));
       effect.g22_1 = card.g1c_1;
       effect.k22_1 = true;
     } else {
@@ -40147,7 +40198,7 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
         effect.e22_1 = picks.l(0);
       } else {
         if (step instanceof SummonFreeLevelSum) {
-          var valid_0 = StepHelpers_getInstance().l3f(room, effect, step);
+          var valid_0 = StepHelpers_getInstance().m3f(room, effect, step);
           var chosen = ArrayList_init_$Create$();
           var _iterator__ex2g4s_0 = picks.h();
           while (_iterator__ex2g4s_0.i()) {
@@ -40170,19 +40221,19 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
             var tmp_3 = sum;
             sum = tmp_3 + ensureNotNull(element.p1u()) | 0;
           }
-          if (sum > step.u2z_1)
-            return 'Sus niveles deben sumar ' + step.u2z_1 + ' o menos';
+          if (sum > step.v2z_1)
+            return 'Sus niveles deben sumar ' + step.v2z_1 + ' o menos';
           var _iterator__ex2g4s_2 = chosen.h();
           while (_iterator__ex2g4s_2.i()) {
             var card_1 = _iterator__ex2g4s_2.j();
-            Summons_instance.f2u(room, effect, player, card_1, step.s2z_1, ensureNotNull(card_1.t1c_1), false);
+            Summons_instance.g2u(room, effect, player, card_1, step.t2z_1, ensureNotNull(card_1.t1c_1), false);
           }
           effect.k22_1 = !chosen.m();
         } else {
           if (step instanceof OpponentMaySummon) {
             if (picks.m())
               return null;
-            var tmp3_elvis_lhs = EffectEngine_getInstance().s2c(this.n3f(room, player, step), picks.l(0));
+            var tmp3_elvis_lhs = EffectEngine_getInstance().s2c(this.o3f(room, player, step), picks.l(0));
             var tmp_4;
             if (tmp3_elvis_lhs == null) {
               return 'Ya no puedes invocar esa criatura';
@@ -40190,11 +40241,11 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
               tmp_4 = tmp3_elvis_lhs;
             }
             var card_2 = tmp_4;
-            Summons_instance.f2u(room, effect, player, card_2, step.o2z_1, step.q2z_1, step.r2z_1);
+            Summons_instance.g2u(room, effect, player, card_2, step.p2z_1, step.r2z_1, step.s2z_1);
           } else {
             if (step instanceof SummonLikeSubject) {
               var ally = StepHelpers_getInstance().p2d(room, effect);
-              var tmp4_elvis_lhs = ally == null ? null : EffectEngine_getInstance().s2c(StepHelpers_getInstance().j3f(player, step, ally), picks.l(0));
+              var tmp4_elvis_lhs = ally == null ? null : EffectEngine_getInstance().s2c(StepHelpers_getInstance().k3f(player, step, ally), picks.l(0));
               var tmp_5;
               if (tmp4_elvis_lhs == null) {
                 return 'Ya no puedes invocar esa criatura';
@@ -40202,7 +40253,7 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
                 tmp_5 = tmp4_elvis_lhs;
               }
               var card_3 = tmp_5;
-              Summons_instance.f2u(room, effect, player, card_3, step.k2z_1, ensureNotNull(card_3.t1c_1), true);
+              Summons_instance.g2u(room, effect, player, card_3, step.l2z_1, ensureNotNull(card_3.t1c_1), true);
               effect.g22_1 = card_3.g1c_1;
               effect.k22_1 = true;
             } else {
@@ -40215,20 +40266,20 @@ protoOf(SummonSteps).v2e = function (room, effect, step, player, picks, order, r
   }
   return null;
 };
-protoOf(SummonSteps).n3f = function (room, opponent, step) {
+protoOf(SummonSteps).o3f = function (room, opponent, step) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = EffectEngine_getInstance().d2f(opponent, step.o2z_1);
+  var tmp0 = EffectEngine_getInstance().d2f(opponent, step.p2z_1);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
     var tmp;
-    if ('creature' === element.o1c_1 && !(element.t1c_1 == null) && ensureNotNull(step.p2z_1).p2c(element)) {
+    if ('creature' === element.o1c_1 && !(element.t1c_1 == null) && ensureNotNull(step.q2z_1).p2c(element)) {
       var tmp_0 = EffectEngine_getInstance();
       var tmp_1 = opponent.f1e_1;
       // Inline function 'kotlin.math.max' call
-      var b = ensureNotNull(element.t1c_1) - step.q2z_1 | 0;
+      var b = ensureNotNull(element.t1c_1) - step.r2z_1 | 0;
       var tmp$ret$3 = Math.max(0, b);
       tmp = tmp_0.x2h(room, tmp_1, tmp$ret$3);
     } else {
@@ -40240,7 +40291,7 @@ protoOf(SummonSteps).n3f = function (room, opponent, step) {
   }
   return destination;
 };
-protoOf(SummonSteps).o3f = function (player, step) {
+protoOf(SummonSteps).p3f = function (player, step) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = player.a1f_1;
   // Inline function 'kotlin.collections.filterTo' call
@@ -40248,13 +40299,13 @@ protoOf(SummonSteps).o3f = function (player, step) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if ('creature' === element.o1c_1 && ensureNotNull(step.i30_1).p2c(element) && !SummonSteps_instance.p3f(player, step, element).m()) {
+    if ('creature' === element.o1c_1 && ensureNotNull(step.j30_1).p2c(element) && !SummonSteps_instance.q3f(player, step, element).m()) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(SummonSteps).p3f = function (player, step, summoner) {
+protoOf(SummonSteps).q3f = function (player, step, summoner) {
   var tmp0_elvis_lhs = summoner.p1u();
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -40264,25 +40315,25 @@ protoOf(SummonSteps).p3f = function (player, step, summoner) {
   }
   var level = tmp;
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = EffectEngine_getInstance().d2f(player, step.j30_1);
+  var tmp0 = EffectEngine_getInstance().d2f(player, step.k30_1);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if ('creature' === element.o1c_1 && !(element.q1c_1 == null) && ensureNotNull(step.k30_1).p2c(element) && EffectEngine_getInstance().q2y(element, level)) {
+    if ('creature' === element.o1c_1 && !(element.q1c_1 == null) && ensureNotNull(step.l30_1).p2c(element) && EffectEngine_getInstance().r2y(element, level)) {
       destination.f(element);
     }
   }
   return destination;
 };
-protoOf(SummonSteps).q3f = function (room, effect, player, card, summoner, from) {
+protoOf(SummonSteps).r3f = function (room, effect, player, card, summoner, from) {
   // Inline function 'kotlin.text.lowercase' call
   // Inline function 'kotlin.js.asDynamic' call
   var kind = ensureNotNull(card.q1c_1).toLowerCase();
   if ('ritual' === kind) {
     EffectEngine_getInstance().d2f(player, from).y1(card);
-    Summons_instance.k3c(room, player, card, from, 0, summoner, frozenListOf([]), effect, plus(player.g1e_1, ' invoca por Ritual ') + EffectEngine_getInstance().q2c(card) + ' de sus ' + EffectEngine_getInstance().g2z(from) + ' usando ' + EffectEngine_getInstance().q2c(summoner) + ', ignorando el requerimiento y el coste especial (' + effect.p21_1 + ')');
+    Summons_instance.l3c(room, player, card, from, 0, summoner, frozenListOf([]), effect, plus(player.g1e_1, ' invoca por Ritual ') + EffectEngine_getInstance().q2c(card) + ' de sus ' + EffectEngine_getInstance().h2z(from) + ' usando ' + EffectEngine_getInstance().q2c(summoner) + ', ignorando el requerimiento y el coste especial (' + effect.p21_1 + ')');
     return Unit_instance;
   }
   var tmp0_elvis_lhs = summoner.p1u();
@@ -40314,14 +40365,14 @@ function Summons() {
   this.y1i_1 = 'normal-summon|';
   this.z1i_1 = 'summon-discount|';
 }
-protoOf(Summons).o38 = function (room, userId, player, card) {
+protoOf(Summons).p38 = function (room, userId, player, card) {
   if (card == null)
     return 'La carta no est\xE1 en tu mano';
   if (!('creature' === card.o1c_1))
     return 'Solo las criaturas se invocan';
   if (card.t1c_1 == null)
     return 'Esta carta no tiene coste normal: no puede invocarse normalmente';
-  var cost = ensureNotNull(card.t1c_1) - (this.j3c(room, userId, card, card.t1c_1) ? 1 : 0) | 0;
+  var cost = ensureNotNull(card.t1c_1) - (this.k3c(room, userId, card, card.t1c_1) ? 1 : 0) | 0;
   var canSacrifice = CardEffects_getInstance().p2p(card);
   var tmp;
   if (canSacrifice == null) {
@@ -40360,9 +40411,9 @@ protoOf(Summons).o38 = function (room, userId, player, card) {
     var tmp_2 = ensureNotNull(player);
     var tmp0_0 = ensureNotNull(tmp0_safe_receiver.h2k_1.a2k_1).q2j_1;
     // Inline function 'kotlin.math.min' call
-    var b = CostModifiers_getInstance().p2x(player, tmp0_safe_receiver, card).k();
+    var b = CostModifiers_getInstance().q2x(player, tmp0_safe_receiver, card).k();
     var tmp$ret$8 = Math.min(tmp0_0, b);
-    tmp_0 = tmp_1.o2x(room, tmp_2, tmp0_safe_receiver, tmp$ret$8);
+    tmp_0 = tmp_1.p2x(room, tmp_2, tmp0_safe_receiver, tmp$ret$8);
   }
   var tmp1_elvis_lhs = tmp_0;
   var byPayment = tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
@@ -40375,17 +40426,17 @@ protoOf(Summons).o38 = function (room, userId, player, card) {
   return null;
 };
 protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
-  var error = this.h2t(room, userId, 'invocar');
+  var error = this.i2t(room, userId, 'invocar');
   if (!(error == null))
     return error;
   var player = room.a1e(userId);
   var found = player == null ? null : EffectEngine_getInstance().s2c(player.u1e_1, instanceId);
-  error = this.o38(room, userId, player, found);
+  error = this.p38(room, userId, player, found);
   if (!(error == null))
     return error;
   var card = ensureNotNull(found);
   ensureNotNull(player);
-  var advantage = this.j3c(room, userId, card, card.t1c_1);
+  var advantage = this.k3c(room, userId, card, card.t1c_1);
   var cost = ensureNotNull(card.t1c_1) - (advantage ? 1 : 0) | 0;
   var sacrifice = CardEffects_getInstance().p2p(card);
   var sacrificed = null;
@@ -40419,7 +40470,7 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
     var answer = tmp$ret$3;
     var upTo = CardEffects_getInstance().q2p(card);
     if (answer == null && !options.m()) {
-      EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SUMMON_SACRIFICE_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 al invocarla', upTo <= 1 ? 'Puedes sacrificar 1 aliado [dinosaurio] activo para invocar ' + EffectEngine_getInstance().q2c(card) + ' en tu l\xEDnea frontal reduciendo su coste en el coste ' + 'del aliado. O ninguno.' : 'Puedes sacrificar hasta ' + upTo + ' aliados ' + sacrifice.e2e() + ' para invocar ' + EffectEngine_getInstance().q2c(card) + ' en tu l\xEDnea frontal ' + 'reduciendo su coste en la suma de sus costes. O ninguno.', 'Sacrificar', options, player.a1f_1);
+      EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SUMMON_SACRIFICE_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 al invocarla', upTo <= 1 ? 'Puedes sacrificar 1 aliado [dinosaurio] activo para invocar ' + EffectEngine_getInstance().q2c(card) + ' en tu l\xEDnea frontal reduciendo su coste en el coste ' + 'del aliado. O ninguno.' : 'Puedes sacrificar hasta ' + upTo + ' aliados ' + sacrifice.e2e() + ' para invocar ' + EffectEngine_getInstance().q2c(card) + ' en tu l\xEDnea frontal ' + 'reduciendo su coste en la suma de sus costes. O ninguno.', 'Sacrificar', options, player.a1f_1);
       ensureNotNull(room.r18_1).r1m_1 = 0;
       if (upTo > 1) {
         var tmp = ensureNotNull(room.r18_1);
@@ -40477,9 +40528,9 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
       cost = Math.max(0, b_1);
     }
   }
-  var tap = CostModifiers_getInstance().k2x(room, player, Event_SUMMON_getInstance(), null, card, cost);
+  var tap = CostModifiers_getInstance().l2x(room, player, Event_SUMMON_getInstance(), null, card, cost);
   if (!(tap == null)) {
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_COST_TAP_getInstance().g2s(), EffectEngine_getInstance().q2c(tap.i2k_1) + ' \xB7 ' + tap.h2k_1.u2j_1, '\xBFAgotas ' + EffectEngine_getInstance().q2c(tap.i2k_1) + ' para reducir en ' + tap.h2k_1.j2k(room, userId) + ' el coste de ' + EffectEngine_getInstance().q2c(card) + '?', 'Agotar', frozenListOf([tap.i2k_1]), frozenListOf([tap.i2k_1]));
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_COST_TAP_getInstance().i2s(), EffectEngine_getInstance().q2c(tap.i2k_1) + ' \xB7 ' + tap.h2k_1.u2j_1, '\xBFAgotas ' + EffectEngine_getInstance().q2c(tap.i2k_1) + ' para reducir en ' + tap.h2k_1.j2k(room, userId) + ' el coste de ' + EffectEngine_getInstance().q2c(card) + '?', 'Agotar', frozenListOf([tap.i2k_1]), frozenListOf([tap.i2k_1]));
     ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     ensureNotNull(room.r18_1).w1m_1 = 'normal-summon|' + toString(y == null ? '' : y);
@@ -40503,8 +40554,8 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
   var discount = tmp$ret$13;
   var choice = CostModifiers_getInstance().o2j(room, player, Event_SUMMON_getInstance(), null, card, null);
   if (discount == null && !(choice == null) && cost > 0) {
-    var options_0 = CostModifiers_getInstance().p2x(player, choice, card);
-    EffectEngine_getInstance().h2s(room, userId, PromptPurpose_SUMMONER_DISCOUNT_getInstance().g2s(), EffectEngine_getInstance().q2c(choice.i2k_1) + ' \xB7 ' + choice.h2k_1.u2j_1, CostModifiers_getInstance().r2x(choice), 'Pagar', options_0, player.y1e_1);
+    var options_0 = CostModifiers_getInstance().q2x(player, choice, card);
+    EffectEngine_getInstance().j2s(room, userId, PromptPurpose_SUMMONER_DISCOUNT_getInstance().i2s(), EffectEngine_getInstance().q2c(choice.i2k_1) + ' \xB7 ' + choice.h2k_1.u2j_1, CostModifiers_getInstance().s2x(choice), 'Pagar', options_0, player.y1e_1);
     ensureNotNull(room.r18_1).r1m_1 = 0;
     var tmp_2 = ensureNotNull(room.r18_1);
     var tmp0_2 = ensureNotNull(choice.h2k_1.a2k_1).q2j_1;
@@ -40526,7 +40577,7 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
       tmp_3 = false;
     }
     if (tmp_3) {
-      var options_1 = CostModifiers_getInstance().p2x(player, choice, card);
+      var options_1 = CostModifiers_getInstance().q2x(player, choice, card);
       // Inline function 'kotlin.collections.mapNotNull' call
       var tmp0_3 = split(ids_0, [',']);
       // Inline function 'kotlin.collections.mapNotNullTo' call
@@ -40544,7 +40595,7 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
         }
       }
       var paid = destination_0;
-      var lower_0 = CostModifiers_getInstance().o2x(room, player, choice, paid.k());
+      var lower_0 = CostModifiers_getInstance().p2x(room, player, choice, paid.k());
       var _iterator__ex2g4s_6 = paid.h();
       while (_iterator__ex2g4s_6.i()) {
         var c_0 = _iterator__ex2g4s_6.j();
@@ -40563,7 +40614,7 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
     }
   }
   // Inline function 'kotlin.math.max' call
-  var b_4 = cost - CostModifiers_getInstance().m2x(room, player, Event_SUMMON_getInstance(), null, card, null, cost) | 0;
+  var b_4 = cost - CostModifiers_getInstance().n2x(room, player, Event_SUMMON_getInstance(), null, card, null, cost) | 0;
   cost = Math.max(0, b_4);
   if (!EffectEngine_getInstance().x2h(room, userId, cost))
     return 'No tienes gemas suficientes: tienes ' + EffectEngine_getInstance().z1r(room, userId) + ' y cuesta ' + cost;
@@ -40575,24 +40626,24 @@ protoOf(Summons).a1j = function (room, userId, instanceId, x, y) {
   card.k1c_1 = false;
   var tmp_4 = card;
   tmp_4.l1c_1 = x == null ? 50.0 : x;
-  var assault = !(y == null) && y < 55 && !(EffectEngine_getInstance().t2t(card, 'Asalto') == null);
+  var assault = !(y == null) && y < 55 && !(EffectEngine_getInstance().u2t(card, 'Asalto') == null);
   card.m1c_1 = !(sacrificed == null) ? 25.0 : assault ? ensureNotNull(y) : !(y == null) && y >= 55 ? y : 75.0;
   if (assault)
     card.k1c_1 = true;
   player.a1f_1.f(card);
   EffectEngine_getInstance().g2e(room, 'NORMAL_SUMMON', userId, card, 'hand', 'field', null, frozenMapOf_0('cost', cost), plus(player.g1e_1, ' invoc\xF3 ') + EffectEngine_getInstance().q2c(card) + ' pagando ' + EffectEngine_getInstance().p2k(cost) + (advantage ? ' (ventaja del iniciador)' : ''));
-  this.r3f(room, player, card);
+  this.s3f(room, player, card);
   Chain_instance.z1l(room);
   return null;
 };
-protoOf(Summons).p38 = function (room, userId, card) {
+protoOf(Summons).q38 = function (room, userId, card) {
   if (card == null)
     return 'La carta no est\xE1 en tu mano';
   if (!('utility' === card.o1c_1) && !('structure' === card.o1c_1))
     return 'Solo las utilidades y estructuras se juegan';
-  if ('structure' === card.o1c_1 && this.s3f(room, userId))
+  if ('structure' === card.o1c_1 && this.t3f(room, userId))
     return 'Solo puedes jugar una estructura por turno';
-  var blocked = Chain_instance.e2s(room, userId, card);
+  var blocked = Chain_instance.g2s(room, userId, card);
   if (!(blocked == null))
     return blocked;
   var cost = CardEffects_getInstance().h2p(room, userId, card);
@@ -40601,12 +40652,12 @@ protoOf(Summons).p38 = function (room, userId, card) {
   return null;
 };
 protoOf(Summons).k1j = function (room, userId, instanceId, x, y) {
-  var error = this.h2t(room, userId, 'jugar cartas');
+  var error = this.i2t(room, userId, 'jugar cartas');
   if (!(error == null))
     return error;
   var player = room.a1e(userId);
   var found = player == null ? null : EffectEngine_getInstance().s2c(player.u1e_1, instanceId);
-  error = this.p38(room, userId, found);
+  error = this.q38(room, userId, found);
   if (!(error == null))
     return error;
   var card = ensureNotNull(found);
@@ -40616,11 +40667,11 @@ protoOf(Summons).k1j = function (room, userId, instanceId, x, y) {
   if (structure) {
     room.a19_1.f('structure-played|' + userId);
   }
-  this.l34(room, player, card, cost, x, y, null);
+  this.m34(room, player, card, cost, x, y, null);
   Chain_instance.z1l(room);
   return null;
 };
-protoOf(Summons).t3f = function (room, userId) {
+protoOf(Summons).u3f = function (room, userId) {
   var player = room.a1e(userId);
   if (player == null || !room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()))
     return frozenListOf([]);
@@ -40631,7 +40682,7 @@ protoOf(Summons).t3f = function (room, userId) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!(Chain_instance.e2s(room, userId, element) == null)) {
+    if (!(Chain_instance.g2s(room, userId, element) == null)) {
       destination.f(element);
     }
   }
@@ -40647,16 +40698,16 @@ protoOf(Summons).t3f = function (room, userId) {
   var tmp = destination_0;
   return isInterface(tmp, KtMutableList) ? tmp : THROW_CCE();
 };
-protoOf(Summons).s3f = function (room, userId) {
+protoOf(Summons).t3f = function (room, userId) {
   return room.a19_1.n('structure-played|' + userId);
 };
-protoOf(Summons).l34 = function (room, player, card, cost, x, y, effect) {
+protoOf(Summons).m34 = function (room, player, card, cost, x, y, effect) {
   playFrom(this, room, player, card, cost, x, y, effect, 'hand');
 };
 protoOf(Summons).u2k = function (room, player, card, cost) {
   playFrom(this, room, player, card, cost, null, null, null, 'lifeStack');
 };
-protoOf(Summons).h2t = function (room, userId, what) {
+protoOf(Summons).i2t = function (room, userId, what) {
   if (!room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()))
     return 'La partida no est\xE1 en curso';
   if (!(ensureNotNull(userId) === room.c18_1))
@@ -40683,15 +40734,15 @@ protoOf(Summons).w1j = function (room, userId, summoned, summoner, summonType, l
   }
   var tmp_0 = EffectEngine_getInstance();
   tmp_0.g2e(room, 'SPECIAL_SUMMON', userId, summoned, null, 'field', null, frozenMapOf_1('summonType', summonType == null ? 'special' : summonType, 'manual', true), logText);
-  this.s3e(room, player, ensureNotNull(summoned), null);
+  this.t3e(room, player, ensureNotNull(summoned), null);
   Chain_instance.z1l(room);
 };
-protoOf(Summons).j3c = function (room, userId, card, cost) {
+protoOf(Summons).k3c = function (room, userId, card, cost) {
   return ensureNotNull(card).r1c_1 && !(cost == null) && cost > 0 && ensureNotNull(userId) === room.d19_1;
 };
-protoOf(Summons).s3e = function (room, player, card, effect) {
+protoOf(Summons).t3e = function (room, player, card, effect) {
   if ('creature' === card.o1c_1 && !EffectEngine_getInstance().e1p(card) && !(EffectEngine_getInstance().s2c(player.a1f_1, card.g1c_1) == null)) {
-    EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_SPECIAL_FRONT_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 L\xEDnea frontal', '\xBFMueves a ' + EffectEngine_getInstance().q2c(card) + ' a tu l\xEDnea frontal? Despu\xE9s robas 1 carta por la invocaci\xF3n.', 'A la l\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
+    EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_SPECIAL_FRONT_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 L\xEDnea frontal', '\xBFMueves a ' + EffectEngine_getInstance().q2c(card) + ' a tu l\xEDnea frontal? Despu\xE9s robas 1 carta por la invocaci\xF3n.', 'A la l\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
     ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
     ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
     if (!(effect == null))
@@ -40700,9 +40751,9 @@ protoOf(Summons).s3e = function (room, player, card, effect) {
   }
   this.r2k(room, player, effect);
 };
-protoOf(Summons).c3c = function (room, player, card, kind, summonerId) {
-  var cost = card.x1c_1 == null ? null : ensureNotNull(card.x1c_1) - ('ritual' === kind && this.j3c(room, player.f1e_1, card, card.x1c_1) ? 1 : 0) | 0;
-  var tmp0_elvis_lhs = CostModifiers_getInstance().k2x(room, player, Event_SPECIAL_SUMMON_getInstance(), kind, card, cost);
+protoOf(Summons).d3c = function (room, player, card, kind, summonerId) {
+  var cost = card.x1c_1 == null ? null : ensureNotNull(card.x1c_1) - ('ritual' === kind && this.k3c(room, player.f1e_1, card, card.x1c_1) ? 1 : 0) | 0;
+  var tmp0_elvis_lhs = CostModifiers_getInstance().l2x(room, player, Event_SPECIAL_SUMMON_getInstance(), kind, card, cost);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return false;
@@ -40710,14 +40761,14 @@ protoOf(Summons).c3c = function (room, player, card, kind, summonerId) {
     tmp = tmp0_elvis_lhs;
   }
   var use = tmp;
-  EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_COST_TAP_getInstance().g2s(), EffectEngine_getInstance().q2c(use.i2k_1) + ' \xB7 ' + use.h2k_1.u2j_1, '\xBFAgotas ' + EffectEngine_getInstance().q2c(use.i2k_1) + ' para reducir en ' + use.h2k_1.j2k(room, player.f1e_1) + ' el coste especial de ' + EffectEngine_getInstance().q2c(card) + '?', 'Agotar', frozenListOf([use.i2k_1]), frozenListOf([use.i2k_1]));
+  EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_COST_TAP_getInstance().i2s(), EffectEngine_getInstance().q2c(use.i2k_1) + ' \xB7 ' + use.h2k_1.u2j_1, '\xBFAgotas ' + EffectEngine_getInstance().q2c(use.i2k_1) + ' para reducir en ' + use.h2k_1.j2k(room, player.f1e_1) + ' el coste especial de ' + EffectEngine_getInstance().q2c(card) + '?', 'Agotar', frozenListOf([use.i2k_1]), frozenListOf([use.i2k_1]));
   ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
   ensureNotNull(room.r18_1).w1m_1 = summonerId;
   return true;
 };
 protoOf(Summons).u1j = function (room, target, summoner) {
-  Formations_instance.t35(room, target, ensureNotNull(summoner));
+  Formations_instance.u35(room, target, ensureNotNull(summoner));
   target.j1c_1 = false;
   target.l1c_1 = ensureNotNull(summoner).l1c_1;
   target.m1c_1 = summoner.m1c_1;
@@ -40742,7 +40793,7 @@ protoOf(Summons).u1j = function (room, target, summoner) {
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!ClassChanges_instance.f2t(element) && !NameChanges_instance.f2t(element)) {
+    if (!ClassChanges_instance.g2t(element) && !NameChanges_instance.g2t(element)) {
       destination.f(element);
     }
   }
@@ -40766,7 +40817,7 @@ protoOf(Summons).u1j = function (room, target, summoner) {
 protoOf(Summons).m2j = function (room) {
   var pending = room.w18_1;
   room.w18_1 = null;
-  var tmp0_elvis_lhs = room.a1e(ensureNotNull(pending).e39_1);
+  var tmp0_elvis_lhs = room.a1e(ensureNotNull(pending).f39_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -40774,32 +40825,32 @@ protoOf(Summons).m2j = function (room) {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  var card = EffectEngine_getInstance().s2c(EffectEngine_getInstance().d2f(player, pending.h39_1), pending.f39_1);
-  var summoner = EffectEngine_getInstance().s2c(player.a1f_1, pending.g39_1);
+  var card = EffectEngine_getInstance().s2c(EffectEngine_getInstance().d2f(player, pending.i39_1), pending.g39_1);
+  var summoner = EffectEngine_getInstance().s2c(player.a1f_1, pending.h39_1);
   if (card == null || summoner == null) {
     EffectEngine_getInstance().h2e(room, 'El Ascenso no se completa: ' + (summoner == null ? 'el invocador dej\xF3 el campo' : 'la carta ya no est\xE1'), null);
     return Unit_instance;
   }
-  SpecialSummons_instance.q2k(room, player, card, ensureNotNull(SpecialRequirements_getInstance().f2i(card)), summoner, frozenListOf([]), pending.h39_1, 0, null);
+  SpecialSummons_instance.q2k(room, player, card, ensureNotNull(SpecialRequirements_getInstance().f2i(card)), summoner, frozenListOf([]), pending.i39_1, 0, null);
 };
-protoOf(Summons).r3f = function (room, player, card) {
-  if (!(room.r18_1 == null) || EffectEngine_getInstance().t2t(card, 'Asalto') == null || EffectEngine_getInstance().e1p(card))
+protoOf(Summons).s3f = function (room, player, card) {
+  if (!(room.r18_1 == null) || EffectEngine_getInstance().u2t(card, 'Asalto') == null || EffectEngine_getInstance().e1p(card))
     return Unit_instance;
-  EffectEngine_getInstance().h2s(room, player.f1e_1, PromptPurpose_ASSAULT_getInstance().g2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 Asalto', 'En lugar de quedar en tu retaguardia, puedes colocarla agotada en tu l\xEDnea frontal.', 'L\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
+  EffectEngine_getInstance().j2s(room, player.f1e_1, PromptPurpose_ASSAULT_getInstance().i2s(), EffectEngine_getInstance().q2c(card) + ' \xB7 Asalto', 'En lugar de quedar en tu retaguardia, puedes colocarla agotada en tu l\xEDnea frontal.', 'L\xEDnea frontal', frozenListOf([card]), frozenListOf([card]));
   ensureNotNull(room.r18_1).g1m_1 = Kind_CONFIRM_getInstance();
   ensureNotNull(room.r18_1).v1m_1 = card.g1c_1;
 };
-protoOf(Summons).x3d = function (room, effect, player, target, ritual, summoner, others) {
+protoOf(Summons).y3d = function (room, effect, player, target, ritual, summoner, others) {
   // Inline function 'kotlin.math.max' call
-  var b = ensureNotNull(target.x1c_1) - ritual.p3c_1 | 0;
+  var b = ensureNotNull(target.x1c_1) - ritual.q3c_1 | 0;
   var cost = Math.max(0, b);
-  cost = cost - CostModifiers_getInstance().m2x(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', target, summoner, cost) | 0;
+  cost = cost - CostModifiers_getInstance().n2x(room, player, Event_SPECIAL_SUMMON_getInstance(), 'ritual', target, summoner, cost) | 0;
   EffectEngine_getInstance().t2k(room, player.f1e_1, cost);
-  EffectEngine_getInstance().d2f(player, ritual.o3c_1).y1(target);
+  EffectEngine_getInstance().d2f(player, ritual.p3c_1).y1(target);
   effect.e22_1 = null;
-  this.k3c(room, player, target, ritual.o3c_1, cost, summoner, others, effect, plus(player.g1e_1, ' invoca por Ritual ') + EffectEngine_getInstance().q2c(target) + ' de sus ' + EffectEngine_getInstance().g2z(ritual.o3c_1) + ' usando ' + EffectEngine_getInstance().q2c(summoner) + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + ' (' + effect.p21_1 + ')');
+  this.l3c(room, player, target, ritual.p3c_1, cost, summoner, others, effect, plus(player.g1e_1, ' invoca por Ritual ') + EffectEngine_getInstance().q2c(target) + ' de sus ' + EffectEngine_getInstance().h2z(ritual.p3c_1) + ' usando ' + EffectEngine_getInstance().q2c(summoner) + ' y pagando ' + EffectEngine_getInstance().p2k(cost) + ' (' + effect.p21_1 + ')');
 };
-protoOf(Summons).k3c = function (room, player, target, fromZone, cost, summoner, others, effect, logText) {
+protoOf(Summons).l3c = function (room, player, target, fromZone, cost, summoner, others, effect, logText) {
   this.u1j(room, target, summoner);
   Removals_getInstance().w2e(room, summoner, player, true, 'RITUAL', player.f1e_1, null, effect);
   var _iterator__ex2g4s = others.h();
@@ -40817,13 +40868,13 @@ protoOf(Summons).k3c = function (room, player, target, fromZone, cost, summoner,
   }
   player.a1f_1.f(target);
   EffectEngine_getInstance().g2e(room, 'SPECIAL_SUMMON', player.f1e_1, target, fromZone, 'field', effect, frozenMapOf_2('summonType', 'ritual', 'cost', cost, 'used', 1 + others.k() | 0), logText);
-  this.s3e(room, player, target, effect);
+  this.t3e(room, player, target, effect);
 };
-protoOf(Summons).f2u = function (room, effect, player, card, fromZone, reduce, toFront) {
+protoOf(Summons).g2u = function (room, effect, player, card, fromZone, reduce, toFront) {
   // Inline function 'kotlin.math.max' call
   var b = ensureNotNull(card.t1c_1) - reduce | 0;
   var cost = Math.max(0, b);
-  cost = cost - CostModifiers_getInstance().m2x(room, player, Event_EFFECT_SUMMON_getInstance(), null, card, null, cost) | 0;
+  cost = cost - CostModifiers_getInstance().n2x(room, player, Event_EFFECT_SUMMON_getInstance(), null, card, null, cost) | 0;
   EffectEngine_getInstance().t2k(room, ensureNotNull(player).f1e_1, cost);
   EffectEngine_getInstance().d2f(player, fromZone).y1(card);
   card.j1c_1 = false;
@@ -40831,17 +40882,17 @@ protoOf(Summons).f2u = function (room, effect, player, card, fromZone, reduce, t
   card.l1c_1 = 50.0;
   card.m1c_1 = toFront ? 25.0 : 75.0;
   player.a1f_1.f(card);
-  EffectEngine_getInstance().g2e(room, 'EFFECT_SUMMON', player.f1e_1, card, fromZone, 'field', effect, frozenMapOf_0('cost', cost), plus(player.g1e_1, ' invoca ') + EffectEngine_getInstance().q2c(card) + (Zone_HAND_getInstance().q1f(fromZone) ? ' de su mano' : ' de sus ' + EffectEngine_getInstance().g2z(fromZone)) + ' pagando ' + EffectEngine_getInstance().p2k(cost) + ' (' + effect.p21_1 + ')');
+  EffectEngine_getInstance().g2e(room, 'EFFECT_SUMMON', player.f1e_1, card, fromZone, 'field', effect, frozenMapOf_0('cost', cost), plus(player.g1e_1, ' invoca ') + EffectEngine_getInstance().q2c(card) + (Zone_HAND_getInstance().q1f(fromZone) ? ' de su mano' : ' de sus ' + EffectEngine_getInstance().h2z(fromZone)) + ' pagando ' + EffectEngine_getInstance().p2k(cost) + ' (' + effect.p21_1 + ')');
   this.r2k(room, player, effect);
-  this.r3f(room, player, card);
+  this.s3f(room, player, card);
 };
 protoOf(Summons).r2k = function (room, player, effect) {
   if (player.v1e_1.m())
     return Unit_instance;
-  this.a33(room, player, effect, true);
+  this.b33(room, player, effect, true);
   EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' roba 1 carta por la invocaci\xF3n'), room.p18_1);
 };
-protoOf(Summons).a33 = function (room, player, effect, regulatory) {
+protoOf(Summons).b33 = function (room, player, effect, regulatory) {
   var card = player.v1e_1.f2(0);
   card.j1c_1 = false;
   player.u1e_1.f(card);
@@ -40855,17 +40906,17 @@ function swapPartners($this, player, effect, step, self_0) {
   if (!EffectEngine_getInstance().e1p(self_0))
     return frozenListOf([]);
   var tmp;
-  if (step.n30_1) {
-    tmp = Formations_instance.v33(player);
+  if (step.o30_1) {
+    tmp = Formations_instance.w33(player);
   } else {
     // Inline function 'kotlin.collections.filter' call
-    var tmp0 = Formations_instance.w35(player);
+    var tmp0 = Formations_instance.x35(player);
     // Inline function 'kotlin.collections.filterTo' call
     var destination = ArrayList_init_$Create$();
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (Formations_instance.v35(player, self_0, element)) {
+      if (Formations_instance.w35(player, self_0, element)) {
         destination.f(element);
       }
     }
@@ -40878,14 +40929,14 @@ function swapPartners($this, player, effect, step, self_0) {
   var _iterator__ex2g4s_0 = pool.h();
   while (_iterator__ex2g4s_0.i()) {
     var element_0 = _iterator__ex2g4s_0.j();
-    if (!(element_0 === self_0) && (step.m30_1 == null || step.m30_1.p2c(element_0)) && !(step.o30_1 && effect.x21_1.n(element_0.g1c_1))) {
+    if (!(element_0 === self_0) && (step.n30_1 == null || step.n30_1.p2c(element_0)) && !(step.p30_1 && effect.x21_1.n(element_0.g1c_1))) {
       destination_0.f(element_0);
     }
   }
   return destination_0;
 }
 function TableSteps() {
-  this.u3f_1 = 'swapped';
+  this.v3f_1 = 'swapped';
 }
 protoOf(TableSteps).r2c = function (room, effect, step) {
   var player = ensureNotNull(room.a1e(effect.m21_1));
@@ -40927,7 +40978,7 @@ protoOf(TableSteps).r2c = function (room, effect, step) {
   } else {
     if (step instanceof SwapInFormation) {
       var tmp_2;
-      if (step.l30_1) {
+      if (step.m30_1) {
         var tmp_3;
         if (!(onField == null)) {
           // Inline function 'kotlin.collections.isNotEmpty' call
@@ -40975,7 +41026,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
   var userId = player.f1e_1;
   if (step instanceof ReduceOpponentLivesBy) {
     var opponent = room.a1e(room.l1i(userId));
-    var amount = ensureNotNull(step.f30_1).d1p(room, userId);
+    var amount = ensureNotNull(step.g30_1).d1p(room, userId);
     if (opponent == null || amount <= 0)
       return false;
     var _iterator__ex2g4s = opponent.x1e_1.h();
@@ -40994,7 +41045,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
         var _iterator__ex2g4s_0 = room.a18_1.w1().h();
         while (_iterator__ex2g4s_0.i()) {
           var p = _iterator__ex2g4s_0.j();
-          var _iterator__ex2g4s_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().r2u(p.a1f_1)).h();
+          var _iterator__ex2g4s_1 = ArrayList_init_$Create$_0(EffectEngine_getInstance().s2u(p.a1f_1)).h();
           while (_iterator__ex2g4s_1.i()) {
             var c = _iterator__ex2g4s_1.j();
             if ('creature' === c.o1c_1 && !effect.x21_1.n(c.g1c_1)) {
@@ -41010,7 +41061,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
         tmp = frozenListOf([]);
       } else {
         // Inline function 'kotlin.collections.filter' call
-        var tmp0 = EffectEngine_getInstance().r2u(who.a1f_1);
+        var tmp0 = EffectEngine_getInstance().s2u(who.a1f_1);
         // Inline function 'kotlin.collections.filterTo' call
         var destination = ArrayList_init_$Create$();
         var _iterator__ex2g4s_2 = tmp0.h();
@@ -41037,9 +41088,9 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
           var p_0 = _iterator__ex2g4s_3.j();
           var tmp_0 = p_0;
           // Inline function 'kotlin.math.max' call
-          var b = p_0.s1e_1 - step.g30_1 | 0;
+          var b = p_0.s1e_1 - step.h30_1 | 0;
           tmp_0.s1e_1 = Math.max(0, b);
-          EffectEngine_getInstance().h2e(room, plus(p_0.g1e_1, ' reduce en ') + step.g30_1 + ' su marcador: queda en ' + p_0.s1e_1 + ' (' + effect.p21_1 + ')', null);
+          EffectEngine_getInstance().h2e(room, plus(p_0.g1e_1, ' reduce en ') + step.h30_1 + ' su marcador: queda en ' + p_0.s1e_1 + ' (' + effect.p21_1 + ')', null);
         }
         return false;
       } else {
@@ -41056,17 +41107,17 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
             }
           }
           var faceUp = destination_0;
-          if (step.z2z_1) {
+          if (step.a30_1) {
             // Inline function 'kotlin.collections.forEach' call
             var _iterator__ex2g4s_5 = faceUp.h();
             while (_iterator__ex2g4s_5.i()) {
               var element_1 = _iterator__ex2g4s_5.j();
               element_1.j1c_1 = true;
             }
-            if (step.a30_1) {
+            if (step.b30_1) {
               Companion_getInstance_19().j1i(player.x1e_1, room.i19_1);
             }
-            EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' coloca bocabajo sus ') + faceUp.k() + ' vidas bocarriba' + (step.a30_1 ? ' y baraja sus vidas' : '') + ' (' + effect.p21_1 + ')', null);
+            EffectEngine_getInstance().h2e(room, plus(player.g1e_1, ' coloca bocabajo sus ') + faceUp.k() + ' vidas bocarriba' + (step.b30_1 ? ' y baraja sus vidas' : '') + ' (' + effect.p21_1 + ')', null);
             return false;
           }
           if (faceUp.m())
@@ -41084,7 +41135,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
               effect.y21_1 = effect.y21_1 + 1 | 0;
               return Resolution_getInstance().e2r(room, effect, step);
             }
-            var tmp0_1 = step.b30_1;
+            var tmp0_1 = step.c30_1;
             // Inline function 'kotlin.math.min' call
             var b_0 = who_0.u1e_1.k();
             var n = Math.min(tmp0_1, b_0);
@@ -41130,7 +41181,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                 }
                 var n_0 = tmp$ret$10;
                 if (n_0 > 0) {
-                  Resolution_getInstance().e2r(room, effect, Compose_getInstance().h2v(n_0));
+                  Resolution_getInstance().e2r(room, effect, Compose_getInstance().i2v(n_0));
                 }
                 return false;
               } else {
@@ -41149,7 +41200,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                 } else {
                   if (step instanceof OpponentMayTap) {
                     var opponent_2 = room.a1e(room.l1i(userId));
-                    var tmp1_elvis_lhs = step.n2z_1;
+                    var tmp1_elvis_lhs = step.o2z_1;
                     var filter = tmp1_elvis_lhs == null ? Companion_instance_11.c2q() : tmp1_elvis_lhs;
                     var tmp_2;
                     if (opponent_2 == null) {
@@ -41236,7 +41287,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                             do {
                               var i = inductionVariable;
                               inductionVariable = inductionVariable + 1 | 0;
-                              Summons_instance.a33(room, p_2, effect, false);
+                              Summons_instance.b33(room, p_2, effect, false);
                             }
                              while (inductionVariable < n_1);
                           EffectEngine_getInstance().h2e(room, plus(p_2.g1e_1, ' roba ') + n_1 + ' ' + EffectEngine_getInstance().f2e(n_1, 'carta', 'cartas') + ' (' + effect.p21_1 + ')', null);
@@ -41245,16 +41296,16 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                       } else {
                         if (step instanceof SwapInFormation) {
                           var chosen = effect.c22_1.u1('swapped');
-                          var first = step.l30_1 ? EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1) : chosen == null || chosen.m() ? null : EffectEngine_getInstance().s2c(player.a1f_1, chosen.l(0));
-                          var members = Formations_instance.w35(player);
+                          var first = step.m30_1 ? EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1) : chosen == null || chosen.m() ? null : EffectEngine_getInstance().s2c(player.a1f_1, chosen.l(0));
+                          var members = Formations_instance.x35(player);
                           if (first == null) {
-                            if (step.l30_1 || members.m())
+                            if (step.m30_1 || members.m())
                               return false;
-                            StepHelpers_getInstance().b2e(room, effect, 'Elige el primero de los 2 aliados de una misma formaci\xF3n que intercambian sus posiciones.', 'Intercambiar', Formations_instance.v33(player), EffectEngine_getInstance().a2e(members), 1);
+                            StepHelpers_getInstance().b2e(room, effect, 'Elige el primero de los 2 aliados de una misma formaci\xF3n que intercambian sus posiciones.', 'Intercambiar', Formations_instance.w33(player), EffectEngine_getInstance().a2e(members), 1);
                             return true;
                           }
                           var tmp_4;
-                          if (step.l30_1) {
+                          if (step.m30_1) {
                             tmp_4 = swapPartners(this, player, effect, step, first);
                           } else {
                             // Inline function 'kotlin.collections.filter' call
@@ -41263,7 +41314,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                             var _iterator__ex2g4s_12 = members.h();
                             while (_iterator__ex2g4s_12.i()) {
                               var element_6 = _iterator__ex2g4s_12.j();
-                              if (Formations_instance.v35(player, first, element_6)) {
+                              if (Formations_instance.w35(player, first, element_6)) {
                                 destination_3.f(element_6);
                               }
                             }
@@ -41272,7 +41323,7 @@ protoOf(TableSteps).o2d = function (room, effect, step) {
                           var valid = tmp_4;
                           if (valid.m())
                             return false;
-                          StepHelpers_getInstance().b2e(room, effect, 'Elige el aliado de la formaci\xF3n de ' + EffectEngine_getInstance().q2c(first) + ' que intercambia su posici\xF3n con ' + EffectEngine_getInstance().q2c(first) + '.', 'Intercambiar', Formations_instance.v33(player), EffectEngine_getInstance().a2e(valid), 1);
+                          StepHelpers_getInstance().b2e(room, effect, 'Elige el aliado de la formaci\xF3n de ' + EffectEngine_getInstance().q2c(first) + ' que intercambia su posici\xF3n con ' + EffectEngine_getInstance().q2c(first) + '.', 'Intercambiar', Formations_instance.w33(player), EffectEngine_getInstance().a2e(valid), 1);
                           return true;
                         } else {
                           if (step instanceof DestroyFaceUpLife) {
@@ -41340,7 +41391,7 @@ protoOf(TableSteps).v2e = function (room, effect, step, player, picks, order, re
     }
     var chosen = tmp_0;
     var tmp_1;
-    if (step.l30_1) {
+    if (step.m30_1) {
       tmp_1 = EffectEngine_getInstance().s2c(player.a1f_1, effect.n21_1);
     } else {
       var tmp2_safe_receiver = firstOrNull(chosen);
@@ -41361,7 +41412,7 @@ protoOf(TableSteps).v2e = function (room, effect, step, player, picks, order, re
       return null;
     }
     var tmp_3;
-    if (step.l30_1) {
+    if (step.m30_1) {
       var tmp0 = swapPartners(this, player, effect, step, first);
       var tmp$ret$4;
       $l$block_0: {
@@ -41392,12 +41443,12 @@ protoOf(TableSteps).v2e = function (room, effect, step, player, picks, order, re
     }
     if (tmp_3)
       return 'No puede intercambiarse con esa carta';
-    if (!step.l30_1 && !Formations_instance.v35(player, first, picked))
+    if (!step.m30_1 && !Formations_instance.w35(player, first, picked))
       return 'Deben estar en la misma formaci\xF3n';
     chosen.a2();
     chosen.f(first.g1c_1);
     chosen.f(picked.g1c_1);
-    Formations_instance.u35(room, effect, player, first, picked);
+    Formations_instance.v35(room, effect, player, first, picked);
     effect.k22_1 = true;
   } else {
     if (step instanceof EachPlayerKeepsOneInFrontLine) {
@@ -41491,7 +41542,7 @@ function TableSteps_getInstance() {
 }
 function TurnRules() {
 }
-protoOf(TurnRules).v3f = function (room, userId, startOfTurn) {
+protoOf(TurnRules).w3f = function (room, userId, startOfTurn) {
   var player = room.a1e(userId);
   if (player == null || !room.z17_1.equals(RoomStatus_IN_PROGRESS_getInstance()) || !(room.r18_1 == null))
     return Unit_instance;
@@ -41510,7 +41561,7 @@ protoOf(TurnRules).v3f = function (room, userId, startOfTurn) {
   if (back.m())
     return Unit_instance;
   var title = startOfTurn ? 'Inicio de turno' : 'Final de turno';
-  EffectEngine_getInstance().h2s(room, userId, PromptPurpose_ADVANCE_getInstance().g2s(), title + ' \xB7 L\xEDnea frontal', 'Elige las criaturas de tu retaguardia que suben a la l\xEDnea frontal (todas a la vez), o ninguna.', 'A la l\xEDnea frontal', back, back);
+  EffectEngine_getInstance().j2s(room, userId, PromptPurpose_ADVANCE_getInstance().i2s(), title + ' \xB7 L\xEDnea frontal', 'Elige las criaturas de tu retaguardia que suben a la l\xEDnea frontal (todas a la vez), o ninguna.', 'A la l\xEDnea frontal', back, back);
   ensureNotNull(room.r18_1).s1m_1 = back.k();
 };
 protoOf(TurnRules).r1l = function (room, playerId) {
@@ -41522,7 +41573,7 @@ protoOf(TurnRules).r1l = function (room, playerId) {
     tmp = tmp0_elvis_lhs;
   }
   var player = tmp;
-  Formations_instance.s35(room, player);
+  Formations_instance.t35(room, player);
   EffectEngine_getInstance().g2e(room, 'TURN_START', playerId, null, null, null, null, null, 'Inicio del turno de ' + player.g1e_1);
   var _iterator__ex2g4s = room.a18_1.w1().h();
   $l$loop: while (_iterator__ex2g4s.i()) {
@@ -41532,14 +41583,14 @@ protoOf(TurnRules).r1l = function (room, playerId) {
     var _iterator__ex2g4s_0 = p.a1f_1.h();
     while (_iterator__ex2g4s_0.i()) {
       var c = _iterator__ex2g4s_0.j();
-      var exhausted = EffectEngine_getInstance().i2z(c) || (!('creature' === c.o1c_1) && c.k1c_1);
-      if (exhausted && !(EffectEngine_getInstance().t2t(c, 'Reactivar') == null)) {
+      var exhausted = EffectEngine_getInstance().j2z(c) || (!('creature' === c.o1c_1) && c.k1c_1);
+      if (exhausted && !(EffectEngine_getInstance().u2t(c, 'Reactivar') == null)) {
         c.k1c_1 = false;
         EffectEngine_getInstance().g2e(room, 'UNTAP', p.f1e_1, c, null, null, null, frozenMapOf_0('keyword', 'Reactivar'), EffectEngine_getInstance().q2c(c) + ' se reactiva (Reactivar)');
       }
     }
   }
-  this.v3f(room, playerId, true);
+  this.w3f(room, playerId, true);
   Chain_instance.z1l(room);
 };
 protoOf(TurnRules).i1k = function (room, playerId) {
@@ -41552,7 +41603,7 @@ protoOf(TurnRules).i1k = function (room, playerId) {
   }
   var player = tmp;
   EffectEngine_getInstance().g2e(room, 'TURN_END', playerId, null, null, null, null, null, 'Final del turno de ' + player.g1e_1);
-  this.v3f(room, playerId, false);
+  this.w3f(room, playerId, false);
   Chain_instance.z1l(room);
 };
 var TurnRules_instance;
@@ -41591,10 +41642,10 @@ function Watches() {
   this.q2r_1 = 'watch|';
   this.r2r_1 = 'sigue:';
 }
-protoOf(Watches).s31 = function (controllerId, sourceId, script, cardId) {
+protoOf(Watches).t31 = function (controllerId, sourceId, script, cardId) {
   return 'watch|' + controllerId + '|' + sourceId + '|' + script + '|' + cardId;
 };
-protoOf(Watches).r31 = function (script, cardId) {
+protoOf(Watches).s31 = function (script, cardId) {
   return 'sigue:' + script + '|' + cardId;
 };
 protoOf(Watches).s2r = function (room, cardId) {
@@ -41643,17 +41694,17 @@ function Watches_getInstance() {
   return Watches_instance;
 }
 function File(path, text) {
-  this.w3f_1 = path;
-  this.x3f_1 = text;
+  this.x3f_1 = path;
+  this.y3f_1 = text;
 }
-protoOf(File).y3f = function () {
-  return substringAfterLast(this.w3f_1, _Char___init__impl__6a9atx(47));
+protoOf(File).z3f = function () {
+  return substringAfterLast(this.x3f_1, _Char___init__impl__6a9atx(47));
 };
 function CardBundle() {
-  this.z3f_1 = 'eras-card-bundle/1';
-  this.a3g_1 = 'eras/card-bundle.json';
+  this.a3g_1 = 'eras-card-bundle/1';
+  this.b3g_1 = 'eras/card-bundle.json';
 }
-protoOf(CardBundle).b3g = function (bundle) {
+protoOf(CardBundle).c3g = function (bundle) {
   var tmp;
   try {
     tmp = Default_getInstance_0().ax(bundle);
@@ -41741,10 +41792,10 @@ protoOf(CardBundle).b3g = function (bundle) {
   }
   return destination;
 };
-protoOf(CardBundle).c3g = function (bundle) {
-  return this.d3g(this.b3g(bundle));
+protoOf(CardBundle).d3g = function (bundle) {
+  return this.e3g(this.c3g(bundle));
 };
-protoOf(CardBundle).d3g = function (files) {
+protoOf(CardBundle).e3g = function (files) {
   var cards = ArrayList_init_$Create$();
   var names = HashSet_init_$Create$();
   var ids = HashSet_init_$Create$();
@@ -41753,12 +41804,12 @@ protoOf(CardBundle).d3g = function (files) {
     var file = _iterator__ex2g4s.j();
     var tmp;
     try {
-      tmp = CardReader_instance.c3g(file.x3f_1);
+      tmp = CardReader_instance.d3g(file.y3f_1);
     } catch ($p) {
       var tmp_0;
       if ($p instanceof IllegalArgumentException) {
         var e = $p;
-        throw IllegalStateException_init_$Create$_0(file.y3f() + ': ' + e.message, e);
+        throw IllegalStateException_init_$Create$_0(file.z3f() + ': ' + e.message, e);
       } else {
         throw $p;
       }
@@ -41787,1204 +41838,1204 @@ function CardBundle_getInstance() {
   return CardBundle_instance;
 }
 function readActionAtEndOfTurn($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.AtEndOfTurn', setOf_0('effect'), true);
-  return new AtEndOfTurn(JsonFields_getInstance().g3g(o, 'effect', at));
+  JsonFields_getInstance().g3g(o, at, 'Action.AtEndOfTurn', setOf_0('effect'), true);
+  return new AtEndOfTurn(JsonFields_getInstance().h3g(o, 'effect', at));
 }
 function readActionAttack($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Attack', setOf(['opponentOnly', 'creaturesOnly', 'activeToo', 'at']), true);
-  return new Attack(JsonFields_getInstance().h3g(o, 'opponentOnly', at), JsonFields_getInstance().h3g(o, 'creaturesOnly', at), JsonFields_getInstance().h3g(o, 'activeToo', at), JsonFields_getInstance().g3g(o, 'at', at));
+  JsonFields_getInstance().g3g(o, at, 'Action.Attack', setOf(['opponentOnly', 'creaturesOnly', 'activeToo', 'at']), true);
+  return new Attack(JsonFields_getInstance().i3g(o, 'opponentOnly', at), JsonFields_getInstance().i3g(o, 'creaturesOnly', at), JsonFields_getInstance().i3g(o, 'activeToo', at), JsonFields_getInstance().h3g(o, 'at', at));
 }
 function readActionDamage($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Damage', setOf_0('amount'), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Damage', setOf_0('amount'), true);
   var tmp = JsonFields_getInstance();
-  return new Damage(tmp.i3g(o, 'amount', at, CardModelReader$amount$ref($this)));
+  return new Damage(tmp.j3g(o, 'amount', at, CardModelReader$amount$ref($this)));
 }
 function readActionDestroy($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Destroy', setOf(['cards', 'sacrifice', 'required']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Destroy', setOf(['cards', 'sacrifice', 'required']), true);
   var tmp = JsonFields_getInstance();
-  return new Destroy(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'sacrifice', at), JsonFields_getInstance().h3g(o, 'required', at));
+  return new Destroy(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().i3g(o, 'sacrifice', at), JsonFields_getInstance().i3g(o, 'required', at));
 }
 function readActionDraw($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Draw', setOf(['count', 'bothPlayers']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Draw', setOf(['count', 'bothPlayers']), true);
   var tmp = JsonFields_getInstance();
-  return new Draw(tmp.i3g(o, 'count', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().h3g(o, 'bothPlayers', at));
+  return new Draw(tmp.j3g(o, 'count', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().i3g(o, 'bothPlayers', at));
 }
 function readActionFlip($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Flip', setOf(['cards', 'faceUp', 'toggle']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Flip', setOf(['cards', 'faceUp', 'toggle']), true);
   var tmp = JsonFields_getInstance();
-  return new Flip(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'faceUp', at), JsonFields_getInstance().h3g(o, 'toggle', at));
+  return new Flip(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().i3g(o, 'faceUp', at), JsonFields_getInstance().i3g(o, 'toggle', at));
 }
 function readActionGems($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Gems', setOf_0('count'), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Gems', setOf_0('count'), true);
   var tmp = JsonFields_getInstance();
-  return new Gems_0(tmp.i3g(o, 'count', at, CardModelReader$amount$ref($this)));
+  return new Gems_0(tmp.j3g(o, 'count', at, CardModelReader$amount$ref($this)));
 }
 function readActionLook($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Look', setOf(['count', 'until', 'excavate', 'opponent']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Look', setOf(['count', 'until', 'excavate', 'opponent']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'count', at, CardModelReader$amount$ref($this));
+  var tmp_0 = tmp.j3g(o, 'count', at, CardModelReader$amount$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new Look(tmp_0, tmp_1.i3g(o, 'until', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'excavate', at), JsonFields_getInstance().h3g(o, 'opponent', at));
+  return new Look(tmp_0, tmp_1.j3g(o, 'until', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'excavate', at), JsonFields_getInstance().i3g(o, 'opponent', at));
 }
 function readActionModify($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Modify', setOf(['cards', 'strength', 'toZero', 'keyword', 'until']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Modify', setOf(['cards', 'strength', 'toZero', 'keyword', 'until']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this));
+  var tmp_0 = tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new Modify(tmp_0, tmp_1.i3g(o, 'strength', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().h3g(o, 'toZero', at), JsonFields_getInstance().g3g(o, 'keyword', at), JsonFields_getInstance().j3g(o, 'until', at, get_entries_10(), 'Action.Until'));
+  return new Modify(tmp_0, tmp_1.j3g(o, 'strength', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().i3g(o, 'toZero', at), JsonFields_getInstance().h3g(o, 'keyword', at), JsonFields_getInstance().k3g(o, 'until', at, get_entries_10(), 'Action.Until'));
 }
 function readActionMove($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Move', setOf(['cards', 'to', 'random', 'label', 'required', 'exhausted', 'faceDown', 'rest', 'sameName', 'distinctLevels', 'withResources']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Move', setOf(['cards', 'to', 'random', 'label', 'required', 'exhausted', 'faceDown', 'rest', 'sameName', 'distinctLevels', 'withResources']), true);
   var tmp = JsonFields_getInstance();
-  return new Move_0(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().g3g(o, 'to', at), JsonFields_getInstance().h3g(o, 'random', at), JsonFields_getInstance().g3g(o, 'label', at), JsonFields_getInstance().h3g(o, 'required', at), JsonFields_getInstance().h3g(o, 'exhausted', at), JsonFields_getInstance().h3g(o, 'faceDown', at), JsonFields_getInstance().g3g(o, 'rest', at), JsonFields_getInstance().h3g(o, 'sameName', at), JsonFields_getInstance().h3g(o, 'distinctLevels', at), JsonFields_getInstance().h3g(o, 'withResources', at));
+  return new Move_0(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'to', at), JsonFields_getInstance().i3g(o, 'random', at), JsonFields_getInstance().h3g(o, 'label', at), JsonFields_getInstance().i3g(o, 'required', at), JsonFields_getInstance().i3g(o, 'exhausted', at), JsonFields_getInstance().i3g(o, 'faceDown', at), JsonFields_getInstance().h3g(o, 'rest', at), JsonFields_getInstance().i3g(o, 'sameName', at), JsonFields_getInstance().i3g(o, 'distinctLevels', at), JsonFields_getInstance().i3g(o, 'withResources', at));
 }
 function readActionPlay($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Play', setOf(['cards', 'reduce', 'required']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Play', setOf(['cards', 'reduce', 'required']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this));
+  var tmp_0 = tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new Play(tmp_0, tmp_1.i3g(o, 'reduce', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().h3g(o, 'required', at));
+  return new Play(tmp_0, tmp_1.j3g(o, 'reduce', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().i3g(o, 'required', at));
 }
 function readActionSelect($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Select', setOf(['selector', 'target', 'saveAs', 'label', 'endsIfNone', 'maxLevelSum']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Select', setOf(['selector', 'target', 'saveAs', 'label', 'endsIfNone', 'maxLevelSum']), true);
   var tmp = JsonFields_getInstance();
-  return new Select(tmp.i3g(o, 'selector', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'target', at), JsonFields_getInstance().g3g(o, 'saveAs', at), JsonFields_getInstance().g3g(o, 'label', at), JsonFields_getInstance().h3g(o, 'endsIfNone', at), JsonFields_getInstance().k3g(o, 'maxLevelSum', at));
+  return new Select(tmp.j3g(o, 'selector', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().i3g(o, 'target', at), JsonFields_getInstance().h3g(o, 'saveAs', at), JsonFields_getInstance().h3g(o, 'label', at), JsonFields_getInstance().i3g(o, 'endsIfNone', at), JsonFields_getInstance().l3g(o, 'maxLevelSum', at));
 }
 function readActionSequence($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Sequence', setOf_0('actions'), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Sequence', setOf_0('actions'), true);
   var tmp = JsonFields_getInstance();
-  return new Sequence(tmp.l3g(o, 'actions', at, CardModelReader$readActionSequence$lambda));
+  return new Sequence(tmp.m3g(o, 'actions', at, CardModelReader$readActionSequence$lambda));
 }
 function readActionSetTapped($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.SetTapped', setOf(['cards', 'tapped', 'required', 'maxCostSum']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.SetTapped', setOf(['cards', 'tapped', 'required', 'maxCostSum']), true);
   var tmp = JsonFields_getInstance();
-  return new SetTapped(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'tapped', at), JsonFields_getInstance().h3g(o, 'required', at), JsonFields_getInstance().k3g(o, 'maxCostSum', at));
+  return new SetTapped(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().i3g(o, 'tapped', at), JsonFields_getInstance().i3g(o, 'required', at), JsonFields_getInstance().l3g(o, 'maxCostSum', at));
 }
 function readActionSummon($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Summon', setOf(['cards', 'reduce', 'toFront', 'required', 'orPlay']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Summon', setOf(['cards', 'reduce', 'toFront', 'required', 'orPlay']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this));
+  var tmp_0 = tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new Summon(tmp_0, tmp_1.i3g(o, 'reduce', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().h3g(o, 'toFront', at), JsonFields_getInstance().h3g(o, 'required', at), JsonFields_getInstance().h3g(o, 'orPlay', at));
+  return new Summon(tmp_0, tmp_1.j3g(o, 'reduce', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().i3g(o, 'toFront', at), JsonFields_getInstance().i3g(o, 'required', at), JsonFields_getInstance().i3g(o, 'orPlay', at));
 }
 function readActionSummonSpecial($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.SummonSpecial', setOf_0('rule'), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.SummonSpecial', setOf_0('rule'), true);
   var tmp = JsonFields_getInstance();
-  return new SummonSpecial(tmp.i3g(o, 'rule', at, CardModelReader$specialRule$ref($this)));
+  return new SummonSpecial(tmp.j3g(o, 'rule', at, CardModelReader$specialRule$ref($this)));
 }
 function readActionWatch($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Action.Watch', setOf(['cards', 'effect', 'untilTurnEnd']), true);
+  JsonFields_getInstance().g3g(o, at, 'Action.Watch', setOf(['cards', 'effect', 'untilTurnEnd']), true);
   var tmp = JsonFields_getInstance();
-  return new Watch_0(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().g3g(o, 'effect', at), JsonFields_getInstance().h3g(o, 'untilTurnEnd', at));
+  return new Watch_0(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'effect', at), JsonFields_getInstance().i3g(o, 'untilTurnEnd', at));
 }
 function readAmountCardsIn($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.CardsIn', setOf_0('cards'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.CardsIn', setOf_0('cards'), true);
   var tmp = JsonFields_getInstance();
-  return new CardsIn(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)));
+  return new CardsIn(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)));
 }
 function readAmountEnemiesInFrontLine($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.EnemiesInFrontLine', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.EnemiesInFrontLine', emptySet(), true);
   return EnemiesInFrontLine_instance;
 }
 function readAmountFaceUpLives($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.FaceUpLives', setOf_0('whose'), true);
-  return new FaceUpLives(JsonFields_getInstance().j3g(o, 'whose', at, get_entries_0(), 'Condition.Side'));
+  JsonFields_getInstance().g3g(o, at, 'Amount.FaceUpLives', setOf_0('whose'), true);
+  return new FaceUpLives(JsonFields_getInstance().k3g(o, 'whose', at, get_entries_0(), 'Condition.Side'));
 }
 function readAmountFixed($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Fixed', setOf_0('value'), true);
-  return new Fixed(JsonFields_getInstance().m3g(o, 'value', at));
+  JsonFields_getInstance().g3g(o, at, 'Amount.Fixed', setOf_0('value'), true);
+  return new Fixed(JsonFields_getInstance().n3g(o, 'value', at));
 }
 function readAmountGems($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Gems', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.Gems', emptySet(), true);
   return Gems_instance;
 }
 function readAmountHandOver($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.HandOver', setOf_0('keep'), true);
-  return new HandOver(JsonFields_getInstance().m3g(o, 'keep', at));
+  JsonFields_getInstance().g3g(o, at, 'Amount.HandOver', setOf_0('keep'), true);
+  return new HandOver(JsonFields_getInstance().n3g(o, 'keep', at));
 }
 function readAmountHandUnder($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.HandUnder', setOf_0('upTo'), true);
-  return new HandUnder(JsonFields_getInstance().m3g(o, 'upTo', at));
+  JsonFields_getInstance().g3g(o, at, 'Amount.HandUnder', setOf_0('upTo'), true);
+  return new HandUnder(JsonFields_getInstance().n3g(o, 'upTo', at));
 }
 function readAmountIfThen($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.IfThen', setOf(['condition', 'then', 'otherwise']), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.IfThen', setOf(['condition', 'then', 'otherwise']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'condition', at, CardModelReader$condition$ref($this));
+  var tmp_0 = tmp.j3g(o, 'condition', at, CardModelReader$condition$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.i3g(o, 'then', at, CardModelReader$amount$ref($this));
+  var tmp_2 = tmp_1.j3g(o, 'then', at, CardModelReader$amount$ref($this));
   var tmp_3 = JsonFields_getInstance();
-  return new IfThen(tmp_0, tmp_2, tmp_3.i3g(o, 'otherwise', at, CardModelReader$amount$ref($this)));
+  return new IfThen(tmp_0, tmp_2, tmp_3.j3g(o, 'otherwise', at, CardModelReader$amount$ref($this)));
 }
 function readAmountInZone($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.InZone', setOf(['zone', 'filter', 'opponent']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'Amount.InZone', setOf(['zone', 'filter', 'opponent']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  return new InZone(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'opponent', at));
+  return new InZone(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'opponent', at));
 }
 function readAmountInZones($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.InZones', setOf(['zones', 'filter']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zones', at);
+  JsonFields_getInstance().g3g(o, at, 'Amount.InZones', setOf(['zones', 'filter']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zones', at);
   var tmp_0 = JsonFields_getInstance();
-  return new InZones(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new InZones(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readAmountLastCount($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.LastCount', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.LastCount', emptySet(), true);
   return LastCount_instance;
 }
 function readAmountLastMoved($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.LastMoved', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.LastMoved', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new LastMoved(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new LastMoved(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readAmountLeast($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Least', setOf_0('of'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.Least', setOf_0('of'), true);
   var tmp = JsonFields_getInstance();
-  return new Least(tmp.l3g(o, 'of', at, CardModelReader$readAmountLeast$lambda));
+  return new Least(tmp.m3g(o, 'of', at, CardModelReader$readAmountLeast$lambda));
 }
 function readAmountLevelsOnField($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.LevelsOnField', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.LevelsOnField', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new LevelsOnField(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new LevelsOnField(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readAmountLives($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Lives', setOf(['opponent', 'faceDownOnly']), true);
-  return new Lives(JsonFields_getInstance().h3g(o, 'opponent', at), JsonFields_getInstance().h3g(o, 'faceDownOnly', at));
+  JsonFields_getInstance().g3g(o, at, 'Amount.Lives', setOf(['opponent', 'faceDownOnly']), true);
+  return new Lives(JsonFields_getInstance().i3g(o, 'opponent', at), JsonFields_getInstance().i3g(o, 'faceDownOnly', at));
 }
 function readAmountLivesBehind($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.LivesBehind', setOf_0('faceDownOnly'), true);
-  return new LivesBehind(JsonFields_getInstance().h3g(o, 'faceDownOnly', at));
+  JsonFields_getInstance().g3g(o, at, 'Amount.LivesBehind', setOf_0('faceDownOnly'), true);
+  return new LivesBehind(JsonFields_getInstance().i3g(o, 'faceDownOnly', at));
 }
 function readAmountOnBothFields($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.OnBothFields', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.OnBothFields', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new OnBothFields(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new OnBothFields(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readAmountOnField($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.OnField', setOf(['filter', 'opponent']), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.OnField', setOf(['filter', 'opponent']), true);
   var tmp = JsonFields_getInstance();
-  return new OnField(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'opponent', at));
+  return new OnField(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'opponent', at));
 }
 function readAmountOpponentLevels($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.OpponentLevels', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.OpponentLevels', emptySet(), true);
   return OpponentLevels_instance;
 }
 function readAmountScaled($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Scaled', setOf(['base', 'divisor', 'plus']), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.Scaled', setOf(['base', 'divisor', 'plus']), true);
   var tmp = JsonFields_getInstance();
-  return new Scaled(tmp.i3g(o, 'base', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().m3g(o, 'divisor', at), JsonFields_getInstance().m3g(o, 'plus', at));
+  return new Scaled(tmp.j3g(o, 'base', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().n3g(o, 'divisor', at), JsonFields_getInstance().n3g(o, 'plus', at));
 }
 function readAmountSignedGems($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.SignedGems', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.SignedGems', emptySet(), true);
   return SignedGems_instance;
 }
 function readAmountSourceStrength($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.SourceStrength', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.SourceStrength', emptySet(), true);
   return SourceStrength_instance;
 }
 function readAmountSubjectLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.SubjectLevel', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.SubjectLevel', emptySet(), true);
   return SubjectLevel_instance;
 }
 function readAmountSumOf($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.SumOf', setOf(['cards', 'value']), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.SumOf', setOf(['cards', 'value']), true);
   var tmp = JsonFields_getInstance();
-  return new SumOf(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().g3g(o, 'value', at));
+  return new SumOf(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)), JsonFields_getInstance().h3g(o, 'value', at));
 }
 function readAmountTargetable($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Targetable', setOf_0('cards'), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.Targetable', setOf_0('cards'), true);
   var tmp = JsonFields_getInstance();
-  return new Targetable(tmp.i3g(o, 'cards', at, CardModelReader$selector$ref($this)));
+  return new Targetable(tmp.j3g(o, 'cards', at, CardModelReader$selector$ref($this)));
 }
 function readAmountTimes($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.Times', setOf(['base', 'factor']), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.Times', setOf(['base', 'factor']), true);
   var tmp = JsonFields_getInstance();
-  return new Times(tmp.i3g(o, 'base', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().m3g(o, 'factor', at));
+  return new Times(tmp.j3g(o, 'base', at, CardModelReader$amount$ref($this)), JsonFields_getInstance().n3g(o, 'factor', at));
 }
 function readAmountTriggerSourceLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.TriggerSourceLevel', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.TriggerSourceLevel', emptySet(), true);
   return TriggerSourceLevel_instance;
 }
 function readAmountTriggerStrengthBeforeRemoval($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.TriggerStrengthBeforeRemoval', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.TriggerStrengthBeforeRemoval', emptySet(), true);
   return TriggerStrengthBeforeRemoval_instance;
 }
 function readAmountUsedToSummon($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Amount.UsedToSummon', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Amount.UsedToSummon', emptySet(), true);
   return UsedToSummon_instance;
 }
 function readCardDefinition($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardDefinition', setOf(['name', 'effects', 'inherited', 'continuous', 'reactions', 'inheritedReactions', 'traits', 'formation', 'requirement', 'inheritedContinuous']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'name', at);
+  JsonFields_getInstance().g3g(o, at, 'CardDefinition', setOf(['name', 'effects', 'inherited', 'continuous', 'reactions', 'inheritedReactions', 'traits', 'formation', 'requirement', 'inheritedContinuous']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'name', at);
   var tmp_0 = JsonFields_getInstance();
-  var tmp_1 = tmp_0.l3g(o, 'effects', at, CardModelReader$readCardDefinition$lambda);
+  var tmp_1 = tmp_0.m3g(o, 'effects', at, CardModelReader$readCardDefinition$lambda);
   var tmp_2 = JsonFields_getInstance();
-  var tmp_3 = tmp_2.l3g(o, 'inherited', at, CardModelReader$readCardDefinition$lambda_0);
+  var tmp_3 = tmp_2.m3g(o, 'inherited', at, CardModelReader$readCardDefinition$lambda_0);
   var tmp_4 = JsonFields_getInstance();
-  var tmp_5 = tmp_4.l3g(o, 'continuous', at, CardModelReader$readCardDefinition$lambda_1);
+  var tmp_5 = tmp_4.m3g(o, 'continuous', at, CardModelReader$readCardDefinition$lambda_1);
   var tmp_6 = JsonFields_getInstance();
-  var tmp_7 = tmp_6.l3g(o, 'reactions', at, CardModelReader$readCardDefinition$lambda_2);
+  var tmp_7 = tmp_6.m3g(o, 'reactions', at, CardModelReader$readCardDefinition$lambda_2);
   var tmp_8 = JsonFields_getInstance();
-  var tmp_9 = tmp_8.l3g(o, 'inheritedReactions', at, CardModelReader$readCardDefinition$lambda_3);
+  var tmp_9 = tmp_8.m3g(o, 'inheritedReactions', at, CardModelReader$readCardDefinition$lambda_3);
   var tmp_10 = JsonFields_getInstance();
-  var tmp_11 = tmp_10.i3g(o, 'traits', at, CardModelReader$cardTraits$ref($this));
+  var tmp_11 = tmp_10.j3g(o, 'traits', at, CardModelReader$cardTraits$ref($this));
   var tmp_12 = JsonFields_getInstance();
-  var tmp_13 = tmp_12.i3g(o, 'formation', at, CardModelReader$formationEffects$ref($this));
+  var tmp_13 = tmp_12.j3g(o, 'formation', at, CardModelReader$formationEffects$ref($this));
   var tmp_14 = JsonFields_getInstance();
-  var tmp_15 = tmp_14.i3g(o, 'requirement', at, CardModelReader$requirementSpec$ref($this));
+  var tmp_15 = tmp_14.j3g(o, 'requirement', at, CardModelReader$requirementSpec$ref($this));
   var tmp_16 = JsonFields_getInstance();
-  return new CardDefinition(tmp, tmp_1, tmp_3, tmp_5, tmp_7, tmp_9, tmp_11, tmp_13, tmp_15, tmp_16.l3g(o, 'inheritedContinuous', at, CardModelReader$readCardDefinition$lambda_4));
+  return new CardDefinition(tmp, tmp_1, tmp_3, tmp_5, tmp_7, tmp_9, tmp_11, tmp_13, tmp_15, tmp_16.m3g(o, 'inheritedContinuous', at, CardModelReader$readCardDefinition$lambda_4));
 }
 function readCardEffectsAllyGuard($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.AllyGuard', setOf(['allies', 'replacement']), true);
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.AllyGuard', setOf(['allies', 'replacement']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'allies', at, CardModelReader$cardFilter$ref($this));
+  var tmp_0 = tmp.j3g(o, 'allies', at, CardModelReader$cardFilter$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new AllyGuard(tmp_0, tmp_1.i3g(o, 'replacement', at, CardModelReader$cardEffectsReplacement$ref($this)));
+  return new AllyGuard(tmp_0, tmp_1.j3g(o, 'replacement', at, CardModelReader$cardEffectsReplacement$ref($this)));
 }
 function readCardEffectsAllyRemovalSummon($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.AllyRemovalSummon', setOf(['zone', 'ally', 'reduce', 'replacement']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.AllyRemovalSummon', setOf(['zone', 'ally', 'reduce', 'replacement']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  var tmp_1 = tmp_0.i3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
-  var tmp_2 = JsonFields_getInstance().m3g(o, 'reduce', at);
+  var tmp_1 = tmp_0.j3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
+  var tmp_2 = JsonFields_getInstance().n3g(o, 'reduce', at);
   var tmp_3 = JsonFields_getInstance();
-  return new AllyRemovalSummon(tmp, tmp_1, tmp_2, tmp_3.i3g(o, 'replacement', at, CardModelReader$cardEffectsReplacement$ref($this)));
+  return new AllyRemovalSummon(tmp, tmp_1, tmp_2, tmp_3.j3g(o, 'replacement', at, CardModelReader$cardEffectsReplacement$ref($this)));
 }
 function readCardEffectsAlternativeLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.AlternativeLevel', setOf(['level', 'by']), false);
-  var tmp = JsonFields_getInstance().m3g(o, 'level', at);
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.AlternativeLevel', setOf(['level', 'by']), false);
+  var tmp = JsonFields_getInstance().n3g(o, 'level', at);
   var tmp_0 = JsonFields_getInstance();
-  return new AlternativeLevel(tmp, tmp_0.i3g(o, 'by', at, CardModelReader$cardFilter$ref($this)));
+  return new AlternativeLevel(tmp, tmp_0.j3g(o, 'by', at, CardModelReader$cardFilter$ref($this)));
 }
 function readCardEffectsContinuous($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.Continuous', setOf(['label', 'text', 'allyTurn', 'condition', 'strength', 'keywords', 'bonus', 'zone', 'levelBonus', 'targets', 'enemies', 'formationNeighbours', 'keywordAmount', 'lives', 'effectsSeeStrength', 'ofHolder']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'label', at);
-  var tmp_0 = JsonFields_getInstance().g3g(o, 'text', at);
-  var tmp_1 = JsonFields_getInstance().h3g(o, 'allyTurn', at);
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.Continuous', setOf(['label', 'text', 'allyTurn', 'condition', 'strength', 'keywords', 'bonus', 'zone', 'levelBonus', 'targets', 'enemies', 'formationNeighbours', 'keywordAmount', 'lives', 'effectsSeeStrength', 'ofHolder']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'label', at);
+  var tmp_0 = JsonFields_getInstance().h3g(o, 'text', at);
+  var tmp_1 = JsonFields_getInstance().i3g(o, 'allyTurn', at);
   var tmp_2 = JsonFields_getInstance();
-  var tmp_3 = tmp_2.i3g(o, 'condition', at, CardModelReader$condition$ref($this));
-  var tmp_4 = JsonFields_getInstance().m3g(o, 'strength', at);
+  var tmp_3 = tmp_2.j3g(o, 'condition', at, CardModelReader$condition$ref($this));
+  var tmp_4 = JsonFields_getInstance().n3g(o, 'strength', at);
   var tmp_5 = JsonFields_getInstance();
-  var tmp_6 = tmp_5.l3g(o, 'keywords', at, CardModelReader$readCardEffectsContinuous$lambda);
+  var tmp_6 = tmp_5.m3g(o, 'keywords', at, CardModelReader$readCardEffectsContinuous$lambda);
   var tmp_7 = JsonFields_getInstance();
-  var tmp_8 = tmp_7.i3g(o, 'bonus', at, CardModelReader$amount$ref($this));
-  var tmp_9 = JsonFields_getInstance().g3g(o, 'zone', at);
+  var tmp_8 = tmp_7.j3g(o, 'bonus', at, CardModelReader$amount$ref($this));
+  var tmp_9 = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_10 = JsonFields_getInstance();
-  var tmp_11 = tmp_10.i3g(o, 'levelBonus', at, CardModelReader$amount$ref($this));
+  var tmp_11 = tmp_10.j3g(o, 'levelBonus', at, CardModelReader$amount$ref($this));
   var tmp_12 = JsonFields_getInstance();
-  var tmp_13 = tmp_12.i3g(o, 'targets', at, CardModelReader$cardFilter$ref($this));
-  var tmp_14 = JsonFields_getInstance().h3g(o, 'enemies', at);
-  var tmp_15 = JsonFields_getInstance().h3g(o, 'formationNeighbours', at);
+  var tmp_13 = tmp_12.j3g(o, 'targets', at, CardModelReader$cardFilter$ref($this));
+  var tmp_14 = JsonFields_getInstance().i3g(o, 'enemies', at);
+  var tmp_15 = JsonFields_getInstance().i3g(o, 'formationNeighbours', at);
   var tmp_16 = JsonFields_getInstance();
-  var tmp_17 = tmp_16.i3g(o, 'keywordAmount', at, CardModelReader$amount$ref($this));
-  var tmp_18 = JsonFields_getInstance().h3g(o, 'lives', at);
-  var tmp_19 = JsonFields_getInstance().m3g(o, 'effectsSeeStrength', at);
+  var tmp_17 = tmp_16.j3g(o, 'keywordAmount', at, CardModelReader$amount$ref($this));
+  var tmp_18 = JsonFields_getInstance().i3g(o, 'lives', at);
+  var tmp_19 = JsonFields_getInstance().n3g(o, 'effectsSeeStrength', at);
   var tmp_20 = JsonFields_getInstance();
-  return new Continuous(tmp, tmp_0, tmp_1, tmp_3, tmp_4, tmp_6, tmp_8, tmp_9, tmp_11, tmp_13, tmp_14, tmp_15, tmp_17, tmp_18, tmp_19, tmp_20.i3g(o, 'ofHolder', at, CardModelReader$cardFilter$ref($this)));
+  return new Continuous(tmp, tmp_0, tmp_1, tmp_3, tmp_4, tmp_6, tmp_8, tmp_9, tmp_11, tmp_13, tmp_14, tmp_15, tmp_17, tmp_18, tmp_19, tmp_20.j3g(o, 'ofHolder', at, CardModelReader$cardFilter$ref($this)));
 }
 function readCardEffectsDamageReplacement($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.DamageReplacement', setOf(['maxDamage', 'reduce']), true);
-  return new DamageReplacement(JsonFields_getInstance().m3g(o, 'maxDamage', at), JsonFields_getInstance().m3g(o, 'reduce', at));
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.DamageReplacement', setOf(['maxDamage', 'reduce']), true);
+  return new DamageReplacement(JsonFields_getInstance().n3g(o, 'maxDamage', at), JsonFields_getInstance().n3g(o, 'reduce', at));
 }
 function readCardEffectsFieldPiecesDiscount($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.FieldPiecesDiscount', setOf(['pieces', 'reduce']), false);
-  return new FieldPiecesDiscount(JsonFields_getInstance().m3g(o, 'pieces', at), JsonFields_getInstance().m3g(o, 'reduce', at));
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.FieldPiecesDiscount', setOf(['pieces', 'reduce']), false);
+  return new FieldPiecesDiscount(JsonFields_getInstance().n3g(o, 'pieces', at), JsonFields_getInstance().n3g(o, 'reduce', at));
 }
 function readCardEffectsReplacement($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardEffects.Replacement', setOf(['id', 'label', 'text', 'destroyOnly', 'byOpponentOnly', 'limit', 'cost', 'resourceFilter', 'withMaterials', 'opponentTurn', 'holder', 'allyTurn', 'count']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'id', at);
-  var tmp_0 = JsonFields_getInstance().g3g(o, 'label', at);
-  var tmp_1 = JsonFields_getInstance().g3g(o, 'text', at);
-  var tmp_2 = JsonFields_getInstance().h3g(o, 'destroyOnly', at);
-  var tmp_3 = JsonFields_getInstance().h3g(o, 'byOpponentOnly', at);
-  var tmp_4 = JsonFields_getInstance().j3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit');
-  var tmp_5 = JsonFields_getInstance().j3g(o, 'cost', at, get_entries(), 'CardEffects.ReplacementCost');
+  JsonFields_getInstance().g3g(o, at, 'CardEffects.Replacement', setOf(['id', 'label', 'text', 'destroyOnly', 'byOpponentOnly', 'limit', 'cost', 'resourceFilter', 'withMaterials', 'opponentTurn', 'holder', 'allyTurn', 'count']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'id', at);
+  var tmp_0 = JsonFields_getInstance().h3g(o, 'label', at);
+  var tmp_1 = JsonFields_getInstance().h3g(o, 'text', at);
+  var tmp_2 = JsonFields_getInstance().i3g(o, 'destroyOnly', at);
+  var tmp_3 = JsonFields_getInstance().i3g(o, 'byOpponentOnly', at);
+  var tmp_4 = JsonFields_getInstance().k3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit');
+  var tmp_5 = JsonFields_getInstance().k3g(o, 'cost', at, get_entries(), 'CardEffects.ReplacementCost');
   var tmp_6 = JsonFields_getInstance();
-  var tmp_7 = tmp_6.i3g(o, 'resourceFilter', at, CardModelReader$cardFilter$ref($this));
-  var tmp_8 = JsonFields_getInstance().h3g(o, 'withMaterials', at);
-  var tmp_9 = JsonFields_getInstance().h3g(o, 'opponentTurn', at);
+  var tmp_7 = tmp_6.j3g(o, 'resourceFilter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_8 = JsonFields_getInstance().i3g(o, 'withMaterials', at);
+  var tmp_9 = JsonFields_getInstance().i3g(o, 'opponentTurn', at);
   var tmp_10 = JsonFields_getInstance();
-  return new Replacement(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_8, tmp_9, tmp_10.i3g(o, 'holder', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'allyTurn', at), JsonFields_getInstance().m3g(o, 'count', at));
+  return new Replacement(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_8, tmp_9, tmp_10.j3g(o, 'holder', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'allyTurn', at), JsonFields_getInstance().n3g(o, 'count', at));
 }
 function readCardFilter($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardFilter', setOf(['colors', 'classes', 'cardType', 'level', 'maxLevel', 'maxStrength', 'activeOnly', 'exhaustedOnly', 'minLevel', 'minStrength', 'maxCost', 'name', 'notName', 'starterOnly', 'colorAndClass', 'notColors', 'nameContains', 'minCost', 'cardTypes', 'anyOf', 'mentions', 'backOnly', 'enlace', 'frontOnly', 'noResources', 'faceUpOnly', 'faceDownOnly', 'minSpecialCost', 'hasResources', 'withoutResource']), false);
+  JsonFields_getInstance().g3g(o, at, 'CardFilter', setOf(['colors', 'classes', 'cardType', 'level', 'maxLevel', 'maxStrength', 'activeOnly', 'exhaustedOnly', 'minLevel', 'minStrength', 'maxCost', 'name', 'notName', 'starterOnly', 'colorAndClass', 'notColors', 'nameContains', 'minCost', 'cardTypes', 'anyOf', 'mentions', 'backOnly', 'enlace', 'frontOnly', 'noResources', 'faceUpOnly', 'faceDownOnly', 'minSpecialCost', 'hasResources', 'withoutResource']), false);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.l3g(o, 'colors', at, CardModelReader$readCardFilter$lambda);
+  var tmp_0 = tmp.m3g(o, 'colors', at, CardModelReader$readCardFilter$lambda);
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.l3g(o, 'classes', at, CardModelReader$readCardFilter$lambda_0);
-  var tmp_3 = JsonFields_getInstance().g3g(o, 'cardType', at);
-  var tmp_4 = JsonFields_getInstance().k3g(o, 'level', at);
-  var tmp_5 = JsonFields_getInstance().k3g(o, 'maxLevel', at);
-  var tmp_6 = JsonFields_getInstance().k3g(o, 'maxStrength', at);
-  var tmp_7 = JsonFields_getInstance().h3g(o, 'activeOnly', at);
-  var tmp_8 = JsonFields_getInstance().h3g(o, 'exhaustedOnly', at);
-  var tmp_9 = JsonFields_getInstance().k3g(o, 'minLevel', at);
-  var tmp_10 = JsonFields_getInstance().k3g(o, 'minStrength', at);
-  var tmp_11 = JsonFields_getInstance().k3g(o, 'maxCost', at);
-  var tmp_12 = JsonFields_getInstance().g3g(o, 'name', at);
-  var tmp_13 = JsonFields_getInstance().g3g(o, 'notName', at);
-  var tmp_14 = JsonFields_getInstance().h3g(o, 'starterOnly', at);
-  var tmp_15 = JsonFields_getInstance().h3g(o, 'colorAndClass', at);
+  var tmp_2 = tmp_1.m3g(o, 'classes', at, CardModelReader$readCardFilter$lambda_0);
+  var tmp_3 = JsonFields_getInstance().h3g(o, 'cardType', at);
+  var tmp_4 = JsonFields_getInstance().l3g(o, 'level', at);
+  var tmp_5 = JsonFields_getInstance().l3g(o, 'maxLevel', at);
+  var tmp_6 = JsonFields_getInstance().l3g(o, 'maxStrength', at);
+  var tmp_7 = JsonFields_getInstance().i3g(o, 'activeOnly', at);
+  var tmp_8 = JsonFields_getInstance().i3g(o, 'exhaustedOnly', at);
+  var tmp_9 = JsonFields_getInstance().l3g(o, 'minLevel', at);
+  var tmp_10 = JsonFields_getInstance().l3g(o, 'minStrength', at);
+  var tmp_11 = JsonFields_getInstance().l3g(o, 'maxCost', at);
+  var tmp_12 = JsonFields_getInstance().h3g(o, 'name', at);
+  var tmp_13 = JsonFields_getInstance().h3g(o, 'notName', at);
+  var tmp_14 = JsonFields_getInstance().i3g(o, 'starterOnly', at);
+  var tmp_15 = JsonFields_getInstance().i3g(o, 'colorAndClass', at);
   var tmp_16 = JsonFields_getInstance();
-  var tmp_17 = tmp_16.l3g(o, 'notColors', at, CardModelReader$readCardFilter$lambda_1);
-  var tmp_18 = JsonFields_getInstance().g3g(o, 'nameContains', at);
-  var tmp_19 = JsonFields_getInstance().k3g(o, 'minCost', at);
+  var tmp_17 = tmp_16.m3g(o, 'notColors', at, CardModelReader$readCardFilter$lambda_1);
+  var tmp_18 = JsonFields_getInstance().h3g(o, 'nameContains', at);
+  var tmp_19 = JsonFields_getInstance().l3g(o, 'minCost', at);
   var tmp_20 = JsonFields_getInstance();
-  var tmp_21 = tmp_20.l3g(o, 'cardTypes', at, CardModelReader$readCardFilter$lambda_2);
+  var tmp_21 = tmp_20.m3g(o, 'cardTypes', at, CardModelReader$readCardFilter$lambda_2);
   var tmp_22 = JsonFields_getInstance();
-  return new CardFilter(tmp_0, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_17, tmp_18, tmp_19, tmp_21, tmp_22.l3g(o, 'anyOf', at, CardModelReader$readCardFilter$lambda_3), JsonFields_getInstance().g3g(o, 'mentions', at), JsonFields_getInstance().h3g(o, 'backOnly', at), JsonFields_getInstance().h3g(o, 'enlace', at), JsonFields_getInstance().h3g(o, 'frontOnly', at), JsonFields_getInstance().h3g(o, 'noResources', at), JsonFields_getInstance().h3g(o, 'faceUpOnly', at), JsonFields_getInstance().h3g(o, 'faceDownOnly', at), JsonFields_getInstance().k3g(o, 'minSpecialCost', at), JsonFields_getInstance().h3g(o, 'hasResources', at), JsonFields_getInstance().g3g(o, 'withoutResource', at));
+  return new CardFilter(tmp_0, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_17, tmp_18, tmp_19, tmp_21, tmp_22.m3g(o, 'anyOf', at, CardModelReader$readCardFilter$lambda_3), JsonFields_getInstance().h3g(o, 'mentions', at), JsonFields_getInstance().i3g(o, 'backOnly', at), JsonFields_getInstance().i3g(o, 'enlace', at), JsonFields_getInstance().i3g(o, 'frontOnly', at), JsonFields_getInstance().i3g(o, 'noResources', at), JsonFields_getInstance().i3g(o, 'faceUpOnly', at), JsonFields_getInstance().i3g(o, 'faceDownOnly', at), JsonFields_getInstance().l3g(o, 'minSpecialCost', at), JsonFields_getInstance().i3g(o, 'hasResources', at), JsonFields_getInstance().h3g(o, 'withoutResource', at));
 }
 function readCardTraits($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CardTraits', setOf(['alias', 'specialFromTributes', 'alternativeLevel', 'fieldPiecesDiscount', 'creatureForEffects', 'sacrificeToSummon', 'lifePlayCost', 'oneEffectPerTurn', 'sacrificeUpTo', 'nameAlsoHas']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'alias', at);
-  var tmp_0 = JsonFields_getInstance().h3g(o, 'specialFromTributes', at);
+  JsonFields_getInstance().g3g(o, at, 'CardTraits', setOf(['alias', 'specialFromTributes', 'alternativeLevel', 'fieldPiecesDiscount', 'creatureForEffects', 'sacrificeToSummon', 'lifePlayCost', 'oneEffectPerTurn', 'sacrificeUpTo', 'nameAlsoHas']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'alias', at);
+  var tmp_0 = JsonFields_getInstance().i3g(o, 'specialFromTributes', at);
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.i3g(o, 'alternativeLevel', at, CardModelReader$cardEffectsAlternativeLevel$ref($this));
+  var tmp_2 = tmp_1.j3g(o, 'alternativeLevel', at, CardModelReader$cardEffectsAlternativeLevel$ref($this));
   var tmp_3 = JsonFields_getInstance();
-  var tmp_4 = tmp_3.i3g(o, 'fieldPiecesDiscount', at, CardModelReader$cardEffectsFieldPiecesDiscount$ref($this));
-  var tmp_5 = JsonFields_getInstance().k3g(o, 'creatureForEffects', at);
+  var tmp_4 = tmp_3.j3g(o, 'fieldPiecesDiscount', at, CardModelReader$cardEffectsFieldPiecesDiscount$ref($this));
+  var tmp_5 = JsonFields_getInstance().l3g(o, 'creatureForEffects', at);
   var tmp_6 = JsonFields_getInstance();
-  return new CardTraits(tmp, tmp_0, tmp_2, tmp_4, tmp_5, tmp_6.i3g(o, 'sacrificeToSummon', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().k3g(o, 'lifePlayCost', at), JsonFields_getInstance().h3g(o, 'oneEffectPerTurn', at), JsonFields_getInstance().k3g(o, 'sacrificeUpTo', at), JsonFields_getInstance().g3g(o, 'nameAlsoHas', at));
+  return new CardTraits(tmp, tmp_0, tmp_2, tmp_4, tmp_5, tmp_6.j3g(o, 'sacrificeToSummon', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().l3g(o, 'lifePlayCost', at), JsonFields_getInstance().i3g(o, 'oneEffectPerTurn', at), JsonFields_getInstance().l3g(o, 'sacrificeUpTo', at), JsonFields_getInstance().h3g(o, 'nameAlsoHas', at));
 }
 function readConditionAddedAsResource($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.AddedAsResource', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.AddedAsResource', emptySet(), true);
   return AddedAsResource_instance;
 }
 function readConditionAll($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.All', setOf_0('all'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.All', setOf_0('all'), true);
   var tmp = JsonFields_getInstance();
-  return new All(tmp.l3g(o, 'all', at, CardModelReader$readConditionAll$lambda));
+  return new All(tmp.m3g(o, 'all', at, CardModelReader$readConditionAll$lambda));
 }
 function readConditionAllyClashes($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.AllyClashes', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.AllyClashes', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new AllyClashes(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new AllyClashes(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionAllyDealtDirectDamage($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.AllyDealtDirectDamage', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.AllyDealtDirectDamage', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new AllyDealtDirectDamage(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new AllyDealtDirectDamage(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionAlways($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Always', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Always', emptySet(), true);
   return Always_instance;
 }
 function readConditionAny($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Any', setOf_0('any'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Any', setOf_0('any'), true);
   var tmp = JsonFields_getInstance();
-  return new Any(tmp.l3g(o, 'any', at, CardModelReader$readConditionAny$lambda));
+  return new Any(tmp.m3g(o, 'any', at, CardModelReader$readConditionAny$lambda));
 }
 function readConditionByEffect($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.ByEffect', setOf_0('by'), true);
-  return new ByEffect(JsonFields_getInstance().j3g(o, 'by', at, get_entries_0(), 'Condition.Side'));
+  JsonFields_getInstance().g3g(o, at, 'Condition.ByEffect', setOf_0('by'), true);
+  return new ByEffect(JsonFields_getInstance().k3g(o, 'by', at, get_entries_0(), 'Condition.Side'));
 }
 function readConditionCompare($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Compare', setOf(['left', 'op', 'right']), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Compare', setOf(['left', 'op', 'right']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'left', at, CardModelReader$amount$ref($this));
-  var tmp_1 = JsonFields_getInstance().j3g(o, 'op', at, get_entries_1(), 'Condition.Op');
+  var tmp_0 = tmp.j3g(o, 'left', at, CardModelReader$amount$ref($this));
+  var tmp_1 = JsonFields_getInstance().k3g(o, 'op', at, get_entries_1(), 'Condition.Op');
   var tmp_2 = JsonFields_getInstance();
-  return new Compare(tmp_0, tmp_1, tmp_2.i3g(o, 'right', at, CardModelReader$amount$ref($this)));
+  return new Compare(tmp_0, tmp_1, tmp_2.j3g(o, 'right', at, CardModelReader$amount$ref($this)));
 }
 function readConditionDestroyed($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Destroyed', setOf(['owner', 'by', 'filter', 'byCard', 'byThis', 'cause', 'exceptAttacker']), true);
-  var tmp = JsonFields_getInstance().j3g(o, 'owner', at, get_entries_0(), 'Condition.Side');
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'by', at, get_entries_0(), 'Condition.Side');
+  JsonFields_getInstance().g3g(o, at, 'Condition.Destroyed', setOf(['owner', 'by', 'filter', 'byCard', 'byThis', 'cause', 'exceptAttacker']), true);
+  var tmp = JsonFields_getInstance().k3g(o, 'owner', at, get_entries_0(), 'Condition.Side');
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'by', at, get_entries_0(), 'Condition.Side');
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_2 = tmp_1.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
   var tmp_3 = JsonFields_getInstance();
-  return new Destroyed(tmp, tmp_0, tmp_2, tmp_3.i3g(o, 'byCard', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'byThis', at), JsonFields_getInstance().g3g(o, 'cause', at), JsonFields_getInstance().h3g(o, 'exceptAttacker', at));
+  return new Destroyed(tmp, tmp_0, tmp_2, tmp_3.j3g(o, 'byCard', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'byThis', at), JsonFields_getInstance().h3g(o, 'cause', at), JsonFields_getInstance().i3g(o, 'exceptAttacker', at));
 }
 function readConditionEntersFrontLine($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.EntersFrontLine', setOf(['enemy', 'filter']), true);
-  var tmp = JsonFields_getInstance().h3g(o, 'enemy', at);
+  JsonFields_getInstance().g3g(o, at, 'Condition.EntersFrontLine', setOf(['enemy', 'filter']), true);
+  var tmp = JsonFields_getInstance().i3g(o, 'enemy', at);
   var tmp_0 = JsonFields_getInstance();
-  return new EntersFrontLine(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new EntersFrontLine(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionGameIs($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.GameIs', setOf_0('state'), true);
-  return new GameIs(JsonFields_getInstance().j3g(o, 'state', at, get_entries_3(), 'Condition.GameState'));
+  JsonFields_getInstance().g3g(o, at, 'Condition.GameIs', setOf_0('state'), true);
+  return new GameIs(JsonFields_getInstance().k3g(o, 'state', at, get_entries_3(), 'Condition.GameState'));
 }
 function readConditionHappened($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Happened', setOf(['eventType', 'actor', 'owner', 'thisCard', 'filter', 'from', 'to', 'byEffect', 'data', 'byCard']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'eventType', at);
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'actor', at, get_entries_0(), 'Condition.Side');
-  var tmp_1 = JsonFields_getInstance().j3g(o, 'owner', at, get_entries_0(), 'Condition.Side');
-  var tmp_2 = JsonFields_getInstance().h3g(o, 'thisCard', at);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Happened', setOf(['eventType', 'actor', 'owner', 'thisCard', 'filter', 'from', 'to', 'byEffect', 'data', 'byCard']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'eventType', at);
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'actor', at, get_entries_0(), 'Condition.Side');
+  var tmp_1 = JsonFields_getInstance().k3g(o, 'owner', at, get_entries_0(), 'Condition.Side');
+  var tmp_2 = JsonFields_getInstance().i3g(o, 'thisCard', at);
   var tmp_3 = JsonFields_getInstance();
-  var tmp_4 = tmp_3.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
-  var tmp_5 = JsonFields_getInstance().g3g(o, 'from', at);
-  var tmp_6 = JsonFields_getInstance().g3g(o, 'to', at);
-  var tmp_7 = JsonFields_getInstance().h3g(o, 'byEffect', at);
+  var tmp_4 = tmp_3.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_5 = JsonFields_getInstance().h3g(o, 'from', at);
+  var tmp_6 = JsonFields_getInstance().h3g(o, 'to', at);
+  var tmp_7 = JsonFields_getInstance().i3g(o, 'byEffect', at);
   var tmp_8 = JsonFields_getInstance();
-  var tmp_9 = tmp_8.l3g(o, 'data', at, CardModelReader$readConditionHappened$lambda);
+  var tmp_9 = tmp_8.m3g(o, 'data', at, CardModelReader$readConditionHappened$lambda);
   var tmp_10 = JsonFields_getInstance();
-  return new Happened(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_5, tmp_6, tmp_7, tmp_9, tmp_10.i3g(o, 'byCard', at, CardModelReader$cardFilter$ref($this)));
+  return new Happened(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_5, tmp_6, tmp_7, tmp_9, tmp_10.j3g(o, 'byCard', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionImmediately($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Immediately', setOf_0('condition'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Immediately', setOf_0('condition'), true);
   var tmp = JsonFields_getInstance();
-  return new Immediately(tmp.i3g(o, 'condition', at, CardModelReader$condition$ref($this)));
+  return new Immediately(tmp.j3g(o, 'condition', at, CardModelReader$condition$ref($this)));
 }
 function readConditionNot($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Not', setOf_0('condition'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Not', setOf_0('condition'), true);
   var tmp = JsonFields_getInstance();
-  return new Not(tmp.i3g(o, 'condition', at, CardModelReader$condition$ref($this)));
+  return new Not(tmp.j3g(o, 'condition', at, CardModelReader$condition$ref($this)));
 }
 function readConditionNothingElsePlayedThisTurn($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.NothingElsePlayedThisTurn', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.NothingElsePlayedThisTurn', emptySet(), true);
   return NothingElsePlayedThisTurn_instance;
 }
 function readConditionSummoned($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Summoned', setOf(['side', 'other', 'filter', 'how', 'kind']), true);
-  var tmp = JsonFields_getInstance().j3g(o, 'side', at, get_entries_0(), 'Condition.Side');
-  var tmp_0 = JsonFields_getInstance().h3g(o, 'other', at);
+  JsonFields_getInstance().g3g(o, at, 'Condition.Summoned', setOf(['side', 'other', 'filter', 'how', 'kind']), true);
+  var tmp = JsonFields_getInstance().k3g(o, 'side', at, get_entries_0(), 'Condition.Side');
+  var tmp_0 = JsonFields_getInstance().i3g(o, 'other', at);
   var tmp_1 = JsonFields_getInstance();
-  return new Summoned(tmp, tmp_0, tmp_1.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().g3g(o, 'how', at), JsonFields_getInstance().g3g(o, 'kind', at));
+  return new Summoned(tmp, tmp_0, tmp_1.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'how', at), JsonFields_getInstance().h3g(o, 'kind', at));
 }
 function readConditionSummonedWithoutMaterial($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.SummonedWithoutMaterial', setOf_0('material'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.SummonedWithoutMaterial', setOf_0('material'), true);
   var tmp = JsonFields_getInstance();
-  return new SummonedWithoutMaterial(tmp.i3g(o, 'material', at, CardModelReader$cardFilter$ref($this)));
+  return new SummonedWithoutMaterial(tmp.j3g(o, 'material', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionTargeted($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.Targeted', setOf_0('thisCard'), true);
-  return new Targeted(JsonFields_getInstance().h3g(o, 'thisCard', at));
+  JsonFields_getInstance().g3g(o, at, 'Condition.Targeted', setOf_0('thisCard'), true);
+  return new Targeted(JsonFields_getInstance().i3g(o, 'thisCard', at));
 }
 function readConditionThisClashes($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.ThisClashes', setOf(['enemy', 'asAttacker']), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.ThisClashes', setOf(['enemy', 'asAttacker']), true);
   var tmp = JsonFields_getInstance();
-  return new ThisClashes(tmp.i3g(o, 'enemy', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'asAttacker', at));
+  return new ThisClashes(tmp.j3g(o, 'enemy', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'asAttacker', at));
 }
 function readConditionThisIs($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.ThisIs', setOf_0('state'), true);
-  return new ThisIs(JsonFields_getInstance().j3g(o, 'state', at, get_entries_2(), 'Condition.CardState'));
+  JsonFields_getInstance().g3g(o, at, 'Condition.ThisIs', setOf_0('state'), true);
+  return new ThisIs(JsonFields_getInstance().k3g(o, 'state', at, get_entries_2(), 'Condition.CardState'));
 }
 function readConditionThisMatches($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.ThisMatches', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'Condition.ThisMatches', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new ThisMatches(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new ThisMatches(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionThisTributed($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.ThisTributed', setOf(['fromZone', 'exceptZone', 'by']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'fromZone', at);
-  var tmp_0 = JsonFields_getInstance().g3g(o, 'exceptZone', at);
+  JsonFields_getInstance().g3g(o, at, 'Condition.ThisTributed', setOf(['fromZone', 'exceptZone', 'by']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'fromZone', at);
+  var tmp_0 = JsonFields_getInstance().h3g(o, 'exceptZone', at);
   var tmp_1 = JsonFields_getInstance();
-  return new ThisTributed(tmp, tmp_0, tmp_1.i3g(o, 'by', at, CardModelReader$cardFilter$ref($this)));
+  return new ThisTributed(tmp, tmp_0, tmp_1.j3g(o, 'by', at, CardModelReader$cardFilter$ref($this)));
 }
 function readConditionYouReducedStrength($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Condition.YouReducedStrength', setOf(['toAtMost', 'enemyStillThere', 'byAnyone']), true);
-  return new YouReducedStrength(JsonFields_getInstance().k3g(o, 'toAtMost', at), JsonFields_getInstance().h3g(o, 'enemyStillThere', at), JsonFields_getInstance().h3g(o, 'byAnyone', at));
+  JsonFields_getInstance().g3g(o, at, 'Condition.YouReducedStrength', setOf(['toAtMost', 'enemyStillThere', 'byAnyone']), true);
+  return new YouReducedStrength(JsonFields_getInstance().l3g(o, 'toAtMost', at), JsonFields_getInstance().i3g(o, 'enemyStillThere', at), JsonFields_getInstance().i3g(o, 'byAnyone', at));
 }
 function readCostModifiersCostModifier($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CostModifiers.CostModifier', setOf(['label', 'event', 'kinds', 'holder', 'allyTurn', 'condition', 'payment', 'reduce', 'limit', 'card', 'amount', 'summoner', 'gems']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'label', at);
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'event', at, get_entries_4(), 'CostModifiers.Event');
+  JsonFields_getInstance().g3g(o, at, 'CostModifiers.CostModifier', setOf(['label', 'event', 'kinds', 'holder', 'allyTurn', 'condition', 'payment', 'reduce', 'limit', 'card', 'amount', 'summoner', 'gems']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'label', at);
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'event', at, get_entries_4(), 'CostModifiers.Event');
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.n3g(o, 'kinds', at, CardModelReader$readCostModifiersCostModifier$lambda);
-  var tmp_3 = JsonFields_getInstance().j3g(o, 'holder', at, get_entries_5(), 'CostModifiers.Holder');
-  var tmp_4 = JsonFields_getInstance().h3g(o, 'allyTurn', at);
+  var tmp_2 = tmp_1.o3g(o, 'kinds', at, CardModelReader$readCostModifiersCostModifier$lambda);
+  var tmp_3 = JsonFields_getInstance().k3g(o, 'holder', at, get_entries_5(), 'CostModifiers.Holder');
+  var tmp_4 = JsonFields_getInstance().i3g(o, 'allyTurn', at);
   var tmp_5 = JsonFields_getInstance();
-  var tmp_6 = tmp_5.i3g(o, 'condition', at, CardModelReader$condition$ref($this));
+  var tmp_6 = tmp_5.j3g(o, 'condition', at, CardModelReader$condition$ref($this));
   var tmp_7 = JsonFields_getInstance();
-  var tmp_8 = tmp_7.i3g(o, 'payment', at, CardModelReader$costModifiersPayment$ref($this));
-  var tmp_9 = JsonFields_getInstance().m3g(o, 'reduce', at);
-  var tmp_10 = JsonFields_getInstance().j3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit');
+  var tmp_8 = tmp_7.j3g(o, 'payment', at, CardModelReader$costModifiersPayment$ref($this));
+  var tmp_9 = JsonFields_getInstance().n3g(o, 'reduce', at);
+  var tmp_10 = JsonFields_getInstance().k3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit');
   var tmp_11 = JsonFields_getInstance();
-  var tmp_12 = tmp_11.i3g(o, 'card', at, CardModelReader$cardFilter$ref($this));
+  var tmp_12 = tmp_11.j3g(o, 'card', at, CardModelReader$cardFilter$ref($this));
   var tmp_13 = JsonFields_getInstance();
-  var tmp_14 = tmp_13.i3g(o, 'amount', at, CardModelReader$amount$ref($this));
+  var tmp_14 = tmp_13.j3g(o, 'amount', at, CardModelReader$amount$ref($this));
   var tmp_15 = JsonFields_getInstance();
-  return new CostModifier(tmp, tmp_0, tmp_2, tmp_3, tmp_4, tmp_6, tmp_8, tmp_9, tmp_10, tmp_12, tmp_14, tmp_15.i3g(o, 'summoner', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().m3g(o, 'gems', at));
+  return new CostModifier(tmp, tmp_0, tmp_2, tmp_3, tmp_4, tmp_6, tmp_8, tmp_9, tmp_10, tmp_12, tmp_14, tmp_15.j3g(o, 'summoner', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().n3g(o, 'gems', at));
 }
 function readCostModifiersPayment($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'CostModifiers.Payment', setOf(['kind', 'count', 'filter', 'withHolder', 'per']), false);
-  var tmp = JsonFields_getInstance().j3g(o, 'kind', at, get_entries_6(), 'CostModifiers.PaymentKind');
-  var tmp_0 = JsonFields_getInstance().m3g(o, 'count', at);
+  JsonFields_getInstance().g3g(o, at, 'CostModifiers.Payment', setOf(['kind', 'count', 'filter', 'withHolder', 'per']), false);
+  var tmp = JsonFields_getInstance().k3g(o, 'kind', at, get_entries_6(), 'CostModifiers.PaymentKind');
+  var tmp_0 = JsonFields_getInstance().n3g(o, 'count', at);
   var tmp_1 = JsonFields_getInstance();
-  return new Payment(tmp, tmp_0, tmp_1.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'withHolder', at), JsonFields_getInstance().k3g(o, 'per', at));
+  return new Payment(tmp, tmp_0, tmp_1.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'withHolder', at), JsonFields_getInstance().l3g(o, 'per', at));
 }
 function readEffectScript($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectScript', setOf(['id', 'moment', 'mandatory', 'label', 'text', 'cost', 'steps', 'condition', 'sourceZone', 'allyTurn', 'limit']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'id', at);
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'moment', at, get_entries_7(), 'EffectScript.Moment');
-  var tmp_1 = JsonFields_getInstance().h3g(o, 'mandatory', at);
-  var tmp_2 = JsonFields_getInstance().g3g(o, 'label', at);
-  var tmp_3 = JsonFields_getInstance().g3g(o, 'text', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectScript', setOf(['id', 'moment', 'mandatory', 'label', 'text', 'cost', 'steps', 'condition', 'sourceZone', 'allyTurn', 'limit']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'id', at);
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'moment', at, get_entries_7(), 'EffectScript.Moment');
+  var tmp_1 = JsonFields_getInstance().i3g(o, 'mandatory', at);
+  var tmp_2 = JsonFields_getInstance().h3g(o, 'label', at);
+  var tmp_3 = JsonFields_getInstance().h3g(o, 'text', at);
   var tmp_4 = JsonFields_getInstance();
-  var tmp_5 = tmp_4.l3g(o, 'cost', at, CardModelReader$readEffectScript$lambda);
+  var tmp_5 = tmp_4.m3g(o, 'cost', at, CardModelReader$readEffectScript$lambda);
   var tmp_6 = JsonFields_getInstance();
-  var tmp_7 = tmp_6.l3g(o, 'steps', at, CardModelReader$readEffectScript$lambda_0);
+  var tmp_7 = tmp_6.m3g(o, 'steps', at, CardModelReader$readEffectScript$lambda_0);
   var tmp_8 = JsonFields_getInstance();
-  return new EffectScript(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_5, tmp_7, tmp_8.i3g(o, 'condition', at, CardModelReader$condition$ref($this)), JsonFields_getInstance().g3g(o, 'sourceZone', at), JsonFields_getInstance().h3g(o, 'allyTurn', at), JsonFields_getInstance().j3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit'));
+  return new EffectScript(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_5, tmp_7, tmp_8.j3g(o, 'condition', at, CardModelReader$condition$ref($this)), JsonFields_getInstance().h3g(o, 'sourceZone', at), JsonFields_getInstance().i3g(o, 'allyTurn', at), JsonFields_getInstance().k3g(o, 'limit', at, get_entries_8(), 'EffectScript.Limit'));
 }
 function readEffectStepActivateMaterialSummonEffects($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ActivateMaterialSummonEffects', setOf(['count', 'filter', 'distinctLevels']), true);
-  var tmp = JsonFields_getInstance().m3g(o, 'count', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ActivateMaterialSummonEffects', setOf(['count', 'filter', 'distinctLevels']), true);
+  var tmp = JsonFields_getInstance().n3g(o, 'count', at);
   var tmp_0 = JsonFields_getInstance();
-  return new ActivateMaterialSummonEffects(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'distinctLevels', at));
+  return new ActivateMaterialSummonEffects(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'distinctLevels', at));
 }
 function readEffectStepActivateSubjectSummonEffect($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ActivateSubjectSummonEffect', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ActivateSubjectSummonEffect', emptySet(), true);
   return ActivateSubjectSummonEffect_instance;
 }
 function readEffectStepActivateTributedSummonEffect($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ActivateTributedSummonEffect', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ActivateTributedSummonEffect', emptySet(), true);
   return ActivateTributedSummonEffect_instance;
 }
 function readEffectStepAddResourceToHigherAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AddResourceToHigherAlly', setOf(['zone', 'filter']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AddResourceToHigherAlly', setOf(['zone', 'filter']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  return new AddResourceToHigherAlly(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new AddResourceToHigherAlly(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepAlliesGain($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AlliesGain', setOf(['filter', 'keyword', 'until', 'others']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AlliesGain', setOf(['filter', 'keyword', 'until', 'others']), true);
   var tmp = JsonFields_getInstance();
-  return new AlliesGain(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().g3g(o, 'keyword', at), JsonFields_getInstance().g3g(o, 'until', at), JsonFields_getInstance().h3g(o, 'others', at));
+  return new AlliesGain(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'keyword', at), JsonFields_getInstance().h3g(o, 'until', at), JsonFields_getInstance().i3g(o, 'others', at));
 }
 function readEffectStepAllySpecialSummonsSameLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AllySpecialSummonsSameLevel', setOf(['ally', 'zone', 'filter']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AllySpecialSummonsSameLevel', setOf(['ally', 'zone', 'filter']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
-  var tmp_1 = JsonFields_getInstance().g3g(o, 'zone', at);
+  var tmp_0 = tmp.j3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
+  var tmp_1 = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_2 = JsonFields_getInstance();
-  return new AllySpecialSummonsSameLevel(tmp_0, tmp_1, tmp_2.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new AllySpecialSummonsSameLevel(tmp_0, tmp_1, tmp_2.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepAttachLowerFromTributes($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AttachLowerFromTributes', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AttachLowerFromTributes', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new AttachLowerFromTributes(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new AttachLowerFromTributes(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepAttachSelfAsResourceToAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AttachSelfAsResourceToAlly', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AttachSelfAsResourceToAlly', emptySet(), true);
   return AttachSelfAsResourceToAlly_instance;
 }
 function readEffectStepAttachSubjectToHigherAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AttachSubjectToHigherAlly', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AttachSubjectToHigherAlly', emptySet(), true);
   return AttachSubjectToHigherAlly_instance;
 }
 function readEffectStepAttachSubjectToSummoned($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.AttachSubjectToSummoned', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.AttachSubjectToSummoned', emptySet(), true);
   return AttachSubjectToSummoned_instance;
 }
 function readEffectStepBounceChosen($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.BounceChosen', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.BounceChosen', emptySet(), true);
   return BounceChosen_instance;
 }
 function readEffectStepChangeClass($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ChangeClass', setOf(['from', 'to']), true);
-  return new ChangeClass(JsonFields_getInstance().g3g(o, 'from', at), JsonFields_getInstance().g3g(o, 'to', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ChangeClass', setOf(['from', 'to']), true);
+  return new ChangeClass(JsonFields_getInstance().h3g(o, 'from', at), JsonFields_getInstance().h3g(o, 'to', at));
 }
 function readEffectStepChooseEnemiesLevelSum($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ChooseEnemiesLevelSum', setOf_0('sum'), true);
-  return new ChooseEnemiesLevelSum(JsonFields_getInstance().m3g(o, 'sum', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ChooseEnemiesLevelSum', setOf_0('sum'), true);
+  return new ChooseEnemiesLevelSum(JsonFields_getInstance().n3g(o, 'sum', at));
 }
 function readEffectStepChooseOpponentTribute($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ChooseOpponentTribute', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ChooseOpponentTribute', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new ChooseOpponentTribute(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new ChooseOpponentTribute(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepChooseWeakestEnemy($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ChooseWeakestEnemy', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ChooseWeakestEnemy', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new ChooseWeakestEnemy(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new ChooseWeakestEnemy(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepDeclareBlockSelf($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.DeclareBlockSelf', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.DeclareBlockSelf', emptySet(), true);
   return DeclareBlockSelf_instance;
 }
 function readEffectStepDestroyFaceUpLife($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.DestroyFaceUpLife', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.DestroyFaceUpLife', emptySet(), true);
   return DestroyFaceUpLife_instance;
 }
 function readEffectStepDestroyTopLife($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.DestroyTopLife', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.DestroyTopLife', emptySet(), true);
   return DestroyTopLife_instance;
 }
 function readEffectStepDo($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.Do', setOf_0('action'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.Do', setOf_0('action'), true);
   var tmp = JsonFields_getInstance();
-  return new Do(tmp.i3g(o, 'action', at, CardModelReader$action$ref($this)));
+  return new Do(tmp.j3g(o, 'action', at, CardModelReader$action$ref($this)));
 }
 function readEffectStepEachPlayerDiscards($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.EachPlayerDiscards', setOf_0('count'), true);
-  return new EachPlayerDiscards(JsonFields_getInstance().m3g(o, 'count', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.EachPlayerDiscards', setOf_0('count'), true);
+  return new EachPlayerDiscards(JsonFields_getInstance().n3g(o, 'count', at));
 }
 function readEffectStepEachPlayerKeepsOneInFrontLine($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.EachPlayerKeepsOneInFrontLine', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.EachPlayerKeepsOneInFrontLine', emptySet(), true);
   return EachPlayerKeepsOneInFrontLine_instance;
 }
 function readEffectStepEachPlayerLowersMarker($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.EachPlayerLowersMarker', setOf_0('count'), true);
-  return new EachPlayerLowersMarker(JsonFields_getInstance().m3g(o, 'count', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.EachPlayerLowersMarker', setOf_0('count'), true);
+  return new EachPlayerLowersMarker(JsonFields_getInstance().n3g(o, 'count', at));
 }
 function readEffectStepEndYourTurn($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.EndYourTurn', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.EndYourTurn', emptySet(), true);
   return EndYourTurn_instance;
 }
 function readEffectStepExtraCombatHitThenEndTurn($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ExtraCombatHitThenEndTurn', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ExtraCombatHitThenEndTurn', emptySet(), true);
   return ExtraCombatHitThenEndTurn_instance;
 }
 function readEffectStepExtraHit($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ExtraHit', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ExtraHit', emptySet(), true);
   return ExtraHit_instance;
 }
 function readEffectStepGainGemsPerOwnSacrificed($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.GainGemsPerOwnSacrificed', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.GainGemsPerOwnSacrificed', emptySet(), true);
   return GainGemsPerOwnSacrificed_instance;
 }
 function readEffectStepGrantEffect($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.GrantEffect', setOf_0('effect'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.GrantEffect', setOf_0('effect'), true);
   var tmp = JsonFields_getInstance();
-  return new GrantEffect(tmp.i3g(o, 'effect', at, CardModelReader$effectScript$ref($this)));
+  return new GrantEffect(tmp.j3g(o, 'effect', at, CardModelReader$effectScript$ref($this)));
 }
 function readEffectStepGroupUp($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.GroupUp', setOf_0('allies'), true);
-  return new GroupUp(JsonFields_getInstance().m3g(o, 'allies', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.GroupUp', setOf_0('allies'), true);
+  return new GroupUp(JsonFields_getInstance().n3g(o, 'allies', at));
 }
 function readEffectStepHandsToBottomDrawOpponentLives($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.HandsToBottomDrawOpponentLives', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.HandsToBottomDrawOpponentLives', emptySet(), true);
   return HandsToBottomDrawOpponentLives_instance;
 }
 function readEffectStepIfChosenGone($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfChosenGone', setOf_0('covers'), true);
-  return new IfChosenGone(JsonFields_getInstance().m3g(o, 'covers', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfChosenGone', setOf_0('covers'), true);
+  return new IfChosenGone(JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepIfCondition($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfCondition', setOf(['condition', 'covers', 'ofTrigger']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfCondition', setOf(['condition', 'covers', 'ofTrigger']), true);
   var tmp = JsonFields_getInstance();
-  return new IfCondition(tmp.i3g(o, 'condition', at, CardModelReader$condition$ref($this)), JsonFields_getInstance().m3g(o, 'covers', at), JsonFields_getInstance().h3g(o, 'ofTrigger', at));
+  return new IfCondition(tmp.j3g(o, 'condition', at, CardModelReader$condition$ref($this)), JsonFields_getInstance().n3g(o, 'covers', at), JsonFields_getInstance().i3g(o, 'ofTrigger', at));
 }
 function readEffectStepIfDone($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfDone', setOf_0('covers'), true);
-  return new IfDone(JsonFields_getInstance().m3g(o, 'covers', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfDone', setOf_0('covers'), true);
+  return new IfDone(JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepIfNotDone($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfNotDone', setOf_0('covers'), true);
-  return new IfNotDone(JsonFields_getInstance().m3g(o, 'covers', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfNotDone', setOf_0('covers'), true);
+  return new IfNotDone(JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepIfPossible($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfPossible', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfPossible', emptySet(), true);
   return IfPossible_instance;
 }
 function readEffectStepIfSaved($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfSaved', setOf(['name', 'covers']), true);
-  return new IfSaved(JsonFields_getInstance().g3g(o, 'name', at), JsonFields_getInstance().m3g(o, 'covers', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfSaved', setOf(['name', 'covers']), true);
+  return new IfSaved(JsonFields_getInstance().h3g(o, 'name', at), JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepIfTributed($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.IfTributed', setOf(['filter', 'covers']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.IfTributed', setOf(['filter', 'covers']), true);
   var tmp = JsonFields_getInstance();
-  return new IfTributed(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().m3g(o, 'covers', at));
+  return new IfTributed(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepKeepOnField($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.KeepOnField', setOf(['exhausted', 'asCreature']), true);
-  return new KeepOnField(JsonFields_getInstance().h3g(o, 'exhausted', at), JsonFields_getInstance().k3g(o, 'asCreature', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.KeepOnField', setOf(['exhausted', 'asCreature']), true);
+  return new KeepOnField(JsonFields_getInstance().i3g(o, 'exhausted', at), JsonFields_getInstance().l3g(o, 'asCreature', at));
 }
 function readEffectStepLivesFaceDown($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.LivesFaceDown', setOf(['all', 'shuffle']), true);
-  return new LivesFaceDown(JsonFields_getInstance().h3g(o, 'all', at), JsonFields_getInstance().h3g(o, 'shuffle', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.LivesFaceDown', setOf(['all', 'shuffle']), true);
+  return new LivesFaceDown(JsonFields_getInstance().i3g(o, 'all', at), JsonFields_getInstance().i3g(o, 'shuffle', at));
 }
 function readEffectStepMaterialOfExhaustedAllyToBack($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.MaterialOfExhaustedAllyToBack', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.MaterialOfExhaustedAllyToBack', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new MaterialOfExhaustedAllyToBack(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new MaterialOfExhaustedAllyToBack(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepMaterializeSelfOnTriggerAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.MaterializeSelfOnTriggerAlly', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.MaterializeSelfOnTriggerAlly', emptySet(), true);
   return MaterializeSelfOnTriggerAlly_instance;
 }
 function readEffectStepMayDo($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.MayDo', setOf(['question', 'covers']), true);
-  return new MayDo(JsonFields_getInstance().g3g(o, 'question', at), JsonFields_getInstance().m3g(o, 'covers', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.MayDo', setOf(['question', 'covers']), true);
+  return new MayDo(JsonFields_getInstance().h3g(o, 'question', at), JsonFields_getInstance().n3g(o, 'covers', at));
 }
 function readEffectStepNoUntapChosen($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.NoUntapChosen', setOf_0('wholeTurn'), true);
-  return new NoUntapChosen(JsonFields_getInstance().h3g(o, 'wholeTurn', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.NoUntapChosen', setOf_0('wholeTurn'), true);
+  return new NoUntapChosen(JsonFields_getInstance().i3g(o, 'wholeTurn', at));
 }
 function readEffectStepOpponentGainsGemsAsCounter($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.OpponentGainsGemsAsCounter', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.OpponentGainsGemsAsCounter', emptySet(), true);
   return OpponentGainsGemsAsCounter_instance;
 }
 function readEffectStepOpponentMaySummon($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.OpponentMaySummon', setOf(['zone', 'filter', 'reduce', 'toFront']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.OpponentMaySummon', setOf(['zone', 'filter', 'reduce', 'toFront']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  return new OpponentMaySummon(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().m3g(o, 'reduce', at), JsonFields_getInstance().h3g(o, 'toFront', at));
+  return new OpponentMaySummon(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().n3g(o, 'reduce', at), JsonFields_getInstance().i3g(o, 'toFront', at));
 }
 function readEffectStepOpponentMayTap($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.OpponentMayTap', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.OpponentMayTap', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new OpponentMayTap(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new OpponentMayTap(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepOpponentMovesOneToFront($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.OpponentMovesOneToFront', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.OpponentMovesOneToFront', emptySet(), true);
   return OpponentMovesOneToFront_instance;
 }
 function readEffectStepPickAllyUpToSacrificedLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.PickAllyUpToSacrificedLevel', setOf_0('plus'), true);
-  return new PickAllyUpToSacrificedLevel(JsonFields_getInstance().m3g(o, 'plus', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.PickAllyUpToSacrificedLevel', setOf_0('plus'), true);
+  return new PickAllyUpToSacrificedLevel(JsonFields_getInstance().n3g(o, 'plus', at));
 }
 function readEffectStepPickAllyWithHigherAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.PickAllyWithHigherAlly', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.PickAllyWithHigherAlly', emptySet(), true);
   return PickAllyWithHigherAlly_instance;
 }
 function readEffectStepPickAllyWithMaterials($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.PickAllyWithMaterials', setOf_0('count'), true);
-  return new PickAllyWithMaterials(JsonFields_getInstance().m3g(o, 'count', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.PickAllyWithMaterials', setOf_0('count'), true);
+  return new PickAllyWithMaterials(JsonFields_getInstance().n3g(o, 'count', at));
 }
 function readEffectStepPlaceChosenTributeAndSelf($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.PlaceChosenTributeAndSelf', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.PlaceChosenTributeAndSelf', emptySet(), true);
   return PlaceChosenTributeAndSelf_instance;
 }
 function readEffectStepPlaceFromHandUntilTurnEnd($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.PlaceFromHandUntilTurnEnd', setOf_0('filter'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.PlaceFromHandUntilTurnEnd', setOf_0('filter'), true);
   var tmp = JsonFields_getInstance();
-  return new PlaceFromHandUntilTurnEnd(tmp.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new PlaceFromHandUntilTurnEnd(tmp.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepReduceOpponentLivesBy($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ReduceOpponentLivesBy', setOf_0('amount'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ReduceOpponentLivesBy', setOf_0('amount'), true);
   var tmp = JsonFields_getInstance();
-  return new ReduceOpponentLivesBy(tmp.i3g(o, 'amount', at, CardModelReader$amount$ref($this)));
+  return new ReduceOpponentLivesBy(tmp.j3g(o, 'amount', at, CardModelReader$amount$ref($this)));
 }
 function readEffectStepReduceRepeatedly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ReduceRepeatedly', setOf(['times', 'amount', 'until', 'perTriggerCard']), true);
-  return new ReduceRepeatedly(JsonFields_getInstance().m3g(o, 'times', at), JsonFields_getInstance().m3g(o, 'amount', at), JsonFields_getInstance().g3g(o, 'until', at), JsonFields_getInstance().h3g(o, 'perTriggerCard', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ReduceRepeatedly', setOf(['times', 'amount', 'until', 'perTriggerCard']), true);
+  return new ReduceRepeatedly(JsonFields_getInstance().n3g(o, 'times', at), JsonFields_getInstance().n3g(o, 'amount', at), JsonFields_getInstance().h3g(o, 'until', at), JsonFields_getInstance().i3g(o, 'perTriggerCard', at));
 }
 function readEffectStepReturnAllyOfSummonedLevel($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ReturnAllyOfSummonedLevel', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ReturnAllyOfSummonedLevel', emptySet(), true);
   return ReturnAllyOfSummonedLevel_instance;
 }
 function readEffectStepReturnSubjectAtAttackEnd($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.ReturnSubjectAtAttackEnd', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.ReturnSubjectAtAttackEnd', emptySet(), true);
   return ReturnSubjectAtAttackEnd_instance;
 }
 function readEffectStepRevealFromHand($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.RevealFromHand', setOf(['filters', 'withAllyOfLevel']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.RevealFromHand', setOf(['filters', 'withAllyOfLevel']), true);
   var tmp = JsonFields_getInstance();
-  return new RevealFromHand(tmp.l3g(o, 'filters', at, CardModelReader$readEffectStepRevealFromHand$lambda), JsonFields_getInstance().h3g(o, 'withAllyOfLevel', at));
+  return new RevealFromHand(tmp.m3g(o, 'filters', at, CardModelReader$readEffectStepRevealFromHand$lambda), JsonFields_getInstance().i3g(o, 'withAllyOfLevel', at));
 }
 function readEffectStepRevealOpponentHandSendOneToBottom($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.RevealOpponentHandSendOneToBottom', setOf_0('count'), true);
-  return new RevealOpponentHandSendOneToBottom(JsonFields_getInstance().m3g(o, 'count', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.RevealOpponentHandSendOneToBottom', setOf_0('count'), true);
+  return new RevealOpponentHandSendOneToBottom(JsonFields_getInstance().n3g(o, 'count', at));
 }
 function readEffectStepSacrificeAlly($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SacrificeAlly', setOf(['toUntapAnother', 'other']), true);
-  return new SacrificeAlly(JsonFields_getInstance().h3g(o, 'toUntapAnother', at), JsonFields_getInstance().h3g(o, 'other', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SacrificeAlly', setOf(['toUntapAnother', 'other']), true);
+  return new SacrificeAlly(JsonFields_getInstance().i3g(o, 'toUntapAnother', at), JsonFields_getInstance().i3g(o, 'other', at));
 }
 function readEffectStepSkipBlockStep($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SkipBlockStep', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SkipBlockStep', emptySet(), true);
   return SkipBlockStep_instance;
 }
 function readEffectStepSpecialSelfDeclaredSummoner($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SpecialSelfDeclaredSummoner', setOf_0('zones'), true);
-  return new SpecialSelfDeclaredSummoner(JsonFields_getInstance().g3g(o, 'zones', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SpecialSelfDeclaredSummoner', setOf_0('zones'), true);
+  return new SpecialSelfDeclaredSummoner(JsonFields_getInstance().h3g(o, 'zones', at));
 }
 function readEffectStepSubjectFromTrigger($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SubjectFromTrigger', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SubjectFromTrigger', emptySet(), true);
   return SubjectFromTrigger_instance;
 }
 function readEffectStepSubjectIsThisCard($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SubjectIsThisCard', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SubjectIsThisCard', emptySet(), true);
   return SubjectIsThisCard_instance;
 }
 function readEffectStepSummonFreeLevelSum($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SummonFreeLevelSum', setOf(['zone', 'filter', 'maxLevelSum']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SummonFreeLevelSum', setOf(['zone', 'filter', 'maxLevelSum']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  return new SummonFreeLevelSum(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().m3g(o, 'maxLevelSum', at));
+  return new SummonFreeLevelSum(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().n3g(o, 'maxLevelSum', at));
 }
 function readEffectStepSummonLikeSubject($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SummonLikeSubject', setOf(['zone', 'filter']), true);
-  var tmp = JsonFields_getInstance().g3g(o, 'zone', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SummonLikeSubject', setOf(['zone', 'filter']), true);
+  var tmp = JsonFields_getInstance().h3g(o, 'zone', at);
   var tmp_0 = JsonFields_getInstance();
-  return new SummonLikeSubject(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new SummonLikeSubject(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepSwapInFormation($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.SwapInFormation', setOf(['withSelf', 'other', 'anyFormation', 'exceptTargets']), true);
-  var tmp = JsonFields_getInstance().h3g(o, 'withSelf', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.SwapInFormation', setOf(['withSelf', 'other', 'anyFormation', 'exceptTargets']), true);
+  var tmp = JsonFields_getInstance().i3g(o, 'withSelf', at);
   var tmp_0 = JsonFields_getInstance();
-  return new SwapInFormation(tmp, tmp_0.i3g(o, 'other', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'anyFormation', at), JsonFields_getInstance().h3g(o, 'exceptTargets', at));
+  return new SwapInFormation(tmp, tmp_0.j3g(o, 'other', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().i3g(o, 'anyFormation', at), JsonFields_getInstance().i3g(o, 'exceptTargets', at));
 }
 function readEffectStepTakeFromLookedDistinctLevels($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TakeFromLookedDistinctLevels', setOf(['max', 'filter']), true);
-  var tmp = JsonFields_getInstance().m3g(o, 'max', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TakeFromLookedDistinctLevels', setOf(['max', 'filter']), true);
+  var tmp = JsonFields_getInstance().n3g(o, 'max', at);
   var tmp_0 = JsonFields_getInstance();
-  return new TakeFromLookedDistinctLevels(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new TakeFromLookedDistinctLevels(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepTakeFromLookedEachRestToBottom($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TakeFromLookedEachRestToBottom', setOf_0('filters'), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TakeFromLookedEachRestToBottom', setOf_0('filters'), true);
   var tmp = JsonFields_getInstance();
-  return new TakeFromLookedEachRestToBottom(tmp.l3g(o, 'filters', at, CardModelReader$readEffectStepTakeFromLookedEachRestToBottom$lambda));
+  return new TakeFromLookedEachRestToBottom(tmp.m3g(o, 'filters', at, CardModelReader$readEffectStepTakeFromLookedEachRestToBottom$lambda));
 }
 function readEffectStepTakeFromLookedLikeSubject($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TakeFromLookedLikeSubject', setOf_0('max'), true);
-  return new TakeFromLookedLikeSubject(JsonFields_getInstance().m3g(o, 'max', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TakeFromLookedLikeSubject', setOf_0('max'), true);
+  return new TakeFromLookedLikeSubject(JsonFields_getInstance().n3g(o, 'max', at));
 }
 function readEffectStepTakeName($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TakeName', setOf_0('from'), true);
-  return new TakeName(JsonFields_getInstance().g3g(o, 'from', at));
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TakeName', setOf_0('from'), true);
+  return new TakeName(JsonFields_getInstance().h3g(o, 'from', at));
 }
 function readEffectStepTributeAlliesLevelSum($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TributeAlliesLevelSum', setOf(['minCount', 'minSum', 'filter']), true);
-  var tmp = JsonFields_getInstance().m3g(o, 'minCount', at);
-  var tmp_0 = JsonFields_getInstance().m3g(o, 'minSum', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TributeAlliesLevelSum', setOf(['minCount', 'minSum', 'filter']), true);
+  var tmp = JsonFields_getInstance().n3g(o, 'minCount', at);
+  var tmp_0 = JsonFields_getInstance().n3g(o, 'minSum', at);
   var tmp_1 = JsonFields_getInstance();
-  return new TributeAlliesLevelSum(tmp, tmp_0, tmp_1.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new TributeAlliesLevelSum(tmp, tmp_0, tmp_1.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepTributeAllyMaterial($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TributeAllyMaterial', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TributeAllyMaterial', emptySet(), true);
   return TributeAllyMaterial_instance;
 }
 function readEffectStepTributeAllyMaterialWhere($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TributeAllyMaterialWhere', setOf(['ally', 'material']), true);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TributeAllyMaterialWhere', setOf(['ally', 'material']), true);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
+  var tmp_0 = tmp.j3g(o, 'ally', at, CardModelReader$cardFilter$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  return new TributeAllyMaterialWhere(tmp_0, tmp_1.i3g(o, 'material', at, CardModelReader$cardFilter$ref($this)));
+  return new TributeAllyMaterialWhere(tmp_0, tmp_1.j3g(o, 'material', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepTributeAllyResources($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TributeAllyResources', setOf(['max', 'filter']), true);
-  var tmp = JsonFields_getInstance().m3g(o, 'max', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TributeAllyResources', setOf(['max', 'filter']), true);
+  var tmp = JsonFields_getInstance().n3g(o, 'max', at);
   var tmp_0 = JsonFields_getInstance();
-  return new TributeAllyResources(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
+  return new TributeAllyResources(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)));
 }
 function readEffectStepTributesToDeckBottomForKeyword($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'EffectStep.TributesToDeckBottomForKeyword', setOf(['count', 'filter', 'keyword']), true);
-  var tmp = JsonFields_getInstance().m3g(o, 'count', at);
+  JsonFields_getInstance().g3g(o, at, 'EffectStep.TributesToDeckBottomForKeyword', setOf(['count', 'filter', 'keyword']), true);
+  var tmp = JsonFields_getInstance().n3g(o, 'count', at);
   var tmp_0 = JsonFields_getInstance();
-  return new TributesToDeckBottomForKeyword(tmp, tmp_0.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().g3g(o, 'keyword', at));
+  return new TributesToDeckBottomForKeyword(tmp, tmp_0.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().h3g(o, 'keyword', at));
 }
 function readFormationEffects($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'FormationEffects', setOf(['effects', 'continuous', 'reactions']), false);
+  JsonFields_getInstance().g3g(o, at, 'FormationEffects', setOf(['effects', 'continuous', 'reactions']), false);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.l3g(o, 'effects', at, CardModelReader$readFormationEffects$lambda);
+  var tmp_0 = tmp.m3g(o, 'effects', at, CardModelReader$readFormationEffects$lambda);
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.l3g(o, 'continuous', at, CardModelReader$readFormationEffects$lambda_0);
+  var tmp_2 = tmp_1.m3g(o, 'continuous', at, CardModelReader$readFormationEffects$lambda_0);
   var tmp_3 = JsonFields_getInstance();
-  return new FormationEffects(tmp_0, tmp_2, tmp_3.l3g(o, 'reactions', at, CardModelReader$readFormationEffects$lambda_1));
+  return new FormationEffects(tmp_0, tmp_2, tmp_3.m3g(o, 'reactions', at, CardModelReader$readFormationEffects$lambda_1));
 }
 function readMaterialSpec($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'MaterialSpec', setOf(['count', 'more', 'level', 'orLess', 'levelSum', 'zones', 'filter', 'maxCount']), false);
-  var tmp = JsonFields_getInstance().m3g(o, 'count', at);
-  var tmp_0 = JsonFields_getInstance().h3g(o, 'more', at);
-  var tmp_1 = JsonFields_getInstance().m3g(o, 'level', at);
-  var tmp_2 = JsonFields_getInstance().h3g(o, 'orLess', at);
-  var tmp_3 = JsonFields_getInstance().m3g(o, 'levelSum', at);
+  JsonFields_getInstance().g3g(o, at, 'MaterialSpec', setOf(['count', 'more', 'level', 'orLess', 'levelSum', 'zones', 'filter', 'maxCount']), false);
+  var tmp = JsonFields_getInstance().n3g(o, 'count', at);
+  var tmp_0 = JsonFields_getInstance().i3g(o, 'more', at);
+  var tmp_1 = JsonFields_getInstance().n3g(o, 'level', at);
+  var tmp_2 = JsonFields_getInstance().i3g(o, 'orLess', at);
+  var tmp_3 = JsonFields_getInstance().n3g(o, 'levelSum', at);
   var tmp_4 = JsonFields_getInstance();
-  var tmp_5 = tmp_4.l3g(o, 'zones', at, CardModelReader$readMaterialSpec$lambda);
+  var tmp_5 = tmp_4.m3g(o, 'zones', at, CardModelReader$readMaterialSpec$lambda);
   var tmp_6 = JsonFields_getInstance();
-  return new MaterialSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_5, tmp_6.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().k3g(o, 'maxCount', at));
+  return new MaterialSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_5, tmp_6.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().l3g(o, 'maxCount', at));
 }
 function readReactionAttacksBeforeAscended($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Reaction.AttacksBeforeAscended', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Reaction.AttacksBeforeAscended', emptySet(), true);
   return AttacksBeforeAscended_instance;
 }
 function readReactionEnemyAsTypeForRequirement($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Reaction.EnemyAsTypeForRequirement', setOf(['asType', 'opponentTurn']), true);
-  return new EnemyAsTypeForRequirement(JsonFields_getInstance().g3g(o, 'asType', at), JsonFields_getInstance().h3g(o, 'opponentTurn', at));
+  JsonFields_getInstance().g3g(o, at, 'Reaction.EnemyAsTypeForRequirement', setOf(['asType', 'opponentTurn']), true);
+  return new EnemyAsTypeForRequirement(JsonFields_getInstance().h3g(o, 'asType', at), JsonFields_getInstance().i3g(o, 'opponentTurn', at));
 }
 function readReactionGainBeforeAscended($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Reaction.GainBeforeAscended', setOf_0('keyword'), true);
-  return new GainBeforeAscended(JsonFields_getInstance().g3g(o, 'keyword', at));
+  JsonFields_getInstance().g3g(o, at, 'Reaction.GainBeforeAscended', setOf_0('keyword'), true);
+  return new GainBeforeAscended(JsonFields_getInstance().h3g(o, 'keyword', at));
 }
 function readReactionSwapsBlocker($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Reaction.SwapsBlocker', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Reaction.SwapsBlocker', emptySet(), true);
   return SwapsBlocker_instance;
 }
 function readReactionTributesInsteadOfDamage($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Reaction.TributesInsteadOfDamage', emptySet(), true);
+  JsonFields_getInstance().g3g(o, at, 'Reaction.TributesInsteadOfDamage', emptySet(), true);
   return TributesInsteadOfDamage_instance;
 }
 function readRequirementSpec($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'RequirementSpec', setOf(['summoner', 'materials', 'alliesSum', 'alliesSumByCost', 'alone', 'aloneAtLevel', 'strongest', 'formationSize', 'formationAtLeast', 'condition', 'conditionText', 'alternative', 'ritual']), false);
+  JsonFields_getInstance().g3g(o, at, 'RequirementSpec', setOf(['summoner', 'materials', 'alliesSum', 'alliesSumByCost', 'alone', 'aloneAtLevel', 'strongest', 'formationSize', 'formationAtLeast', 'condition', 'conditionText', 'alternative', 'ritual']), false);
   var tmp = JsonFields_getInstance();
-  var tmp_0 = tmp.i3g(o, 'summoner', at, CardModelReader$summonerSpec$ref($this));
+  var tmp_0 = tmp.j3g(o, 'summoner', at, CardModelReader$summonerSpec$ref($this));
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.i3g(o, 'materials', at, CardModelReader$materialSpec$ref($this));
-  var tmp_3 = JsonFields_getInstance().m3g(o, 'alliesSum', at);
-  var tmp_4 = JsonFields_getInstance().h3g(o, 'alliesSumByCost', at);
-  var tmp_5 = JsonFields_getInstance().h3g(o, 'alone', at);
-  var tmp_6 = JsonFields_getInstance().m3g(o, 'aloneAtLevel', at);
-  var tmp_7 = JsonFields_getInstance().h3g(o, 'strongest', at);
-  var tmp_8 = JsonFields_getInstance().m3g(o, 'formationSize', at);
-  var tmp_9 = JsonFields_getInstance().h3g(o, 'formationAtLeast', at);
+  var tmp_2 = tmp_1.j3g(o, 'materials', at, CardModelReader$materialSpec$ref($this));
+  var tmp_3 = JsonFields_getInstance().n3g(o, 'alliesSum', at);
+  var tmp_4 = JsonFields_getInstance().i3g(o, 'alliesSumByCost', at);
+  var tmp_5 = JsonFields_getInstance().i3g(o, 'alone', at);
+  var tmp_6 = JsonFields_getInstance().n3g(o, 'aloneAtLevel', at);
+  var tmp_7 = JsonFields_getInstance().i3g(o, 'strongest', at);
+  var tmp_8 = JsonFields_getInstance().n3g(o, 'formationSize', at);
+  var tmp_9 = JsonFields_getInstance().i3g(o, 'formationAtLeast', at);
   var tmp_10 = JsonFields_getInstance();
-  var tmp_11 = tmp_10.i3g(o, 'condition', at, CardModelReader$condition$ref($this));
-  var tmp_12 = JsonFields_getInstance().g3g(o, 'conditionText', at);
+  var tmp_11 = tmp_10.j3g(o, 'condition', at, CardModelReader$condition$ref($this));
+  var tmp_12 = JsonFields_getInstance().h3g(o, 'conditionText', at);
   var tmp_13 = JsonFields_getInstance();
-  var tmp_14 = tmp_13.i3g(o, 'alternative', at, CardModelReader$requirementSpec$ref($this));
+  var tmp_14 = tmp_13.j3g(o, 'alternative', at, CardModelReader$requirementSpec$ref($this));
   var tmp_15 = JsonFields_getInstance();
-  return new RequirementSpec(tmp_0, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_11, tmp_12, tmp_14, tmp_15.i3g(o, 'ritual', at, CardModelReader$ritualSpec$ref($this)));
+  return new RequirementSpec(tmp_0, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_11, tmp_12, tmp_14, tmp_15.j3g(o, 'ritual', at, CardModelReader$ritualSpec$ref($this)));
 }
 function readRitualPartsPart($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'RitualParts.Part', setOf(['level', 'orLess', 'type', 'summoner', 'maxLevel']), false);
-  return new Part(JsonFields_getInstance().m3g(o, 'level', at), JsonFields_getInstance().h3g(o, 'orLess', at), JsonFields_getInstance().g3g(o, 'type', at), JsonFields_getInstance().h3g(o, 'summoner', at), JsonFields_getInstance().k3g(o, 'maxLevel', at));
+  JsonFields_getInstance().g3g(o, at, 'RitualParts.Part', setOf(['level', 'orLess', 'type', 'summoner', 'maxLevel']), false);
+  return new Part(JsonFields_getInstance().n3g(o, 'level', at), JsonFields_getInstance().i3g(o, 'orLess', at), JsonFields_getInstance().h3g(o, 'type', at), JsonFields_getInstance().i3g(o, 'summoner', at), JsonFields_getInstance().l3g(o, 'maxLevel', at));
 }
 function readRitualSpec($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'RitualSpec', setOf(['sum', 'level', 'maxLevel', 'atLeast', 'maxStrength', 'extra', 'eachMaxLevel', 'parts', 'orCost', 'filter', 'summonerLevel']), false);
-  var tmp = JsonFields_getInstance().h3g(o, 'sum', at);
-  var tmp_0 = JsonFields_getInstance().m3g(o, 'level', at);
-  var tmp_1 = JsonFields_getInstance().k3g(o, 'maxLevel', at);
-  var tmp_2 = JsonFields_getInstance().h3g(o, 'atLeast', at);
-  var tmp_3 = JsonFields_getInstance().k3g(o, 'maxStrength', at);
-  var tmp_4 = JsonFields_getInstance().m3g(o, 'extra', at);
-  var tmp_5 = JsonFields_getInstance().k3g(o, 'eachMaxLevel', at);
+  JsonFields_getInstance().g3g(o, at, 'RitualSpec', setOf(['sum', 'level', 'maxLevel', 'atLeast', 'maxStrength', 'extra', 'eachMaxLevel', 'parts', 'orCost', 'filter', 'summonerLevel']), false);
+  var tmp = JsonFields_getInstance().i3g(o, 'sum', at);
+  var tmp_0 = JsonFields_getInstance().n3g(o, 'level', at);
+  var tmp_1 = JsonFields_getInstance().l3g(o, 'maxLevel', at);
+  var tmp_2 = JsonFields_getInstance().i3g(o, 'atLeast', at);
+  var tmp_3 = JsonFields_getInstance().l3g(o, 'maxStrength', at);
+  var tmp_4 = JsonFields_getInstance().n3g(o, 'extra', at);
+  var tmp_5 = JsonFields_getInstance().l3g(o, 'eachMaxLevel', at);
   var tmp_6 = JsonFields_getInstance();
-  var tmp_7 = tmp_6.l3g(o, 'parts', at, CardModelReader$readRitualSpec$lambda);
-  var tmp_8 = JsonFields_getInstance().h3g(o, 'orCost', at);
+  var tmp_7 = tmp_6.m3g(o, 'parts', at, CardModelReader$readRitualSpec$lambda);
+  var tmp_8 = JsonFields_getInstance().i3g(o, 'orCost', at);
   var tmp_9 = JsonFields_getInstance();
-  return new RitualSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_8, tmp_9.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().k3g(o, 'summonerLevel', at));
+  return new RitualSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_8, tmp_9.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this)), JsonFields_getInstance().l3g(o, 'summonerLevel', at));
 }
 function readSelector($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Selector', setOf(['zones', 'owner', 'filter', 'min', 'max', 'self', 'mode', 'relative', 'special']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'zones', at);
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'owner', at, get_entries_13(), 'Selector.Owner');
+  JsonFields_getInstance().g3g(o, at, 'Selector', setOf(['zones', 'owner', 'filter', 'min', 'max', 'self', 'mode', 'relative', 'special']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'zones', at);
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'owner', at, get_entries_13(), 'Selector.Owner');
   var tmp_1 = JsonFields_getInstance();
-  var tmp_2 = tmp_1.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_2 = tmp_1.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
   var tmp_3 = JsonFields_getInstance();
-  var tmp_4 = tmp_3.i3g(o, 'min', at, CardModelReader$amount$ref($this));
+  var tmp_4 = tmp_3.j3g(o, 'min', at, CardModelReader$amount$ref($this));
   var tmp_5 = JsonFields_getInstance();
-  var tmp_6 = tmp_5.i3g(o, 'max', at, CardModelReader$amount$ref($this));
-  var tmp_7 = JsonFields_getInstance().j3g(o, 'self', at, get_entries_14(), 'Selector.Self');
-  var tmp_8 = JsonFields_getInstance().j3g(o, 'mode', at, get_entries_15(), 'Selector.Mode');
+  var tmp_6 = tmp_5.j3g(o, 'max', at, CardModelReader$amount$ref($this));
+  var tmp_7 = JsonFields_getInstance().k3g(o, 'self', at, get_entries_14(), 'Selector.Self');
+  var tmp_8 = JsonFields_getInstance().k3g(o, 'mode', at, get_entries_15(), 'Selector.Mode');
   var tmp_9 = JsonFields_getInstance();
-  var tmp_10 = tmp_9.i3g(o, 'relative', at, CardModelReader$selectorRelative$ref($this));
+  var tmp_10 = tmp_9.j3g(o, 'relative', at, CardModelReader$selectorRelative$ref($this));
   var tmp_11 = JsonFields_getInstance();
-  return new Selector(tmp, tmp_0, tmp_2, tmp_4, tmp_6, tmp_7, tmp_8, tmp_10, tmp_11.i3g(o, 'special', at, CardModelReader$selectorSpecial$ref($this)));
+  return new Selector(tmp, tmp_0, tmp_2, tmp_4, tmp_6, tmp_7, tmp_8, tmp_10, tmp_11.j3g(o, 'special', at, CardModelReader$selectorSpecial$ref($this)));
 }
 function readSelectorRelative($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Selector.Relative', setOf(['to', 'compareLevel', 'plus', 'compareStrength', 'differentName', 'sameName', 'sharesClass', 'level', 'maxLevel', 'maxStrength']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'to', at);
-  var tmp_0 = JsonFields_getInstance().j3g(o, 'compareLevel', at, get_entries_12(), 'Selector.Compare');
-  var tmp_1 = JsonFields_getInstance().m3g(o, 'plus', at);
-  var tmp_2 = JsonFields_getInstance().j3g(o, 'compareStrength', at, get_entries_12(), 'Selector.Compare');
-  var tmp_3 = JsonFields_getInstance().h3g(o, 'differentName', at);
-  var tmp_4 = JsonFields_getInstance().h3g(o, 'sameName', at);
-  var tmp_5 = JsonFields_getInstance().h3g(o, 'sharesClass', at);
+  JsonFields_getInstance().g3g(o, at, 'Selector.Relative', setOf(['to', 'compareLevel', 'plus', 'compareStrength', 'differentName', 'sameName', 'sharesClass', 'level', 'maxLevel', 'maxStrength']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'to', at);
+  var tmp_0 = JsonFields_getInstance().k3g(o, 'compareLevel', at, get_entries_12(), 'Selector.Compare');
+  var tmp_1 = JsonFields_getInstance().n3g(o, 'plus', at);
+  var tmp_2 = JsonFields_getInstance().k3g(o, 'compareStrength', at, get_entries_12(), 'Selector.Compare');
+  var tmp_3 = JsonFields_getInstance().i3g(o, 'differentName', at);
+  var tmp_4 = JsonFields_getInstance().i3g(o, 'sameName', at);
+  var tmp_5 = JsonFields_getInstance().i3g(o, 'sharesClass', at);
   var tmp_6 = JsonFields_getInstance();
-  var tmp_7 = tmp_6.i3g(o, 'level', at, CardModelReader$amount$ref($this));
+  var tmp_7 = tmp_6.j3g(o, 'level', at, CardModelReader$amount$ref($this));
   var tmp_8 = JsonFields_getInstance();
-  var tmp_9 = tmp_8.i3g(o, 'maxLevel', at, CardModelReader$amount$ref($this));
+  var tmp_9 = tmp_8.j3g(o, 'maxLevel', at, CardModelReader$amount$ref($this));
   var tmp_10 = JsonFields_getInstance();
-  return new Relative(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_9, tmp_10.i3g(o, 'maxStrength', at, CardModelReader$amount$ref($this)));
+  return new Relative(tmp, tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_7, tmp_9, tmp_10.j3g(o, 'maxStrength', at, CardModelReader$amount$ref($this)));
 }
 function readSelectorSpecial($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'Selector.Special', setOf(['rule', 'stage']), false);
+  JsonFields_getInstance().g3g(o, at, 'Selector.Special', setOf(['rule', 'stage']), false);
   var tmp = JsonFields_getInstance();
-  return new Special(tmp.i3g(o, 'rule', at, CardModelReader$specialRule$ref($this)), JsonFields_getInstance().j3g(o, 'stage', at, get_entries_11(), 'Selector.Stage'));
+  return new Special(tmp.j3g(o, 'rule', at, CardModelReader$specialRule$ref($this)), JsonFields_getInstance().k3g(o, 'stage', at, get_entries_11(), 'Selector.Stage'));
 }
 function readSpecialRule($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'SpecialRule', setOf(['kind', 'zone', 'reduce', 'summoner', 'filter', 'reduceBy', 'relative', 'otherName', 'sameLevelBonus']), false);
-  var tmp = JsonFields_getInstance().g3g(o, 'kind', at);
-  var tmp_0 = JsonFields_getInstance().g3g(o, 'zone', at);
-  var tmp_1 = JsonFields_getInstance().m3g(o, 'reduce', at);
-  var tmp_2 = JsonFields_getInstance().g3g(o, 'summoner', at);
+  JsonFields_getInstance().g3g(o, at, 'SpecialRule', setOf(['kind', 'zone', 'reduce', 'summoner', 'filter', 'reduceBy', 'relative', 'otherName', 'sameLevelBonus']), false);
+  var tmp = JsonFields_getInstance().h3g(o, 'kind', at);
+  var tmp_0 = JsonFields_getInstance().h3g(o, 'zone', at);
+  var tmp_1 = JsonFields_getInstance().n3g(o, 'reduce', at);
+  var tmp_2 = JsonFields_getInstance().h3g(o, 'summoner', at);
   var tmp_3 = JsonFields_getInstance();
-  var tmp_4 = tmp_3.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_4 = tmp_3.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
   var tmp_5 = JsonFields_getInstance();
-  var tmp_6 = tmp_5.i3g(o, 'reduceBy', at, CardModelReader$amount$ref($this));
+  var tmp_6 = tmp_5.j3g(o, 'reduceBy', at, CardModelReader$amount$ref($this));
   var tmp_7 = JsonFields_getInstance();
-  return new SpecialRule(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_6, tmp_7.i3g(o, 'relative', at, CardModelReader$selectorRelative$ref($this)), JsonFields_getInstance().h3g(o, 'otherName', at), JsonFields_getInstance().m3g(o, 'sameLevelBonus', at));
+  return new SpecialRule(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_6, tmp_7.j3g(o, 'relative', at, CardModelReader$selectorRelative$ref($this)), JsonFields_getInstance().i3g(o, 'otherName', at), JsonFields_getInstance().n3g(o, 'sameLevelBonus', at));
 }
 function readSummonerSpec($this, o, at) {
-  JsonFields_getInstance().f3g(o, at, 'SummonerSpec', setOf(['level', 'maxLevel', 'atLeast', 'orLess', 'filter', 'zones', 'none']), false);
-  var tmp = JsonFields_getInstance().m3g(o, 'level', at);
-  var tmp_0 = JsonFields_getInstance().k3g(o, 'maxLevel', at);
-  var tmp_1 = JsonFields_getInstance().h3g(o, 'atLeast', at);
-  var tmp_2 = JsonFields_getInstance().h3g(o, 'orLess', at);
+  JsonFields_getInstance().g3g(o, at, 'SummonerSpec', setOf(['level', 'maxLevel', 'atLeast', 'orLess', 'filter', 'zones', 'none']), false);
+  var tmp = JsonFields_getInstance().n3g(o, 'level', at);
+  var tmp_0 = JsonFields_getInstance().l3g(o, 'maxLevel', at);
+  var tmp_1 = JsonFields_getInstance().i3g(o, 'atLeast', at);
+  var tmp_2 = JsonFields_getInstance().i3g(o, 'orLess', at);
   var tmp_3 = JsonFields_getInstance();
-  var tmp_4 = tmp_3.i3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
+  var tmp_4 = tmp_3.j3g(o, 'filter', at, CardModelReader$cardFilter$ref($this));
   var tmp_5 = JsonFields_getInstance();
-  return new SummonerSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_5.l3g(o, 'zones', at, CardModelReader$readSummonerSpec$lambda), JsonFields_getInstance().h3g(o, 'none', at));
+  return new SummonerSpec(tmp, tmp_0, tmp_1, tmp_2, tmp_4, tmp_5.m3g(o, 'zones', at, CardModelReader$readSummonerSpec$lambda), JsonFields_getInstance().i3g(o, 'none', at));
 }
 function CardModelReader$amount$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.p3g(p0_0, p1);
+    return p0.q3g(p0_0, p1);
   }, 2, 0, 9, 'amount', [p0]);
 }
 function CardModelReader$selector$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.q3g(p0_0, p1);
+    return p0.r3g(p0_0, p1);
   }, 2, 0, 10, 'selector', [p0]);
 }
 function CardModelReader$cardFilter$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.r3g(p0_0, p1);
+    return p0.s3g(p0_0, p1);
   }, 2, 0, 11, 'cardFilter', [p0]);
 }
 function CardModelReader$readActionSequence$lambda(e, p) {
-  return CardModelReader_getInstance().s3g(e, p);
+  return CardModelReader_getInstance().t3g(e, p);
 }
 function CardModelReader$specialRule$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.t3g(p0_0, p1);
+    return p0.u3g(p0_0, p1);
   }, 2, 0, 12, 'specialRule', [p0]);
 }
 function CardModelReader$condition$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.u3g(p0_0, p1);
+    return p0.v3g(p0_0, p1);
   }, 2, 0, 13, 'condition', [p0]);
 }
 function CardModelReader$readAmountLeast$lambda(e, p) {
-  return CardModelReader_getInstance().p3g(e, p);
+  return CardModelReader_getInstance().q3g(e, p);
 }
 function CardModelReader$readCardDefinition$lambda(e, p) {
-  return CardModelReader_getInstance().v3g(e, p);
-}
-function CardModelReader$readCardDefinition$lambda_0(e, p) {
-  return CardModelReader_getInstance().v3g(e, p);
-}
-function CardModelReader$readCardDefinition$lambda_1(e, p) {
   return CardModelReader_getInstance().w3g(e, p);
 }
-function CardModelReader$readCardDefinition$lambda_2(e, p) {
+function CardModelReader$readCardDefinition$lambda_0(e, p) {
+  return CardModelReader_getInstance().w3g(e, p);
+}
+function CardModelReader$readCardDefinition$lambda_1(e, p) {
   return CardModelReader_getInstance().x3g(e, p);
 }
+function CardModelReader$readCardDefinition$lambda_2(e, p) {
+  return CardModelReader_getInstance().y3g(e, p);
+}
 function CardModelReader$readCardDefinition$lambda_3(e, p) {
-  return CardModelReader_getInstance().x3g(e, p);
+  return CardModelReader_getInstance().y3g(e, p);
 }
 function CardModelReader$cardTraits$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.y3g(p0_0, p1);
+    return p0.z3g(p0_0, p1);
   }, 2, 0, 14, 'cardTraits', [p0]);
 }
 function CardModelReader$formationEffects$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.z3g(p0_0, p1);
+    return p0.a3h(p0_0, p1);
   }, 2, 0, 15, 'formationEffects', [p0]);
 }
 function CardModelReader$requirementSpec$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.a3h(p0_0, p1);
+    return p0.b3h(p0_0, p1);
   }, 2, 0, 16, 'requirementSpec', [p0]);
 }
 function CardModelReader$readCardDefinition$lambda_4(e, p) {
-  return CardModelReader_getInstance().w3g(e, p);
+  return CardModelReader_getInstance().x3g(e, p);
 }
 function CardModelReader$cardEffectsReplacement$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.b3h(p0_0, p1);
+    return p0.c3h(p0_0, p1);
   }, 2, 0, 17, 'cardEffectsReplacement', [p0]);
 }
 function CardModelReader$readCardEffectsContinuous$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCardFilter$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCardFilter$lambda_0(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCardFilter$lambda_1(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCardFilter$lambda_2(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCardFilter$lambda_3(e, p) {
-  return CardModelReader_getInstance().r3g(e, p);
+  return CardModelReader_getInstance().s3g(e, p);
 }
 function CardModelReader$cardEffectsAlternativeLevel$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.d3h(p0_0, p1);
+    return p0.e3h(p0_0, p1);
   }, 2, 0, 18, 'cardEffectsAlternativeLevel', [p0]);
 }
 function CardModelReader$cardEffectsFieldPiecesDiscount$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.e3h(p0_0, p1);
+    return p0.f3h(p0_0, p1);
   }, 2, 0, 19, 'cardEffectsFieldPiecesDiscount', [p0]);
 }
 function CardModelReader$readConditionAll$lambda(e, p) {
-  return CardModelReader_getInstance().u3g(e, p);
+  return CardModelReader_getInstance().v3g(e, p);
 }
 function CardModelReader$readConditionAny$lambda(e, p) {
-  return CardModelReader_getInstance().u3g(e, p);
+  return CardModelReader_getInstance().v3g(e, p);
 }
 function CardModelReader$readConditionHappened$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$readCostModifiersCostModifier$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$costModifiersPayment$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.f3h(p0_0, p1);
+    return p0.g3h(p0_0, p1);
   }, 2, 0, 20, 'costModifiersPayment', [p0]);
 }
 function CardModelReader$readEffectScript$lambda(e, p) {
-  return CardModelReader_getInstance().g3h(e, p);
+  return CardModelReader_getInstance().h3h(e, p);
 }
 function CardModelReader$readEffectScript$lambda_0(e, p) {
-  return CardModelReader_getInstance().g3h(e, p);
+  return CardModelReader_getInstance().h3h(e, p);
 }
 function CardModelReader$action$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.s3g(p0_0, p1);
+    return p0.t3g(p0_0, p1);
   }, 2, 0, 21, 'action', [p0]);
 }
 function CardModelReader$effectScript$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.v3g(p0_0, p1);
+    return p0.w3g(p0_0, p1);
   }, 2, 0, 22, 'effectScript', [p0]);
 }
 function CardModelReader$readEffectStepRevealFromHand$lambda(e, p) {
-  return CardModelReader_getInstance().r3g(e, p);
+  return CardModelReader_getInstance().s3g(e, p);
 }
 function CardModelReader$readEffectStepTakeFromLookedEachRestToBottom$lambda(e, p) {
-  return CardModelReader_getInstance().r3g(e, p);
+  return CardModelReader_getInstance().s3g(e, p);
 }
 function CardModelReader$readFormationEffects$lambda(e, p) {
-  return CardModelReader_getInstance().v3g(e, p);
-}
-function CardModelReader$readFormationEffects$lambda_0(e, p) {
   return CardModelReader_getInstance().w3g(e, p);
 }
-function CardModelReader$readFormationEffects$lambda_1(e, p) {
+function CardModelReader$readFormationEffects$lambda_0(e, p) {
   return CardModelReader_getInstance().x3g(e, p);
 }
+function CardModelReader$readFormationEffects$lambda_1(e, p) {
+  return CardModelReader_getInstance().y3g(e, p);
+}
 function CardModelReader$readMaterialSpec$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader$summonerSpec$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.h3h(p0_0, p1);
+    return p0.i3h(p0_0, p1);
   }, 2, 0, 23, 'summonerSpec', [p0]);
 }
 function CardModelReader$materialSpec$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.i3h(p0_0, p1);
+    return p0.j3h(p0_0, p1);
   }, 2, 0, 24, 'materialSpec', [p0]);
 }
 function CardModelReader$ritualSpec$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.j3h(p0_0, p1);
+    return p0.k3h(p0_0, p1);
   }, 2, 0, 25, 'ritualSpec', [p0]);
 }
 function CardModelReader$readRitualSpec$lambda(e, p) {
-  return CardModelReader_getInstance().k3h(e, p);
+  return CardModelReader_getInstance().l3h(e, p);
 }
 function CardModelReader$selectorRelative$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.l3h(p0_0, p1);
+    return p0.m3h(p0_0, p1);
   }, 2, 0, 26, 'selectorRelative', [p0]);
 }
 function CardModelReader$selectorSpecial$ref(p0) {
   return constructCallableReference(function (p0_0, p1) {
-    return p0.m3h(p0_0, p1);
+    return p0.n3h(p0_0, p1);
   }, 2, 0, 27, 'selectorSpecial', [p0]);
 }
 function CardModelReader$readSummonerSpec$lambda(e, p) {
-  return JsonFields_getInstance().c3h(e, p);
+  return JsonFields_getInstance().d3h(e, p);
 }
 function CardModelReader() {
   CardModelReader_instance = this;
-  this.o3g_1 = mapOf([to('Action', listOf_0(['AtEndOfTurn', 'Attack', 'Damage', 'Destroy', 'Draw', 'Flip', 'Gems', 'Look', 'Modify', 'Move', 'Play', 'Select', 'Sequence', 'SetTapped', 'Summon', 'SummonSpecial', 'Watch'])), to('Amount', listOf_0(['CardsIn', 'EnemiesInFrontLine', 'FaceUpLives', 'Fixed', 'Gems', 'HandOver', 'HandUnder', 'IfThen', 'InZone', 'InZones', 'LastCount', 'LastMoved', 'Least', 'LevelsOnField', 'Lives', 'LivesBehind', 'OnBothFields', 'OnField', 'OpponentLevels', 'Scaled', 'SignedGems', 'SourceStrength', 'SubjectLevel', 'SumOf', 'Targetable', 'Times', 'TriggerSourceLevel', 'TriggerStrengthBeforeRemoval', 'UsedToSummon'])), to('CardEffects.Replacement', listOf('Replacement')), to('Condition', listOf_0(['AddedAsResource', 'All', 'AllyClashes', 'AllyDealtDirectDamage', 'Always', 'Any', 'ByEffect', 'Compare', 'Destroyed', 'EntersFrontLine', 'GameIs', 'Happened', 'Immediately', 'Not', 'NothingElsePlayedThisTurn', 'Summoned', 'SummonedWithoutMaterial', 'Targeted', 'ThisClashes', 'ThisIs', 'ThisMatches', 'ThisTributed', 'YouReducedStrength'])), to('EffectStep', listOf_0(['ActivateMaterialSummonEffects', 'ActivateSubjectSummonEffect', 'ActivateTributedSummonEffect', 'AddResourceToHigherAlly', 'AlliesGain', 'AllySpecialSummonsSameLevel', 'AttachLowerFromTributes', 'AttachSelfAsResourceToAlly', 'AttachSubjectToHigherAlly', 'AttachSubjectToSummoned', 'BounceChosen', 'ChangeClass', 'ChooseEnemiesLevelSum', 'ChooseOpponentTribute', 'ChooseWeakestEnemy', 'DeclareBlockSelf', 'DestroyFaceUpLife', 'DestroyTopLife', 'Do', 'EachPlayerDiscards', 'EachPlayerKeepsOneInFrontLine', 'EachPlayerLowersMarker', 'EndYourTurn', 'ExtraCombatHitThenEndTurn', 'ExtraHit', 'GainGemsPerOwnSacrificed', 'GrantEffect', 'GroupUp', 'HandsToBottomDrawOpponentLives', 'IfChosenGone', 'IfCondition', 'IfDone', 'IfNotDone', 'IfPossible', 'IfSaved', 'IfTributed', 'KeepOnField', 'LivesFaceDown', 'MaterialOfExhaustedAllyToBack', 'MaterializeSelfOnTriggerAlly', 'MayDo', 'NoUntapChosen', 'OpponentGainsGemsAsCounter', 'OpponentMaySummon', 'OpponentMayTap', 'OpponentMovesOneToFront', 'PickAllyUpToSacrificedLevel', 'PickAllyWithHigherAlly', 'PickAllyWithMaterials', 'PlaceChosenTributeAndSelf', 'PlaceFromHandUntilTurnEnd', 'ReduceOpponentLivesBy', 'ReduceRepeatedly', 'ReturnAllyOfSummonedLevel', 'ReturnSubjectAtAttackEnd', 'RevealFromHand', 'RevealOpponentHandSendOneToBottom', 'SacrificeAlly', 'SkipBlockStep', 'SpecialSelfDeclaredSummoner', 'SubjectFromTrigger', 'SubjectIsThisCard', 'SummonFreeLevelSum', 'SummonLikeSubject', 'SwapInFormation', 'TakeFromLookedDistinctLevels', 'TakeFromLookedEachRestToBottom', 'TakeFromLookedLikeSubject', 'TakeName', 'TributeAlliesLevelSum', 'TributeAllyMaterial', 'TributeAllyMaterialWhere', 'TributeAllyResources', 'TributesToDeckBottomForKeyword'])), to('Reaction', listOf_0(['AllyGuard', 'AllyRemovalSummon', 'AttacksBeforeAscended', 'CostModifier', 'DamageReplacement', 'EnemyAsTypeForRequirement', 'GainBeforeAscended', 'Replacement', 'SwapsBlocker', 'TributesInsteadOfDamage']))]);
+  this.p3g_1 = mapOf([to('Action', listOf_0(['AtEndOfTurn', 'Attack', 'Damage', 'Destroy', 'Draw', 'Flip', 'Gems', 'Look', 'Modify', 'Move', 'Play', 'Select', 'Sequence', 'SetTapped', 'Summon', 'SummonSpecial', 'Watch'])), to('Amount', listOf_0(['CardsIn', 'EnemiesInFrontLine', 'FaceUpLives', 'Fixed', 'Gems', 'HandOver', 'HandUnder', 'IfThen', 'InZone', 'InZones', 'LastCount', 'LastMoved', 'Least', 'LevelsOnField', 'Lives', 'LivesBehind', 'OnBothFields', 'OnField', 'OpponentLevels', 'Scaled', 'SignedGems', 'SourceStrength', 'SubjectLevel', 'SumOf', 'Targetable', 'Times', 'TriggerSourceLevel', 'TriggerStrengthBeforeRemoval', 'UsedToSummon'])), to('CardEffects.Replacement', listOf('Replacement')), to('Condition', listOf_0(['AddedAsResource', 'All', 'AllyClashes', 'AllyDealtDirectDamage', 'Always', 'Any', 'ByEffect', 'Compare', 'Destroyed', 'EntersFrontLine', 'GameIs', 'Happened', 'Immediately', 'Not', 'NothingElsePlayedThisTurn', 'Summoned', 'SummonedWithoutMaterial', 'Targeted', 'ThisClashes', 'ThisIs', 'ThisMatches', 'ThisTributed', 'YouReducedStrength'])), to('EffectStep', listOf_0(['ActivateMaterialSummonEffects', 'ActivateSubjectSummonEffect', 'ActivateTributedSummonEffect', 'AddResourceToHigherAlly', 'AlliesGain', 'AllySpecialSummonsSameLevel', 'AttachLowerFromTributes', 'AttachSelfAsResourceToAlly', 'AttachSubjectToHigherAlly', 'AttachSubjectToSummoned', 'BounceChosen', 'ChangeClass', 'ChooseEnemiesLevelSum', 'ChooseOpponentTribute', 'ChooseWeakestEnemy', 'DeclareBlockSelf', 'DestroyFaceUpLife', 'DestroyTopLife', 'Do', 'EachPlayerDiscards', 'EachPlayerKeepsOneInFrontLine', 'EachPlayerLowersMarker', 'EndYourTurn', 'ExtraCombatHitThenEndTurn', 'ExtraHit', 'GainGemsPerOwnSacrificed', 'GrantEffect', 'GroupUp', 'HandsToBottomDrawOpponentLives', 'IfChosenGone', 'IfCondition', 'IfDone', 'IfNotDone', 'IfPossible', 'IfSaved', 'IfTributed', 'KeepOnField', 'LivesFaceDown', 'MaterialOfExhaustedAllyToBack', 'MaterializeSelfOnTriggerAlly', 'MayDo', 'NoUntapChosen', 'OpponentGainsGemsAsCounter', 'OpponentMaySummon', 'OpponentMayTap', 'OpponentMovesOneToFront', 'PickAllyUpToSacrificedLevel', 'PickAllyWithHigherAlly', 'PickAllyWithMaterials', 'PlaceChosenTributeAndSelf', 'PlaceFromHandUntilTurnEnd', 'ReduceOpponentLivesBy', 'ReduceRepeatedly', 'ReturnAllyOfSummonedLevel', 'ReturnSubjectAtAttackEnd', 'RevealFromHand', 'RevealOpponentHandSendOneToBottom', 'SacrificeAlly', 'SkipBlockStep', 'SpecialSelfDeclaredSummoner', 'SubjectFromTrigger', 'SubjectIsThisCard', 'SummonFreeLevelSum', 'SummonLikeSubject', 'SwapInFormation', 'TakeFromLookedDistinctLevels', 'TakeFromLookedEachRestToBottom', 'TakeFromLookedLikeSubject', 'TakeName', 'TributeAlliesLevelSum', 'TributeAllyMaterial', 'TributeAllyMaterialWhere', 'TributeAllyResources', 'TributesToDeckBottomForKeyword'])), to('Reaction', listOf_0(['AllyGuard', 'AllyRemovalSummon', 'AttacksBeforeAscended', 'CostModifier', 'DamageReplacement', 'EnemyAsTypeForRequirement', 'GainBeforeAscended', 'Replacement', 'SwapsBlocker', 'TributesInsteadOfDamage']))]);
 }
-protoOf(CardModelReader).s3g = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'Action');
-  var id = JsonFields_getInstance().o3h(o, at, 'Action');
+protoOf(CardModelReader).t3g = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'Action');
+  var id = JsonFields_getInstance().p3h(o, at, 'Action');
   var tmp;
   switch (id) {
     case 'AtEndOfTurn':
@@ -43039,14 +43090,14 @@ protoOf(CardModelReader).s3g = function (e, at) {
       tmp = readActionWatch(this, o, at);
       break;
     default:
-      JsonFields_getInstance().p3h(at, id, 'Action', getValue(this.o3g_1, 'Action'));
+      JsonFields_getInstance().q3h(at, id, 'Action', getValue(this.p3g_1, 'Action'));
       break;
   }
   return tmp;
 };
-protoOf(CardModelReader).p3g = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'Amount');
-  var id = JsonFields_getInstance().o3h(o, at, 'Amount');
+protoOf(CardModelReader).q3g = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'Amount');
+  var id = JsonFields_getInstance().p3h(o, at, 'Amount');
   var tmp;
   switch (id) {
     case 'CardsIn':
@@ -43137,43 +43188,43 @@ protoOf(CardModelReader).p3g = function (e, at) {
       tmp = readAmountUsedToSummon(this, o, at);
       break;
     default:
-      JsonFields_getInstance().p3h(at, id, 'Amount', getValue(this.o3g_1, 'Amount'));
+      JsonFields_getInstance().q3h(at, id, 'Amount', getValue(this.p3g_1, 'Amount'));
       break;
   }
   return tmp;
 };
-protoOf(CardModelReader).q3h = function (e, at) {
-  return readCardDefinition(this, JsonFields_getInstance().n3h(e, at, 'CardDefinition'), at);
-};
-protoOf(CardModelReader).d3h = function (e, at) {
-  return readCardEffectsAlternativeLevel(this, JsonFields_getInstance().n3h(e, at, 'CardEffects.AlternativeLevel'), at);
-};
-protoOf(CardModelReader).w3g = function (e, at) {
-  return readCardEffectsContinuous(this, JsonFields_getInstance().n3h(e, at, 'CardEffects.Continuous'), at);
+protoOf(CardModelReader).r3h = function (e, at) {
+  return readCardDefinition(this, JsonFields_getInstance().o3h(e, at, 'CardDefinition'), at);
 };
 protoOf(CardModelReader).e3h = function (e, at) {
-  return readCardEffectsFieldPiecesDiscount(this, JsonFields_getInstance().n3h(e, at, 'CardEffects.FieldPiecesDiscount'), at);
+  return readCardEffectsAlternativeLevel(this, JsonFields_getInstance().o3h(e, at, 'CardEffects.AlternativeLevel'), at);
 };
-protoOf(CardModelReader).b3h = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'CardEffects.Replacement');
-  var id = JsonFields_getInstance().o3h(o, at, 'CardEffects.Replacement');
+protoOf(CardModelReader).x3g = function (e, at) {
+  return readCardEffectsContinuous(this, JsonFields_getInstance().o3h(e, at, 'CardEffects.Continuous'), at);
+};
+protoOf(CardModelReader).f3h = function (e, at) {
+  return readCardEffectsFieldPiecesDiscount(this, JsonFields_getInstance().o3h(e, at, 'CardEffects.FieldPiecesDiscount'), at);
+};
+protoOf(CardModelReader).c3h = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'CardEffects.Replacement');
+  var id = JsonFields_getInstance().p3h(o, at, 'CardEffects.Replacement');
   var tmp;
   if (id === 'Replacement') {
     tmp = readCardEffectsReplacement(this, o, at);
   } else {
-    JsonFields_getInstance().p3h(at, id, 'CardEffects.Replacement', getValue(this.o3g_1, 'CardEffects.Replacement'));
+    JsonFields_getInstance().q3h(at, id, 'CardEffects.Replacement', getValue(this.p3g_1, 'CardEffects.Replacement'));
   }
   return tmp;
 };
-protoOf(CardModelReader).r3g = function (e, at) {
-  return readCardFilter(this, JsonFields_getInstance().n3h(e, at, 'CardFilter'), at);
+protoOf(CardModelReader).s3g = function (e, at) {
+  return readCardFilter(this, JsonFields_getInstance().o3h(e, at, 'CardFilter'), at);
 };
-protoOf(CardModelReader).y3g = function (e, at) {
-  return readCardTraits(this, JsonFields_getInstance().n3h(e, at, 'CardTraits'), at);
+protoOf(CardModelReader).z3g = function (e, at) {
+  return readCardTraits(this, JsonFields_getInstance().o3h(e, at, 'CardTraits'), at);
 };
-protoOf(CardModelReader).u3g = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'Condition');
-  var id = JsonFields_getInstance().o3h(o, at, 'Condition');
+protoOf(CardModelReader).v3g = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'Condition');
+  var id = JsonFields_getInstance().p3h(o, at, 'Condition');
   var tmp;
   switch (id) {
     case 'AddedAsResource':
@@ -43246,20 +43297,20 @@ protoOf(CardModelReader).u3g = function (e, at) {
       tmp = readConditionYouReducedStrength(this, o, at);
       break;
     default:
-      JsonFields_getInstance().p3h(at, id, 'Condition', getValue(this.o3g_1, 'Condition'));
+      JsonFields_getInstance().q3h(at, id, 'Condition', getValue(this.p3g_1, 'Condition'));
       break;
   }
   return tmp;
 };
-protoOf(CardModelReader).f3h = function (e, at) {
-  return readCostModifiersPayment(this, JsonFields_getInstance().n3h(e, at, 'CostModifiers.Payment'), at);
-};
-protoOf(CardModelReader).v3g = function (e, at) {
-  return readEffectScript(this, JsonFields_getInstance().n3h(e, at, 'EffectScript'), at);
-};
 protoOf(CardModelReader).g3h = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'EffectStep');
-  var id = JsonFields_getInstance().o3h(o, at, 'EffectStep');
+  return readCostModifiersPayment(this, JsonFields_getInstance().o3h(e, at, 'CostModifiers.Payment'), at);
+};
+protoOf(CardModelReader).w3g = function (e, at) {
+  return readEffectScript(this, JsonFields_getInstance().o3h(e, at, 'EffectScript'), at);
+};
+protoOf(CardModelReader).h3h = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'EffectStep');
+  var id = JsonFields_getInstance().p3h(o, at, 'EffectStep');
   var tmp;
   switch (id) {
     case 'ActivateMaterialSummonEffects':
@@ -43485,20 +43536,20 @@ protoOf(CardModelReader).g3h = function (e, at) {
       tmp = readEffectStepTributesToDeckBottomForKeyword(this, o, at);
       break;
     default:
-      JsonFields_getInstance().p3h(at, id, 'EffectStep', getValue(this.o3g_1, 'EffectStep'));
+      JsonFields_getInstance().q3h(at, id, 'EffectStep', getValue(this.p3g_1, 'EffectStep'));
       break;
   }
   return tmp;
 };
-protoOf(CardModelReader).z3g = function (e, at) {
-  return readFormationEffects(this, JsonFields_getInstance().n3h(e, at, 'FormationEffects'), at);
+protoOf(CardModelReader).a3h = function (e, at) {
+  return readFormationEffects(this, JsonFields_getInstance().o3h(e, at, 'FormationEffects'), at);
 };
-protoOf(CardModelReader).i3h = function (e, at) {
-  return readMaterialSpec(this, JsonFields_getInstance().n3h(e, at, 'MaterialSpec'), at);
+protoOf(CardModelReader).j3h = function (e, at) {
+  return readMaterialSpec(this, JsonFields_getInstance().o3h(e, at, 'MaterialSpec'), at);
 };
-protoOf(CardModelReader).x3g = function (e, at) {
-  var o = JsonFields_getInstance().n3h(e, at, 'Reaction');
-  var id = JsonFields_getInstance().o3h(o, at, 'Reaction');
+protoOf(CardModelReader).y3g = function (e, at) {
+  var o = JsonFields_getInstance().o3h(e, at, 'Reaction');
+  var id = JsonFields_getInstance().p3h(o, at, 'Reaction');
   var tmp;
   switch (id) {
     case 'AllyGuard':
@@ -43532,34 +43583,34 @@ protoOf(CardModelReader).x3g = function (e, at) {
       tmp = readReactionTributesInsteadOfDamage(this, o, at);
       break;
     default:
-      JsonFields_getInstance().p3h(at, id, 'Reaction', getValue(this.o3g_1, 'Reaction'));
+      JsonFields_getInstance().q3h(at, id, 'Reaction', getValue(this.p3g_1, 'Reaction'));
       break;
   }
   return tmp;
 };
-protoOf(CardModelReader).a3h = function (e, at) {
-  return readRequirementSpec(this, JsonFields_getInstance().n3h(e, at, 'RequirementSpec'), at);
-};
-protoOf(CardModelReader).k3h = function (e, at) {
-  return readRitualPartsPart(this, JsonFields_getInstance().n3h(e, at, 'RitualParts.Part'), at);
-};
-protoOf(CardModelReader).j3h = function (e, at) {
-  return readRitualSpec(this, JsonFields_getInstance().n3h(e, at, 'RitualSpec'), at);
-};
-protoOf(CardModelReader).q3g = function (e, at) {
-  return readSelector(this, JsonFields_getInstance().n3h(e, at, 'Selector'), at);
+protoOf(CardModelReader).b3h = function (e, at) {
+  return readRequirementSpec(this, JsonFields_getInstance().o3h(e, at, 'RequirementSpec'), at);
 };
 protoOf(CardModelReader).l3h = function (e, at) {
-  return readSelectorRelative(this, JsonFields_getInstance().n3h(e, at, 'Selector.Relative'), at);
+  return readRitualPartsPart(this, JsonFields_getInstance().o3h(e, at, 'RitualParts.Part'), at);
+};
+protoOf(CardModelReader).k3h = function (e, at) {
+  return readRitualSpec(this, JsonFields_getInstance().o3h(e, at, 'RitualSpec'), at);
+};
+protoOf(CardModelReader).r3g = function (e, at) {
+  return readSelector(this, JsonFields_getInstance().o3h(e, at, 'Selector'), at);
 };
 protoOf(CardModelReader).m3h = function (e, at) {
-  return readSelectorSpecial(this, JsonFields_getInstance().n3h(e, at, 'Selector.Special'), at);
+  return readSelectorRelative(this, JsonFields_getInstance().o3h(e, at, 'Selector.Relative'), at);
 };
-protoOf(CardModelReader).t3g = function (e, at) {
-  return readSpecialRule(this, JsonFields_getInstance().n3h(e, at, 'SpecialRule'), at);
+protoOf(CardModelReader).n3h = function (e, at) {
+  return readSelectorSpecial(this, JsonFields_getInstance().o3h(e, at, 'Selector.Special'), at);
 };
-protoOf(CardModelReader).h3h = function (e, at) {
-  return readSummonerSpec(this, JsonFields_getInstance().n3h(e, at, 'SummonerSpec'), at);
+protoOf(CardModelReader).u3g = function (e, at) {
+  return readSpecialRule(this, JsonFields_getInstance().o3h(e, at, 'SpecialRule'), at);
+};
+protoOf(CardModelReader).i3h = function (e, at) {
+  return readSummonerSpec(this, JsonFields_getInstance().o3h(e, at, 'SummonerSpec'), at);
 };
 var CardModelReader_instance;
 function CardModelReader_getInstance() {
@@ -43569,9 +43620,9 @@ function CardModelReader_getInstance() {
 }
 function CardReader() {
 }
-protoOf(CardReader).c3g = function (json) {
+protoOf(CardReader).d3g = function (json) {
   try {
-    return CardModelReader_getInstance().q3h(this.r3h(json), '');
+    return CardModelReader_getInstance().r3h(this.s3h(json), '');
   } catch ($p) {
     if ($p instanceof CardJsonException) {
       var e = $p;
@@ -43581,7 +43632,7 @@ protoOf(CardReader).c3g = function (json) {
     }
   }
 };
-protoOf(CardReader).r3h = function (json) {
+protoOf(CardReader).s3h = function (json) {
   var tmp;
   try {
     tmp = Default_getInstance_0().ax(json);
@@ -43595,7 +43646,7 @@ protoOf(CardReader).r3h = function (json) {
     }
   }
   var tree = tmp;
-  DuplicateKeys_instance.s3h(json);
+  DuplicateKeys_instance.t3h(json);
   return tree;
 };
 var CardReader_instance;
@@ -43641,7 +43692,7 @@ function isJsonSpace($this, $receiver) {
 }
 function DuplicateKeys() {
 }
-protoOf(DuplicateKeys).s3h = function (json) {
+protoOf(DuplicateKeys).t3h = function (json) {
   var open = ArrayList_init_$Create$();
   var i = 0;
   while (i < json.length) {
@@ -43690,9 +43741,9 @@ function JsonFields$enum$lambda(it) {
 }
 function JsonFields() {
   JsonFields_instance = this;
-  this.e3g_1 = Regex_init_$Create$('-?(0|[1-9][0-9]*)');
+  this.f3g_1 = Regex_init_$Create$('-?(0|[1-9][0-9]*)');
 }
-protoOf(JsonFields).t3h = function (at, message) {
+protoOf(JsonFields).u3h = function (at, message) {
   var tmp;
   // Inline function 'kotlin.text.isEmpty' call
   if (charSequenceLength(at) === 0) {
@@ -43702,26 +43753,26 @@ protoOf(JsonFields).t3h = function (at, message) {
   }
   throw new CardJsonException(tmp);
 };
-protoOf(JsonFields).n3h = function (e, at, what) {
+protoOf(JsonFields).o3h = function (e, at, what) {
   var tmp0_elvis_lhs = e instanceof JsonObject ? e : null;
   var tmp;
   if (tmp0_elvis_lhs == null) {
-    this.t3h(at, 'se esperaba un objeto (' + what + '), no ' + this.u3h(e));
+    this.u3h(at, 'se esperaba un objeto (' + what + '), no ' + this.v3h(e));
   } else {
     tmp = tmp0_elvis_lhs;
   }
   return tmp;
 };
-protoOf(JsonFields).f3g = function (o, at, what, known, typed) {
+protoOf(JsonFields).g3g = function (o, at, what, known, typed) {
   var _iterator__ex2g4s = o.v1().h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var key = _iterator__ex2g4s.j();
     if (known.n(key) || (typed && key === 'type'))
       continue $l$loop;
-    this.t3h(at, 'campo desconocido "' + key + '" en ' + what + ' (conocidos: ' + joinToString(sorted(known), ', ') + ')');
+    this.u3h(at, 'campo desconocido "' + key + '" en ' + what + ' (conocidos: ' + joinToString(sorted(known), ', ') + ')');
   }
 };
-protoOf(JsonFields).o3h = function (o, at, family) {
+protoOf(JsonFields).p3h = function (o, at, family) {
   var type = o.kb('type');
   var tmp;
   if (type == null) {
@@ -43730,7 +43781,7 @@ protoOf(JsonFields).o3h = function (o, at, family) {
     tmp = type instanceof JsonNull;
   }
   if (tmp) {
-    this.t3h(at, 'falta "type" (el nombre de un ' + family + ')');
+    this.u3h(at, 'falta "type" (el nombre de un ' + family + ')');
   }
   var tmp_0;
   if (!(type instanceof JsonPrimitive)) {
@@ -43739,18 +43790,18 @@ protoOf(JsonFields).o3h = function (o, at, family) {
     tmp_0 = !type.iz();
   }
   if (tmp_0) {
-    this.t3h(at, '"type" debe ser un nombre, no ' + this.u3h(type));
+    this.u3h(at, '"type" debe ser un nombre, no ' + this.v3h(type));
   }
   return type.jz();
 };
-protoOf(JsonFields).p3h = function (at, id, family, known) {
-  this.t3h(at, 'tipo desconocido "' + id + '" para ' + family + ' (conocidos: ' + joinToString(sorted(known), ', ') + ')');
+protoOf(JsonFields).q3h = function (at, id, family, known) {
+  this.u3h(at, 'tipo desconocido "' + id + '" para ' + family + ' (conocidos: ' + joinToString(sorted(known), ', ') + ')');
 };
-protoOf(JsonFields).m3g = function (o, key, at) {
-  var tmp0_elvis_lhs = this.k3g(o, key, at);
+protoOf(JsonFields).n3g = function (o, key, at) {
+  var tmp0_elvis_lhs = this.l3g(o, key, at);
   return tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs;
 };
-protoOf(JsonFields).k3g = function (o, key, at) {
+protoOf(JsonFields).l3g = function (o, key, at) {
   var tmp0_elvis_lhs = o.kb(key);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -43763,11 +43814,11 @@ protoOf(JsonFields).k3g = function (o, key, at) {
   if (e instanceof JsonNull) {
     tmp_0 = null;
   } else {
-    tmp_0 = this.v3h(e, child(this, at, key));
+    tmp_0 = this.w3h(e, child(this, at, key));
   }
   return tmp_0;
 };
-protoOf(JsonFields).v3h = function (e, at) {
+protoOf(JsonFields).w3h = function (e, at) {
   var tmp;
   var tmp_0;
   if (!(e instanceof JsonPrimitive)) {
@@ -43781,22 +43832,22 @@ protoOf(JsonFields).v3h = function (e, at) {
     tmp = e instanceof JsonNull;
   }
   if (tmp) {
-    this.t3h(at, 'se esperaba un n\xFAmero entero, no ' + this.u3h(e));
+    this.u3h(at, 'se esperaba un n\xFAmero entero, no ' + this.v3h(e));
   }
   var text = e.jz();
-  if (!this.e3g_1.ua(text)) {
-    this.t3h(at, 'se esperaba un n\xFAmero entero, no ' + text);
+  if (!this.f3g_1.ua(text)) {
+    this.u3h(at, 'se esperaba un n\xFAmero entero, no ' + text);
   }
   var tmp0_elvis_lhs = toIntOrNull(text);
   var tmp_1;
   if (tmp0_elvis_lhs == null) {
-    this.t3h(at, 'n\xFAmero fuera del rango de int: ' + text);
+    this.u3h(at, 'n\xFAmero fuera del rango de int: ' + text);
   } else {
     tmp_1 = tmp0_elvis_lhs;
   }
   return tmp_1;
 };
-protoOf(JsonFields).h3g = function (o, key, at) {
+protoOf(JsonFields).i3g = function (o, key, at) {
   var tmp0_elvis_lhs = o.kb(key);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -43820,11 +43871,11 @@ protoOf(JsonFields).h3g = function (o, key, at) {
     tmp_0 = (!(e.jz() === 'true') && !(e.jz() === 'false'));
   }
   if (tmp_0) {
-    this.t3h(child(this, at, key), 'se esperaba true o false, no ' + this.u3h(e));
+    this.u3h(child(this, at, key), 'se esperaba true o false, no ' + this.v3h(e));
   }
   return e.jz() === 'true';
 };
-protoOf(JsonFields).g3g = function (o, key, at) {
+protoOf(JsonFields).h3g = function (o, key, at) {
   var tmp0_elvis_lhs = o.kb(key);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -43837,11 +43888,11 @@ protoOf(JsonFields).g3g = function (o, key, at) {
   if (e instanceof JsonNull) {
     tmp_0 = null;
   } else {
-    tmp_0 = this.c3h(e, child(this, at, key));
+    tmp_0 = this.d3h(e, child(this, at, key));
   }
   return tmp_0;
 };
-protoOf(JsonFields).c3h = function (e, at) {
+protoOf(JsonFields).d3h = function (e, at) {
   var tmp;
   if (!(e instanceof JsonPrimitive)) {
     tmp = true;
@@ -43849,12 +43900,12 @@ protoOf(JsonFields).c3h = function (e, at) {
     tmp = !e.iz();
   }
   if (tmp) {
-    this.t3h(at, 'se esperaba un texto, no ' + this.u3h(e));
+    this.u3h(at, 'se esperaba un texto, no ' + this.v3h(e));
   }
   return e.jz();
 };
-protoOf(JsonFields).j3g = function (o, key, at, entries, what) {
-  var tmp0_elvis_lhs = this.g3g(o, key, at);
+protoOf(JsonFields).k3g = function (o, key, at, entries, what) {
+  var tmp0_elvis_lhs = this.h3g(o, key, at);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -43879,13 +43930,13 @@ protoOf(JsonFields).j3g = function (o, key, at, entries, what) {
   var tmp_0;
   if (tmp1_elvis_lhs == null) {
     var tmp_1 = child(this, at, key);
-    this.t3h(tmp_1, '"' + name + '" no es un ' + what + ' (valores: ' + joinToString(entries, ', ', VOID, VOID, VOID, VOID, JsonFields$enum$lambda) + ')');
+    this.u3h(tmp_1, '"' + name + '" no es un ' + what + ' (valores: ' + joinToString(entries, ', ', VOID, VOID, VOID, VOID, JsonFields$enum$lambda) + ')');
   } else {
     tmp_0 = tmp1_elvis_lhs;
   }
   return tmp_0;
 };
-protoOf(JsonFields).i3g = function (o, key, at, read) {
+protoOf(JsonFields).j3g = function (o, key, at, read) {
   var tmp0_elvis_lhs = o.kb(key);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -43902,7 +43953,7 @@ protoOf(JsonFields).i3g = function (o, key, at, read) {
   }
   return tmp_0;
 };
-protoOf(JsonFields).l3g = function (o, key, at, read) {
+protoOf(JsonFields).m3g = function (o, key, at, read) {
   var out = ArrayList_init_$Create$();
   $l$block_0: {
     // Inline function 'com.drive.drive_manager.simulator.engine.cards.JsonFields.elements' call
@@ -43919,7 +43970,7 @@ protoOf(JsonFields).l3g = function (o, key, at, read) {
     }
     var path = child(this, at, key);
     if (!(e instanceof JsonArray)) {
-      this.t3h(path, 'se esperaba una lista, no ' + this.u3h(e));
+      this.u3h(path, 'se esperaba una lista, no ' + this.v3h(e));
     }
     // Inline function 'kotlin.collections.forEachIndexed' call
     var index = 0;
@@ -43930,7 +43981,7 @@ protoOf(JsonFields).l3g = function (o, key, at, read) {
       index = _unary__edvuaz + 1 | 0;
       var i = checkIndexOverflow(_unary__edvuaz);
       if (item instanceof JsonNull) {
-        JsonFields_getInstance().t3h(path + '[' + i + ']', 'elemento nulo');
+        JsonFields_getInstance().u3h(path + '[' + i + ']', 'elemento nulo');
       }
       var path_0 = path + '[' + i + ']';
       out.f(read(item, path_0));
@@ -43938,7 +43989,7 @@ protoOf(JsonFields).l3g = function (o, key, at, read) {
   }
   return out;
 };
-protoOf(JsonFields).n3g = function (o, key, at, read) {
+protoOf(JsonFields).o3g = function (o, key, at, read) {
   var out = HashSet_init_$Create$();
   $l$block_0: {
     // Inline function 'com.drive.drive_manager.simulator.engine.cards.JsonFields.elements' call
@@ -43955,7 +44006,7 @@ protoOf(JsonFields).n3g = function (o, key, at, read) {
     }
     var path = child(this, at, key);
     if (!(e instanceof JsonArray)) {
-      this.t3h(path, 'se esperaba una lista, no ' + this.u3h(e));
+      this.u3h(path, 'se esperaba una lista, no ' + this.v3h(e));
     }
     // Inline function 'kotlin.collections.forEachIndexed' call
     var index = 0;
@@ -43966,7 +44017,7 @@ protoOf(JsonFields).n3g = function (o, key, at, read) {
       index = _unary__edvuaz + 1 | 0;
       var i = checkIndexOverflow(_unary__edvuaz);
       if (item instanceof JsonNull) {
-        JsonFields_getInstance().t3h(path + '[' + i + ']', 'elemento nulo');
+        JsonFields_getInstance().u3h(path + '[' + i + ']', 'elemento nulo');
       }
       var path_0 = path + '[' + i + ']';
       out.f(read(item, path_0));
@@ -43974,7 +44025,7 @@ protoOf(JsonFields).n3g = function (o, key, at, read) {
   }
   return out;
 };
-protoOf(JsonFields).u3h = function (e) {
+protoOf(JsonFields).v3h = function (e) {
   var tmp;
   if (e instanceof JsonNull) {
     tmp = 'null';
@@ -44009,118 +44060,118 @@ function JsonFields_getInstance() {
 }
 function AtEndOfTurnHandler() {
 }
-protoOf(AtEndOfTurnHandler).w3h = function (ctx, action) {
+protoOf(AtEndOfTurnHandler).x3h = function (ctx, action) {
   return true;
 };
-protoOf(AtEndOfTurnHandler).x3h = function (ctx, action) {
-  return this.w3h(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE());
-};
 protoOf(AtEndOfTurnHandler).y3h = function (ctx, action) {
-  ctx.o31(action.z3h_1);
+  return this.x3h(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE());
+};
+protoOf(AtEndOfTurnHandler).z3h = function (ctx, action) {
+  ctx.p31(action.a3i_1);
   return false;
 };
-protoOf(AtEndOfTurnHandler).a3i = function (ctx, action) {
-  return this.y3h(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE());
-};
-protoOf(AtEndOfTurnHandler).b3i = function (ctx, action, answer) {
-  return 'Este paso no espera ninguna elecci\xF3n';
+protoOf(AtEndOfTurnHandler).b3i = function (ctx, action) {
+  return this.z3h(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE());
 };
 protoOf(AtEndOfTurnHandler).c3i = function (ctx, action, answer) {
-  return this.b3i(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE(), answer);
+  return 'Este paso no espera ninguna elecci\xF3n';
+};
+protoOf(AtEndOfTurnHandler).d3i = function (ctx, action, answer) {
+  return this.c3i(ctx, action instanceof AtEndOfTurn ? action : THROW_CCE(), answer);
 };
 function AttackHandler() {
 }
-protoOf(AttackHandler).d3i = function (ctx, action) {
+protoOf(AttackHandler).e3i = function (ctx, action) {
   return true;
 };
-protoOf(AttackHandler).x3h = function (ctx, action) {
-  return this.d3i(ctx, action instanceof Attack ? action : THROW_CCE());
-};
-protoOf(AttackHandler).e3i = function (ctx, action) {
-  return ctx.m31(action.f3i_1, action.g3i_1, action.h3i_1, action.i3i_1);
-};
-protoOf(AttackHandler).a3i = function (ctx, action) {
+protoOf(AttackHandler).y3h = function (ctx, action) {
   return this.e3i(ctx, action instanceof Attack ? action : THROW_CCE());
 };
-protoOf(AttackHandler).j3i = function (ctx, action, answer) {
-  ctx.n31(answer.k3i_1);
+protoOf(AttackHandler).f3i = function (ctx, action) {
+  return ctx.n31(action.g3i_1, action.h3i_1, action.i3i_1, action.j3i_1);
+};
+protoOf(AttackHandler).b3i = function (ctx, action) {
+  return this.f3i(ctx, action instanceof Attack ? action : THROW_CCE());
+};
+protoOf(AttackHandler).k3i = function (ctx, action, answer) {
+  ctx.o31(answer.l3i_1);
   return null;
 };
-protoOf(AttackHandler).c3i = function (ctx, action, answer) {
-  return this.j3i(ctx, action instanceof Attack ? action : THROW_CCE(), answer);
+protoOf(AttackHandler).d3i = function (ctx, action, answer) {
+  return this.k3i(ctx, action instanceof Attack ? action : THROW_CCE(), answer);
 };
 function DamageHandler() {
 }
-protoOf(DamageHandler).m3i = function (ctx, action) {
+protoOf(DamageHandler).n3i = function (ctx, action) {
   return true;
 };
-protoOf(DamageHandler).x3h = function (ctx, action) {
-  return this.m3i(ctx, action instanceof Damage ? action : THROW_CCE());
+protoOf(DamageHandler).y3h = function (ctx, action) {
+  return this.n3i(ctx, action instanceof Damage ? action : THROW_CCE());
 };
-protoOf(DamageHandler).n3i = function (ctx, action) {
-  ctx.d33(ctx.s34(action.o3i_1));
+protoOf(DamageHandler).o3i = function (ctx, action) {
+  ctx.e33(ctx.t34(action.p3i_1));
   return false;
 };
-protoOf(DamageHandler).a3i = function (ctx, action) {
-  return this.n3i(ctx, action instanceof Damage ? action : THROW_CCE());
+protoOf(DamageHandler).b3i = function (ctx, action) {
+  return this.o3i(ctx, action instanceof Damage ? action : THROW_CCE());
 };
 function candidates($this, ctx, action) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.p3i_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.q3i_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (ctx.m32(element) || (action.q3i_1 && ctx.j33(element))) {
+    if (ctx.n32(element) || (action.r3i_1 && ctx.k33(element))) {
       destination.f(element);
     }
   }
   return destination;
 }
 function apply($this, ctx, action, cards) {
-  ctx.x32(cards);
+  ctx.y32(cards);
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    ctx.p33(card, action.q3i_1);
+    ctx.q33(card, action.r3i_1);
   }
 }
 function DestroyHandler() {
 }
-protoOf(DestroyHandler).s3i = function (ctx, action) {
-  if (ensureNotNull(action.p3i_1).t3i())
+protoOf(DestroyHandler).t3i = function (ctx, action) {
+  if (ensureNotNull(action.q3i_1).u3i())
     return true;
   var tmp = candidates(this, ctx, action).k();
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(action.p3i_1.a35_1);
+  var b = ctx.t34(action.q3i_1.b35_1);
   return tmp >= Math.max(1, b);
 };
-protoOf(DestroyHandler).x3h = function (ctx, action) {
-  return this.s3i(ctx, action instanceof Destroy ? action : THROW_CCE());
+protoOf(DestroyHandler).y3h = function (ctx, action) {
+  return this.t3i(ctx, action instanceof Destroy ? action : THROW_CCE());
 };
-protoOf(DestroyHandler).u3i = function (ctx, action) {
-  var selector = ensureNotNull(action.p3i_1);
+protoOf(DestroyHandler).v3i = function (ctx, action) {
+  var selector = ensureNotNull(action.q3i_1);
   var valid = candidates(this, ctx, action);
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
   if (max <= 0) {
-    ctx.y32(false);
+    ctx.z32(false);
     return false;
   }
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     apply(this, ctx, action, ArrayList_init_$Create$_0(valid.p1(0, max)));
     return false;
   }
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var filter = selector.g35().e2e();
+  var filter = selector.h35().e2e();
   var tmp;
   var tmp_0;
-  if (action.q3i_1) {
+  if (action.r3i_1) {
     var tmp$ret$2;
     $l$block_0: {
       // Inline function 'kotlin.collections.any' call
@@ -44137,7 +44188,7 @@ protoOf(DestroyHandler).u3i = function (ctx, action) {
       var _iterator__ex2g4s = valid.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (ctx.j33(element)) {
+        if (ctx.k33(element)) {
           tmp$ret$2 = true;
           break $l$block_0;
         }
@@ -44158,7 +44209,7 @@ protoOf(DestroyHandler).u3i = function (ctx, action) {
     }
   }
   var what = tmp;
-  var tmp_2 = (action.q3i_1 ? 'Sacrifica ' : 'Destruye ') + (min < max ? 'hasta ' : '') + max + what;
+  var tmp_2 = (action.r3i_1 ? 'Sacrifica ' : 'Destruye ') + (min < max ? 'hasta ' : '') + max + what;
   var tmp_3;
   var tmp$ret$4;
   $l$block_1: {
@@ -44179,16 +44230,16 @@ protoOf(DestroyHandler).u3i = function (ctx, action) {
   } else {
     tmp_3 = ' ' + filter;
   }
-  ctx.h35(tmp_2 + tmp_3 + '.', action.q3i_1 ? 'Sacrificar' : 'Destruir', Selection_instance.w3i(ctx, selector), valid, min, max);
+  ctx.i35(tmp_2 + tmp_3 + '.', action.r3i_1 ? 'Sacrificar' : 'Destruir', Selection_instance.x3i(ctx, selector), valid, min, max);
   return true;
 };
-protoOf(DestroyHandler).a3i = function (ctx, action) {
-  return this.u3i(ctx, action instanceof Destroy ? action : THROW_CCE());
+protoOf(DestroyHandler).b3i = function (ctx, action) {
+  return this.v3i(ctx, action instanceof Destroy ? action : THROW_CCE());
 };
-protoOf(DestroyHandler).x3i = function (ctx, action, answer) {
+protoOf(DestroyHandler).y3i = function (ctx, action, answer) {
   var valid = candidates(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -44217,30 +44268,30 @@ protoOf(DestroyHandler).x3i = function (ctx, action, answer) {
   apply(this, ctx, action, picked);
   return null;
 };
-protoOf(DestroyHandler).c3i = function (ctx, action, answer) {
-  return this.x3i(ctx, action instanceof Destroy ? action : THROW_CCE(), answer);
+protoOf(DestroyHandler).d3i = function (ctx, action, answer) {
+  return this.y3i(ctx, action instanceof Destroy ? action : THROW_CCE(), answer);
 };
 function DrawHandler() {
 }
-protoOf(DrawHandler).y3i = function (ctx, action) {
+protoOf(DrawHandler).z3i = function (ctx, action) {
   return true;
 };
-protoOf(DrawHandler).x3h = function (ctx, action) {
-  return this.y3i(ctx, action instanceof Draw ? action : THROW_CCE());
-};
-protoOf(DrawHandler).z3i = function (ctx, action) {
-  ctx.z32(ctx.s34(action.a3j_1), action.b3j_1);
-  return false;
-};
-protoOf(DrawHandler).a3i = function (ctx, action) {
+protoOf(DrawHandler).y3h = function (ctx, action) {
   return this.z3i(ctx, action instanceof Draw ? action : THROW_CCE());
 };
+protoOf(DrawHandler).a3j = function (ctx, action) {
+  ctx.a33(ctx.t34(action.b3j_1), action.c3j_1);
+  return false;
+};
+protoOf(DrawHandler).b3i = function (ctx, action) {
+  return this.a3j(ctx, action instanceof Draw ? action : THROW_CCE());
+};
 function candidates_0($this, ctx, action) {
-  var found = Selection_instance.u34(ctx, ensureNotNull(action.c3j_1), false);
-  if (action.e3j_1)
+  var found = Selection_instance.v34(ctx, ensureNotNull(action.d3j_1), false);
+  if (action.f3j_1)
     return found;
   var tmp;
-  if (action.d3j_1) {
+  if (action.e3j_1) {
     // Inline function 'kotlin.collections.filter' call
     // Inline function 'kotlin.collections.filterTo' call
     var destination = ArrayList_init_$Create$();
@@ -44271,54 +44322,54 @@ function apply_0($this, ctx, action, cards) {
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    ctx.h33(card, action.e3j_1 ? null : action.d3j_1);
+    ctx.i33(card, action.f3j_1 ? null : action.e3j_1);
   }
   // Inline function 'kotlin.collections.isNotEmpty' call
   var tmp$ret$0 = !cards.m();
-  ctx.y32(tmp$ret$0);
+  ctx.z32(tmp$ret$0);
 }
 function FlipHandler() {
 }
-protoOf(FlipHandler).f3j = function (ctx, action) {
-  if (ensureNotNull(action.c3j_1).t3i())
+protoOf(FlipHandler).g3j = function (ctx, action) {
+  if (ensureNotNull(action.d3j_1).u3i())
     return true;
   var tmp = candidates_0(this, ctx, action).k();
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(action.c3j_1.a35_1);
+  var b = ctx.t34(action.d3j_1.b35_1);
   return tmp >= Math.max(1, b);
 };
-protoOf(FlipHandler).x3h = function (ctx, action) {
-  return this.f3j(ctx, action instanceof Flip ? action : THROW_CCE());
+protoOf(FlipHandler).y3h = function (ctx, action) {
+  return this.g3j(ctx, action instanceof Flip ? action : THROW_CCE());
 };
-protoOf(FlipHandler).g3j = function (ctx, action) {
-  var selector = ensureNotNull(action.c3j_1);
+protoOf(FlipHandler).h3j = function (ctx, action) {
+  var selector = ensureNotNull(action.d3j_1);
   var valid = candidates_0(this, ctx, action);
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
   if (max <= 0) {
-    ctx.y32(false);
+    ctx.z32(false);
     return false;
   }
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     apply_0(this, ctx, action, valid.p1(0, max));
     return false;
   }
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var verb = action.e3j_1 ? 'Voltea ' : action.d3j_1 ? 'Revela ' : 'Coloca bocabajo ';
-  ctx.h35(verb + (min < max ? 'hasta ' : '') + max + ' ' + (max === 1 ? 'carta' : 'cartas') + ' de ' + (equals_0(selector.y34_1, Owner_OPPONENT_getInstance()) ? 'las vidas oponentes' : ctx.n32(selector.x34_1)) + '.', !action.d3j_1 && !action.e3j_1 ? 'Bocabajo' : 'Voltear', Selection_instance.w3i(ctx, selector), valid, min, max);
+  var verb = action.f3j_1 ? 'Voltea ' : action.e3j_1 ? 'Revela ' : 'Coloca bocabajo ';
+  ctx.i35(verb + (min < max ? 'hasta ' : '') + max + ' ' + (max === 1 ? 'carta' : 'cartas') + ' de ' + (equals_0(selector.z34_1, Owner_OPPONENT_getInstance()) ? 'las vidas oponentes' : ctx.o32(selector.y34_1)) + '.', !action.e3j_1 && !action.f3j_1 ? 'Bocabajo' : 'Voltear', Selection_instance.x3i(ctx, selector), valid, min, max);
   return true;
 };
-protoOf(FlipHandler).a3i = function (ctx, action) {
-  return this.g3j(ctx, action instanceof Flip ? action : THROW_CCE());
+protoOf(FlipHandler).b3i = function (ctx, action) {
+  return this.h3j(ctx, action instanceof Flip ? action : THROW_CCE());
 };
-protoOf(FlipHandler).h3j = function (ctx, action, answer) {
+protoOf(FlipHandler).i3j = function (ctx, action, answer) {
   var valid = candidates_0(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -44346,89 +44397,89 @@ protoOf(FlipHandler).h3j = function (ctx, action, answer) {
   apply_0(this, ctx, action, picked);
   return null;
 };
-protoOf(FlipHandler).c3i = function (ctx, action, answer) {
-  return this.h3j(ctx, action instanceof Flip ? action : THROW_CCE(), answer);
+protoOf(FlipHandler).d3i = function (ctx, action, answer) {
+  return this.i3j(ctx, action instanceof Flip ? action : THROW_CCE(), answer);
 };
 function GemsHandler() {
 }
-protoOf(GemsHandler).i3j = function (ctx, action) {
-  var count = ctx.s34(action.j3j_1);
-  return count >= 0 || ctx.c33(-count | 0);
+protoOf(GemsHandler).j3j = function (ctx, action) {
+  var count = ctx.t34(action.k3j_1);
+  return count >= 0 || ctx.d33(-count | 0);
 };
-protoOf(GemsHandler).x3h = function (ctx, action) {
-  return this.i3j(ctx, action instanceof Gems_0 ? action : THROW_CCE());
+protoOf(GemsHandler).y3h = function (ctx, action) {
+  return this.j3j(ctx, action instanceof Gems_0 ? action : THROW_CCE());
 };
-protoOf(GemsHandler).k3j = function (ctx, action) {
-  ctx.b33(ctx.s34(action.j3j_1));
+protoOf(GemsHandler).l3j = function (ctx, action) {
+  ctx.c33(ctx.t34(action.k3j_1));
   return false;
 };
-protoOf(GemsHandler).a3i = function (ctx, action) {
-  return this.k3j(ctx, action instanceof Gems_0 ? action : THROW_CCE());
+protoOf(GemsHandler).b3i = function (ctx, action) {
+  return this.l3j(ctx, action instanceof Gems_0 ? action : THROW_CCE());
 };
 function LookHandler() {
 }
-protoOf(LookHandler).l3j = function (ctx, action) {
+protoOf(LookHandler).m3j = function (ctx, action) {
   return true;
 };
-protoOf(LookHandler).x3h = function (ctx, action) {
-  return this.l3j(ctx, action instanceof Look ? action : THROW_CCE());
+protoOf(LookHandler).y3h = function (ctx, action) {
+  return this.m3j(ctx, action instanceof Look ? action : THROW_CCE());
 };
-protoOf(LookHandler).m3j = function (ctx, action) {
-  if (action.p3j_1 || !(action.o3j_1 == null)) {
-    ctx.g33(ctx.s34(action.n3j_1), action.o3j_1);
+protoOf(LookHandler).n3j = function (ctx, action) {
+  if (action.q3j_1 || !(action.p3j_1 == null)) {
+    ctx.h33(ctx.t34(action.o3j_1), action.p3j_1);
   } else {
-    ctx.f33(ctx.s34(action.n3j_1), action.q3j_1);
+    ctx.g33(ctx.t34(action.o3j_1), action.r3j_1);
   }
   return false;
 };
-protoOf(LookHandler).a3i = function (ctx, action) {
-  return this.m3j(ctx, action instanceof Look ? action : THROW_CCE());
+protoOf(LookHandler).b3i = function (ctx, action) {
+  return this.n3j(ctx, action instanceof Look ? action : THROW_CCE());
 };
 function ModifyHandler() {
 }
-protoOf(ModifyHandler).r3j = function (ctx, action) {
+protoOf(ModifyHandler).s3j = function (ctx, action) {
   return true;
 };
-protoOf(ModifyHandler).x3h = function (ctx, action) {
-  return this.r3j(ctx, action instanceof Modify ? action : THROW_CCE());
+protoOf(ModifyHandler).y3h = function (ctx, action) {
+  return this.s3j(ctx, action instanceof Modify ? action : THROW_CCE());
 };
-protoOf(ModifyHandler).s3j = function (ctx, action) {
-  var _iterator__ex2g4s = ArrayList_init_$Create$_0(Selection_instance.u34(ctx, ensureNotNull(action.t3j_1), false)).h();
+protoOf(ModifyHandler).t3j = function (ctx, action) {
+  var _iterator__ex2g4s = ArrayList_init_$Create$_0(Selection_instance.v34(ctx, ensureNotNull(action.u3j_1), false)).h();
   $l$loop: while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    if (!ctx.m32(card) || ctx.v32(card))
+    if (!ctx.n32(card) || ctx.w32(card))
       continue $l$loop;
-    if (action.v3j_1) {
-      ctx.n33(card, -ctx.b1p(card) | 0, action.x3j_1);
-    } else if (!(action.u3j_1 == null)) {
-      ctx.n33(card, ctx.s34(action.u3j_1), action.x3j_1);
+    if (action.w3j_1) {
+      ctx.o33(card, -ctx.b1p(card) | 0, action.y3j_1);
+    } else if (!(action.v3j_1 == null)) {
+      ctx.o33(card, ctx.t34(action.v3j_1), action.y3j_1);
     }
-    if (!(action.w3j_1 == null)) {
-      ctx.o33(card, action.w3j_1, action.x3j_1);
+    if (!(action.x3j_1 == null)) {
+      ctx.p33(card, action.x3j_1, action.y3j_1);
     }
   }
   return false;
 };
-protoOf(ModifyHandler).a3i = function (ctx, action) {
-  return this.s3j(ctx, action instanceof Modify ? action : THROW_CCE());
+protoOf(ModifyHandler).b3i = function (ctx, action) {
+  return this.t3j(ctx, action instanceof Modify ? action : THROW_CCE());
 };
 function candidates_1($this, ctx, action) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.y3e_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.z3e_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (!ctx.o32(element, action.z3e_1) && !ctx.v32(element)) {
+    if (!ctx.p32(element, action.a3f_1) && !ctx.w32(element)) {
       destination.f(element);
     }
   }
   var found = destination;
-  if (!action.g3f_1)
+  if (!action.h3f_1)
     return found;
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(action.y3e_1.a35_1);
+  var b = ctx.t34(action.z3e_1.b35_1);
   var copies = Math.max(1, b);
   // Inline function 'kotlin.collections.groupBy' call
   // Inline function 'kotlin.collections.groupByTo' call
@@ -44485,14 +44536,14 @@ function candidates_1($this, ctx, action) {
 }
 function move_0($this, ctx, action, cards) {
   var ordered = ArrayList_init_$Create$_0(cards);
-  if (action.a3f_1) {
-    Companion_getInstance_19().j1i(ordered, ctx.d31());
+  if (action.b3f_1) {
+    Companion_getInstance_19().j1i(ordered, ctx.e31());
   }
-  var done = ctx.p32(ordered, action.z3e_1, action.d3f_1, action.e3f_1, action.i3f_1);
-  if (ensureNotNull(action.y3e_1).v3i().equals(Mode_SELF_getInstance())) {
-    ctx.y32(!done.m());
+  var done = ctx.q32(ordered, action.a3f_1, action.e3f_1, action.f3f_1, action.j3f_1);
+  if (ensureNotNull(action.z3e_1).w3i().equals(Mode_SELF_getInstance())) {
+    ctx.z32(!done.m());
   } else {
-    ctx.x32(done);
+    ctx.y32(done);
   }
 }
 function label($this, to) {
@@ -44521,9 +44572,9 @@ function label($this, to) {
 }
 function instruction($this, ctx, action, min, max) {
   var what = (min < max ? 'hasta ' : '') + max + ' ' + (max === 1 ? 'carta' : 'cartas');
-  var filter = ensureNotNull(action.y3e_1).g35().e2e();
-  var zones = ensureNotNull(ctx.n32(action.y3e_1.x34_1));
-  var from = action.y3e_1.x34_1 === 'looked' ? '' : equals_0(action.y3e_1.y34_1, Owner_OPPONENT_getInstance()) ? ' de ' + replace(replace(zones, 'tus ', 'las '), 'tu ', 'la ') + ' oponentes' : ' de ' + zones;
+  var filter = ensureNotNull(action.z3e_1).h35().e2e();
+  var zones = ensureNotNull(ctx.o32(action.z3e_1.y34_1));
+  var from = action.z3e_1.y34_1 === 'looked' ? '' : equals_0(action.z3e_1.z34_1, Owner_OPPONENT_getInstance()) ? ' de ' + replace(replace(zones, 'tus ', 'las '), 'tu ', 'la ') + ' oponentes' : ' de ' + zones;
   var tmp;
   var tmp$ret$0;
   $l$block: {
@@ -44545,20 +44596,20 @@ function instruction($this, ctx, action, min, max) {
     tmp = ' ' + filter;
   }
   var cards = what + tmp + from;
-  if (action.y3e_1.y3j().equals(Self_REQUIRE_getInstance()))
+  if (action.z3e_1.z3j().equals(Self_REQUIRE_getInstance()))
     cards = cards + ', incluida esta carta';
-  if (action.h3f_1)
+  if (action.i3f_1)
     cards = cards + ' de distinto nivel';
-  var random = action.a3f_1 ? ' en orden aleatorio' : '';
-  if (startsWith(ensureNotNull(action.z3e_1), 'materials:') || startsWith(action.z3e_1, 'resources:')) {
-    return 'A\xF1ade ' + cards + (action.i3f_1 ? ' con todos sus recursos' : '') + ' como ' + (startsWith(action.z3e_1, 'materials:') ? 'material.' : 'recurso.');
+  var random = action.b3f_1 ? ' en orden aleatorio' : '';
+  if (startsWith(ensureNotNull(action.a3f_1), 'materials:') || startsWith(action.a3f_1, 'resources:')) {
+    return 'A\xF1ade ' + cards + (action.j3f_1 ? ' con todos sus recursos' : '') + ' como ' + (startsWith(action.a3f_1, 'materials:') ? 'material.' : 'recurso.');
   }
-  if ('deckTopKept' === action.f3f_1)
+  if ('deckTopKept' === action.g3f_1)
     return instructionOf($this, action, cards, random) + ' El resto vuelve al tope de tu mazo en su orden.';
   return instructionOf($this, action, cards, random);
 }
 function instructionOf($this, action, cards, random) {
-  switch (ensureNotNull(action.z3e_1)) {
+  switch (ensureNotNull(action.a3f_1)) {
     case 'tributeZone':
       return 'Tributa ' + cards + '.';
     case 'discardPile':
@@ -44570,41 +44621,41 @@ function instructionOf($this, action, cards, random) {
     case 'hand':
       return 'Toma ' + cards + ' para tu mano.';
     case 'frontLine':
-      return 'Coloca ' + cards + ' en tu l\xEDnea frontal' + (action.d3f_1 ? ', agotada.' : '.');
+      return 'Coloca ' + cards + ' en tu l\xEDnea frontal' + (action.e3f_1 ? ', agotada.' : '.');
     case 'backLine':
-      return 'Coloca ' + cards + ' en tu retaguardia' + (action.d3f_1 ? ', agotada.' : '.');
+      return 'Coloca ' + cards + ' en tu retaguardia' + (action.e3f_1 ? ', agotada.' : '.');
     case 'lifeTop':
-      return 'Coloca ' + cards + ' al tope de tus vidas' + (action.e3f_1 ? '.' : ', bocarriba.');
+      return 'Coloca ' + cards + ' al tope de tus vidas' + (action.f3f_1 ? '.' : ', bocarriba.');
     case 'lifeBottom':
-      return 'Coloca ' + cards + ' al fondo de las vidas' + (action.e3f_1 ? '.' : ', bocarriba.');
+      return 'Coloca ' + cards + ' al fondo de las vidas' + (action.f3f_1 ? '.' : ', bocarriba.');
     default:
       return 'Elige ' + cards + '.';
   }
 }
 function MoveHandler() {
 }
-protoOf(MoveHandler).z3j = function (ctx, action) {
-  var selector = ensureNotNull(action.y3e_1);
-  if (selector.a3k('subject') && ctx.e2v('subject').m())
+protoOf(MoveHandler).a3k = function (ctx, action) {
+  var selector = ensureNotNull(action.z3e_1);
+  if (selector.b3k('subject') && ctx.f2v('subject').m())
     return true;
-  if (ensureNotNull(selector.x34_1) === 'looked' || selector.t3i())
+  if (ensureNotNull(selector.y34_1) === 'looked' || selector.u3i())
     return true;
-  if (selector.v3i().equals(Mode_ALL_getInstance()) && ctx.s34(selector.a35_1) <= 0 && !selector.y3j().equals(Self_REQUIRE_getInstance()))
+  if (selector.w3i().equals(Mode_ALL_getInstance()) && ctx.t34(selector.b35_1) <= 0 && !selector.z3j().equals(Self_REQUIRE_getInstance()))
     return true;
   var tmp;
-  var tmp_0 = selector.b35_1;
+  var tmp_0 = selector.c35_1;
   if (tmp_0 instanceof Least) {
     tmp = true;
   } else {
-    var tmp_1 = selector.b35_1;
+    var tmp_1 = selector.c35_1;
     tmp = tmp_1 instanceof Targetable;
   }
   var bounded = tmp;
   var tmp_2;
   if (bounded) {
-    var tmp_3 = ctx.s34(selector.b35_1);
+    var tmp_3 = ctx.t34(selector.c35_1);
     // Inline function 'kotlin.math.max' call
-    var b = ctx.s34(selector.a35_1);
+    var b = ctx.t34(selector.b35_1);
     tmp_2 = tmp_3 < Math.max(1, b);
   } else {
     tmp_2 = false;
@@ -44613,7 +44664,7 @@ protoOf(MoveHandler).z3j = function (ctx, action) {
     return false;
   var found = candidates_1(this, ctx, action);
   var tmp_4;
-  if (selector.y3j().equals(Self_REQUIRE_getInstance())) {
+  if (selector.z3j().equals(Self_REQUIRE_getInstance())) {
     var tmp$ret$1;
     $l$block_0: {
       // Inline function 'kotlin.collections.none' call
@@ -44630,7 +44681,7 @@ protoOf(MoveHandler).z3j = function (ctx, action) {
       var _iterator__ex2g4s = found.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (ctx.i32(element)) {
+        if (ctx.j32(element)) {
           tmp$ret$1 = false;
           break $l$block_0;
         }
@@ -44643,7 +44694,7 @@ protoOf(MoveHandler).z3j = function (ctx, action) {
   }
   if (tmp_4)
     return false;
-  if (action.h3f_1) {
+  if (action.i3f_1) {
     // Inline function 'kotlin.collections.mapNotNull' call
     // Inline function 'kotlin.collections.mapNotNullTo' call
     var destination = ArrayList_init_$Create$();
@@ -44661,66 +44712,66 @@ protoOf(MoveHandler).z3j = function (ctx, action) {
     }
     var tmp_6 = distinct(destination).k();
     // Inline function 'kotlin.math.max' call
-    var b_0 = ctx.s34(selector.a35_1);
+    var b_0 = ctx.t34(selector.b35_1);
     return tmp_6 >= Math.max(1, b_0);
   }
   var tmp_7 = found.k();
   // Inline function 'kotlin.math.max' call
-  var b_1 = ctx.s34(selector.a35_1);
+  var b_1 = ctx.t34(selector.b35_1);
   return tmp_7 >= Math.max(1, b_1);
 };
-protoOf(MoveHandler).x3h = function (ctx, action) {
-  return this.z3j(ctx, action instanceof Move_0 ? action : THROW_CCE());
+protoOf(MoveHandler).y3h = function (ctx, action) {
+  return this.a3k(ctx, action instanceof Move_0 ? action : THROW_CCE());
 };
-protoOf(MoveHandler).b3k = function (ctx, action) {
-  var selector = ensureNotNull(action.y3e_1);
-  if ('deckTopOrBottom' === action.z3e_1) {
-    if (ctx.q32().m())
+protoOf(MoveHandler).c3k = function (ctx, action) {
+  var selector = ensureNotNull(action.z3e_1);
+  if ('deckTopOrBottom' === action.a3f_1) {
+    if (ctx.r32().m())
       return false;
-    var deck = ctx.t32() ? 'del mazo de tu oponente' : 'de tu mazo';
-    ctx.h35(ctx.q32().k() > 1 ? 'Ordena las cartas (la de la izquierda queda m\xE1s arriba) y elige si van al tope o al fondo ' + deck + '.' : 'Elige si la carta va al tope o al fondo ' + deck + '.', null, ctx.q32(), ctx.q32(), 0, 1);
-    ctx.l31();
+    var deck = ctx.u32() ? 'del mazo de tu oponente' : 'de tu mazo';
+    ctx.i35(ctx.r32().k() > 1 ? 'Ordena las cartas (la de la izquierda queda m\xE1s arriba) y elige si van al tope o al fondo ' + deck + '.' : 'Elige si la carta va al tope o al fondo ' + deck + '.', null, ctx.r32(), ctx.r32(), 0, 1);
+    ctx.m31();
     return true;
   }
   var valid = candidates_1(this, ctx, action);
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
-  if (!(action.f3f_1 == null) && !ctx.q32().m()) {
+  if (!(action.g3f_1 == null) && !ctx.r32().m()) {
     // Inline function 'kotlin.math.min' call
-    var a = ctx.s34(selector.a35_1);
+    var a = ctx.t34(selector.b35_1);
     var min = Math.min(a, max);
     var tmp = instruction(this, ctx, action, min, max);
-    var tmp0_elvis_lhs = action.b3f_1;
-    ctx.h35(tmp, tmp0_elvis_lhs == null ? label(this, action.z3e_1) : tmp0_elvis_lhs, ctx.q32(), valid, min, max);
-    if (!('deckTopKept' === action.f3f_1)) {
-      ctx.w32('deckTop' === action.f3f_1);
+    var tmp0_elvis_lhs = action.c3f_1;
+    ctx.i35(tmp, tmp0_elvis_lhs == null ? label(this, action.a3f_1) : tmp0_elvis_lhs, ctx.r32(), valid, min, max);
+    if (!('deckTopKept' === action.g3f_1)) {
+      ctx.x32('deckTop' === action.g3f_1);
     }
     return true;
   }
   if (max <= 0) {
-    ctx.x32(frozenListOf([]));
+    ctx.y32(frozenListOf([]));
     return false;
   }
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     move_0(this, ctx, action, valid.p1(0, max));
     return false;
   }
   // Inline function 'kotlin.math.min' call
-  var a_0 = ctx.s34(selector.a35_1);
+  var a_0 = ctx.t34(selector.b35_1);
   var min_0 = Math.min(a_0, max);
   var tmp_0 = instruction(this, ctx, action, min_0, max);
-  var tmp1_elvis_lhs = action.b3f_1;
-  ctx.h35(tmp_0, tmp1_elvis_lhs == null ? label(this, action.z3e_1) : tmp1_elvis_lhs, Selection_instance.w3i(ctx, selector), valid, min_0, max);
-  if (selector.y3j().equals(Self_REQUIRE_getInstance())) {
+  var tmp1_elvis_lhs = action.c3f_1;
+  ctx.i35(tmp_0, tmp1_elvis_lhs == null ? label(this, action.a3f_1) : tmp1_elvis_lhs, Selection_instance.x3i(ctx, selector), valid, min_0, max);
+  if (selector.z3j().equals(Self_REQUIRE_getInstance())) {
     var tmp$ret$3;
     $l$block: {
       // Inline function 'kotlin.collections.firstOrNull' call
       var _iterator__ex2g4s = valid.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (ctx.i32(element)) {
+        if (ctx.j32(element)) {
           tmp$ret$3 = element;
           break $l$block;
         }
@@ -44732,25 +44783,25 @@ protoOf(MoveHandler).b3k = function (ctx, action) {
       null;
     else {
       // Inline function 'kotlin.let' call
-      ctx.n34(tmp2_safe_receiver);
+      ctx.o34(tmp2_safe_receiver);
     }
   }
-  if (action.h3f_1) {
-    ctx.i33();
+  if (action.i3f_1) {
+    ctx.j33();
   }
   return true;
 };
-protoOf(MoveHandler).a3i = function (ctx, action) {
-  return this.b3k(ctx, action instanceof Move_0 ? action : THROW_CCE());
+protoOf(MoveHandler).b3i = function (ctx, action) {
+  return this.c3k(ctx, action instanceof Move_0 ? action : THROW_CCE());
 };
-protoOf(MoveHandler).c3k = function (ctx, action, answer) {
-  if ('deckTopOrBottom' === action.z3e_1) {
-    ctx.r32(ensureNotNull(answer.k3i_1).m() ? 'deckBottom' : 'deckTop', answer.l3i_1);
+protoOf(MoveHandler).d3k = function (ctx, action, answer) {
+  if ('deckTopOrBottom' === action.a3f_1) {
+    ctx.s32(ensureNotNull(answer.l3i_1).m() ? 'deckBottom' : 'deckTop', answer.m3i_1);
     return null;
   }
   var valid = candidates_1(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -44777,7 +44828,7 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
     picked.f(card);
   }
   var tmp_0;
-  if (ensureNotNull(action.y3e_1).y3j().equals(Self_REQUIRE_getInstance()) && !picked.m()) {
+  if (ensureNotNull(action.z3e_1).z3j().equals(Self_REQUIRE_getInstance()) && !picked.m()) {
     var tmp$ret$2;
     $l$block_1: {
       // Inline function 'kotlin.collections.none' call
@@ -44794,7 +44845,7 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
       var _iterator__ex2g4s_1 = picked.h();
       while (_iterator__ex2g4s_1.i()) {
         var element_0 = _iterator__ex2g4s_1.j();
-        if (ctx.i32(element_0)) {
+        if (ctx.j32(element_0)) {
           tmp$ret$2 = false;
           break $l$block_1;
         }
@@ -44808,7 +44859,7 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
   if (tmp_0)
     return 'Debes incluir esta carta';
   var tmp_2;
-  if (action.g3f_1) {
+  if (action.h3f_1) {
     // Inline function 'kotlin.collections.map' call
     // Inline function 'kotlin.collections.mapTo' call
     var destination = ArrayList_init_$Create$_1(collectionSizeOrDefault(picked, 10));
@@ -44834,7 +44885,7 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
   if (tmp_2)
     return 'Las cartas deben ser copias de una misma carta';
   var tmp_4;
-  if (action.h3f_1) {
+  if (action.i3f_1) {
     var tmp_5;
     var tmp$ret$9;
     $l$block_3: {
@@ -44880,9 +44931,9 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
   if (tmp_4)
     return 'Las cartas deben ser de distinto nivel';
   var tmp_7;
-  if (action.h3f_1) {
+  if (action.i3f_1) {
     var tmp_8 = picked.k();
-    var tmp0 = ctx.s34(action.y3e_1.a35_1);
+    var tmp0 = ctx.t34(action.z3e_1.b35_1);
     // Inline function 'kotlin.math.min' call
     var b = candidates_1(this, ctx, action).k();
     tmp_7 = tmp_8 < Math.min(tmp0, b);
@@ -44890,22 +44941,22 @@ protoOf(MoveHandler).c3k = function (ctx, action, answer) {
     tmp_7 = false;
   }
   if (tmp_7)
-    return 'Elige ' + ctx.s34(action.y3e_1.a35_1) + ' cartas';
+    return 'Elige ' + ctx.t34(action.z3e_1.b35_1) + ' cartas';
   move_0(this, ctx, action, picked);
-  if ('deckTopKept' === action.f3f_1) {
-    ctx.r32('deckTop', null);
-  } else if (!(action.f3f_1 == null)) {
-    ctx.r32(action.f3f_1, answer.l3i_1);
+  if ('deckTopKept' === action.g3f_1) {
+    ctx.s32('deckTop', null);
+  } else if (!(action.g3f_1 == null)) {
+    ctx.s32(action.g3f_1, answer.m3i_1);
   }
   return null;
 };
-protoOf(MoveHandler).c3i = function (ctx, action, answer) {
-  return this.c3k(ctx, action instanceof Move_0 ? action : THROW_CCE(), answer);
+protoOf(MoveHandler).d3i = function (ctx, action, answer) {
+  return this.d3k(ctx, action instanceof Move_0 ? action : THROW_CCE(), answer);
 };
 function candidates_2($this, ctx, action) {
-  var reduce = ctx.s34(action.e3k_1);
+  var reduce = ctx.t34(action.f3k_1);
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.d3k_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.e3k_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -44916,19 +44967,19 @@ function candidates_2($this, ctx, action) {
     var tmp_1;
     if ('utility' === element.o1c_1 || 'structure' === element.o1c_1) {
       // Inline function 'kotlin.math.max' call
-      var b = ctx.j34(element) - reduce | 0;
+      var b = ctx.k34(element) - reduce | 0;
       var tmp$ret$3 = Math.max(0, b);
-      tmp_1 = ctx.d34(tmp$ret$3);
+      tmp_1 = ctx.e34(tmp$ret$3);
     } else {
       tmp_1 = false;
     }
     if (tmp_1) {
-      tmp_0 = ctx.e34(element);
+      tmp_0 = ctx.f34(element);
     } else {
       tmp_0 = false;
     }
     if (tmp_0) {
-      tmp = action.d3k_1.v3i().equals(Mode_SELF_getInstance()) || !ctx.i32(element) || ctx.f34();
+      tmp = action.e3k_1.w3i().equals(Mode_SELF_getInstance()) || !ctx.j32(element) || ctx.g34();
     } else {
       tmp = false;
     }
@@ -44939,45 +44990,45 @@ function candidates_2($this, ctx, action) {
   return destination;
 }
 function apply_1($this, ctx, action, cards) {
-  var reduce = ctx.s34(action.e3k_1);
+  var reduce = ctx.t34(action.f3k_1);
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    ctx.k34(card, reduce);
+    ctx.l34(card, reduce);
   }
-  ctx.y32(!cards.m());
+  ctx.z32(!cards.m());
 }
 function PlayHandler() {
 }
-protoOf(PlayHandler).g3k = function (ctx, action) {
+protoOf(PlayHandler).h3k = function (ctx, action) {
   var tmp = candidates_2(this, ctx, action).k();
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(ensureNotNull(action.d3k_1).a35_1);
+  var b = ctx.t34(ensureNotNull(action.e3k_1).b35_1);
   return tmp >= Math.max(1, b);
 };
-protoOf(PlayHandler).x3h = function (ctx, action) {
-  return this.g3k(ctx, action instanceof Play ? action : THROW_CCE());
+protoOf(PlayHandler).y3h = function (ctx, action) {
+  return this.h3k(ctx, action instanceof Play ? action : THROW_CCE());
 };
-protoOf(PlayHandler).h3k = function (ctx, action) {
-  var selector = ensureNotNull(action.d3k_1);
+protoOf(PlayHandler).i3k = function (ctx, action) {
+  var selector = ensureNotNull(action.e3k_1);
   var valid = candidates_2(this, ctx, action);
   if (valid.m()) {
-    ctx.g34('No hay cartas que este efecto pueda jugar');
+    ctx.h34('No hay cartas que este efecto pueda jugar');
     return false;
   }
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     apply_1(this, ctx, action, ArrayList_init_$Create$_0(valid.p1(0, max)));
     return false;
   }
-  var reduce = ctx.s34(action.e3k_1);
+  var reduce = ctx.t34(action.f3k_1);
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var filter = selector.g35().e2e();
+  var filter = selector.h35().e2e();
   var cost = reduce >= 1000 ? ' sin pagar su coste' : reduce > 0 ? ' reduciendo su coste en ' + reduce : ' pagando su coste';
   var tmp = 'Juega ' + (min < max ? 'hasta ' : '') + max + (max === 1 ? ' carta' : ' cartas');
   var tmp_0;
@@ -45000,16 +45051,16 @@ protoOf(PlayHandler).h3k = function (ctx, action) {
   } else {
     tmp_0 = ' ' + filter;
   }
-  ctx.h35(tmp + tmp_0 + ' de ' + ctx.n32(selector.x34_1) + cost + '.', 'Jugar', Selection_instance.w3i(ctx, selector), valid, min, max);
+  ctx.i35(tmp + tmp_0 + ' de ' + ctx.o32(selector.y34_1) + cost + '.', 'Jugar', Selection_instance.x3i(ctx, selector), valid, min, max);
   return true;
 };
-protoOf(PlayHandler).a3i = function (ctx, action) {
-  return this.h3k(ctx, action instanceof Play ? action : THROW_CCE());
+protoOf(PlayHandler).b3i = function (ctx, action) {
+  return this.i3k(ctx, action instanceof Play ? action : THROW_CCE());
 };
-protoOf(PlayHandler).i3k = function (ctx, action, answer) {
+protoOf(PlayHandler).j3k = function (ctx, action, answer) {
   var valid = candidates_2(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -45035,7 +45086,7 @@ protoOf(PlayHandler).i3k = function (ctx, action, answer) {
     var card = tmp;
     picked.f(card);
   }
-  var reduce = ctx.s34(action.e3k_1);
+  var reduce = ctx.t34(action.f3k_1);
   // Inline function 'kotlin.collections.sumOf' call
   var sum = 0;
   var _iterator__ex2g4s_1 = picked.h();
@@ -45043,29 +45094,29 @@ protoOf(PlayHandler).i3k = function (ctx, action, answer) {
     var element_0 = _iterator__ex2g4s_1.j();
     var tmp_0 = sum;
     // Inline function 'kotlin.math.max' call
-    var b = ctx.j34(element_0) - reduce | 0;
+    var b = ctx.k34(element_0) - reduce | 0;
     sum = tmp_0 + Math.max(0, b) | 0;
   }
   var total = sum;
-  if (!ctx.d34(total))
+  if (!ctx.e34(total))
     return 'No tienes gemas para pagarlas todas (' + total + ')';
   apply_1(this, ctx, action, picked);
   return null;
 };
-protoOf(PlayHandler).c3i = function (ctx, action, answer) {
-  return this.i3k(ctx, action instanceof Play ? action : THROW_CCE(), answer);
+protoOf(PlayHandler).d3i = function (ctx, action, answer) {
+  return this.j3k(ctx, action instanceof Play ? action : THROW_CCE(), answer);
 };
 function SelectHandler() {
 }
-protoOf(SelectHandler).j3k = function (ctx, action) {
-  var selector = ensureNotNull(action.k3k_1);
-  if (!(selector.f35_1 == null))
-    return !Selection_instance.u34(ctx, selector, false).m();
-  if (selector.a3k('subject') && ctx.e2v('subject').m())
+protoOf(SelectHandler).k3k = function (ctx, action) {
+  var selector = ensureNotNull(action.l3k_1);
+  if (!(selector.g35_1 == null))
+    return !Selection_instance.v34(ctx, selector, false).m();
+  if (selector.b3k('subject') && ctx.f2v('subject').m())
     return true;
-  var found = Selection_instance.u34(ctx, selector, action.l3k_1);
+  var found = Selection_instance.v34(ctx, selector, action.m3k_1);
   var tmp;
-  if (selector.y3j().equals(Self_REQUIRE_getInstance())) {
+  if (selector.z3j().equals(Self_REQUIRE_getInstance())) {
     var tmp$ret$0;
     $l$block_0: {
       // Inline function 'kotlin.collections.none' call
@@ -45082,7 +45133,7 @@ protoOf(SelectHandler).j3k = function (ctx, action) {
       var _iterator__ex2g4s = found.h();
       while (_iterator__ex2g4s.i()) {
         var element = _iterator__ex2g4s.j();
-        if (ctx.i32(element)) {
+        if (ctx.j32(element)) {
           tmp$ret$0 = false;
           break $l$block_0;
         }
@@ -45095,22 +45146,22 @@ protoOf(SelectHandler).j3k = function (ctx, action) {
   }
   if (tmp)
     return false;
-  return found.k() >= ctx.s34(selector.a35_1);
+  return found.k() >= ctx.t34(selector.b35_1);
 };
-protoOf(SelectHandler).x3h = function (ctx, action) {
-  return this.j3k(ctx, action instanceof Select ? action : THROW_CCE());
+protoOf(SelectHandler).y3h = function (ctx, action) {
+  return this.k3k(ctx, action instanceof Select ? action : THROW_CCE());
 };
-protoOf(SelectHandler).q3k = function (ctx, action) {
-  var selector = ensureNotNull(action.k3k_1);
-  var valid = Selection_instance.u34(ctx, selector, action.l3k_1);
+protoOf(SelectHandler).r3k = function (ctx, action) {
+  var selector = ensureNotNull(action.l3k_1);
+  var valid = Selection_instance.v34(ctx, selector, action.m3k_1);
   if (valid.m()) {
-    if (action.o3k_1) {
-      ctx.g34('No hay aliados que puedan elegirse');
-      ctx.k31();
+    if (action.p3k_1) {
+      ctx.h34('No hay aliados que puedan elegirse');
+      ctx.l31();
     }
     return false;
   }
-  if (selector.v3i().equals(Mode_ALL_getInstance())) {
+  if (selector.w3i().equals(Mode_ALL_getInstance())) {
     // Inline function 'kotlin.collections.map' call
     // Inline function 'kotlin.collections.mapTo' call
     var destination = ArrayList_init_$Create$_1(collectionSizeOrDefault(valid, 10));
@@ -45120,28 +45171,28 @@ protoOf(SelectHandler).q3k = function (ctx, action) {
       var tmp$ret$2 = item.g1c_1;
       destination.f(tmp$ret$2);
     }
-    this.r3k(ctx, action, new Answer(destination, frozenListOf([])));
+    this.s3k(ctx, action, new Answer(destination, frozenListOf([])));
     return false;
   }
-  if (!(selector.f35_1 == null)) {
-    var bounds = ctx.z31(selector.f35_1, valid.k());
-    ctx.h35(ctx.b32(selector.f35_1), action.n3k_1, Selection_instance.w3i(ctx, selector), valid, bounds[0], bounds[1]);
+  if (!(selector.g35_1 == null)) {
+    var bounds = ctx.a32(selector.g35_1, valid.k());
+    ctx.i35(ctx.c32(selector.g35_1), action.o3k_1, Selection_instance.x3i(ctx, selector), valid, bounds[0], bounds[1]);
     if (bounds[2] > 0) {
-      ctx.g31(bounds[2]);
+      ctx.h31(bounds[2]);
     }
     return true;
   }
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var instruction = (action.l3k_1 ? 'Elige ' : 'Selecciona ') + (min < max ? 'hasta ' : '') + max + ' ' + ctx.w34(selector) + (selector.y3j().equals(Self_REQUIRE_getInstance()) ? ', incluida esta carta' : '') + '.';
-  var tmp0_elvis_lhs = action.n3k_1;
-  var label = tmp0_elvis_lhs == null ? action.l3k_1 ? 'Objetivo' : 'Elegida' : tmp0_elvis_lhs;
-  var sum = action.p3k_1;
+  var instruction = (action.m3k_1 ? 'Elige ' : 'Selecciona ') + (min < max ? 'hasta ' : '') + max + ' ' + ctx.x34(selector) + (selector.z3j().equals(Self_REQUIRE_getInstance()) ? ', incluida esta carta' : '') + '.';
+  var tmp0_elvis_lhs = action.o3k_1;
+  var label = tmp0_elvis_lhs == null ? action.m3k_1 ? 'Objetivo' : 'Elegida' : tmp0_elvis_lhs;
+  var sum = action.q3k_1;
   var tmp;
   if (sum == null) {
     tmp = valid;
@@ -45161,25 +45212,25 @@ protoOf(SelectHandler).q3k = function (ctx, action) {
   }
   var fitting = tmp;
   var tmp_0 = sum == null ? instruction : removeSuffix(instruction, '.') + (' que sumen hasta ' + sum + ' en nivel.');
-  var tmp_1 = Selection_instance.w3i(ctx, selector);
+  var tmp_1 = Selection_instance.x3i(ctx, selector);
   // Inline function 'kotlin.math.min' call
   var b_0 = fitting.k();
   var tmp_2 = Math.min(min, b_0);
   // Inline function 'kotlin.math.min' call
   var b_1 = fitting.k();
   var tmp$ret$9 = Math.min(max, b_1);
-  ctx.h35(tmp_0, label, tmp_1, fitting, tmp_2, tmp$ret$9);
+  ctx.i35(tmp_0, label, tmp_1, fitting, tmp_2, tmp$ret$9);
   if (!(sum == null)) {
-    ctx.g31(sum);
+    ctx.h31(sum);
   }
   return true;
 };
-protoOf(SelectHandler).a3i = function (ctx, action) {
-  return this.q3k(ctx, action instanceof Select ? action : THROW_CCE());
+protoOf(SelectHandler).b3i = function (ctx, action) {
+  return this.r3k(ctx, action instanceof Select ? action : THROW_CCE());
 };
-protoOf(SelectHandler).r3k = function (ctx, action, answer) {
-  var picks = ensureNotNull(answer.k3i_1);
-  var valid = Selection_instance.u34(ctx, ensureNotNull(action.k3k_1), action.l3k_1);
+protoOf(SelectHandler).s3k = function (ctx, action, answer) {
+  var picks = ensureNotNull(answer.l3i_1);
+  var valid = Selection_instance.v34(ctx, ensureNotNull(action.l3k_1), action.m3k_1);
   var _iterator__ex2g4s = picks.h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
@@ -45209,7 +45260,7 @@ protoOf(SelectHandler).r3k = function (ctx, action, answer) {
     if (tmp$ret$0)
       return 'Esa carta ya no se puede elegir';
   }
-  var sum = action.p3k_1;
+  var sum = action.q3k_1;
   var tmp_0;
   if (!(sum == null)) {
     // Inline function 'kotlin.collections.filter' call
@@ -45238,7 +45289,7 @@ protoOf(SelectHandler).r3k = function (ctx, action, answer) {
   if (tmp_0)
     return 'Sus niveles deben sumar ' + sum + ' o menos';
   var tmp_2;
-  if (action.k3k_1.y3j().equals(Self_REQUIRE_getInstance()) && !picks.m()) {
+  if (action.l3k_1.z3j().equals(Self_REQUIRE_getInstance()) && !picks.m()) {
     var tmp$ret$7;
     $l$block_2: {
       // Inline function 'kotlin.collections.none' call
@@ -45255,7 +45306,7 @@ protoOf(SelectHandler).r3k = function (ctx, action, answer) {
       var _iterator__ex2g4s_3 = valid.h();
       while (_iterator__ex2g4s_3.i()) {
         var element_2 = _iterator__ex2g4s_3.j();
-        if (ctx.i32(element_2) && picks.n(element_2.g1c_1)) {
+        if (ctx.j32(element_2) && picks.n(element_2.g1c_1)) {
           tmp$ret$7 = false;
           break $l$block_2;
         }
@@ -45269,21 +45320,21 @@ protoOf(SelectHandler).r3k = function (ctx, action, answer) {
   if (tmp_2) {
     return 'Debes incluir esta carta';
   }
-  if (!(action.k3k_1.f35_1 == null)) {
-    var wrong = ctx.d32(action.k3k_1.f35_1, picks);
+  if (!(action.l3k_1.g35_1 == null)) {
+    var wrong = ctx.e32(action.l3k_1.g35_1, picks);
     if (!(wrong == null))
       return wrong;
   }
-  var tmp0_elvis_lhs_0 = action.m3k_1;
-  var saveAs = tmp0_elvis_lhs_0 == null ? action.l3k_1 ? 'targets' : 'last' : tmp0_elvis_lhs_0;
-  ctx.i35(saveAs, picks);
+  var tmp0_elvis_lhs_0 = action.n3k_1;
+  var saveAs = tmp0_elvis_lhs_0 == null ? action.m3k_1 ? 'targets' : 'last' : tmp0_elvis_lhs_0;
+  ctx.j35(saveAs, picks);
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
   var destination_0 = ArrayList_init_$Create$();
   var _iterator__ex2g4s_4 = valid.h();
   while (_iterator__ex2g4s_4.i()) {
     var element_3 = _iterator__ex2g4s_4.j();
-    if (picks.n(element_3.g1c_1) && !ctx.j32(element_3) && !element_3.k1c_1) {
+    if (picks.n(element_3.g1c_1) && !ctx.k32(element_3) && !element_3.k1c_1) {
       destination_0.f(element_3);
     }
   }
@@ -45296,74 +45347,74 @@ protoOf(SelectHandler).r3k = function (ctx, action, answer) {
     var tmp$ret$14 = item.g1c_1;
     destination_1.f(tmp$ret$14);
   }
-  ctx.i35('activeAllies', destination_1);
-  ctx.y32(!picks.m());
-  if (action.l3k_1 && !picks.m()) {
+  ctx.j35('activeAllies', destination_1);
+  ctx.z32(!picks.m());
+  if (action.m3k_1 && !picks.m()) {
     // Inline function 'kotlin.collections.map' call
     // Inline function 'kotlin.collections.mapTo' call
     var destination_2 = ArrayList_init_$Create$_1(collectionSizeOrDefault(picks, 10));
     var _iterator__ex2g4s_6 = picks.h();
     while (_iterator__ex2g4s_6.i()) {
       var item_0 = _iterator__ex2g4s_6.j();
-      var tmp$ret$17 = ctx.q2c(ctx.q31(item_0));
+      var tmp$ret$17 = ctx.q2c(ctx.r31(item_0));
       destination_2.f(tmp$ret$17);
     }
     var names = destination_2;
-    ctx.j35('TARGET', ctx.q31(picks.l(0)), frozenMapOf_0('targetIds', picks), plus(ensureNotNull(ctx.b31()).g1e_1, ' elige como objetivo a ') + joinToString(names, ', '));
+    ctx.k35('TARGET', ctx.r31(picks.l(0)), frozenMapOf_0('targetIds', picks), plus(ensureNotNull(ctx.c31()).g1e_1, ' elige como objetivo a ') + joinToString(names, ', '));
   }
   return null;
 };
-protoOf(SelectHandler).c3i = function (ctx, action, answer) {
-  return this.r3k(ctx, action instanceof Select ? action : THROW_CCE(), answer);
+protoOf(SelectHandler).d3i = function (ctx, action, answer) {
+  return this.s3k(ctx, action instanceof Select ? action : THROW_CCE(), answer);
 };
 function SequenceHandler() {
 }
-protoOf(SequenceHandler).s3k = function (ctx, action) {
-  return Actions_getInstance().z3a(ctx, ensureNotNull(action.w3e_1).l(0));
-};
-protoOf(SequenceHandler).x3h = function (ctx, action) {
-  return this.s3k(ctx, action instanceof Sequence ? action : THROW_CCE());
-};
 protoOf(SequenceHandler).t3k = function (ctx, action) {
-  var i = ctx.e31();
-  while (i < ensureNotNull(action.w3e_1).k()) {
-    ctx.f31(i);
-    if (Actions_getInstance().a3b(ctx, action.w3e_1.l(i)))
+  return Actions_getInstance().a3b(ctx, ensureNotNull(action.x3e_1).l(0));
+};
+protoOf(SequenceHandler).y3h = function (ctx, action) {
+  return this.t3k(ctx, action instanceof Sequence ? action : THROW_CCE());
+};
+protoOf(SequenceHandler).u3k = function (ctx, action) {
+  var i = ctx.f31();
+  while (i < ensureNotNull(action.x3e_1).k()) {
+    ctx.g31(i);
+    if (Actions_getInstance().b3b(ctx, action.x3e_1.l(i)))
       return true;
     i = i + 1 | 0;
   }
-  ctx.f31(0);
+  ctx.g31(0);
   return false;
 };
-protoOf(SequenceHandler).a3i = function (ctx, action) {
-  return this.t3k(ctx, action instanceof Sequence ? action : THROW_CCE());
+protoOf(SequenceHandler).b3i = function (ctx, action) {
+  return this.u3k(ctx, action instanceof Sequence ? action : THROW_CCE());
 };
-protoOf(SequenceHandler).u3k = function (ctx, action, answer) {
-  var current = ensureNotNull(action.w3e_1).l(ctx.e31());
-  var error = Actions_getInstance().b3b(ctx, current, answer);
+protoOf(SequenceHandler).v3k = function (ctx, action, answer) {
+  var current = ensureNotNull(action.x3e_1).l(ctx.f31());
+  var error = Actions_getInstance().c3b(ctx, current, answer);
   if (!(error == null))
     return error;
-  var next = ctx.e31() + 1 | 0;
-  if (next >= action.w3e_1.k()) {
-    ctx.f31(0);
+  var next = ctx.f31() + 1 | 0;
+  if (next >= action.x3e_1.k()) {
+    ctx.g31(0);
     return null;
   }
-  ctx.f31(next);
-  ctx.t31();
+  ctx.g31(next);
+  ctx.u31();
   return null;
 };
-protoOf(SequenceHandler).c3i = function (ctx, action, answer) {
-  return this.u3k(ctx, action instanceof Sequence ? action : THROW_CCE(), answer);
+protoOf(SequenceHandler).d3i = function (ctx, action, answer) {
+  return this.v3k(ctx, action instanceof Sequence ? action : THROW_CCE(), answer);
 };
 function candidates_3($this, ctx, action) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.v3k_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.w3k_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (ctx.m32(element) && !ctx.v32(element) && (action.w3k_1 ? ctx.k33(element) : ctx.l33(element))) {
+    if (ctx.n32(element) && !ctx.w32(element) && (action.x3k_1 ? ctx.l33(element) : ctx.m33(element))) {
       destination.f(element);
     }
   }
@@ -45374,11 +45425,11 @@ function candidates_3($this, ctx, action) {
   while (_iterator__ex2g4s_0.i()) {
     var element_0 = _iterator__ex2g4s_0.j();
     var tmp;
-    if (action.y3k_1 == null) {
+    if (action.z3k_1 == null) {
       tmp = true;
     } else {
       var tmp0_elvis_lhs = element_0.t1c_1;
-      tmp = (tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs) <= action.y3k_1;
+      tmp = (tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs) <= action.z3k_1;
     }
     if (tmp) {
       destination_0.f(element_0);
@@ -45390,45 +45441,45 @@ function apply_2($this, ctx, action, cards) {
   var _iterator__ex2g4s = ArrayList_init_$Create$_0(cards).h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    ctx.m33(card, action.w3k_1);
+    ctx.n33(card, action.x3k_1);
   }
-  ctx.y32(!cards.m());
-  ctx.m34(cards.k());
+  ctx.z32(!cards.m());
+  ctx.n34(cards.k());
 }
 function SetTappedHandler() {
 }
-protoOf(SetTappedHandler).z3k = function (ctx, action) {
-  if (ensureNotNull(action.v3k_1).t3i())
+protoOf(SetTappedHandler).a3l = function (ctx, action) {
+  if (ensureNotNull(action.w3k_1).u3i())
     return true;
   var tmp = candidates_3(this, ctx, action).k();
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(action.v3k_1.a35_1);
+  var b = ctx.t34(action.w3k_1.b35_1);
   return tmp >= Math.max(1, b);
 };
-protoOf(SetTappedHandler).x3h = function (ctx, action) {
-  return this.z3k(ctx, action instanceof SetTapped ? action : THROW_CCE());
+protoOf(SetTappedHandler).y3h = function (ctx, action) {
+  return this.a3l(ctx, action instanceof SetTapped ? action : THROW_CCE());
 };
-protoOf(SetTappedHandler).a3l = function (ctx, action) {
-  var selector = ensureNotNull(action.v3k_1);
+protoOf(SetTappedHandler).b3l = function (ctx, action) {
+  var selector = ensureNotNull(action.w3k_1);
   var valid = candidates_3(this, ctx, action);
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
   if (max <= 0) {
-    ctx.y32(false);
+    ctx.z32(false);
     return false;
   }
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     apply_2(this, ctx, action, valid.p1(0, max));
     return false;
   }
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var verb = action.w3k_1 ? 'Agota ' : 'Reactiva ';
-  var filter = selector.g35().e2e();
-  var sum = action.y3k_1 == null ? '' : ' que en coste sumen hasta ' + action.y3k_1;
+  var verb = action.x3k_1 ? 'Agota ' : 'Reactiva ';
+  var filter = selector.h35().e2e();
+  var sum = action.z3k_1 == null ? '' : ' que en coste sumen hasta ' + action.z3k_1;
   var tmp = verb + (min < max ? 'hasta ' : '') + max + (max === 1 ? ' carta' : ' cartas');
   var tmp_0;
   var tmp$ret$2;
@@ -45450,16 +45501,16 @@ protoOf(SetTappedHandler).a3l = function (ctx, action) {
   } else {
     tmp_0 = ' ' + filter;
   }
-  ctx.h35(tmp + tmp_0 + sum + '.', action.w3k_1 ? 'Agotar' : 'Reactivar', Selection_instance.w3i(ctx, selector), valid, min, max);
+  ctx.i35(tmp + tmp_0 + sum + '.', action.x3k_1 ? 'Agotar' : 'Reactivar', Selection_instance.x3i(ctx, selector), valid, min, max);
   return true;
 };
-protoOf(SetTappedHandler).a3i = function (ctx, action) {
-  return this.a3l(ctx, action instanceof SetTapped ? action : THROW_CCE());
+protoOf(SetTappedHandler).b3i = function (ctx, action) {
+  return this.b3l(ctx, action instanceof SetTapped ? action : THROW_CCE());
 };
-protoOf(SetTappedHandler).b3l = function (ctx, action, answer) {
+protoOf(SetTappedHandler).c3l = function (ctx, action, answer) {
   var valid = candidates_3(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -45478,7 +45529,7 @@ protoOf(SetTappedHandler).b3l = function (ctx, action, answer) {
     var tmp0_elvis_lhs = tmp$ret$0;
     var tmp;
     if (tmp0_elvis_lhs == null) {
-      return 'Esa carta ya no se puede ' + (action.w3k_1 ? 'agotar' : 'reactivar');
+      return 'Esa carta ya no se puede ' + (action.x3k_1 ? 'agotar' : 'reactivar');
     } else {
       tmp = tmp0_elvis_lhs;
     }
@@ -45486,7 +45537,7 @@ protoOf(SetTappedHandler).b3l = function (ctx, action, answer) {
     picked.f(card);
   }
   var tmp_0;
-  if (!(action.y3k_1 == null)) {
+  if (!(action.z3k_1 == null)) {
     // Inline function 'kotlin.collections.sumOf' call
     var sum = 0;
     var _iterator__ex2g4s_1 = picked.h();
@@ -45496,22 +45547,22 @@ protoOf(SetTappedHandler).b3l = function (ctx, action, answer) {
       var tmp0_elvis_lhs_0 = element_0.t1c_1;
       sum = tmp_1 + (tmp0_elvis_lhs_0 == null ? 0 : tmp0_elvis_lhs_0) | 0;
     }
-    tmp_0 = sum > action.y3k_1;
+    tmp_0 = sum > action.z3k_1;
   } else {
     tmp_0 = false;
   }
   if (tmp_0)
-    return 'Las cartas elegidas deben sumar ' + action.y3k_1 + ' o menos en coste';
+    return 'Las cartas elegidas deben sumar ' + action.z3k_1 + ' o menos en coste';
   apply_2(this, ctx, action, picked);
   return null;
 };
-protoOf(SetTappedHandler).c3i = function (ctx, action, answer) {
-  return this.b3l(ctx, action instanceof SetTapped ? action : THROW_CCE(), answer);
+protoOf(SetTappedHandler).d3i = function (ctx, action, answer) {
+  return this.c3l(ctx, action instanceof SetTapped ? action : THROW_CCE(), answer);
 };
 function candidates_4($this, ctx, action) {
-  var reduce = ctx.s34(action.d3l_1);
+  var reduce = ctx.t34(action.e3l_1);
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.c3l_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.d3l_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
@@ -45520,19 +45571,19 @@ function candidates_4($this, ctx, action) {
     var tmp$ret$2;
     $l$block: {
       var cost = element.t1c_1;
-      if (action.g3l_1 && ('utility' === element.o1c_1 || 'structure' === element.o1c_1)) {
+      if (action.h3l_1 && ('utility' === element.o1c_1 || 'structure' === element.o1c_1)) {
         var tmp;
         var tmp_0;
         // Inline function 'kotlin.math.max' call
-        var b = ctx.j34(element) - reduce | 0;
+        var b = ctx.k34(element) - reduce | 0;
         var tmp$ret$3 = Math.max(0, b);
-        if (ctx.d34(tmp$ret$3)) {
-          tmp_0 = ctx.e34(element);
+        if (ctx.e34(tmp$ret$3)) {
+          tmp_0 = ctx.f34(element);
         } else {
           tmp_0 = false;
         }
         if (tmp_0) {
-          tmp = action.c3l_1.v3i().equals(Mode_SELF_getInstance()) || !ctx.i32(element) || ctx.f34();
+          tmp = action.d3l_1.w3i().equals(Mode_SELF_getInstance()) || !ctx.j32(element) || ctx.g34();
         } else {
           tmp = false;
         }
@@ -45543,14 +45594,14 @@ function candidates_4($this, ctx, action) {
       var tmp_2;
       if ('creature' === element.o1c_1 && !(cost == null)) {
         // Inline function 'kotlin.math.max' call
-        var b_0 = ctx.i34(element) - reduce | 0;
+        var b_0 = ctx.j34(element) - reduce | 0;
         var tmp$ret$4 = Math.max(0, b_0);
-        tmp_2 = ctx.d34(tmp$ret$4);
+        tmp_2 = ctx.e34(tmp$ret$4);
       } else {
         tmp_2 = false;
       }
       if (tmp_2) {
-        tmp_1 = action.c3l_1.v3i().equals(Mode_SELF_getInstance()) || !ctx.i32(element) || ctx.f34();
+        tmp_1 = action.d3l_1.w3i().equals(Mode_SELF_getInstance()) || !ctx.j32(element) || ctx.g34();
       } else {
         tmp_1 = false;
       }
@@ -45563,51 +45614,51 @@ function candidates_4($this, ctx, action) {
   return destination;
 }
 function apply_3($this, ctx, action, cards) {
-  var reduce = ctx.s34(action.d3l_1);
+  var reduce = ctx.t34(action.e3l_1);
   var _iterator__ex2g4s = cards.h();
   while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
     if ('creature' === card.o1c_1) {
-      ctx.h34(card, reduce, action.e3l_1);
+      ctx.i34(card, reduce, action.f3l_1);
     } else {
-      ctx.k34(card, reduce);
+      ctx.l34(card, reduce);
     }
   }
-  ctx.y32(!cards.m());
+  ctx.z32(!cards.m());
 }
 function SummonHandler() {
 }
-protoOf(SummonHandler).h3l = function (ctx, action) {
+protoOf(SummonHandler).i3l = function (ctx, action) {
   var tmp = candidates_4(this, ctx, action).k();
   // Inline function 'kotlin.math.max' call
-  var b = ctx.s34(ensureNotNull(action.c3l_1).a35_1);
+  var b = ctx.t34(ensureNotNull(action.d3l_1).b35_1);
   return tmp >= Math.max(1, b);
 };
-protoOf(SummonHandler).x3h = function (ctx, action) {
-  return this.h3l(ctx, action instanceof Summon ? action : THROW_CCE());
+protoOf(SummonHandler).y3h = function (ctx, action) {
+  return this.i3l(ctx, action instanceof Summon ? action : THROW_CCE());
 };
-protoOf(SummonHandler).i3l = function (ctx, action) {
-  var selector = ensureNotNull(action.c3l_1);
+protoOf(SummonHandler).j3l = function (ctx, action) {
+  var selector = ensureNotNull(action.d3l_1);
   var valid = candidates_4(this, ctx, action);
   if (valid.m()) {
-    ctx.g34('No hay criaturas que este efecto pueda invocar');
+    ctx.h34('No hay criaturas que este efecto pueda invocar');
     return false;
   }
-  var tmp0 = ctx.s34(selector.b35_1);
+  var tmp0 = ctx.t34(selector.c35_1);
   // Inline function 'kotlin.math.min' call
   var b = valid.k();
   var max = Math.min(tmp0, b);
-  if (!selector.v3i().equals(Mode_CHOOSE_getInstance())) {
+  if (!selector.w3i().equals(Mode_CHOOSE_getInstance())) {
     apply_3(this, ctx, action, ArrayList_init_$Create$_0(valid.p1(0, max)));
     return false;
   }
-  var reduce = ctx.s34(action.d3l_1);
+  var reduce = ctx.t34(action.e3l_1);
   // Inline function 'kotlin.math.min' call
-  var a = ctx.s34(selector.a35_1);
+  var a = ctx.t34(selector.b35_1);
   var min = Math.min(a, max);
-  var filter = selector.g35().e2e();
+  var filter = selector.h35().e2e();
   var cost = reduce >= 1000 ? ' sin pagar su coste' : reduce > 0 ? ' reduciendo su coste en ' + reduce : ' pagando su coste';
-  if (action.g3l_1) {
+  if (action.h3l_1) {
     var tmp = 'Juega o invoca ' + (min < max ? 'hasta ' : '') + max + (max === 1 ? ' carta' : ' cartas');
     var tmp_0;
     var tmp$ret$2;
@@ -45629,7 +45680,7 @@ protoOf(SummonHandler).i3l = function (ctx, action) {
     } else {
       tmp_0 = ' ' + filter;
     }
-    ctx.h35(tmp + tmp_0 + ' de ' + ctx.n32(selector.x34_1) + cost + '.', 'Jugar o invocar', Selection_instance.w3i(ctx, selector), valid, min, max);
+    ctx.i35(tmp + tmp_0 + ' de ' + ctx.o32(selector.y34_1) + cost + '.', 'Jugar o invocar', Selection_instance.x3i(ctx, selector), valid, min, max);
     return true;
   }
   var tmp_1 = 'Invoca ' + (min < max ? 'hasta ' : '') + max + (max === 1 ? ' criatura' : ' criaturas');
@@ -45653,16 +45704,16 @@ protoOf(SummonHandler).i3l = function (ctx, action) {
   } else {
     tmp_2 = ' ' + filter;
   }
-  ctx.h35(tmp_1 + tmp_2 + ' de ' + ctx.n32(selector.x34_1) + cost + '. Entra en ' + (action.e3l_1 ? 'tu l\xEDnea frontal' : 'Retaguardia') + ' y robas 1 carta.', 'Invocar', Selection_instance.w3i(ctx, selector), valid, min, max);
+  ctx.i35(tmp_1 + tmp_2 + ' de ' + ctx.o32(selector.y34_1) + cost + '. Entra en ' + (action.f3l_1 ? 'tu l\xEDnea frontal' : 'Retaguardia') + ' y robas 1 carta.', 'Invocar', Selection_instance.x3i(ctx, selector), valid, min, max);
   return true;
 };
-protoOf(SummonHandler).a3i = function (ctx, action) {
-  return this.i3l(ctx, action instanceof Summon ? action : THROW_CCE());
+protoOf(SummonHandler).b3i = function (ctx, action) {
+  return this.j3l(ctx, action instanceof Summon ? action : THROW_CCE());
 };
-protoOf(SummonHandler).j3l = function (ctx, action, answer) {
+protoOf(SummonHandler).k3l = function (ctx, action, answer) {
   var valid = candidates_4(this, ctx, action);
   var picked = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = ensureNotNull(answer.k3i_1).h();
+  var _iterator__ex2g4s = ensureNotNull(answer.l3i_1).h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
     var tmp$ret$0;
@@ -45688,7 +45739,7 @@ protoOf(SummonHandler).j3l = function (ctx, action, answer) {
     var card = tmp;
     picked.f(card);
   }
-  var reduce = ctx.s34(action.d3l_1);
+  var reduce = ctx.t34(action.e3l_1);
   // Inline function 'kotlin.collections.sumOf' call
   var sum = 0;
   var _iterator__ex2g4s_1 = picked.h();
@@ -45696,75 +45747,75 @@ protoOf(SummonHandler).j3l = function (ctx, action, answer) {
     var element_0 = _iterator__ex2g4s_1.j();
     var tmp_0 = sum;
     // Inline function 'kotlin.math.max' call
-    var b = ('creature' === element_0.o1c_1 ? ctx.i34(element_0) : ctx.j34(element_0)) - reduce | 0;
+    var b = ('creature' === element_0.o1c_1 ? ctx.j34(element_0) : ctx.k34(element_0)) - reduce | 0;
     sum = tmp_0 + Math.max(0, b) | 0;
   }
   var total = sum;
-  if (!ctx.d34(total))
+  if (!ctx.e34(total))
     return 'No tienes gemas para pagarlas todas (' + total + ')';
   apply_3(this, ctx, action, picked);
   return null;
 };
-protoOf(SummonHandler).c3i = function (ctx, action, answer) {
-  return this.j3l(ctx, action instanceof Summon ? action : THROW_CCE(), answer);
+protoOf(SummonHandler).d3i = function (ctx, action, answer) {
+  return this.k3l(ctx, action instanceof Summon ? action : THROW_CCE(), answer);
 };
 function SummonSpecialHandler() {
 }
-protoOf(SummonSpecialHandler).k3l = function (ctx, action) {
+protoOf(SummonSpecialHandler).l3l = function (ctx, action) {
   return true;
 };
-protoOf(SummonSpecialHandler).x3h = function (ctx, action) {
-  return this.k3l(ctx, action instanceof SummonSpecial ? action : THROW_CCE());
+protoOf(SummonSpecialHandler).y3h = function (ctx, action) {
+  return this.l3l(ctx, action instanceof SummonSpecial ? action : THROW_CCE());
 };
-protoOf(SummonSpecialHandler).l3l = function (ctx, action) {
-  ctx.f32(action.x3e_1);
+protoOf(SummonSpecialHandler).m3l = function (ctx, action) {
+  ctx.g32(action.y3e_1);
   return false;
 };
-protoOf(SummonSpecialHandler).a3i = function (ctx, action) {
-  return this.l3l(ctx, action instanceof SummonSpecial ? action : THROW_CCE());
+protoOf(SummonSpecialHandler).b3i = function (ctx, action) {
+  return this.m3l(ctx, action instanceof SummonSpecial ? action : THROW_CCE());
 };
 function WatchHandler() {
 }
-protoOf(WatchHandler).m3l = function (ctx, action) {
+protoOf(WatchHandler).n3l = function (ctx, action) {
   return true;
 };
-protoOf(WatchHandler).x3h = function (ctx, action) {
-  return this.m3l(ctx, action instanceof Watch_0 ? action : THROW_CCE());
+protoOf(WatchHandler).y3h = function (ctx, action) {
+  return this.n3l(ctx, action instanceof Watch_0 ? action : THROW_CCE());
 };
-protoOf(WatchHandler).n3l = function (ctx, action) {
+protoOf(WatchHandler).o3l = function (ctx, action) {
   // Inline function 'kotlin.collections.filter' call
-  var tmp0 = Selection_instance.u34(ctx, ensureNotNull(action.o3l_1), false);
+  var tmp0 = Selection_instance.v34(ctx, ensureNotNull(action.p3l_1), false);
   // Inline function 'kotlin.collections.filterTo' call
   var destination = ArrayList_init_$Create$();
   var _iterator__ex2g4s = tmp0.h();
   while (_iterator__ex2g4s.i()) {
     var element = _iterator__ex2g4s.j();
-    if (ctx.m32(element)) {
+    if (ctx.n32(element)) {
       destination.f(element);
     }
   }
   var cards = destination;
-  ctx.p31(cards, action.p3l_1, action.q3l_1);
+  ctx.q31(cards, action.q3l_1, action.r3l_1);
   return false;
 };
-protoOf(WatchHandler).a3i = function (ctx, action) {
-  return this.n3l(ctx, action instanceof Watch_0 ? action : THROW_CCE());
+protoOf(WatchHandler).b3i = function (ctx, action) {
+  return this.o3l(ctx, action instanceof Watch_0 ? action : THROW_CCE());
 };
-protoOf(WatchHandler).r3l = function (ctx, action, answer) {
+protoOf(WatchHandler).s3l = function (ctx, action, answer) {
   return 'Este paso no espera ninguna elecci\xF3n';
 };
-protoOf(WatchHandler).c3i = function (ctx, action, answer) {
-  return this.r3l(ctx, action instanceof Watch_0 ? action : THROW_CCE(), answer);
+protoOf(WatchHandler).d3i = function (ctx, action, answer) {
+  return this.s3l(ctx, action instanceof Watch_0 ? action : THROW_CCE(), answer);
 };
 function Companion_21() {
-  this.s3l_1 = 1000;
+  this.t3l_1 = 1000;
 }
 var Companion_instance_22;
 function Companion_getInstance_21() {
   return Companion_instance_22;
 }
 function Companion_22() {
-  this.t3l_1 = 1000;
+  this.u3l_1 = 1000;
 }
 var Companion_instance_23;
 function Companion_getInstance_22() {
@@ -45805,81 +45856,81 @@ function Move_init_$Create$(cards, to, random, label, required) {
   return Move_init_$Init$(cards, to, random, label, required, objectCreate(protoOf(Move_0)));
 }
 function Companion_23() {
-  this.u3l_1 = 'frontLine';
-  this.v3l_1 = 'backLine';
-  this.w3l_1 = 'lifeTop';
-  this.x3l_1 = 'lifeBottom';
-  this.y3l_1 = 'tributeZone';
-  this.z3l_1 = 'discardPile';
-  this.a3m_1 = 'deckTop';
-  this.b3m_1 = 'deckBottom';
-  this.c3m_1 = 'deckTopKept';
-  this.d3m_1 = 'deckTopOrBottom';
-  this.e3m_1 = 'hand';
+  this.v3l_1 = 'frontLine';
+  this.w3l_1 = 'backLine';
+  this.x3l_1 = 'lifeTop';
+  this.y3l_1 = 'lifeBottom';
+  this.z3l_1 = 'tributeZone';
+  this.a3m_1 = 'discardPile';
+  this.b3m_1 = 'deckTop';
+  this.c3m_1 = 'deckBottom';
+  this.d3m_1 = 'deckTopKept';
+  this.e3m_1 = 'deckTopOrBottom';
+  this.f3m_1 = 'hand';
 }
 var Companion_instance_24;
 function Companion_getInstance_23() {
   return Companion_instance_24;
 }
 function Sequence(actions) {
-  this.w3e_1 = actions;
+  this.x3e_1 = actions;
 }
-protoOf(Sequence).c2t = function () {
+protoOf(Sequence).d2t = function () {
   return true;
 };
 protoOf(Sequence).toString = function () {
-  return 'Sequence(actions=' + toString_0(this.w3e_1) + ')';
+  return 'Sequence(actions=' + toString_0(this.x3e_1) + ')';
 };
 protoOf(Sequence).hashCode = function () {
-  return this.w3e_1 == null ? 0 : hashCode(this.w3e_1);
+  return this.x3e_1 == null ? 0 : hashCode(this.x3e_1);
 };
 protoOf(Sequence).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Sequence))
     return false;
-  if (!equals_0(this.w3e_1, other.w3e_1))
+  if (!equals_0(this.x3e_1, other.x3e_1))
     return false;
   return true;
 };
 function SummonSpecial(rule) {
-  this.x3e_1 = rule;
+  this.y3e_1 = rule;
 }
 protoOf(SummonSpecial).toString = function () {
-  return 'SummonSpecial(rule=' + toString_0(this.x3e_1) + ')';
+  return 'SummonSpecial(rule=' + toString_0(this.y3e_1) + ')';
 };
 protoOf(SummonSpecial).hashCode = function () {
-  return this.x3e_1 == null ? 0 : this.x3e_1.hashCode();
+  return this.y3e_1 == null ? 0 : this.y3e_1.hashCode();
 };
 protoOf(SummonSpecial).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof SummonSpecial))
     return false;
-  if (!equals_0(this.x3e_1, other.x3e_1))
+  if (!equals_0(this.y3e_1, other.y3e_1))
     return false;
   return true;
 };
 function Summon(cards, reduce, toFront, required, orPlay) {
   orPlay = orPlay === VOID ? false : orPlay;
-  this.c3l_1 = cards;
-  this.d3l_1 = reduce;
-  this.e3l_1 = toFront;
-  this.f3l_1 = required;
-  this.g3l_1 = orPlay;
+  this.d3l_1 = cards;
+  this.e3l_1 = reduce;
+  this.f3l_1 = toFront;
+  this.g3l_1 = required;
+  this.h3l_1 = orPlay;
 }
-protoOf(Summon).c2t = function () {
-  return this.f3l_1;
+protoOf(Summon).d2t = function () {
+  return this.g3l_1;
 };
 protoOf(Summon).toString = function () {
-  return 'Summon(cards=' + toString_0(this.c3l_1) + ', reduce=' + toString_0(this.d3l_1) + ', toFront=' + this.e3l_1 + ', required=' + this.f3l_1 + ', orPlay=' + this.g3l_1 + ')';
+  return 'Summon(cards=' + toString_0(this.d3l_1) + ', reduce=' + toString_0(this.e3l_1) + ', toFront=' + this.f3l_1 + ', required=' + this.g3l_1 + ', orPlay=' + this.h3l_1 + ')';
 };
 protoOf(Summon).hashCode = function () {
-  var result = this.c3l_1 == null ? 0 : this.c3l_1.hashCode();
-  result = imul(result, 31) + (this.d3l_1 == null ? 0 : hashCode(this.d3l_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.e3l_1) | 0;
+  var result = this.d3l_1 == null ? 0 : this.d3l_1.hashCode();
+  result = imul(result, 31) + (this.e3l_1 == null ? 0 : hashCode(this.e3l_1)) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.f3l_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.g3l_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.h3l_1) | 0;
   return result;
 };
 protoOf(Summon).equals = function (other) {
@@ -45887,33 +45938,33 @@ protoOf(Summon).equals = function (other) {
     return true;
   if (!(other instanceof Summon))
     return false;
-  if (!equals_0(this.c3l_1, other.c3l_1))
-    return false;
   if (!equals_0(this.d3l_1, other.d3l_1))
     return false;
-  if (!(this.e3l_1 === other.e3l_1))
+  if (!equals_0(this.e3l_1, other.e3l_1))
     return false;
   if (!(this.f3l_1 === other.f3l_1))
     return false;
   if (!(this.g3l_1 === other.g3l_1))
     return false;
+  if (!(this.h3l_1 === other.h3l_1))
+    return false;
   return true;
 };
 function Play(cards, reduce, required) {
-  this.d3k_1 = cards;
-  this.e3k_1 = reduce;
-  this.f3k_1 = required;
+  this.e3k_1 = cards;
+  this.f3k_1 = reduce;
+  this.g3k_1 = required;
 }
-protoOf(Play).c2t = function () {
-  return this.f3k_1;
+protoOf(Play).d2t = function () {
+  return this.g3k_1;
 };
 protoOf(Play).toString = function () {
-  return 'Play(cards=' + toString_0(this.d3k_1) + ', reduce=' + toString_0(this.e3k_1) + ', required=' + this.f3k_1 + ')';
+  return 'Play(cards=' + toString_0(this.e3k_1) + ', reduce=' + toString_0(this.f3k_1) + ', required=' + this.g3k_1 + ')';
 };
 protoOf(Play).hashCode = function () {
-  var result = this.d3k_1 == null ? 0 : this.d3k_1.hashCode();
-  result = imul(result, 31) + (this.e3k_1 == null ? 0 : hashCode(this.e3k_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.f3k_1) | 0;
+  var result = this.e3k_1 == null ? 0 : this.e3k_1.hashCode();
+  result = imul(result, 31) + (this.f3k_1 == null ? 0 : hashCode(this.f3k_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.g3k_1) | 0;
   return result;
 };
 protoOf(Play).equals = function (other) {
@@ -45921,11 +45972,11 @@ protoOf(Play).equals = function (other) {
     return true;
   if (!(other instanceof Play))
     return false;
-  if (!equals_0(this.d3k_1, other.d3k_1))
-    return false;
   if (!equals_0(this.e3k_1, other.e3k_1))
     return false;
-  if (!(this.f3k_1 === other.f3k_1))
+  if (!equals_0(this.f3k_1, other.f3k_1))
+    return false;
+  if (!(this.g3k_1 === other.g3k_1))
     return false;
   return true;
 };
@@ -45933,19 +45984,19 @@ function Attack(opponentOnly, creaturesOnly, activeToo, at) {
   creaturesOnly = creaturesOnly === VOID ? false : creaturesOnly;
   activeToo = activeToo === VOID ? false : activeToo;
   at = at === VOID ? null : at;
-  this.f3i_1 = opponentOnly;
-  this.g3i_1 = creaturesOnly;
-  this.h3i_1 = activeToo;
-  this.i3i_1 = at;
+  this.g3i_1 = opponentOnly;
+  this.h3i_1 = creaturesOnly;
+  this.i3i_1 = activeToo;
+  this.j3i_1 = at;
 }
 protoOf(Attack).toString = function () {
-  return 'Attack(opponentOnly=' + this.f3i_1 + ', creaturesOnly=' + this.g3i_1 + ', activeToo=' + this.h3i_1 + ', at=' + this.i3i_1 + ')';
+  return 'Attack(opponentOnly=' + this.g3i_1 + ', creaturesOnly=' + this.h3i_1 + ', activeToo=' + this.i3i_1 + ', at=' + this.j3i_1 + ')';
 };
 protoOf(Attack).hashCode = function () {
-  var result = getBooleanHashCode(this.f3i_1);
-  result = imul(result, 31) + getBooleanHashCode(this.g3i_1) | 0;
+  var result = getBooleanHashCode(this.g3i_1);
   result = imul(result, 31) + getBooleanHashCode(this.h3i_1) | 0;
-  result = imul(result, 31) + (this.i3i_1 == null ? 0 : getStringHashCode(this.i3i_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.i3i_1) | 0;
+  result = imul(result, 31) + (this.j3i_1 == null ? 0 : getStringHashCode(this.j3i_1)) | 0;
   return result;
 };
 protoOf(Attack).equals = function (other) {
@@ -45953,46 +46004,46 @@ protoOf(Attack).equals = function (other) {
     return true;
   if (!(other instanceof Attack))
     return false;
-  if (!(this.f3i_1 === other.f3i_1))
-    return false;
   if (!(this.g3i_1 === other.g3i_1))
     return false;
   if (!(this.h3i_1 === other.h3i_1))
     return false;
-  if (!(this.i3i_1 == other.i3i_1))
+  if (!(this.i3i_1 === other.i3i_1))
+    return false;
+  if (!(this.j3i_1 == other.j3i_1))
     return false;
   return true;
 };
 function AtEndOfTurn(effect) {
-  this.z3h_1 = effect;
+  this.a3i_1 = effect;
 }
 protoOf(AtEndOfTurn).toString = function () {
-  return 'AtEndOfTurn(effect=' + this.z3h_1 + ')';
+  return 'AtEndOfTurn(effect=' + this.a3i_1 + ')';
 };
 protoOf(AtEndOfTurn).hashCode = function () {
-  return this.z3h_1 == null ? 0 : getStringHashCode(this.z3h_1);
+  return this.a3i_1 == null ? 0 : getStringHashCode(this.a3i_1);
 };
 protoOf(AtEndOfTurn).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof AtEndOfTurn))
     return false;
-  if (!(this.z3h_1 == other.z3h_1))
+  if (!(this.a3i_1 == other.a3i_1))
     return false;
   return true;
 };
 function Watch_0(cards, effect, untilTurnEnd) {
-  this.o3l_1 = cards;
-  this.p3l_1 = effect;
-  this.q3l_1 = untilTurnEnd;
+  this.p3l_1 = cards;
+  this.q3l_1 = effect;
+  this.r3l_1 = untilTurnEnd;
 }
 protoOf(Watch_0).toString = function () {
-  return 'Watch(cards=' + toString_0(this.o3l_1) + ', effect=' + this.p3l_1 + ', untilTurnEnd=' + this.q3l_1 + ')';
+  return 'Watch(cards=' + toString_0(this.p3l_1) + ', effect=' + this.q3l_1 + ', untilTurnEnd=' + this.r3l_1 + ')';
 };
 protoOf(Watch_0).hashCode = function () {
-  var result = this.o3l_1 == null ? 0 : this.o3l_1.hashCode();
-  result = imul(result, 31) + (this.p3l_1 == null ? 0 : getStringHashCode(this.p3l_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.q3l_1) | 0;
+  var result = this.p3l_1 == null ? 0 : this.p3l_1.hashCode();
+  result = imul(result, 31) + (this.q3l_1 == null ? 0 : getStringHashCode(this.q3l_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.r3l_1) | 0;
   return result;
 };
 protoOf(Watch_0).equals = function (other) {
@@ -46000,24 +46051,24 @@ protoOf(Watch_0).equals = function (other) {
     return true;
   if (!(other instanceof Watch_0))
     return false;
-  if (!equals_0(this.o3l_1, other.o3l_1))
+  if (!equals_0(this.p3l_1, other.p3l_1))
     return false;
-  if (!(this.p3l_1 == other.p3l_1))
+  if (!(this.q3l_1 == other.q3l_1))
     return false;
-  if (!(this.q3l_1 === other.q3l_1))
+  if (!(this.r3l_1 === other.r3l_1))
     return false;
   return true;
 };
 function Draw(count, bothPlayers) {
-  this.a3j_1 = count;
-  this.b3j_1 = bothPlayers;
+  this.b3j_1 = count;
+  this.c3j_1 = bothPlayers;
 }
 protoOf(Draw).toString = function () {
-  return 'Draw(count=' + toString_0(this.a3j_1) + ', bothPlayers=' + this.b3j_1 + ')';
+  return 'Draw(count=' + toString_0(this.b3j_1) + ', bothPlayers=' + this.c3j_1 + ')';
 };
 protoOf(Draw).hashCode = function () {
-  var result = this.a3j_1 == null ? 0 : hashCode(this.a3j_1);
-  result = imul(result, 31) + getBooleanHashCode(this.b3j_1) | 0;
+  var result = this.b3j_1 == null ? 0 : hashCode(this.b3j_1);
+  result = imul(result, 31) + getBooleanHashCode(this.c3j_1) | 0;
   return result;
 };
 protoOf(Draw).equals = function (other) {
@@ -46025,45 +46076,45 @@ protoOf(Draw).equals = function (other) {
     return true;
   if (!(other instanceof Draw))
     return false;
-  if (!equals_0(this.a3j_1, other.a3j_1))
+  if (!equals_0(this.b3j_1, other.b3j_1))
     return false;
-  if (!(this.b3j_1 === other.b3j_1))
+  if (!(this.c3j_1 === other.c3j_1))
     return false;
   return true;
 };
 function Gems_0(count) {
-  this.j3j_1 = count;
+  this.k3j_1 = count;
 }
 protoOf(Gems_0).toString = function () {
-  return 'Gems(count=' + toString_0(this.j3j_1) + ')';
+  return 'Gems(count=' + toString_0(this.k3j_1) + ')';
 };
 protoOf(Gems_0).hashCode = function () {
-  return this.j3j_1 == null ? 0 : hashCode(this.j3j_1);
+  return this.k3j_1 == null ? 0 : hashCode(this.k3j_1);
 };
 protoOf(Gems_0).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Gems_0))
     return false;
-  if (!equals_0(this.j3j_1, other.j3j_1))
+  if (!equals_0(this.k3j_1, other.k3j_1))
     return false;
   return true;
 };
 function Damage(amount) {
-  this.o3i_1 = amount;
+  this.p3i_1 = amount;
 }
 protoOf(Damage).toString = function () {
-  return 'Damage(amount=' + toString_0(this.o3i_1) + ')';
+  return 'Damage(amount=' + toString_0(this.p3i_1) + ')';
 };
 protoOf(Damage).hashCode = function () {
-  return this.o3i_1 == null ? 0 : hashCode(this.o3i_1);
+  return this.p3i_1 == null ? 0 : hashCode(this.p3i_1);
 };
 protoOf(Damage).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Damage))
     return false;
-  if (!equals_0(this.o3i_1, other.o3i_1))
+  if (!equals_0(this.p3i_1, other.p3i_1))
     return false;
   return true;
 };
@@ -46071,19 +46122,19 @@ function Look(count, until, excavate, opponent) {
   until = until === VOID ? null : until;
   excavate = excavate === VOID ? false : excavate;
   opponent = opponent === VOID ? false : opponent;
-  this.n3j_1 = count;
-  this.o3j_1 = until;
-  this.p3j_1 = excavate;
-  this.q3j_1 = opponent;
+  this.o3j_1 = count;
+  this.p3j_1 = until;
+  this.q3j_1 = excavate;
+  this.r3j_1 = opponent;
 }
 protoOf(Look).toString = function () {
-  return 'Look(count=' + toString_0(this.n3j_1) + ', until=' + toString_0(this.o3j_1) + ', excavate=' + this.p3j_1 + ', opponent=' + this.q3j_1 + ')';
+  return 'Look(count=' + toString_0(this.o3j_1) + ', until=' + toString_0(this.p3j_1) + ', excavate=' + this.q3j_1 + ', opponent=' + this.r3j_1 + ')';
 };
 protoOf(Look).hashCode = function () {
-  var result = this.n3j_1 == null ? 0 : hashCode(this.n3j_1);
-  result = imul(result, 31) + (this.o3j_1 == null ? 0 : this.o3j_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.p3j_1) | 0;
+  var result = this.o3j_1 == null ? 0 : hashCode(this.o3j_1);
+  result = imul(result, 31) + (this.p3j_1 == null ? 0 : this.p3j_1.hashCode()) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.q3j_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.r3j_1) | 0;
   return result;
 };
 protoOf(Look).equals = function (other) {
@@ -46091,34 +46142,34 @@ protoOf(Look).equals = function (other) {
     return true;
   if (!(other instanceof Look))
     return false;
-  if (!equals_0(this.n3j_1, other.n3j_1))
-    return false;
   if (!equals_0(this.o3j_1, other.o3j_1))
     return false;
-  if (!(this.p3j_1 === other.p3j_1))
+  if (!equals_0(this.p3j_1, other.p3j_1))
     return false;
   if (!(this.q3j_1 === other.q3j_1))
+    return false;
+  if (!(this.r3j_1 === other.r3j_1))
     return false;
   return true;
 };
 function SetTapped(cards, tapped, required, maxCostSum) {
   maxCostSum = maxCostSum === VOID ? null : maxCostSum;
-  this.v3k_1 = cards;
-  this.w3k_1 = tapped;
-  this.x3k_1 = required;
-  this.y3k_1 = maxCostSum;
+  this.w3k_1 = cards;
+  this.x3k_1 = tapped;
+  this.y3k_1 = required;
+  this.z3k_1 = maxCostSum;
 }
-protoOf(SetTapped).c2t = function () {
-  return this.x3k_1;
+protoOf(SetTapped).d2t = function () {
+  return this.y3k_1;
 };
 protoOf(SetTapped).toString = function () {
-  return 'SetTapped(cards=' + toString_0(this.v3k_1) + ', tapped=' + this.w3k_1 + ', required=' + this.x3k_1 + ', maxCostSum=' + this.y3k_1 + ')';
+  return 'SetTapped(cards=' + toString_0(this.w3k_1) + ', tapped=' + this.x3k_1 + ', required=' + this.y3k_1 + ', maxCostSum=' + this.z3k_1 + ')';
 };
 protoOf(SetTapped).hashCode = function () {
-  var result = this.v3k_1 == null ? 0 : this.v3k_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.w3k_1) | 0;
+  var result = this.w3k_1 == null ? 0 : this.w3k_1.hashCode();
   result = imul(result, 31) + getBooleanHashCode(this.x3k_1) | 0;
-  result = imul(result, 31) + (this.y3k_1 == null ? 0 : this.y3k_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.y3k_1) | 0;
+  result = imul(result, 31) + (this.z3k_1 == null ? 0 : this.z3k_1) | 0;
   return result;
 };
 protoOf(SetTapped).equals = function (other) {
@@ -46126,13 +46177,13 @@ protoOf(SetTapped).equals = function (other) {
     return true;
   if (!(other instanceof SetTapped))
     return false;
-  if (!equals_0(this.v3k_1, other.v3k_1))
-    return false;
-  if (!(this.w3k_1 === other.w3k_1))
+  if (!equals_0(this.w3k_1, other.w3k_1))
     return false;
   if (!(this.x3k_1 === other.x3k_1))
     return false;
-  if (!(this.y3k_1 == other.y3k_1))
+  if (!(this.y3k_1 === other.y3k_1))
+    return false;
+  if (!(this.z3k_1 == other.z3k_1))
     return false;
   return true;
 };
@@ -46142,17 +46193,17 @@ function Until(name, ordinal) {
 function Flip(cards, faceUp, toggle) {
   faceUp = faceUp === VOID ? true : faceUp;
   toggle = toggle === VOID ? false : toggle;
-  this.c3j_1 = cards;
-  this.d3j_1 = faceUp;
-  this.e3j_1 = toggle;
+  this.d3j_1 = cards;
+  this.e3j_1 = faceUp;
+  this.f3j_1 = toggle;
 }
 protoOf(Flip).toString = function () {
-  return 'Flip(cards=' + toString_0(this.c3j_1) + ', faceUp=' + this.d3j_1 + ', toggle=' + this.e3j_1 + ')';
+  return 'Flip(cards=' + toString_0(this.d3j_1) + ', faceUp=' + this.e3j_1 + ', toggle=' + this.f3j_1 + ')';
 };
 protoOf(Flip).hashCode = function () {
-  var result = this.c3j_1 == null ? 0 : this.c3j_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.d3j_1) | 0;
+  var result = this.d3j_1 == null ? 0 : this.d3j_1.hashCode();
   result = imul(result, 31) + getBooleanHashCode(this.e3j_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.f3j_1) | 0;
   return result;
 };
 protoOf(Flip).equals = function (other) {
@@ -46160,30 +46211,30 @@ protoOf(Flip).equals = function (other) {
     return true;
   if (!(other instanceof Flip))
     return false;
-  if (!equals_0(this.c3j_1, other.c3j_1))
-    return false;
-  if (!(this.d3j_1 === other.d3j_1))
+  if (!equals_0(this.d3j_1, other.d3j_1))
     return false;
   if (!(this.e3j_1 === other.e3j_1))
+    return false;
+  if (!(this.f3j_1 === other.f3j_1))
     return false;
   return true;
 };
 function Modify(cards, strength, toZero, keyword, until) {
-  this.t3j_1 = cards;
-  this.u3j_1 = strength;
-  this.v3j_1 = toZero;
-  this.w3j_1 = keyword;
-  this.x3j_1 = until;
+  this.u3j_1 = cards;
+  this.v3j_1 = strength;
+  this.w3j_1 = toZero;
+  this.x3j_1 = keyword;
+  this.y3j_1 = until;
 }
 protoOf(Modify).toString = function () {
-  return 'Modify(cards=' + toString_0(this.t3j_1) + ', strength=' + toString_0(this.u3j_1) + ', toZero=' + this.v3j_1 + ', keyword=' + this.w3j_1 + ', until=' + toString_0(this.x3j_1) + ')';
+  return 'Modify(cards=' + toString_0(this.u3j_1) + ', strength=' + toString_0(this.v3j_1) + ', toZero=' + this.w3j_1 + ', keyword=' + this.x3j_1 + ', until=' + toString_0(this.y3j_1) + ')';
 };
 protoOf(Modify).hashCode = function () {
-  var result = this.t3j_1 == null ? 0 : this.t3j_1.hashCode();
-  result = imul(result, 31) + (this.u3j_1 == null ? 0 : hashCode(this.u3j_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.v3j_1) | 0;
-  result = imul(result, 31) + (this.w3j_1 == null ? 0 : getStringHashCode(this.w3j_1)) | 0;
-  result = imul(result, 31) + (this.x3j_1 == null ? 0 : this.x3j_1.hashCode()) | 0;
+  var result = this.u3j_1 == null ? 0 : this.u3j_1.hashCode();
+  result = imul(result, 31) + (this.v3j_1 == null ? 0 : hashCode(this.v3j_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.w3j_1) | 0;
+  result = imul(result, 31) + (this.x3j_1 == null ? 0 : getStringHashCode(this.x3j_1)) | 0;
+  result = imul(result, 31) + (this.y3j_1 == null ? 0 : this.y3j_1.hashCode()) | 0;
   return result;
 };
 protoOf(Modify).equals = function (other) {
@@ -46191,33 +46242,33 @@ protoOf(Modify).equals = function (other) {
     return true;
   if (!(other instanceof Modify))
     return false;
-  if (!equals_0(this.t3j_1, other.t3j_1))
-    return false;
   if (!equals_0(this.u3j_1, other.u3j_1))
     return false;
-  if (!(this.v3j_1 === other.v3j_1))
+  if (!equals_0(this.v3j_1, other.v3j_1))
     return false;
-  if (!(this.w3j_1 == other.w3j_1))
+  if (!(this.w3j_1 === other.w3j_1))
     return false;
-  if (!equals_0(this.x3j_1, other.x3j_1))
+  if (!(this.x3j_1 == other.x3j_1))
+    return false;
+  if (!equals_0(this.y3j_1, other.y3j_1))
     return false;
   return true;
 };
 function Destroy(cards, sacrifice, required) {
-  this.p3i_1 = cards;
-  this.q3i_1 = sacrifice;
-  this.r3i_1 = required;
+  this.q3i_1 = cards;
+  this.r3i_1 = sacrifice;
+  this.s3i_1 = required;
 }
-protoOf(Destroy).c2t = function () {
-  return this.r3i_1;
+protoOf(Destroy).d2t = function () {
+  return this.s3i_1;
 };
 protoOf(Destroy).toString = function () {
-  return 'Destroy(cards=' + toString_0(this.p3i_1) + ', sacrifice=' + this.q3i_1 + ', required=' + this.r3i_1 + ')';
+  return 'Destroy(cards=' + toString_0(this.q3i_1) + ', sacrifice=' + this.r3i_1 + ', required=' + this.s3i_1 + ')';
 };
 protoOf(Destroy).hashCode = function () {
-  var result = this.p3i_1 == null ? 0 : this.p3i_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.q3i_1) | 0;
+  var result = this.q3i_1 == null ? 0 : this.q3i_1.hashCode();
   result = imul(result, 31) + getBooleanHashCode(this.r3i_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.s3i_1) | 0;
   return result;
 };
 protoOf(Destroy).equals = function (other) {
@@ -46225,11 +46276,11 @@ protoOf(Destroy).equals = function (other) {
     return true;
   if (!(other instanceof Destroy))
     return false;
-  if (!equals_0(this.p3i_1, other.p3i_1))
-    return false;
-  if (!(this.q3i_1 === other.q3i_1))
+  if (!equals_0(this.q3i_1, other.q3i_1))
     return false;
   if (!(this.r3i_1 === other.r3i_1))
+    return false;
+  if (!(this.s3i_1 === other.s3i_1))
     return false;
   return true;
 };
@@ -46237,36 +46288,36 @@ function Move_0(cards, to, random, label, required, exhausted, faceDown, rest, s
   sameName = sameName === VOID ? false : sameName;
   distinctLevels = distinctLevels === VOID ? false : distinctLevels;
   withResources = withResources === VOID ? false : withResources;
-  this.y3e_1 = cards;
-  this.z3e_1 = to;
-  this.a3f_1 = random;
-  this.b3f_1 = label;
-  this.c3f_1 = required;
-  this.d3f_1 = exhausted;
-  this.e3f_1 = faceDown;
-  this.f3f_1 = rest;
-  this.g3f_1 = sameName;
-  this.h3f_1 = distinctLevels;
-  this.i3f_1 = withResources;
+  this.z3e_1 = cards;
+  this.a3f_1 = to;
+  this.b3f_1 = random;
+  this.c3f_1 = label;
+  this.d3f_1 = required;
+  this.e3f_1 = exhausted;
+  this.f3f_1 = faceDown;
+  this.g3f_1 = rest;
+  this.h3f_1 = sameName;
+  this.i3f_1 = distinctLevels;
+  this.j3f_1 = withResources;
 }
-protoOf(Move_0).c2t = function () {
-  return this.c3f_1;
+protoOf(Move_0).d2t = function () {
+  return this.d3f_1;
 };
 protoOf(Move_0).toString = function () {
-  return 'Move(cards=' + toString_0(this.y3e_1) + ', to=' + this.z3e_1 + ', random=' + this.a3f_1 + ', label=' + this.b3f_1 + ', required=' + this.c3f_1 + ', exhausted=' + this.d3f_1 + ', faceDown=' + this.e3f_1 + ', rest=' + this.f3f_1 + ', sameName=' + this.g3f_1 + ', distinctLevels=' + this.h3f_1 + ', withResources=' + this.i3f_1 + ')';
+  return 'Move(cards=' + toString_0(this.z3e_1) + ', to=' + this.a3f_1 + ', random=' + this.b3f_1 + ', label=' + this.c3f_1 + ', required=' + this.d3f_1 + ', exhausted=' + this.e3f_1 + ', faceDown=' + this.f3f_1 + ', rest=' + this.g3f_1 + ', sameName=' + this.h3f_1 + ', distinctLevels=' + this.i3f_1 + ', withResources=' + this.j3f_1 + ')';
 };
 protoOf(Move_0).hashCode = function () {
-  var result = this.y3e_1 == null ? 0 : this.y3e_1.hashCode();
-  result = imul(result, 31) + (this.z3e_1 == null ? 0 : getStringHashCode(this.z3e_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.a3f_1) | 0;
-  result = imul(result, 31) + (this.b3f_1 == null ? 0 : getStringHashCode(this.b3f_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.c3f_1) | 0;
+  var result = this.z3e_1 == null ? 0 : this.z3e_1.hashCode();
+  result = imul(result, 31) + (this.a3f_1 == null ? 0 : getStringHashCode(this.a3f_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.b3f_1) | 0;
+  result = imul(result, 31) + (this.c3f_1 == null ? 0 : getStringHashCode(this.c3f_1)) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.d3f_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.e3f_1) | 0;
-  result = imul(result, 31) + (this.f3f_1 == null ? 0 : getStringHashCode(this.f3f_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.g3f_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.f3f_1) | 0;
+  result = imul(result, 31) + (this.g3f_1 == null ? 0 : getStringHashCode(this.g3f_1)) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.h3f_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.i3f_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.j3f_1) | 0;
   return result;
 };
 protoOf(Move_0).equals = function (other) {
@@ -46274,52 +46325,52 @@ protoOf(Move_0).equals = function (other) {
     return true;
   if (!(other instanceof Move_0))
     return false;
-  if (!equals_0(this.y3e_1, other.y3e_1))
+  if (!equals_0(this.z3e_1, other.z3e_1))
     return false;
-  if (!(this.z3e_1 == other.z3e_1))
+  if (!(this.a3f_1 == other.a3f_1))
     return false;
-  if (!(this.a3f_1 === other.a3f_1))
+  if (!(this.b3f_1 === other.b3f_1))
     return false;
-  if (!(this.b3f_1 == other.b3f_1))
-    return false;
-  if (!(this.c3f_1 === other.c3f_1))
+  if (!(this.c3f_1 == other.c3f_1))
     return false;
   if (!(this.d3f_1 === other.d3f_1))
     return false;
   if (!(this.e3f_1 === other.e3f_1))
     return false;
-  if (!(this.f3f_1 == other.f3f_1))
+  if (!(this.f3f_1 === other.f3f_1))
     return false;
-  if (!(this.g3f_1 === other.g3f_1))
+  if (!(this.g3f_1 == other.g3f_1))
     return false;
   if (!(this.h3f_1 === other.h3f_1))
     return false;
   if (!(this.i3f_1 === other.i3f_1))
     return false;
+  if (!(this.j3f_1 === other.j3f_1))
+    return false;
   return true;
 };
 function Select(selector, target, saveAs, label, endsIfNone, maxLevelSum) {
   maxLevelSum = maxLevelSum === VOID ? null : maxLevelSum;
-  this.k3k_1 = selector;
-  this.l3k_1 = target;
-  this.m3k_1 = saveAs;
-  this.n3k_1 = label;
-  this.o3k_1 = endsIfNone;
-  this.p3k_1 = maxLevelSum;
+  this.l3k_1 = selector;
+  this.m3k_1 = target;
+  this.n3k_1 = saveAs;
+  this.o3k_1 = label;
+  this.p3k_1 = endsIfNone;
+  this.q3k_1 = maxLevelSum;
 }
-protoOf(Select).c2t = function () {
+protoOf(Select).d2t = function () {
   return true;
 };
 protoOf(Select).toString = function () {
-  return 'Select(selector=' + toString_0(this.k3k_1) + ', target=' + this.l3k_1 + ', saveAs=' + this.m3k_1 + ', label=' + this.n3k_1 + ', endsIfNone=' + this.o3k_1 + ', maxLevelSum=' + this.p3k_1 + ')';
+  return 'Select(selector=' + toString_0(this.l3k_1) + ', target=' + this.m3k_1 + ', saveAs=' + this.n3k_1 + ', label=' + this.o3k_1 + ', endsIfNone=' + this.p3k_1 + ', maxLevelSum=' + this.q3k_1 + ')';
 };
 protoOf(Select).hashCode = function () {
-  var result = this.k3k_1 == null ? 0 : this.k3k_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.l3k_1) | 0;
-  result = imul(result, 31) + (this.m3k_1 == null ? 0 : getStringHashCode(this.m3k_1)) | 0;
+  var result = this.l3k_1 == null ? 0 : this.l3k_1.hashCode();
+  result = imul(result, 31) + getBooleanHashCode(this.m3k_1) | 0;
   result = imul(result, 31) + (this.n3k_1 == null ? 0 : getStringHashCode(this.n3k_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.o3k_1) | 0;
-  result = imul(result, 31) + (this.p3k_1 == null ? 0 : this.p3k_1) | 0;
+  result = imul(result, 31) + (this.o3k_1 == null ? 0 : getStringHashCode(this.o3k_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.p3k_1) | 0;
+  result = imul(result, 31) + (this.q3k_1 == null ? 0 : this.q3k_1) | 0;
   return result;
 };
 protoOf(Select).equals = function (other) {
@@ -46327,17 +46378,17 @@ protoOf(Select).equals = function (other) {
     return true;
   if (!(other instanceof Select))
     return false;
-  if (!equals_0(this.k3k_1, other.k3k_1))
+  if (!equals_0(this.l3k_1, other.l3k_1))
     return false;
-  if (!(this.l3k_1 === other.l3k_1))
-    return false;
-  if (!(this.m3k_1 == other.m3k_1))
+  if (!(this.m3k_1 === other.m3k_1))
     return false;
   if (!(this.n3k_1 == other.n3k_1))
     return false;
-  if (!(this.o3k_1 === other.o3k_1))
+  if (!(this.o3k_1 == other.o3k_1))
     return false;
-  if (!(this.p3k_1 == other.p3k_1))
+  if (!(this.p3k_1 === other.p3k_1))
+    return false;
+  if (!(this.q3k_1 == other.q3k_1))
     return false;
   return true;
 };
@@ -46494,15 +46545,15 @@ function Stage(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
 function Special(rule, stage) {
-  this.a3d_1 = rule;
-  this.b3d_1 = stage;
+  this.b3d_1 = rule;
+  this.c3d_1 = stage;
 }
 protoOf(Special).toString = function () {
-  return 'Special(rule=' + toString_0(this.a3d_1) + ', stage=' + toString_0(this.b3d_1) + ')';
+  return 'Special(rule=' + toString_0(this.b3d_1) + ', stage=' + toString_0(this.c3d_1) + ')';
 };
 protoOf(Special).hashCode = function () {
-  var result = this.a3d_1 == null ? 0 : this.a3d_1.hashCode();
-  result = imul(result, 31) + (this.b3d_1 == null ? 0 : this.b3d_1.hashCode()) | 0;
+  var result = this.b3d_1 == null ? 0 : this.b3d_1.hashCode();
+  result = imul(result, 31) + (this.c3d_1 == null ? 0 : this.c3d_1.hashCode()) | 0;
   return result;
 };
 protoOf(Special).equals = function (other) {
@@ -46510,9 +46561,9 @@ protoOf(Special).equals = function (other) {
     return true;
   if (!(other instanceof Special))
     return false;
-  if (!equals_0(this.a3d_1, other.a3d_1))
-    return false;
   if (!equals_0(this.b3d_1, other.b3d_1))
+    return false;
+  if (!equals_0(this.c3d_1, other.c3d_1))
     return false;
   return true;
 };
@@ -46528,31 +46579,31 @@ function Compare_0(name, ordinal) {
 }
 function Relative(to, compareLevel, plus, compareStrength, differentName, sameName, sharesClass, level, maxLevel, maxStrength) {
   maxStrength = maxStrength === VOID ? null : maxStrength;
-  this.f3d_1 = to;
-  this.g3d_1 = compareLevel;
-  this.h3d_1 = plus;
-  this.i3d_1 = compareStrength;
-  this.j3d_1 = differentName;
-  this.k3d_1 = sameName;
-  this.l3d_1 = sharesClass;
-  this.m3d_1 = level;
-  this.n3d_1 = maxLevel;
-  this.o3d_1 = maxStrength;
+  this.g3d_1 = to;
+  this.h3d_1 = compareLevel;
+  this.i3d_1 = plus;
+  this.j3d_1 = compareStrength;
+  this.k3d_1 = differentName;
+  this.l3d_1 = sameName;
+  this.m3d_1 = sharesClass;
+  this.n3d_1 = level;
+  this.o3d_1 = maxLevel;
+  this.p3d_1 = maxStrength;
 }
 protoOf(Relative).toString = function () {
-  return 'Relative(to=' + this.f3d_1 + ', compareLevel=' + toString_0(this.g3d_1) + ', plus=' + this.h3d_1 + ', compareStrength=' + toString_0(this.i3d_1) + ', differentName=' + this.j3d_1 + ', sameName=' + this.k3d_1 + ', sharesClass=' + this.l3d_1 + ', level=' + toString_0(this.m3d_1) + ', maxLevel=' + toString_0(this.n3d_1) + ', maxStrength=' + toString_0(this.o3d_1) + ')';
+  return 'Relative(to=' + this.g3d_1 + ', compareLevel=' + toString_0(this.h3d_1) + ', plus=' + this.i3d_1 + ', compareStrength=' + toString_0(this.j3d_1) + ', differentName=' + this.k3d_1 + ', sameName=' + this.l3d_1 + ', sharesClass=' + this.m3d_1 + ', level=' + toString_0(this.n3d_1) + ', maxLevel=' + toString_0(this.o3d_1) + ', maxStrength=' + toString_0(this.p3d_1) + ')';
 };
 protoOf(Relative).hashCode = function () {
-  var result = this.f3d_1 == null ? 0 : getStringHashCode(this.f3d_1);
-  result = imul(result, 31) + (this.g3d_1 == null ? 0 : this.g3d_1.hashCode()) | 0;
-  result = imul(result, 31) + this.h3d_1 | 0;
-  result = imul(result, 31) + (this.i3d_1 == null ? 0 : this.i3d_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.j3d_1) | 0;
+  var result = this.g3d_1 == null ? 0 : getStringHashCode(this.g3d_1);
+  result = imul(result, 31) + (this.h3d_1 == null ? 0 : this.h3d_1.hashCode()) | 0;
+  result = imul(result, 31) + this.i3d_1 | 0;
+  result = imul(result, 31) + (this.j3d_1 == null ? 0 : this.j3d_1.hashCode()) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.k3d_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.l3d_1) | 0;
-  result = imul(result, 31) + (this.m3d_1 == null ? 0 : hashCode(this.m3d_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.m3d_1) | 0;
   result = imul(result, 31) + (this.n3d_1 == null ? 0 : hashCode(this.n3d_1)) | 0;
   result = imul(result, 31) + (this.o3d_1 == null ? 0 : hashCode(this.o3d_1)) | 0;
+  result = imul(result, 31) + (this.p3d_1 == null ? 0 : hashCode(this.p3d_1)) | 0;
   return result;
 };
 protoOf(Relative).equals = function (other) {
@@ -46560,25 +46611,25 @@ protoOf(Relative).equals = function (other) {
     return true;
   if (!(other instanceof Relative))
     return false;
-  if (!(this.f3d_1 == other.f3d_1))
+  if (!(this.g3d_1 == other.g3d_1))
     return false;
-  if (!equals_0(this.g3d_1, other.g3d_1))
+  if (!equals_0(this.h3d_1, other.h3d_1))
     return false;
-  if (!(this.h3d_1 === other.h3d_1))
+  if (!(this.i3d_1 === other.i3d_1))
     return false;
-  if (!equals_0(this.i3d_1, other.i3d_1))
-    return false;
-  if (!(this.j3d_1 === other.j3d_1))
+  if (!equals_0(this.j3d_1, other.j3d_1))
     return false;
   if (!(this.k3d_1 === other.k3d_1))
     return false;
   if (!(this.l3d_1 === other.l3d_1))
     return false;
-  if (!equals_0(this.m3d_1, other.m3d_1))
+  if (!(this.m3d_1 === other.m3d_1))
     return false;
   if (!equals_0(this.n3d_1, other.n3d_1))
     return false;
   if (!equals_0(this.o3d_1, other.o3d_1))
+    return false;
+  if (!equals_0(this.p3d_1, other.p3d_1))
     return false;
   return true;
 };
@@ -46593,14 +46644,14 @@ function Mode(name, ordinal) {
 }
 function Companion_25() {
 }
-protoOf(Companion_25).f2v = function (zones, filter) {
+protoOf(Companion_25).g2v = function (zones, filter) {
   return Selector_init_$Create$(zones, Owner_YOU_getInstance(), filter, new Fixed(0), new Fixed(2147483647), Self_ANY_getInstance(), Mode_ALL_getInstance());
 };
-protoOf(Companion_25).g2v = function (zones) {
+protoOf(Companion_25).h2v = function (zones) {
   return Selector_init_$Create$(zones, Owner_YOU_getInstance(), Companion_instance_11.c2q(), new Fixed(1), new Fixed(1), Self_ANY_getInstance(), Mode_SELF_getInstance());
 };
-protoOf(Companion_25).e2v = function (name) {
-  return this.f2v('saved:' + name, Companion_instance_11.c2q());
+protoOf(Companion_25).f2v = function (name) {
+  return this.g2v('saved:' + name, Companion_instance_11.c2q());
 };
 var Companion_instance_26;
 function Companion_getInstance_25() {
@@ -46679,47 +46730,47 @@ function Mode_SELF_getInstance() {
   return Mode_SELF_instance;
 }
 function Selector(zones, owner, filter, min, max, self_0, mode, relative, special) {
-  this.x34_1 = zones;
-  this.y34_1 = owner;
-  this.z34_1 = filter;
-  this.a35_1 = min;
-  this.b35_1 = max;
-  this.c35_1 = self_0;
-  this.d35_1 = mode;
-  this.e35_1 = relative;
-  this.f35_1 = special;
+  this.y34_1 = zones;
+  this.z34_1 = owner;
+  this.a35_1 = filter;
+  this.b35_1 = min;
+  this.c35_1 = max;
+  this.d35_1 = self_0;
+  this.e35_1 = mode;
+  this.f35_1 = relative;
+  this.g35_1 = special;
 }
-protoOf(Selector).g35 = function () {
-  var tmp0_elvis_lhs = this.z34_1;
+protoOf(Selector).h35 = function () {
+  var tmp0_elvis_lhs = this.a35_1;
   return tmp0_elvis_lhs == null ? Companion_instance_11.c2q() : tmp0_elvis_lhs;
 };
-protoOf(Selector).y3j = function () {
-  var tmp0_elvis_lhs = this.c35_1;
+protoOf(Selector).z3j = function () {
+  var tmp0_elvis_lhs = this.d35_1;
   return tmp0_elvis_lhs == null ? Self_ANY_getInstance() : tmp0_elvis_lhs;
 };
-protoOf(Selector).v3i = function () {
-  var tmp0_elvis_lhs = this.d35_1;
+protoOf(Selector).w3i = function () {
+  var tmp0_elvis_lhs = this.e35_1;
   return tmp0_elvis_lhs == null ? Mode_CHOOSE_getInstance() : tmp0_elvis_lhs;
 };
-protoOf(Selector).t3i = function () {
-  return startsWith(ensureNotNull(this.x34_1), 'saved:') || startsWith(this.x34_1, 'savedOwn:');
+protoOf(Selector).u3i = function () {
+  return startsWith(ensureNotNull(this.y34_1), 'saved:') || startsWith(this.y34_1, 'savedOwn:');
 };
-protoOf(Selector).a3k = function (name) {
-  return contains_0(ensureNotNull(this.x34_1), ':' + name) || (!(this.e35_1 == null) && name === this.e35_1.f3d_1);
+protoOf(Selector).b3k = function (name) {
+  return contains_0(ensureNotNull(this.y34_1), ':' + name) || (!(this.f35_1 == null) && name === this.f35_1.g3d_1);
 };
 protoOf(Selector).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Selector))
     return false;
-  return this.x34_1 == other.x34_1 && equals_0(this.y34_1, other.y34_1) && this.g35().equals(other.g35()) && equals_0(this.a35_1, other.a35_1) && equals_0(this.b35_1, other.b35_1) && this.y3j().equals(other.y3j()) && this.v3i().equals(other.v3i()) && equals_0(this.e35_1, other.e35_1) && equals_0(this.f35_1, other.f35_1);
+  return this.y34_1 == other.y34_1 && equals_0(this.z34_1, other.z34_1) && this.h35().equals(other.h35()) && equals_0(this.b35_1, other.b35_1) && equals_0(this.c35_1, other.c35_1) && this.z3j().equals(other.z3j()) && this.w3i().equals(other.w3i()) && equals_0(this.f35_1, other.f35_1) && equals_0(this.g35_1, other.g35_1);
 };
 protoOf(Selector).hashCode = function () {
   var result = 0;
   // Inline function 'kotlin.arrayOf' call
   // Inline function 'kotlin.js.unsafeCast' call
   // Inline function 'kotlin.js.asDynamic' call
-  var indexedObject = [this.x34_1, this.y34_1, this.g35(), this.a35_1, this.b35_1, this.y3j(), this.v3i(), this.e35_1, this.f35_1];
+  var indexedObject = [this.y34_1, this.z34_1, this.h35(), this.b35_1, this.c35_1, this.z3j(), this.w3i(), this.f35_1, this.g35_1];
   var inductionVariable = 0;
   var last = indexedObject.length;
   while (inductionVariable < last) {
@@ -46732,7 +46783,7 @@ protoOf(Selector).hashCode = function () {
   return result;
 };
 protoOf(Selector).toString = function () {
-  return 'Selector[zones=' + this.x34_1 + ', owner=' + toString_0(this.y34_1) + ', filter=' + this.g35().toString() + ', min=' + toString_0(this.a35_1) + ', max=' + toString_0(this.b35_1) + ', self=' + this.y3j().toString() + ', mode=' + this.v3i().toString() + ', ' + ('relative=' + toString_0(this.e35_1) + ', special=' + toString_0(this.f35_1) + ']');
+  return 'Selector[zones=' + this.y34_1 + ', owner=' + toString_0(this.z34_1) + ', filter=' + this.h35().toString() + ', min=' + toString_0(this.b35_1) + ', max=' + toString_0(this.c35_1) + ', self=' + this.z3j().toString() + ', mode=' + this.w3i().toString() + ', ' + ('relative=' + toString_0(this.f35_1) + ', special=' + toString_0(this.g35_1) + ']');
 };
 function SpecialRule_init_$Init$(kind, zone, reduce, summoner, filter, $this) {
   SpecialRule.call($this, kind, zone, reduce, summoner, filter, null, null);
@@ -46742,8 +46793,8 @@ function SpecialRule_init_$Create$(kind, zone, reduce, summoner, filter) {
   return SpecialRule_init_$Init$(kind, zone, reduce, summoner, filter, objectCreate(protoOf(SpecialRule)));
 }
 function Companion_26() {
-  this.f3m_1 = 'ofThisCard';
-  this.g3m_1 = 'ritual';
+  this.g3m_1 = 'ofThisCard';
+  this.h3m_1 = 'ritual';
 }
 var Companion_instance_27;
 function Companion_getInstance_26() {
@@ -46752,32 +46803,32 @@ function Companion_getInstance_26() {
 function SpecialRule(kind, zone, reduce, summoner, filter, reduceBy, relative, otherName, sameLevelBonus) {
   otherName = otherName === VOID ? false : otherName;
   sameLevelBonus = sameLevelBonus === VOID ? 0 : sameLevelBonus;
-  this.n3c_1 = kind;
-  this.o3c_1 = zone;
-  this.p3c_1 = reduce;
-  this.q3c_1 = summoner;
-  this.r3c_1 = filter;
-  this.s3c_1 = reduceBy;
-  this.t3c_1 = relative;
-  this.u3c_1 = otherName;
-  this.v3c_1 = sameLevelBonus;
+  this.o3c_1 = kind;
+  this.p3c_1 = zone;
+  this.q3c_1 = reduce;
+  this.r3c_1 = summoner;
+  this.s3c_1 = filter;
+  this.t3c_1 = reduceBy;
+  this.u3c_1 = relative;
+  this.v3c_1 = otherName;
+  this.w3c_1 = sameLevelBonus;
 }
-protoOf(SpecialRule).w3c = function () {
-  return 'self' === this.q3c_1;
+protoOf(SpecialRule).x3c = function () {
+  return 'self' === this.r3c_1;
 };
 protoOf(SpecialRule).toString = function () {
-  return 'SpecialRule(kind=' + this.n3c_1 + ', zone=' + this.o3c_1 + ', reduce=' + this.p3c_1 + ', summoner=' + this.q3c_1 + ', filter=' + toString_0(this.r3c_1) + ', reduceBy=' + toString_0(this.s3c_1) + ', relative=' + toString_0(this.t3c_1) + ', otherName=' + this.u3c_1 + ', sameLevelBonus=' + this.v3c_1 + ')';
+  return 'SpecialRule(kind=' + this.o3c_1 + ', zone=' + this.p3c_1 + ', reduce=' + this.q3c_1 + ', summoner=' + this.r3c_1 + ', filter=' + toString_0(this.s3c_1) + ', reduceBy=' + toString_0(this.t3c_1) + ', relative=' + toString_0(this.u3c_1) + ', otherName=' + this.v3c_1 + ', sameLevelBonus=' + this.w3c_1 + ')';
 };
 protoOf(SpecialRule).hashCode = function () {
-  var result = this.n3c_1 == null ? 0 : getStringHashCode(this.n3c_1);
-  result = imul(result, 31) + (this.o3c_1 == null ? 0 : getStringHashCode(this.o3c_1)) | 0;
-  result = imul(result, 31) + this.p3c_1 | 0;
-  result = imul(result, 31) + (this.q3c_1 == null ? 0 : getStringHashCode(this.q3c_1)) | 0;
-  result = imul(result, 31) + (this.r3c_1 == null ? 0 : this.r3c_1.hashCode()) | 0;
-  result = imul(result, 31) + (this.s3c_1 == null ? 0 : hashCode(this.s3c_1)) | 0;
-  result = imul(result, 31) + (this.t3c_1 == null ? 0 : this.t3c_1.hashCode()) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.u3c_1) | 0;
-  result = imul(result, 31) + this.v3c_1 | 0;
+  var result = this.o3c_1 == null ? 0 : getStringHashCode(this.o3c_1);
+  result = imul(result, 31) + (this.p3c_1 == null ? 0 : getStringHashCode(this.p3c_1)) | 0;
+  result = imul(result, 31) + this.q3c_1 | 0;
+  result = imul(result, 31) + (this.r3c_1 == null ? 0 : getStringHashCode(this.r3c_1)) | 0;
+  result = imul(result, 31) + (this.s3c_1 == null ? 0 : this.s3c_1.hashCode()) | 0;
+  result = imul(result, 31) + (this.t3c_1 == null ? 0 : hashCode(this.t3c_1)) | 0;
+  result = imul(result, 31) + (this.u3c_1 == null ? 0 : this.u3c_1.hashCode()) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.v3c_1) | 0;
+  result = imul(result, 31) + this.w3c_1 | 0;
   return result;
 };
 protoOf(SpecialRule).equals = function (other) {
@@ -46785,36 +46836,36 @@ protoOf(SpecialRule).equals = function (other) {
     return true;
   if (!(other instanceof SpecialRule))
     return false;
-  if (!(this.n3c_1 == other.n3c_1))
-    return false;
   if (!(this.o3c_1 == other.o3c_1))
     return false;
-  if (!(this.p3c_1 === other.p3c_1))
+  if (!(this.p3c_1 == other.p3c_1))
     return false;
-  if (!(this.q3c_1 == other.q3c_1))
+  if (!(this.q3c_1 === other.q3c_1))
     return false;
-  if (!equals_0(this.r3c_1, other.r3c_1))
+  if (!(this.r3c_1 == other.r3c_1))
     return false;
   if (!equals_0(this.s3c_1, other.s3c_1))
     return false;
   if (!equals_0(this.t3c_1, other.t3c_1))
     return false;
-  if (!(this.u3c_1 === other.u3c_1))
+  if (!equals_0(this.u3c_1, other.u3c_1))
     return false;
   if (!(this.v3c_1 === other.v3c_1))
+    return false;
+  if (!(this.w3c_1 === other.w3c_1))
     return false;
   return true;
 };
 function Answer(picks, order) {
-  this.k3i_1 = picks;
-  this.l3i_1 = order;
+  this.l3i_1 = picks;
+  this.m3i_1 = order;
 }
 protoOf(Answer).toString = function () {
-  return 'Answer(picks=' + toString_0(this.k3i_1) + ', order=' + toString_0(this.l3i_1) + ')';
+  return 'Answer(picks=' + toString_0(this.l3i_1) + ', order=' + toString_0(this.m3i_1) + ')';
 };
 protoOf(Answer).hashCode = function () {
-  var result = this.k3i_1 == null ? 0 : hashCode(this.k3i_1);
-  result = imul(result, 31) + (this.l3i_1 == null ? 0 : hashCode(this.l3i_1)) | 0;
+  var result = this.l3i_1 == null ? 0 : hashCode(this.l3i_1);
+  result = imul(result, 31) + (this.m3i_1 == null ? 0 : hashCode(this.m3i_1)) | 0;
   return result;
 };
 protoOf(Answer).equals = function (other) {
@@ -46822,30 +46873,30 @@ protoOf(Answer).equals = function (other) {
     return true;
   if (!(other instanceof Answer))
     return false;
-  if (!equals_0(this.k3i_1, other.k3i_1))
-    return false;
   if (!equals_0(this.l3i_1, other.l3i_1))
+    return false;
+  if (!equals_0(this.m3i_1, other.m3i_1))
     return false;
   return true;
 };
 function ActionHandler() {
 }
 function handler($this, action) {
-  var tmp = $this.y3a_1.u1(getKClassFromExpression(action));
+  var tmp = $this.z3a_1.u1(getKClassFromExpression(action));
   return (!(tmp == null) ? isInterface(tmp, ActionHandler) : false) ? tmp : THROW_CCE();
 }
 function Actions() {
   Actions_instance = this;
-  this.y3a_1 = frozenMapOfEntries([to(getKClass(Select), new SelectHandler()), to(getKClass(Attack), new AttackHandler()), to(getKClass(AtEndOfTurn), new AtEndOfTurnHandler()), to(getKClass(Watch_0), new WatchHandler()), to(getKClass(Move_0), new MoveHandler()), to(getKClass(Draw), new DrawHandler()), to(getKClass(Gems_0), new GemsHandler()), to(getKClass(Damage), new DamageHandler()), to(getKClass(Look), new LookHandler()), to(getKClass(Flip), new FlipHandler()), to(getKClass(SetTapped), new SetTappedHandler()), to(getKClass(Modify), new ModifyHandler()), to(getKClass(Destroy), new DestroyHandler()), to(getKClass(Summon), new SummonHandler()), to(getKClass(Play), new PlayHandler()), to(getKClass(Sequence), new SequenceHandler()), to(getKClass(SummonSpecial), new SummonSpecialHandler())]);
+  this.z3a_1 = frozenMapOfEntries([to(getKClass(Select), new SelectHandler()), to(getKClass(Attack), new AttackHandler()), to(getKClass(AtEndOfTurn), new AtEndOfTurnHandler()), to(getKClass(Watch_0), new WatchHandler()), to(getKClass(Move_0), new MoveHandler()), to(getKClass(Draw), new DrawHandler()), to(getKClass(Gems_0), new GemsHandler()), to(getKClass(Damage), new DamageHandler()), to(getKClass(Look), new LookHandler()), to(getKClass(Flip), new FlipHandler()), to(getKClass(SetTapped), new SetTappedHandler()), to(getKClass(Modify), new ModifyHandler()), to(getKClass(Destroy), new DestroyHandler()), to(getKClass(Summon), new SummonHandler()), to(getKClass(Play), new PlayHandler()), to(getKClass(Sequence), new SequenceHandler()), to(getKClass(SummonSpecial), new SummonSpecialHandler())]);
 }
-protoOf(Actions).z3a = function (ctx, action) {
-  return handler(this, action).x3h(ctx, action);
-};
 protoOf(Actions).a3b = function (ctx, action) {
-  return handler(this, action).a3i(ctx, action);
+  return handler(this, action).y3h(ctx, action);
 };
-protoOf(Actions).b3b = function (ctx, action, answer) {
-  return handler(this, action).c3i(ctx, action, answer);
+protoOf(Actions).b3b = function (ctx, action) {
+  return handler(this, action).b3i(ctx, action);
+};
+protoOf(Actions).c3b = function (ctx, action, answer) {
+  return handler(this, action).d3i(ctx, action, answer);
 };
 var Actions_instance;
 function Actions_getInstance() {
@@ -46854,18 +46905,18 @@ function Actions_getInstance() {
   return Actions_instance;
 }
 function relative($this, ctx, r, card) {
-  if (!(r.m3d_1 == null) && !(ctx.s34(r.m3d_1) === card.p1u()))
+  if (!(r.n3d_1 == null) && !(ctx.t34(r.n3d_1) === card.p1u()))
     return false;
-  if (!(r.n3d_1 == null)) {
+  if (!(r.o3d_1 == null)) {
     var level = card.p1u();
-    if (level == null || level > ctx.s34(r.n3d_1))
+    if (level == null || level > ctx.t34(r.o3d_1))
       return false;
   }
-  if (!(r.o3d_1 == null) && ctx.b1p(card) > ctx.s34(r.o3d_1))
+  if (!(r.p3d_1 == null) && ctx.b1p(card) > ctx.t34(r.p3d_1))
     return false;
-  if (r.f3d_1 == null)
+  if (r.g3d_1 == null)
     return true;
-  var tmp0_elvis_lhs = ctx.x33(r.f3d_1);
+  var tmp0_elvis_lhs = ctx.y33(r.g3d_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return false;
@@ -46873,7 +46924,7 @@ function relative($this, ctx, r, card) {
     tmp = tmp0_elvis_lhs;
   }
   var other = tmp;
-  if (!(r.g3d_1 == null)) {
+  if (!(r.h3d_1 == null)) {
     var tmp1_elvis_lhs = card.p1u();
     var tmp_0;
     if (tmp1_elvis_lhs == null) {
@@ -46882,9 +46933,9 @@ function relative($this, ctx, r, card) {
       tmp_0 = tmp1_elvis_lhs;
     }
     var cardLevel = tmp_0;
-    var level_0 = ctx.y33(other) + r.h3d_1 | 0;
+    var level_0 = ctx.z33(other) + r.i3d_1 | 0;
     var tmp_1;
-    switch (r.g3d_1.k2_1) {
+    switch (r.h3d_1.k2_1) {
       case 0:
         tmp_1 = cardLevel === level_0;
         break;
@@ -46905,11 +46956,11 @@ function relative($this, ctx, r, card) {
     if (!holds)
       return false;
   }
-  if (!(r.i3d_1 == null)) {
+  if (!(r.j3d_1 == null)) {
     var mine = ctx.b1p(card);
     var theirs = ctx.b1p(other);
     var tmp_2;
-    switch (r.i3d_1.k2_1) {
+    switch (r.j3d_1.k2_1) {
       case 0:
         tmp_2 = mine === theirs;
         break;
@@ -46932,11 +46983,11 @@ function relative($this, ctx, r, card) {
   }
   var name = NameChanges_instance.a2q(card);
   var otherName = NameChanges_instance.a2q(other);
-  if (r.j3d_1 && !(name == null) && equals(name, otherName, true))
+  if (r.k3d_1 && !(name == null) && equals(name, otherName, true))
     return false;
-  if (r.k3d_1 && (name == null || !equals(name, otherName, true)))
+  if (r.l3d_1 && (name == null || !equals(name, otherName, true)))
     return false;
-  if (r.l3d_1) {
+  if (r.m3d_1) {
     var theirs_0 = ClassChanges_instance.l2q(other);
     var classes = ClassChanges_instance.l2q(card);
     var tmp$ret$0;
@@ -47046,11 +47097,11 @@ function addZones($this, into, ctx, whose, zones, enemy) {
     var zone = toString(tmp$ret$1);
     if (startsWith(zone, 'savedOwn:')) {
       if (!enemy) {
-        var _iterator__ex2g4s_0 = ctx.e2v(substring_0(zone, 9)).h();
+        var _iterator__ex2g4s_0 = ctx.f2v(substring_0(zone, 9)).h();
         while (_iterator__ex2g4s_0.i()) {
           var id = _iterator__ex2g4s_0.j();
-          var card = ctx.q31(id);
-          if (!(card == null) && !ctx.j32(card)) {
+          var card = ctx.r31(id);
+          if (!(card == null) && !ctx.k32(card)) {
             into.f(card);
           }
         }
@@ -47059,11 +47110,11 @@ function addZones($this, into, ctx, whose, zones, enemy) {
     }
     if (startsWith(zone, 'saved:')) {
       if (!enemy) {
-        var _iterator__ex2g4s_1 = ctx.e2v(substring_0(zone, 6)).h();
+        var _iterator__ex2g4s_1 = ctx.f2v(substring_0(zone, 6)).h();
         while (_iterator__ex2g4s_1.i()) {
           var id_0 = _iterator__ex2g4s_1.j();
-          var card_0 = ctx.q31(id_0);
-          if (!(card_0 == null) && !(ctx.j32(card_0) && !ctx.e1p(card_0))) {
+          var card_0 = ctx.r31(id_0);
+          if (!(card_0 == null) && !(ctx.k32(card_0) && !ctx.e1p(card_0))) {
             into.f(card_0);
           }
         }
@@ -47075,67 +47126,67 @@ function addZones($this, into, ctx, whose, zones, enemy) {
       case 'pickableAttackers':
       case 'attackers':
         if (!enemy) {
-          into.r(ctx.h31(zone));
+          into.r(ctx.i31(zone));
         }
 
         continue $l$loop_17;
     }
     if (zone === 'clash') {
-      var card_1 = ctx.z33();
+      var card_1 = ctx.a34();
       if (!(card_1 == null) && !into.n(card_1)) {
         into.f(card_1);
       }
       continue $l$loop_17;
     }
     if (zone === 'thisCard') {
-      var card_2 = enemy ? null : ctx.q31(ctx.b34());
-      if (!(card_2 == null) && ctx.m32(card_2)) {
+      var card_2 = enemy ? null : ctx.r31(ctx.c34());
+      if (!(card_2 == null) && ctx.n32(card_2)) {
         into.f(card_2);
       }
       continue $l$loop_17;
     }
     if (zone === 'usedToSummon') {
       if (!enemy) {
-        into.r(ctx.s33());
+        into.r(ctx.t33());
       }
       continue $l$loop_17;
     }
     if (zone === 'formation') {
       if (!enemy) {
-        into.r(ctx.t33());
+        into.r(ctx.u33());
       }
       continue $l$loop_17;
     }
     if (zone === 'eventAttacker') {
-      var card_3 = enemy ? null : ctx.w33();
+      var card_3 = enemy ? null : ctx.x33();
       if (!(card_3 == null)) {
         into.f(card_3);
       }
       continue $l$loop_17;
     }
     if (zone === 'subjectOrSummoned') {
-      var card_4 = enemy ? null : ctx.c34();
+      var card_4 = enemy ? null : ctx.d34();
       if (!(card_4 == null)) {
         into.f(card_4);
       }
       continue $l$loop_17;
     }
     if (zone === 'subjectOrSelf') {
-      var card_5 = enemy ? null : ctx.r33();
+      var card_5 = enemy ? null : ctx.s33();
       if (!(card_5 == null)) {
         into.f(card_5);
       }
       continue $l$loop_17;
     }
     if (zone === 'eventOnField') {
-      var card_6 = enemy ? null : ctx.c31();
-      if (!(card_6 == null) && !(ctx.j32(card_6) && !ctx.e1p(card_6))) {
+      var card_6 = enemy ? null : ctx.d31();
+      if (!(card_6 == null) && !(ctx.k32(card_6) && !ctx.e1p(card_6))) {
         into.f(card_6);
       }
       continue $l$loop_17;
     }
     if (zone === 'event') {
-      var card_7 = enemy ? null : ctx.u32();
+      var card_7 = enemy ? null : ctx.v32();
       if (!(card_7 == null)) {
         into.f(card_7);
       }
@@ -47149,13 +47200,13 @@ function addZones($this, into, ctx, whose, zones, enemy) {
     }
     if (zone === 'looked') {
       if (!enemy) {
-        into.r(ctx.q32());
+        into.r(ctx.r32());
       }
       continue $l$loop_17;
     }
     if (startsWith(zone, 'materials') || startsWith(zone, 'resources')) {
       if (!enemy) {
-        into.r(ctx.l32(zone));
+        into.r(ctx.m32(zone));
       }
       continue $l$loop_17;
     }
@@ -47168,7 +47219,7 @@ function addZones($this, into, ctx, whose, zones, enemy) {
         var _iterator__ex2g4s_2 = tmp0.h();
         while (_iterator__ex2g4s_2.i()) {
           var element = _iterator__ex2g4s_2.j();
-          if (ctx.k32(element)) {
+          if (ctx.l32(element)) {
             destination.f(element);
           }
         }
@@ -47216,13 +47267,13 @@ function addZones($this, into, ctx, whose, zones, enemy) {
       into.r(ctx.d2f(whose, zone));
       continue $l$loop_17;
     }
-    if (enemy && ctx.q34() && !anyLine)
+    if (enemy && ctx.r34() && !anyLine)
       continue $l$loop_17;
     var _iterator__ex2g4s_4 = ensureNotNull(whose).a1f_1.h();
     $l$loop_21: while (_iterator__ex2g4s_4.i()) {
       var card_8 = _iterator__ex2g4s_4.j();
       var front = ctx.e1p(card_8);
-      if (allies && !ctx.k32(card_8))
+      if (allies && !ctx.l32(card_8))
         continue $l$loop_21;
       if (zone === 'frontLine' && !front)
         continue $l$loop_21;
@@ -47236,43 +47287,43 @@ function addZones($this, into, ctx, whose, zones, enemy) {
 }
 function Selection() {
 }
-protoOf(Selection).w3i = function (ctx, selector) {
-  if (!(selector.f35_1 == null))
-    return ctx.x31(selector.f35_1);
+protoOf(Selection).x3i = function (ctx, selector) {
+  if (!(selector.g35_1 == null))
+    return ctx.y31(selector.g35_1);
   var pool = ArrayList_init_$Create$();
-  if (!equals_0(selector.y34_1, Owner_OPPONENT_getInstance())) {
-    addZones(this, pool, ctx, ctx.b31(), selector.x34_1, false);
+  if (!equals_0(selector.z34_1, Owner_OPPONENT_getInstance())) {
+    addZones(this, pool, ctx, ctx.c31(), selector.y34_1, false);
   }
-  if (!equals_0(selector.y34_1, Owner_YOU_getInstance()) && !(ctx.h32() == null)) {
-    addZones(this, pool, ctx, ctx.h32(), selector.x34_1, true);
+  if (!equals_0(selector.z34_1, Owner_YOU_getInstance()) && !(ctx.i32() == null)) {
+    addZones(this, pool, ctx, ctx.i32(), selector.y34_1, true);
   }
   return pool;
 };
-protoOf(Selection).u34 = function (ctx, selector, target) {
-  if (!(selector.f35_1 == null))
-    return ctx.u31(selector.f35_1);
+protoOf(Selection).v34 = function (ctx, selector, target) {
+  if (!(selector.g35_1 == null))
+    return ctx.v31(selector.g35_1);
   var found = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = this.w3i(ctx, selector).h();
+  var _iterator__ex2g4s = this.x3i(ctx, selector).h();
   $l$loop_4: while (_iterator__ex2g4s.i()) {
     var card = _iterator__ex2g4s.j();
-    var self_0 = ctx.i32(card);
-    if (selector.v3i().equals(Mode_SELF_getInstance()) && !self_0)
+    var self_0 = ctx.j32(card);
+    if (selector.w3i().equals(Mode_SELF_getInstance()) && !self_0)
       continue $l$loop_4;
-    if (!selector.g35().p2c(card) && !(self_0 && selector.y3j().equals(Self_REQUIRE_getInstance())))
+    if (!selector.h35().p2c(card) && !(self_0 && selector.z3j().equals(Self_REQUIRE_getInstance())))
       continue $l$loop_4;
-    if (selector.y3j().equals(Self_EXCLUDE_getInstance()) && self_0)
+    if (selector.z3j().equals(Self_EXCLUDE_getInstance()) && self_0)
       continue $l$loop_4;
-    if (!(selector.e35_1 == null) && !relative(this, ctx, selector.e35_1, card))
+    if (!(selector.f35_1 == null) && !relative(this, ctx, selector.f35_1, card))
       continue $l$loop_4;
-    if (ctx.j32(card) && ctx.m32(card)) {
-      if (!ctx.k32(card))
+    if (ctx.k32(card) && ctx.n32(card)) {
+      if (!ctx.l32(card))
         continue $l$loop_4;
-      if (target && ctx.o34(card))
+      if (target && ctx.p34(card))
         continue $l$loop_4;
     }
     found.f(card);
   }
-  if (selector.v3i().equals(Mode_NEWEST_getInstance())) {
+  if (selector.w3i().equals(Mode_NEWEST_getInstance())) {
     reverse(found);
   }
   return found;
@@ -47303,14 +47354,14 @@ function Clocks() {
 protoOf(Clocks).u1l = function () {
   var tmp0_safe_receiver = this.s1l_1.j1r();
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver();
-  return tmp1_elvis_lhs == null ? Platform_instance.h3m() : tmp1_elvis_lhs;
+  return tmp1_elvis_lhs == null ? Platform_instance.i3m() : tmp1_elvis_lhs;
 };
 protoOf(Clocks).d24 = function () {
   var tmp0_safe_receiver = this.t1l_1.j1r();
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver();
-  return tmp1_elvis_lhs == null ? Platform_instance.i3m() : tmp1_elvis_lhs;
+  return tmp1_elvis_lhs == null ? Platform_instance.j3m() : tmp1_elvis_lhs;
 };
-protoOf(Clocks).j3m = function (millis, nanos, block) {
+protoOf(Clocks).k3m = function (millis, nanos, block) {
   var gameBefore = this.s1l_1.j1r();
   var botBefore = this.t1l_1.j1r();
   this.s1l_1.w2a(millis);
@@ -47322,7 +47373,7 @@ protoOf(Clocks).j3m = function (millis, nanos, block) {
     this.t1l_1.w2a(botBefore);
   }
 };
-protoOf(Clocks).k3m = function (stepNanos) {
+protoOf(Clocks).l3m = function (stepNanos) {
   var now = {_v: new Long(0, 0)};
   return Clocks$ticks$lambda(now, stepNanos);
 };
@@ -47333,10 +47384,10 @@ function Clocks_getInstance() {
   return Clocks_instance;
 }
 function JavaRegex() {
-  this.l3m_1 = ' \\t\\n\\u000B\\f\\r';
-  this.m3m_1 = '\\n\\r\\u0085\\u2028\\u2029';
+  this.m3m_1 = ' \\t\\n\\u000B\\f\\r';
+  this.n3m_1 = '\\n\\r\\u0085\\u2028\\u2029';
 }
-protoOf(JavaRegex).n3m = function (pattern) {
+protoOf(JavaRegex).o3m = function (pattern) {
   var out = StringBuilder_init_$Create$();
   var inClass = false;
   var i = 0;
@@ -47414,35 +47465,33 @@ function RankRules_getInstance() {
 }
 function Seat(userId, username, deckId, deckName, starterCardId, skipOptional, deck, autoOptional) {
   autoOptional = autoOptional === VOID ? false : autoOptional;
-  this.o3m_1 = userId;
-  this.p3m_1 = username;
-  this.q3m_1 = deckId;
-  this.r3m_1 = deckName;
-  this.s3m_1 = starterCardId;
-  this.t3m_1 = skipOptional;
-  this.u3m_1 = deck;
-  this.v3m_1 = autoOptional;
+  this.p3m_1 = userId;
+  this.q3m_1 = username;
+  this.r3m_1 = deckId;
+  this.s3m_1 = deckName;
+  this.t3m_1 = starterCardId;
+  this.u3m_1 = skipOptional;
+  this.v3m_1 = deck;
+  this.w3m_1 = autoOptional;
 }
 protoOf(Seat).toString = function () {
-  return 'Seat(userId=' + this.o3m_1 + ', username=' + this.p3m_1 + ', deckId=' + this.q3m_1 + ', deckName=' + this.r3m_1 + ', starterCardId=' + this.s3m_1 + ', skipOptional=' + this.t3m_1 + ', deck=' + toString_0(this.u3m_1) + ', autoOptional=' + this.v3m_1 + ')';
+  return 'Seat(userId=' + this.p3m_1 + ', username=' + this.q3m_1 + ', deckId=' + this.r3m_1 + ', deckName=' + this.s3m_1 + ', starterCardId=' + this.t3m_1 + ', skipOptional=' + this.u3m_1 + ', deck=' + toString_0(this.v3m_1) + ', autoOptional=' + this.w3m_1 + ')';
 };
 protoOf(Seat).hashCode = function () {
-  var result = this.o3m_1 == null ? 0 : getStringHashCode(this.o3m_1);
-  result = imul(result, 31) + (this.p3m_1 == null ? 0 : getStringHashCode(this.p3m_1)) | 0;
+  var result = this.p3m_1 == null ? 0 : getStringHashCode(this.p3m_1);
   result = imul(result, 31) + (this.q3m_1 == null ? 0 : getStringHashCode(this.q3m_1)) | 0;
   result = imul(result, 31) + (this.r3m_1 == null ? 0 : getStringHashCode(this.r3m_1)) | 0;
   result = imul(result, 31) + (this.s3m_1 == null ? 0 : getStringHashCode(this.s3m_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.t3m_1) | 0;
-  result = imul(result, 31) + (this.u3m_1 == null ? 0 : hashCode(this.u3m_1)) | 0;
-  result = imul(result, 31) + getBooleanHashCode(this.v3m_1) | 0;
+  result = imul(result, 31) + (this.t3m_1 == null ? 0 : getStringHashCode(this.t3m_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.u3m_1) | 0;
+  result = imul(result, 31) + (this.v3m_1 == null ? 0 : hashCode(this.v3m_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.w3m_1) | 0;
   return result;
 };
 protoOf(Seat).equals = function (other) {
   if (this === other)
     return true;
   if (!(other instanceof Seat))
-    return false;
-  if (!(this.o3m_1 == other.o3m_1))
     return false;
   if (!(this.p3m_1 == other.p3m_1))
     return false;
@@ -47452,11 +47501,13 @@ protoOf(Seat).equals = function (other) {
     return false;
   if (!(this.s3m_1 == other.s3m_1))
     return false;
-  if (!(this.t3m_1 === other.t3m_1))
+  if (!(this.t3m_1 == other.t3m_1))
     return false;
-  if (!equals_0(this.u3m_1, other.u3m_1))
+  if (!(this.u3m_1 === other.u3m_1))
     return false;
-  if (!(this.v3m_1 === other.v3m_1))
+  if (!equals_0(this.v3m_1, other.v3m_1))
+    return false;
+  if (!(this.w3m_1 === other.w3m_1))
     return false;
   return true;
 };
@@ -47476,33 +47527,33 @@ function Companion_getInstance_27() {
   return Companion_instance_28;
 }
 function MatchSetup(seed, editor, bot, ranked, confirmMandatory, hostId, firstChoice, idSeq, eventSeq, seats, botEdge) {
-  this.w3m_1 = seed;
-  this.x3m_1 = editor;
-  this.y3m_1 = bot;
-  this.z3m_1 = ranked;
-  this.a3n_1 = confirmMandatory;
-  this.b3n_1 = hostId;
-  this.c3n_1 = firstChoice;
-  this.d3n_1 = idSeq;
-  this.e3n_1 = eventSeq;
-  this.f3n_1 = seats;
-  this.g3n_1 = botEdge;
+  this.x3m_1 = seed;
+  this.y3m_1 = editor;
+  this.z3m_1 = bot;
+  this.a3n_1 = ranked;
+  this.b3n_1 = confirmMandatory;
+  this.c3n_1 = hostId;
+  this.d3n_1 = firstChoice;
+  this.e3n_1 = idSeq;
+  this.f3n_1 = eventSeq;
+  this.g3n_1 = seats;
+  this.h3n_1 = botEdge;
 }
 protoOf(MatchSetup).toString = function () {
-  return 'MatchSetup(seed=' + this.w3m_1.toString() + ', editor=' + this.x3m_1 + ', bot=' + this.y3m_1 + ', ranked=' + this.z3m_1 + ', confirmMandatory=' + this.a3n_1 + ', hostId=' + this.b3n_1 + ', firstChoice=' + this.c3n_1 + ', idSeq=' + this.d3n_1.toString() + ', eventSeq=' + this.e3n_1.toString() + ', seats=' + toString_0(this.f3n_1) + ', botEdge=' + this.g3n_1 + ')';
+  return 'MatchSetup(seed=' + this.x3m_1.toString() + ', editor=' + this.y3m_1 + ', bot=' + this.z3m_1 + ', ranked=' + this.a3n_1 + ', confirmMandatory=' + this.b3n_1 + ', hostId=' + this.c3n_1 + ', firstChoice=' + this.d3n_1 + ', idSeq=' + this.e3n_1.toString() + ', eventSeq=' + this.f3n_1.toString() + ', seats=' + toString_0(this.g3n_1) + ', botEdge=' + this.h3n_1 + ')';
 };
 protoOf(MatchSetup).hashCode = function () {
-  var result = this.w3m_1.hashCode();
-  result = imul(result, 31) + getBooleanHashCode(this.x3m_1) | 0;
+  var result = this.x3m_1.hashCode();
   result = imul(result, 31) + getBooleanHashCode(this.y3m_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.z3m_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.a3n_1) | 0;
-  result = imul(result, 31) + (this.b3n_1 == null ? 0 : getStringHashCode(this.b3n_1)) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.b3n_1) | 0;
   result = imul(result, 31) + (this.c3n_1 == null ? 0 : getStringHashCode(this.c3n_1)) | 0;
-  result = imul(result, 31) + this.d3n_1.hashCode() | 0;
+  result = imul(result, 31) + (this.d3n_1 == null ? 0 : getStringHashCode(this.d3n_1)) | 0;
   result = imul(result, 31) + this.e3n_1.hashCode() | 0;
-  result = imul(result, 31) + (this.f3n_1 == null ? 0 : hashCode(this.f3n_1)) | 0;
-  result = imul(result, 31) + this.g3n_1 | 0;
+  result = imul(result, 31) + this.f3n_1.hashCode() | 0;
+  result = imul(result, 31) + (this.g3n_1 == null ? 0 : hashCode(this.g3n_1)) | 0;
+  result = imul(result, 31) + this.h3n_1 | 0;
   return result;
 };
 protoOf(MatchSetup).equals = function (other) {
@@ -47510,9 +47561,7 @@ protoOf(MatchSetup).equals = function (other) {
     return true;
   if (!(other instanceof MatchSetup))
     return false;
-  if (!equalsLong(this.w3m_1, other.w3m_1))
-    return false;
-  if (!(this.x3m_1 === other.x3m_1))
+  if (!equalsLong(this.x3m_1, other.x3m_1))
     return false;
   if (!(this.y3m_1 === other.y3m_1))
     return false;
@@ -47520,17 +47569,19 @@ protoOf(MatchSetup).equals = function (other) {
     return false;
   if (!(this.a3n_1 === other.a3n_1))
     return false;
-  if (!(this.b3n_1 == other.b3n_1))
+  if (!(this.b3n_1 === other.b3n_1))
     return false;
   if (!(this.c3n_1 == other.c3n_1))
     return false;
-  if (!equalsLong(this.d3n_1, other.d3n_1))
+  if (!(this.d3n_1 == other.d3n_1))
     return false;
   if (!equalsLong(this.e3n_1, other.e3n_1))
     return false;
-  if (!equals_0(this.f3n_1, other.f3n_1))
+  if (!equalsLong(this.f3n_1, other.f3n_1))
     return false;
-  if (!(this.g3n_1 === other.g3n_1))
+  if (!equals_0(this.g3n_1, other.g3n_1))
+    return false;
+  if (!(this.h3n_1 === other.h3n_1))
     return false;
   return true;
 };
@@ -47732,7 +47783,7 @@ protoOf(Companion_28).c1m = function (type) {
 protoOf(Companion_28).b1v = function (action) {
   return action == null ? null : this.c1m(action.n19_1);
 };
-protoOf(Companion_28).h3n = function (action, flag) {
+protoOf(Companion_28).i3n = function (action, flag) {
   var type = this.b1v(action);
   return !(type == null) && contains(type.n1p_1, flag);
 };
@@ -47926,10 +47977,10 @@ function ActionType(name, ordinal, flags) {
 protoOf(ActionType).o1p = function (action) {
   return !(action == null) && this.j2_1 === action.n19_1;
 };
-protoOf(ActionType).i3n = function () {
+protoOf(ActionType).j3n = function () {
   return this.n1p_1.n(Flag_OWNER_ONLY_getInstance());
 };
-protoOf(ActionType).j3n = function () {
+protoOf(ActionType).k3n = function () {
   return this.n1p_1.n(Flag_WHILE_RESOLVING_getInstance());
 };
 function ActionType_NORMAL_SUMMON_getInstance() {
@@ -48225,15 +48276,15 @@ function ActionType_CREATE_DUMMY_getInstance() {
   return ActionType_CREATE_DUMMY_instance;
 }
 function Found(card, zone) {
-  this.e2z_1 = card;
-  this.f2z_1 = zone;
+  this.f2z_1 = card;
+  this.g2z_1 = zone;
 }
 protoOf(Found).toString = function () {
-  return 'Found(card=' + toString_0(this.e2z_1) + ', zone=' + toString_0(this.f2z_1) + ')';
+  return 'Found(card=' + toString_0(this.f2z_1) + ', zone=' + toString_0(this.g2z_1) + ')';
 };
 protoOf(Found).hashCode = function () {
-  var result = this.e2z_1 == null ? 0 : this.e2z_1.hashCode();
-  result = imul(result, 31) + (this.f2z_1 == null ? 0 : this.f2z_1.hashCode()) | 0;
+  var result = this.f2z_1 == null ? 0 : this.f2z_1.hashCode();
+  result = imul(result, 31) + (this.g2z_1 == null ? 0 : this.g2z_1.hashCode()) | 0;
   return result;
 };
 protoOf(Found).equals = function (other) {
@@ -48241,9 +48292,9 @@ protoOf(Found).equals = function (other) {
     return true;
   if (!(other instanceof Found))
     return false;
-  if (!equals_0(this.e2z_1, other.e2z_1))
-    return false;
   if (!equals_0(this.f2z_1, other.f2z_1))
+    return false;
+  if (!equals_0(this.g2z_1, other.g2z_1))
     return false;
   return true;
 };
@@ -48268,7 +48319,7 @@ function CardLocator() {
   this.r1h_1 = frozenListOf(values_16().slice());
   this.s1h_1 = frozenListOf([Zone_HAND_getInstance(), Zone_DECK_getInstance(), Zone_FIELD_getInstance(), Zone_LIFE_STACK_getInstance(), Zone_TRIBUTE_ZONE_getInstance(), Zone_DISCARD_PILE_getInstance()]);
 }
-protoOf(CardLocator).d2z = function (player, instanceId, zones, includeAttached) {
+protoOf(CardLocator).e2z = function (player, instanceId, zones, includeAttached) {
   if (player == null || instanceId == null)
     return null;
   var _iterator__ex2g4s = zones.h();
@@ -48298,8 +48349,8 @@ protoOf(CardLocator).d2z = function (player, instanceId, zones, includeAttached)
   return null;
 };
 protoOf(CardLocator).t1h = function (player, instanceId, zones, includeAttached) {
-  var found = this.d2z(player, instanceId, zones, includeAttached);
-  return found == null ? null : found.e2z_1;
+  var found = this.e2z(player, instanceId, zones, includeAttached);
+  return found == null ? null : found.f2z_1;
 };
 protoOf(CardLocator).i2a = function (players, instanceId, zones, includeAttached) {
   var _iterator__ex2g4s = players.h();
@@ -48311,15 +48362,15 @@ protoOf(CardLocator).i2a = function (players, instanceId, zones, includeAttached
   }
   return null;
 };
-protoOf(CardLocator).a2z = function (room, zones, includeAttached) {
+protoOf(CardLocator).b2z = function (room, zones, includeAttached) {
   var tmp = asSequence(room.a18_1.w1());
   var tmp_0 = flatMap(tmp, CardLocator$cards$lambda(zones));
   return flatMap(tmp_0, CardLocator$cards$lambda_0(includeAttached));
 };
-protoOf(CardLocator).y2y = function (room, instanceId, zones, includeAttached) {
+protoOf(CardLocator).z2y = function (room, instanceId, zones, includeAttached) {
   if (instanceId == null)
     return null;
-  var tmp0 = this.a2z(room, zones, includeAttached);
+  var tmp0 = this.b2z(room, zones, includeAttached);
   var tmp$ret$0;
   $l$block: {
     // Inline function 'kotlin.sequences.firstOrNull' call
@@ -48402,7 +48453,7 @@ protoOf(CardSlot).equals = function (other) {
     return true;
   if (!(other instanceof CardSlot))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.j1c_1 === other.j1c_1))
     return false;
@@ -48494,7 +48545,7 @@ protoOf(CardSlot).equals = function (other) {
     return false;
   return true;
 };
-protoOf(CardSlot).g2t = function (other) {
+protoOf(CardSlot).h2t = function (other) {
   return other instanceof CardSlot;
 };
 protoOf(CardSlot).hashCode = function () {
@@ -48641,13 +48692,13 @@ protoOf(CardSlot).toString = function () {
   return 'CardSlot(instanceId=' + this.g1c_1 + ', cardId=' + this.h1c_1 + ', imageUrl=' + this.i1c_1 + ', faceDown=' + this.j1c_1 + ', tapped=' + this.k1c_1 + ', x=' + this.l1c_1 + ', y=' + this.m1c_1 + ', cardName=' + this.n1c_1 + ', cardType=' + this.o1c_1 + ', strength=' + this.p1c_1 + ', specialSummonKind=' + this.q1c_1 + ', starter=' + this.r1c_1 + ', strengthModifier=' + this.s1c_1 + ', cost=' + this.t1c_1 + ', level=' + this.p1u() + ', colors=' + toString_0(this.v1c_1) + ', classes=' + toString_0(this.w1c_1) + ', specialCost=' + this.x1c_1 + ', requirement=' + this.y1c_1 + ', keywords=' + toString_0(this.z1c_1) + ', inheritKeywords=' + toString_0(this.a1d_1) + ', turnKeywords=' + toString_0(this.b1d_1) + ', laterKeywords=' + toString_0(this.c1d_1) + ', untilNextAttack=' + toString_0(this.d1d_1) + ', fieldSeq=' + this.e1d_1.toString() + ', turnStrength=' + this.f1d_1 + ', laterStrength=' + this.g1d_1 + ', continuousStrength=' + this.h1d_1 + ', continuousLevel=' + this.i1d_1 + ', returnAtTurnEnd=' + this.j1d_1 + ', continuousKeywords=' + toString_0(this.k1d_1) + ', floating=' + toString_0(this.l1d_1) + ', noUntap=' + this.m1d_1 + ', noStartUntap=' + this.n1d_1 + ', materials=' + toString_0(this.o1d_1) + ', resources=' + toString_0(this.p1d_1) + ', unprogrammed=' + this.q1d_1 + ', mentions=' + toString_0(this.r1d_1) + ', finish=' + this.s1d_1 + ', alt=' + this.t1d_1 + ', altArtUrls=' + toString_0(this.u1d_1) + ', arrows=' + toString_0(this.v1d_1) + ', enlace=' + this.w1d_1 + ', formationGrants=' + toString_0(this.x1d_1) + ')';
 };
 function Found_0(name, privateDeck, ownerId, cards) {
-  this.k3n_1 = name;
-  this.l3n_1 = privateDeck;
-  this.m3n_1 = ownerId;
-  this.n3n_1 = cards;
+  this.l3n_1 = name;
+  this.m3n_1 = privateDeck;
+  this.n3n_1 = ownerId;
+  this.o3n_1 = cards;
 }
-protoOf(Found_0).o3n = function () {
-  return this.n3n_1();
+protoOf(Found_0).p3n = function () {
+  return this.o3n_1();
 };
 function Shelf() {
 }
@@ -48665,7 +48716,7 @@ function DeckChoice$unprogrammedIn$lambda(_destruct__k2r9zo) {
 }
 function DeckChoice() {
 }
-protoOf(DeckChoice).t3n = function (room, userId, action, shelf) {
+protoOf(DeckChoice).u3n = function (room, userId, action, shelf) {
   var tmp0_elvis_lhs = room.a1e(userId);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -48684,10 +48735,10 @@ protoOf(DeckChoice).t3n = function (room, userId, action, shelf) {
     tmp_0 = tmp1_elvis_lhs;
   }
   var deckId = tmp_0;
-  var deck = shelf.p3n(deckId);
-  if (deck == null || !RoomGuard_instance.u3n(deck.l3n_1, deck.m3n_1, room, userId))
+  var deck = shelf.q3n(deckId);
+  if (deck == null || !RoomGuard_instance.v3n(deck.m3n_1, deck.n3n_1, room, userId))
     return Companion_instance_30.r19(room.h17_1, 'No se encontr\xF3 el mazo');
-  var slots = deck.o3n();
+  var slots = deck.p3n();
   if (slots.m())
     return Companion_instance_30.r19(room.h17_1, 'No se encontr\xF3 el mazo');
   var tmp_1;
@@ -48697,11 +48748,11 @@ protoOf(DeckChoice).t3n = function (room, userId, action, shelf) {
     tmp_1 = null;
   }
   var forBot = tmp_1;
-  if (!room.i17_1 && !(this.v3n(slots) == null))
+  if (!room.i17_1 && !(this.w3n(slots) == null))
     return Companion_instance_30.r19(room.h17_1, 'Este mazo tiene cartas que todav\xEDa no est\xE1n programadas en el simulador');
   var isBot = 'bot' === userId;
   if (!room.i17_1 && !isBot) {
-    var tmp2_safe_receiver = shelf.q3n(userId, slots);
+    var tmp2_safe_receiver = shelf.r3n(userId, slots);
     if (tmp2_safe_receiver == null)
       null;
     else {
@@ -48710,10 +48761,10 @@ protoOf(DeckChoice).t3n = function (room, userId, action, shelf) {
     }
   }
   if (!isBot) {
-    shelf.r3n(userId, slots);
+    shelf.s3n(userId, slots);
   }
   player.m1e_1 = deckId;
-  player.n1e_1 = deck.k3n_1;
+  player.n1e_1 = deck.l3n_1;
   player.v1e_1 = ArrayList_init_$Create$_0(slots);
   player.w1e_1 = PreRoomActions_instance.e1i(slots);
   var tmp_2 = player;
@@ -48738,7 +48789,7 @@ protoOf(DeckChoice).t3n = function (room, userId, action, shelf) {
   }
   return Companion_instance_30.d1e(room, ActionType_SET_DECK_getInstance(), userId);
 };
-protoOf(DeckChoice).w3n = function (room, userId, action, shelf) {
+protoOf(DeckChoice).x3n = function (room, userId, action, shelf) {
   var tmp0_elvis_lhs = action.z1d('cardId');
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -48747,7 +48798,7 @@ protoOf(DeckChoice).w3n = function (room, userId, action, shelf) {
     tmp = tmp0_elvis_lhs;
   }
   var cardId = tmp;
-  if (!shelf.s3n(room, cardId))
+  if (!shelf.t3n(room, cardId))
     return Companion_instance_30.r19(room.h17_1, 'No se encontraron los datos de la carta');
   return Companion_instance_30.d1e(room, ActionType_REFRESH_CARD_METADATA_getInstance(), userId);
 };
@@ -48761,7 +48812,7 @@ protoOf(DeckChoice).y28 = function (slots, nextId) {
   }
   return copy;
 };
-protoOf(DeckChoice).v3n = function (slots) {
+protoOf(DeckChoice).w3n = function (slots) {
   var names = LinkedHashMap_init_$Create$();
   var _iterator__ex2g4s = slots.h();
   while (_iterator__ex2g4s.i()) {
@@ -48780,7 +48831,7 @@ protoOf(DeckChoice).v3n = function (slots) {
   var tmp = names.x1();
   return joinToString(tmp, ', ', VOID, VOID, VOID, VOID, DeckChoice$unprogrammedIn$lambda);
 };
-protoOf(DeckChoice).x3n = function (room, cardId, apply) {
+protoOf(DeckChoice).y3n = function (room, cardId, apply) {
   var _iterator__ex2g4s = room.a18_1.w1().h();
   while (_iterator__ex2g4s.i()) {
     var player = _iterator__ex2g4s.j();
@@ -48944,7 +48995,7 @@ protoOf(GameAction).equals = function (other) {
     return true;
   if (!(other instanceof GameAction))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.n19_1 == other.n19_1))
     return false;
@@ -48952,7 +49003,7 @@ protoOf(GameAction).equals = function (other) {
     return false;
   return true;
 };
-protoOf(GameAction).g2t = function (other) {
+protoOf(GameAction).h2t = function (other) {
   return other instanceof GameAction;
 };
 protoOf(GameAction).hashCode = function () {
@@ -49007,7 +49058,7 @@ protoOf(GameLogEntry).equals = function (other) {
     return true;
   if (!(other instanceof GameLogEntry))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!equalsLong(this.o27_1, other.o27_1))
     return false;
@@ -49031,7 +49082,7 @@ protoOf(GameLogEntry).equals = function (other) {
     return false;
   return true;
 };
-protoOf(GameLogEntry).g2t = function (other) {
+protoOf(GameLogEntry).h2t = function (other) {
   return other instanceof GameLogEntry;
 };
 protoOf(GameLogEntry).hashCode = function () {
@@ -49098,7 +49149,7 @@ var RoomStatus_FINISHED_instance;
 function RoomStatus(name, ordinal) {
   Enum.call(this, name, ordinal);
 }
-protoOf(RoomStatus).a3o = function () {
+protoOf(RoomStatus).b3o = function () {
   return this.equals(RoomStatus_SELECTING_STARTER_getInstance()) || this.equals(RoomStatus_MULLIGAN_getInstance()) || this.equals(RoomStatus_IN_PROGRESS_getInstance());
 };
 function RoomStatus_WAITING_getInstance() {
@@ -49150,7 +49201,7 @@ function GameRoom() {
   this.c18_1 = null;
   this.d18_1 = 'MAIN';
   this.e18_1 = 0;
-  this.f18_1 = Platform_instance.b3o();
+  this.f18_1 = Platform_instance.c3o();
   this.g18_1 = 'random';
   this.h18_1 = null;
   this.i18_1 = LinkedHashMap_init_$Create$();
@@ -49193,7 +49244,7 @@ protoOf(GameRoom).y2k = function (prefix) {
   this.u18_1 = add(this.u18_1, get_ONE());
   return tmp + this.u18_1.toString();
 };
-protoOf(GameRoom).c3o = function () {
+protoOf(GameRoom).d3o = function () {
   return this.a18_1.k() >= 2;
 };
 protoOf(GameRoom).a1e = function (userId) {
@@ -49223,7 +49274,7 @@ protoOf(GameRoom).equals = function (other) {
     return true;
   if (!(other instanceof GameRoom))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.i17_1 === other.i17_1))
     return false;
@@ -49335,7 +49386,7 @@ protoOf(GameRoom).equals = function (other) {
     return false;
   return true;
 };
-protoOf(GameRoom).g2t = function (other) {
+protoOf(GameRoom).h2t = function (other) {
   return other instanceof GameRoom;
 };
 protoOf(GameRoom).hashCode = function () {
@@ -49522,7 +49573,7 @@ function build($this, room, event, actorId) {
   u.c1g_1 = room.o17_1;
   u.d1g_1 = room.i17_1 ? room.p17_1 : null;
   u.e1g_1 = room.u17_1;
-  var hiddenRival = $this.d3o(room);
+  var hiddenRival = $this.e3o(room);
   u.f1g_1 = hiddenRival ? 0 : room.v17_1;
   u.g1g_1 = room.r17_1;
   u.h1g_1 = room.i17_1 || room.l17_1 ? room.s17_1 : null;
@@ -49549,7 +49600,7 @@ function build($this, room, event, actorId) {
   var _iterator__ex2g4s = room.a18_1.v1().h();
   while (_iterator__ex2g4s.i()) {
     var id = _iterator__ex2g4s.j();
-    var list = Chain_instance.d2t(room, id);
+    var list = Chain_instance.e2t(room, id);
     if (!list.m()) {
       // Inline function 'kotlin.collections.set' call
       activatable.g2(id, list);
@@ -49560,7 +49611,7 @@ function build($this, room, event, actorId) {
   var _iterator__ex2g4s_0 = room.a18_1.v1().h();
   while (_iterator__ex2g4s_0.i()) {
     var id_0 = _iterator__ex2g4s_0.j();
-    var list_0 = SpecialRequirements_getInstance().q38(room, id_0);
+    var list_0 = SpecialRequirements_getInstance().r38(room, id_0);
     if (!list_0.m()) {
       // Inline function 'kotlin.collections.set' call
       specials.g2(id_0, list_0);
@@ -49571,7 +49622,7 @@ function build($this, room, event, actorId) {
   var _iterator__ex2g4s_1 = room.a18_1.v1().h();
   while (_iterator__ex2g4s_1.i()) {
     var id_1 = _iterator__ex2g4s_1.j();
-    var list_1 = Summons_instance.t3f(room, id_1);
+    var list_1 = Summons_instance.u3f(room, id_1);
     if (!list_1.m()) {
       // Inline function 'kotlin.collections.set' call
       unplayable.g2(id_1, list_1);
@@ -49596,7 +49647,7 @@ function build($this, room, event, actorId) {
   var _iterator__ex2g4s_3 = room.a18_1.v1().h();
   while (_iterator__ex2g4s_3.i()) {
     var id_3 = _iterator__ex2g4s_3.j();
-    var options = Formations_instance.r35(room, id_3);
+    var options = Formations_instance.s35(room, id_3);
     if (!options.m()) {
       // Inline function 'kotlin.collections.set' call
       joins.g2(id_3, options);
@@ -49610,7 +49661,7 @@ function build($this, room, event, actorId) {
   var _iterator__ex2g4s_4 = tmp0.h();
   while (_iterator__ex2g4s_4.i()) {
     var element = _iterator__ex2g4s_4.j();
-    if (Summons_instance.s3f(room, element)) {
+    if (Summons_instance.t3f(room, element)) {
       destination.f(element);
     }
   }
@@ -49642,10 +49693,10 @@ protoOf(Companion_29).m1i = function (room, event, actorId) {
   EffectEngine_getInstance().y1l(room);
   return build(this, room, event, actorId);
 };
-protoOf(Companion_29).d3o = function (room) {
+protoOf(Companion_29).e3o = function (room) {
   return room.j17_1 && room.k17_1 && room.z17_1.equals(RoomStatus_WAITING_getInstance());
 };
-protoOf(Companion_29).e3o = function (room, event, actorId) {
+protoOf(Companion_29).f3o = function (room, event, actorId) {
   return build(this, room, event, actorId);
 };
 protoOf(Companion_29).b1e = function (room) {
@@ -49718,7 +49769,7 @@ protoOf(GameStateUpdate).equals = function (other) {
     return true;
   if (!(other instanceof GameStateUpdate))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.w1f_1 === other.w1f_1))
     return false;
@@ -49822,7 +49873,7 @@ protoOf(GameStateUpdate).equals = function (other) {
     return false;
   return true;
 };
-protoOf(GameStateUpdate).g2t = function (other) {
+protoOf(GameStateUpdate).h2t = function (other) {
   return other instanceof GameStateUpdate;
 };
 protoOf(GameStateUpdate).hashCode = function () {
@@ -50035,7 +50086,7 @@ protoOf(PlayerState).equals = function (other) {
     return true;
   if (!(other instanceof PlayerState))
     return false;
-  if (!other.g2t(this))
+  if (!other.h2t(this))
     return false;
   if (!(this.k1e_1 === other.k1e_1))
     return false;
@@ -50083,7 +50134,7 @@ protoOf(PlayerState).equals = function (other) {
     return false;
   return true;
 };
-protoOf(PlayerState).g2t = function (other) {
+protoOf(PlayerState).h2t = function (other) {
   return other instanceof PlayerState;
 };
 protoOf(PlayerState).hashCode = function () {
@@ -50226,7 +50277,7 @@ function PlayerState$_set_lifeStack_$ref_toug24() {
   }, 2, 0, 39);
 }
 function setLike($this, o) {
-  var tmp0_elvis_lhs = Platform_instance.f3o(o);
+  var tmp0_elvis_lhs = Platform_instance.g3o(o);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     var tmp_0;
@@ -50256,13 +50307,13 @@ function Companion_getInstance_30() {
 function room($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof GameRoom ? done : THROW_CCE();
   }
   var c = new GameRoom();
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.h17_1 = o.h17_1;
   c.i17_1 = o.i17_1;
   c.j17_1 = o.j17_1;
@@ -50333,7 +50384,7 @@ function room($this, o) {
   c.f19_1 = o.f19_1;
   c.g19_1 = o.g19_1;
   c.h19_1 = o.h19_1;
-  c.i19_1 = o.i19_1 == null ? null : new GameRandom(ensureNotNull($this.g3o_1).ue());
+  c.i19_1 = o.i19_1 == null ? null : new GameRandom(ensureNotNull($this.h3o_1).ue());
   c.j19_1 = o.j19_1;
   c.k19_1 = o.k19_1;
   c.l19_1 = HashMap_init_$Create$(o.l19_1);
@@ -50343,13 +50394,13 @@ function room($this, o) {
 function player($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof PlayerState ? done : THROW_CCE();
   }
   var c = new PlayerState(o.f1e_1, o.g1e_1);
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.h1e_1 = o.h1e_1;
   c.i1e_1 = o.i1e_1;
   c.j1e_1 = o.j1e_1;
@@ -50388,13 +50439,13 @@ function player($this, o) {
 function card_1($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof CardSlot ? done : THROW_CCE();
   }
   var c = new CardSlot();
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.g1c_1 = o.g1c_1;
   c.h1c_1 = o.h1c_1;
   c.i1c_1 = o.i1c_1;
@@ -50444,13 +50495,13 @@ function card_1($this, o) {
 function effect($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof PendingEffect ? done : THROW_CCE();
   }
   var c = new PendingEffect();
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.k21_1 = o.k21_1;
   c.l21_1 = o.l21_1;
   c.m21_1 = o.m21_1;
@@ -50505,13 +50556,13 @@ function effect($this, o) {
 function prompt($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof Prompt ? done : THROW_CCE();
   }
   var c = new Prompt();
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.f1m_1 = o.f1m_1;
   c.g1m_1 = o.g1m_1;
   c.h1m_1 = o.h1m_1;
@@ -50543,13 +50594,13 @@ function prompt($this, o) {
 function combat($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null)) {
     return done instanceof Combat ? done : THROW_CCE();
   }
   var c = new Combat();
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   c.t1z_1 = o.t1z_1;
   c.u1z_1 = o.u1z_1;
   c.v1z_1 = o.v1z_1;
@@ -50571,12 +50622,12 @@ function combat($this, o) {
 function cards($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null))
     return cast(Companion_instance_31, done);
   var c = ArrayList_init_$Create$_1(o.k());
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   var _iterator__ex2g4s = o.h();
   while (_iterator__ex2g4s.i()) {
     var s = _iterator__ex2g4s.j();
@@ -50587,12 +50638,12 @@ function cards($this, o) {
 function effects($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null))
     return cast(Companion_instance_31, done);
   var c = ArrayList_init_$Create$_1(o.k());
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   var _iterator__ex2g4s = o.h();
   while (_iterator__ex2g4s.i()) {
     var e = _iterator__ex2g4s.j();
@@ -50603,24 +50654,24 @@ function effects($this, o) {
 function list($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null))
     return cast(Companion_instance_31, done);
   var c = ArrayList_init_$Create$_0(o);
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   return c;
 }
 function set($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null))
     return cast(Companion_instance_31, done);
   var c = setLike(Companion_instance_31, o);
   c.r(o);
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   return c;
 }
 function map($this, o) {
@@ -50633,10 +50684,10 @@ function map($this, o) {
 function mapLike($this, o) {
   if (o == null)
     return null;
-  var done = $this.h3o_1.u1(o);
+  var done = $this.i3o_1.u1(o);
   if (!(done == null))
     return cast(Companion_instance_31, done);
-  var tmp0_elvis_lhs = Platform_instance.i3o(o);
+  var tmp0_elvis_lhs = Platform_instance.j3o(o);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     var tmp_0;
@@ -50651,26 +50702,26 @@ function mapLike($this, o) {
   }
   var c = tmp;
   // Inline function 'kotlin.collections.set' call
-  $this.h3o_1.g2(o, c);
+  $this.i3o_1.g2(o, c);
   return c;
 }
 function RoomCopy(chance) {
-  this.g3o_1 = chance;
-  this.h3o_1 = Platform_instance.j28();
+  this.h3o_1 = chance;
+  this.i3o_1 = Platform_instance.j28();
 }
 function refused($this, room, message, userId) {
   return new Applied(Companion_instance_30.r19(room.h17_1, message), userId);
 }
 function Applied(update, actor) {
-  this.j3o_1 = update;
-  this.k3o_1 = actor;
+  this.k3o_1 = update;
+  this.l3o_1 = actor;
 }
 protoOf(Applied).toString = function () {
-  return 'Applied(update=' + toString_0(this.j3o_1) + ', actor=' + this.k3o_1 + ')';
+  return 'Applied(update=' + toString_0(this.k3o_1) + ', actor=' + this.l3o_1 + ')';
 };
 protoOf(Applied).hashCode = function () {
-  var result = this.j3o_1 == null ? 0 : this.j3o_1.hashCode();
-  result = imul(result, 31) + (this.k3o_1 == null ? 0 : getStringHashCode(this.k3o_1)) | 0;
+  var result = this.k3o_1 == null ? 0 : this.k3o_1.hashCode();
+  result = imul(result, 31) + (this.l3o_1 == null ? 0 : getStringHashCode(this.l3o_1)) | 0;
   return result;
 };
 protoOf(Applied).equals = function (other) {
@@ -50678,16 +50729,16 @@ protoOf(Applied).equals = function (other) {
     return true;
   if (!(other instanceof Applied))
     return false;
-  if (!equals_0(this.j3o_1, other.j3o_1))
+  if (!equals_0(this.k3o_1, other.k3o_1))
     return false;
-  if (!(this.k3o_1 == other.k3o_1))
+  if (!(this.l3o_1 == other.l3o_1))
     return false;
   return true;
 };
 function Companion_31() {
   this.r29_1 = 'editor-rival';
 }
-protoOf(Companion_31).l3o = function (action) {
+protoOf(Companion_31).m3o = function (action) {
   var tmp0_elvis_lhs = action.o19_1;
   var payload = LinkedHashMap_init_$Create$_0(tmp0_elvis_lhs == null ? frozenMapOf() : tmp0_elvis_lhs);
   // Inline function 'kotlin.collections.set' call
@@ -50698,7 +50749,7 @@ protoOf(Companion_31).l3o = function (action) {
   rival.o19_1 = HashMap_init_$Create$(payload);
   return rival;
 };
-protoOf(Companion_31).m3o = function (update, actor) {
+protoOf(Companion_31).n3o = function (update, actor) {
   if (!(update == null) && !(update.r1g_1 == null) && update.q1g_1 == null)
     update.q1g_1 = actor;
   return update;
@@ -50729,13 +50780,13 @@ function Companion_getInstance_31() {
 function RoomEngine(host) {
   this.x29_1 = new ActionDispatcher(host);
 }
-protoOf(RoomEngine).n3o = function (room, userId, action) {
+protoOf(RoomEngine).o3o = function (room, userId, action) {
   var userId_0 = userId;
   var type = Companion_instance_29.b1v(action);
   if (room.i17_1) {
     if (!(ensureNotNull(userId_0) === room.b18_1))
       return refused(Companion_instance_32, room, 'Es una sala de pruebas: solo su due\xF1o puede jugar en ella', userId_0);
-    if ('editor-rival' === action.z1d('actAs') && (type == null || !type.i3n()))
+    if ('editor-rival' === action.z1d('actAs') && (type == null || !type.j3n()))
       userId_0 = 'editor-rival';
   }
   if (BotSeat_getInstance().a1v(room, action)) {
@@ -50747,12 +50798,12 @@ protoOf(RoomEngine).n3o = function (room, userId, action) {
   }
   return new Applied(null, userId_0);
 };
-protoOf(RoomEngine).o3o = function (room, actor, action, manual) {
+protoOf(RoomEngine).p3o = function (room, actor, action, manual) {
   var type = Companion_instance_29.b1v(action);
-  var refusal = RoomGuard_instance.p3o(room, actor, action, manual);
+  var refusal = RoomGuard_instance.q3o(room, actor, action, manual);
   if (!(refusal == null))
     return Companion_instance_30.r19(room.h17_1, refusal);
-  if (room.e1j() && (type == null || !type.j3n())) {
+  if (room.e1j() && (type == null || !type.k3n())) {
     return Companion_instance_30.r19(room.h17_1, 'Hay un efecto resolvi\xE9ndose: espera a que termine');
   }
   var update = this.x29_1.g17(type, room, actor, action);
@@ -50771,21 +50822,21 @@ protoOf(RoomEngine).o3o = function (room, actor, action, manual) {
   }
   return update;
 };
-protoOf(RoomEngine).q3o = function (room, userId, action, manual) {
-  var who = this.n3o(room, userId, action);
-  if (!(who.j3o_1 == null))
-    return who.j3o_1;
-  return this.o3o(room, who.k3o_1, action, manual);
+protoOf(RoomEngine).r3o = function (room, userId, action, manual) {
+  var who = this.o3o(room, userId, action);
+  if (!(who.k3o_1 == null))
+    return who.k3o_1;
+  return this.p3o(room, who.l3o_1, action, manual);
 };
 protoOf(RoomEngine).y29 = function (room, seat, action) {
   if (!room.i17_1 || ensureNotNull(seat) === room.b18_1)
-    return this.q3o(room, seat, action, false);
-  return this.q3o(room, room.b18_1, Companion_instance_32.l3o(action), false);
+    return this.r3o(room, seat, action, false);
+  return this.r3o(room, room.b18_1, Companion_instance_32.m3o(action), false);
 };
 function RoomGuard() {
   this.v1l_1 = 50;
 }
-protoOf(RoomGuard).p3o = function (room, userId, action, manual) {
+protoOf(RoomGuard).q3o = function (room, userId, action, manual) {
   var join = ActionType_JOIN_ROOM_getInstance().o1p(action);
   var tmp;
   if (!join) {
@@ -50799,17 +50850,17 @@ protoOf(RoomGuard).p3o = function (room, userId, action, manual) {
     return 'No est\xE1s en la sala';
   if (join && !room.m17_1.m() && !contains(room.m17_1, userId))
     return 'Esta sala es de una partida de la cola ranked';
-  if (!room.i17_1 && !manual && !Companion_instance_29.h3n(action, Flag_RULES_getInstance()))
+  if (!room.i17_1 && !manual && !Companion_instance_29.i3n(action, Flag_RULES_getInstance()))
     return 'Esa acci\xF3n manual solo est\xE1 disponible en partidas de prueba';
   return null;
 };
-protoOf(RoomGuard).r3o = function (room) {
-  return room.z17_1.a3o();
+protoOf(RoomGuard).s3o = function (room) {
+  return room.z17_1.b3o();
 };
 protoOf(RoomGuard).w1l = function (room) {
-  return room.a18_1.k() === 2 && this.r3o(room);
+  return room.a18_1.k() === 2 && this.s3o(room);
 };
-protoOf(RoomGuard).u3n = function (privateDeck, deckOwner, room, userId) {
+protoOf(RoomGuard).v3n = function (privateDeck, deckOwner, room, userId) {
   var owner;
   switch (userId) {
     case 'editor-rival':
@@ -50874,9 +50925,9 @@ function Keeper() {
 }
 function RoomSeats() {
 }
-protoOf(RoomSeats).v3o = function (room, userId, action, keeper) {
+protoOf(RoomSeats).w3o = function (room, userId, action, keeper) {
   var tmp;
-  if (room.c3o()) {
+  if (room.d3o()) {
     // Inline function 'kotlin.collections.containsKey' call
     var this_0 = room.a18_1;
     tmp = !(isInterface(this_0, KtMap) ? this_0 : THROW_CCE()).s1(userId);
@@ -50890,14 +50941,14 @@ protoOf(RoomSeats).v3o = function (room, userId, action, keeper) {
   var existing = room.a1e(userId);
   if (!(existing == null)) {
     existing.k1e_1 = true;
-    keeper.s3o(existing);
+    keeper.t3o(existing);
     return Companion_instance_30.m1i(room, 'RECONNECT', userId);
   }
   if (username == null)
     username = userId;
   var player = new PlayerState(userId, username);
   player.k1e_1 = true;
-  keeper.s3o(player);
+  keeper.t3o(player);
   var tmp0 = room.a18_1;
   // Inline function 'kotlin.collections.set' call
   var key = ensureNotNull(userId);
@@ -50906,7 +50957,7 @@ protoOf(RoomSeats).v3o = function (room, userId, action, keeper) {
     room.b18_1 = userId;
   return Companion_instance_30.d1e(room, ActionType_JOIN_ROOM_getInstance(), userId);
 };
-protoOf(RoomSeats).w3o = function (room) {
+protoOf(RoomSeats).x3o = function (room) {
   if (room.i17_1 || room.j17_1) {
     var owner = room.b18_1 == null ? null : room.a1e(room.b18_1);
     return owner == null || !owner.k1e_1;
@@ -50937,22 +50988,22 @@ protoOf(RoomSeats).w3o = function (room) {
   }
   return tmp$ret$0;
 };
-protoOf(RoomSeats).x3o = function (room, userId, keeper) {
+protoOf(RoomSeats).y3o = function (room, userId, keeper) {
   if (!(ensureNotNull(userId) === room.b18_1))
     return Companion_instance_30.r19(room.h17_1, 'Solo el due\xF1o de la sala puede cerrarla');
   if (!room.i17_1 && RoomGuard_instance.w1l(room))
     return Companion_instance_30.r19(room.h17_1, 'La partida est\xE1 en curso: r\xEDndete para salir');
   room.z17_1 = RoomStatus_FINISHED_getInstance();
   var update = Companion_instance_30.m1i(room, 'ROOM_CLOSED', userId);
-  keeper.t3o(room);
+  keeper.u3o(room);
   return update;
 };
-protoOf(RoomSeats).y3o = function (room) {
+protoOf(RoomSeats).z3o = function (room) {
   room.g19_1 = 'bot';
   room.h19_1 = 'abandon';
   room.z17_1 = RoomStatus_POST_GAME_getInstance();
 };
-protoOf(RoomSeats).z3o = function (room, leavingId) {
+protoOf(RoomSeats).a3p = function (room, leavingId) {
   // Inline function 'kotlin.collections.filter' call
   var tmp0 = room.a18_1.w1();
   // Inline function 'kotlin.collections.filterTo' call
@@ -50986,20 +51037,20 @@ protoOf(RoomSeats).z3o = function (room, leavingId) {
   var pool = tmp;
   room.b18_1 = pool.m() ? null : pool.l(Default_getInstance().se(pool.k())).f1e_1;
 };
-protoOf(RoomSeats).a3p = function (room, userId, keeper) {
+protoOf(RoomSeats).b3p = function (room, userId, keeper) {
   if (userId === room.b18_1) {
-    this.z3o(room, userId);
+    this.a3p(room, userId);
   }
   room.a18_1.h2(userId);
-  keeper.u3o(room, userId);
+  keeper.v3o(room, userId);
   if (!(room.g18_1 == null) && room.g18_1 === userId)
     room.g18_1 = 'random';
   if (room.a18_1.m()) {
     room.z17_1 = RoomStatus_FINISHED_getInstance();
-    keeper.t3o(room);
+    keeper.u3o(room);
     return true;
   }
-  if (!room.i17_1 && RoomGuard_instance.r3o(room) && room.a18_1.k() === 1) {
+  if (!room.i17_1 && RoomGuard_instance.s3o(room) && room.a18_1.k() === 1) {
     room.g19_1 = room.a18_1.v1().h().j();
     room.h19_1 = 'abandon';
     room.m18_1.a2();
@@ -51028,11 +51079,11 @@ protoOf(RoomSeats).a3p = function (room, userId, keeper) {
     var element_1 = _iterator__ex2g4s_1.j();
     element_1.p1e_1 = false;
   }
-  if (this.w3o(room))
-    room.h18_1 = Platform_instance.b3o();
+  if (this.x3o(room))
+    room.h18_1 = Platform_instance.c3o();
   return false;
 };
-protoOf(RoomSeats).b3p = function (room, userId, keeper) {
+protoOf(RoomSeats).c3p = function (room, userId, keeper) {
   var tmp0_elvis_lhs = room.a1e(userId);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -51043,20 +51094,20 @@ protoOf(RoomSeats).b3p = function (room, userId, keeper) {
   var player = tmp;
   var name = player.g1e_1;
   if (room.i17_1 || room.j17_1) {
-    if (room.j17_1 && room.k17_1 && RoomGuard_instance.r3o(room)) {
-      this.y3o(room);
+    if (room.j17_1 && room.k17_1 && RoomGuard_instance.s3o(room)) {
+      this.z3o(room);
     }
     room.z17_1 = RoomStatus_FINISHED_getInstance();
-    keeper.t3o(room);
+    keeper.u3o(room);
     return Companion_instance_30.m1i(room, 'ROOM_CLOSED', userId);
   }
-  var wasPlaying = RoomGuard_instance.r3o(room);
-  var closed = this.a3p(room, ensureNotNull(userId), keeper);
+  var wasPlaying = RoomGuard_instance.s3o(room);
+  var closed = this.b3p(room, ensureNotNull(userId), keeper);
   var update = Companion_instance_30.m1i(room, closed ? 'ROOM_CLOSED' : 'PLAYER_LEFT', userId);
   update.z1g_1 = plus(name, wasPlaying ? ' abandon\xF3 la partida' : ' sali\xF3 de la sala');
   return update;
 };
-protoOf(RoomSeats).c3p = function (room, userId, action, keeper) {
+protoOf(RoomSeats).d3p = function (room, userId, action, keeper) {
   if (!(ensureNotNull(userId) === room.b18_1))
     return Companion_instance_30.r19(room.h17_1, 'Solo el due\xF1o de la sala puede sacar jugadores');
   var targetId = action.z1d('userId');
@@ -51068,9 +51119,9 @@ protoOf(RoomSeats).c3p = function (room, userId, action, keeper) {
   var playing = !room.z17_1.equals(RoomStatus_WAITING_getInstance()) && !room.z17_1.equals(RoomStatus_POST_GAME_getInstance());
   if (playing && target.k1e_1)
     return Companion_instance_30.r19(room.h17_1, 'Durante la partida solo puedes sacar a un jugador desconectado');
-  if (playing && compare(subtract(Platform_instance.h3m(), target.l1e_1), new Long(20000, 0)) < 0)
+  if (playing && compare(subtract(Platform_instance.i3m(), target.l1e_1), new Long(20000, 0)) < 0)
     return Companion_instance_30.r19(room.h17_1, 'Espera unos segundos: tu rival puede estar reconect\xE1ndose');
-  this.a3p(room, ensureNotNull(targetId), keeper);
+  this.b3p(room, ensureNotNull(targetId), keeper);
   var update = Companion_instance_30.m1i(room, 'PLAYER_KICKED', userId);
   update.u1g_1 = targetId;
   update.z1g_1 = plus(target.g1e_1, ' fue sacado de la sala');
@@ -51090,7 +51141,7 @@ function seatTestRival($this, room) {
 }
 function RoomSetup() {
 }
-protoOf(RoomSetup).d3p = function (ownerId, editor, ranked) {
+protoOf(RoomSetup).e3p = function (ownerId, editor, ranked) {
   var room = new GameRoom();
   room.b18_1 = ownerId;
   room.y17_1 = true;
@@ -51099,7 +51150,7 @@ protoOf(RoomSetup).d3p = function (ownerId, editor, ranked) {
     seatTestRival(this, room);
   }
   room.k17_1 = (ranked && !editor);
-  room.h18_1 = Platform_instance.b3o();
+  room.h18_1 = Platform_instance.c3o();
   room.h17_1 = substring(Platform_instance.v1h(), 0, 8);
   return room;
 };
@@ -51109,7 +51160,7 @@ function RoomSetup_getInstance() {
 }
 function ShallowCopy() {
 }
-protoOf(ShallowCopy).e3p = function (o) {
+protoOf(ShallowCopy).f3p = function (o) {
   var c = new GameStateUpdate();
   c.s1f_1 = o.s1f_1;
   c.t1f_1 = o.t1f_1;
@@ -51240,7 +51291,7 @@ protoOf(ShallowCopy).j20 = function (o) {
   c.x1d_1 = o.x1d_1;
   return c;
 };
-protoOf(ShallowCopy).f3p = function (o) {
+protoOf(ShallowCopy).g3p = function (o) {
   var c = GameEvent_init_$Create$();
   c.n24_1 = o.n24_1;
   c.o24_1 = o.o24_1;
@@ -51255,7 +51306,7 @@ protoOf(ShallowCopy).f3p = function (o) {
   c.x24_1 = o.x24_1;
   return c;
 };
-protoOf(ShallowCopy).g3p = function (o) {
+protoOf(ShallowCopy).h3p = function (o) {
   var c = new GameLogEntry();
   c.o27_1 = o.o27_1;
   c.p27_1 = o.p27_1;
@@ -51494,33 +51545,33 @@ function onlyMine($this, byPlayer, viewerId) {
   return isInterface(mine, KtMutableMap) ? mine : THROW_CCE();
 }
 function redact($this, event, viewerId, hidden) {
-  var secret = !(ensureNotNull(viewerId) === event.q24_1) && ($this.j3p_1.n(ensureNotNull(event.p24_1)) || ($this.k3p_1.n(ensureNotNull(event.p24_1)) && hidden.n(event.r24_1)));
+  var secret = !(ensureNotNull(viewerId) === event.q24_1) && ($this.k3p_1.n(ensureNotNull(event.p24_1)) || ($this.l3p_1.n(ensureNotNull(event.p24_1)) && hidden.n(event.r24_1)));
   if (!secret || event.s24_1 == null)
     return event;
-  var copy = ShallowCopy_instance.f3p(event);
+  var copy = ShallowCopy_instance.g3p(event);
   copy.s24_1 = null;
   return copy;
 }
 function redact_0($this, entry, hidden) {
   if (entry.s27_1 == null || !hidden.n(entry.s27_1))
     return entry;
-  var copy = ShallowCopy_instance.g3p(entry);
+  var copy = ShallowCopy_instance.h3p(entry);
   copy.t27_1 = null;
   copy.u27_1 = null;
   return copy;
 }
 function StateMask() {
   StateMask_instance = this;
-  this.h3p_1 = 5;
-  this.i3p_1 = 'Rival';
-  this.j3p_1 = frozenSetOf(['DRAW', 'LOOK_TOP']);
-  this.k3p_1 = frozenSetOf(['SEND', 'MOVE']);
+  this.i3p_1 = 5;
+  this.j3p_1 = 'Rival';
+  this.k3p_1 = frozenSetOf(['DRAW', 'LOOK_TOP']);
+  this.l3p_1 = frozenSetOf(['SEND', 'MOVE']);
 }
-protoOf(StateMask).l3p = function (update, viewerId, manual) {
+protoOf(StateMask).m3p = function (update, viewerId, manual) {
   var byId = update.u1f_1;
   if (byId == null || update.w1f_1 || update.z1f_1)
     return update;
-  var view = ShallowCopy_instance.e3p(update);
+  var view = ShallowCopy_instance.f3p(update);
   var hidden = HashSet_init_$Create$();
   var choosing = 'MULLIGAN' === update.t1f_1 && (update.l1g_1 == null || !contains(ensureNotNull(update.l1g_1), viewerId));
   var ownShown = choosing ? 5 : 0;
@@ -51592,7 +51643,7 @@ protoOf(StateMask).l3p = function (update, viewerId, manual) {
   }
   return view;
 };
-protoOf(StateMask).m3p = function (room, update) {
+protoOf(StateMask).n3p = function (room, update) {
   if (!(update.r1g_1 == null))
     return update.q1g_1 == null ? emptySet() : setOf_0(ensureNotNull(update.q1g_1));
   var viewers = LinkedHashSet_init_$Create$();
@@ -51687,16 +51738,16 @@ protoOf(Companion_33).c1m = function (zoneId) {
   }
   return null;
 };
-protoOf(Companion_33).h2z = function (zoneId) {
+protoOf(Companion_33).i2z = function (zoneId) {
   var tmp0_safe_receiver = this.c1m(zoneId);
-  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.n3p();
+  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.o3p();
   return tmp1_elvis_lhs == null ? zoneId : tmp1_elvis_lhs;
 };
 protoOf(Companion_33).d1m = function (zoneId) {
   if (zoneId == null)
     return 'zona desconocida';
   var tmp0_safe_receiver = this.c1m(zoneId);
-  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.o3p();
+  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.p3p();
   return tmp1_elvis_lhs == null ? zoneId : tmp1_elvis_lhs;
 };
 var Companion_instance_34;
@@ -51715,7 +51766,7 @@ function Zone(name, ordinal, id, cards, shortLabel, logLabel, ownLabel) {
   this.o1f_1 = logLabel;
   this.p1f_1 = ownLabel;
 }
-protoOf(Zone).g2s = function () {
+protoOf(Zone).i2s = function () {
   return this.l1f_1;
 };
 protoOf(Zone).e1m = function (player) {
@@ -51724,13 +51775,13 @@ protoOf(Zone).e1m = function (player) {
 protoOf(Zone).q1f = function (zoneId) {
   return this.l1f_1 === zoneId;
 };
-protoOf(Zone).n3p = function () {
+protoOf(Zone).o3p = function () {
   return this.n1f_1;
 };
-protoOf(Zone).o3p = function () {
+protoOf(Zone).p3p = function () {
   return this.o1f_1;
 };
-protoOf(Zone).n3e = function () {
+protoOf(Zone).o3e = function () {
   return this.p1f_1;
 };
 function Zone_FIELD_getInstance() {
@@ -51763,15 +51814,15 @@ function get_json() {
 }
 var json;
 function CardOutline(name, effects) {
-  this.p3p_1 = name;
-  this.q3p_1 = effects;
+  this.q3p_1 = name;
+  this.r3p_1 = effects;
 }
 protoOf(CardOutline).toString = function () {
-  return 'CardOutline(name=' + this.p3p_1 + ', effects=' + toString(this.q3p_1) + ')';
+  return 'CardOutline(name=' + this.q3p_1 + ', effects=' + toString(this.r3p_1) + ')';
 };
 protoOf(CardOutline).hashCode = function () {
-  var result = getStringHashCode(this.p3p_1);
-  result = imul(result, 31) + hashCode(this.q3p_1) | 0;
+  var result = getStringHashCode(this.q3p_1);
+  result = imul(result, 31) + hashCode(this.r3p_1) | 0;
   return result;
 };
 protoOf(CardOutline).equals = function (other) {
@@ -51779,22 +51830,22 @@ protoOf(CardOutline).equals = function (other) {
     return true;
   if (!(other instanceof CardOutline))
     return false;
-  if (!(this.p3p_1 === other.p3p_1))
+  if (!(this.q3p_1 === other.q3p_1))
     return false;
-  if (!equals_0(this.q3p_1, other.q3p_1))
+  if (!equals_0(this.r3p_1, other.r3p_1))
     return false;
   return true;
 };
 function EffectOutline(id, moment) {
-  this.r3p_1 = id;
-  this.s3p_1 = moment;
+  this.s3p_1 = id;
+  this.t3p_1 = moment;
 }
 protoOf(EffectOutline).toString = function () {
-  return 'EffectOutline(id=' + this.r3p_1 + ', moment=' + this.s3p_1 + ')';
+  return 'EffectOutline(id=' + this.s3p_1 + ', moment=' + this.t3p_1 + ')';
 };
 protoOf(EffectOutline).hashCode = function () {
-  var result = getStringHashCode(this.r3p_1);
-  result = imul(result, 31) + (this.s3p_1 == null ? 0 : getStringHashCode(this.s3p_1)) | 0;
+  var result = getStringHashCode(this.s3p_1);
+  result = imul(result, 31) + (this.t3p_1 == null ? 0 : getStringHashCode(this.t3p_1)) | 0;
   return result;
 };
 protoOf(EffectOutline).equals = function (other) {
@@ -51802,9 +51853,9 @@ protoOf(EffectOutline).equals = function (other) {
     return true;
   if (!(other instanceof EffectOutline))
     return false;
-  if (!(this.r3p_1 === other.r3p_1))
+  if (!(this.s3p_1 === other.s3p_1))
     return false;
-  if (!(this.s3p_1 == other.s3p_1))
+  if (!(this.t3p_1 == other.t3p_1))
     return false;
   return true;
 };
@@ -51844,13 +51895,13 @@ function _init_properties_CardFile_kt__a9tu7o() {
   }
 }
 function sam$com_drive_drive_manager_simulator_engine_CardSource$0(function_0) {
-  this.t3p_1 = function_0;
+  this.u3p_1 = function_0;
 }
 protoOf(sam$com_drive_drive_manager_simulator_engine_CardSource$0).y2n = function () {
-  return this.t3p_1();
+  return this.u3p_1();
 };
 protoOf(sam$com_drive_drive_manager_simulator_engine_CardSource$0).t2 = function () {
-  return this.t3p_1;
+  return this.u3p_1;
 };
 protoOf(sam$com_drive_drive_manager_simulator_engine_CardSource$0).equals = function (other) {
   var tmp;
@@ -51876,12 +51927,12 @@ function EngineApi$installCards$lambda($cards) {
   };
 }
 function EngineApi$cardSummary$lambda(it) {
-  return it.r3p_1;
+  return it.s3p_1;
 }
 function EngineApi() {
   this.VERSION = '0.1.0-SNAPSHOT';
 }
-protoOf(EngineApi).u3p = function () {
+protoOf(EngineApi).v3p = function () {
   return this.VERSION;
 };
 protoOf(EngineApi).shuffledOrder = function (seed, count) {
@@ -51902,7 +51953,7 @@ protoOf(EngineApi).shuffledOrder = function (seed, count) {
   return copyToArray(cards);
 };
 protoOf(EngineApi).installCards = function (bundle) {
-  var cards = CardBundle_instance.c3g(bundle);
+  var cards = CardBundle_instance.d3g(bundle);
   var tmp = CardSources_instance;
   var tmp_0 = EngineApi$installCards$lambda(cards);
   tmp.o2q(new sam$com_drive_drive_manager_simulator_engine_CardSource$0(tmp_0));
@@ -51915,8 +51966,8 @@ protoOf(EngineApi).installBotResources = function (json) {
 };
 protoOf(EngineApi).cardSummary = function (text) {
   var card = readCardOutline(text);
-  var tmp = card.p3p_1 + '|';
-  return tmp + joinToString(card.q3p_1, ',', VOID, VOID, VOID, VOID, EngineApi$cardSummary$lambda);
+  var tmp = card.q3p_1 + '|';
+  return tmp + joinToString(card.r3p_1, ',', VOID, VOID, VOID, VOID, EngineApi$cardSummary$lambda);
 };
 var EngineApi_instance;
 function EngineApi_getInstance() {
@@ -51933,7 +51984,7 @@ function obj($this, o) {
     // Inline function 'kotlin.collections.component2' call
     var v = _destruct__k2r9zo.r1();
     // Inline function 'kotlin.collections.set' call
-    var value = $this.x3p(v);
+    var value = $this.y3p(v);
     out.g2(k, value);
   }
   return out;
@@ -51982,12 +52033,12 @@ function ActionJson$JSON$lambda($this$Json) {
 function ActionJson() {
   ActionJson_instance = this;
   var tmp = this;
-  tmp.w3p_1 = Json(VOID, ActionJson$JSON$lambda);
+  tmp.x3p_1 = Json(VOID, ActionJson$JSON$lambda);
 }
-protoOf(ActionJson).c3g = function (body) {
+protoOf(ActionJson).d3g = function (body) {
   var tmp;
   try {
-    tmp = this.w3p_1.ax(body);
+    tmp = this.x3p_1.ax(body);
   } catch ($p) {
     var tmp_0;
     if ($p instanceof Exception) {
@@ -52031,7 +52082,7 @@ protoOf(ActionJson).c3g = function (body) {
   }
   return action;
 };
-protoOf(ActionJson).x3p = function (e) {
+protoOf(ActionJson).y3p = function (e) {
   var tmp;
   if (e instanceof JsonNull) {
     tmp = null;
@@ -52045,7 +52096,7 @@ protoOf(ActionJson).x3p = function (e) {
         var _iterator__ex2g4s = e.h();
         while (_iterator__ex2g4s.i()) {
           var item = _iterator__ex2g4s.j();
-          var tmp$ret$1 = ActionJson_getInstance().x3p(item);
+          var tmp$ret$1 = ActionJson_getInstance().y3p(item);
           destination.f(tmp$ret$1);
         }
         tmp = destination;
@@ -52117,7 +52168,7 @@ function doubles($this, e) {
   return tmp;
 }
 function Companion_34() {
-  this.y3p_1 = 'eras-bot-resources/1';
+  this.z3p_1 = 'eras-bot-resources/1';
 }
 var Companion_instance_35;
 function Companion_getInstance_34() {
@@ -52171,16 +52222,16 @@ function BotResources(json) {
     var tmp$ret$4 = tmp_6;
     destination.g2(tmp_5, tmp$ret$4);
   }
-  tmp_4.v3p_1 = destination;
+  tmp_4.w3p_1 = destination;
 }
 protoOf(BotResources).k = function () {
-  return this.v3p_1.k();
+  return this.w3p_1.k();
 };
 protoOf(BotResources).d1s = function (path, failure) {
-  return this.v3p_1.u1(path);
+  return this.w3p_1.u1(path);
 };
 protoOf(BotResources).c1t = function (path) {
-  var tmp0_elvis_lhs = this.v3p_1.u1(path);
+  var tmp0_elvis_lhs = this.w3p_1.u1(path);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -52255,7 +52306,7 @@ function mentionedTypes($this, meta) {
           tmp = tmp0_elvis_lhs;
         }
         var text = tmp;
-        var _iterator__ex2g4s_2 = $this.z3p_1.ya(text).h();
+        var _iterator__ex2g4s_2 = $this.a3q_1.ya(text).h();
         while (_iterator__ex2g4s_2.i()) {
           var m = _iterator__ex2g4s_2.j();
           // Inline function 'kotlin.text.trim' call
@@ -52318,7 +52369,7 @@ function keywordNames($this, effects) {
     var tmp1_elvis_lhs = string_0($this, k, 'number');
     var number = tmp1_elvis_lhs == null ? '' : tmp1_elvis_lhs;
     // Inline function 'kotlin.text.trim' call
-    var this_0 = $this.a3q_1.bb(keyword, LocalDecks$Companion$keywordNames$lambda(number));
+    var this_0 = $this.b3q_1.bb(keyword, LocalDecks$Companion$keywordNames$lambda(number));
     // Inline function 'kotlin.text.trim' call
     var this_1 = isCharSequence(this_0) ? this_0 : THROW_CCE();
     var startIndex = 0;
@@ -52342,7 +52393,7 @@ function keywordNames($this, effects) {
     }
     var tmp$ret$1 = charSequenceSubSequence(this_1, startIndex, endIndex + 1 | 0);
     var name = toString(tmp$ret$1);
-    keywords.f($this.b3q_1.bb(name, LocalDecks$Companion$keywordNames$lambda_0));
+    keywords.f($this.c3q_1.bb(name, LocalDecks$Companion$keywordNames$lambda_0));
   }
   return keywords;
 }
@@ -52391,7 +52442,7 @@ function bool($this, o, key) {
 }
 function LocalDecks$Companion$refresh$lambda($cardId, $meta) {
   return function (it) {
-    Companion_getInstance_35().c3q(it, $cardId, $meta);
+    Companion_getInstance_35().d3q(it, $cardId, $meta);
     return Unit_instance;
   };
 }
@@ -52404,23 +52455,23 @@ function LocalDecks$Companion$keywordNames$lambda_0(it) {
   return ' ';
 }
 function Entry_0(cardId, imageUrl, meta, copies) {
-  this.d3q_1 = cardId;
-  this.e3q_1 = imageUrl;
-  this.f3q_1 = meta;
-  this.g3q_1 = copies;
+  this.e3q_1 = cardId;
+  this.f3q_1 = imageUrl;
+  this.g3q_1 = meta;
+  this.h3q_1 = copies;
 }
 function Deck(id, name, entries) {
-  this.h3q_1 = id;
-  this.i3q_1 = name;
-  this.j3q_1 = entries;
+  this.i3q_1 = id;
+  this.j3q_1 = name;
+  this.k3q_1 = entries;
 }
 function Companion_35() {
   Companion_instance_36 = this;
-  this.z3p_1 = Platform_instance.s1s('(?<!\\[)\\[([^\\[\\]]+)\\](?!\\])');
-  this.a3q_1 = Platform_instance.s1s('\\{[^}]*\\}');
-  this.b3q_1 = Platform_instance.s1s('\\s+');
+  this.a3q_1 = Platform_instance.s1s('(?<!\\[)\\[([^\\[\\]]+)\\](?!\\])');
+  this.b3q_1 = Platform_instance.s1s('\\{[^}]*\\}');
+  this.c3q_1 = Platform_instance.s1s('\\s+');
 }
-protoOf(Companion_35).k3q = function (decksJson) {
+protoOf(Companion_35).l3q = function (decksJson) {
   var out = LinkedHashMap_init_$Create$();
   if (decksJson == null)
     return out;
@@ -52501,13 +52552,13 @@ protoOf(Companion_35).k3q = function (decksJson) {
   }
   return out;
 };
-protoOf(Companion_35).l3q = function (deck, nextId) {
+protoOf(Companion_35).m3q = function (deck, nextId) {
   var slots = ArrayList_init_$Create$();
-  var _iterator__ex2g4s = deck.j3q_1.h();
+  var _iterator__ex2g4s = deck.k3q_1.h();
   while (_iterator__ex2g4s.i()) {
     var e = _iterator__ex2g4s.j();
     // Inline function 'kotlin.repeat' call
-    var times = e.g3q_1;
+    var times = e.h3q_1;
     var inductionVariable = 0;
     if (inductionVariable < times)
       do {
@@ -52515,22 +52566,22 @@ protoOf(Companion_35).l3q = function (deck, nextId) {
         inductionVariable = inductionVariable + 1 | 0;
         var slot = new CardSlot();
         slot.g1c_1 = nextId();
-        slot.h1c_1 = e.d3q_1;
+        slot.h1c_1 = e.e3q_1;
         slot.j1c_1 = true;
-        slot.i1c_1 = e.e3q_1;
-        slot.n1c_1 = string_0(Companion_getInstance_35(), e.f3q_1, 'cardName');
-        Companion_getInstance_35().c3q(slot, e.d3q_1, e.f3q_1);
+        slot.i1c_1 = e.f3q_1;
+        slot.n1c_1 = string_0(Companion_getInstance_35(), e.g3q_1, 'cardName');
+        Companion_getInstance_35().d3q(slot, e.e3q_1, e.g3q_1);
         slots.f(slot);
       }
        while (inductionVariable < times);
   }
   return slots;
 };
-protoOf(Companion_35).m3q = function (room, cardId, meta) {
+protoOf(Companion_35).n3q = function (room, cardId, meta) {
   var tmp = DeckChoice_instance;
-  return tmp.x3n(room, cardId, LocalDecks$Companion$refresh$lambda(cardId, meta));
+  return tmp.y3n(room, cardId, LocalDecks$Companion$refresh$lambda(cardId, meta));
 };
-protoOf(Companion_35).c3q = function (slot, cardId, meta) {
+protoOf(Companion_35).d3q = function (slot, cardId, meta) {
   if (!(cardId === slot.h1c_1))
     return Unit_instance;
   slot.n1c_1 = string_0(this, meta, 'cardName');
@@ -52602,17 +52653,17 @@ function Companion_getInstance_35() {
   return Companion_instance_36;
 }
 function LocalDecks$metadataOf$lambda(it) {
-  return asSequence(it.j3q_1);
+  return asSequence(it.k3q_1);
 }
 function LocalDecks(decksJson) {
   Companion_getInstance_35();
-  this.n3q_1 = Companion_getInstance_35().k3q(decksJson);
+  this.o3q_1 = Companion_getInstance_35().l3q(decksJson);
 }
-protoOf(LocalDecks).o3q = function (deckId) {
-  return this.n3q_1.u1(deckId);
+protoOf(LocalDecks).p3q = function (deckId) {
+  return this.o3q_1.u1(deckId);
 };
-protoOf(LocalDecks).p3q = function (cardId) {
-  var tmp = asSequence(this.n3q_1.w1());
+protoOf(LocalDecks).q3q = function (cardId) {
+  var tmp = asSequence(this.o3q_1.w1());
   var tmp0 = flatMap(tmp, LocalDecks$metadataOf$lambda);
   var tmp$ret$0;
   $l$block: {
@@ -52620,7 +52671,7 @@ protoOf(LocalDecks).p3q = function (cardId) {
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var element = _iterator__ex2g4s.j();
-      if (element.d3q_1 === cardId) {
+      if (element.e3q_1 === cardId) {
         tmp$ret$0 = element;
         break $l$block;
       }
@@ -52628,7 +52679,7 @@ protoOf(LocalDecks).p3q = function (cardId) {
     tmp$ret$0 = null;
   }
   var tmp0_safe_receiver = tmp$ret$0;
-  return tmp0_safe_receiver == null ? null : tmp0_safe_receiver.f3q_1;
+  return tmp0_safe_receiver == null ? null : tmp0_safe_receiver.g3q_1;
 };
 function string_1($this, o, key) {
   var tmp = o.kb(key);
@@ -52650,10 +52701,10 @@ function string_1($this, o, key) {
   return tmp1_safe_receiver == null ? null : tmp1_safe_receiver.jz();
 }
 function counted_0($this, block) {
-  var before = $this.b3r_1.w3q_1.z17_1;
+  var before = $this.c3r_1.x3q_1.z17_1;
   var out = block();
-  if (!before.equals(RoomStatus_POST_GAME_getInstance()) && $this.b3r_1.w3q_1.z17_1.equals(RoomStatus_POST_GAME_getInstance())) {
-    $this.e3r_1 = $this.e3r_1 + 1 | 0;
+  if (!before.equals(RoomStatus_POST_GAME_getInstance()) && $this.c3r_1.x3q_1.z17_1.equals(RoomStatus_POST_GAME_getInstance())) {
+    $this.f3r_1 = $this.f3r_1 + 1 | 0;
   }
   return out;
 }
@@ -52663,19 +52714,19 @@ function Companion_36() {
   this.DEFAULT_TICK_NANOS = 1000000;
   this.MAX_BOT_MOVES = 5000;
 }
-protoOf(Companion_36).f3r = function () {
+protoOf(Companion_36).g3r = function () {
   return this.DEFAULT_ROOM;
 };
-protoOf(Companion_36).g3r = function () {
+protoOf(Companion_36).h3r = function () {
   return this.DEFAULT_USER;
 };
-protoOf(Companion_36).h3r = function () {
+protoOf(Companion_36).i3r = function () {
   return this.DEFAULT_TICK_NANOS;
 };
-protoOf(Companion_36).i3r = function () {
+protoOf(Companion_36).j3r = function () {
   return this.MAX_BOT_MOVES;
 };
-protoOf(Companion_36).j3r = function (seed) {
+protoOf(Companion_36).k3r = function (seed) {
   // Inline function 'kotlin.Long.times' call
   // Inline function 'kotlin.Long.plus' call
   var this_0 = multiply(seed, fromInt(31));
@@ -52691,29 +52742,29 @@ function LocalMatch$lambda(this$0, $c, $seed) {
     var tmp_0 = string_1(Companion_instance_37, $c, 'playmat');
     var tmp_1 = string_1(Companion_instance_37, $c, 'cardBack');
     var tmp_2 = $c.kb('decks');
-    return new LocalRoom(this$0.userId, tmp, tmp_0, tmp_1, this$0.roomId, $seed, new LocalDecks(tmp_2 instanceof JsonObject ? tmp_2 : null), string_1(Companion_instance_37, $c, 'botLevel'), Companion_instance_37.j3r($seed), string_1(Companion_instance_37, $c, 'editor') === 'true');
+    return new LocalRoom(this$0.userId, tmp, tmp_0, tmp_1, this$0.roomId, $seed, new LocalDecks(tmp_2 instanceof JsonObject ? tmp_2 : null), string_1(Companion_instance_37, $c, 'botLevel'), Companion_instance_37.k3r($seed), string_1(Companion_instance_37, $c, 'editor') === 'true');
   };
 }
 function LocalMatch$send$lambda$lambda(this$0, $parsed) {
   return function () {
-    return this$0.b3r_1.k3r($parsed);
+    return this$0.c3r_1.l3r($parsed);
   };
 }
 function LocalMatch$send$lambda(this$0, $parsed) {
   return function () {
     // Inline function 'kotlin.collections.toTypedArray' call
-    var this_0 = this$0.c3r_1.o3r(LocalMatch$send$lambda$lambda(this$0, $parsed));
+    var this_0 = this$0.d3r_1.p3r(LocalMatch$send$lambda$lambda(this$0, $parsed));
     return copyToArray(this_0);
   };
 }
 function LocalMatch$step$lambda$lambda(this$0) {
   return function () {
-    return this$0.b3r_1.p3r();
+    return this$0.c3r_1.q3r();
   };
 }
 function LocalMatch$step$lambda(this$0) {
   return function () {
-    var tmp0_safe_receiver = this$0.c3r_1.o3r(LocalMatch$step$lambda$lambda(this$0));
+    var tmp0_safe_receiver = this$0.d3r_1.p3r(LocalMatch$step$lambda$lambda(this$0));
     var tmp;
     if (tmp0_safe_receiver == null) {
       tmp = null;
@@ -52725,8 +52776,8 @@ function LocalMatch$step$lambda(this$0) {
   };
 }
 function LocalMatch(config) {
-  this.d3r_1 = null;
-  this.e3r_1 = 0;
+  this.e3r_1 = null;
+  this.f3r_1 = 0;
   var tmp = Default_getInstance_0().ax(config);
   var tmp0_elvis_lhs = tmp instanceof JsonObject ? tmp : null;
   var tmp_0;
@@ -52750,7 +52801,7 @@ function LocalMatch(config) {
   var tmp_3;
   switch (tmp5_elvis_lhs == null ? 'ticks' : tmp5_elvis_lhs) {
     case 'ticks':
-      tmp_3 = Clocks_getInstance().k3m(ticks);
+      tmp_3 = Clocks_getInstance().l3m(ticks);
       break;
     case 'system':
       tmp_3 = null;
@@ -52761,32 +52812,32 @@ function LocalMatch(config) {
   var botClock = tmp_3;
   var tmp_4 = this;
   var tmp7_safe_receiver = string_1(Companion_instance_37, c, 'time');
-  tmp_4.c3r_1 = new MatchClocks(tmp7_safe_receiver == null ? null : toLong(tmp7_safe_receiver), botClock);
+  tmp_4.d3r_1 = new MatchClocks(tmp7_safe_receiver == null ? null : toLong(tmp7_safe_receiver), botClock);
   var tmp_5 = this;
-  tmp_5.b3r_1 = this.c3r_1.o3r(LocalMatch$lambda(this, c, seed));
+  tmp_5.c3r_1 = this.d3r_1.p3r(LocalMatch$lambda(this, c, seed));
 }
-protoOf(LocalMatch).q3r = function () {
-  return this.b3r_1;
-};
 protoOf(LocalMatch).r3r = function () {
-  return this.roomId;
+  return this.c3r_1;
 };
 protoOf(LocalMatch).s3r = function () {
+  return this.roomId;
+};
+protoOf(LocalMatch).t3r = function () {
   return this.userId;
 };
 protoOf(LocalMatch).lastError = function () {
-  return this.d3r_1;
+  return this.e3r_1;
 };
 protoOf(LocalMatch).send = function (action) {
-  this.d3r_1 = null;
+  this.e3r_1 = null;
   var tmp;
   try {
-    tmp = ActionJson_getInstance().c3g(action);
+    tmp = ActionJson_getInstance().d3g(action);
   } catch ($p) {
     var tmp_0;
     if ($p instanceof IllegalArgumentException) {
       var e = $p;
-      this.d3r_1 = 'Unreadable action: ' + e.message;
+      this.e3r_1 = 'Unreadable action: ' + e.message;
       // Inline function 'kotlin.emptyArray' call
       return [];
     } else {
@@ -52801,7 +52852,7 @@ protoOf(LocalMatch).send = function (action) {
     var tmp_2;
     if ($p_0 instanceof Error) {
       var e_0 = $p_0;
-      this.d3r_1 = 'The engine failed on ' + parsed.n19_1 + ': ' + e_0.toString();
+      this.e3r_1 = 'The engine failed on ' + parsed.n19_1 + ': ' + e_0.toString();
       // Inline function 'kotlin.emptyArray' call
       tmp_2 = [];
     } else {
@@ -52819,7 +52870,7 @@ protoOf(LocalMatch).step = function () {
     var tmp_0;
     if ($p instanceof Error) {
       var e = $p;
-      this.d3r_1 = 'The bot failed: ' + e.toString();
+      this.e3r_1 = 'The bot failed: ' + e.toString();
       tmp_0 = null;
     } else {
       throw $p;
@@ -52849,15 +52900,15 @@ protoOf(LocalMatch).playBot = function () {
   return copyToArray(out);
 };
 protoOf(LocalMatch).botPauseMs = function () {
-  return convertToInt(this.b3r_1.t3r());
+  return convertToInt(this.c3r_1.u3r());
 };
 protoOf(LocalMatch).status = function () {
-  return this.b3r_1.w3q_1.z17_1.j2_1;
+  return this.c3r_1.x3q_1.z17_1.j2_1;
 };
 protoOf(LocalMatch).result = function () {
-  var r = this.b3r_1.w3q_1;
+  var r = this.c3r_1.x3q_1;
   var tmp = to('status', JsonPrimitive_0(r.z17_1.j2_1));
-  var tmp_0 = to('gamesEnded', JsonPrimitive_1(this.e3r_1));
+  var tmp_0 = to('gamesEnded', JsonPrimitive_1(this.f3r_1));
   var tmp0_safe_receiver = r.g19_1;
   var tmp_1;
   if (tmp0_safe_receiver == null) {
@@ -52877,31 +52928,31 @@ protoOf(LocalMatch).result = function () {
     tmp_3 = JsonPrimitive_0(tmp2_safe_receiver);
   }
   var tmp3_elvis_lhs = tmp_3;
-  return (new JsonObject(linkedMapOf([tmp, tmp_0, tmp_2, to('endReason', tmp3_elvis_lhs == null ? JsonNull_getInstance() : tmp3_elvis_lhs), to('turns', JsonPrimitive_1(MatchDigest_instance.u3r(r))), to('digest', JsonPrimitive_0(MatchDigest_instance.v3r(r)))]))).toString();
+  return (new JsonObject(linkedMapOf([tmp, tmp_0, tmp_2, to('endReason', tmp3_elvis_lhs == null ? JsonNull_getInstance() : tmp3_elvis_lhs), to('turns', JsonPrimitive_1(MatchDigest_instance.v3r(r))), to('digest', JsonPrimitive_0(MatchDigest_instance.w3r(r)))]))).toString();
 };
 function applyAction($this, actor, action) {
-  if (!$this.z3q_1)
-    return Companion_instance_32.m3o(Companion_instance_30.r19($this.w3q_1.h17_1, 'La sala ya no existe'), actor);
-  return Companion_instance_32.m3o($this.x3q_1.q3o($this.w3q_1, actor, action, false), actor);
+  if (!$this.a3r_1)
+    return Companion_instance_32.n3o(Companion_instance_30.r19($this.x3q_1.h17_1, 'La sala ya no existe'), actor);
+  return Companion_instance_32.n3o($this.y3q_1.r3o($this.x3q_1, actor, action, false), actor);
 }
 function toPlayer($this, update) {
-  if (update == null || !StateMask_getInstance().m3p($this.w3q_1, update).n($this.q3q_1))
+  if (update == null || !StateMask_getInstance().n3p($this.x3q_1, update).n($this.r3q_1))
     return emptyList();
-  return listOf(!(update.r1g_1 == null) ? update : StateMask_getInstance().l3p(update, $this.q3q_1, false));
+  return listOf(!(update.r1g_1 == null) ? update : StateMask_getInstance().m3p(update, $this.r3q_1, false));
 }
 function chainStep($this, r, event, actor, out) {
   // Inline function 'kotlin.collections.mapTo' call
-  var _iterator__ex2g4s = toPlayer($this, Companion_instance_30.e3o(r, event, actor)).h();
+  var _iterator__ex2g4s = toPlayer($this, Companion_instance_30.f3o(r, event, actor)).h();
   while (_iterator__ex2g4s.i()) {
     var item = _iterator__ex2g4s.j();
-    var tmp$ret$1 = UpdateJson_getInstance().x3r(item);
+    var tmp$ret$1 = UpdateJson_getInstance().y3r(item);
     out.f(tmp$ret$1);
   }
 }
 function Companion_37() {
   Companion_instance_38 = this;
-  this.y3r_1 = 'bot';
-  this.z3r_1 = new Long(600, 0);
+  this.z3r_1 = 'bot';
+  this.a3s_1 = new Long(600, 0);
 }
 var Companion_instance_38;
 function Companion_getInstance_37() {
@@ -52911,13 +52962,13 @@ function Companion_getInstance_37() {
 }
 function LocalRoom$sendTexts$lambda(this$0, $out) {
   return function (r, event) {
-    chainStep(this$0, r, event, this$0.q3q_1, $out);
+    chainStep(this$0, r, event, this$0.r3q_1, $out);
     return Unit_instance;
   };
 }
 function LocalRoom$sendTexts$lambda_0(this$0, $action) {
   return function () {
-    return this$0.a3s($action);
+    return this$0.b3s($action);
   };
 }
 function LocalRoom$botMoveTexts$lambda(this$0, $seat, $out) {
@@ -52939,7 +52990,7 @@ function LocalRoom$botMoveTexts$lambda$lambda_0(this$0, $out) {
     var _iterator__ex2g4s = tmp0.h();
     while (_iterator__ex2g4s.i()) {
       var item = _iterator__ex2g4s.j();
-      var tmp$ret$1 = UpdateJson_getInstance().x3r(item);
+      var tmp$ret$1 = UpdateJson_getInstance().y3r(item);
       destination.f(tmp$ret$1);
     }
     return Unit_instance;
@@ -52949,7 +53000,7 @@ function LocalRoom$botMoveTexts$lambda_0(this$0, $player, $seat, $out) {
   return function () {
     var tmp = RoomBots_instance;
     var tmp_0 = LocalRoom$botMoveTexts$lambda$lambda(this$0, $seat);
-    return tmp.p29(this$0.w3q_1, $player, $seat, tmp_0, LocalRoom$botMoveTexts$lambda$lambda_0(this$0, $out));
+    return tmp.p29(this$0.x3q_1, $player, $seat, tmp_0, LocalRoom$botMoveTexts$lambda$lambda_0(this$0, $out));
   };
 }
 function LocalRoom$find$lambda$lambda(this$0) {
@@ -52960,78 +53011,78 @@ function LocalRoom$find$lambda$lambda(this$0) {
 function LocalRoom$find$lambda($deck, this$0) {
   return function () {
     var tmp = Companion_getInstance_35();
-    return tmp.l3q($deck, LocalRoom$find$lambda$lambda(this$0));
+    return tmp.m3q($deck, LocalRoom$find$lambda$lambda(this$0));
   };
 }
 function LocalRoom(userId, avatar, playmat, cardBack, roomId, seed, decks, botLevel, botSeed, editor) {
   Companion_getInstance_37();
   editor = editor === VOID ? false : editor;
-  this.q3q_1 = userId;
-  this.r3q_1 = avatar;
-  this.s3q_1 = playmat;
-  this.t3q_1 = cardBack;
-  this.u3q_1 = decks;
-  this.v3q_1 = botSeed;
-  this.w3q_1 = RoomSetup_instance.d3p(this.q3q_1, editor, false);
-  this.x3q_1 = new RoomEngine(this);
-  this.y3q_1 = null;
-  this.z3q_1 = true;
-  this.a3r_1 = 0;
-  this.w3q_1.h17_1 = roomId;
-  this.w3q_1.i19_1 = new GameRandom(seed);
+  this.r3q_1 = userId;
+  this.s3q_1 = avatar;
+  this.t3q_1 = playmat;
+  this.u3q_1 = cardBack;
+  this.v3q_1 = decks;
+  this.w3q_1 = botSeed;
+  this.x3q_1 = RoomSetup_instance.e3p(this.r3q_1, editor, false);
+  this.y3q_1 = new RoomEngine(this);
+  this.z3q_1 = null;
+  this.a3r_1 = true;
+  this.b3r_1 = 0;
+  this.x3q_1.h17_1 = roomId;
+  this.x3q_1.i19_1 = new GameRandom(seed);
   if (!(botLevel == null))
-    this.w3q_1.w17_1 = botLevel;
+    this.x3q_1.w17_1 = botLevel;
   if (!editor) {
-    RoomBots_instance.d29(this.w3q_1, this);
+    RoomBots_instance.d29(this.x3q_1, this);
   }
 }
-protoOf(LocalRoom).a3s = function (action) {
-  if (this.z3q_1 && ActionType_SET_BOT_DELAY_getInstance().o1p(action))
-    return toPlayer(this, RoomBots_instance.n29(this.w3q_1, this.q3q_1, action));
-  if (this.z3q_1) {
-    this.w3q_1.k18_1.y1(this.q3q_1);
-    this.w3q_1.l18_1.y1(this.q3q_1);
+protoOf(LocalRoom).b3s = function (action) {
+  if (this.a3r_1 && ActionType_SET_BOT_DELAY_getInstance().o1p(action))
+    return toPlayer(this, RoomBots_instance.n29(this.x3q_1, this.r3q_1, action));
+  if (this.a3r_1) {
+    this.x3q_1.k18_1.y1(this.r3q_1);
+    this.x3q_1.l18_1.y1(this.r3q_1);
   }
-  return toPlayer(this, applyAction(this, this.q3q_1, action));
+  return toPlayer(this, applyAction(this, this.r3q_1, action));
 };
-protoOf(LocalRoom).k3r = function (action) {
+protoOf(LocalRoom).l3r = function (action) {
   var out = ArrayList_init_$Create$();
   var tmp;
   if (ActionType_TIME_STEP_getInstance().o1p(action) || ActionType_SET_PAUSED_getInstance().o1p(action)) {
-    tmp = this.a3s(action);
+    tmp = this.b3s(action);
   } else {
     var tmp_0 = LinkWatch_getInstance();
     var tmp_1 = LocalRoom$sendTexts$lambda(this, out);
-    tmp = tmp_0.v38(this.w3q_1, tmp_1, LocalRoom$sendTexts$lambda_0(this, action));
+    tmp = tmp_0.w38(this.x3q_1, tmp_1, LocalRoom$sendTexts$lambda_0(this, action));
   }
   var updates = tmp;
   // Inline function 'kotlin.collections.mapTo' call
   var _iterator__ex2g4s = updates.h();
   while (_iterator__ex2g4s.i()) {
     var item = _iterator__ex2g4s.j();
-    var tmp$ret$1 = UpdateJson_getInstance().x3r(item);
+    var tmp$ret$1 = UpdateJson_getInstance().y3r(item);
     out.f(tmp$ret$1);
   }
   return out;
 };
-protoOf(LocalRoom).p3r = function () {
-  var player = this.y3q_1;
-  if (!this.z3q_1 || player == null)
+protoOf(LocalRoom).q3r = function () {
+  var player = this.z3q_1;
+  if (!this.a3r_1 || player == null)
     return null;
-  var seat = BotSeat_getInstance().c1v(this.w3q_1);
+  var seat = BotSeat_getInstance().c1v(this.x3q_1);
   var out = ArrayList_init_$Create$();
   var tmp = LinkWatch_getInstance();
   var tmp_0 = LocalRoom$botMoveTexts$lambda(this, seat, out);
-  var move = tmp.v38(this.w3q_1, tmp_0, LocalRoom$botMoveTexts$lambda_0(this, player, seat, out));
+  var move = tmp.w38(this.x3q_1, tmp_0, LocalRoom$botMoveTexts$lambda_0(this, player, seat, out));
   return move.equals(Move_NOTHING_getInstance()) ? null : out;
 };
-protoOf(LocalRoom).t3r = function () {
-  var tmp0_safe_receiver = this.w3q_1.u17_1;
+protoOf(LocalRoom).u3r = function () {
+  var tmp0_safe_receiver = this.x3q_1.u17_1;
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : fromInt(tmp0_safe_receiver);
   var tmp;
   if (tmp1_elvis_lhs == null) {
-    var tmp2_safe_receiver = this.y3q_1;
-    tmp = tmp2_safe_receiver == null ? null : tmp2_safe_receiver.u1u(this.w3q_1, BotSeat_getInstance().c1v(this.w3q_1));
+    var tmp2_safe_receiver = this.z3q_1;
+    tmp = tmp2_safe_receiver == null ? null : tmp2_safe_receiver.u1u(this.x3q_1, BotSeat_getInstance().c1v(this.x3q_1));
   } else {
     tmp = tmp1_elvis_lhs;
   }
@@ -53039,42 +53090,42 @@ protoOf(LocalRoom).t3r = function () {
   return tmp3_elvis_lhs == null ? new Long(600, 0) : tmp3_elvis_lhs;
 };
 protoOf(LocalRoom).c1a = function (room, userId, action) {
-  return RoomSeats_instance.v3o(room, userId, action, this);
+  return RoomSeats_instance.w3o(room, userId, action, this);
 };
 protoOf(LocalRoom).s1a = function (room, userId) {
-  return RoomSeats_instance.b3p(room, userId, this);
+  return RoomSeats_instance.c3p(room, userId, this);
 };
 protoOf(LocalRoom).t1a = function (room, userId, action) {
-  return RoomSeats_instance.c3p(room, userId, action, this);
+  return RoomSeats_instance.d3p(room, userId, action, this);
 };
 protoOf(LocalRoom).y1b = function (room, userId) {
-  return RoomSeats_instance.x3o(room, userId, this);
+  return RoomSeats_instance.y3o(room, userId, this);
 };
 protoOf(LocalRoom).o1a = function (type, room, userId, action) {
   return RoomBots_instance.e29(type, room, userId, action, this);
 };
 protoOf(LocalRoom).m1a = function (room, userId, action) {
-  return DeckChoice_instance.t3n(room, userId, action, this);
+  return DeckChoice_instance.u3n(room, userId, action, this);
 };
 protoOf(LocalRoom).c1i = function (room, rematch) {
   return RoomBots_instance.l29(room, this, rematch);
 };
 protoOf(LocalRoom).v1b = function (room, userId, action) {
-  return DeckChoice_instance.w3n(room, userId, action, this);
+  return DeckChoice_instance.x3n(room, userId, action, this);
 };
 protoOf(LocalRoom).q1a = function (room, userId, action) {
   return Companion_instance_30.r19(room.h17_1, 'Solo en la sala de pruebas');
 };
-protoOf(LocalRoom).s3o = function (player) {
-  player.h1e_1 = player.f1e_1 === this.q3q_1 ? this.r3q_1 : null;
-  player.i1e_1 = player.f1e_1 === this.q3q_1 ? this.s3q_1 : null;
-  player.j1e_1 = player.f1e_1 === this.q3q_1 ? this.t3q_1 : null;
+protoOf(LocalRoom).t3o = function (player) {
+  player.h1e_1 = player.f1e_1 === this.r3q_1 ? this.s3q_1 : null;
+  player.i1e_1 = player.f1e_1 === this.r3q_1 ? this.t3q_1 : null;
+  player.j1e_1 = player.f1e_1 === this.r3q_1 ? this.u3q_1 : null;
 };
-protoOf(LocalRoom).t3o = function (room) {
-  this.z3q_1 = false;
+protoOf(LocalRoom).u3o = function (room) {
+  this.a3r_1 = false;
 };
-protoOf(LocalRoom).p3n = function (deckId) {
-  var tmp0_elvis_lhs = this.u3q_1.o3q(deckId);
+protoOf(LocalRoom).q3n = function (deckId) {
+  var tmp0_elvis_lhs = this.v3q_1.p3q(deckId);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -53082,10 +53133,10 @@ protoOf(LocalRoom).p3n = function (deckId) {
     tmp = tmp0_elvis_lhs;
   }
   var deck = tmp;
-  return new Found_0(deck.i3q_1, false, null, LocalRoom$find$lambda(deck, this));
+  return new Found_0(deck.j3q_1, false, null, LocalRoom$find$lambda(deck, this));
 };
-protoOf(LocalRoom).s3n = function (room, cardId) {
-  var tmp0_elvis_lhs = this.u3q_1.p3q(cardId);
+protoOf(LocalRoom).t3n = function (room, cardId) {
+  var tmp0_elvis_lhs = this.v3q_1.q3q(cardId);
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return false;
@@ -53093,22 +53144,22 @@ protoOf(LocalRoom).s3n = function (room, cardId) {
     tmp = tmp0_elvis_lhs;
   }
   var meta = tmp;
-  Companion_getInstance_35().m3q(room, cardId, meta);
+  Companion_getInstance_35().n3q(room, cardId, meta);
   return true;
 };
 protoOf(LocalRoom).t28 = function () {
-  this.a3r_1 = this.a3r_1 + 1 | 0;
-  return 'c' + this.a3r_1;
+  this.b3r_1 = this.b3r_1 + 1 | 0;
+  return 'c' + this.b3r_1;
 };
 protoOf(LocalRoom).r28 = function (room, level) {
   var tmp = this;
   // Inline function 'kotlin.also' call
   var this_0 = BotCatalog_getInstance().r1t(level);
-  this_0.t1u(this.v3q_1);
-  tmp.y3q_1 = this_0;
+  this_0.t1u(this.w3q_1);
+  tmp.z3q_1 = this_0;
 };
 protoOf(LocalRoom).v28 = function (room) {
-  this.y3q_1 = null;
+  this.z3q_1 = null;
 };
 protoOf(LocalRoom).s28 = function (room) {
   return 1000;
@@ -53120,17 +53171,17 @@ function MatchClocks$run$lambda($m) {
 }
 function MatchClocks$run$lambda_0(this$0, $block) {
   return function () {
-    return Usefulness_getInstance().v2a(this$0.n3r_1, $block);
+    return Usefulness_getInstance().v2a(this$0.o3r_1, $block);
   };
 }
 function MatchClocks(fixedMillis, botNanos) {
-  this.l3r_1 = fixedMillis;
-  this.m3r_1 = botNanos;
-  this.n3r_1 = HashMap_init_$Create$_0();
+  this.m3r_1 = fixedMillis;
+  this.n3r_1 = botNanos;
+  this.o3r_1 = HashMap_init_$Create$_0();
 }
-protoOf(MatchClocks).o3r = function (block) {
+protoOf(MatchClocks).p3r = function (block) {
   var tmp = Clocks_getInstance();
-  var tmp0_safe_receiver = this.l3r_1;
+  var tmp0_safe_receiver = this.m3r_1;
   var tmp_0;
   if (tmp0_safe_receiver == null) {
     tmp_0 = null;
@@ -53139,7 +53190,7 @@ protoOf(MatchClocks).o3r = function (block) {
     tmp_0 = MatchClocks$run$lambda(tmp0_safe_receiver);
   }
   var tmp_1 = tmp_0;
-  return tmp.j3m(tmp_1, this.m3r_1, MatchClocks$run$lambda_0(this, block));
+  return tmp.k3m(tmp_1, this.n3r_1, MatchClocks$run$lambda_0(this, block));
 };
 function zone($this, out, name, cards) {
   out.l7(name).m7(_Char___init__impl__6a9atx(58));
@@ -53178,10 +53229,10 @@ function card_2($this, out, c) {
 }
 function MatchDigest() {
 }
-protoOf(MatchDigest).v3r = function (room) {
-  return this.c3s(this.b3s(room));
+protoOf(MatchDigest).w3r = function (room) {
+  return this.d3s(this.c3s(room));
 };
-protoOf(MatchDigest).u3r = function (room) {
+protoOf(MatchDigest).v3r = function (room) {
   var tmp0 = room.o18_1;
   var tmp$ret$0;
   $l$block: {
@@ -53209,7 +53260,7 @@ protoOf(MatchDigest).u3r = function (room) {
   }
   return tmp$ret$0 + 1 | 0;
 };
-protoOf(MatchDigest).b3s = function (room) {
+protoOf(MatchDigest).c3s = function (room) {
   var out = StringBuilder_init_$Create$();
   out.l7(room.z17_1.j2_1).m7(_Char___init__impl__6a9atx(124)).l7(room.g19_1).m7(_Char___init__impl__6a9atx(124)).l7(room.h19_1).m7(_Char___init__impl__6a9atx(124)).l7(room.c18_1).m7(_Char___init__impl__6a9atx(124)).l7(room.d18_1).m7(_Char___init__impl__6a9atx(124)).da(room.e18_1).m7(_Char___init__impl__6a9atx(124)).ea(room.u18_1).m7(_Char___init__impl__6a9atx(124)).ea(room.p18_1).m7(_Char___init__impl__6a9atx(124)).ea(room.q17_1).m7(_Char___init__impl__6a9atx(124)).l7(room.b19_1).m7(_Char___init__impl__6a9atx(10));
   var _iterator__ex2g4s = sorted(room.a18_1.v1()).h();
@@ -53231,7 +53282,7 @@ protoOf(MatchDigest).b3s = function (room) {
   }
   return out.toString();
 };
-protoOf(MatchDigest).c3s = function (text) {
+protoOf(MatchDigest).d3s = function (text) {
   var h = new Long(-2078137563, -873292572);
   var indexedObject = encodeToByteArray(text);
   var inductionVariable = 0;
@@ -53281,13 +53332,13 @@ function pending($this, p) {
   return obj_0($this, [to('controllerId', str($this, p.m21_1)), to('costIndex', num($this, p.w21_1)), to('id', str($this, p.k21_1)), to('inheritedFromImage', str($this, p.v21_1)), to('inheritedFromName', str($this, p.u21_1)), to('label', str($this, p.q21_1)), to('link', num($this, p.t21_1)), to('resolutionId', str($this, p.z21_1)), to('ritualSummonerId', str($this, p.f22_1)), to('ritualTargetId', str($this, p.e22_1)), to('saved', map_0($this, p.c22_1)), to('scriptId', str($this, p.l21_1)), to('sequenceIndex', num($this, p.b22_1)), to('sourceFieldSeq', num_0($this, p.o21_1)), to('sourceInstanceId', str($this, p.n21_1)), to('sourceName', str($this, p.p21_1)), to('stepIndex', num($this, p.a22_1)), to('subjectId', str($this, p.d22_1)), to('summonedId', str($this, p.g22_1)), to('targetIds', list_1($this, p.x21_1)), to('text', str($this, p.r21_1)), to('triggerSeq', num_0($this, p.s21_1))]);
 }
 function prompt_0($this, p) {
-  return obj_0($this, [to('cardLabels', map_0($this, p.x1m_1)), to('cards', list_1($this, p.p1m_1)), to('chosenLabel', str($this, p.o1m_1)), to('distinctLevels', bool_0($this, p.c1n_1)), to('effectId', str($this, p.i1m_1)), to('effectText', str($this, p.z1m_1)), to('effects', list_1($this, p.y1m_1)), to('exactOrNone', bool_0($this, p.b1n_1)), to('id', str($this, p.f1m_1)), to('instruction', str($this, p.n1m_1)), to('kind', $this.d3s(p.g1m_1)), to('max', num($this, p.s1m_1)), to('maxLevelSum', num($this, p.a1n_1)), to('min', num($this, p.r1m_1)), to('playerId', str($this, p.h1m_1)), to('purpose', str($this, p.j1m_1)), to('reorderRest', bool_0($this, p.t1m_1)), to('requiredIds', list_1($this, p.d1n_1)), to('restToTop', bool_0($this, p.u1m_1)), to('sourceImageUrl', str($this, p.l1m_1)), to('sourceName', str($this, p.k1m_1)), to('subjectId', str($this, p.v1m_1)), to('summonerId', str($this, p.w1m_1)), to('title', str($this, p.m1m_1)), to('topOrBottom', bool_0($this, p.e1n_1)), to('validIds', list_1($this, p.q1m_1))]);
+  return obj_0($this, [to('cardLabels', map_0($this, p.x1m_1)), to('cards', list_1($this, p.p1m_1)), to('chosenLabel', str($this, p.o1m_1)), to('distinctLevels', bool_0($this, p.c1n_1)), to('effectId', str($this, p.i1m_1)), to('effectText', str($this, p.z1m_1)), to('effects', list_1($this, p.y1m_1)), to('exactOrNone', bool_0($this, p.b1n_1)), to('id', str($this, p.f1m_1)), to('instruction', str($this, p.n1m_1)), to('kind', $this.e3s(p.g1m_1)), to('max', num($this, p.s1m_1)), to('maxLevelSum', num($this, p.a1n_1)), to('min', num($this, p.r1m_1)), to('playerId', str($this, p.h1m_1)), to('purpose', str($this, p.j1m_1)), to('reorderRest', bool_0($this, p.t1m_1)), to('requiredIds', list_1($this, p.d1n_1)), to('restToTop', bool_0($this, p.u1m_1)), to('sourceImageUrl', str($this, p.l1m_1)), to('sourceName', str($this, p.k1m_1)), to('subjectId', str($this, p.v1m_1)), to('summonerId', str($this, p.w1m_1)), to('title', str($this, p.m1m_1)), to('topOrBottom', bool_0($this, p.e1n_1)), to('validIds', list_1($this, p.q1m_1))]);
 }
 function offered($this, o) {
   return obj_0($this, [to('effectId', str($this, o.i1u_1)), to('sourceId', str($this, o.j1u_1)), to('sourceName', str($this, o.k1u_1)), to('label', str($this, o.l1u_1)), to('text', str($this, o.m1u_1)), to('inheritedFromName', str($this, o.n1u_1)), to('inheritedFromImage', str($this, o.o1u_1))]);
 }
 function combat_0($this, c) {
-  return obj_0($this, [to('attackerId', str($this, c.t1z_1)), to('attackerOwnerId', str($this, c.u1z_1)), to('blockAsked', bool_0($this, c.c20_1)), to('blockerId', str($this, c.x1z_1)), to('byEffect', bool_0($this, c.a20_1)), to('damageReplaceAsked', bool_0($this, c.h20_1)), to('damageTributeAskedAt', num($this, c.i20_1)), to('defenderId', str($this, c.v1z_1)), to('enemyDestroyed', bool_0($this, c.f20_1)), to('hitsLeft', num($this, c.d20_1)), to('phase', $this.d3s(c.z1z_1)), to('provokeAsked', bool_0($this, c.b20_1)), to('skipBlock', bool_0($this, c.g20_1)), to('step', $this.d3s(c.y1z_1)), to('targetId', str($this, c.w1z_1)), to('untilEndOfAttack', list_1($this, c.e20_1))]);
+  return obj_0($this, [to('attackerId', str($this, c.t1z_1)), to('attackerOwnerId', str($this, c.u1z_1)), to('blockAsked', bool_0($this, c.c20_1)), to('blockerId', str($this, c.x1z_1)), to('byEffect', bool_0($this, c.a20_1)), to('damageReplaceAsked', bool_0($this, c.h20_1)), to('damageTributeAskedAt', num($this, c.i20_1)), to('defenderId', str($this, c.v1z_1)), to('enemyDestroyed', bool_0($this, c.f20_1)), to('hitsLeft', num($this, c.d20_1)), to('phase', $this.e3s(c.z1z_1)), to('provokeAsked', bool_0($this, c.b20_1)), to('skipBlock', bool_0($this, c.g20_1)), to('step', $this.e3s(c.y1z_1)), to('targetId', str($this, c.w1z_1)), to('untilEndOfAttack', list_1($this, c.e20_1))]);
 }
 function activatable($this, a) {
   return obj_0($this, [to('instanceId', str($this, a.s2q_1)), to('scriptId', str($this, a.t2q_1)), to('label', str($this, a.u2q_1)), to('text', str($this, a.v2q_1))]);
@@ -53309,7 +53360,7 @@ function nonEmpty($this, name, items) {
       if (isInterface(items, KtMap)) {
         tmp = items.m() ? null : to(name, map_0($this, items));
       } else {
-        tmp = to(name, $this.d3s(items));
+        tmp = to(name, $this.e3s(items));
       }
     }
   }
@@ -53331,7 +53382,7 @@ function num_1($this, n) {
   return n == null ? JsonNull_getInstance() : double($this, n);
 }
 function double($this, d) {
-  return JsonUnquotedLiteral(Platform_instance.e3s(d));
+  return JsonUnquotedLiteral(Platform_instance.f3s(d));
 }
 function list_1($this, items) {
   var tmp;
@@ -53344,7 +53395,7 @@ function list_1($this, items) {
     var _iterator__ex2g4s = items.h();
     while (_iterator__ex2g4s.i()) {
       var item = _iterator__ex2g4s.j();
-      var tmp$ret$2 = UpdateJson_getInstance().d3s(item);
+      var tmp$ret$2 = UpdateJson_getInstance().e3s(item);
       destination.f(tmp$ret$2);
     }
     tmp = new JsonArray(destination);
@@ -53365,26 +53416,26 @@ function map_0($this, items) {
     var v = _destruct__k2r9zo.r1();
     var tmp2 = toString_0(k);
     // Inline function 'kotlin.collections.set' call
-    var value = $this.d3s(v);
+    var value = $this.e3s(v);
     out.g2(tmp2, value);
   }
   return new JsonObject(out);
 }
 function UpdateJson$PROPERTIES$delegate$lambda() {
-  return linkedMapOf([to('GameStateUpdate', toList(UpdateJson_getInstance().f3s(new GameStateUpdate()).v1())), to('PlayerState', toList(player_0(UpdateJson_getInstance(), new PlayerState(null, null)).v1())), to('CardSlot', toList(card_3(UpdateJson_getInstance(), new CardSlot()).v1())), to('FloatingEffect', toList(floating(UpdateJson_getInstance(), new FloatingEffect(null, null, null, 0, null)).v1())), to('GameLogEntry', toList(logEntry(UpdateJson_getInstance(), new GameLogEntry()).v1())), to('GameEvent', toList(event(UpdateJson_getInstance(), GameEvent_init_$Create$()).v1())), to('PendingEffect', toList(pending(UpdateJson_getInstance(), new PendingEffect()).v1())), to('Prompt', toList(prompt_0(UpdateJson_getInstance(), new Prompt()).v1())), to('OfferedEffect', toList(offered(UpdateJson_getInstance(), new OfferedEffect(null, null, null, null, null, null, null)).v1())), to('Combat', toList(combat_0(UpdateJson_getInstance(), new Combat()).v1())), to('Activatable', toList(activatable(UpdateJson_getInstance(), new Activatable(null, null, null, null)).v1()))]);
+  return linkedMapOf([to('GameStateUpdate', toList(UpdateJson_getInstance().g3s(new GameStateUpdate()).v1())), to('PlayerState', toList(player_0(UpdateJson_getInstance(), new PlayerState(null, null)).v1())), to('CardSlot', toList(card_3(UpdateJson_getInstance(), new CardSlot()).v1())), to('FloatingEffect', toList(floating(UpdateJson_getInstance(), new FloatingEffect(null, null, null, 0, null)).v1())), to('GameLogEntry', toList(logEntry(UpdateJson_getInstance(), new GameLogEntry()).v1())), to('GameEvent', toList(event(UpdateJson_getInstance(), GameEvent_init_$Create$()).v1())), to('PendingEffect', toList(pending(UpdateJson_getInstance(), new PendingEffect()).v1())), to('Prompt', toList(prompt_0(UpdateJson_getInstance(), new Prompt()).v1())), to('OfferedEffect', toList(offered(UpdateJson_getInstance(), new OfferedEffect(null, null, null, null, null, null, null)).v1())), to('Combat', toList(combat_0(UpdateJson_getInstance(), new Combat()).v1())), to('Activatable', toList(activatable(UpdateJson_getInstance(), new Activatable(null, null, null, null)).v1()))]);
 }
 function UpdateJson() {
   UpdateJson_instance = this;
   var tmp = this;
-  tmp.w3r_1 = lazy(UpdateJson$PROPERTIES$delegate$lambda);
+  tmp.x3r_1 = lazy(UpdateJson$PROPERTIES$delegate$lambda);
 }
-protoOf(UpdateJson).x3r = function (update) {
-  return JacksonText_instance.h3s(this.f3s(update));
+protoOf(UpdateJson).y3r = function (update) {
+  return JacksonText_instance.i3s(this.g3s(update));
 };
-protoOf(UpdateJson).f3s = function (u) {
-  return obj_0(this, [to('activatable', map_0(this, u.h1h_1)), to('actorId', str(this, u.q1g_1)), to('attackTargets', map_0(this, u.m1h_1)), to('bot', bool_0(this, u.x1f_1)), to('botChoices', list_1(this, u.k1g_1)), to('botDelayMs', num(this, u.e1g_1)), to('botEdge', num(this, u.f1g_1)), to('botLevel', str(this, u.j1g_1)), to('chain', list_1(this, u.c1h_1)), to('combat', this.d3s(u.e1h_1)), to('currentPhase', str(this, u.o1g_1)), to('currentTurnUserId', str(this, u.n1g_1)), to('editor', bool_0(this, u.w1f_1)), to('editorBot', bool_0(this, u.b1g_1)), to('editorSelfBot', bool_0(this, u.c1g_1)), to('endReason', str(this, u.p1h_1)), to('error', str(this, u.r1g_1)), to('event', str(this, u.p1g_1)), to('eventLog', list_1(this, u.a1h_1)), to('firstChoice', str(this, u.m1g_1)), to('firstPlayerId', str(this, u.f1h_1)), nonEmpty(this, 'formationJoins', u.n1h_1), to('hostId', str(this, u.v1f_1)), to('legalActions', map_0(this, u.l1h_1)), to('logEntry', str(this, u.z1g_1)), to('mulliganReady', list_1(this, u.l1g_1)), to('paused', bool_0(this, u.g1g_1)), to('players', map_0(this, u.u1f_1)), to('postGameChoices', map_0(this, u.t1g_1)), to('prompt', this.d3s(u.d1h_1)), to('queued', bool_0(this, u.a1g_1)), to('ranked', bool_0(this, u.y1f_1)), to('replay', bool_0(this, u.z1f_1)), to('revealedCardImageUrl', str(this, u.x1g_1)), to('revealedCardName', str(this, u.y1g_1)), to('roomId', str(this, u.s1f_1)), to('selfBotLevel', str(this, u.d1g_1)), to('sharedCounter', num(this, u.s1g_1)), to('specialSummonable', map_0(this, u.j1h_1)), to('starterAdvantageUserId', str(this, u.g1h_1)), to('status', str(this, u.t1f_1)), to('structurePlayed', list_1(this, u.i1h_1)), to('subjectUserId', str(this, u.u1g_1)), to('targetedInstanceId', str(this, u.v1g_1)), to('targetingSourceInstanceId', str(this, u.w1g_1)), to('timeline', list_1(this, u.b1h_1)), to('timelineAt', num(this, u.h1g_1)), to('timelineSize', num(this, u.i1g_1)), to('unplayable', map_0(this, u.k1h_1)), to('winnerId', str(this, u.o1h_1))]);
+protoOf(UpdateJson).g3s = function (u) {
+  return obj_0(this, [to('activatable', map_0(this, u.h1h_1)), to('actorId', str(this, u.q1g_1)), to('attackTargets', map_0(this, u.m1h_1)), to('bot', bool_0(this, u.x1f_1)), to('botChoices', list_1(this, u.k1g_1)), to('botDelayMs', num(this, u.e1g_1)), to('botEdge', num(this, u.f1g_1)), to('botLevel', str(this, u.j1g_1)), to('chain', list_1(this, u.c1h_1)), to('combat', this.e3s(u.e1h_1)), to('currentPhase', str(this, u.o1g_1)), to('currentTurnUserId', str(this, u.n1g_1)), to('editor', bool_0(this, u.w1f_1)), to('editorBot', bool_0(this, u.b1g_1)), to('editorSelfBot', bool_0(this, u.c1g_1)), to('endReason', str(this, u.p1h_1)), to('error', str(this, u.r1g_1)), to('event', str(this, u.p1g_1)), to('eventLog', list_1(this, u.a1h_1)), to('firstChoice', str(this, u.m1g_1)), to('firstPlayerId', str(this, u.f1h_1)), nonEmpty(this, 'formationJoins', u.n1h_1), to('hostId', str(this, u.v1f_1)), to('legalActions', map_0(this, u.l1h_1)), to('logEntry', str(this, u.z1g_1)), to('mulliganReady', list_1(this, u.l1g_1)), to('paused', bool_0(this, u.g1g_1)), to('players', map_0(this, u.u1f_1)), to('postGameChoices', map_0(this, u.t1g_1)), to('prompt', this.e3s(u.d1h_1)), to('queued', bool_0(this, u.a1g_1)), to('ranked', bool_0(this, u.y1f_1)), to('replay', bool_0(this, u.z1f_1)), to('revealedCardImageUrl', str(this, u.x1g_1)), to('revealedCardName', str(this, u.y1g_1)), to('roomId', str(this, u.s1f_1)), to('selfBotLevel', str(this, u.d1g_1)), to('sharedCounter', num(this, u.s1g_1)), to('specialSummonable', map_0(this, u.j1h_1)), to('starterAdvantageUserId', str(this, u.g1h_1)), to('status', str(this, u.t1f_1)), to('structurePlayed', list_1(this, u.i1h_1)), to('subjectUserId', str(this, u.u1g_1)), to('targetedInstanceId', str(this, u.v1g_1)), to('targetingSourceInstanceId', str(this, u.w1g_1)), to('timeline', list_1(this, u.b1h_1)), to('timelineAt', num(this, u.h1g_1)), to('timelineSize', num(this, u.i1g_1)), to('unplayable', map_0(this, u.k1h_1)), to('winnerId', str(this, u.o1h_1))]);
 };
-protoOf(UpdateJson).d3s = function (v) {
+protoOf(UpdateJson).e3s = function (v) {
   var tmp;
   if (v == null) {
     tmp = JsonNull_getInstance();
@@ -53453,7 +53504,7 @@ protoOf(UpdateJson).d3s = function (v) {
                                       tmp = floating(this, v);
                                     } else {
                                       if (v instanceof GameStateUpdate) {
-                                        tmp = this.f3s(v);
+                                        tmp = this.g3s(v);
                                       } else {
                                         if (isInterface(v, KtMap)) {
                                           tmp = map_0(this, v);
@@ -53470,7 +53521,7 @@ protoOf(UpdateJson).d3s = function (v) {
                                               while (inductionVariable < last) {
                                                 var item = v[inductionVariable];
                                                 inductionVariable = inductionVariable + 1 | 0;
-                                                var tmp$ret$2 = UpdateJson_getInstance().d3s(item);
+                                                var tmp$ret$2 = UpdateJson_getInstance().e3s(item);
                                                 destination.f(tmp$ret$2);
                                               }
                                               tmp = new JsonArray(destination);
@@ -53543,15 +53594,15 @@ function string_2($this, s, out) {
   out.m7(_Char___init__impl__6a9atx(34));
 }
 function JacksonText() {
-  this.g3s_1 = '0123456789ABCDEF';
+  this.h3s_1 = '0123456789ABCDEF';
 }
-protoOf(JacksonText).h3s = function (element) {
+protoOf(JacksonText).i3s = function (element) {
   // Inline function 'kotlin.also' call
   var this_0 = StringBuilder_init_$Create$();
-  JacksonText_instance.i3s(element, this_0);
+  JacksonText_instance.j3s(element, this_0);
   return this_0.toString();
 };
-protoOf(JacksonText).i3s = function (element, out) {
+protoOf(JacksonText).j3s = function (element, out) {
   if (element instanceof JsonNull)
     out.l7('null');
   else {
@@ -53572,7 +53623,7 @@ protoOf(JacksonText).i3s = function (element, out) {
         first = false;
         string_2(this, k, out);
         out.m7(_Char___init__impl__6a9atx(58));
-        this.i3s(v, out);
+        this.j3s(v, out);
       }
       out.m7(_Char___init__impl__6a9atx(125));
     } else {
@@ -53587,7 +53638,7 @@ protoOf(JacksonText).i3s = function (element, out) {
             if (i > 0) {
               out.m7(_Char___init__impl__6a9atx(44));
             }
-            this.i3s(element.l(i), out);
+            this.j3s(element.l(i), out);
           }
            while (inductionVariable <= last);
         out.m7(_Char___init__impl__6a9atx(93));
@@ -53609,9 +53660,9 @@ function JacksonText_getInstance() {
   return JacksonText_instance;
 }
 function advance_0($this, from) {
-  if (!((from == null ? null : from.m3s_1) == null))
-    return from.m3s_1;
-  var tmp1_elvis_lhs = $this.y3s_1.r3s_1;
+  if (!((from == null ? null : from.n3s_1) == null))
+    return from.n3s_1;
+  var tmp1_elvis_lhs = $this.z3s_1.s3s_1;
   var tmp;
   if (tmp1_elvis_lhs == null) {
     return null;
@@ -53619,9 +53670,9 @@ function advance_0($this, from) {
     tmp = tmp1_elvis_lhs;
   }
   var tab = tmp;
-  while ($this.v3s_1 < tab.length) {
-    var _unary__edvuaz = $this.v3s_1;
-    $this.v3s_1 = _unary__edvuaz + 1 | 0;
+  while ($this.w3s_1 < tab.length) {
+    var _unary__edvuaz = $this.w3s_1;
+    $this.w3s_1 = _unary__edvuaz + 1 | 0;
     var e = tab[_unary__edvuaz];
     if (!(e == null))
       return e;
@@ -53629,16 +53680,16 @@ function advance_0($this, from) {
   return null;
 }
 function JavaHashMap$entries$1$iterator$1(this$0) {
-  this.y3s_1 = this$0;
-  this.v3s_1 = 0;
-  this.w3s_1 = advance_0(this, null);
-  this.x3s_1 = null;
+  this.z3s_1 = this$0;
+  this.w3s_1 = 0;
+  this.x3s_1 = advance_0(this, null);
+  this.y3s_1 = null;
 }
 protoOf(JavaHashMap$entries$1$iterator$1).i = function () {
-  return !(this.w3s_1 == null);
+  return !(this.x3s_1 == null);
 };
 protoOf(JavaHashMap$entries$1$iterator$1).j = function () {
-  var tmp0_elvis_lhs = this.w3s_1;
+  var tmp0_elvis_lhs = this.x3s_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     throw NoSuchElementException_init_$Create$_0();
@@ -53646,12 +53697,12 @@ protoOf(JavaHashMap$entries$1$iterator$1).j = function () {
     tmp = tmp0_elvis_lhs;
   }
   var e = tmp;
-  this.x3s_1 = e;
-  this.w3s_1 = advance_0(this, e);
+  this.y3s_1 = e;
+  this.x3s_1 = advance_0(this, e);
   return e;
 };
 protoOf(JavaHashMap$entries$1$iterator$1).h3 = function () {
-  var tmp0_elvis_lhs = this.x3s_1;
+  var tmp0_elvis_lhs = this.y3s_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     throw IllegalStateException_init_$Create$_1();
@@ -53659,58 +53710,58 @@ protoOf(JavaHashMap$entries$1$iterator$1).h3 = function () {
     tmp = tmp0_elvis_lhs;
   }
   var e = tmp;
-  this.x3s_1 = null;
-  this.y3s_1.h2(e.k3s_1);
+  this.y3s_1 = null;
+  this.z3s_1.h2(e.l3s_1);
 };
 function Node(hash, key, value, next) {
-  this.j3s_1 = hash;
-  this.k3s_1 = key;
-  this.l3s_1 = value;
-  this.m3s_1 = next;
+  this.k3s_1 = hash;
+  this.l3s_1 = key;
+  this.m3s_1 = value;
+  this.n3s_1 = next;
 }
 protoOf(Node).q1 = function () {
-  return this.k3s_1;
-};
-protoOf(Node).r1 = function () {
   return this.l3s_1;
 };
-protoOf(Node).z3s = function (newValue) {
-  var old = this.l3s_1;
-  this.l3s_1 = newValue;
+protoOf(Node).r1 = function () {
+  return this.m3s_1;
+};
+protoOf(Node).a3t = function (newValue) {
+  var old = this.m3s_1;
+  this.m3s_1 = newValue;
   return old;
 };
 protoOf(Node).equals = function (other) {
   var tmp;
   var tmp_0;
   if (!(other == null) ? isInterface(other, Entry) : false) {
-    tmp_0 = equals_0(other.q1(), this.k3s_1);
+    tmp_0 = equals_0(other.q1(), this.l3s_1);
   } else {
     tmp_0 = false;
   }
   if (tmp_0) {
-    tmp = equals_0(other.r1(), this.l3s_1);
+    tmp = equals_0(other.r1(), this.m3s_1);
   } else {
     tmp = false;
   }
   return tmp;
 };
 protoOf(Node).hashCode = function () {
-  var tmp0_safe_receiver = this.k3s_1;
+  var tmp0_safe_receiver = this.l3s_1;
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : hashCode(tmp0_safe_receiver);
   var tmp = tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
-  var tmp2_safe_receiver = this.l3s_1;
+  var tmp2_safe_receiver = this.m3s_1;
   var tmp3_elvis_lhs = tmp2_safe_receiver == null ? null : hashCode(tmp2_safe_receiver);
   return tmp ^ (tmp3_elvis_lhs == null ? 0 : tmp3_elvis_lhs);
 };
 protoOf(Node).toString = function () {
-  return toString_0(this.k3s_1) + '=' + toString_0(this.l3s_1);
+  return toString_0(this.l3s_1) + '=' + toString_0(this.m3s_1);
 };
 function JavaHashMap_init_$Init$(from, $this) {
   JavaHashMap.call($this);
   var s = from.k();
   if (s > 0) {
     var t = numberToInt(s / 0.75 + 1.0);
-    $this.t3s_1 = Companion_instance_39.f3t(t);
+    $this.u3s_1 = Companion_instance_39.g3t(t);
     // Inline function 'kotlin.collections.iterator' call
     var _iterator__ex2g4s = from.x1().h();
     while (_iterator__ex2g4s.i()) {
@@ -53733,7 +53784,7 @@ function hash($this, key) {
   return h ^ (h >>> 16 | 0);
 }
 function find_1($this, key) {
-  var tmp0_elvis_lhs = $this.r3s_1;
+  var tmp0_elvis_lhs = $this.s3s_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -53743,21 +53794,21 @@ function find_1($this, key) {
   var tab = tmp;
   var e = tab[(tab.length - 1 | 0) & hash($this, key)];
   while (!(e == null)) {
-    if (equals_0(e.k3s_1, key))
+    if (equals_0(e.l3s_1, key))
       return e;
-    e = e.m3s_1;
+    e = e.n3s_1;
   }
   return null;
 }
 function resize($this) {
-  var old = $this.r3s_1;
+  var old = $this.s3s_1;
   var tmp1_elvis_lhs = old == null ? null : old.length;
   var oldCap = tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
-  var newCap = oldCap > 0 ? oldCap << 1 : $this.t3s_1 > 0 ? $this.t3s_1 : 16;
-  $this.t3s_1 = numberToInt(newCap * 0.75);
+  var newCap = oldCap > 0 ? oldCap << 1 : $this.u3s_1 > 0 ? $this.u3s_1 : 16;
+  $this.u3s_1 = numberToInt(newCap * 0.75);
   // Inline function 'kotlin.arrayOfNulls' call
   var tab = Array(newCap);
-  $this.r3s_1 = tab;
+  $this.s3s_1 = tab;
   if (!(old == null)) {
     var inductionVariable = 0;
     if (inductionVariable < oldCap)
@@ -53770,19 +53821,19 @@ function resize($this) {
         var hiHead = null;
         var hiTail = null;
         while (!(e == null)) {
-          var next = e.m3s_1;
-          e.m3s_1 = null;
-          if ((e.j3s_1 & oldCap) === 0) {
+          var next = e.n3s_1;
+          e.n3s_1 = null;
+          if ((e.k3s_1 & oldCap) === 0) {
             if (loTail == null)
               loHead = e;
             else
-              loTail.m3s_1 = e;
+              loTail.n3s_1 = e;
             loTail = e;
           } else {
             if (hiTail == null)
               hiHead = e;
             else
-              hiTail.m3s_1 = e;
+              hiTail.n3s_1 = e;
             hiTail = e;
           }
           e = next;
@@ -53795,13 +53846,13 @@ function resize($this) {
   return tab;
 }
 function Companion_38() {
-  this.a3t_1 = 16;
-  this.b3t_1 = 0.75;
-  this.c3t_1 = 8;
-  this.d3t_1 = 64;
-  this.e3t_1 = 1073741824;
+  this.b3t_1 = 16;
+  this.c3t_1 = 0.75;
+  this.d3t_1 = 8;
+  this.e3t_1 = 64;
+  this.f3t_1 = 1073741824;
 }
-protoOf(Companion_38).f3t = function (c) {
+protoOf(Companion_38).g3t = function (c) {
   var tmp;
   if ((c - 1 | 0) <= 0) {
     tmp = 0;
@@ -53818,42 +53869,42 @@ function Companion_getInstance_38() {
   return Companion_instance_39;
 }
 function JavaHashMap$entries$1(this$0) {
-  this.g3t_1 = this$0;
+  this.h3t_1 = this$0;
   AbstractMutableSet.call(this);
 }
 protoOf(JavaHashMap$entries$1).k = function () {
-  return this.g3t_1.s3s_1;
+  return this.h3t_1.t3s_1;
 };
-protoOf(JavaHashMap$entries$1).p36 = function (element) {
+protoOf(JavaHashMap$entries$1).q36 = function (element) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(JavaHashMap$entries$1).f = function (element) {
-  return this.p36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
+  return this.q36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
 };
 protoOf(JavaHashMap$entries$1).h = function () {
-  return new JavaHashMap$entries$1$iterator$1(this.g3t_1);
+  return new JavaHashMap$entries$1$iterator$1(this.h3t_1);
 };
 function JavaHashMap() {
   AbstractMutableMap.call(this);
-  this.r3s_1 = null;
-  this.s3s_1 = 0;
+  this.s3s_1 = null;
   this.t3s_1 = 0;
+  this.u3s_1 = 0;
   var tmp = this;
-  tmp.u3s_1 = new JavaHashMap$entries$1(this);
+  tmp.v3s_1 = new JavaHashMap$entries$1(this);
 }
 protoOf(JavaHashMap).k = function () {
-  return this.s3s_1;
+  return this.t3s_1;
 };
 protoOf(JavaHashMap).s1 = function (key) {
   return !(find_1(this, key) == null);
 };
 protoOf(JavaHashMap).u1 = function (key) {
   var tmp0_safe_receiver = find_1(this, key);
-  return tmp0_safe_receiver == null ? null : tmp0_safe_receiver.l3s_1;
+  return tmp0_safe_receiver == null ? null : tmp0_safe_receiver.m3s_1;
 };
 protoOf(JavaHashMap).g2 = function (key, value) {
   var h = hash(this, key);
-  var tmp0_elvis_lhs = this.r3s_1;
+  var tmp0_elvis_lhs = this.s3s_1;
   var tab = tmp0_elvis_lhs == null ? resize(this) : tmp0_elvis_lhs;
   var i = (tab.length - 1 | 0) & h;
   var e = tab[i];
@@ -53862,26 +53913,26 @@ protoOf(JavaHashMap).g2 = function (key, value) {
   } else {
     var bin = 0;
     $l$loop: while (true) {
-      if (equals_0(ensureNotNull(e).k3s_1, key))
-        return e.z3s(value);
+      if (equals_0(ensureNotNull(e).l3s_1, key))
+        return e.a3t(value);
       bin = bin + 1 | 0;
-      if (e.m3s_1 == null)
+      if (e.n3s_1 == null)
         break $l$loop;
-      e = e.m3s_1;
+      e = e.n3s_1;
     }
-    e.m3s_1 = new Node(h, key, value, null);
+    e.n3s_1 = new Node(h, key, value, null);
     if (bin >= 7 && tab.length < 64) {
       resize(this);
     }
   }
-  this.s3s_1 = this.s3s_1 + 1 | 0;
-  if (this.s3s_1 > this.t3s_1) {
+  this.t3s_1 = this.t3s_1 + 1 | 0;
+  if (this.t3s_1 > this.u3s_1) {
     resize(this);
   }
   return null;
 };
 protoOf(JavaHashMap).h2 = function (key) {
-  var tmp0_elvis_lhs = this.r3s_1;
+  var tmp0_elvis_lhs = this.s3s_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return null;
@@ -53893,21 +53944,21 @@ protoOf(JavaHashMap).h2 = function (key) {
   var prev = null;
   var e = tab[i];
   while (!(e == null)) {
-    if (equals_0(e.k3s_1, key)) {
+    if (equals_0(e.l3s_1, key)) {
       if (prev == null) {
-        tab[i] = e.m3s_1;
+        tab[i] = e.n3s_1;
       } else
-        prev.m3s_1 = e.m3s_1;
-      this.s3s_1 = this.s3s_1 - 1 | 0;
-      return e.l3s_1;
+        prev.n3s_1 = e.n3s_1;
+      this.t3s_1 = this.t3s_1 - 1 | 0;
+      return e.m3s_1;
     }
     prev = e;
-    e = e.m3s_1;
+    e = e.n3s_1;
   }
   return null;
 };
 protoOf(JavaHashMap).a2 = function () {
-  var tmp0_elvis_lhs = this.r3s_1;
+  var tmp0_elvis_lhs = this.s3s_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -53916,33 +53967,33 @@ protoOf(JavaHashMap).a2 = function () {
   }
   var tab = tmp;
   fill(tab, null);
-  this.s3s_1 = 0;
+  this.t3s_1 = 0;
 };
 protoOf(JavaHashMap).x1 = function () {
-  return this.u3s_1;
+  return this.v3s_1;
 };
 function Platform() {
 }
-protoOf(Platform).i38 = function () {
+protoOf(Platform).j38 = function () {
   return Default_getInstance().ue();
 };
 protoOf(Platform).x1u = function (type) {
   return emptyList();
 };
-protoOf(Platform).h3m = function () {
+protoOf(Platform).i3m = function () {
   return numberToLong(Date.now());
 };
-protoOf(Platform).i3m = function () {
+protoOf(Platform).j3m = function () {
   var millis = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
   return numberToLong(millis * 1000000.0);
 };
-protoOf(Platform).b3o = function () {
-  return new Instant(this.h3m());
+protoOf(Platform).c3o = function () {
+  return new Instant(this.i3m());
 };
 protoOf(Platform).s1s = function (pattern) {
-  return Regex_init_$Create$(JavaRegex_instance.n3m(pattern));
+  return Regex_init_$Create$(JavaRegex_instance.o3m(pattern));
 };
-protoOf(Platform).e3s = function (value) {
+protoOf(Platform).f3s = function (value) {
   if (isNaN_0(value))
     return 'NaN';
   if (isInfinite(value))
@@ -54018,10 +54069,10 @@ protoOf(Platform).v1h = function () {
      while (inductionVariable < 32);
   return this_0.toString();
 };
-protoOf(Platform).m2t = function () {
+protoOf(Platform).n2t = function () {
   return new JavaHashMap();
 };
-protoOf(Platform).s2y = function (from) {
+protoOf(Platform).t2y = function (from) {
   return JavaHashMap_init_$Create$(from);
 };
 protoOf(Platform).a1x = function () {
@@ -54030,10 +54081,10 @@ protoOf(Platform).a1x = function () {
 protoOf(Platform).j28 = function () {
   return new IdentityMap();
 };
-protoOf(Platform).f3o = function (o) {
+protoOf(Platform).g3o = function (o) {
   return null;
 };
-protoOf(Platform).i3o = function (o) {
+protoOf(Platform).j3o = function (o) {
   return null;
 };
 var Platform_instance;
@@ -54054,22 +54105,22 @@ function computeIfAbsentAtomic(_this__u8e3s4, key, compute) {
   return tmp;
 }
 function Instant(epochMillis) {
-  this.h3t_1 = epochMillis;
+  this.i3t_1 = epochMillis;
 }
 protoOf(Instant).equals = function (other) {
   var tmp;
   if (other instanceof Instant) {
-    tmp = equalsLong(other.h3t_1, this.h3t_1);
+    tmp = equalsLong(other.i3t_1, this.i3t_1);
   } else {
     tmp = false;
   }
   return tmp;
 };
 protoOf(Instant).hashCode = function () {
-  return this.h3t_1.hashCode();
+  return this.i3t_1.hashCode();
 };
 protoOf(Instant).toString = function () {
-  return (new Date(toNumber(this.h3t_1))).toISOString();
+  return (new Date(toNumber(this.i3t_1))).toISOString();
 };
 function LocalValue(initial) {
   initial = initial === VOID ? null : initial;
@@ -54107,69 +54158,69 @@ protoOf(AtomicCounter).toString = function () {
   return this.l1q_1.toString();
 };
 function AtomicFlag() {
-  this.i3t_1 = false;
+  this.j3t_1 = false;
 }
 function IdentityMap$Entries$iterator$1($keys, this$0) {
-  this.l3t_1 = $keys;
-  this.m3t_1 = this$0;
-  this.j3t_1 = 0;
-  this.k3t_1 = -1;
+  this.m3t_1 = $keys;
+  this.n3t_1 = this$0;
+  this.k3t_1 = 0;
+  this.l3t_1 = -1;
 }
 protoOf(IdentityMap$Entries$iterator$1).i = function () {
-  return this.j3t_1 < this.l3t_1.length;
+  return this.k3t_1 < this.m3t_1.length;
 };
 protoOf(IdentityMap$Entries$iterator$1).j = function () {
   if (!this.i())
     throw NoSuchElementException_init_$Create$_0();
   var tmp = this;
-  var _unary__edvuaz = this.j3t_1;
-  this.j3t_1 = _unary__edvuaz + 1 | 0;
-  tmp.k3t_1 = _unary__edvuaz;
-  return new Entry_1(this.m3t_1, this.l3t_1[this.k3t_1]);
+  var _unary__edvuaz = this.k3t_1;
+  this.k3t_1 = _unary__edvuaz + 1 | 0;
+  tmp.l3t_1 = _unary__edvuaz;
+  return new Entry_1(this.n3t_1, this.m3t_1[this.l3t_1]);
 };
 protoOf(IdentityMap$Entries$iterator$1).h3 = function () {
   // Inline function 'kotlin.check' call
-  if (!(this.k3t_1 >= 0)) {
+  if (!(this.l3t_1 >= 0)) {
     var message = 'next() first';
     throw IllegalStateException_init_$Create$(toString(message));
   }
-  this.m3t_1.r3t_1.delete(this.l3t_1[this.k3t_1]);
-  this.k3t_1 = -1;
+  this.n3t_1.s3t_1.delete(this.m3t_1[this.l3t_1]);
+  this.l3t_1 = -1;
 };
 function Entries_0($outer) {
-  this.s3t_1 = $outer;
+  this.t3t_1 = $outer;
   AbstractMutableSet.call(this);
 }
 protoOf(Entries_0).k = function () {
-  return this.s3t_1.k();
+  return this.t3t_1.k();
 };
-protoOf(Entries_0).p36 = function (element) {
+protoOf(Entries_0).q36 = function (element) {
   throw UnsupportedOperationException_init_$Create$();
 };
 protoOf(Entries_0).f = function (element) {
-  return this.p36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
+  return this.q36((!(element == null) ? isInterface(element, MutableEntry) : false) ? element : THROW_CCE());
 };
 protoOf(Entries_0).h = function () {
   // Inline function 'kotlin.js.unsafeCast' call
-  var keys = Array.from(this.s3t_1.r3t_1.keys());
-  return new IdentityMap$Entries$iterator$1(keys, this.s3t_1);
+  var keys = Array.from(this.t3t_1.s3t_1.keys());
+  return new IdentityMap$Entries$iterator$1(keys, this.t3t_1);
 };
 function Entry_1($outer, key) {
-  this.u3t_1 = $outer;
-  this.t3t_1 = key;
+  this.v3t_1 = $outer;
+  this.u3t_1 = key;
 }
 protoOf(Entry_1).q1 = function () {
-  return this.t3t_1;
+  return this.u3t_1;
 };
 protoOf(Entry_1).r1 = function () {
   // Inline function 'kotlin.js.unsafeCast' call
-  return this.u3t_1.r3t_1.get(this.t3t_1);
+  return this.v3t_1.s3t_1.get(this.u3t_1);
 };
 protoOf(Entry_1).equals = function (other) {
   var tmp;
   var tmp_0;
   if (!(other == null) ? isInterface(other, Entry) : false) {
-    tmp_0 = other.q1() === this.t3t_1;
+    tmp_0 = other.q1() === this.u3t_1;
   } else {
     tmp_0 = false;
   }
@@ -54182,7 +54233,7 @@ protoOf(Entry_1).equals = function (other) {
 };
 protoOf(Entry_1).hashCode = function () {
   // Inline function 'kotlin.hashCode' call
-  var tmp0_safe_receiver = this.t3t_1;
+  var tmp0_safe_receiver = this.u3t_1;
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : hashCode(tmp0_safe_receiver);
   var tmp = tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
   // Inline function 'kotlin.hashCode' call
@@ -54191,25 +54242,25 @@ protoOf(Entry_1).hashCode = function () {
   return tmp ^ (tmp1_elvis_lhs_0 == null ? 0 : tmp1_elvis_lhs_0);
 };
 protoOf(Entry_1).toString = function () {
-  return toString_0(this.t3t_1) + '=' + toString_0(this.r1());
+  return toString_0(this.u3t_1) + '=' + toString_0(this.r1());
 };
 function IdentityMap() {
   AbstractMutableMap.call(this);
-  this.r3t_1 = new Map();
+  this.s3t_1 = new Map();
 }
 protoOf(IdentityMap).k = function () {
   // Inline function 'kotlin.js.unsafeCast' call
-  return this.r3t_1.size;
+  return this.s3t_1.size;
 };
 protoOf(IdentityMap).s1 = function (key) {
   // Inline function 'kotlin.js.unsafeCast' call
-  return this.r3t_1.has(key);
+  return this.s3t_1.has(key);
 };
 protoOf(IdentityMap).u1 = function (key) {
   var tmp;
   if (this.s1(key)) {
     // Inline function 'kotlin.js.unsafeCast' call
-    tmp = this.r3t_1.get(key);
+    tmp = this.s3t_1.get(key);
   } else {
     tmp = null;
   }
@@ -54217,40 +54268,40 @@ protoOf(IdentityMap).u1 = function (key) {
 };
 protoOf(IdentityMap).g2 = function (key, value) {
   var old = this.u1(key);
-  this.r3t_1.set(key, value);
+  this.s3t_1.set(key, value);
   return old;
 };
 protoOf(IdentityMap).h2 = function (key) {
   var old = this.u1(key);
-  this.r3t_1.delete(key);
+  this.s3t_1.delete(key);
   return old;
 };
 protoOf(IdentityMap).a2 = function () {
-  this.r3t_1.clear();
+  this.s3t_1.clear();
 };
 protoOf(IdentityMap).x1 = function () {
   return new Entries_0(this);
 };
 //region block: post-declaration
-protoOf(DamageHandler).c3i = answer;
-protoOf(DrawHandler).c3i = answer;
-protoOf(GemsHandler).c3i = answer;
-protoOf(LookHandler).c3i = answer;
-protoOf(ModifyHandler).c3i = answer;
-protoOf(SummonSpecialHandler).c3i = answer;
-protoOf(SummonSpecial).c2t = needsCards;
-protoOf(Attack).c2t = needsCards;
-protoOf(AtEndOfTurn).c2t = needsCards;
-protoOf(Watch_0).c2t = needsCards;
-protoOf(Draw).c2t = needsCards;
-protoOf(Gems_0).c2t = needsCards;
-protoOf(Damage).c2t = needsCards;
-protoOf(Look).c2t = needsCards;
-protoOf(Flip).c2t = needsCards;
-protoOf(Modify).c2t = needsCards;
-protoOf(LocalRoom).u3o = forgetSessions;
-protoOf(LocalRoom).q3n = refusal;
-protoOf(LocalRoom).r3n = withFinishes;
+protoOf(DamageHandler).d3i = answer;
+protoOf(DrawHandler).d3i = answer;
+protoOf(GemsHandler).d3i = answer;
+protoOf(LookHandler).d3i = answer;
+protoOf(ModifyHandler).d3i = answer;
+protoOf(SummonSpecialHandler).d3i = answer;
+protoOf(SummonSpecial).d2t = needsCards;
+protoOf(Attack).d2t = needsCards;
+protoOf(AtEndOfTurn).d2t = needsCards;
+protoOf(Watch_0).d2t = needsCards;
+protoOf(Draw).d2t = needsCards;
+protoOf(Gems_0).d2t = needsCards;
+protoOf(Damage).d2t = needsCards;
+protoOf(Look).d2t = needsCards;
+protoOf(Flip).d2t = needsCards;
+protoOf(Modify).d2t = needsCards;
+protoOf(LocalRoom).v3o = forgetSessions;
+protoOf(LocalRoom).r3n = refusal;
+protoOf(LocalRoom).s3n = withFinishes;
 protoOf(LocalRoom).u28 = poolDeck;
 protoOf(LocalRoom).w28 = newSelfBot;
 protoOf(LocalRoom).x28 = dropSelfBot;

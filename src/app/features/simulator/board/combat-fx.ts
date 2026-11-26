@@ -243,8 +243,8 @@ export class CombatFx {
   }
 
   /**
-   * An effect activated: its card (on the table, in a hand or on its pile) glows in the effects' color and the effect
-   * awakens on it (a circle of runes, a gleam, motes of light: FxDraw.magic); done when it has gone.
+   * An effect activated: its card (on the table, in a hand or on its pile) glows white and a blue mist with motes of
+   * light spreads under it (FxDraw.mist); done when it has gone.
    */
   activation(sourceId: string, state: GameState | null): Promise<void> {
     const where = pileOf(state, sourceId);
@@ -253,13 +253,13 @@ export class CombatFx {
     card.animate(
       [
         { filter: 'none' },
-        { filter: 'brightness(1.3) drop-shadow(0 0 18px var(--color-sim-effect)) drop-shadow(0 0 5px #fff)', offset: 0.3 },
-        { filter: 'brightness(1.12) drop-shadow(0 0 12px var(--color-sim-effect))', offset: 0.75 },
+        { filter: 'brightness(1.35) drop-shadow(0 0 16px #fff) drop-shadow(0 0 6px #fff)', offset: 0.3 },
+        { filter: 'brightness(1.15) drop-shadow(0 0 12px #fff)', offset: 0.7 },
         { filter: 'none' },
       ],
       { duration: TIMING.activation, easing: 'ease-out' },
     );
-    return this.draw.magic(card);
+    return this.draw.mist(card);
   }
 
   /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */

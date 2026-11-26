@@ -15,8 +15,11 @@ export const TIMING = {
   arrow: 950,
   /** A sign over a card (sword, shield). */
   badge: 1100,
-  /** An effect awakening on its card: a circle of runes, a gleam, motes of light. */
+  /** An effect activated on its card: it glows, a blue mist with motes of light under it. */
   activation: 1300,
+  /** A summon by ritual: the circle of runes, opening this long before the card lands. */
+  ritual: 1300,
+  ritualLead: 450,
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */

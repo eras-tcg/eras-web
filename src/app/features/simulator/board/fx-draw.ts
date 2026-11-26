@@ -1,13 +1,18 @@
 import { BoardAnimations } from './board-animations';
 import { centerOf } from './board-dom';
-import { overlayFor } from './table-plane';
+import { overlayFor, tablePlane, underTable } from './table-plane';
 import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
+/** An effect's mist: its blue clouds (their core and their edge) and the motes of light rising from it. */
+const MIST_CORE = 'rgb(120 175 255 / 75%)';
+const MIST_EDGE = 'rgb(40 100 255 / 35%)';
+const MOTE = '#7cc4ff';
+
 /**
  * What the board's effects draw over the table, lying on it when it leans ("Mesa en perspectiva"): curved arrows,
- * signs over a card, an effect awakening on a card, text rising and fading, a pile shaking. Each one removes itself.
+ * signs over a card, an effect's mist under a card, text rising and fading, a pile shaking. Each one removes itself.
  */
 export class FxDraw {
   /** The screen's layer for the arrows of a flat table. */
@@ -120,127 +125,112 @@ export class FxDraw {
   }
 
   /**
-   * An effect awakening on a card (lying on the table as the card does, turned as it is): a circle of runes opens
-   * around it, turning, and fades; a gleam sweeps across the card; motes of light rise from it and drift off. In the
-   * effects' color. Done when it has gone.
+   * An effect activated on a card: a blue mist spreads under it, swirling, with motes of light rising from it, and
+   * fades. Under everything on the table when the card lies on it; over it elsewhere (a hand, a plate). Done when it
+   * has gone.
    */
-  magic(card: HTMLElement): Promise<void> {
-    const over = overlayFor(this.document, card, LAYER.fx);
+  mist(card: HTMLElement): Promise<void> {
     const c = centerOf(card);
-    const at = over.at(c.x, c.y);
     const r = card.getBoundingClientRect();
     const w = card.offsetWidth || r.width;
     const h = card.offsetHeight || r.height;
-    const turn = card.classList.contains('tapped') ? ' rotate(90deg)' : '';
+    const size = Math.max(w, h) * 2.3;
     const d = TIMING.activation;
-    const color = 'var(--color-sim-effect)';
-    const made: Element[] = [];
-    const runs: Promise<unknown>[] = [];
-    const place = (el: HTMLElement | SVGElement, ew: number, eh: number) => {
-      Object.assign(el.style, {
+    const plane = tablePlane(this.document);
+    const lying = plane ? plane.holds(card) : !!card.closest('.plane');
+    const under = lying ? underTable(this.document, c, size, size) : null;
+    let host: HTMLElement;
+    let remove: () => void;
+    if (under) {
+      host = under.el;
+      remove = under.remove;
+    } else {
+      const over = overlayFor(this.document, card, LAYER.fx);
+      const at = over.at(c.x, c.y);
+      host = this.document.createElement('div');
+      Object.assign(host.style, {
         position: over.position,
-        left: `${at.x - ew / 2}px`,
-        top: `${at.y - eh / 2}px`,
-        width: `${ew}px`,
-        height: `${eh}px`,
+        left: `${at.x - size / 2}px`,
+        top: `${at.y - size / 2}px`,
+        width: `${size}px`,
+        height: `${size}px`,
         zIndex: LAYER.fx,
         pointerEvents: 'none',
-        overflow: 'visible',
       });
-      over.host.append(el);
-      made.push(el);
-    };
+      over.host.append(host);
+      remove = () => {
+        host.remove();
+        over.remove();
+      };
+    }
     this.animations.hold(d);
-
-    // The circle of runes: two rings, the outer one notched with runes, a six-pointed star inside; it opens out turning
-    const size = Math.max(w, h) * 1.45;
-    const sigil = this.document.createElementNS(SVG, 'svg');
-    sigil.setAttribute('viewBox', '-50 -50 100 100');
-    const runes = Array.from({ length: 24 }, (_, i) => {
-      const a = (i / 24) * Math.PI * 2;
-      const x = Math.cos(a) * 44;
-      const y = Math.sin(a) * 44;
-      const deg = (a * 180) / Math.PI + 90;
-      // A small mark, one of three shapes, standing on the ring
-      const mark = ['M-1.4 -1.6 L0 1.6 L1.4 -1.6', 'M-1.4 0 H1.4 M0 -1.7 V1.7', 'M-1.2 -1.6 V1.6 M-1.2 0 L1.3 -1.6'][i % 3];
-      return `<path d="${mark}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${deg.toFixed(1)})"/>`;
-    }).join('');
-    const star = (k: number) =>
-      Array.from({ length: 3 }, (_, i) => {
-        const a = (i / 3) * Math.PI * 2 + (k * Math.PI) / 3 - Math.PI / 2;
-        return `${(Math.cos(a) * 34).toFixed(2)},${(Math.sin(a) * 34).toFixed(2)}`;
-      }).join(' ');
-    sigil.innerHTML =
-      `<g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 2px ${color}) drop-shadow(0 0 5px ${color})">` +
-      `<circle r="48" stroke-width="0.9"/><circle r="40" stroke-width="0.6" stroke-dasharray="2 1.5"/>` +
-      `<g stroke-width="0.7">${runes}</g>` +
-      `<polygon points="${star(0)}" stroke-width="0.6"/><polygon points="${star(1)}" stroke-width="0.6"/>` +
-      `<circle r="17" stroke-width="0.5"/></g>`;
-    place(sigil, size, size);
-    sigil.style.opacity = '0';
-    runs.push(
-      sigil.animate(
-        [
-          { opacity: 0, transform: `scale(0.55) rotate(-40deg)` },
-          { opacity: 1, transform: `scale(1) rotate(0deg)`, offset: 0.3 },
-          { opacity: 0.85, transform: `scale(1.04) rotate(25deg)`, offset: 0.75 },
-          { opacity: 0, transform: `scale(1.12) rotate(45deg)` },
-        ],
-        { duration: d, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-      ).finished,
-    );
-
-    // The gleam: a band of light sweeping across the card's face, corner to corner
-    const shine = this.document.createElement('div');
-    place(shine, w, h);
-    Object.assign(shine.style, { overflow: 'hidden', borderRadius: 'var(--radius-card)', transform: turn.trim() || 'none' });
-    const band = this.document.createElement('div');
-    Object.assign(band.style, {
-      position: 'absolute',
-      inset: '-50%',
-      background: `linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0%) 44%, rgb(255 255 255 / 75%) 50%, color-mix(in srgb, ${color} 60%, transparent) 53%, transparent 60%)`,
-      mixBlendMode: 'screen',
-    });
-    shine.append(band);
-    runs.push(
-      band.animate([{ transform: 'translate(-45%, -30%)' }, { transform: 'translate(45%, 30%)' }], {
-        duration: d * 0.45,
-        delay: d * 0.18,
-        easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
-        fill: 'both',
-      }).finished,
-    );
-
-    // Motes of light rising from the card, drifting and twinkling out
-    for (let i = 0; i < 18; i++) {
-      const mote = this.document.createElement('div');
-      const s = 2 + Math.random() * 3;
-      place(mote, s, s);
-      const white = Math.random() < 0.4;
-      Object.assign(mote.style, { borderRadius: '50%', background: white ? '#fff' : color, boxShadow: `0 0 ${4 + s * 1.5}px ${white ? '#fff' : color}`, opacity: '0' });
-      const x0 = (Math.random() - 0.5) * w;
-      const y0 = (Math.random() - 0.2) * h * 0.6;
-      const rise = h * (0.45 + Math.random() * 0.5);
-      const drift = (Math.random() - 0.5) * w * 0.5;
+    const runs: Promise<unknown>[] = [];
+    // The mist: soft blue clouds, each a little off the middle, swelling and turning slowly as they fade
+    for (let i = 0; i < 4; i++) {
+      const cloud = this.document.createElement('div');
+      const ox = (Math.random() - 0.5) * size * 0.18;
+      const oy = (Math.random() - 0.5) * size * 0.18;
+      const spin = (Math.random() < 0.5 ? -1 : 1) * (25 + Math.random() * 30);
+      Object.assign(cloud.style, {
+        position: 'absolute',
+        inset: `${8 + i * 4}%`,
+        borderRadius: '50%',
+        background: `radial-gradient(ellipse ${60 + Math.random() * 25}% ${50 + Math.random() * 25}% at ${45 + Math.random() * 10}% ${45 + Math.random() * 10}%, ${MIST_CORE}, ${MIST_EDGE} 45%, transparent 72%)`,
+        filter: 'blur(10px)',
+        mixBlendMode: 'screen',
+        opacity: '0',
+      });
+      host.append(cloud);
       runs.push(
-        mote.animate(
+        cloud.animate(
           [
-            { opacity: 0, transform: `translate(${x0}px, ${y0}px) scale(0.4)` },
-            { opacity: 1, transform: `translate(${x0 + drift * 0.3}px, ${y0 - rise * 0.3}px) scale(1)`, offset: 0.3 },
-            { opacity: 0.7, transform: `translate(${x0 + drift * 0.7}px, ${y0 - rise * 0.7}px) scale(0.9)`, offset: 0.7 },
-            { opacity: 0, transform: `translate(${x0 + drift}px, ${y0 - rise}px) scale(0.3)` },
+            { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(0.55) rotate(0deg)` },
+            { opacity: 0.95, transform: `translate(${ox}px, ${oy}px) scale(0.95) rotate(${spin * 0.4}deg)`, offset: 0.3 },
+            { opacity: 0.7, transform: `translate(${ox * 1.4}px, ${oy * 1.4}px) scale(1.15) rotate(${spin * 0.8}deg)`, offset: 0.7 },
+            { opacity: 0, transform: `translate(${ox * 1.8}px, ${oy * 1.8}px) scale(1.3) rotate(${spin}deg)` },
           ],
-          { duration: d * (0.55 + Math.random() * 0.35), delay: d * (0.1 + Math.random() * 0.3), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)', fill: 'backwards' },
+          { duration: d, delay: i * 40, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)', fill: 'backwards' },
         ).finished,
       );
     }
-
+    // Motes of light rising out of the mist, drifting and twinkling out
+    for (let i = 0; i < 16; i++) {
+      const mote = this.document.createElement('div');
+      const s = 2 + Math.random() * 3;
+      const a = Math.random() * Math.PI * 2;
+      const rad = Math.max(w, h) * (0.35 + Math.random() * 0.4);
+      const x0 = size / 2 + Math.cos(a) * rad;
+      const y0 = size / 2 + Math.sin(a) * rad * 0.8;
+      const rise = h * (0.3 + Math.random() * 0.45);
+      const drift = (Math.random() - 0.5) * w * 0.4;
+      const white = Math.random() < 0.35;
+      Object.assign(mote.style, {
+        position: 'absolute',
+        left: `${x0 - s / 2}px`,
+        top: `${y0 - s / 2}px`,
+        width: `${s}px`,
+        height: `${s}px`,
+        borderRadius: '50%',
+        background: white ? '#fff' : MOTE,
+        boxShadow: `0 0 ${4 + s * 1.5}px ${white ? '#fff' : MOTE}`,
+        opacity: '0',
+      });
+      host.append(mote);
+      runs.push(
+        mote.animate(
+          [
+            { opacity: 0, transform: 'translate(0, 0) scale(0.4)' },
+            { opacity: 1, transform: `translate(${drift * 0.3}px, ${-rise * 0.3}px) scale(1)`, offset: 0.3 },
+            { opacity: 0.6, transform: `translate(${drift * 0.7}px, ${-rise * 0.7}px) scale(0.9)`, offset: 0.7 },
+            { opacity: 0, transform: `translate(${drift}px, ${-rise}px) scale(0.3)` },
+          ],
+          { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.12 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)', fill: 'backwards' },
+        ).finished,
+      );
+    }
     return Promise.all(runs)
       .catch(() => undefined)
-      .then(() => {
-        made.forEach((el) => el.remove());
-        over.remove();
-      });
+      .then(remove);
   }
 
   /** Text that rises from a point of the screen and fades. */

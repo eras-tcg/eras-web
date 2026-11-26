@@ -358,6 +358,12 @@ export class CardFlightsComponent {
     if (!this.seen.size && !this.handSeen.size) return false;
     let summoned = false;
     const me = this.me();
+    const rituals = new Set(
+      this.timeline
+        .peek(state)
+        .filter((e) => e.type === 'SPECIAL_SUMMON' && e.data?.['summonType'] === 'ritual')
+        .map((e) => e.cardInstanceId),
+    );
     for (const p of Object.values(state.players ?? {})) {
       const front = new Set(fieldRows(p.field).front.map((c) => c.instanceId));
       for (const c of p.field) {
@@ -383,7 +389,7 @@ export class CardFlightsComponent {
         const weight = impactWeight(displayStrength(c));
         const { hang, duration } = summonTiming(weight);
         if (from) this.glide(sprite, card, c, from, duration, hang);
-        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight);
+        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, rituals.has(c.instanceId));
         summoned = true;
       }
     }

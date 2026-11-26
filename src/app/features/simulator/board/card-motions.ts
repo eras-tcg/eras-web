@@ -1,7 +1,8 @@
 import { BoardAnimations } from './board-animations';
 import { quake, quakesWithTable } from './board-quake';
 import { Seen, TableMeasure } from './card-seen';
-import { TablePlane, overlayFor, tablePlane } from './table-plane';
+import { TablePlane, overlayFor, tablePlane, underTable } from './table-plane';
+import { runeCircle } from './ritual-circle';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 import { CARD_H, CARD_W, Point, seeded, shatterShape } from './shatter-shape';
@@ -256,13 +257,17 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength): it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
+   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength), into a circle of runes when by `ritual`: it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
-  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5): void {
+  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, ritual = false): void {
     if (this.animations.still()) return;
-    this.run(() => this.burstNow(card, landing, mine, delay, weight));
+    this.run(() => {
+      // By ritual: a circle of runes opens where it lands as it comes down
+      if (ritual) setTimeout(() => void runeCircle(this.document, this.animations, card), Math.max(0, delay - TIMING.ritualLead));
+      this.burstNow(card, landing, mine, delay, weight);
+    });
   }
 
   private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number): void {
@@ -513,31 +518,13 @@ export class CardMotions {
   private circuits(center: { x: number; y: number }, w: number, h: number, color: string, delay: number): void {
     const life = TIMING.burst * 0.85;
     const edge = () => edgePoint(w, h);
-    const plane = this.document.querySelector<HTMLElement>('.board .table .plane');
-    if (!plane) return;
-    const leaning = tablePlane(this.document);
     const span = Math.max(w, h) * 2.4;
+    const under = underTable(this.document, center, span, span);
+    if (!under) return;
     const svg = this.document.createElementNS(SVG, 'svg');
     svg.setAttribute('viewBox', `${-span / 2} ${-span / 2} ${span} ${span}`);
-    // Under everything on the table: in the leaning table's depth, a pixel under its cards and zones (and over the
-    // playmats, two under); on a flat table, at the back of the plane, set apart for it while it shows
-    Object.assign(svg.style, { position: 'absolute', width: `${span}px`, height: `${span}px`, pointerEvents: 'none', overflow: 'visible' });
-    let isolated = false;
-    if (leaning) svg.style.transform = 'translateZ(-1px)';
-    else {
-      svg.style.zIndex = '-1';
-      if (!plane.style.isolation) {
-        plane.style.isolation = 'isolate';
-        isolated = true;
-      }
-    }
-    plane.prepend(svg);
-    // Placed in the plane's box (the table's, when the flat plane is not positioned)
-    const positioned = this.document.defaultView?.getComputedStyle(plane).position !== 'static';
-    const box = (positioned ? plane : (plane.offsetParent ?? plane)).getBoundingClientRect();
-    const at = leaning ? leaning.toLocal(center.x, center.y) : { x: center.x - box.left, y: center.y - box.top };
-    svg.style.left = `${at.x - span / 2}px`;
-    svg.style.top = `${at.y - span / 2}px`;
+    Object.assign(svg.style, { width: '100%', height: '100%', overflow: 'visible' });
+    under.el.append(svg);
     const unit = Math.max(w, h);
     const runs: Promise<unknown>[] = [];
     for (let i = 0; i < 12; i++) {
@@ -575,10 +562,7 @@ export class CardMotions {
     }
     Promise.all(runs)
       .catch(() => undefined)
-      .then(() => {
-        svg.remove();
-        if (isolated) plane.style.isolation = '';
-      });
+      .then(under.remove);
   }
 
   /**

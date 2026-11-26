@@ -127,7 +127,7 @@ function completed(
 
 /**
  * Ascenso, a promotion in rank: the card's edge lights up gold on the table, and the light rises from it as a wall all
- * round the card, its top a bright line going up, lighting the card from every side; then the wall fades as it goes on
+ * round the card, fading out towards its top, lighting the card from every side; then the wall fades as it goes on
  * up, the card glows gold faintly and embers rise. On the leaning table the wall stands up from it in depth; on a flat
  * one a curtain of light rises up the screen from the card's foot.
  */
@@ -166,7 +166,7 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
       { duration: d, easing: 'linear' },
     ),
   );
-  // The wall: rising (its height grows from the edge, its top a bright line), holding, then fading as it goes on up
+  // The wall: rising (its height grows from the edge, fading out towards its top), holding, then fading as it goes on up
   const rise = (stand: string, grow: 'scaleX' | 'scaleY') =>
     [
       { opacity: 0, transform: `${stand} ${grow}(0)` },
@@ -184,23 +184,23 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
     // Along the foot and the head: turned up on their lower edge
     for (const y of [y0 + h, y0]) {
       wall(
-        { left: `${x0}px`, top: `${y - tall}px`, width: `${w}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top'), borderTop: rim },
+        { left: `${x0}px`, top: `${y - tall}px`, width: `${w}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top') },
         rise('rotateX(-90deg)', 'scaleY'),
       );
     }
     // Along the sides: the left one turned up on its left edge, the right one on its right edge
     wall(
-      { left: `${x0}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '0 50%', background: glow('right'), borderRight: rim },
+      { left: `${x0}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '0 50%', background: glow('right') },
       rise('rotateY(-90deg)', 'scaleX'),
     );
     wall(
-      { left: `${x0 + w - tall}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '100% 50%', background: glow('left'), borderLeft: rim },
+      { left: `${x0 + w - tall}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '100% 50%', background: glow('left') },
       rise('rotateY(90deg)', 'scaleX'),
     );
   } else {
     // Flat: a curtain of light rising up the screen from the card's foot, as wide as the card
     wall(
-      { left: `${at.x - w / 2}px`, top: `${at.y + h / 2 - tall * 1.4}px`, width: `${w}px`, height: `${tall * 1.4}px`, transformOrigin: '50% 100%', background: glow('top'), borderTop: rim },
+      { left: `${at.x - w / 2}px`, top: `${at.y + h / 2 - tall * 1.4}px`, width: `${w}px`, height: `${tall * 1.4}px`, transformOrigin: '50% 100%', background: glow('top') },
       rise('', 'scaleY'),
     );
   }

@@ -127,7 +127,7 @@ function completed(
 
 /**
  * Ascenso, a promotion in rank: the card's edge lights up gold on the table, and the light rises from it as a wall all
- * round the card, fading out towards its top, lighting the card from every side; then the wall fades as it goes on
+ * round the card (round its rounded corners too), fading out towards its top, lighting the card from every side; then the wall fades as it goes on
  * up, the card glows gold faintly and embers rise. On the leaning table the wall stands up from it in depth; on a flat
  * one a curtain of light rises up the screen from the card's foot.
  */
@@ -180,25 +180,37 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const wall = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[]) =>
     keep(add({ zIndex: LAYER.fx, ...style }, frames, { duration: d, easing: 'linear' }));
   if (deep) {
-    // Four sides standing up from the card's edges (each laid on the table out from its edge, then turned up on it)
+    // Panels standing up all round the card's edge, its rounded corners too: the edge as a ring of points (the corners
+    // as arcs), a panel on each stretch between two, laid on the table out from it, turned up on it, then turned on the
+    // table to lie along it
+    const r = Math.min(w, h) * 0.032 * 1.4;
     const x0 = at.x - w / 2;
     const y0 = at.y - h / 2;
-    // Along the foot and the head: turned up on their lower edge
-    for (const y of [y0 + h, y0]) {
+    const corners: [number, number, number][] = [
+      [x0 + w - r, y0 + h - r, 0],
+      [x0 + r, y0 + h - r, 90],
+      [x0 + r, y0 + r, 180],
+      [x0 + w - r, y0 + r, 270],
+    ];
+    const ring = corners.flatMap(([cx, cy, from]) =>
+      [0, 1, 2, 3].map((k) => {
+        const deg = ((from + k * 30) * Math.PI) / 180;
+        return { x: cx + Math.cos(deg) * r, y: cy + Math.sin(deg) * r };
+      }),
+    );
+    ring.forEach((p1, i) => {
+      const p2 = ring[(i + 1) % ring.length];
+      const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (len < 0.5) return;
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2;
+      const turn = (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI;
       wall(
-        { left: `${x0}px`, top: `${y - tall}px`, width: `${w}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top') },
-        rise('rotateX(-90deg)', 'scaleY'),
+        // A hair longer, so the panels meet without seams
+        { left: `${mx - len / 2 - 0.5}px`, top: `${my - tall}px`, width: `${len + 1}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top') },
+        rise(`rotate(${turn.toFixed(1)}deg) rotateX(-90deg)`, 'scaleY'),
       );
-    }
-    // Along the sides: the left one turned up on its left edge, the right one on its right edge
-    wall(
-      { left: `${x0}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '0 50%', background: glow('right') },
-      rise('rotateY(-90deg)', 'scaleX'),
-    );
-    wall(
-      { left: `${x0 + w - tall}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '100% 50%', background: glow('left') },
-      rise('rotateY(90deg)', 'scaleX'),
-    );
+    });
   } else {
     // Flat: a curtain of light rising up the screen from the card's foot, as wide as the card
     wall(
@@ -212,10 +224,11 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const { screen } = measure(card, top);
   completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, d * 0.25, d, true, 0.35).forEach(keep);
   const point = () => ({ x: (Math.random() - 0.5) * w, y: (Math.random() - 0.5) * h });
-  // Embers of gold rising off the card from the start, as the wall rises
-  for (let i = 0; i < 18; i++) {
+  // Embers of gold rising off the card from the start, as the wall rises; most from its middle
+  for (let i = 0; i < 34; i++) {
     const s = 2 + Math.random() * 3;
-    const q = point();
+    const spot = point();
+    const q = i < 22 ? { x: spot.x * 0.4, y: spot.y * 0.4 } : spot;
     const rise = h * (0.4 + Math.random() * 0.5);
     keep(
       add(

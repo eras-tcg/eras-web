@@ -1,7 +1,7 @@
-import { pileOf } from '@data/simulator/game-rules';
+import { findSlot, pileOf } from '@data/simulator/game-rules';
 import { GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { centerOf, fieldCard, fieldPlace, fieldSprite, liftPlace, pile, tableCard } from './board-dom';
+import { centerOf, fieldCard, fieldPlace, fieldSprite, lifeCard, liftPlace, pile, tableCard } from './board-dom';
 import { quake, quakesWithTable } from './board-quake';
 import { FxDraw } from './fx-draw';
 import { Overlay, overlayFor } from './table-plane';
@@ -247,9 +247,9 @@ export class CombatFx {
    * light rise from it (FxDraw.lightUp); done when it has gone.
    */
   activation(sourceId: string, state: GameState | null): Promise<void> {
-    const where = pileOf(state, sourceId);
-    const card = tableCard(this.document, sourceId) ?? (where ? pile(this.document, where.ownerId, where.zone) : null);
-    if (!card) return Promise.resolve();
+    const shown = this.activating(sourceId, state);
+    if (!shown) return Promise.resolve();
+    const { card, done } = shown;
     card.animate(
       [
         { filter: 'none' },
@@ -259,8 +259,38 @@ export class CombatFx {
       ],
       { duration: TIMING.activation, easing: 'ease-out' },
     );
-    return this.draw.lightUp(card);
+    return this.draw.lightUp(card).then(done);
   }
+
+  /**
+   * The card an effect is activated from, as drawn: on the table or in a hand; its own place in the lives; on top of
+   * the Descarte or the Tributos, its face laid over the card shown there meanwhile (`done` takes it away); else its
+   * pile. Null when it is not drawn.
+   */
+  private activating(id: string, state: GameState | null): { card: HTMLElement; done: () => void } | null {
+    const none = () => undefined;
+    const drawn = tableCard(this.document, id);
+    if (drawn) return { card: drawn, done: none };
+    const where = pileOf(state, id);
+    if (!where) return null;
+    if (where.zone === 'lifeStack') {
+      const life = lifeCard(this.document, where.ownerId, id);
+      if (life) return { card: life, done: none };
+    }
+    const place = pile(this.document, where.ownerId, where.zone);
+    const top = place?.querySelector<HTMLElement>('eras-game-card');
+    const imageUrl = findSlot(state, id)?.imageUrl;
+    if (top && imageUrl && (where.zone === 'discardPile' || where.zone === 'tributeZone')) {
+      const face = this.document.createElement('div');
+      Object.assign(face.style, { position: 'absolute', inset: '0', zIndex: '2', pointerEvents: 'none', ...cardFaceStyle(imageUrl) });
+      // The rival's pile shows its cards upside down
+      if (top.classList.contains('upside-down')) face.style.transform = 'rotate(180deg)';
+      top.append(face);
+      return { card: face, done: () => face.remove() };
+    }
+    return place ? { card: place, done: none } : null;
+  }
+
 
   /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */
   private shock(over: Overlay, at: { x: number; y: number }, size: number, delay: number): void {

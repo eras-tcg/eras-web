@@ -224,6 +224,8 @@ export class CardDetailDialogComponent {
         identity: v.color ? `var(--color-card-${v.color.toLowerCase()})` : '#64748b',
         creature: cardCreatureUrl(meta),
       },
+      width: '100vw',
+      height: '100dvh',
       maxWidth: '100vw',
       maxHeight: '100dvh',
     });

@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
 import { ApiConfig } from '@core/http/api-config';
 import { CardMeta } from '@data/cards/card.model';
@@ -58,6 +58,7 @@ const UNDO_STEPS = 30;
           </label>
         }
         <div class="group">
+          <button erasButton variant="ghost" size="sm" type="button" [disabled]="zoom() === 1" (click)="fit()">Ajustar ({{ zoomText() }})</button>
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!undoable()" (click)="undo()">Deshacer</button>
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!mask" (click)="clear()">Limpiar</button>
         </div>
@@ -68,10 +69,14 @@ const UNDO_STEPS = 30;
       @if (error(); as message) {
         <eras-alert tone="danger">{{ message }}</eras-alert>
       }
-      <div class="canvas-box">
+      <div class="canvas-box" #box [class.panning]="panning()" (wheel)="wheel($event)" (pointerdown)="panStart($event)">
         <canvas
           #canvas
           [class.brush]="tool() === 'paint' || tool() === 'erase'"
+          [style.left.px]="view().x"
+          [style.top.px]="view().y"
+          [style.width.px]="view().w"
+          [style.height.px]="view().h"
           (pointerdown)="down($event)"
           (pointermove)="move($event)"
           (pointerup)="up()"
@@ -81,6 +86,7 @@ const UNDO_STEPS = 30;
       </div>
       <p class="hint">
         Agregar o Quitar parte: un clic sobre ella. Pincel y Borrador: arrastrar. Lo que queda fuera se ve en magenta.
+        Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer.
       </p>
       <footer class="actions">
         @if (data.creature) {
@@ -96,16 +102,17 @@ const UNDO_STEPS = 30;
     }
   `,
   styles: `
+    /* The whole screen: the illustration as big as it fits, and zoomed in from there */
     .editor {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: var(--space-3);
       padding: var(--space-4);
-      inline-size: min(96vw, 1100px);
-      max-block-size: 94dvh;
-      grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+      box-sizing: border-box;
+      inline-size: 100vw;
+      block-size: 100dvh;
       background: var(--color-surface);
       color: var(--color-text);
-      border-radius: var(--radius-lg, 12px);
     }
     .head,
     .tools,
@@ -136,18 +143,22 @@ const UNDO_STEPS = 30;
       font-size: var(--font-size-sm, 0.875rem);
     }
     .canvas-box {
+      position: relative;
+      flex: 1 1 0;
       min-block-size: 0;
-      display: grid;
-      place-items: center;
       overflow: hidden;
       background: #111;
       border-radius: var(--radius-md, 8px);
     }
     canvas {
-      max-inline-size: 100%;
-      max-block-size: 62dvh;
+      position: absolute;
       cursor: crosshair;
       touch-action: none;
+      image-rendering: pixelated;
+    }
+    .panning,
+    .panning canvas {
+      cursor: grabbing;
     }
     canvas.brush {
       cursor: cell;
@@ -179,6 +190,28 @@ export class CreatureCutoutDialogComponent {
   protected readonly previewUrl = signal<string | null>(null);
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  private readonly box = viewChild.required<ElementRef<HTMLElement>>('box');
+
+  /** How much closer than fitting the illustration is seen (1: all of it in view), and where the view is moved to. */
+  protected readonly zoom = signal(1);
+  private readonly pan = signal({ x: 0, y: 0 });
+  /** The box's size and the illustration's (its pixels). */
+  private readonly boxSize = signal({ w: 0, h: 0 });
+  private readonly artSize = signal({ w: 0, h: 0 });
+  protected readonly panning = signal(false);
+  private space = false;
+  private drag: { x: number; y: number } | null = null;
+  protected readonly zoomText = computed(() => `${Math.round(this.zoom() * 100)} %`);
+  /** Where the illustration is drawn in its box and how big: fitted, zoomed, moved. */
+  protected readonly view = computed(() => {
+    const { w: bw, h: bh } = this.boxSize();
+    const { w: aw, h: ah } = this.artSize();
+    if (!aw || !bw) return { x: 0, y: 0, w: 0, h: 0 };
+    const k = Math.min(bw / aw, bh / ah) * this.zoom();
+    const w = aw * k;
+    const h = ah * k;
+    return { x: (bw - w) / 2 + this.pan().x, y: (bh - h) / 2 + this.pan().y, w, h };
+  });
   protected mask: Mask | null = null;
   private art: ImageData | null = null;
   private artUrl: string | null = null;
@@ -188,8 +221,30 @@ export class CreatureCutoutDialogComponent {
   private frame = 0;
 
   constructor() {
-    afterNextRender(() => void this.start());
-    inject(DestroyRef).onDestroy(() => {
+    afterNextRender(() => {
+      const box = this.box().nativeElement;
+      const resize = new ResizeObserver(() => this.boxSize.set({ w: box.clientWidth, h: box.clientHeight }));
+      resize.observe(box);
+      destroy.onDestroy(() => resize.disconnect());
+      void this.start();
+    });
+    // Ctrl + Z undoes; the space bar held moves the view while dragging
+    const keys = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        if (this.undoable()) this.undo();
+      }
+      if (event.key === ' ') {
+        this.space = event.type === 'keydown';
+        if ((event.target as HTMLElement).tagName !== 'INPUT') event.preventDefault();
+      }
+    };
+    document.addEventListener('keydown', keys);
+    document.addEventListener('keyup', keys);
+    const destroy = inject(DestroyRef);
+    destroy.onDestroy(() => {
+      document.removeEventListener('keydown', keys);
+      document.removeEventListener('keyup', keys);
       cancelAnimationFrame(this.frame);
       if (this.artUrl) URL.revokeObjectURL(this.artUrl);
       this.endPreview();
@@ -211,6 +266,7 @@ export class CreatureCutoutDialogComponent {
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(bitmap, 0, 0, w, h);
       this.art = ctx.getImageData(0, 0, w, h);
+      this.artSize.set({ w, h });
       this.mask = emptyMask(w, h);
       // SAM reads the illustration as it is shown (its size, so its parts match the mask)
       const scaled = await new Promise<Blob | null>((done) => canvas.toBlob(done, 'image/png'));
@@ -256,7 +312,63 @@ export class CreatureCutoutDialogComponent {
     }
   }
 
+  /** Ctrl + wheel zooms in or out on the pointer; the wheel alone moves the view. */
+  protected wheel(event: WheelEvent): void {
+    event.preventDefault();
+    if (!(event.ctrlKey || event.metaKey)) {
+      this.pan.update((p) => ({ x: p.x - event.deltaX, y: p.y - event.deltaY }));
+      return;
+    }
+    const box = this.box().nativeElement.getBoundingClientRect();
+    const before = this.view();
+    const zoom = Math.min(16, Math.max(1, this.zoom() * Math.exp(-event.deltaY * 0.0015)));
+    if (zoom === this.zoom()) return;
+    // The point under the pointer stays under it
+    const px = event.clientX - box.left;
+    const py = event.clientY - box.top;
+    const k = zoom / this.zoom();
+    this.zoom.set(zoom);
+    const after = this.view();
+    const x = px - (px - before.x) * k;
+    const y = py - (py - before.y) * k;
+    this.pan.update((p) => (zoom === 1 ? { x: 0, y: 0 } : { x: p.x + x - after.x, y: p.y + y - after.y }));
+  }
+
+  /** The whole illustration in view again. */
+  protected fit(): void {
+    this.zoom.set(1);
+    this.pan.set({ x: 0, y: 0 });
+  }
+
+  /** The middle button, or the space bar held, drags the view. */
+  protected panStart(event: PointerEvent): void {
+    if (event.button !== 1 && !this.space) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const el = this.box().nativeElement;
+    el.setPointerCapture(event.pointerId);
+    this.drag = { x: event.clientX, y: event.clientY };
+    this.panning.set(true);
+    const move = (e: PointerEvent) => {
+      if (!this.drag) return;
+      this.pan.update((p) => ({ x: p.x + e.clientX - this.drag!.x, y: p.y + e.clientY - this.drag!.y }));
+      this.drag = { x: e.clientX, y: e.clientY };
+    };
+    const end = () => {
+      this.drag = null;
+      this.panning.set(false);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', end);
+      el.removeEventListener('pointercancel', end);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+  }
+
   protected async down(event: PointerEvent): Promise<void> {
+    // Moving the view, not editing
+    if (event.button === 1 || this.space) return;
     if (!this.mask || this.busy()) return;
     const at = this.pointAt(event);
     const tool = this.tool();

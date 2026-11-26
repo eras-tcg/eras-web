@@ -256,16 +256,16 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
+   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength): it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
-  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number): void {
+  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5): void {
     if (this.animations.still()) return;
-    this.run(() => this.burstNow(card, landing, mine, delay));
+    this.run(() => this.burstNow(card, landing, mine, delay, weight));
   }
 
-  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number): void {
+  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number): void {
     const color = mine ? 'var(--color-sim-link-mine)' : 'var(--color-sim-link-rival)';
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     // On the leaning table the frame lies on it, around the card at its own size
@@ -325,19 +325,20 @@ export class CardMotions {
       ],
       { duration: TIMING.burst, delay, easing: 'ease-out' },
     );
-    quake(this.document, this.animations, 0.6, delay);
+    quake(this.document, this.animations, 0.3 + 0.7 * weight, delay);
     this.debris(host, at, w, h, color, delay, !lying);
     this.circuits(center, w, h, color, delay);
-    this.hop(card, center, Math.max(rect.width, rect.height), delay);
+    this.hop(card, center, Math.max(rect.width, rect.height), delay, weight);
   }
 
   /**
    * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
    * around it jump up off the table (along its up, leaning with it) and drop back, each one tilted its own way, the
-   * nearest first and highest, as the blow spreads. A copy jumps, its shadow left on the table; the card waits hidden.
+   * nearest first and highest, as the blow spreads; higher and farther the heavier it is (`weight`, 0 to 1). A copy jumps, its shadow left on the table; the card waits hidden.
    */
-  private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number): void {
-    const reach = size * 3.2;
+  private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number, weight: number): void {
+    // A heavier card shakes the table farther
+    const reach = size * (2.4 + 1.6 * weight);
     for (const other of this.document.querySelectorAll<HTMLElement>('[data-instance-id] > eras-sim-card eras-game-card')) {
       const sprite = other.closest<HTMLElement>('eras-sim-card');
       if (other === card || !sprite || sprite.style.visibility === 'hidden') continue;
@@ -346,11 +347,19 @@ export class CardMotions {
       const cy = r.top + r.height / 2;
       const near = 1 - Math.hypot(cx - at.x, cy - at.y) / reach;
       if (near < 0.12) continue;
-      this.hopOne(other, sprite, { x: cx, y: cy }, at, near, delay + (1 - near) * reach * 0.25);
+      this.hopOne(other, sprite, { x: cx, y: cy }, at, near, weight, delay + (1 - near) * reach * 0.25);
     }
   }
 
-  private hopOne(card: HTMLElement, sprite: HTMLElement, center: { x: number; y: number }, blow: { x: number; y: number }, near: number, delay: number): void {
+  private hopOne(
+    card: HTMLElement,
+    sprite: HTMLElement,
+    center: { x: number; y: number },
+    blow: { x: number; y: number },
+    near: number,
+    weight: number,
+    delay: number,
+  ): void {
     // On the leaning table its layer leans with it (in 3D): up from the layer is up from the table
     const over = overlayFor(this.document, card, LAYER.charge);
     const c = over.at(center.x, center.y);
@@ -385,8 +394,9 @@ export class CardMotions {
     // Tilted about an axis across the way the blow goes, turned a little at random: never flat, never two alike
     const away = Math.atan2(c.y - o.y, c.x - o.x) + Math.PI / 2 + (Math.random() - 0.5) * 1.2;
     const axis = `${Math.cos(away).toFixed(3)}, ${Math.sin(away).toFixed(3)}, 0`;
-    const tilt = (11 + Math.random() * 9) * near * (Math.random() < 0.8 ? 1 : -1);
-    const up = 34 * near;
+    // Higher and more tilted the heavier the card that landed
+    const tilt = (11 + Math.random() * 9) * near * (0.6 + 0.8 * weight) * (Math.random() < 0.8 ? 1 : -1);
+    const up = 34 * near * (0.3 + 1.2 * weight);
     // How high its middle is for its lowest edge to touch the table, tilted `deg`
     const rest = (deg: number) => (Math.abs(Math.sin((deg * Math.PI) / 180)) * Math.max(w, h)) / 2;
     const steps: [number, number, number | null, string | null][] = [
@@ -409,7 +419,7 @@ export class CardMotions {
     });
     copy.style.transform = String(frames[0].k['transform']);
     copy.style.visibility = 'hidden';
-    const timing = { duration: TIMING.hop, delay };
+    const timing = { duration: TIMING.hop * (0.85 + 0.35 * weight), delay };
     const jump = copy.animate(frames.map((f) => f.k), timing);
     shade.animate(frames.map((f) => f.g), timing);
     // The card gives way to its copy only while it jumps

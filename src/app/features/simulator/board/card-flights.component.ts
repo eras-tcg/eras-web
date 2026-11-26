@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
-import { PILES, findSlot } from '@data/simulator/game-rules';
+import { PILES, displayStrength, findSlot } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
 import { CardSlot, GameEvent, GameState, ZoneName } from '@data/simulator/simulator.model';
@@ -13,7 +13,7 @@ import { poseOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LifeFlights } from './life-flights';
 import { TimelineCursor } from './timeline-cursor';
-import { TIMING } from './timing';
+import { TIMING, impactWeight, summonTiming } from './timing';
 import { TurnDraw } from './turn-draw';
 
 /** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
@@ -367,8 +367,11 @@ export class CardFlightsComponent {
           this.lifePlayed(c, p.userId) ??
           this.handSeen.get(c.instanceId) ??
           this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
-        if (from) this.glide(sprite, card, c, from, TIMING.summon, true);
-        this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
+        // The stronger, the longer it hangs over its place and the harder it lands
+        const weight = impactWeight(displayStrength(c));
+        const { hang, duration } = summonTiming(weight);
+        if (from) this.glide(sprite, card, c, from, duration, hang);
+        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight);
         summoned = true;
       }
     }
@@ -397,15 +400,20 @@ export class CardFlightsComponent {
 
   /**
    * A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands);
-   * summoned (`slam`), it slams onto it.
+   * summoned (`hang`: how long it hangs over it), it slams onto it.
    */
-  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, slam = false): void {
+  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, hang?: number): void {
     if (this.animations.still()) return;
     const to = card.getBoundingClientRect();
     if (Math.abs(from.x - (to.left + to.width / 2)) < 2 && Math.abs(from.y - (to.top + to.height / 2)) < 2) return;
     // A face-down card in a hand (the rival's) turns over as it flies, when it lands face up
     const imageUrl = slot.faceDown ? null : (slot.imageUrl ?? from.imageUrl);
-    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, { fromBack: !from.imageUrl && !!imageUrl, duration, hide: sprite, slam });
+    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, {
+      fromBack: !from.imageUrl && !!imageUrl,
+      duration,
+      hide: sprite,
+      slam: hang === undefined ? undefined : { hang },
+    });
   }
 
   /**

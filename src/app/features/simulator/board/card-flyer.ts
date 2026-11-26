@@ -17,8 +17,8 @@ export interface FlightOptions {
   under?: boolean;
   /** It goes at once, whatever this update started (a flight a click starts, long after its update). */
   now?: boolean;
-  /** It slams onto its place (a summon): up over it, then down hard. */
-  slam?: boolean;
+  /** It slams onto its place (a summon): up over it, hangs there this long (ms), then down hard. */
+  slam?: { hang: number };
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -65,7 +65,11 @@ export class CardFlyer {
     // Only the pose: the shadow is on its faces (a filter on the card flattens it, and its face would show through its back
     // while it waits to leave or turns over)
     const faces = { fromBack: !!options.fromBack, toBack: faceDown };
-    const frames = (options.slam ? slamFrames(stage, start, end, faces) : poseFrames(stage, start, end, faces, options.under)).map(
+    const frames = (
+      options.slam
+        ? slamFrames(stage, start, end, faces, this.hover(options.duration ?? TIMING.flight, options.slam.hang))
+        : poseFrames(stage, start, end, faces, options.under)
+    ).map(
       ({ filter, ...frame }) => (void filter, frame),
     );
 
@@ -91,6 +95,15 @@ export class CardFlyer {
       return;
     }
     launch();
+  }
+
+  /**
+   * When a slam hangs over its place, as shares of its flight (`duration`, `hang` of it hanging): its way there takes
+   * three fifths of the rest, its drop the other two.
+   */
+  private hover(duration: number, hang: number): { from: number; to: number } {
+    const there = (duration - hang) * 0.62;
+    return { from: there / duration, to: (there + hang) / duration };
   }
 
   /** A still copy of a card where it was drawn (`seen`), until removed: a life waiting face up on its pile. */

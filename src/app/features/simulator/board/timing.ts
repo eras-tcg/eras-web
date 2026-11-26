@@ -29,7 +29,7 @@ export const TIMING = {
   materialization: 1500,
   materializationLead: 650,
   evolution: 1400,
-  evolutionLead: 250,
+  evolutionLead: 0,
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */

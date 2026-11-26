@@ -60,6 +60,45 @@ function adder(document: Document, host: HTMLElement, position: string, runs: Pr
 }
 
 /**
+ * The card completed (`at`, `w`×`h`, in its host's pixels): when `filled`, the card's shape lit full in `color` with a
+ * line of light round it, fading; and a flash of white and `color` that swells off it. After `delay`; `d` scales them.
+ */
+function completed(add: ReturnType<typeof adder>, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, d: number, filled: boolean): HTMLElement[] {
+  const box = { left: `${at.x - w / 2}px`, top: `${at.y - h / 2}px`, width: `${w}px`, height: `${h}px`, zIndex: LAYER.fx, borderRadius: 'var(--radius-card)', mixBlendMode: 'screen' };
+  const made: HTMLElement[] = [];
+  if (filled) {
+    made.push(
+      add(
+        {
+          ...box,
+          border: '1.5px solid #fff',
+          background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${color} 70%, transparent) 35%, color-mix(in srgb, ${color} 30%, transparent) 80%)`,
+          boxShadow: `0 0 8px 2px ${color}, inset 0 0 10px 2px ${color}`,
+        },
+        [
+          { opacity: 0, transform: 'scale(0.94)' },
+          { opacity: 1, transform: 'scale(1)', offset: 0.2 },
+          { opacity: 0, transform: 'scale(1)' },
+        ],
+        { duration: d * 0.3, delay, easing: 'ease-out' },
+      ),
+    );
+  }
+  made.push(
+    add(
+      { ...box, background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${color} 60%, transparent) 60%, transparent)` },
+      [
+        { opacity: 0, transform: 'scale(0.9)' },
+        { opacity: 1, transform: 'scale(1.02)', offset: 0.2 },
+        { opacity: 0, transform: 'scale(1.2)' },
+      ],
+      { duration: d * 0.35, delay: delay + (filled ? d * 0.04 : 0), easing: 'ease-out' },
+    ),
+  );
+  return made;
+}
+
+/**
  * Ascenso, a promotion in rank: tiers of golden light the card's shape stack up from it one over another, each higher
  * and narrower than the last, as rising through the ranks; then they come down into the card all at once, which
  * flashes gold, and embers of gold rise. On the leaning table the tiers rise off it in depth; on a flat one, up the
@@ -244,27 +283,8 @@ function materialization(document: Document, animations: BoardAnimations, card: 
     ),
   );
   runs.push(charge.animate([{ opacity: 1 }, { opacity: 0 }], { duration: d * 0.25, delay: d * land, fill: 'forwards' }).finished);
-  // The flash as it lands
-  keep(
-    add(
-      {
-        left: `${at.x - w / 2}px`,
-        top: `${at.y - h / 2}px`,
-        width: `${w}px`,
-        height: `${h}px`,
-        zIndex: LAYER.fx,
-        borderRadius: 'var(--radius-card)',
-        background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${MATTER} 60%, transparent) 60%, transparent)`,
-        mixBlendMode: 'screen',
-      },
-      [
-        { opacity: 0, transform: 'scale(0.9)' },
-        { opacity: 1, transform: 'scale(1.02)', offset: 0.2 },
-        { opacity: 0, transform: 'scale(1.2)' },
-      ],
-      { duration: d * 0.35, delay: d * land, easing: 'ease-out' },
-    ),
-  );
+  // The flash as it lands (its core is the card filled)
+  completed(add, at, w, h, MATTER, d * land, d, false).forEach(keep);
   return Promise.all(runs)
     .catch(() => undefined)
     .then(() => {
@@ -274,9 +294,9 @@ function materialization(document: Document, animations: BoardAnimations, card: 
 }
 
 /**
- * Evolución, a creature evolving: two strands of green life coil round the card in a circle, rising off the table as
- * they turn, like a helix, motes of it rising up the middle with them, while rings of growth the card's shape pulse out from it, one after another, each bigger
- * than the last. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
+ * Evolución, a creature evolving: four strands of green life coil round the card in a circle, rising off the table as
+ * they turn, like a helix, motes of it rising up the middle with them; then the card is completed: lit full in green,
+ * it flashes. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
  */
 function evolution(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.evolution;
@@ -287,30 +307,7 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
   const keep = (el: HTMLElement) => (made.push(el), el);
   const lying = adder(document, over.host, over.position, runs);
   animations.hold(d);
-  // Rings of growth: the card's shape, pulsing out one after another
-  for (let i = 0; i < 3; i++) {
-    keep(
-      lying(
-        {
-          left: `${at.x - w / 2}px`,
-          top: `${at.y - h / 2}px`,
-          width: `${w}px`,
-          height: `${h}px`,
-          zIndex: LAYER.fx,
-          borderRadius: 'var(--radius-card)',
-          border: `2px solid ${LIFE}`,
-          boxShadow: `0 0 10px 2px ${LIFE}, inset 0 0 8px 1px ${LIFE}`,
-        },
-        [
-          { opacity: 0, transform: 'scale(1)' },
-          { opacity: 0.9, transform: `scale(${1.05 + i * 0.05})`, offset: 0.2 },
-          { opacity: 0, transform: `scale(${1.3 + i * 0.15})` },
-        ],
-        { duration: d * 0.45, delay: d * (0.15 + i * 0.18), easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-      ),
-    );
-  }
-  // The helix: beads on two strands, half a turn apart, going round the card as they rise. Each bead sits at the end
+  // The helix: beads on four strands, a quarter turn apart, going round the card as they rise. Each bead sits at the end
   // of an arm that turns (rotate, then out along it), so it follows a true circle, not a polygon
   const radius = Math.max(w, h) * 0.62;
   const climb = Math.max(w, h) * 1.1;
@@ -339,7 +336,7 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
     );
   const beads = 16;
   const turns = 540;
-  for (const strand of [0, 180]) {
+  for (const strand of [0, 90, 180, 270]) {
     for (let i = 0; i < beads; i++) {
       const at0 = strand;
       bead(
@@ -361,6 +358,8 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
       { duration: d * (0.45 + Math.random() * 0.2), delay: d * (0.08 + Math.random() * 0.4), easing: 'cubic-bezier(0.3, 0.2, 0.6, 1)' },
     );
   }
+  // The card completed, in green, as the strands have risen
+  completed(lying, at, w, h, LIFE, d * 0.6, d, true).forEach(keep);
   return Promise.all(runs).then(() => {
     made.forEach((el) => el.remove());
     over.remove();

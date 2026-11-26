@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, signal } from '@angular/core';
-import { DRAG_START, Tilt, cardEdge, facingTilt, lightOf, spinFromDrag } from '../card-art-viewer/card-tilt';
+import { DRAG_START, TOUCH_DRAG_START, Tilt, cardEdge, facingTilt, lightOf, spinFromDrag } from '../card-art-viewer/card-tilt';
 import { CARD_SHINE } from '../card-image/card-shine';
 
 /**
@@ -281,7 +281,7 @@ export class CardFaceComponent {
   protected readonly metal = computed(() => (this.live() ? this.facing().ry * 9 - this.facing().rx * 6 : null));
 
   /** The press in progress: where it started, the card's size, and whether it has become a drag. */
-  private press: { x: number; y: number; w: number; h: number; moved: boolean } | null = null;
+  private press: { x: number; y: number; w: number; h: number; moved: boolean; slop: number } | null = null;
 
   /** A drag just ended: the click that follows it is not the card's. */
   private dragged = false;
@@ -306,7 +306,7 @@ export class CardFaceComponent {
     const box = el.getBoundingClientRect();
     el.setPointerCapture(event.pointerId);
     this.dragged = false;
-    this.press = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, moved: false };
+    this.press = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, moved: false, slop: event.pointerType === 'touch' ? TOUCH_DRAG_START : DRAG_START };
   }
 
   protected drag(event: PointerEvent): void {
@@ -314,7 +314,7 @@ export class CardFaceComponent {
     if (!p) return;
     const dx = event.clientX - p.x;
     const dy = event.clientY - p.y;
-    if (!p.moved && Math.hypot(dx, dy) < DRAG_START) return;
+    if (!p.moved && Math.hypot(dx, dy) < p.slop) return;
     p.moved = true;
     this.held.set(true);
     this.tilt.set(spinFromDrag({ rx: 0, ry: 0 }, dx, dy, p.w, p.h));

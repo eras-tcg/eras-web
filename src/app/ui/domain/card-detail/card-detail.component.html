@@ -72,7 +72,8 @@
     <div class="actions"><ng-content select="[detail-actions]" /></div>
   </div>
 
-  <!-- zoomable: a click (or Enter) on the image opens it (imageOpened), as a bigger view -->
+  <!-- zoomable: a click, holding it pressed (as on the game table) or Enter on the image opens it (imageOpened), as a
+       bigger view -->
   <!-- The image, with its rarity on a tab over its top edge when given -->
   <div class="image" [class.with-rarity]="rarity() !== null">
     @if (rarity()) {
@@ -91,6 +92,8 @@
       [shineSrc]="shineSrc()"
       [noGloss]="noGloss()"
       eager
+      [erasHoldPeek]="zoomable()"
+      (peek)="imageOpened.emit()"
       (click)="zoomable() && imageOpened.emit()"
       (keydown.enter)="zoomable() && imageOpened.emit()"
     />

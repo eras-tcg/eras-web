@@ -5,6 +5,7 @@ import { CardFact, CardFactsComponent } from '../card-facts/card-facts.component
 import { CardImageComponent } from '../card-image/card-image.component';
 import { RarityTabComponent } from '../rarity-tab/rarity-tab.component';
 import { ColorPipComponent } from '../color-pip/color-pip.component';
+import { HoldPeekDirective } from '../../utilities/hold-peek';
 
 export interface CardTextSegment {
   kind: 'text' | 'keyword' | 'note';
@@ -36,6 +37,7 @@ export interface CardTextGroup {
     RarityTabComponent,
     ColorPipComponent,
     CardFactsComponent,
+    HoldPeekDirective,
   ],
   templateUrl: './card-detail.component.html',
   styleUrl: './card-detail.component.scss',
@@ -74,7 +76,7 @@ export class CardDetailComponent {
 
   readonly previousPrinting = output<void>();
   readonly nextPrinting = output<void>();
-  /** The image can be clicked (imageOpened); `zoomLabel` says what it opens. */
+  /** The image can be clicked or held pressed (imageOpened); `zoomLabel` says what it opens. */
   readonly zoomable = input(false, { transform: booleanAttribute });
   readonly zoomLabel = input('Ver la carta');
   /** The image leans toward the pointer, its shine moving (eras-card-image `live`). */

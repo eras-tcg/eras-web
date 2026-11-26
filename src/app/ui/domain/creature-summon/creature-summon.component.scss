@@ -32,6 +32,13 @@
   animation: out calc(0.45s * var(--pace, 1)) ease forwards;
 }
 
+/* The feather filter's definitions take no room */
+.defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+}
+
 .fx,
 .motes {
   position: absolute;
@@ -118,20 +125,8 @@
   max-inline-size: 80vw;
   opacity: 0;
   transform: translateX(-50%);
-  /* The sides the picture's edge cut fade out, its glow with them (the mask comes after the filter) */
-  --fade-left: 0%;
-  --fade-right: 0%;
-  --fade-top: 0%;
-  --fade-bottom: 0%;
-
-  mask-image:
-    linear-gradient(to right, transparent, #000 var(--fade-left)),
-    linear-gradient(to left, transparent, #000 var(--fade-right)),
-    linear-gradient(to bottom, transparent, #000 var(--fade-top)),
-    linear-gradient(to top, transparent, #000 var(--fade-bottom));
-  mask-composite: intersect;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c1) 60%, #fff))
-    drop-shadow(0 0 26px color-mix(in srgb, var(--c1) 60%, transparent)) drop-shadow(0 26px 30px rgb(0 0 0 / 70%));
+  /* A soft light round it in its colors (no white rim: it would trace a cut-out's edges) */
+  filter: drop-shadow(0 0 22px color-mix(in srgb, var(--c1) 50%, transparent)) drop-shadow(0 26px 30px rgb(0 0 0 / 70%));
 
   img {
     block-size: 100%;

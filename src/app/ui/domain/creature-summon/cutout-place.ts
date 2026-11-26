@@ -1,6 +1,6 @@
 /*
  * Where a saved creature cut-out was cropped from its illustration: a text chunk of its PNG (written by the cut-out
- * editor and the batch tool). The summon uses it to fade the sides that met the picture's edge.
+ * editor and the batch tool), so the editor can go on from a saved cut-out.
  */
 /** Where a saved cut-out was cropped from its illustration (pixels), and the illustration's size then. */
 export interface CutoutPlace {
@@ -65,20 +65,4 @@ function crc32(bytes: Uint8Array): number {
   let c = 0xffffffff;
   for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
-}
-
-
-/**
- * Which sides of a cut-out `cw`×`ch` were cut by the picture's edge (so they end straight, not round the figure). Its
- * crop stops a little short of that edge (the saved fade leaves the outer rim clear): within 8 % of the picture's shorter
- * side counts as on it.
- */
-export function sidesAtEdge(place: CutoutPlace, cw: number, ch: number): { left: boolean; right: boolean; top: boolean; bottom: boolean } {
-  const near = 0.08 * Math.min(place.width, place.height);
-  return {
-    left: place.x <= near,
-    top: place.y <= near,
-    right: place.width - (place.x + cw) <= near,
-    bottom: place.height - (place.y + ch) <= near,
-  };
 }

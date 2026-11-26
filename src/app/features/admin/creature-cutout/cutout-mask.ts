@@ -90,17 +90,34 @@ function edgeFade(x: number, y: number, w: number, h: number, fade: number): num
  */
 export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number, place: CutoutPlace, width: number, height: number): Mask {
   const mask = emptyMask(width, height);
-  const kx = width / place.width;
-  const ky = height / place.height;
+  const W = place.width;
+  const H = place.height;
+  const fade = place.fade ?? 0.16;
+  // An old save faded the picture's edge out and cropped off the rim it left clear: on the sides it reached, the rim is
+  // filled from just inside it (where the fade still kept the picture)
+  const inner = fade > 0 ? Math.ceil(0.45 * fade * Math.min(W, H)) : 0;
+  const band = 0.08 * Math.min(W, H);
+  const lost = {
+    left: fade > 0 && place.x <= band,
+    top: fade > 0 && place.y <= band,
+    right: fade > 0 && W - (place.x + cw) <= band,
+    bottom: fade > 0 && H - (place.y + ch) <= band,
+  };
   for (let y = 0; y < height; y++) {
-    const sy = Math.floor(y / ky) - place.y;
+    let py = Math.floor((y * H) / height);
+    if (lost.top) py = Math.max(py, inner, place.y);
+    if (lost.bottom) py = Math.min(py, H - 1 - inner, place.y + ch - 1);
+    const sy = py - place.y;
     if (sy < 0 || sy >= ch) continue;
     for (let x = 0; x < width; x++) {
-      const sx = Math.floor(x / kx) - place.x;
+      let px = Math.floor((x * W) / width);
+      if (lost.left) px = Math.max(px, inner, place.x);
+      if (lost.right) px = Math.min(px, W - 1 - inner, place.x + cw - 1);
+      const sx = px - place.x;
       if (sx < 0 || sx >= cw) continue;
       const a = alpha[sy * cw + sx];
       if (!a) continue;
-      const f = edgeFade(x, y, width, height, place.fade ?? 0.16);
+      const f = edgeFade(px, py, W, H, fade);
       mask.data[y * width + x] = f > 0.02 ? Math.min(255, a / f) : 255;
     }
   }

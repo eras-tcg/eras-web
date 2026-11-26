@@ -88,4 +88,19 @@ describe('cut-out place', () => {
     expect(back.data[0]).toBe(128);
     expect(back.data[5 * 10 + 5]).toBe(0);
   });
+
+  it('fills the rim an old save cropped off where the figure reached the edge of the picture', () => {
+    // A 400×400 picture filled; the old save faded it at 16 % (64 px) and kept 10..389 (the clear rim cropped off)
+    const crop = new Uint8ClampedArray(380 * 380);
+    for (let y = 0; y < 380; y++)
+      for (let x = 0; x < 380; x++) {
+        const near = Math.min(x + 10, 389 - x, y + 10, 389 - y);
+        crop[y * 380 + x] = 255 * Math.pow(Math.min(1, near / 64), 1.5);
+      }
+    const back = maskFromCutout(crop, 380, 380, { x: 10, y: 10, width: 400, height: 400 }, 400, 400);
+    expect(back.data[200 * 400 + 0]).toBeGreaterThan(240);
+    expect(back.data[0]).toBeGreaterThan(240);
+    expect(back.data[399 * 400 + 200]).toBeGreaterThan(240);
+    expect(back.data[200 * 400 + 200]).toBe(255);
+  });
 });

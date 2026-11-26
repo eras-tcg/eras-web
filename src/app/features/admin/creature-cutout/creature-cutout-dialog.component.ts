@@ -9,7 +9,8 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
-import { Mask, combine, dab, emptyMask, fadedAtEdges, maskFromCutout, placeOf, shownBox, withPlace } from './cutout-mask';
+import { Mask, combine, dab, emptyMask, fadedAtEdges, maskFromCutout, shownBox } from './cutout-mask';
+import { placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 import { CutoutSam } from './cutout-sam';
 
 export interface CreatureCutoutData {

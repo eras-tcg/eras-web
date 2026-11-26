@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { roman } from '../game-card/roman';
 import { paletteOfImage } from './creature-palette';
+import { CutoutPlace, placeOf, sidesAtEdge } from './cutout-place';
 import { SummonVortex, summonVortex } from './summon-vortex';
 
 /** How long the creature stays on show (ms) and how long the stage takes to fade away after. */
@@ -51,7 +52,14 @@ export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
       <span class="ground" aria-hidden="true"></span>
       <span class="shock" aria-hidden="true"></span>
       <span class="motes" #motes aria-hidden="true"></span>
-      <span class="creature"><img [src]="creature()" alt="" (load)="loaded()" (error)="finish()" /></span>
+      <span
+        class="creature"
+        [style.--fade-left]="edges().left ? fade : '0%'"
+        [style.--fade-right]="edges().right ? fade : '0%'"
+        [style.--fade-top]="edges().top ? fade : '0%'"
+        [style.--fade-bottom]="edges().bottom ? fade : '0%'"
+        ><img #picture [src]="creature()" alt="" (load)="loaded()" (error)="finish()"
+      /></span>
       <!-- Its name across a band of light, as the turn's phases are shown; its level on a gold medal under it -->
       <span class="plate">
         <span class="band">
@@ -85,6 +93,15 @@ export class CreatureSummonComponent {
   protected readonly romanOf = roman;
   protected readonly phase = signal<'wait' | 'on' | 'off'>('wait');
   protected readonly colors = signal<[string, string]>(['rgb(203 213 225)', 'rgb(148 163 184)']);
+  /**
+   * The sides where the figure was cut by its picture's edge: they fade out (the creature and its glow), so the card's
+   * rectangle never shows. Read from the cut-out's PNG.
+   */
+  protected readonly edges = signal({ left: false, right: false, top: false, bottom: false });
+  /** How much of the creature a cut side takes to fade out. */
+  protected readonly fade = '22%';
+  private readonly picture = viewChild.required<ElementRef<HTMLImageElement>>('picture');
+  private place: CutoutPlace | null = null;
 
   private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
   private readonly fx = viewChild.required<ElementRef<HTMLElement>>('fx');
@@ -94,7 +111,7 @@ export class CreatureSummonComponent {
   private vortex: SummonVortex | null = null;
   private frame = 0;
   private timers: ReturnType<typeof setTimeout>[] = [];
-  private ready = { image: false, palette: false };
+  private ready = { image: false, palette: false, place: false };
   private ended = false;
 
   constructor() {
@@ -108,6 +125,14 @@ export class CreatureSummonComponent {
         this.ready.palette = true;
         this.start();
       });
+      void fetch(this.creature())
+        .then((r) => r.arrayBuffer())
+        .then((b) => (this.place = placeOf(new Uint8Array(b))))
+        .catch(() => null)
+        .finally(() => {
+          this.ready.place = true;
+          this.start();
+        });
     });
     inject(DestroyRef).onDestroy(() => this.stop());
   }
@@ -127,7 +152,9 @@ export class CreatureSummonComponent {
 
   /** Once the creature and its colors are both there. */
   private start(): void {
-    if (!this.ready.image || !this.ready.palette || this.phase() !== 'wait' || this.ended) return;
+    if (!this.ready.image || !this.ready.palette || !this.ready.place || this.phase() !== 'wait' || this.ended) return;
+    const img = this.picture().nativeElement;
+    if (this.place) this.edges.set(sidesAtEdge(this.place, img.naturalWidth, img.naturalHeight));
     this.phase.set('on');
     // The colors reach the shader once they are on the stage
     const [main, second] = this.colors();

@@ -1,4 +1,5 @@
-import { combine, dab, emptyMask, fadedAtEdges, maskFromCutout, placeOf, shownBox, withPlace } from './cutout-mask';
+import { combine, dab, emptyMask, fadedAtEdges, maskFromCutout, shownBox } from './cutout-mask';
+import { placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 
 describe('cutout mask', () => {
   it('adds a part and takes one out', () => {

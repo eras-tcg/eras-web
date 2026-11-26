@@ -118,6 +118,18 @@
   max-inline-size: 80vw;
   opacity: 0;
   transform: translateX(-50%);
+  /* The sides the picture's edge cut fade out, its glow with them (the mask comes after the filter) */
+  --fade-left: 0%;
+  --fade-right: 0%;
+  --fade-top: 0%;
+  --fade-bottom: 0%;
+
+  mask-image:
+    linear-gradient(to right, transparent, #000 var(--fade-left)),
+    linear-gradient(to left, transparent, #000 var(--fade-right)),
+    linear-gradient(to bottom, transparent, #000 var(--fade-top)),
+    linear-gradient(to top, transparent, #000 var(--fade-bottom));
+  mask-composite: intersect;
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c1) 60%, #fff))
     drop-shadow(0 0 26px color-mix(in srgb, var(--c1) 60%, transparent)) drop-shadow(0 26px 30px rgb(0 0 0 / 70%));
 

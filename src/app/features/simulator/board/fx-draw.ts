@@ -5,9 +5,11 @@ import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
-/** An effect's mist: its blue clouds (their core and their edge) and the motes of light rising from it. */
-const MIST_CORE = 'rgb(120 175 255 / 75%)';
-const MIST_EDGE = 'rgb(40 100 255 / 35%)';
+/** An effect's mist: its blue clouds (their core, their body and their bright rim), its veil, and its motes of light. */
+const MIST_CORE = 'rgb(120 175 255 / 70%)';
+const MIST_EDGE = 'rgb(50 110 255 / 45%)';
+const MIST_RIM = 'rgb(140 200 255 / 75%)';
+const MIST_VEIL = 'rgb(170 210 255 / 35%)';
 const MOTE = '#7cc4ff';
 
 /**
@@ -125,112 +127,124 @@ export class FxDraw {
   }
 
   /**
-   * An effect activated on a card: a blue mist spreads under it, swirling, with motes of light rising from it, and
-   * fades. Under everything on the table when the card lies on it; over it elsewhere (a hand, a plate). Done when it
-   * has gone.
+   * An effect activated on a card: a pool of blue mist with a clear edge spreads under it, swirling; a thin veil of it
+   * drifts over the card and motes of light rise from it, over the card; then all of it fades. The pool lies under
+   * everything on the table when the card lies on it (over it elsewhere: a hand, a plate). Done when it has gone.
    */
   mist(card: HTMLElement): Promise<void> {
     const c = centerOf(card);
     const r = card.getBoundingClientRect();
     const w = card.offsetWidth || r.width;
     const h = card.offsetHeight || r.height;
-    const size = Math.max(w, h) * 2.3;
+    const size = Math.max(w, h) * 1.7;
     const d = TIMING.activation;
     const plane = tablePlane(this.document);
     const lying = plane ? plane.holds(card) : !!card.closest('.plane');
+    // Over the card: a box of the same size, lying as the card does
+    const over = overlayFor(this.document, card, LAYER.fx);
+    const at = over.at(c.x, c.y);
+    const top = this.document.createElement('div');
+    Object.assign(top.style, {
+      position: over.position,
+      left: `${at.x - size / 2}px`,
+      top: `${at.y - size / 2}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      zIndex: LAYER.fx,
+      pointerEvents: 'none',
+    });
+    over.host.append(top);
     const under = lying ? underTable(this.document, c, size, size) : null;
-    let host: HTMLElement;
-    let remove: () => void;
-    if (under) {
-      host = under.el;
-      remove = under.remove;
-    } else {
-      const over = overlayFor(this.document, card, LAYER.fx);
-      const at = over.at(c.x, c.y);
-      host = this.document.createElement('div');
-      Object.assign(host.style, {
-        position: over.position,
-        left: `${at.x - size / 2}px`,
-        top: `${at.y - size / 2}px`,
-        width: `${size}px`,
-        height: `${size}px`,
-        zIndex: LAYER.fx,
-        pointerEvents: 'none',
-      });
-      over.host.append(host);
-      remove = () => {
-        host.remove();
-        over.remove();
-      };
-    }
+    const pool = under?.el ?? top;
     this.animations.hold(d);
     const runs: Promise<unknown>[] = [];
-    // The mist: soft blue clouds, each a little off the middle, swelling and turning slowly as they fade
-    for (let i = 0; i < 4; i++) {
-      const cloud = this.document.createElement('div');
-      const ox = (Math.random() - 0.5) * size * 0.18;
-      const oy = (Math.random() - 0.5) * size * 0.18;
-      const spin = (Math.random() < 0.5 ? -1 : 1) * (25 + Math.random() * 30);
-      Object.assign(cloud.style, {
-        position: 'absolute',
-        inset: `${8 + i * 4}%`,
-        borderRadius: '50%',
-        background: `radial-gradient(ellipse ${60 + Math.random() * 25}% ${50 + Math.random() * 25}% at ${45 + Math.random() * 10}% ${45 + Math.random() * 10}%, ${MIST_CORE}, ${MIST_EDGE} 45%, transparent 72%)`,
-        filter: 'blur(10px)',
-        mixBlendMode: 'screen',
-        opacity: '0',
-      });
-      host.append(cloud);
-      runs.push(
-        cloud.animate(
-          [
-            { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(0.55) rotate(0deg)` },
-            { opacity: 0.95, transform: `translate(${ox}px, ${oy}px) scale(0.95) rotate(${spin * 0.4}deg)`, offset: 0.3 },
-            { opacity: 0.7, transform: `translate(${ox * 1.4}px, ${oy * 1.4}px) scale(1.15) rotate(${spin * 0.8}deg)`, offset: 0.7 },
-            { opacity: 0, transform: `translate(${ox * 1.8}px, ${oy * 1.8}px) scale(1.3) rotate(${spin}deg)` },
-          ],
-          { duration: d, delay: i * 40, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)', fill: 'backwards' },
-        ).finished,
+    const add = (host: HTMLElement, style: Partial<CSSStyleDeclaration>, frames: Keyframe[], timing: KeyframeAnimationOptions) => {
+      const el = this.document.createElement('div');
+      Object.assign(el.style, { position: 'absolute', opacity: '0', ...style });
+      host.append(el);
+      runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished);
+    };
+    // The pool: blue clouds, each a little off the middle, ending in a bright, clear rim; they turn slowly as they fade
+    for (let i = 0; i < 3; i++) {
+      const ox = (Math.random() - 0.5) * size * 0.08;
+      const oy = (Math.random() - 0.5) * size * 0.08;
+      const spin = (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 25);
+      const rx = 64 + Math.random() * 8;
+      const ry = 58 + Math.random() * 8;
+      add(
+        pool,
+        {
+          inset: `${4 + i * 5}%`,
+          borderRadius: '50%',
+          background: `radial-gradient(ellipse ${rx}% ${ry}% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE} 52%, ${MIST_RIM} 64%, transparent 69%)`,
+          filter: 'blur(2px)',
+          mixBlendMode: 'screen',
+        },
+        [
+          { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(0.6) rotate(0deg)` },
+          { opacity: 0.95, transform: `translate(${ox}px, ${oy}px) scale(1) rotate(${spin * 0.45}deg)`, offset: 0.28 },
+          { opacity: 0.8, transform: `translate(${ox}px, ${oy}px) scale(1.04) rotate(${spin * 0.8}deg)`, offset: 0.72 },
+          { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(1.08) rotate(${spin}deg)` },
+        ],
+        { duration: d, delay: i * 50, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)' },
       );
     }
-    // Motes of light rising out of the mist, drifting and twinkling out
-    for (let i = 0; i < 16; i++) {
-      const mote = this.document.createElement('div');
+    // A thin veil of it over the card, drifting across
+    add(
+      top,
+      {
+        left: `${(size - w * 1.15) / 2}px`,
+        top: `${(size - h * 1.1) / 2}px`,
+        width: `${w * 1.15}px`,
+        height: `${h * 1.1}px`,
+        borderRadius: '45%',
+        background: `radial-gradient(ellipse 50% 50% at 50% 55%, ${MIST_VEIL}, transparent 70%)`,
+        filter: 'blur(6px)',
+        mixBlendMode: 'screen',
+      },
+      [
+        { opacity: 0, transform: `translate(${-w * 0.08}px, ${h * 0.04}px)` },
+        { opacity: 1, transform: 'translate(0, 0)', offset: 0.35 },
+        { opacity: 0.7, transform: `translate(${w * 0.06}px, ${-h * 0.03}px)`, offset: 0.7 },
+        { opacity: 0, transform: `translate(${w * 0.1}px, ${-h * 0.06}px)` },
+      ],
+      { duration: d, delay: d * 0.08, easing: 'ease-in-out' },
+    );
+    // Motes of light rising from the card, over it, drifting and twinkling out
+    for (let i = 0; i < 18; i++) {
       const s = 2 + Math.random() * 3;
-      const a = Math.random() * Math.PI * 2;
-      const rad = Math.max(w, h) * (0.35 + Math.random() * 0.4);
-      const x0 = size / 2 + Math.cos(a) * rad;
-      const y0 = size / 2 + Math.sin(a) * rad * 0.8;
+      const x0 = size / 2 + (Math.random() - 0.5) * w * 1.1;
+      const y0 = size / 2 + (Math.random() - 0.3) * h * 0.8;
       const rise = h * (0.3 + Math.random() * 0.45);
       const drift = (Math.random() - 0.5) * w * 0.4;
       const white = Math.random() < 0.35;
-      Object.assign(mote.style, {
-        position: 'absolute',
-        left: `${x0 - s / 2}px`,
-        top: `${y0 - s / 2}px`,
-        width: `${s}px`,
-        height: `${s}px`,
-        borderRadius: '50%',
-        background: white ? '#fff' : MOTE,
-        boxShadow: `0 0 ${4 + s * 1.5}px ${white ? '#fff' : MOTE}`,
-        opacity: '0',
-      });
-      host.append(mote);
-      runs.push(
-        mote.animate(
-          [
-            { opacity: 0, transform: 'translate(0, 0) scale(0.4)' },
-            { opacity: 1, transform: `translate(${drift * 0.3}px, ${-rise * 0.3}px) scale(1)`, offset: 0.3 },
-            { opacity: 0.6, transform: `translate(${drift * 0.7}px, ${-rise * 0.7}px) scale(0.9)`, offset: 0.7 },
-            { opacity: 0, transform: `translate(${drift}px, ${-rise}px) scale(0.3)` },
-          ],
-          { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.12 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)', fill: 'backwards' },
-        ).finished,
+      add(
+        top,
+        {
+          left: `${x0 - s / 2}px`,
+          top: `${y0 - s / 2}px`,
+          width: `${s}px`,
+          height: `${s}px`,
+          borderRadius: '50%',
+          background: white ? '#fff' : MOTE,
+          boxShadow: `0 0 ${4 + s * 1.5}px ${white ? '#fff' : MOTE}`,
+        },
+        [
+          { opacity: 0, transform: 'translate(0, 0) scale(0.4)' },
+          { opacity: 1, transform: `translate(${drift * 0.3}px, ${-rise * 0.3}px) scale(1)`, offset: 0.3 },
+          { opacity: 0.6, transform: `translate(${drift * 0.7}px, ${-rise * 0.7}px) scale(0.9)`, offset: 0.7 },
+          { opacity: 0, transform: `translate(${drift}px, ${-rise}px) scale(0.3)` },
+        ],
+        { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.12 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
       );
     }
     return Promise.all(runs)
       .catch(() => undefined)
-      .then(remove);
+      .then(() => {
+        under?.remove();
+        top.remove();
+        over.remove();
+      });
   }
 
   /** Text that rises from a point of the screen and fades. */

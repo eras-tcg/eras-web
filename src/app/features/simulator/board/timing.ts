@@ -23,7 +23,7 @@ export const TIMING = {
    * Evolución strands of life coiling round it.
    */
   ritual: 1300,
-  ritualLead: 450,
+  ritualLead: 0,
   promotion: 1500,
   promotionLead: 0,
   materialization: 1500,

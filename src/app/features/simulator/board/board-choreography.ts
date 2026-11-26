@@ -14,7 +14,7 @@ export interface ChoreographySteps {
   declare(attackerId: string, targetId: string | null, defenderId: string | null, tap: boolean): Promise<void>;
   /** A block declared: a shield over the blocker, which is exhausted with it (`tap`). */
   block(blockerId: string, tap: boolean): Promise<void>;
-  /** An effect activated: its card lights up where it lies, a white aura spreading from it. */
+  /** An effect activated: its card lights up where it lies and a circle of runes opens around it. */
   activate(sourceId: string, playerId: string | null): Promise<void>;
   /** The chain as it is in the next update: links joining it or resolving, shown big; done when all have gone. */
   chain(next: GameState): Promise<void>;

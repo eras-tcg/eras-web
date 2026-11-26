@@ -13,8 +13,10 @@ export const TIMING = {
   charge: 1000,
   /** An arrow (an attack's target, an effect's targets) drawing itself, holding and fading. */
   arrow: 950,
-  /** A sign over a card (sword, shield) or an activation's aura. */
+  /** A sign over a card (sword, shield). */
   badge: 1100,
+  /** An effect awakening on its card: a circle of runes, a gleam, motes of light. */
+  activation: 1300,
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */

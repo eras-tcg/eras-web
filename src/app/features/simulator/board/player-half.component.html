@@ -82,6 +82,10 @@
             [class.formed-end]="place?.end"
           >
             <eras-sim-card [slot]="s" zone="field" [opponent]="opponent()" />
+            <!-- Enlace: the formation's rank (its highest level), under its middle -->
+            @if (line === 'front' ? formationRank().get(s.instanceId) : null; as r) {
+              <span class="formation-rank" [class.between]="r.between" [attr.aria-label]="'Rango ' + r.rank">{{ roman(r.rank) }}</span>
+            }
             <!-- Enlace: who points to whom between it and the creature to its right -->
             @if (line === 'front' ? linkMarks().get(s.instanceId) : null; as dir) {
               <span class="link-mark" aria-hidden="true">

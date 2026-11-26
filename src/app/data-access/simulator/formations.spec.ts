@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drawnFrontRow, formationGrants, formationPlaces, frontOrder, pointsSide } from './formations';
+import { drawnFrontRow, formationGrants, formationPlaces, formationRanks, frontOrder, pointsSide } from './formations';
 import { CardSlot, PlayerState } from './simulator.model';
 
 const slot = (id: string, over: Partial<CardSlot> = {}): CardSlot =>
@@ -49,6 +49,16 @@ describe('formations', () => {
     const places = formationPlaces(player, drawnFrontRow(player, [slot('a'), slot('s'), slot('b')]));
     expect(places.get('a')).toEqual({ index: 0, start: true, end: false });
     expect(places.get('b')).toEqual({ index: 0, start: false, end: true });
+  });
+
+  it('ranks each formation by its highest level, under its middle', () => {
+    const row = [slot('a', { level: 2 }), slot('b', { level: 4 }), slot('c', { level: 1 }), slot('x', { level: 5 }), slot('d', { level: 3 }), slot('e', { level: 1 })];
+    const player = { formations: [['a', 'b', 'c'], ['d', 'e']] } as unknown as PlayerState;
+    const ranks = formationRanks(formationPlaces(player, row), row);
+    // Three members: on the middle one; two: between them (on the left one's right edge); a creature apart has none
+    expect(ranks.get('b')).toEqual({ rank: 4, between: false });
+    expect(ranks.get('d')).toEqual({ rank: 3, between: true });
+    expect(ranks.size).toBe(2);
   });
 
   it('reads the link effects received', () => {

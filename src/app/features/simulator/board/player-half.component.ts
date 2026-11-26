@@ -5,7 +5,8 @@ import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/le
 import { GameStore } from '@data/simulator/game.store';
 import { CardBackService, cardBackFill, cardBackOf } from '@core/theme/card-back.service';
 import { CardSlot, OptionalMode, PlayerState, ZoneName } from '@data/simulator/simulator.model';
-import { drawnFrontRow, formationPlaces, pointsSide } from '@data/simulator/formations';
+import { drawnFrontRow, formationPlaces, formationRanks, pointsSide } from '@data/simulator/formations';
+import { roman } from '@ui/domain/game-card/roman';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
@@ -385,6 +386,9 @@ export class PlayerHalfComponent {
   }
   /** Enlace: the cards of the Línea frontal in a formation, with where each run starts and ends (drawn as one group). */
   protected readonly formation = computed(() => formationPlaces(this.player(), this.rows().front));
+  /** Each formation's rank (its highest level), under its middle. */
+  protected readonly formationRank = computed(() => formationRanks(this.formation(), this.rows().front));
+  protected readonly roman = roman;
   /**
    * Enlace: the arrows of each face-up card of the field that has them, lit when it points to the creature on that side (Línea
    * frontal, active), dim otherwise.

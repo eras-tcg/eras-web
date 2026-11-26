@@ -53,8 +53,8 @@ const UNDO_STEPS = 30;
         </div>
         @if (tool() === 'paint' || tool() === 'erase') {
           <label class="size">
-            Tamaño
-            <input type="range" min="2" max="80" [value]="brush()" (input)="brush.set(+$any($event.target).value)" />
+            Tamaño: {{ brush() }} px
+            <input type="range" min="1" max="120" step="1" aria-label="Tamaño del pincel" [value]="brush()" (input)="brush.set(+$any($event.target).value)" />
           </label>
         }
         <div class="group">
@@ -181,7 +181,8 @@ export class CreatureCutoutDialogComponent {
     { id: 'erase', label: 'Borrador', brush: true },
   ];
   protected readonly tool = signal<Tool>('add');
-  protected readonly brush = signal(14);
+  /** How many pixels of the illustration the brush covers across (1: a single pixel). */
+  protected readonly brush = signal(6);
   protected readonly samReady = signal(false);
   protected readonly status = signal<string | null>('Cargando la ilustración…');
   protected readonly error = signal<string | null>(null);
@@ -398,11 +399,11 @@ export class CreatureCutoutDialogComponent {
     if (!this.stroke || !this.mask) return;
     const at = this.pointAt(event);
     const add = this.tool() === 'paint';
-    const r = this.brush();
-    // Dabs along the way, close enough to make a line
-    const steps = Math.max(1, Math.ceil(Math.hypot(at.x - this.stroke.x, at.y - this.stroke.y) / (r / 3)));
+    const size = this.brush();
+    // Dabs along the way, close enough to make a line (every half pixel at least, for a thin brush)
+    const steps = Math.max(1, Math.ceil(Math.hypot(at.x - this.stroke.x, at.y - this.stroke.y) / Math.max(0.5, size / 4)));
     for (let i = 1; i <= steps; i++) {
-      dab(this.mask, this.stroke.x + ((at.x - this.stroke.x) * i) / steps, this.stroke.y + ((at.y - this.stroke.y) * i) / steps, r, add);
+      dab(this.mask, this.stroke.x + ((at.x - this.stroke.x) * i) / steps, this.stroke.y + ((at.y - this.stroke.y) * i) / steps, size, add);
     }
     this.stroke = at;
     this.scheduleDraw();

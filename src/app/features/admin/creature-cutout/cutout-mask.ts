@@ -22,21 +22,29 @@ export function combine(mask: Mask, part: Uint8ClampedArray | Uint8Array, add: b
   return { ...mask, data };
 }
 
-/** A round dab of the brush at (x, y), radius r: painting the creature in (or erasing it), soft at its rim. */
-export function dab(mask: Mask, x: number, y: number, r: number, add: boolean): void {
+/**
+ * A round dab of the brush at (x, y), `size` pixels across: painting the creature in (or erasing it), soft at its rim.
+ * One pixel across is just the pixel under the point, whole.
+ */
+export function dab(mask: Mask, x: number, y: number, size: number, add: boolean): void {
   const { width, height, data } = mask;
+  const put = (i: number, k: number) => (data[i] = add ? Math.max(data[i], 255 * k) : Math.min(data[i], 255 * (1 - k)));
+  if (size <= 1) {
+    const px = Math.floor(x);
+    const py = Math.floor(y);
+    if (px >= 0 && py >= 0 && px < width && py < height) put(py * width + px, 1);
+    return;
+  }
+  const r = size / 2;
   const x0 = Math.max(0, Math.floor(x - r));
   const x1 = Math.min(width - 1, Math.ceil(x + r));
   const y0 = Math.max(0, Math.floor(y - r));
   const y1 = Math.min(height - 1, Math.ceil(y + r));
   for (let py = y0; py <= y1; py++) {
     for (let px = x0; px <= x1; px++) {
-      const d = Math.hypot(px - x, py - y);
-      if (d > r) continue;
-      // The last pixel of the dab blends in
-      const k = Math.min(1, r - d);
-      const i = py * width + px;
-      data[i] = add ? Math.max(data[i], 255 * k) : Math.min(data[i], 255 * (1 - k));
+      // From the pixel's middle; its last pixel blends in
+      const k = Math.min(1, r - Math.hypot(px + 0.5 - x, py + 0.5 - y) + 0.5);
+      if (k > 0) put(py * width + px, k);
     }
   }
 }

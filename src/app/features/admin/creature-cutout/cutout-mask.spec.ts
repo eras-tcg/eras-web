@@ -11,11 +11,18 @@ describe('cutout mask', () => {
 
   it('paints a round dab and erases it', () => {
     const m = emptyMask(9, 9);
-    dab(m, 4, 4, 2, true);
+    dab(m, 4.5, 4.5, 4, true);
     expect(m.data[4 * 9 + 4]).toBe(255);
     expect(m.data[0]).toBe(0);
-    dab(m, 4, 4, 3, false);
+    dab(m, 4.5, 4.5, 6, false);
     expect(m.data[4 * 9 + 4]).toBe(0);
+  });
+
+  it('a brush one pixel across paints only the pixel under the point', () => {
+    const m = emptyMask(5, 5);
+    dab(m, 2.7, 1.2, 1, true);
+    expect([...m.data].filter((v) => v > 0)).toEqual([255]);
+    expect(m.data[1 * 5 + 2]).toBe(255);
   });
 
   it('fades the figure where it meets the edge, not inside', () => {

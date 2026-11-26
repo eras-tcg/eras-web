@@ -58,10 +58,20 @@ export class CutoutSam {
       this.inputs.original_sizes,
       this.inputs.reshaped_input_sizes,
     ))[0];
+    // SAM guesses three parts, small to large (a buckle, the armour, the whole robot): the largest of those it is
+    // nearly as sure of as its best, since a click usually means the whole figure there
     const scores = out.iou_scores.data as Float32Array;
-    let best = 0;
-    for (let i = 1; i < scores.length; i++) if (scores[i] > scores[best]) best = i;
     const size = oh * ow;
-    return (masks.data as Uint8Array).slice(best * size, (best + 1) * size);
+    const data = masks.data as Uint8Array;
+    const top = Math.max(...scores);
+    let pick = -1;
+    let area = -1;
+    for (let i = 0; i < scores.length; i++) {
+      if (scores[i] < top - 0.15) continue;
+      let n = 0;
+      for (let p = i * size; p < (i + 1) * size; p++) n += data[p] ? 1 : 0;
+      if (n > area) [pick, area] = [i, n];
+    }
+    return data.slice(pick * size, (pick + 1) * size);
   }
 }

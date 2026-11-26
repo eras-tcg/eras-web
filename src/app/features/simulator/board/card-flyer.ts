@@ -1,6 +1,6 @@
 import { CardSlot, GameState, ZoneName } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { CardPose, Stage, poseFrames, poseOf, stageOf } from './card-pose';
+import { CardPose, Stage, poseFrames, poseOf, slamFrames, stageOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
@@ -17,6 +17,8 @@ export interface FlightOptions {
   under?: boolean;
   /** It goes at once, whatever this update started (a flight a click starts, long after its update). */
   now?: boolean;
+  /** It slams onto its place (a summon): up over it, then down hard. */
+  slam?: boolean;
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -62,7 +64,8 @@ export class CardFlyer {
     const end = toCard ? poseOf(toCard) : poseOf(slot, { width: slotWidth, height: (slotWidth * 88) / 63 });
     // Only the pose: the shadow is on its faces (a filter on the card flattens it, and its face would show through its back
     // while it waits to leave or turns over)
-    const frames = poseFrames(stage, start, end, { fromBack: !!options.fromBack, toBack: faceDown }, options.under).map(
+    const faces = { fromBack: !!options.fromBack, toBack: faceDown };
+    const frames = (options.slam ? slamFrames(stage, start, end, faces) : poseFrames(stage, start, end, faces, options.under)).map(
       ({ filter, ...frame }) => (void filter, frame),
     );
 
@@ -77,7 +80,7 @@ export class CardFlyer {
     inner.style.transform = String(frames[0]['transform']);
     const launch = () => {
       this.animations.hold(delay + duration);
-      this.launch(inner, flight, frames, delay, duration, options.hide, landed);
+      this.launch(inner, flight, frames, delay, duration, options.slam ? 'linear' : 'cubic-bezier(0.4, 0, 0.2, 1)', options.hide, landed);
     };
     if (this.context.deferring() && !options.now) {
       flight.style.visibility = 'hidden';
@@ -194,8 +197,17 @@ export class CardFlyer {
     return { flight, inner };
   }
 
-  private launch(inner: HTMLElement, flight: HTMLElement, frames: Keyframe[], delay: number, duration: number, hide?: HTMLElement | null, landed?: (() => void) | null): void {
-    const animation = inner.animate(frames, { duration, delay, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'both' });
+  private launch(
+    inner: HTMLElement,
+    flight: HTMLElement,
+    frames: Keyframe[],
+    delay: number,
+    duration: number,
+    easing: string,
+    hide?: HTMLElement | null,
+    landed?: (() => void) | null,
+  ): void {
+    const animation = inner.animate(frames, { duration, delay, easing, fill: 'both' });
     const done = () => {
       flight.remove();
       if (hide) hide.style.visibility = '';

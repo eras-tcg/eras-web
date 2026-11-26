@@ -1,4 +1,5 @@
 import { BoardAnimations } from './board-animations';
+import { quake, quakesWithTable } from './board-quake';
 import { Seen, TableMeasure } from './card-seen';
 import { TablePlane, tablePlane } from './table-plane';
 import { LAYER, TIMING } from './timing';
@@ -24,8 +25,8 @@ export class CardMotions {
   private readonly broken = new Map<string, () => void>();
 
   /**
-   * A destroyed card breaks where it lies, and stays there: struck at a point, a white flash and a shock wave burst
-   * from it; the card splits into pieces along glowing cracks, pushed apart over a red-hot glow; sparks and splinters of
+   * A destroyed card breaks where it lies, and stays there: struck at a point, a white flash holds a moment, the table
+   * jolts and a shock wave bursts from it; the card splits into pieces along glowing cracks, pushed apart over a red-hot glow; sparks and splinters of
    * it fly off and fall; then the pieces close back up, the cracks and the burn die down, and the card waits, whole, for
    * its flight to its zone, which takes over from it (release). It never vanishes first. `id`: the card's instance id
    * (the same card always breaks the same way).
@@ -43,7 +44,7 @@ export class CardMotions {
     const turn = turnDeg ? `rotate(${turnDeg}deg)` : '';
     const face = cardFaceStyle(from.imageUrl);
     const pct = (p: Point) => `${((p.x / CARD_W) * 100).toFixed(2)}% ${((p.y / CARD_H) * 100).toFixed(2)}%`;
-    const place = (el: HTMLElement, x: number, y: number, ew: number, eh: number) =>
+    const place = (el: HTMLElement, x: number, y: number, ew: number, eh: number) => {
       Object.assign(el.style, {
         position: lying ? 'absolute' : 'fixed',
         left: `${x - ew / 2}px`,
@@ -53,6 +54,9 @@ export class CardMotions {
         zIndex: LAYER.shatter,
         pointerEvents: 'none',
       });
+      // Flat on the screen, it jolts with the table (on the leaning table, its layer does)
+      if (!lying) quakesWithTable(el);
+    };
     // The point struck, on the screen (the card may lie turned)
     const r = (turnDeg * Math.PI) / 180;
     const ox = (shape.impact.x / CARD_W - 0.5) * w;
@@ -109,14 +113,16 @@ export class CardMotions {
     made.push(box);
     this.animations.hold(d);
 
-    // The blow: a white flash, a jolt, the card glowing red; then it settles back as it was
+    // The blow: a blinding flash that holds a moment, a hard jolt with the table, the card glowing red; then it settles
+    quake(this.document, this.animations, 1, d * 0.04);
     box.animate(
       [
         { transform: `${turn} scale(1)`, filter: 'none' },
-        { transform: `${turn} scale(1.06)`, filter: 'brightness(2.6) saturate(0.6)', offset: 0.08 },
-        { transform: `${turn} translate(-3px, 1px) scale(1.02)`, filter: 'brightness(1.4) drop-shadow(0 0 18px #e0242f)', offset: 0.2 },
-        { transform: `${turn} translate(3px, -1px)`, filter: 'brightness(1.2) drop-shadow(0 0 24px #e0242f)', offset: 0.32 },
-        { transform: `${turn} translate(-1px, 0)`, filter: 'brightness(1.05) drop-shadow(0 0 16px #e0242f)', offset: 0.5 },
+        { transform: `${turn} scale(1.1)`, filter: 'brightness(3) saturate(0.5)', offset: 0.05 },
+        { transform: `${turn} scale(1.09)`, filter: 'brightness(2.6) saturate(0.6)', offset: 0.12 },
+        { transform: `${turn} translate(-5px, 2px) scale(1.02)`, filter: 'brightness(1.5) drop-shadow(0 0 22px #e0242f)', offset: 0.22 },
+        { transform: `${turn} translate(4px, -2px)`, filter: 'brightness(1.25) drop-shadow(0 0 26px #e0242f)', offset: 0.34 },
+        { transform: `${turn} translate(-2px, 1px)`, filter: 'brightness(1.05) drop-shadow(0 0 18px #e0242f)', offset: 0.5 },
         { transform: turn || 'none', filter: 'drop-shadow(0 0 6px #e0242f)', offset: 0.8 },
         { transform: turn || 'none', filter: 'none' },
       ],
@@ -126,14 +132,15 @@ export class CardMotions {
     burn.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0.35, offset: 0.45 }, { opacity: 0 }], { duration: d, fill: 'forwards' });
     // The pieces pushed apart along the cracks (a little turned), then closing back up
     for (const { el, piece } of pieces) {
-      const push = 2.2 + (Math.abs(piece.push.x) + Math.abs(piece.push.y)) * 0.8;
+      const push = 3 + (Math.abs(piece.push.x) + Math.abs(piece.push.y)) * 1.1;
       const tx = (piece.push.x * push * w) / CARD_W;
       const ty = (piece.push.y * push * h) / CARD_H;
       const rot = (piece.push.x * piece.push.y > 0 ? 1 : -1) * 1.6;
       el.animate(
         [
           { transform: 'translate(0, 0) rotate(0deg)' },
-          { transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`, offset: 0.22, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+          { transform: 'translate(0, 0) rotate(0deg)', offset: 0.1, easing: 'cubic-bezier(0.1, 0.9, 0.3, 1)' },
+          { transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`, offset: 0.26, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
           { transform: `translate(${tx * 0.8}px, ${ty * 0.8}px) rotate(${rot * 0.8}deg)`, offset: 0.5, easing: 'cubic-bezier(0.5, 0, 0.3, 1)' },
           { transform: 'translate(0, 0) rotate(0deg)' },
         ],
@@ -171,7 +178,7 @@ export class CardMotions {
 
     // Sparks: glowing points thrown out from the impact, falling as they fade
     const rnd = seeded(id + ':sparks');
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 30; i++) {
       const spark = this.document.createElement('div');
       const size = 2 + rnd() * 3;
       place(spark, hit.x, hit.y, size, size);
@@ -249,7 +256,8 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: a ring of light opens from it and a glow fades on it (blue yours, red the rival's).
+   * A summoned card lands: it presses into the table, which jolts; rings of light open from it and a glow fades on it
+   * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
   burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number): void {
@@ -278,25 +286,44 @@ export class CardMotions {
       pointerEvents: 'none',
       opacity: '0',
     });
-    (lying?.layer ?? this.document.body).append(ring);
+    if (!lying) quakesWithTable(ring);
+    // A white flash ring, quicker and closer, over the colored one
+    const flash = ring.cloneNode() as HTMLElement;
+    Object.assign(flash.style, { border: '4px solid #fff', boxShadow: `0 0 18px 4px #fff, 0 0 30px 8px ${color}` });
+    const host = lying?.layer ?? this.document.body;
+    host.append(ring, flash);
     this.animations.hold(delay + TIMING.burst);
     const animation = ring.animate(
       [
-        { opacity: 0.95, transform: 'scale(0.35)' },
-        { opacity: 0, transform: 'scale(1.15)' },
+        { opacity: 1, transform: 'scale(0.3)', borderWidth: '7px' },
+        { opacity: 0, transform: 'scale(1.25)', borderWidth: '1px' },
       ],
-      { duration: TIMING.burst, delay, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
+      { duration: TIMING.burst, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
     );
-    const gone = () => (lying?.layer ?? ring).remove();
+    flash.animate(
+      [
+        { opacity: 1, transform: 'scale(0.5)' },
+        { opacity: 0, transform: 'scale(0.95)' },
+      ],
+      { duration: TIMING.burst * 0.45, delay, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)', fill: 'backwards' },
+    );
+    const gone = () => {
+      flash.remove();
+      (lying?.layer ?? ring).remove();
+    };
     animation.onfinish = gone;
     animation.oncancel = gone;
+    // It lands with its weight: pressed into the table a moment and back, glowing; the table jolts
     card.animate(
       [
-        { boxShadow: `0 0 0 3px #fff, 0 0 40px 14px ${color}` },
-        { boxShadow: '0 0 0 0 transparent, 0 0 0 0 transparent' },
+        { scale: '1.04', boxShadow: `0 0 0 3px #fff, 0 0 48px 18px ${color}` },
+        { scale: '0.96', offset: 0.12 },
+        { scale: '1.01', offset: 0.3 },
+        { scale: '1', boxShadow: '0 0 0 0 transparent, 0 0 0 0 transparent' },
       ],
       { duration: TIMING.burst, delay, easing: 'ease-out' },
     );
+    quake(this.document, this.animations, 0.6, delay);
   }
 
   /**

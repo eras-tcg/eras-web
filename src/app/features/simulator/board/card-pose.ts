@@ -134,3 +134,26 @@ export function poseFrames(stage: Stage, from: CardPose, to: CardPose, faces: { 
     { transform: transformOf(stage, end, w, h, toFlip, endScale), filter: 'drop-shadow(0 4px 6px rgb(0 0 0 / 35%))' },
   ];
 }
+
+/**
+ * The keyframes of a summoned card slamming onto the table (seen by `stage`'s camera): it flies up over its place,
+ * already turned as it lands, hangs there a moment and drops onto it faster and faster. Each keyframe brings its own
+ * easing: play them linear.
+ */
+export function slamFrames(stage: Stage, from: CardPose, to: CardPose, faces: { fromBack: boolean; toBack: boolean }): Keyframe[] {
+  const w = from.width;
+  const h = from.height;
+  const end: CardPose = { ...to, turn: from.turn + ((((to.turn - from.turn) % 360) + 540) % 360) - 180 };
+  const endScale = (to.scale * to.width) / w;
+  const toFlip = faces.toBack ? 180 : 0;
+  // How high it hangs: along the table's up over its place, more the longer the way
+  const lift = Math.max(70, Math.min(140, Math.hypot(end.x - from.x, end.y - from.y, end.z - from.z) * 0.3));
+  const a = (end.lean * Math.PI) / 180;
+  const over = (k: number): CardPose => ({ ...end, y: end.y - lift * k * Math.sin(a), z: end.z + lift * k * Math.cos(a) });
+  return [
+    { transform: transformOf(stage, from, w, h, faces.fromBack ? 180 : 0, from.scale), easing: 'cubic-bezier(0.25, 0.6, 0.35, 1)' },
+    { transform: transformOf(stage, over(1), w, h, toFlip, endScale * 1.06), offset: 0.6, easing: 'ease-in-out' },
+    { transform: transformOf(stage, over(1.1), w, h, toFlip, endScale * 1.07), offset: 0.72, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
+    { transform: transformOf(stage, end, w, h, toFlip, endScale) },
+  ];
+}

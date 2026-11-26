@@ -10,7 +10,7 @@ export const TIMING = {
   tapTurn: 300,
   tap: 440,
   /** The attacker striking what it hits. */
-  charge: 800,
+  charge: 1000,
   /** An arrow (an attack's target, an effect's targets) drawing itself, holding and fading. */
   arrow: 950,
   /** A sign over a card (sword, shield) or an activation's aura. */
@@ -18,7 +18,7 @@ export const TIMING = {
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */
-  shatter: 720,
+  shatter: 860,
   /** Cards flying between zones; a draw, one card after another; a card changing line; a summon and its burst. */
   flight: 650,
   draw: 550,
@@ -26,10 +26,12 @@ export const TIMING = {
   move: 520,
   /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
   slide: 450,
-  summon: 600,
+  summon: 720,
   burst: 750,
   /** The life lost turning face up on its pile. */
-  lifeFlip: 320,
+  lifeFlip: 480,
+  /** The table jolting under a blow (an attack landing, a card breaking, a summon landing). */
+  quake: 380,
   /** A deck shuffled: it shakes. */
   shuffle: 600,
   /** After an attack is declared, a moment before the block; after cards are destroyed, before the field settles. */

@@ -101,6 +101,8 @@ export function tablePlane(document: Document): TablePlane | null {
         pointerEvents: 'none',
         zIndex: String(zIndex),
       });
+      // It jolts with the table (quake)
+      el.dataset['simQuake'] = '';
       document.body.append(el);
       return el;
     },

@@ -45,7 +45,7 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
   imports: [GameCardComponent, IconComponent],
   template: `
     @for (s of shown(); track s.id) {
-      <button type="button" class="reveal" [class.mine]="s.mine" aria-live="assertive" aria-label="Saltar la animación" (click)="skip()">
+      <button type="button" class="reveal" [class.mine]="s.mine" [class.clash]="s.kind === 'clash'" aria-live="assertive" aria-label="Saltar la animación" (click)="skip()">
         @if (s.kind === 'damage') {
           <div class="side">
             <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
@@ -109,7 +109,9 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
       font: inherit;
       transform: translate(-50%, -50%);
       cursor: pointer;
-      animation: reveal var(--sim-combat-reveal, 2.6s) ease forwards;
+      animation:
+        reveal var(--sim-combat-reveal, 2.6s) ease forwards,
+        jolt 0.38s cubic-bezier(0.2, 0.6, 0.4, 1) var(--jolt-at, 0.55s);
     }
     .reveal.mine { border-color: var(--color-sim-ally); box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-ally) 45%, transparent); }
     .reveal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
@@ -126,6 +128,13 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
     .middle strong { font-size: 3.5rem; line-height: 1; }
     .middle span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
     .flip eras-game-card { animation: flip-in 0.6s ease 0.3s backwards; }
+    /* The blow: the number (or the "VS") slams down and the panel jolts; in a clash both creatures rush in and collide */
+    .middle strong { animation: slam 0.45s cubic-bezier(0.6, 0, 0.9, 0.6) 0.15s backwards; }
+    .reveal { --jolt-at: 0.55s; }
+    .reveal.clash { --jolt-at: 0.5s; }
+    .reveal.clash .middle strong { animation-delay: 0.3s; }
+    .reveal.clash .side:first-child { animation: rush-left 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
+    .reveal.clash .side:last-of-type { animation: rush-right 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
     .hint { position: absolute; inset-block-end: var(--space-2); inset-inline: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); text-align: center; }
     @keyframes reveal {
       0% { opacity: 0; transform: translate(-50%, -45%) scale(0.92); }
@@ -133,9 +142,35 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
       85% { opacity: 1; }
       100% { opacity: 0; }
     }
-    @keyframes flip-in { from { transform: rotateY(90deg); } }
+    @keyframes flip-in {
+      from { transform: rotateY(90deg) scale(1.15); }
+      70% { transform: rotateY(0) scale(1.08); filter: brightness(1.8); }
+      to { transform: none; }
+    }
+    @keyframes slam {
+      from { opacity: 0; scale: 2.6; }
+      65% { opacity: 1; scale: 0.88; }
+      to { scale: 1; }
+    }
+    @keyframes rush-left {
+      from { opacity: 0; translate: -9rem 0; }
+      80% { opacity: 1; translate: 0.8rem 0; }
+      to { translate: 0 0; }
+    }
+    @keyframes rush-right {
+      from { opacity: 0; translate: 9rem 0; }
+      80% { opacity: 1; translate: -0.8rem 0; }
+      to { translate: 0 0; }
+    }
+    @keyframes jolt {
+      0%, 100% { translate: 0 0; }
+      15% { translate: -6px 9px; }
+      35% { translate: 8px -5px; }
+      55% { translate: -5px 3px; }
+      75% { translate: 3px -1px; }
+    }
     @media (prefers-reduced-motion: reduce) {
-      .reveal, .flip eras-game-card { animation: none; }
+      .reveal, .flip eras-game-card, .middle strong, .reveal.clash .side { animation: none; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

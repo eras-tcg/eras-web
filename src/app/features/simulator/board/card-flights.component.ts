@@ -367,7 +367,7 @@ export class CardFlightsComponent {
           this.lifePlayed(c, p.userId) ??
           this.handSeen.get(c.instanceId) ??
           this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
-        if (from) this.glide(sprite, card, c, from, TIMING.summon);
+        if (from) this.glide(sprite, card, c, from, TIMING.summon, true);
         this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
         summoned = true;
       }
@@ -395,14 +395,17 @@ export class CardFlightsComponent {
     return was && !was.faceDown ? { ...from, imageUrl: card.imageUrl } : from;
   }
 
-  /** A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands). */
-  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number): void {
+  /**
+   * A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands);
+   * summoned (`slam`), it slams onto it.
+   */
+  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, slam = false): void {
     if (this.animations.still()) return;
     const to = card.getBoundingClientRect();
     if (Math.abs(from.x - (to.left + to.width / 2)) < 2 && Math.abs(from.y - (to.top + to.height / 2)) < 2) return;
     // A face-down card in a hand (the rival's) turns over as it flies, when it lands face up
     const imageUrl = slot.faceDown ? null : (slot.imageUrl ?? from.imageUrl);
-    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, { fromBack: !from.imageUrl && !!imageUrl, duration, hide: sprite });
+    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, { fromBack: !from.imageUrl && !!imageUrl, duration, hide: sprite, slam });
   }
 
   /**

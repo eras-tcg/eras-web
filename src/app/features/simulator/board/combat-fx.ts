@@ -2,8 +2,9 @@ import { pileOf } from '@data/simulator/game-rules';
 import { GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
 import { centerOf, fieldCard, fieldPlace, fieldSprite, liftPlace, pile, tableCard } from './board-dom';
+import { quake, quakesWithTable } from './board-quake';
 import { FxDraw } from './fx-draw';
-import { overlayFor } from './table-plane';
+import { Overlay, overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
@@ -20,6 +21,8 @@ interface Drawn {
 }
 
 const RIVAL = 'var(--color-sim-rival)';
+/** When the attacker's blow lands, as a share of its charge. */
+const IMPACT = 0.42;
 
 /** The signs over a card: a block's white shield; an attack's sword (the clash's "VS" icon: steel blade, golden hilt). */
 const SHIELD =
@@ -49,7 +52,8 @@ export class CombatFx {
   /**
    * The attacker charges: a copy of it leaves its place, strikes what it hits (`targetId`, or the lives of
    * `attackerOwner`'s rival) and comes back; the real card's sprite waits hidden (its place, with its share of an Enlace
-   * band and its link mark, stays as it is). The target's sprite shakes with a red flash at the blow, over its neighbours.
+   * band and its link mark, stays as it is). At the blow it stops dead a moment, a shock wave opens there and the table
+   * jolts; the target's sprite is knocked back with a red flash, over its neighbours.
    */
   charge(attackerId: string, targetId: string | null, attackerOwner: string | null, state: GameState): Promise<void> {
     const rects = this.measure(state);
@@ -83,33 +87,43 @@ export class CombatFx {
       boxShadow: '0 8px 24px rgb(0 0 0 / 45%)',
       ...cardFaceStyle(seen.imageUrl),
     });
+    if (over.position === 'fixed') quakesWithTable(copy);
     over.host.append(copy);
     if (real) real.style.visibility = 'hidden';
     this.animations.hold(TIMING.charge);
+    // It draws back and rises, rushes in faster and faster, stops dead on the blow a moment, bounces off and goes back
     const animation = copy.animate(
       [
-        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none' },
-        { transform: `translate(${-dx * 0.08}px, ${-dy * 0.08}px) scale(1.05)${turn}`, filter: `drop-shadow(0 0 10px ${RIVAL})`, offset: 0.18 },
-        { transform: `translate(${dx}px, ${dy}px) scale(1.18)${turn}`, filter: `drop-shadow(0 0 18px ${RIVAL})`, offset: 0.42 },
-        { transform: `translate(${dx * 0.92}px, ${dy * 0.92}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 14px ${RIVAL})`, offset: 0.55 },
+        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none', easing: 'cubic-bezier(0.3, 0, 0.3, 1)' },
+        { transform: `translate(${-dx * 0.14}px, ${-dy * 0.14}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.26, easing: 'cubic-bezier(0.7, 0, 1, 0.5)' },
+        { transform: `translate(${dx}px, ${dy}px) scale(1.24)${turn}`, filter: `brightness(1.5) drop-shadow(0 0 22px ${RIVAL})`, offset: IMPACT },
+        { transform: `translate(${dx * 0.98}px, ${dy * 0.98}px) scale(1.2)${turn}`, filter: `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`, offset: IMPACT + 0.07, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
+        { transform: `translate(${dx * 0.78}px, ${dy * 0.78}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.6, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
         { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none' },
       ],
-      { duration: TIMING.charge, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
+      { duration: TIMING.charge },
     );
-    // The blow lands on the target: it shakes as it is drawn (an exhausted blocker stays turned)
+    const blow = TIMING.charge * IMPACT;
+    // The blow: a shock wave where it lands, and the table jolts (harder on the lives)
+    this.shock(over, hit, Math.max(seen.width, seen.height) * 1.6, blow);
+    quake(this.document, this.animations, targetId ? 1 : 1.4, blow);
+    // What it hits is knocked back the way the blow goes, flashing, and settles (an exhausted blocker stays turned)
     const own = target ? this.document.defaultView?.getComputedStyle(target).transform : null;
     const base = own && own !== 'none' ? `${own} ` : '';
-    // Over its neighbours while it shakes (its place does not move)
+    const length = Math.hypot(dx, dy) || 1;
+    const kx = (dx / length) * 16;
+    const ky = (dy / length) * 16;
+    // Over its neighbours while it moves (its place does not move)
     const lowered = targetId && target ? liftPlace(fieldPlace(this.document, targetId)) : null;
     const shake = target?.animate(
       [
-        { transform: `${base}translateX(0)`, filter: 'none' },
-        { transform: `${base}translateX(-7px)`, filter: `brightness(1.6) drop-shadow(0 0 16px ${RIVAL})` },
-        { transform: `${base}translateX(6px)`, filter: `brightness(1.4) drop-shadow(0 0 12px ${RIVAL})` },
-        { transform: `${base}translateX(-3px)`, filter: `drop-shadow(0 0 6px ${RIVAL})` },
-        { transform: `${base}translateX(0)`, filter: 'none' },
+        { transform: `${base}translate(0, 0)`, filter: 'none' },
+        { transform: `${base}translate(${kx}px, ${ky}px) scale(0.94)`, filter: `brightness(2.2) drop-shadow(0 0 20px ${RIVAL})`, offset: 0.12 },
+        { transform: `${base}translate(${-kx * 0.35}px, ${-ky * 0.35}px)`, filter: `brightness(1.4) drop-shadow(0 0 14px ${RIVAL})`, offset: 0.4 },
+        { transform: `${base}translate(${kx * 0.15}px, ${ky * 0.15}px)`, filter: `drop-shadow(0 0 8px ${RIVAL})`, offset: 0.65 },
+        { transform: `${base}translate(0, 0)`, filter: 'none' },
       ],
-      { duration: TIMING.charge * 0.475, delay: TIMING.charge * 0.42, easing: 'ease-out' },
+      { duration: TIMING.charge * 0.5, delay: blow, easing: 'ease-out' },
     );
     if (shake && lowered) {
       shake.onfinish = lowered;
@@ -157,11 +171,27 @@ export class CombatFx {
     return Promise.all([sign, arrowGone]).then(() => undefined);
   }
 
-  /** A block declared: a white shield rises over the blocker, which turns sideways when it is exhausted to block (`tap`). */
+  /**
+   * A block declared: a white shield rises over the blocker, which turns sideways when it is exhausted to block (`tap`)
+   * and braces, setting itself down hard.
+   */
   block(blockerId: string, tap: boolean): Promise<void> {
     const card = fieldCard(this.document, blockerId);
     if (!card) return Promise.resolve();
     if (tap) this.exhaust(card);
+    // It braces as the shield goes up: it rises a little and sets itself down hard (once turned), and the table feels it
+    const brace = TIMING.badge * 0.4;
+    const down = Math.max(tap ? TIMING.tap : 0, brace * 0.7);
+    card.animate(
+      [
+        { scale: '1', filter: 'none' },
+        { scale: '1.08', filter: 'brightness(1.25) drop-shadow(0 0 12px #fff)', offset: 0.45, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
+        { scale: '0.96', filter: 'brightness(1.1) drop-shadow(0 0 8px #fff)', offset: 0.7 },
+        { scale: '1', filter: 'none' },
+      ],
+      { duration: brace, delay: down - brace * 0.7 },
+    );
+    quake(this.document, this.animations, 0.35, down);
     return this.draw.badge(card, SHIELD, '#fff');
   }
 
@@ -183,6 +213,35 @@ export class CombatFx {
       { duration: TIMING.badge, easing: 'ease-out' },
     );
     return this.draw.aura(card);
+  }
+
+  /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */
+  private shock(over: Overlay, at: { x: number; y: number }, size: number, delay: number): void {
+    const ring = this.document.createElement('div');
+    Object.assign(ring.style, {
+      position: over.position,
+      left: `${at.x - size / 2}px`,
+      top: `${at.y - size / 2}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      zIndex: LAYER.charge,
+      pointerEvents: 'none',
+      borderRadius: '50%',
+      border: '3px solid rgb(255 236 220 / 95%)',
+      boxShadow: `0 0 24px 6px ${RIVAL}, inset 0 0 20px 4px ${RIVAL}`,
+      opacity: '0',
+    });
+    if (over.position === 'fixed') quakesWithTable(ring);
+    over.host.append(ring);
+    const wave = ring.animate(
+      [
+        { opacity: 1, transform: 'scale(0.1)', borderWidth: '8px' },
+        { opacity: 0, transform: 'scale(1)', borderWidth: '1px' },
+      ],
+      { duration: TIMING.charge * 0.45, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', fill: 'backwards' },
+    );
+    wave.onfinish = () => ring.remove();
+    wave.oncancel = () => ring.remove();
   }
 
   /**

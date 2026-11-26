@@ -19,8 +19,8 @@ export interface FlightOptions {
   now?: boolean;
   /** It slams onto its place (a summon): up over it, hangs there this long (ms), then down hard. */
   slam?: { hang: number };
-  /** It stops just over its place (a card drawn to the hand) and is set down into it. */
-  settle?: boolean;
+  /** It stops just over its place (a card drawn to the hand), holds there `hold` ms, and is set down into it in `down` ms. */
+  settle?: { hold: number; down: number };
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -71,7 +71,7 @@ export class CardFlyer {
       options.slam
         ? slamFrames(stage, start, end, faces, this.apex(options.duration ?? TIMING.flight, options.slam.hang))
         : options.settle
-          ? settleFrames(stage, start, end, faces, end.height * end.scale * 0.45)
+          ? settleFrames(stage, start, end, faces, end.height * end.scale * 0.45, this.hold(options.duration ?? TIMING.flight, options.settle))
           : poseFrames(stage, start, end, faces, options.under)
     ).map(
       ({ filter, ...frame }) => (void filter, frame),
@@ -99,6 +99,11 @@ export class CardFlyer {
       return;
     }
     launch();
+  }
+
+  /** When a card settling into a hand is over its place, as shares of its flight (`duration`, ending with `hold` and `down`). */
+  private hold(duration: number, settle: { hold: number; down: number }): { from: number; to: number } {
+    return { from: (duration - settle.hold - settle.down) / duration, to: (duration - settle.down) / duration };
   }
 
   /**

@@ -111,6 +111,7 @@ export class CardFlightsComponent {
         this.lives.park(state);
         // A jump through time: nothing flies, the cards are just where they are now
         if (this.game.jumped()) {
+          this.openHand(true);
           this.seen = this.measure.field(state);
           this.handSeen = this.measure.hands(state);
           this.deckIds = new Set(Object.values(state.players ?? {}).flatMap((p) => p.deck.map((c) => c.instanceId)));
@@ -137,6 +138,8 @@ export class CardFlightsComponent {
           Object.values(state.players ?? {}).flatMap((p) => PILES.flatMap((z) => (p[z] as CardSlot[]).map((c) => [c.instanceId, `${p.userId}:${z}`] as const))),
         );
         this.draws(state);
+        // No turn draw took the hand's held room: it opens now
+        this.openHand();
         this.mulliganTop = new Map(
           Object.values(state.players ?? {})
             .filter((p) => state.status === 'MULLIGAN' && !p.hand.length)
@@ -201,7 +204,8 @@ export class CardFlightsComponent {
           return element ? [{ element, imageUrl: c.imageUrl }] : [];
         });
         if (cards.length) {
-          this.turnDraw.play(deck, cards);
+          const held = this.heldHand.splice(0);
+          this.turnDraw.play(deck, cards, () => this.release(held));
           continue;
         }
       }
@@ -216,9 +220,9 @@ export class CardFlightsComponent {
         this.flyer.fly(from, target, !faceUp, {
           fromBack: true,
           delay: i * TIMING.drawStagger,
-          duration: TIMING.draw + TIMING.drawSettle,
+          duration: card ? TIMING.draw + TIMING.drawHold + TIMING.drawDown : TIMING.draw,
           hide: card,
-          settle: !!card,
+          settle: card ? { hold: TIMING.drawHold, down: TIMING.drawDown } : undefined,
         });
       });
     }
@@ -393,6 +397,7 @@ export class CardFlightsComponent {
    */
   private handSlides(state: GameState): void {
     if (this.animations.still() || !this.previous) return;
+    const turnDraw = this.turnDrawStarts(state);
     for (const p of Object.values(state.players ?? {})) {
       const was = this.previous.players?.[p.userId]?.hand.map((c) => c.instanceId).join(',');
       if (was === undefined || was === p.hand.map((c) => c.instanceId).join(',')) continue;
@@ -405,9 +410,41 @@ export class CardFlightsComponent {
         const dx = from.x - (r.left + r.width / 2);
         const dy = from.y - (r.top + r.height / 2);
         if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
-        place.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: TIMING.slide, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+        // Your turn's draw waits for you to take it: the hand keeps its cards where they were until then
+        if (turnDraw && p.userId === this.me()) {
+          place.style.translate = `${dx}px ${dy}px`;
+          this.heldHand.push(place);
+        } else this.slideHome(place, `${dx}px ${dy}px`);
       }
     }
+  }
+
+  /** A card of a hand slides from `from` (a translate) to its place. */
+  private slideHome(place: HTMLElement, from: string): void {
+    place.animate([{ translate: from }, { translate: '0 0' }], { duration: TIMING.slide, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+  }
+
+  /** Cards of your hand kept where they were while your turn's draw waits to be taken. */
+  private heldHand: HTMLElement[] = [];
+
+  /** The held cards no turn draw took slide to their places (at once on a jump through time, `now`). */
+  private openHand(now = false): void {
+    this.release(this.heldHand.splice(0), now);
+  }
+
+  /** Held cards of a hand slide from where they were kept to their places (or just go there, `now`). */
+  private release(held: HTMLElement[], now = false): void {
+    for (const place of held) {
+      const from = place.style.translate;
+      place.style.translate = '';
+      if (!now && from) this.slideHome(place, from);
+    }
+  }
+
+  /** This update starts your turn and its draw will wait for you to take it (TurnDraw). */
+  private turnDrawStarts(state: GameState): boolean {
+    const me = this.me();
+    return !!me && state.currentTurnUserId === me && this.previous?.currentTurnUserId !== me && !this.game.sideByBot() && !this.animations.still();
   }
 
   /** A revealed life just played (the last choice was to play it): from the top of its owner's lives, face up. */

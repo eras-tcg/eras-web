@@ -127,7 +127,7 @@ function completed(
 
 /**
  * Ascenso, a promotion in rank: the card's edge lights up gold on the table, and the light rises from it as a wall all
- * round the card (open at its rounded corners), fading out towards its top, lighting the card from every side; then the wall fades as it goes on
+ * round the card, fading out towards its top, lighting the card from every side; then the wall fades as it goes on
  * up, the card glows gold faintly and embers rise. On the leaning table the wall stands up from it in depth; on a flat
  * one a curtain of light rises up the screen from the card's foot.
  */
@@ -180,17 +180,15 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const wall = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[]) =>
     keep(add({ zIndex: LAYER.fx, ...style }, frames, { duration: d, easing: 'linear' }));
   if (deep) {
-    // Four panels standing up along the card's straight edges (each laid on the table out from its edge, turned up on
-    // it, then turned on the table to lie along it). They stop where its rounded corners start: panels there, seen
-    // edge on, would read as pillars
-    const r = Math.min(w, h) * 0.032 * 1.4;
+    // Four panels standing up along the card's edges, meeting at square corners (each laid on the table out from its
+    // edge, turned up on it, then turned on the table to lie along it)
     const x0 = at.x - w / 2;
     const y0 = at.y - h / 2;
     const sides: [{ x: number; y: number }, { x: number; y: number }][] = [
-      [{ x: x0 + w - r, y: y0 + h }, { x: x0 + r, y: y0 + h }],
-      [{ x: x0, y: y0 + h - r }, { x: x0, y: y0 + r }],
-      [{ x: x0 + r, y: y0 }, { x: x0 + w - r, y: y0 }],
-      [{ x: x0 + w, y: y0 + r }, { x: x0 + w, y: y0 + h - r }],
+      [{ x: x0 + w, y: y0 + h }, { x: x0, y: y0 + h }],
+      [{ x: x0, y: y0 + h }, { x: x0, y: y0 }],
+      [{ x: x0, y: y0 }, { x: x0 + w, y: y0 }],
+      [{ x: x0 + w, y: y0 }, { x: x0 + w, y: y0 + h }],
     ];
     for (const [p1, p2] of sides) {
       const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
@@ -209,11 +207,11 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
       rise('', 'scaleY'),
     );
   }
-  // The card glowing gold, faintly, as the wall stands round it: in a layer of its own (its blending would flatten the
+  // The card lit gold, faintly, as the wall starts to rise (as Evolución's): in a layer of its own (its blending would flatten the
   // wall's layer, which stands up in depth)
   const top = overlayFor(document, card, LAYER.fx);
   const { screen } = measure(card, top);
-  completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, d * 0.25, d, true, 0.35).forEach(keep);
+  completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, 0, d, true, 0.4).forEach(keep);
   const point = () => ({ x: (Math.random() - 0.5) * w, y: (Math.random() - 0.5) * h });
   // Embers of gold rising off the card from the start, as the wall rises; most from its middle
   for (let i = 0; i < 34; i++) {

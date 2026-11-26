@@ -25,7 +25,7 @@ npm run e2e:pwa                      # Playwright contra los builds de producci�
 ```
 
 - `e2e/pwa/pwa-server.ts` imita a CloudFront, incluida su regla de rewrite: un archivo con extensión de más de 12 caracteres recibe `index.html`.
-- Los e2e que dependen de staging (`playwright.config.ts`) fallan si no hay acceso a staging.erastcg.com.
+- No hay staging desde el 2026-11-26: `ng serve` usa producción (`proxy.conf.json`) y los e2e que necesitaban una sesión real de staging se saltan.
 
 ## Modos de la app (`core/pwa/app-mode.ts`)
 
@@ -47,7 +47,7 @@ npm run e2e:pwa                      # Playwright contra los builds de producci�
 
 ## Despliegue
 
-- Rama de trabajo → PR a **`main`**. El CI corre `lint-test`, `build` (aws), `android` (APK), `desktop` (instalador de Windows), `site` (junta el sitio con `/app/*`), `deploy-staging` y `deploy-production`.
+- Rama de trabajo → PR a **`main`**. El CI corre `lint-test`, `build` (aws), `android` (APK), `desktop` (instalador de Windows), `site` (junta el sitio con `/app/*`) y `deploy-production`. No hay staging.
 - Producción **espera la aprobación del dueño**; un agente no puede aprobar.
 - Los despliegues a `main` van de a uno: si uno queda sin aprobar, bloquea los siguientes. Un run viejo superado por otro se puede cancelar.
 - Un cambio en `deploy-site.sh` (repo infra) tiene que mergearse **antes** que el eras-web que lo necesita, porque el despliegue usa infra@main.
@@ -55,7 +55,7 @@ npm run e2e:pwa                      # Playwright contra los builds de producci�
 
 ## Pendientes del dueño
 
-- `cd infra/aws && npx cdk deploy ErasSiteProd ErasSiteStaging --profile eras`: activa el 301 de `erastcg.com` a `www` en CloudFront y la regla de extensiones largas. Mientras tanto, la página redirige sola.
+- `cd infra/aws && npx cdk deploy ErasSiteProd --profile eras`: activa el 301 de `erastcg.com` a `www` en CloudFront y la regla de extensiones largas. Mientras tanto, la página redirige sola.
 - Opcional: una regla CORS en el bucket R2 de imágenes (GET desde `https://www.erastcg.com` y `https://localhost`). Sin ella las imágenes se guardan como opacas: se ven, pero Chrome mide mal el espacio que usan.
 
 ## Repos relacionados

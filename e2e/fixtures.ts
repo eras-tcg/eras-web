@@ -31,8 +31,8 @@ interface Account {
 }
 
 /**
- * Test accounts (git-ignored e2e/.auth.local.json) live on the staging backend, which next.erastcg.com,
- * staging.erastcg.com and `ng serve` all use. Production has none.
+ * Test accounts (git-ignored e2e/.auth.local.json) lived on the staging backend, turned off on 2026-11-26.
+ * Production has none, so the tests that need a real session skip (signInReal answers false).
  */
 const authFile = join(__dirname, '.auth.local.json');
 const auth: { baseURL?: string; accounts?: Account[] } = existsSync(authFile) ? JSON.parse(readFileSync(authFile, 'utf8')) : {};

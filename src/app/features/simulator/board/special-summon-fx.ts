@@ -159,8 +159,9 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
       },
       [
         { opacity: 0 },
-        { opacity: 1, offset: 0.12 },
-        { opacity: 0.9, offset: 0.6 },
+        { opacity: 1, offset: 0.1 },
+        { opacity: 0.9, offset: 0.45 },
+        { opacity: 0, offset: 0.75 },
         { opacity: 0 },
       ],
       { duration: d, easing: 'linear' },
@@ -170,10 +171,11 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const rise = (stand: string, grow: 'scaleX' | 'scaleY') =>
     [
       { opacity: 0, transform: `${stand} ${grow}(0)` },
-      { opacity: 1, transform: `${stand} ${grow}(0.05)`, offset: 0.08, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-      { opacity: 1, transform: `${stand} ${grow}(1)`, offset: 0.5 },
-      { opacity: 0.85, transform: `${stand} ${grow}(1.05)`, offset: 0.7, easing: 'ease-in' },
-      { opacity: 0, transform: `${stand} ${grow}(1.3)` },
+      { opacity: 1, transform: `${stand} ${grow}(0.05)`, offset: 0.06, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
+      { opacity: 1, transform: `${stand} ${grow}(1)`, offset: 0.4 },
+      { opacity: 0.8, transform: `${stand} ${grow}(1.04)`, offset: 0.48, easing: 'ease-in' },
+      { opacity: 0, transform: `${stand} ${grow}(1.25)`, offset: 0.72 },
+      { opacity: 0, transform: `${stand} ${grow}(1.25)` },
     ] as Keyframe[];
   const wall = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[]) =>
     keep(add({ zIndex: LAYER.fx, ...style }, frames, { duration: d, easing: 'linear' }));
@@ -208,9 +210,9 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   // wall's layer, which stands up in depth)
   const top = overlayFor(document, card, LAYER.fx);
   const { screen } = measure(card, top);
-  completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, d * 0.3, d, true, 0.35).forEach(keep);
+  completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, d * 0.25, d, true, 0.35).forEach(keep);
   const point = () => ({ x: (Math.random() - 0.5) * w, y: (Math.random() - 0.5) * h });
-  // Embers of gold rising off the card
+  // Embers of gold rising off the card from the start, as the wall rises
   for (let i = 0; i < 18; i++) {
     const s = 2 + Math.random() * 3;
     const q = point();
@@ -232,7 +234,7 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
           { opacity: 1, transform: `translateY(${-rise * 0.3}px)`, offset: 0.3 },
           { opacity: 0, transform: `translateY(${-rise}px)` },
         ],
-        { duration: d * (0.35 + Math.random() * 0.25), delay: d * (0.6 + Math.random() * 0.1), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
+        { duration: d * (0.35 + Math.random() * 0.25), delay: d * (0.04 + Math.random() * 0.4), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
       ),
     );
   }

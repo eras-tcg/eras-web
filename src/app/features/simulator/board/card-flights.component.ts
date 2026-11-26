@@ -402,7 +402,7 @@ export class CardFlightsComponent {
         };
         // A full-art creature first shows itself big, over its own stage; then its card lands (a special summon's own
         // light after that). The board waits for it all
-        const moment = this.animations.still() ? null : creatureMomentOf(this.catalogCard(c.cardId), displayStrength(c) ?? 0);
+        const moment = this.animations.still() ? null : creatureMomentOf(this.catalogCard(c.cardId));
         if (moment) {
           sprite.style.visibility = 'hidden';
           const release = this.animations.begin();

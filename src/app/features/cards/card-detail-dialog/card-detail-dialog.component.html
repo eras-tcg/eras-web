@@ -119,7 +119,7 @@
   <eras-creature-summon
     [creature]="creature"
     [name]="v.name"
-    [strength]="card().meta?.strength ?? 0"
+    [level]="card().meta?.level ?? null"
     [identity]="v.color ? 'var(--color-card-' + v.color.toLowerCase() + ')' : '#64748b'"
     (done)="summoning.set(false)"
   />

@@ -4,11 +4,11 @@ import { CatalogCard } from '@data/cards/card.model';
 import { CreatureSummonComponent } from '@ui/domain/creature-summon/creature-summon.component';
 import { animationPace } from './timing';
 
-/** What a full-art summon shows: the creature cut out of its card, its name, strength and identity color. */
+/** What a full-art summon shows: the creature cut out of its card, its name, level and identity color. */
 export interface CreatureMoment {
   creature: string;
   name: string;
-  strength: number;
+  level: number | null;
   identity: string;
 }
 
@@ -16,11 +16,11 @@ export interface CreatureMoment {
 const PATIENCE = 900;
 
 /** The moment of a catalog card with its creature cut out (a full-art card), or null. */
-export function creatureMomentOf(card: CatalogCard | undefined, strength: number): CreatureMoment | null {
+export function creatureMomentOf(card: CatalogCard | undefined): CreatureMoment | null {
   const creature = cardCreatureUrl(card?.meta);
   if (!card || !creature) return null;
   const identity = card.color_identity ? `var(--color-card-${card.color_identity.toLowerCase()})` : '#64748b';
-  return { creature, name: card.name ?? '', strength, identity };
+  return { creature, name: card.name ?? '', level: card.meta?.level ?? null, identity };
 }
 
 /**
@@ -53,7 +53,7 @@ export class CreatureMoments {
       const ref = createComponent(CreatureSummonComponent, { environmentInjector: this.injector });
       ref.setInput('creature', moment.creature);
       ref.setInput('name', moment.name);
-      ref.setInput('strength', moment.strength);
+      ref.setInput('level', moment.level);
       ref.setInput('identity', moment.identity);
       ref.setInput('patience', PATIENCE);
       ref.setInput('pace', animationPace());

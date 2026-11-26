@@ -10,6 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { roman } from '../game-card/roman';
 import { paletteOfImage } from './creature-palette';
 import { SummonVortex, summonVortex } from './summon-vortex';
 
@@ -22,7 +23,7 @@ export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
 
 /**
  * A full-art summon: the creature cut out of its illustration, big over its own stage (a soft vortex under a breathing
- * aura, shards of light circling it, motes rising), with its name and strength below. Lit with the colors of the
+ * aura, shards of light circling it, motes rising), with its name and level below. Lit with the colors of the
  * picture. It plays as soon as it is drawn, in the browser's top layer, and says `done` once it has faded away; the
  * host removes it then. Tapping it ends it early.
  */
@@ -42,7 +43,7 @@ export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
       [style.--identity]="identity()"
       [style.--pace]="pace()"
       aria-live="assertive"
-      [attr.aria-label]="name() + ', fuerza ' + strength() + '. Saltar la animación'"
+      [attr.aria-label]="name() + (level() ? ', nivel ' + level() : '') + '. Saltar la animación'"
       (click)="finish()"
     >
       <span class="fx" #fx aria-hidden="true"><canvas #canvas></canvas></span>
@@ -51,9 +52,15 @@ export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
       <span class="shock" aria-hidden="true"></span>
       <span class="motes" #motes aria-hidden="true"></span>
       <span class="creature"><img [src]="creature()" alt="" (load)="loaded()" (error)="finish()" /></span>
+      <!-- Its name across a band of light, as the turn's phases are shown; its level on a gold medal beside it -->
       <span class="plate">
-        <span class="name">{{ name() }}</span>
-        <span class="stat">FUERZA {{ strength() }}</span>
+        <span class="band">
+          @if (level(); as lv) {
+            <span class="level" aria-hidden="true">{{ romanOf(lv) }}</span>
+          }
+          <span class="name">{{ name() }}</span>
+          <span class="sweep" aria-hidden="true"></span>
+        </span>
       </span>
       <span class="flash" aria-hidden="true"></span>
     </button>
@@ -64,8 +71,9 @@ export class CreatureSummonComponent {
   /** The creature cut out of its illustration (a PNG with transparency). */
   readonly creature = input.required<string>();
   readonly name = input.required<string>();
-  readonly strength = input.required<number>();
-  /** The card's identity color (its strength band). */
+  /** Its level (shown in roman numerals); null without one. */
+  readonly level = input<number | null>(null);
+  /** The card's identity color (the band's light). */
   readonly identity = input('#64748b');
   /** How long it may wait for the picture (ms) before giving up (it then just says `done`); null: as long as it takes. */
   readonly patience = input<number | null>(null);
@@ -74,6 +82,7 @@ export class CreatureSummonComponent {
 
   readonly done = output<void>();
 
+  protected readonly romanOf = roman;
   protected readonly phase = signal<'wait' | 'on' | 'off'>('wait');
   protected readonly colors = signal<[string, string]>(['rgb(203 213 225)', 'rgb(148 163 184)']);
 

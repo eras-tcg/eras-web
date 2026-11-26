@@ -15,7 +15,7 @@ import { CutoutSam } from './cutout-sam';
 export interface CreatureCutoutData {
   metaId: string;
   name: string;
-  strength: number;
+  level: number | null;
   identity: string;
   /** Its cut-out saved now (its address), or null: the editor starts from it. */
   creature: string | null;
@@ -103,7 +103,7 @@ const UNDO_STEPS = 30;
       </footer>
     </section>
     @if (previewUrl(); as url) {
-      <eras-creature-summon [creature]="url" [name]="data.name" [strength]="data.strength" [identity]="data.identity" (done)="endPreview()" />
+      <eras-creature-summon [creature]="url" [name]="data.name" [level]="data.level" [identity]="data.identity" (done)="endPreview()" />
     }
   `,
   styles: `

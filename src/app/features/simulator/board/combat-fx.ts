@@ -50,7 +50,8 @@ export class CombatFx {
   ) {}
 
   /**
-   * The attacker charges: a copy of it rises off its place and dives onto what it hits (`targetId`, or the lives of
+   * The attacker charges: a copy of it rises off its place (its shadow left on the table) and dives, nose first, onto
+   * what it hits (`targetId`, or the lives of
    * `attackerOwner`'s rival) and comes back; the real card's sprite waits hidden (its place, with its share of an Enlace
    * band and its link mark, stays as it is). At the blow it stops dead a moment, a shock wave opens there and the table
    * jolts; the target's sprite is knocked back with a red flash, over its neighbours.
@@ -84,27 +85,64 @@ export class CombatFx {
       height: `${seen.height}px`,
       zIndex: LAYER.charge,
       pointerEvents: 'none',
-      boxShadow: '0 8px 24px rgb(0 0 0 / 45%)',
+      boxShadow: '0 2px 6px rgb(0 0 0 / 40%)',
       ...cardFaceStyle(seen.imageUrl),
     });
-    if (over.position === 'fixed') quakesWithTable(copy);
-    over.host.append(copy);
+    // Its shadow on the table under it: it stays on the table as the card rises, farther and softer the higher it is
+    const shade = this.document.createElement('div');
+    Object.assign(shade.style, {
+      position: over.position,
+      left: copy.style.left,
+      top: copy.style.top,
+      width: copy.style.width,
+      height: copy.style.height,
+      zIndex: LAYER.charge,
+      pointerEvents: 'none',
+      borderRadius: copy.style.borderRadius,
+      background: 'rgb(0 0 0 / 70%)',
+      opacity: '0',
+    });
+    if (over.position === 'fixed') [shade, copy].forEach(quakesWithTable);
+    over.host.append(shade, copy);
     if (real) real.style.visibility = 'hidden';
     this.animations.hold(TIMING.charge);
-    // It rises off the table (bigger, its shadow far below it), hangs a moment over its way, then dives onto what it
-    // attacks faster and faster, stops dead on the blow, bounces off and goes back down to its place
-    const lift = seen.height * 0.55;
-    const shadow = (y: number, blur: number, alpha: number) => `0 ${y}px ${blur}px rgb(0 0 0 / ${alpha}%)`;
+    // It rises off the table leaning back, hangs a moment, tips over and dives onto what it attacks faster and faster,
+    // nose first; it slaps flat on the blow and stops dead, bounces off and goes back down to its place. `along`: how
+    // far along its way (over the table), `up`: how high (0 on the table), `pitch`: its leading edge down (degrees)
+    const lift = seen.height * 0.5;
+    const length = Math.hypot(dx, dy) || 1;
+    const axis = `${(-dy / length).toFixed(3)}, ${(dx / length).toFixed(3)}, 0`;
+    const frame = (along: number, up: number, pitch: number, scale: number, offset: number | null, easing: string | null, filter: string) => {
+      const card: Keyframe = {
+        transform: `perspective(900px) translate(${dx * along}px, ${dy * along - up * lift}px) rotate3d(${axis}, ${pitch}deg) scale(${scale})${turn}`,
+        filter,
+      };
+      const ground: Keyframe = {
+        transform: `translate(${dx * along + up * lift * 0.35}px, ${dy * along + up * lift * 0.3}px) scale(${scale * (1 - up * 0.12)})${turn}`,
+        opacity: 0.55 - up * 0.3,
+        filter: `blur(${(3 + up * 14).toFixed(1)}px)`,
+      };
+      for (const k of [card, ground]) {
+        if (offset !== null) k.offset = offset;
+        if (easing) k.easing = easing;
+      }
+      return { card, ground };
+    };
+    const frames = [
+      frame(0, 0, 0, 1, null, 'cubic-bezier(0.25, 0.6, 0.35, 1)', 'none'),
+      frame(-0.06, 1, -24, 1.3, 0.26, 'ease-in-out', `drop-shadow(0 0 12px ${RIVAL})`),
+      frame(0.02, 1.06, 12, 1.32, 0.34, 'cubic-bezier(0.7, 0, 1, 0.5)', `drop-shadow(0 0 16px ${RIVAL})`),
+      frame(1, 0, 30, 1.06, IMPACT, null, `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`),
+      frame(0.98, 0, 0, 1.03, IMPACT + 0.07, 'cubic-bezier(0.2, 0.7, 0.4, 1)', `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`),
+      frame(0.8, 0.25, -8, 1.08, 0.66, 'cubic-bezier(0.45, 0, 0.25, 1)', `drop-shadow(0 0 10px ${RIVAL})`),
+      frame(0, 0, 0, 1, null, null, 'none'),
+    ];
     const animation = copy.animate(
-      [
-        { transform: `translate(0, 0) scale(1)${turn}`, boxShadow: shadow(8, 24, 45), filter: 'none', easing: 'cubic-bezier(0.25, 0.6, 0.35, 1)' },
-        { transform: `translate(${dx * 0.12}px, ${dy * 0.12 - lift}px) scale(1.42)${turn}`, boxShadow: shadow(48, 46, 35), filter: `drop-shadow(0 0 14px ${RIVAL})`, offset: 0.28, easing: 'ease-in-out' },
-        { transform: `translate(${dx * 0.16}px, ${dy * 0.16 - lift * 1.08}px) scale(1.45)${turn}`, boxShadow: shadow(52, 50, 32), filter: `drop-shadow(0 0 16px ${RIVAL})`, offset: 0.34, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
-        { transform: `translate(${dx}px, ${dy}px) scale(1.06)${turn}`, boxShadow: shadow(3, 6, 60), filter: `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`, offset: IMPACT },
-        { transform: `translate(${dx * 0.98}px, ${dy * 0.98}px) scale(1.04)${turn}`, boxShadow: shadow(3, 6, 60), filter: `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`, offset: IMPACT + 0.07, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
-        { transform: `translate(${dx * 0.8}px, ${dy * 0.8 - lift * 0.3}px) scale(1.14)${turn}`, boxShadow: shadow(20, 30, 40), filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.66, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
-        { transform: `translate(0, 0) scale(1)${turn}`, boxShadow: shadow(8, 24, 45), filter: 'none' },
-      ],
+      frames.map((f) => f.card),
+      { duration: TIMING.charge },
+    );
+    shade.animate(
+      frames.map((f) => f.ground),
       { duration: TIMING.charge },
     );
     const blow = TIMING.charge * IMPACT;
@@ -114,7 +152,6 @@ export class CombatFx {
     // What it hits is knocked back the way the blow goes, flashing, and settles (an exhausted blocker stays turned)
     const own = target ? this.document.defaultView?.getComputedStyle(target).transform : null;
     const base = own && own !== 'none' ? `${own} ` : '';
-    const length = Math.hypot(dx, dy) || 1;
     const kx = (dx / length) * 16;
     const ky = (dy / length) * 16;
     // Over its neighbours while it moves (its place does not move)
@@ -136,6 +173,7 @@ export class CombatFx {
     return new Promise((landed) => {
       const done = () => {
         copy.remove();
+        shade.remove();
         over.remove();
         if (real) real.style.visibility = '';
         landed();

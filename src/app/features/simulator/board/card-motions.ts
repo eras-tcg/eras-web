@@ -256,7 +256,7 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it and a glow fades on it
+   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, chips and dust thrown out from its edges and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
@@ -326,6 +326,96 @@ export class CardMotions {
       { duration: TIMING.burst, delay, easing: 'ease-out' },
     );
     quake(this.document, this.animations, 0.6, delay);
+    this.debris(host, at, w, h, color, delay, !lying);
+  }
+
+  /**
+   * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels): sparks and chips thrown out from its
+   * edges along the table, and dust puffing out low around it; each one removes itself.
+   */
+  private debris(host: HTMLElement, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, flat: boolean): void {
+    const life = TIMING.burst * 0.85;
+    const add = (style: Partial<CSSStyleDeclaration>, size: number, frames: Keyframe[], duration: number, wait: number) => {
+      const el = this.document.createElement('div');
+      Object.assign(el.style, {
+        position: flat ? 'fixed' : 'absolute',
+        left: `${at.x - size / 2}px`,
+        top: `${at.y - size / 2}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        zIndex: LAYER.flight,
+        pointerEvents: 'none',
+        opacity: '0',
+        ...style,
+      });
+      if (flat) quakesWithTable(el);
+      host.append(el);
+      const a = el.animate(frames, { duration, delay: delay + wait, easing: 'cubic-bezier(0.15, 0.7, 0.35, 1)' });
+      a.onfinish = () => el.remove();
+      a.oncancel = () => el.remove();
+    };
+    // A point on the card's edge and the way out from it
+    const edge = () => {
+      const side = Math.random() * 2 * (w + h);
+      if (side < w) return { x: side - w / 2, y: -h / 2, nx: 0, ny: -1 };
+      if (side < w + h) return { x: w / 2, y: side - w - h / 2, nx: 1, ny: 0 };
+      if (side < 2 * w + h) return { x: side - w - h - w / 2, y: h / 2, nx: 0, ny: 1 };
+      return { x: -w / 2, y: side - 2 * w - h - h / 2, nx: -1, ny: 0 };
+    };
+    // Sparks: bright points shot out from the edges, fast, slowing as they fade
+    for (let i = 0; i < 26; i++) {
+      const e = edge();
+      const size = 2 + Math.random() * 3.5;
+      const spread = (Math.random() - 0.5) * 1.1;
+      const dist = Math.max(w, h) * (0.25 + Math.random() * 0.55);
+      const vx = (e.nx + spread * (e.ny ? 1 : 0)) * dist;
+      const vy = (e.ny + spread * (e.nx ? 1 : 0)) * dist;
+      const white = Math.random() < 0.45;
+      add(
+        { borderRadius: '50%', background: white ? '#fff' : color, boxShadow: `0 0 ${4 + size}px ${white ? '#fff' : color}` },
+        size,
+        [
+          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px) scale(1)` },
+          { opacity: 0.9, transform: `translate(${e.x + vx * 0.7}px, ${e.y + vy * 0.7}px) scale(0.8)`, offset: 0.55 },
+          { opacity: 0, transform: `translate(${e.x + vx}px, ${e.y + vy}px) scale(0.3)` },
+        ],
+        life * (0.55 + Math.random() * 0.45),
+        Math.random() * 40,
+      );
+    }
+    // Chips: small shards spinning out
+    for (let i = 0; i < 10; i++) {
+      const e = edge();
+      const size = 3 + Math.random() * 4;
+      const dist = Math.max(w, h) * (0.2 + Math.random() * 0.35);
+      const spin = (Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 360);
+      add(
+        { background: 'rgb(255 255 255 / 85%)', clipPath: 'polygon(50% 0, 100% 80%, 0 100%)', filter: `drop-shadow(0 0 3px ${color})` },
+        size,
+        [
+          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px) rotate(0deg)` },
+          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px) rotate(${spin}deg)` },
+        ],
+        life * (0.6 + Math.random() * 0.4),
+        0,
+      );
+    }
+    // Dust: soft puffs rolling out low from the bottom and sides, growing as they thin
+    for (let i = 0; i < 8; i++) {
+      const e = edge();
+      const size = Math.min(w, h) * (0.25 + Math.random() * 0.2);
+      const dist = Math.min(w, h) * (0.3 + Math.random() * 0.3);
+      add(
+        { borderRadius: '50%', background: 'radial-gradient(circle, rgb(220 225 240 / 45%), rgb(220 225 240 / 0%) 70%)' },
+        size,
+        [
+          { opacity: 0.9, transform: `translate(${e.x}px, ${e.y}px) scale(0.4)` },
+          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px) scale(1.6)` },
+        ],
+        life,
+        20,
+      );
+    }
   }
 
   /**

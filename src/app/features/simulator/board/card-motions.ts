@@ -256,7 +256,7 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: it presses into the table, which jolts; rings of light open from it and a glow fades on it
+   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
@@ -268,26 +268,28 @@ export class CardMotions {
   private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number): void {
     const color = mine ? 'var(--color-sim-link-mine)' : 'var(--color-sim-link-rival)';
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    // On the leaning table the ring lies on it, around the card at its own size
+    // On the leaning table the frame lies on it, around the card at its own size
     const lying = this.onPlane({ ...center, width: 0, height: 0, tapped: false, imageUrl: null, plane: this.measure.onTable(card) });
-    const size = lying ? Math.max(card.offsetWidth, card.offsetHeight) * 1.6 : Math.max(rect.width, rect.height) * 1.6;
+    const w = lying ? card.offsetWidth : rect.width;
+    const h = lying ? card.offsetHeight : rect.height;
     const at = lying?.at ?? center;
+    // A frame of light the card's shape, opening out from its edges
     const ring = this.document.createElement('div');
     Object.assign(ring.style, {
       position: lying ? 'absolute' : 'fixed',
-      left: `${at.x - size / 2}px`,
-      top: `${at.y - size / 2}px`,
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: '50%',
+      left: `${at.x - w / 2}px`,
+      top: `${at.y - h / 2}px`,
+      width: `${w}px`,
+      height: `${h}px`,
+      borderRadius: cardFaceStyle(null).borderRadius ?? '6px',
       border: `3px solid ${color}`,
-      boxShadow: `0 0 24px 6px ${color}, inset 0 0 24px 4px ${color}`,
+      boxShadow: `0 0 24px 6px ${color}, inset 0 0 18px 3px ${color}`,
       zIndex: LAYER.flight,
       pointerEvents: 'none',
       opacity: '0',
     });
     if (!lying) quakesWithTable(ring);
-    // A white flash ring, quicker and closer, over the colored one
+    // A white frame, quicker and closer, over the colored one
     const flash = ring.cloneNode() as HTMLElement;
     Object.assign(flash.style, { border: '4px solid #fff', boxShadow: `0 0 18px 4px #fff, 0 0 30px 8px ${color}` });
     const host = lying?.layer ?? this.document.body;
@@ -295,17 +297,17 @@ export class CardMotions {
     this.animations.hold(delay + TIMING.burst);
     const animation = ring.animate(
       [
-        { opacity: 1, transform: 'scale(0.3)', borderWidth: '7px' },
-        { opacity: 0, transform: 'scale(1.25)', borderWidth: '1px' },
+        { opacity: 1, transform: 'scale(1)', borderWidth: '7px' },
+        { opacity: 0, transform: 'scale(1.45)', borderWidth: '1px' },
       ],
       { duration: TIMING.burst, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
     );
     flash.animate(
       [
-        { opacity: 1, transform: 'scale(0.5)' },
-        { opacity: 0, transform: 'scale(0.95)' },
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(1.18)' },
       ],
-      { duration: TIMING.burst * 0.45, delay, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)', fill: 'backwards' },
+      { duration: TIMING.burst * 0.45, delay, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
     );
     const gone = () => {
       flash.remove();

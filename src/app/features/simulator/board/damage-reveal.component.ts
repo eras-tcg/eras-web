@@ -45,106 +45,166 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
   imports: [GameCardComponent, IconComponent],
   template: `
     @for (s of shown(); track s.id) {
-      <button type="button" class="reveal" [class.mine]="s.mine" [class.clash]="s.kind === 'clash'" aria-live="assertive" aria-label="Saltar la animación" (click)="skip()">
-        @if (s.kind === 'damage') {
-          <div class="side">
-            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
-            <span>{{ s.attacker?.cardName ?? (s.byEffect ? 'Efecto' : 'Atacante') }}</span>
-            @if (s.byEffect) {
-              <small>Por efecto</small>
-            }
-          </div>
-          <div class="middle" [class.effect]="s.byEffect">
-            <eras-icon [name]="s.byEffect ? 'zap' : 'sword'" />
-            <strong>{{ s.damage }}</strong>
-            <span>{{ s.byEffect ? 'de daño directo por efecto' : 'de daño directo' }}</span>
-          </div>
-          <div class="side big flip">
-            <eras-game-card [imageUrl]="s.life?.imageUrl ?? null" [foil]="s.life?.finish ?? null" [name]="s.life?.cardName ?? null" />
-            <span>{{ s.defender }} pierde {{ s.life?.cardName ?? 'una vida' }}</span>
-            <small>{{ s.to === 'tributeZone' ? 'Va a sus tributos' : s.to === 'hand' ? 'Va a su mano' : '' }}</small>
-          </div>
-        } @else {
-          <div class="side" [class.loses]="s.attackerStrength <= s.blockerStrength">
-            <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
-            <span>{{ s.attacker?.cardName ?? 'Atacante' }}</span>
-            <strong class="strength">{{ s.attackerStrength }}</strong>
-            @if (s.attackerStrength <= s.blockerStrength) {
-              <small class="destroyed">Destruida</small>
-            }
-          </div>
-          <div class="middle">
-            <eras-icon name="sword" />
-            <strong>VS</strong>
-            <span>Enfrentamiento</span>
-          </div>
-          <div class="side" [class.loses]="s.blockerStrength <= s.attackerStrength">
-            <eras-game-card [imageUrl]="s.blocker?.imageUrl ?? null" [foil]="s.blocker?.finish ?? null" [name]="s.blocker?.cardName ?? null" />
-            <span>{{ s.blocker?.cardName ?? 'Bloqueador' }}</span>
-            <strong class="strength">{{ s.blockerStrength }}</strong>
-            @if (s.blockerStrength <= s.attackerStrength) {
-              <small class="destroyed">Destruida</small>
-            }
-          </div>
-        }
+      <button
+        type="button"
+        class="reveal"
+        [class.mine]="s.mine"
+        [class.clash]="s.kind === 'clash'"
+        aria-live="assertive"
+        aria-label="Saltar la animación"
+        (click)="skip()"
+      >
+        <div class="band">
+          @if (s.kind === 'damage') {
+            <figure class="side left">
+              <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
+              <figcaption>
+                <strong>{{ s.attacker?.cardName ?? (s.byEffect ? 'Efecto' : 'Atacante') }}</strong>
+                @if (s.byEffect) {
+                  <small>Por efecto</small>
+                }
+              </figcaption>
+            </figure>
+            <div class="middle" [class.effect]="s.byEffect">
+              <eras-icon [name]="s.byEffect ? 'zap' : 'sword'" />
+              <strong>{{ s.damage }}</strong>
+              <span>{{ s.byEffect ? 'de daño directo por efecto' : 'de daño directo' }}</span>
+            </div>
+            <figure class="side right big flip">
+              <eras-game-card [imageUrl]="s.life?.imageUrl ?? null" [foil]="s.life?.finish ?? null" [name]="s.life?.cardName ?? null" />
+              <figcaption>
+                <strong>{{ s.defender }} pierde {{ s.life?.cardName ?? 'una vida' }}</strong>
+                <small>{{ s.to === 'tributeZone' ? 'Va a sus tributos' : s.to === 'hand' ? 'Va a su mano' : '' }}</small>
+              </figcaption>
+            </figure>
+          } @else {
+            <figure class="side left" [class.loses]="s.attackerStrength <= s.blockerStrength">
+              <eras-game-card [imageUrl]="s.attacker?.imageUrl ?? null" [foil]="s.attacker?.finish ?? null" [name]="s.attacker?.cardName ?? null" />
+              <figcaption>
+                <strong class="strength">{{ s.attackerStrength }}</strong>
+                <strong>{{ s.attacker?.cardName ?? 'Atacante' }}</strong>
+                @if (s.attackerStrength <= s.blockerStrength) {
+                  <small class="destroyed">Destruida</small>
+                }
+              </figcaption>
+            </figure>
+            <div class="middle">
+              <eras-icon name="sword" />
+              <strong>VS</strong>
+              <span>Enfrentamiento</span>
+            </div>
+            <figure class="side right" [class.loses]="s.blockerStrength <= s.attackerStrength">
+              <eras-game-card [imageUrl]="s.blocker?.imageUrl ?? null" [foil]="s.blocker?.finish ?? null" [name]="s.blocker?.cardName ?? null" />
+              <figcaption>
+                <strong class="strength">{{ s.blockerStrength }}</strong>
+                <strong>{{ s.blocker?.cardName ?? 'Bloqueador' }}</strong>
+                @if (s.blockerStrength <= s.attackerStrength) {
+                  <small class="destroyed">Destruida</small>
+                }
+              </figcaption>
+            </figure>
+          }
+        </div>
         <small class="hint">Clic para continuar</small>
       </button>
     }
   `,
   styles: `
+    /* The whole screen dims; a dark band crosses it with the combat, edged with light of its side's color */
     .reveal {
+      --tone: var(--color-sim-rival);
+
       position: fixed;
-      inset-block-start: 50%;
-      inset-inline-start: 50%;
+      inset: 0;
       z-index: var(--z-sim-combat-reveal);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      background: radial-gradient(ellipse 90% 70% at 50% 50%, rgb(0 0 0 / 65%), rgb(0 0 0 / 35%) 75%, rgb(0 0 0 / 20%));
+      color: var(--color-text);
+      font: inherit;
+      cursor: pointer;
+      animation: reveal var(--sim-combat-reveal, 2.6s) ease forwards;
+    }
+    .reveal.mine { --tone: var(--color-sim-ally); }
+    .reveal:focus-visible { outline: none; }
+    .reveal:focus-visible .band::before { block-size: 4px; }
+    .band {
+      --jolt-at: 0.55s;
+
+      position: relative;
       display: flex;
       align-items: center;
-      gap: var(--space-6);
-      padding: var(--space-5) var(--space-6) var(--space-6);
-      border: 2px solid var(--color-sim-rival);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface);
-      box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-rival) 45%, transparent);
-      color: inherit;
-      font: inherit;
-      transform: translate(-50%, -50%);
-      cursor: pointer;
+      justify-content: center;
+      gap: clamp(1.5rem, 6vw, 5rem);
+      inline-size: 100%;
+      padding-block: var(--space-6);
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--tone) 24%, rgb(6 8 18 / 94%)) 20%,
+        color-mix(in srgb, var(--tone) 24%, rgb(6 8 18 / 94%)) 80%,
+        transparent
+      );
       animation:
-        reveal var(--sim-combat-reveal, 2.6s) ease forwards,
-        jolt 0.38s cubic-bezier(0.2, 0.6, 0.4, 1) var(--jolt-at, 0.55s);
+        open 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both,
+        jolt 0.38s cubic-bezier(0.2, 0.6, 0.4, 1) var(--jolt-at);
     }
-    .reveal.mine { border-color: var(--color-sim-ally); box-shadow: 0 0 40px 8px color-mix(in srgb, var(--color-sim-ally) 45%, transparent); }
-    .reveal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
-    .side { --game-card-width: 9rem; display: grid; justify-items: center; gap: var(--space-2); max-inline-size: 12rem; text-align: center; }
-    .side.big { --game-card-width: 12rem; }
-    .side span { font-weight: var(--font-weight-bold); }
-    .side small { color: var(--color-text-muted); }
-    .side.loses eras-game-card { filter: grayscale(0.8) brightness(0.6); transition: filter 0.4s ease 0.9s; }
-    .strength { font-size: 2rem; line-height: 1; }
-    .destroyed { color: var(--color-sim-rival) !important; font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: 0.06em; }
-    .middle { display: grid; justify-items: center; gap: var(--space-1); color: var(--color-sim-rival); }
-    .middle eras-icon { inline-size: 2.5rem; block-size: 2.5rem; }
+    .clash .band { --jolt-at: 0.5s; }
+    .band::before,
+    .band::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      block-size: 2px;
+      background: linear-gradient(90deg, transparent, var(--tone) 25%, #fff 50%, var(--tone) 75%, transparent);
+      box-shadow: 0 0 14px 2px var(--tone);
+    }
+    .band::before { inset-block-start: 0; }
+    .band::after { inset-block-end: 0; }
+    .side { --game-card-width: clamp(7rem, 13vw, 10rem); display: grid; justify-items: center; gap: var(--space-2); max-inline-size: 14rem; margin: 0; text-align: center; }
+    .side.big { --game-card-width: clamp(8.5rem, 16vw, 12.5rem); }
+    .side eras-game-card { filter: drop-shadow(0 10px 18px rgb(0 0 0 / 60%)); }
+    .side.big eras-game-card { filter: drop-shadow(0 0 22px var(--tone)) drop-shadow(0 10px 18px rgb(0 0 0 / 60%)); }
+    figcaption { display: grid; justify-items: center; gap: var(--space-1); }
+    figcaption strong { font-family: var(--font-family-display); font-size: var(--font-size-lg); line-height: 1.15; text-shadow: 0 2px 6px rgb(0 0 0 / 80%); }
+    figcaption small { color: var(--color-text-muted); }
+    figcaption .strength { color: #fff; font-size: 2.4rem; line-height: 1; text-shadow: 0 0 16px var(--tone), 0 3px 0 rgb(0 0 0 / 60%); }
+    figcaption .destroyed { color: var(--color-sim-rival); font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: 0.08em; }
+    .side.loses eras-game-card { filter: grayscale(0.8) brightness(0.55); transition: filter 0.4s ease 0.9s; }
+    .middle { display: grid; justify-items: center; gap: var(--space-1); color: var(--tone); }
     .middle.effect { color: var(--color-sim-effect); }
-    .middle strong { font-size: 3.5rem; line-height: 1; }
-    .middle span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .middle eras-icon { inline-size: 2.5rem; block-size: 2.5rem; filter: drop-shadow(0 0 10px currentcolor); }
+    .middle strong {
+      color: #fff;
+      font-family: var(--font-family-display);
+      font-size: clamp(4rem, 9vw, 6.5rem);
+      line-height: 1;
+      text-shadow: 0 0 28px var(--tone), 0 4px 0 rgb(0 0 0 / 55%);
+      animation: slam 0.45s cubic-bezier(0.6, 0, 0.9, 0.6) 0.15s backwards;
+    }
+    .middle.effect strong { text-shadow: 0 0 28px var(--color-sim-effect), 0 4px 0 rgb(0 0 0 / 55%); }
+    .middle span { color: var(--color-text-muted); font-size: var(--font-size-sm); letter-spacing: 0.12em; text-transform: uppercase; }
+    .clash .middle strong { animation-delay: 0.3s; }
     .flip eras-game-card { animation: flip-in 0.6s ease 0.3s backwards; }
-    /* The blow: the number (or the "VS") slams down and the panel jolts; in a clash both creatures rush in and collide */
-    .middle strong { animation: slam 0.45s cubic-bezier(0.6, 0, 0.9, 0.6) 0.15s backwards; }
-    .reveal { --jolt-at: 0.55s; }
-    .reveal.clash { --jolt-at: 0.5s; }
-    .reveal.clash .middle strong { animation-delay: 0.3s; }
-    .reveal.clash .side:first-child { animation: rush-left 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
-    .reveal.clash .side:last-of-type { animation: rush-right 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
-    .hint { position: absolute; inset-block-end: var(--space-2); inset-inline: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); text-align: center; }
+    /* The attacker rushes in; in a clash both creatures rush in and collide */
+    .side.left { animation: rush-left 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
+    .clash .side.right { animation: rush-right 0.55s cubic-bezier(0.6, 0, 0.9, 0.5) 0.05s backwards; }
+    .hint { position: absolute; inset-block-end: var(--space-4); inset-inline: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); text-align: center; }
     @keyframes reveal {
-      0% { opacity: 0; transform: translate(-50%, -45%) scale(0.92); }
-      12% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      0% { opacity: 0; }
+      8% { opacity: 1; }
       85% { opacity: 1; }
       100% { opacity: 0; }
     }
+    @keyframes open {
+      from { clip-path: inset(50% 0); }
+      to { clip-path: inset(-60% 0); }
+    }
     @keyframes flip-in {
       from { transform: rotateY(90deg) scale(1.15); }
-      70% { transform: rotateY(0) scale(1.08); filter: brightness(1.8); }
+      70% { transform: rotateY(0) scale(1.08); filter: brightness(1.8) drop-shadow(0 0 22px var(--tone)); }
       to { transform: none; }
     }
     @keyframes slam {
@@ -170,7 +230,7 @@ type Shown = (Hit | Clash) & { id: number; done?: () => void };
       75% { translate: 3px -1px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .reveal, .flip eras-game-card, .middle strong, .reveal.clash .side { animation: none; }
+      .reveal, .band, .flip eras-game-card, .middle strong, .side { animation: none; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

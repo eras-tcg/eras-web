@@ -22,7 +22,7 @@ interface Drawn {
 
 const RIVAL = 'var(--color-sim-rival)';
 /** When the attacker's blow lands, as a share of its charge. */
-const IMPACT = 0.42;
+const IMPACT = 0.46;
 
 /** The signs over a card: a block's white shield; an attack's sword (the clash's "VS" icon: steel blade, golden hilt). */
 const SHIELD =
@@ -50,7 +50,7 @@ export class CombatFx {
   ) {}
 
   /**
-   * The attacker charges: a copy of it leaves its place, strikes what it hits (`targetId`, or the lives of
+   * The attacker charges: a copy of it rises off its place and dives onto what it hits (`targetId`, or the lives of
    * `attackerOwner`'s rival) and comes back; the real card's sprite waits hidden (its place, with its share of an Enlace
    * band and its link mark, stays as it is). At the blow it stops dead a moment, a shock wave opens there and the table
    * jolts; the target's sprite is knocked back with a red flash, over its neighbours.
@@ -91,15 +91,19 @@ export class CombatFx {
     over.host.append(copy);
     if (real) real.style.visibility = 'hidden';
     this.animations.hold(TIMING.charge);
-    // It draws back and rises, rushes in faster and faster, stops dead on the blow a moment, bounces off and goes back
+    // It rises off the table (bigger, its shadow far below it), hangs a moment over its way, then dives onto what it
+    // attacks faster and faster, stops dead on the blow, bounces off and goes back down to its place
+    const lift = seen.height * 0.55;
+    const shadow = (y: number, blur: number, alpha: number) => `0 ${y}px ${blur}px rgb(0 0 0 / ${alpha}%)`;
     const animation = copy.animate(
       [
-        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none', easing: 'cubic-bezier(0.3, 0, 0.3, 1)' },
-        { transform: `translate(${-dx * 0.14}px, ${-dy * 0.14}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.26, easing: 'cubic-bezier(0.7, 0, 1, 0.5)' },
-        { transform: `translate(${dx}px, ${dy}px) scale(1.24)${turn}`, filter: `brightness(1.5) drop-shadow(0 0 22px ${RIVAL})`, offset: IMPACT },
-        { transform: `translate(${dx * 0.98}px, ${dy * 0.98}px) scale(1.2)${turn}`, filter: `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`, offset: IMPACT + 0.07, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
-        { transform: `translate(${dx * 0.78}px, ${dy * 0.78}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.6, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
-        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none' },
+        { transform: `translate(0, 0) scale(1)${turn}`, boxShadow: shadow(8, 24, 45), filter: 'none', easing: 'cubic-bezier(0.25, 0.6, 0.35, 1)' },
+        { transform: `translate(${dx * 0.12}px, ${dy * 0.12 - lift}px) scale(1.42)${turn}`, boxShadow: shadow(48, 46, 35), filter: `drop-shadow(0 0 14px ${RIVAL})`, offset: 0.28, easing: 'ease-in-out' },
+        { transform: `translate(${dx * 0.16}px, ${dy * 0.16 - lift * 1.08}px) scale(1.45)${turn}`, boxShadow: shadow(52, 50, 32), filter: `drop-shadow(0 0 16px ${RIVAL})`, offset: 0.34, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
+        { transform: `translate(${dx}px, ${dy}px) scale(1.06)${turn}`, boxShadow: shadow(3, 6, 60), filter: `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`, offset: IMPACT },
+        { transform: `translate(${dx * 0.98}px, ${dy * 0.98}px) scale(1.04)${turn}`, boxShadow: shadow(3, 6, 60), filter: `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`, offset: IMPACT + 0.07, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
+        { transform: `translate(${dx * 0.8}px, ${dy * 0.8 - lift * 0.3}px) scale(1.14)${turn}`, boxShadow: shadow(20, 30, 40), filter: `drop-shadow(0 0 12px ${RIVAL})`, offset: 0.66, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
+        { transform: `translate(0, 0) scale(1)${turn}`, boxShadow: shadow(8, 24, 45), filter: 'none' },
       ],
       { duration: TIMING.charge },
     );
@@ -238,7 +242,7 @@ export class CombatFx {
         { opacity: 1, transform: 'scale(0.1)', borderWidth: '8px' },
         { opacity: 0, transform: 'scale(1)', borderWidth: '1px' },
       ],
-      { duration: TIMING.charge * 0.45, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', fill: 'backwards' },
+      { duration: TIMING.charge * 0.45, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
     );
     wave.onfinish = () => ring.remove();
     wave.oncancel = () => ring.remove();

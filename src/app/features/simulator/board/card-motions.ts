@@ -332,7 +332,7 @@ export class CardMotions {
 
   /**
    * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
-   * around it hop off the table and drop back rocking, the nearest first and most, as the blow spreads.
+   * around it jump off the table (up from it, an edge first) and drop back, the nearest first and most, as the blow spreads.
    */
   private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number): void {
     const reach = size * 3.2;
@@ -343,17 +343,24 @@ export class CardMotions {
       const near = 1 - d / reach;
       const up = 12 * near;
       if (up < 1.5) continue;
-      // It rocks away from the blow, then back and forth less and less until it settles
-      const away = r.left + r.width / 2 >= at.x ? 1 : -1;
-      const tilt = 7 * near * away;
+      // It jumps off the table, the edge nearest the blow first, lands on the other edge, bounces once less and settles:
+      // up from the table, never turning on it (its own transform, exhausted or the rival's, stays under)
+      const dx = r.left + r.width / 2 - at.x;
+      const dy = r.top + r.height / 2 - at.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const axis = `${(dy / len).toFixed(3)}, ${(-dx / len).toFixed(3)}, 0`;
+      const own = this.document.defaultView?.getComputedStyle(other).transform;
+      const base = own && own !== 'none' ? ` ${own}` : '';
+      const tilt = 14 * near;
+      const pose = (z: number, deg: number) => `perspective(700px) translateZ(${z.toFixed(1)}px) rotate3d(${axis}, ${deg.toFixed(1)}deg)${base}`;
       other.animate(
         [
-          { translate: '0 0', rotate: '0deg', scale: '1', easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
-          { translate: `0 ${-up}px`, rotate: `${tilt}deg`, scale: `${1 + up * 0.004}`, offset: 0.22, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
-          { translate: `0 ${up * 0.12}px`, rotate: `${-tilt * 0.65}deg`, scale: '1', offset: 0.42 },
-          { translate: '0 0', rotate: `${tilt * 0.4}deg`, offset: 0.6 },
-          { rotate: `${-tilt * 0.2}deg`, offset: 0.78 },
-          { translate: '0 0', rotate: '0deg', scale: '1' },
+          { transform: pose(0, 0), easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
+          { transform: pose(up * 3, tilt), offset: 0.24, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
+          { transform: pose(0, -tilt * 0.35), offset: 0.44, easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
+          { transform: pose(up * 0.9, tilt * 0.2), offset: 0.6, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
+          { transform: pose(0, -tilt * 0.06), offset: 0.76 },
+          { transform: pose(0, 0) },
         ],
         // It reaches them as it spreads: a little later the farther they are
         { duration: TIMING.hop, delay: delay + d * 0.25 },

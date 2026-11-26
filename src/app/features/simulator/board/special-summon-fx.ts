@@ -216,8 +216,8 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
 
 /**
  * Materialización, matter composed into a creature: specks of matter are drawn in from all around to where the card
- * will be, faster as they near it, feeding a bright core there that grows, pulsing, into the card's shape; it flashes as
- * the card lands into it. Lying on the table as the card does.
+ * will be, faster as they near it, feeding a bright core there that grows, pulsing and fainter, into the card's shape;
+ * it flashes faintly as the card lands into it. Lying on the table as the card does.
  */
 function materialization(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.materialization;
@@ -284,18 +284,19 @@ function materialization(document: Document, animations: BoardAnimations, card: 
       [
         { opacity: 0, transform: 'scale(0.04)', borderRadius: '50%' },
         { opacity: 1, transform: 'scale(0.12)', borderRadius: '50%', offset: 0.12 },
-        { opacity: 1, transform: 'scale(0.42)', borderRadius: '30%', offset: 0.45, easing: 'ease-in-out' },
-        { opacity: 0.85, transform: 'scale(0.38)', borderRadius: '24%', offset: 0.55 },
-        { opacity: 1, transform: 'scale(0.78)', offset: 0.82, easing: 'ease-in-out' },
-        { opacity: 0.9, transform: 'scale(0.74)', offset: 0.88 },
-        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0.85, transform: 'scale(0.42)', borderRadius: '30%', offset: 0.45, easing: 'ease-in-out' },
+        { opacity: 0.7, transform: 'scale(0.38)', borderRadius: '24%', offset: 0.55 },
+        { opacity: 0.6, transform: 'scale(0.78)', offset: 0.82, easing: 'ease-in-out' },
+        { opacity: 0.5, transform: 'scale(0.74)', offset: 0.88 },
+        // Faint once it is the card's size, as Evolución's glow
+        { opacity: 0.4, transform: 'scale(1)', borderColor: 'rgb(255 255 255 / 40%)' },
       ],
       { duration: d * land, easing: 'linear', fill: 'both' },
     ),
   );
-  runs.push(charge.animate([{ opacity: 1 }, { opacity: 0 }], { duration: d * 0.25, delay: d * land, fill: 'forwards' }).finished);
+  runs.push(charge.animate([{ opacity: 0.4 }, { opacity: 0 }], { duration: d * 0.25, delay: d * land, fill: 'forwards' }).finished);
   // The flash as it lands (its core is the card filled)
-  completed(add, at, w, h, MATTER, d * land, d, false).forEach(keep);
+  completed(add, at, w, h, MATTER, d * land, d, false, 0.4).forEach(keep);
   return Promise.all(runs)
     .catch(() => undefined)
     .then(() => {

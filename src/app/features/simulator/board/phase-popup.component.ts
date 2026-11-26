@@ -11,12 +11,15 @@ interface PhasePopup {
   mine: boolean;
   /** Each one gets its own id: it is drawn anew, so its animation starts over even right after another one. */
   id: number;
+  /** A new turn's main phase: shown once what its start does (its draw) has played. */
+  afterStart: boolean;
 }
 
 /**
  * The turn or the phase changing, shown big across the table as the combat is: a band opens over the middle of the
- * screen, the player whose turn it is above, the phase sweeping in, and it closes. One after another, once what plays
- * on the table has ended; the engine's next choices wait for them (they are animations of the board).
+ * screen, the player whose turn it is above, the phase sweeping in, and it closes. One after another, in the order of
+ * the turn: the final phase of the turn that ends, the start of the next, what that start does (its draw), then its
+ * main phase. What the table does meanwhile and the engine's next choices wait for them.
  */
 @Component({
   selector: 'eras-phase-popup',
@@ -138,9 +141,9 @@ export class PhasePopupComponent {
   private readonly queue: PhasePopup[] = [];
   private ids = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  /** Waiting for the table to be still before the first one shows. */
-  private waiting = false;
-  /** The board's animations wait while they show. */
+  /** Showing them (or waiting to show the next one): new ones join the queue. */
+  private active = false;
+  /** The board's animations wait while one shows. */
   private release: (() => void) | null = null;
   private lastPhase: string | null = null;
   private lastTurn: string | null = null;
@@ -155,25 +158,32 @@ export class PhasePopupComponent {
       const key = s.currentTurnUserId + '|' + s.currentPhase;
       const first = this.lastPhase === null;
       if (key === this.lastPhase) return;
-      const newTurn = this.lastTurn !== null && this.lastTurn !== s.currentTurnUserId;
+      const was = this.lastPhase?.split('|')[1] ?? null;
+      const before = this.lastTurn;
+      const newTurn = before !== null && before !== s.currentTurnUserId;
       this.lastPhase = key;
       this.lastTurn = s.currentTurnUserId;
       if (first) return;
-      const mine = s.currentTurnUserId === this.game.myState()?.userId;
-      const name = s.players?.[s.currentTurnUserId]?.username ?? 'Rival';
-      const who = mine ? 'Tu turno' : 'Turno de ' + name;
+      const me = this.game.myState()?.userId;
+      const whoOf = (id: string) => (id === me ? 'Tu turno' : 'Turno de ' + (s.players?.[id]?.username ?? 'Rival'));
+      const turn = s.currentTurnUserId;
+      const phase = s.currentPhase ?? 'MAIN';
       untracked(() => {
         if (this.animations.off()) return;
-        // A new turn always shows its start, even when it went straight on to the main phase
-        if (newTurn && s.currentPhase !== 'START') this.queue.push({ who, phase: PHASE_LABELS['START'], mine, id: ++this.ids });
-        this.queue.push({ who, phase: PHASE_LABELS[s.currentPhase ?? 'MAIN'] ?? s.currentPhase ?? '', mine, id: ++this.ids });
-        if (this.timer || this.waiting) return;
-        // After what plays now (a clash, a card breaking, flights…), with the table still
-        this.waiting = true;
-        this.animations.whenIdle(() => {
-          this.waiting = false;
-          this.next();
-        });
+        const add = (id: string, p: string, afterStart = false) =>
+          this.queue.push({ who: whoOf(id), phase: PHASE_LABELS[p] ?? p, mine: id === me, id: ++this.ids, afterStart });
+        if (newTurn) {
+          // The turn that ends shows its final phase, though the update went straight on to the next turn
+          if (was !== 'END' && was !== 'END_PHASE' && before) add(before, 'END');
+          // The new one always shows its start; its main phase only once what the start does has played (its draw)
+          add(turn, 'START');
+          if (phase !== 'START') add(turn, phase, true);
+        } else add(turn, phase, was === 'START' && phase === 'MAIN');
+        if (this.active) return;
+        this.active = true;
+        // At once: what this update does on the table (cards drawn flying) waits for it
+        this.release ??= this.animations.begin();
+        this.next();
       });
     });
     inject(DestroyRef).onDestroy(() => {
@@ -183,15 +193,31 @@ export class PhasePopupComponent {
   }
 
   private next(): void {
+    this.timer = null;
     const popup = this.queue.shift() ?? null;
-    this.current.set(popup);
-    if (popup) {
-      this.release ??= this.animations.begin();
-      this.timer = setTimeout(() => this.next(), TIMING.phaseShow);
-    } else {
-      this.timer = null;
+    if (!popup) {
+      this.current.set(null);
+      this.active = false;
       this.release?.();
       this.release = null;
+      return;
     }
+    if (!popup.afterStart) return this.show(popup);
+    // The main phase of a new turn: once what its start does has played (the draw, which waits for the pop-ups before)
+    this.current.set(null);
+    const go = (): void => {
+      if (!this.animations.idle()) return this.animations.whenIdle(go);
+      this.release ??= this.animations.begin();
+      this.show(popup);
+    };
+    // Asked before letting go, so what was waiting for the pop-ups starts first
+    this.animations.whenIdle(go);
+    this.release?.();
+    this.release = null;
+  }
+
+  private show(popup: PhasePopup): void {
+    this.current.set(popup);
+    this.timer = setTimeout(() => this.next(), TIMING.phaseShow);
   }
 }

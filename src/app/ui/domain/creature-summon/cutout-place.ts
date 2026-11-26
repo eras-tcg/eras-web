@@ -9,23 +9,32 @@ export interface CutoutPlace {
   width: number;
   height: number;
   /**
-   * How far in from the picture's edges the save faded the figure out, as a share of the picture's shorter side, and from
-   * which edges (the editor's "Desvanecer bordes"). Cut-outs saved before say nothing: all four edges at 0.16.
+   * How far in from each edge of the picture the save faded the figure out, as a share of its shorter side (0: not
+   * that edge), the editor's "Desvanecer bordes". Saves before it say `fade` (and `edges`) or nothing at all.
    */
+  sides?: CutoutSides;
   fade?: number;
-  edges?: CutoutEdges;
+  edges?: { top: boolean; right: boolean; bottom: boolean; left: boolean };
 }
 
-/** The picture's edges a cut-out fades out from. */
-export interface CutoutEdges {
-  top: boolean;
-  right: boolean;
-  bottom: boolean;
-  left: boolean;
+/** How far in a cut-out fades out from each edge of its picture (share of the shorter side; 0: none). */
+export interface CutoutSides {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
 }
 
-export const ALL_EDGES: CutoutEdges = { top: true, right: true, bottom: true, left: true };
-export const NO_EDGES: CutoutEdges = { top: false, right: false, bottom: false, left: false };
+export const NO_SIDES: CutoutSides = { top: 0, right: 0, bottom: 0, left: 0 };
+
+/** The fade a saved cut-out has from each edge: as it says, or as the older saves did (all four by 16 %). */
+export function sidesOf(place: CutoutPlace): CutoutSides {
+  if (place.sides) return place.sides;
+  if (place.fade === undefined) return { top: 0.16, right: 0.16, bottom: 0.16, left: 0.16 };
+  const f = place.fade;
+  const e = place.edges ?? { top: false, right: false, bottom: false, left: false };
+  return { top: e.top ? f : 0, right: e.right ? f : 0, bottom: e.bottom ? f : 0, left: e.left ? f : 0 };
+}
 
 /** The PNG text chunk keeping it (the cut-out tool of the batch writes the same). */
 const PLACE_KEY = 'eras-cutout';

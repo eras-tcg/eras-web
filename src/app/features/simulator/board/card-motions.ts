@@ -428,7 +428,7 @@ export class CardMotions {
 
   /**
    * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels), on a table of light: sparks and
-   * flickering pixels thrown out from its edges, and traces of light running out from them; each one removes itself.
+   * flickering pixels thrown out from its edges, and rays of light running along circuit traces out from them; each one removes itself.
    */
   private debris(host: HTMLElement, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, flat: boolean): void {
     const life = TIMING.burst * 0.85;
@@ -499,40 +499,61 @@ export class CardMotions {
         Math.random() * 60,
       );
     }
-    // Traces: lines of light running out from its edges straight along the table, as through a circuit, then fading
-    for (let i = 0; i < 10; i++) {
+    // Circuits: thin traces running out from its edges as on a circuit board (straight, a bend at 45°, straight again,
+    // ending in a pad); a ray of light runs along each one, faint traces light up behind it and the pad flashes
+    const span = Math.max(w, h) * 2.4;
+    const svg = this.document.createElementNS(SVG, 'svg');
+    svg.setAttribute('viewBox', `${-span / 2} ${-span / 2} ${span} ${span}`);
+    Object.assign(svg.style, {
+      position: flat ? 'fixed' : 'absolute',
+      left: `${at.x - span / 2}px`,
+      top: `${at.y - span / 2}px`,
+      width: `${span}px`,
+      height: `${span}px`,
+      zIndex: LAYER.flight,
+      pointerEvents: 'none',
+      overflow: 'visible',
+    });
+    if (flat) svg.dataset['simQuake'] = '';
+    host.append(svg);
+    const unit = Math.max(w, h);
+    const runs: Promise<unknown>[] = [];
+    for (let i = 0; i < 12; i++) {
       const e = edge();
-      const len = Math.max(w, h) * (0.35 + Math.random() * 0.45);
-      const across = e.nx !== 0;
-      const trace = this.document.createElement('div');
-      const head = across ? (e.nx > 0 ? 'right' : 'left') : e.ny > 0 ? 'bottom' : 'top';
-      Object.assign(trace.style, {
-        position: flat ? 'fixed' : 'absolute',
-        left: `${at.x + e.x - (across ? (e.nx < 0 ? len : 0) : 1)}px`,
-        top: `${at.y + e.y - (across ? 1 : e.ny < 0 ? len : 0)}px`,
-        width: across ? `${len}px` : '2px',
-        height: across ? '2px' : `${len}px`,
-        zIndex: LAYER.flight,
-        pointerEvents: 'none',
-        opacity: '0',
-        background: `linear-gradient(to ${head}, transparent, ${color} 60%, #fff)`,
-        boxShadow: `0 0 6px ${color}`,
-        transformOrigin: across ? (e.nx > 0 ? 'left' : 'right') : e.ny > 0 ? 'top' : 'bottom',
-      });
-      if (flat) quakesWithTable(trace);
-      host.append(trace);
-      const grow = across ? 'scaleX' : 'scaleY';
-      const t = trace.animate(
-        [
-          { opacity: 1, transform: `${grow}(0)` },
-          { opacity: 1, transform: `${grow}(1)`, offset: 0.45 },
-          { opacity: 0, transform: `${grow}(1)` },
-        ],
-        { duration: life * (0.7 + Math.random() * 0.3), delay: delay + Math.random() * 50, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' },
+      // Out along the edge's normal, then a bend 45° to one side, then out again
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const a1 = unit * (0.06 + Math.random() * 0.12);
+      const a2 = unit * (0.08 + Math.random() * 0.14);
+      const a3 = unit * (0.04 + Math.random() * 0.14);
+      const bx = (e.nx - e.ny * side) * Math.SQRT1_2;
+      const by = (e.ny + e.nx * side) * Math.SQRT1_2;
+      const p1 = { x: e.x + e.nx * a1, y: e.y + e.ny * a1 };
+      const p2 = { x: p1.x + bx * a2, y: p1.y + by * a2 };
+      const p3 = { x: p2.x + e.nx * a3, y: p2.y + e.ny * a3 };
+      const d = `M${e.x.toFixed(1)} ${e.y.toFixed(1)} L${p1.x.toFixed(1)} ${p1.y.toFixed(1)} L${p2.x.toFixed(1)} ${p2.y.toFixed(1)} L${p3.x.toFixed(1)} ${p3.y.toFixed(1)}`;
+      const g = this.document.createElementNS(SVG, 'g');
+      g.innerHTML =
+        `<path d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="0.8" stroke-linejoin="round" opacity="0"/>` +
+        `<path d="${d}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.22 1.4" stroke-dashoffset="0.22" style="filter: drop-shadow(0 0 2px ${color}) drop-shadow(0 0 4px ${color})"/>` +
+        `<circle cx="${p3.x.toFixed(1)}" cy="${p3.y.toFixed(1)}" r="1.6" fill="none" stroke="#fff" stroke-width="0.8" opacity="0" style="filter: drop-shadow(0 0 3px ${color})"/>`;
+      svg.append(g);
+      const [trace, ray, pad] = Array.from(g.children) as SVGElement[];
+      const run = life * (0.45 + Math.random() * 0.25);
+      const wait = delay + Math.random() * 70;
+      runs.push(
+        ray.animate([{ strokeDashoffset: 0.22 }, { strokeDashoffset: -1 }], { duration: run, delay: wait, easing: 'cubic-bezier(0.3, 0.6, 0.5, 1)' }).finished,
+        trace.animate([{ opacity: 0 }, { opacity: 0.5, offset: 0.3 }, { opacity: 0 }], { duration: life, delay: wait }).finished,
+        pad.animate([{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'scale(1.3)', offset: 0.3 }, { opacity: 0, transform: 'scale(1)' }], {
+          duration: life * 0.45,
+          delay: wait + run * 0.6,
+        }).finished,
       );
-      t.onfinish = () => trace.remove();
-      t.oncancel = () => trace.remove();
+      (pad as SVGElement).style.transformBox = 'fill-box';
+      (pad as SVGElement).style.transformOrigin = 'center';
     }
+    Promise.all(runs)
+      .catch(() => undefined)
+      .then(() => svg.remove());
   }
 
   /**

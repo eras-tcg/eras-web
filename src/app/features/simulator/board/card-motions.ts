@@ -2,7 +2,7 @@ import { BoardAnimations } from './board-animations';
 import { quake, quakesWithTable } from './board-quake';
 import { Seen, TableMeasure } from './card-seen';
 import { TablePlane, overlayFor, tablePlane, underTable } from './table-plane';
-import { runeCircle } from './ritual-circle';
+import { SpecialSummonKind, specialSummonFx, specialSummonLead } from './special-summon-fx';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 import { CARD_H, CARD_W, Point, seeded, shatterShape } from './shatter-shape';
@@ -257,20 +257,21 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength), into a circle of runes when by `ritual`: it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
-   * (blue yours, red the rival's).
-   * `landing`: where the card lies once landed (not where it travels from).
+   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength): it presses into the table, which jolts;
+   * frames of light its shape open from it, sparks and pixels fly off its edges, circuits run out under it (a special
+   * summon plays its own instead: `special`) and the cards around it hop; a glow fades on it (blue yours, red the
+   * rival's).
    */
-  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, ritual = false): void {
+  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, special: SpecialSummonKind | null = null): void {
     if (this.animations.still()) return;
     this.run(() => {
-      // By ritual: a circle of runes opens where it lands as it comes down
-      if (ritual) setTimeout(() => void runeCircle(this.document, this.animations, card), Math.max(0, delay - TIMING.ritualLead));
-      this.burstNow(card, landing, mine, delay, weight);
+      // A special summon has its own (in place of the circuits), starting a little before it lands for some
+      if (special) setTimeout(() => void specialSummonFx(special, this.document, this.animations, card), Math.max(0, delay - specialSummonLead(special)));
+      this.burstNow(card, landing, mine, delay, weight, !special);
     });
   }
 
-  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number): void {
+  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number, circuits: boolean): void {
     const color = mine ? 'var(--color-sim-link-mine)' : 'var(--color-sim-link-rival)';
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     // On the leaning table the frame lies on it, around the card at its own size
@@ -332,7 +333,7 @@ export class CardMotions {
     );
     quake(this.document, this.animations, 0.3 + 0.7 * weight, delay);
     this.debris(host, at, w, h, color, delay, !lying);
-    this.circuits(center, w, h, color, delay);
+    if (circuits) this.circuits(center, w, h, color, delay);
     this.hop(card, center, Math.max(rect.width, rect.height), delay, weight);
   }
 

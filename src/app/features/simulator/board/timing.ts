@@ -17,9 +17,19 @@ export const TIMING = {
   badge: 1100,
   /** An effect activated on its card: it glows and motes of light rise from it. */
   activation: 1300,
-  /** A summon by ritual: the circle of runes, opening this long before the card lands. */
+  /**
+   * The special summons, each its own (special-summon-fx), and how long before the card lands each starts: by ritual a
+   * circle of runes; Ascenso a rank's insignia over a pillar of light; Materialización matter drawn in to compose it;
+   * Evolución strands of life coiling round it.
+   */
   ritual: 1300,
   ritualLead: 450,
+  promotion: 1500,
+  promotionLead: 0,
+  materialization: 1500,
+  materializationLead: 650,
+  evolution: 1400,
+  evolutionLead: 250,
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */

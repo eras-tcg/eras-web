@@ -15,6 +15,7 @@ import { LifeFlights } from './life-flights';
 import { TimelineCursor } from './timeline-cursor';
 import { TIMING, impactWeight, summonTiming } from './timing';
 import { TurnDraw } from './turn-draw';
+import { SpecialSummonKind, isSpecialSummonKind } from './special-summon-fx';
 
 /** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
 interface Hop {
@@ -358,12 +359,12 @@ export class CardFlightsComponent {
     if (!this.seen.size && !this.handSeen.size) return false;
     let summoned = false;
     const me = this.me();
-    const rituals = new Set(
-      this.timeline
-        .peek(state)
-        .filter((e) => e.type === 'SPECIAL_SUMMON' && e.data?.['summonType'] === 'ritual')
-        .map((e) => e.cardInstanceId),
-    );
+    // Special summons of this update, by card: each has its own animation
+    const specials = new Map<string, SpecialSummonKind>();
+    for (const e of this.timeline.peek(state)) {
+      const kind = e.data?.['summonType'];
+      if (e.type === 'SPECIAL_SUMMON' && e.cardInstanceId && isSpecialSummonKind(kind)) specials.set(e.cardInstanceId, kind);
+    }
     for (const p of Object.values(state.players ?? {})) {
       const front = new Set(fieldRows(p.field).front.map((c) => c.instanceId));
       for (const c of p.field) {
@@ -389,7 +390,7 @@ export class CardFlightsComponent {
         const weight = impactWeight(displayStrength(c));
         const { hang, duration } = summonTiming(weight);
         if (from) this.glide(sprite, card, c, from, duration, hang);
-        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, rituals.has(c.instanceId));
+        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, specials.get(c.instanceId) ?? null);
         summoned = true;
       }
     }

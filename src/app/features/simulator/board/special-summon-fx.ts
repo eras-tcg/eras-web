@@ -301,7 +301,7 @@ function materialization(document: Document, animations: BoardAnimations, card: 
 function evolution(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.evolution;
   const over = overlayFor(document, card, LAYER.fx);
-  const { at, w, h } = measure(card, over);
+  const { at, w, h, screen } = measure(card, over);
   const runs: Promise<unknown>[] = [];
   const made: HTMLElement[] = [];
   const keep = (el: HTMLElement) => (made.push(el), el);
@@ -309,8 +309,8 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
   animations.hold(d);
   // The helix: beads on four strands, a quarter turn apart, going round the card as they rise. Each bead sits at the end
   // of an arm that turns (rotate, then out along it), so it follows a true circle, not a polygon
-  const radius = Math.max(w, h) * 0.62;
-  const climb = Math.max(w, h) * 1.1;
+  const radius = Math.max(w, h) * 0.55;
+  const climb = Math.max(w, h) * 1.8;
   const deep = over.position === 'absolute';
   // Leaning table: round it on the table, rising off it (its layer is 3D); flat: an ellipse climbing the screen
   const place = (t: number, a: number, r: number) =>
@@ -334,8 +334,9 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
         timing,
       ),
     );
-  const beads = 16;
-  const turns = 540;
+  // Each strand a line of beads close behind one another, so it reads as a coil rising, not a ring
+  const beads = 12;
+  const turns = 360;
   for (const strand of [0, 90, 180, 270]) {
     for (let i = 0; i < beads; i++) {
       const at0 = strand;
@@ -343,7 +344,7 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
         3 + Math.random() * 2,
         i % 3 ? LIFE : LIFE_LIGHT,
         [0, 0.12, 0.88, 1].map((t) => ({ offset: t, opacity: t === 0 || t === 1 ? 0 : 1, transform: place(t, at0 + t * turns, radius) })),
-        { duration: d * 0.6, delay: (i / beads) * d * 0.35, easing: 'linear' },
+        { duration: d * 0.6, delay: (i / beads) * d * 0.22, easing: 'linear' },
       );
     }
   }
@@ -358,10 +359,14 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
       { duration: d * (0.45 + Math.random() * 0.2), delay: d * (0.08 + Math.random() * 0.4), easing: 'cubic-bezier(0.3, 0.2, 0.6, 1)' },
     );
   }
-  // The card completed, in green, as the strands have risen
-  completed(lying, at, w, h, LIFE, d * 0.6, d, true).forEach(keep);
+  // The card completed, in green, as the strands have risen: in a layer of its own (its blending would flatten the
+  // helix's layer, which rises in depth)
+  const top = overlayFor(document, card, LAYER.fx);
+  const done = completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, LIFE, d * 0.6, d, true);
+  done.forEach(keep);
   return Promise.all(runs).then(() => {
     made.forEach((el) => el.remove());
     over.remove();
+    top.remove();
   });
 }

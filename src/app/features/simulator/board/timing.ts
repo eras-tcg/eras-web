@@ -15,7 +15,7 @@ export const TIMING = {
   arrow: 950,
   /** A sign over a card (sword, shield). */
   badge: 1100,
-  /** An effect activated on its card: it glows, a blue mist pouring off its edges. */
+  /** An effect activated on its card: it glows and motes of light rise from it. */
   activation: 1300,
   /** A summon by ritual: the circle of runes, opening this long before the card lands. */
   ritual: 1300,

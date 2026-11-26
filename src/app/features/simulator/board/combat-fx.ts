@@ -243,8 +243,8 @@ export class CombatFx {
   }
 
   /**
-   * An effect activated: its card (on the table, in a hand or on its pile) glows white, its edges light up and a blue
-   * mist pours off them (FxDraw.mist); done when it has gone.
+   * An effect activated: its card (on the table, in a hand or on its pile) glows white, its edges light up and motes of
+   * light rise from it (FxDraw.lightUp); done when it has gone.
    */
   activation(sourceId: string, state: GameState | null): Promise<void> {
     const where = pileOf(state, sourceId);
@@ -259,7 +259,7 @@ export class CombatFx {
       ],
       { duration: TIMING.activation, easing: 'ease-out' },
     );
-    return this.draw.mist(card);
+    return this.draw.lightUp(card);
   }
 
   /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */

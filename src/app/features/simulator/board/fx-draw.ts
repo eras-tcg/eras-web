@@ -5,17 +5,15 @@ import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
-/** An effect's light: the glow of the card's edges (its line, its blue, its outer haze), its mist and its motes. */
+/** An effect's light: the glow of the card's edges (its line, its blue, its outer haze) and its motes. */
 const GLOW_CORE = 'rgb(235 245 255 / 95%)';
 const GLOW_MID = 'rgb(110 170 255 / 85%)';
 const GLOW_OUT = 'rgb(40 100 255 / 45%)';
-const WISP_CORE = 'rgb(200 225 255 / 80%)';
-const WISP_EDGE = 'rgb(70 130 255 / 45%)';
 const MOTE = '#7cc4ff';
 
 /**
  * What the board's effects draw over the table, lying on it when it leans ("Mesa en perspectiva"): curved arrows,
- * signs over a card, an effect's mist pouring off a card, text rising and fading, a pile shaking. Each one removes itself.
+ * signs over a card, an effect lighting a card up, text rising and fading, a pile shaking. Each one removes itself.
  */
 export class FxDraw {
   /** The screen's layer for the arrows of a flat table. */
@@ -128,11 +126,10 @@ export class FxDraw {
   }
 
   /**
-   * An effect activated on a card: its edges light up blue-white and a blue mist pours off them, wisps streaming out
-   * and away from the card as they thin out; motes of light rise from it. Drawn over the card, lying as it does; the
-   * card's face shows through. Done when it has gone.
+   * An effect activated on a card: its edges light up blue-white and motes of light rise from it. Drawn over the card,
+   * lying as it does; the card's face shows through. Done when it has gone.
    */
-  mist(card: HTMLElement): Promise<void> {
+  lightUp(card: HTMLElement): Promise<void> {
     const c = centerOf(card);
     const r = card.getBoundingClientRect();
     const w = card.offsetWidth || r.width;
@@ -186,41 +183,6 @@ export class FxDraw {
       ],
       { duration: d, easing: 'ease-out' },
     );
-    // The mist pouring off the edges: wisps born on them one after another, streaming out (and a little up) as they
-    // swell and thin out
-    const edge = () => {
-      const side = Math.random() * 2 * (cw + ch);
-      if (side < cw) return { x: side, y: 0, nx: 0, ny: -1 };
-      if (side < cw + ch) return { x: cw, y: side - cw, nx: 1, ny: 0 };
-      if (side < 2 * cw + ch) return { x: side - cw - ch, y: ch, nx: 0, ny: 1 };
-      return { x: 0, y: side - 2 * cw - ch, nx: -1, ny: 0 };
-    };
-    const unit = Math.min(cw, ch);
-    for (let i = 0; i < 46; i++) {
-      const e = edge();
-      const s = unit * (0.22 + Math.random() * 0.18);
-      const out = unit * (0.18 + Math.random() * 0.22);
-      const up = unit * (0.05 + Math.random() * 0.12);
-      const life = d * (0.35 + Math.random() * 0.2);
-      add(
-        {
-          left: `${left + e.x - s / 2}px`,
-          top: `${top + e.y - s / 2}px`,
-          width: `${s}px`,
-          height: `${s}px`,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${WISP_CORE}, ${WISP_EDGE} 45%, transparent 70%)`,
-          filter: 'blur(3px)',
-          mixBlendMode: 'screen',
-        },
-        [
-          { opacity: 0, transform: 'translate(0, 0) scale(0.5)' },
-          { opacity: 0.95, transform: `translate(${e.nx * out * 0.3}px, ${e.ny * out * 0.3 - up * 0.3}px) scale(0.9)`, offset: 0.25 },
-          { opacity: 0, transform: `translate(${e.nx * out}px, ${e.ny * out - up}px) scale(1.6)` },
-        ],
-        { duration: life, delay: Math.random() * (d - life) * 0.85, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)' },
-      );
-    }
     // Motes of light rising from the card
     for (let i = 0; i < 16; i++) {
       const s = 2 + Math.random() * 3;

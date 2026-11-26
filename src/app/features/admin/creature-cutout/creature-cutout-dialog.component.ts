@@ -9,7 +9,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
-import { Mask, combine, dab, emptyMask, fadedAtEdges, maskFromCutout, shownBox } from './cutout-mask';
+import { Mask, combine, dab, emptyMask, fadeDab, maskFromCutout, shownBox } from './cutout-mask';
 import { placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 import { CutoutSam } from './cutout-sam';
 
@@ -22,7 +22,9 @@ export interface CreatureCutoutData {
   creature: string | null;
 }
 
-type Tool = 'add' | 'remove' | 'paint' | 'erase';
+type Tool = 'add' | 'remove' | 'paint' | 'erase' | 'fade';
+/** The tools that paint with the brush. */
+const BRUSHES: readonly Tool[] = ['paint', 'erase', 'fade'];
 
 /** The illustration is read at most this big (its longer side), as the batch tool does. */
 const MAX_SIDE = 1100;
@@ -52,7 +54,7 @@ const UNDO_STEPS = 30;
             </button>
           }
         </div>
-        @if (tool() === 'paint' || tool() === 'erase') {
+        @if (isBrush()) {
           <label class="size">
             Tamaño: <span class="size-value">{{ brush() }} px</span>
             <input type="range" min="1" max="120" step="1" aria-label="Tamaño del pincel" [value]="brush()" (input)="brush.set(+$any($event.target).value)" />
@@ -74,7 +76,7 @@ const UNDO_STEPS = 30;
       <div class="canvas-box" #box [class.panning]="panning()" (wheel)="wheel($event)" (pointerdown)="panStart($event)">
         <canvas
           #canvas
-          [class.brush]="tool() === 'paint' || tool() === 'erase'"
+          [class.brush]="isBrush()"
           [style.left.px]="view().x"
           [style.top.px]="view().y"
           [style.width.px]="view().w"
@@ -91,7 +93,7 @@ const UNDO_STEPS = 30;
         }
       </div>
       <p class="hint">
-        Agregar o Quitar parte: un clic sobre ella. Pincel y Borrador: arrastrar. Lo que queda fuera se ve en magenta.
+        Agregar o Quitar parte: un clic sobre ella. Pincel, Borrador y Desvanecer (transparenta de a poco, suave en el borde): arrastrar. Lo que queda fuera se ve en magenta.
         Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer. Ctrl + Y: rehacer. Alt: ver la ilustración sin la máscara.
       </p>
       <footer class="actions">
@@ -203,8 +205,10 @@ export class CreatureCutoutDialogComponent {
     { id: 'remove', label: 'Quitar parte', brush: false },
     { id: 'paint', label: 'Pincel', brush: true },
     { id: 'erase', label: 'Borrador', brush: true },
+    { id: 'fade', label: 'Desvanecer', brush: true },
   ];
   protected readonly tool = signal<Tool>('add');
+  protected readonly isBrush = computed(() => BRUSHES.includes(this.tool()));
   /** How many pixels of the illustration the brush covers across (1: a single pixel). */
   protected readonly brush = signal(6);
   protected readonly samReady = signal(false);
@@ -218,7 +222,7 @@ export class CreatureCutoutDialogComponent {
   /** The circle the brush or the eraser reaches, as big as it is on screen. */
   protected readonly reach = computed(() => {
     const at = this.hover();
-    if (!at || (this.tool() !== 'paint' && this.tool() !== 'erase') || this.panning()) return null;
+    if (!at || !this.isBrush() || this.panning()) return null;
     const scale = this.view().w / (this.artSize().w || 1);
     return { x: at.x, y: at.y, d: Math.max(2, this.brush() * scale) };
   });
@@ -253,6 +257,9 @@ export class CreatureCutoutDialogComponent {
   private sam: CutoutSam | null = null;
   private history: Uint8ClampedArray[] = [];
   private future: Uint8ClampedArray[] = [];
+  /** The Desvanecer stroke under way: the mask when it began and how far it reached each pixel. */
+  private fadeBase: Uint8ClampedArray | null = null;
+  private fadeReach: Float32Array | null = null;
   /** Alt held: the illustration without the mask. */
   private plain = false;
   private stroke: { x: number; y: number } | null = null;
@@ -423,11 +430,15 @@ export class CreatureCutoutDialogComponent {
     if (!this.mask || this.busy()) return;
     const at = this.pointAt(event);
     const tool = this.tool();
-    if (tool === 'paint' || tool === 'erase') {
+    if (BRUSHES.includes(tool)) {
       this.remember();
       this.stroke = at;
       (event.target as HTMLElement).setPointerCapture(event.pointerId);
-      dab(this.mask, at.x, at.y, this.brush(), tool === 'paint');
+      if (tool === 'fade') {
+        this.fadeBase = this.mask.data.slice();
+        this.fadeReach = new Float32Array(this.mask.data.length);
+      }
+      this.brushAt(at.x, at.y);
       this.scheduleDraw();
       return;
     }
@@ -450,19 +461,29 @@ export class CreatureCutoutDialogComponent {
     this.hover.set({ x: event.clientX - box.left, y: event.clientY - box.top });
     if (!this.stroke || !this.mask) return;
     const at = this.pointAt(event);
-    const add = this.tool() === 'paint';
     const size = this.brush();
     // Dabs along the way, close enough to make a line (every half pixel at least, for a thin brush)
     const steps = Math.max(1, Math.ceil(Math.hypot(at.x - this.stroke.x, at.y - this.stroke.y) / Math.max(0.5, size / 4)));
     for (let i = 1; i <= steps; i++) {
-      dab(this.mask, this.stroke.x + ((at.x - this.stroke.x) * i) / steps, this.stroke.y + ((at.y - this.stroke.y) * i) / steps, size, add);
+      this.brushAt(this.stroke.x + ((at.x - this.stroke.x) * i) / steps, this.stroke.y + ((at.y - this.stroke.y) * i) / steps);
     }
     this.stroke = at;
     this.scheduleDraw();
   }
 
+  /** One dab of the brush in use: painting the creature in, erasing it, or fading it out softly. */
+  private brushAt(x: number, y: number): void {
+    if (!this.mask) return;
+    const tool = this.tool();
+    if (tool === 'fade') {
+      if (this.fadeBase && this.fadeReach) fadeDab(this.mask, this.fadeBase, this.fadeReach, x, y, this.brush());
+    } else dab(this.mask, x, y, this.brush(), tool === 'paint');
+  }
+
   protected up(): void {
     this.stroke = null;
+    this.fadeBase = null;
+    this.fadeReach = null;
   }
 
   protected undo(): void {
@@ -534,7 +555,8 @@ export class CreatureCutoutDialogComponent {
   private async cutout(): Promise<Blob | null> {
     if (!this.mask || !this.art) return null;
     const { width: w, height: h } = this.mask;
-    const alpha = fadedAtEdges(this.mask);
+    // As it is: the fades are where the Desvanecer brush put them
+    const alpha = this.mask.data;
     const box = shownBox(alpha, w, h);
     if (!box) {
       this.error.set('El recorte está vacío: agrega la criatura primero');
@@ -550,7 +572,7 @@ export class CreatureCutoutDialogComponent {
     out.getContext('2d')!.drawImage(full, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
     // It keeps where it was cropped from, so it can be edited again from where it was left
     const png = new Uint8Array(await (await out.convertToBlob({ type: 'image/png' })).arrayBuffer());
-    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h })], { type: 'image/png' });
+    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h, fade: 0 })], { type: 'image/png' });
   }
 
   private remember(): void {

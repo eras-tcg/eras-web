@@ -1,4 +1,4 @@
-import { combine, dab, emptyMask, fadedAtEdges, maskFromCutout, shownBox } from './cutout-mask';
+import { combine, dab, emptyMask, fadeDab, maskFromCutout, shownBox } from './cutout-mask';
 import { placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 
 describe('cutout mask', () => {
@@ -26,14 +26,19 @@ describe('cutout mask', () => {
     expect(m.data[1 * 5 + 2]).toBe(255);
   });
 
-  it('fades the figure where it meets the edge, not inside', () => {
-    const m = emptyMask(100, 100);
+  it('the Desvanecer brush fades softly, most in its middle, and a stroke going over itself does not add up', () => {
+    const m = emptyMask(21, 21);
     m.data.fill(255);
-    const a = fadedAtEdges(m);
-    expect(a[0]).toBe(0);
-    expect(a[50 * 100 + 50]).toBe(255);
-    expect(a[50 * 100 + 5]).toBeGreaterThan(0);
-    expect(a[50 * 100 + 5]).toBeLessThan(255);
+    const base = m.data.slice();
+    const reach = new Float32Array(m.data.length);
+    fadeDab(m, base, reach, 10.5, 10.5, 16);
+    fadeDab(m, base, reach, 10.5, 10.5, 16);
+    const middle = m.data[10 * 21 + 10];
+    const nearRim = m.data[10 * 21 + 17];
+    expect(middle).toBe(Math.round(255 * 0.2));
+    expect(nearRim).toBeGreaterThan(middle);
+    expect(nearRim).toBeLessThan(255);
+    expect(m.data[0]).toBe(255);
   });
 
   it('finds the box round what shows', () => {
@@ -58,10 +63,16 @@ describe('cut-out place', () => {
     expect(placeOf(png)).toBeNull();
   });
 
-  it('puts the cut-out back where it was, the edge fade undone', () => {
+  it('puts an old cut-out back where it was, its 16 % edge fade undone', () => {
     const mask = emptyMask(100, 100);
     for (let y = 40; y < 60; y++) for (let x = 0; x < 30; x++) mask.data[y * 100 + x] = 255;
-    const alpha = fadedAtEdges(mask);
+    // As the old saves faded it
+    const alpha = new Uint8ClampedArray(mask.data.length);
+    for (let i = 0; i < alpha.length; i++) {
+      const x = i % 100;
+      const y = (i - x) / 100;
+      alpha[i] = mask.data[i] * Math.pow(Math.min(1, Math.min(x, 99 - x, y, 99 - y) / 16), 1.5);
+    }
     const box = shownBox(alpha, 100, 100, 0)!;
     const crop = new Uint8ClampedArray(box.w * box.h);
     for (let y = 0; y < box.h; y++) for (let x = 0; x < box.w; x++) crop[y * box.w + x] = alpha[(box.y + y) * 100 + box.x + x];
@@ -69,5 +80,12 @@ describe('cut-out place', () => {
     expect(back.data[50 * 100 + 20]).toBe(255);
     expect(back.data[50 * 100 + 8]).toBeGreaterThan(240);
     expect(back.data[50 * 100 + 50]).toBe(0);
+  });
+
+  it('puts a new cut-out back as it was (no fade to undo)', () => {
+    const crop = new Uint8ClampedArray(4 * 4).fill(128);
+    const back = maskFromCutout(crop, 4, 4, { x: 0, y: 0, width: 10, height: 10, fade: 0 }, 10, 10);
+    expect(back.data[0]).toBe(128);
+    expect(back.data[5 * 10 + 5]).toBe(0);
   });
 });

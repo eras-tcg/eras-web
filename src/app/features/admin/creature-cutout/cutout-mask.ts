@@ -52,27 +52,41 @@ export function dab(mask: Mask, x: number, y: number, size: number, add: boolean
 }
 
 /**
- * The mask faded where the figure runs into the picture's edge (a wing cut by the frame): a fade over 16 % of its
- * shorter side, never a straight cut.
+ * A soft dab of the Desvanecer brush at (x, y), `size` across: within one stroke the mask goes down from what it was when
+ * the stroke began (`base`) by up to `strength` at the dab's middle, less towards its rim (`reach` keeps how far each
+ * pixel was reached in the stroke, so going over it again does not add up). Another stroke fades it further.
  */
-export function fadedAtEdges(mask: Mask): Uint8ClampedArray {
-  const { width: w, height: h, data } = mask;
-  const out = new Uint8ClampedArray(data.length);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) out[y * w + x] = data[y * w + x] * edgeFade(x, y, w, h);
+export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array, x: number, y: number, size: number, strength = 0.8): void {
+  const { width, height, data } = mask;
+  const r = Math.max(0.5, size / 2);
+  const x0 = Math.max(0, Math.floor(x - r));
+  const x1 = Math.min(width - 1, Math.ceil(x + r));
+  const y0 = Math.max(0, Math.floor(y - r));
+  const y1 = Math.min(height - 1, Math.ceil(y + r));
+  for (let py = y0; py <= y1; py++) {
+    for (let px = x0; px <= x1; px++) {
+      const d = Math.hypot(px + 0.5 - x, py + 0.5 - y) / r;
+      if (d >= 1) continue;
+      // Smooth from the middle to nothing at the rim
+      const k = 1 - d * d * (3 - 2 * d);
+      const i = py * width + px;
+      if (k <= reach[i]) continue;
+      reach[i] = k;
+      data[i] = base[i] * (1 - strength * k);
+    }
   }
-  return out;
 }
 
-/** How much of a pixel at (x, y) shows near the picture's edge (0 at the edge, 1 from 16 % of its shorter side in). */
-function edgeFade(x: number, y: number, w: number, h: number): number {
+/** How much of a pixel at (x, y) the old saves left near the picture's edge (`fade` of its shorter side, 0 at it). */
+function edgeFade(x: number, y: number, w: number, h: number, fade: number): number {
+  if (fade <= 0) return 1;
   const near = Math.min(x, w - 1 - x, y, h - 1 - y);
-  return Math.pow(Math.min(1, near / (0.16 * Math.min(w, h))), 1.5);
+  return Math.pow(Math.min(1, near / (fade * Math.min(w, h))), 1.5);
 }
 
 /**
- * The mask back from a saved cut-out: its alpha put where it was cropped from, the edge fade undone (the very rim,
- * where the fade left nothing, stays out). `place` in the illustration's size then; scaled to `width`×`height`.
+ * The mask back from a saved cut-out: its alpha put where it was cropped from, the edge fade of the old saves undone
+ * (the very rim, where it left nothing, stays out). `place` in the illustration's size then; scaled to `width`×`height`.
  */
 export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number, place: CutoutPlace, width: number, height: number): Mask {
   const mask = emptyMask(width, height);
@@ -86,7 +100,7 @@ export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number,
       if (sx < 0 || sx >= cw) continue;
       const a = alpha[sy * cw + sx];
       if (!a) continue;
-      const f = edgeFade(x, y, width, height);
+      const f = edgeFade(x, y, width, height, place.fade ?? 0.16);
       mask.data[y * width + x] = f > 0.02 ? Math.min(255, a / f) : 255;
     }
   }

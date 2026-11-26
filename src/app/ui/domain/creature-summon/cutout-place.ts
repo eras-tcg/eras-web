@@ -8,6 +8,11 @@ export interface CutoutPlace {
   y: number;
   width: number;
   height: number;
+  /**
+   * How much of the picture's shorter side the save faded out at its edge: 0 now (the editor's Desvanecer brush puts a
+   * fade where it is wanted); cut-outs saved before say nothing, and had 0.16.
+   */
+  fade?: number;
 }
 
 /** The PNG text chunk keeping it (the cut-out tool of the batch writes the same). */

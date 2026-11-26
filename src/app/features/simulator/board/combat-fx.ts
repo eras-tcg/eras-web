@@ -112,13 +112,18 @@ export class CombatFx {
     const lift = seen.height * 0.5;
     const length = Math.hypot(dx, dy) || 1;
     const axis = `${(-dy / length).toFixed(3)}, ${(dx / length).toFixed(3)}, 0`;
-    const frame = (along: number, up: number, pitch: number, scale: number, offset: number | null, easing: string | null, filter: string) => {
+    // It turns on the table to face what it attacks, so it strikes with its edge, not a corner: its front is its top
+    // (its side when exhausted, its top turned round for the rival's), never set upright; the shortest way round
+    const front = ((degrees - 90) * Math.PI) / 180;
+    const yaw = ((((Math.atan2(dy, dx) - front) * 180) / Math.PI + 540) % 360) - 180;
+    const frame = (along: number, up: number, pitch: number, scale: number, aim: number, offset: number | null, easing: string | null, filter: string) => {
+      const facing = ` rotate(${(yaw * aim).toFixed(1)}deg)`;
       const card: Keyframe = {
-        transform: `perspective(900px) translate(${dx * along}px, ${dy * along - up * lift}px) rotate3d(${axis}, ${pitch}deg) scale(${scale})${turn}`,
+        transform: `perspective(900px) translate(${dx * along}px, ${dy * along - up * lift}px) rotate3d(${axis}, ${pitch}deg)${facing} scale(${scale})${turn}`,
         filter,
       };
       const ground: Keyframe = {
-        transform: `translate(${dx * along + up * lift * 0.35}px, ${dy * along + up * lift * 0.3}px) scale(${scale * (1 - up * 0.12)})${turn}`,
+        transform: `translate(${dx * along + up * lift * 0.35}px, ${dy * along + up * lift * 0.3}px)${facing} scale(${scale * (1 - up * 0.12)})${turn}`,
         opacity: 0.55 - up * 0.3,
         filter: `blur(${(3 + up * 14).toFixed(1)}px)`,
       };
@@ -129,13 +134,13 @@ export class CombatFx {
       return { card, ground };
     };
     const frames = [
-      frame(0, 0, 0, 1, null, 'cubic-bezier(0.25, 0.6, 0.35, 1)', 'none'),
-      frame(-0.06, 1, -24, 1.3, 0.26, 'ease-in-out', `drop-shadow(0 0 12px ${RIVAL})`),
-      frame(0.02, 1.06, 12, 1.32, 0.34, 'cubic-bezier(0.7, 0, 1, 0.5)', `drop-shadow(0 0 16px ${RIVAL})`),
-      frame(1, 0, 30, 1.06, IMPACT, null, `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`),
-      frame(0.98, 0, 0, 1.03, IMPACT + 0.07, 'cubic-bezier(0.2, 0.7, 0.4, 1)', `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`),
-      frame(0.8, 0.25, -8, 1.08, 0.66, 'cubic-bezier(0.45, 0, 0.25, 1)', `drop-shadow(0 0 10px ${RIVAL})`),
-      frame(0, 0, 0, 1, null, null, 'none'),
+      frame(0, 0, 0, 1, 0, null, 'cubic-bezier(0.25, 0.6, 0.35, 1)', 'none'),
+      frame(-0.06, 1, -24, 1.3, 1, 0.26, 'ease-in-out', `drop-shadow(0 0 12px ${RIVAL})`),
+      frame(0.02, 1.06, 12, 1.32, 1, 0.34, 'cubic-bezier(0.7, 0, 1, 0.5)', `drop-shadow(0 0 16px ${RIVAL})`),
+      frame(1, 0, 30, 1.06, 1, IMPACT, null, `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`),
+      frame(0.98, 0, 0, 1.03, 1, IMPACT + 0.07, 'cubic-bezier(0.2, 0.7, 0.4, 1)', `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`),
+      frame(0.8, 0.25, -8, 1.08, 0.5, 0.66, 'cubic-bezier(0.45, 0, 0.25, 1)', `drop-shadow(0 0 10px ${RIVAL})`),
+      frame(0, 0, 0, 1, 0, null, null, 'none'),
     ];
     const animation = copy.animate(
       frames.map((f) => f.card),

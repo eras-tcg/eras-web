@@ -110,10 +110,10 @@ function completed(
 }
 
 /**
- * Ascenso, a promotion in rank: tiers of golden light the card's shape stack up from it one over another, each higher
- * and narrower than the last, as rising through the ranks; then they come down into the card all at once, which
- * flashes gold, and embers of gold rise. On the leaning table the tiers rise off it in depth; on a flat one, up the
- * screen.
+ * Ascenso, a promotion in rank: the card's edge lights up gold on the table, and the light rises from it as a wall all
+ * round the card, its top a bright line going up, lighting the card from every side; then the wall fades as it goes on
+ * up, the card glows gold faintly and embers rise. On the leaning table the wall stands up from it in depth; on a flat
+ * one a curtain of light rises up the screen from the card's foot.
  */
 function promotion(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.promotion;
@@ -125,42 +125,10 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const keep = (el: HTMLElement) => (made.push(el), el);
   animations.hold(d);
   const deep = over.position === 'absolute';
-  const step = Math.max(w, h) * 0.22;
-  const up = (z: number, scale: number) => (deep ? `translateZ(${z.toFixed(1)}px) scale(${scale})` : `translateY(${(-z * 0.8).toFixed(1)}px) scale(${scale})`);
-  const tiers = 4;
-  // When they come down into the card, as a share of it
-  const down = 0.62;
-  for (let i = 0; i < tiers; i++) {
-    const z = step * (i + 1);
-    const scale = 1.12 - i * 0.12;
-    const born = 0.06 + i * 0.12;
-    keep(
-      add(
-        {
-          left: `${at.x - w / 2}px`,
-          top: `${at.y - h / 2}px`,
-          width: `${w}px`,
-          height: `${h}px`,
-          zIndex: LAYER.fx,
-          borderRadius: 'var(--radius-card)',
-          border: `2px solid ${GOLD_LIGHT}`,
-          background: `linear-gradient(to top, color-mix(in srgb, ${GOLD} 22%, transparent), transparent 70%)`,
-          boxShadow: `0 0 14px 3px ${GOLD}, inset 0 0 12px 2px color-mix(in srgb, ${GOLD} 70%, transparent)`,
-          mixBlendMode: 'screen',
-        },
-        [
-          { opacity: 0, transform: up(0, scale * 0.9), offset: 0 },
-          { opacity: 0, transform: up(0, scale * 0.9), offset: born },
-          { opacity: 1, transform: up(z, scale), offset: born + 0.14, easing: 'ease-in-out' },
-          { opacity: 0.9, transform: up(z * 1.04, scale), offset: down, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
-          { opacity: 1, transform: up(0, 1), offset: down + 0.1 },
-          { opacity: 0, transform: up(0, 1.06) },
-        ],
-        { duration: d, easing: 'linear' },
-      ),
-    );
-  }
-  // The card flashing gold as the tiers come down into it
+  const tall = Math.max(w, h) * 0.85;
+  const rim = `2px solid ${GOLD_LIGHT}`;
+  const glow = (to: string) => `linear-gradient(to ${to}, color-mix(in srgb, ${GOLD} 75%, transparent), color-mix(in srgb, ${GOLD} 25%, transparent) 55%, transparent)`;
+  // The edge lit on the table, where the wall rises from
   keep(
     add(
       {
@@ -170,17 +138,61 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
         height: `${h}px`,
         zIndex: LAYER.fx,
         borderRadius: 'var(--radius-card)',
-        background: `radial-gradient(ellipse at center, ${GOLD_LIGHT}, color-mix(in srgb, ${GOLD} 60%, transparent) 60%, transparent)`,
-        mixBlendMode: 'screen',
+        border: rim,
+        boxShadow: `0 0 12px 3px ${GOLD}, inset 0 0 10px 2px color-mix(in srgb, ${GOLD} 60%, transparent)`,
       },
       [
-        { opacity: 0, transform: 'scale(0.95)' },
-        { opacity: 1, transform: 'scale(1.03)', offset: 0.25 },
-        { opacity: 0, transform: 'scale(1.18)' },
+        { opacity: 0 },
+        { opacity: 1, offset: 0.12 },
+        { opacity: 0.9, offset: 0.6 },
+        { opacity: 0 },
       ],
-      { duration: d * 0.35, delay: d * (down + 0.08), easing: 'ease-out' },
+      { duration: d, easing: 'linear' },
     ),
   );
+  // The wall: rising (its height grows from the edge, its top a bright line), holding, then fading as it goes on up
+  const rise = (stand: string, grow: 'scaleX' | 'scaleY') =>
+    [
+      { opacity: 0, transform: `${stand} ${grow}(0)` },
+      { opacity: 1, transform: `${stand} ${grow}(0.05)`, offset: 0.08, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
+      { opacity: 1, transform: `${stand} ${grow}(1)`, offset: 0.5 },
+      { opacity: 0.85, transform: `${stand} ${grow}(1.05)`, offset: 0.7, easing: 'ease-in' },
+      { opacity: 0, transform: `${stand} ${grow}(1.3)` },
+    ] as Keyframe[];
+  const wall = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[]) =>
+    keep(add({ zIndex: LAYER.fx, ...style }, frames, { duration: d, easing: 'linear' }));
+  if (deep) {
+    // Four sides standing up from the card's edges (each laid on the table out from its edge, then turned up on it)
+    const x0 = at.x - w / 2;
+    const y0 = at.y - h / 2;
+    // Along the foot and the head: turned up on their lower edge
+    for (const y of [y0 + h, y0]) {
+      wall(
+        { left: `${x0}px`, top: `${y - tall}px`, width: `${w}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top'), borderTop: rim },
+        rise('rotateX(-90deg)', 'scaleY'),
+      );
+    }
+    // Along the sides: the left one turned up on its left edge, the right one on its right edge
+    wall(
+      { left: `${x0}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '0 50%', background: glow('right'), borderRight: rim },
+      rise('rotateY(-90deg)', 'scaleX'),
+    );
+    wall(
+      { left: `${x0 + w - tall}px`, top: `${y0}px`, width: `${tall}px`, height: `${h}px`, transformOrigin: '100% 50%', background: glow('left'), borderLeft: rim },
+      rise('rotateY(90deg)', 'scaleX'),
+    );
+  } else {
+    // Flat: a curtain of light rising up the screen from the card's foot, as wide as the card
+    wall(
+      { left: `${at.x - w / 2}px`, top: `${at.y + h / 2 - tall * 1.4}px`, width: `${w}px`, height: `${tall * 1.4}px`, transformOrigin: '50% 100%', background: glow('top'), borderTop: rim },
+      rise('', 'scaleY'),
+    );
+  }
+  // The card glowing gold, faintly, as the wall stands round it: in a layer of its own (its blending would flatten the
+  // wall's layer, which stands up in depth)
+  const top = overlayFor(document, card, LAYER.fx);
+  const { screen } = measure(card, top);
+  completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, GOLD, d * 0.3, d, true, 0.35).forEach(keep);
   const point = () => ({ x: (Math.random() - 0.5) * w, y: (Math.random() - 0.5) * h });
   // Embers of gold rising off the card
   for (let i = 0; i < 18; i++) {
@@ -211,6 +223,7 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   return Promise.all(runs).then(() => {
     made.forEach((el) => el.remove());
     over.remove();
+    top.remove();
   });
 }
 

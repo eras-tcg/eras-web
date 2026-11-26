@@ -245,6 +245,9 @@ export class StructurePickerDialogComponent {
     this.taking.set(true);
     const taken = await this.wallet.purchase(edition.editionId, 'structure', `${edition.editionId}|structure`);
     this.taking.set(false);
-    if (taken) this.ref.close(edition.editionId);
+    if (!taken) return;
+    // The server made it one of the player's decks: read them again
+    this.decks.forgetMine();
+    this.ref.close(edition.editionId);
   }
 }

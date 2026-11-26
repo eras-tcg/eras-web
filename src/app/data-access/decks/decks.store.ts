@@ -109,6 +109,14 @@ export class DecksStore {
     this.publicDecks.update((list) => list.filter((d) => d.id !== id));
   }
 
+  /**
+   * The player's decks changed on the server without this store (a structure deck bought becomes one of theirs): read
+   * again the next time they are asked for.
+   */
+  forgetMine(): void {
+    this.mineOwner = null;
+  }
+
   private invalidate(): void {
     this.publicLoaded = false;
     this.mineOwner = null;

@@ -60,9 +60,10 @@ function adder(document: Document, host: HTMLElement, position: string, runs: Pr
 }
 
 /**
- * Ascenso, a promotion in rank: a laurel wreath of gold grows round the card as it lies, two branches rising leaf by
- * leaf from its foot to meet over its head; then the wreath flashes, a golden ring of honor opens from it across the
- * table and embers of gold rise. Lying on the table as the card does.
+ * Ascenso, a promotion in rank: tiers of golden light the card's shape stack up from it one over another, each higher
+ * and narrower than the last, as rising through the ranks; then they come down into the card all at once, which
+ * flashes gold, and embers of gold rise. On the leaning table the tiers rise off it in depth; on a flat one, up the
+ * screen.
  */
 function promotion(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.promotion;
@@ -73,96 +74,68 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const add = adder(document, over.host, over.position, runs);
   const keep = (el: HTMLElement) => (made.push(el), el);
   animations.hold(d);
-  // The wreath: an oval round the card, each branch a stem along one side with leaves set along it, outward and inward
-  const rx = w * 0.78;
-  const ry = h * 0.66;
-  const pad = 24;
-  const vw = rx * 2 + pad * 2;
-  const vh = ry * 2 + pad * 2;
-  const wreath = keep(
-    add(
-      { left: `${at.x - vw / 2}px`, top: `${at.y - vh / 2}px`, width: `${vw}px`, height: `${vh}px`, zIndex: LAYER.fx, overflow: 'visible', filter: `drop-shadow(0 0 4px ${GOLD}) drop-shadow(0 1px 2px rgb(0 0 0 / 70%))` },
-      [
-        { opacity: 1, transform: 'scale(1)' },
-        { opacity: 1, transform: 'scale(1)', offset: 0.62 },
-        { opacity: 1, transform: 'scale(1.04)', filter: `brightness(1.8) drop-shadow(0 0 10px ${GOLD})`, offset: 0.7 },
-        { opacity: 0, transform: 'scale(1.1)' },
-      ],
-      { duration: d, easing: 'ease-out' },
-      'svg',
-    ),
-  );
-  wreath.setAttribute('viewBox', `${-vw / 2} ${-vh / 2} ${vw} ${vh}`);
-  // From the foot (angle 90°, down) up each side to the head (−90°), leaving a gap at both ends
-  const leaves = 9;
-  const point = (deg: number, k = 1) => ({ x: Math.cos((deg * Math.PI) / 180) * rx * k, y: Math.sin((deg * Math.PI) / 180) * ry * k });
-  const branch = (side: 1 | -1) => {
-    const from = 90 + side * 18;
-    const to = 90 + side * 162;
-    const steps = 24;
-    const stem = Array.from({ length: steps + 1 }, (_, i) => {
-      const q = point(from + ((to - from) * i) / steps);
-      return `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
-    }).join(' ');
-    const leafs = Array.from({ length: leaves }, (_, i) => {
-      const deg = from + ((to - from) * (i + 0.6)) / (leaves + 0.2);
-      const q = point(deg);
-      // Along the stem, pointing on towards its tip, alternately out and in
-      const tangent = deg + side * 90;
-      const lean = (i % 2 ? -1 : 1) * 32 * side;
-      const len = Math.min(rx, ry) * 0.2;
-      return `<ellipse data-leaf="${i}" cx="0" cy="0" rx="${(len * 0.5).toFixed(1)}" ry="${(len * 0.2).toFixed(1)}" transform="translate(${q.x.toFixed(1)} ${q.y.toFixed(1)}) rotate(${(tangent + lean).toFixed(1)}) translate(${(len * 0.45).toFixed(1)} 0)" opacity="0"/>`;
-    }).join('');
-    return `<g><path d="${stem}" pathLength="1" fill="none" stroke="${GOLD}" stroke-width="2" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1"/><g fill="${GOLD}" stroke="${GOLD_LIGHT}" stroke-width="0.8">${leafs}</g></g>`;
-  };
-  wreath.innerHTML = branch(1) + branch(-1);
-  wreath.style.opacity = '1';
-  const grow = d * 0.45;
-  wreath.querySelectorAll<SVGPathElement>('path').forEach((stem) =>
-    runs.push(stem.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: grow, easing: 'cubic-bezier(0.3, 0, 0.3, 1)', fill: 'forwards' }).finished.catch(() => undefined)),
-  );
-  wreath.querySelectorAll<SVGEllipseElement>('ellipse').forEach((leaf) => {
-    const i = Number(leaf.dataset['leaf']);
-    leaf.style.transformBox = 'fill-box';
-    leaf.style.transformOrigin = 'center';
-    runs.push(
-      leaf
-        .animate(
-          [
-            { opacity: 0, scale: '0.2' },
-            { opacity: 1, scale: '1.25', offset: 0.6 },
-            { opacity: 1, scale: '1' },
-          ],
-          { duration: grow * 0.35, delay: grow * (0.1 + (i / leaves) * 0.75), easing: 'ease-out', fill: 'forwards' },
-        )
-        .finished.catch(() => undefined),
+  const deep = over.position === 'absolute';
+  const step = Math.max(w, h) * 0.22;
+  const up = (z: number, scale: number) => (deep ? `translateZ(${z.toFixed(1)}px) scale(${scale})` : `translateY(${(-z * 0.8).toFixed(1)}px) scale(${scale})`);
+  const tiers = 4;
+  // When they come down into the card, as a share of it
+  const down = 0.62;
+  for (let i = 0; i < tiers; i++) {
+    const z = step * (i + 1);
+    const scale = 1.12 - i * 0.12;
+    const born = 0.06 + i * 0.12;
+    keep(
+      add(
+        {
+          left: `${at.x - w / 2}px`,
+          top: `${at.y - h / 2}px`,
+          width: `${w}px`,
+          height: `${h}px`,
+          zIndex: LAYER.fx,
+          borderRadius: 'var(--radius-card)',
+          border: `2px solid ${GOLD_LIGHT}`,
+          background: `linear-gradient(to top, color-mix(in srgb, ${GOLD} 22%, transparent), transparent 70%)`,
+          boxShadow: `0 0 14px 3px ${GOLD}, inset 0 0 12px 2px color-mix(in srgb, ${GOLD} 70%, transparent)`,
+          mixBlendMode: 'screen',
+        },
+        [
+          { opacity: 0, transform: up(0, scale * 0.9), offset: 0 },
+          { opacity: 0, transform: up(0, scale * 0.9), offset: born },
+          { opacity: 1, transform: up(z, scale), offset: born + 0.14, easing: 'ease-in-out' },
+          { opacity: 0.9, transform: up(z * 1.04, scale), offset: down, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
+          { opacity: 1, transform: up(0, 1), offset: down + 0.1 },
+          { opacity: 0, transform: up(0, 1.06) },
+        ],
+        { duration: d, easing: 'linear' },
+      ),
     );
-  });
-  // The ring of honor: opens from the wreath across the table as it flashes
-  const ring = Math.max(rx, ry) * 2;
+  }
+  // The card flashing gold as the tiers come down into it
   keep(
     add(
       {
-        left: `${at.x - ring / 2}px`,
-        top: `${at.y - ring / 2}px`,
-        width: `${ring}px`,
-        height: `${ring}px`,
+        left: `${at.x - w / 2}px`,
+        top: `${at.y - h / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
         zIndex: LAYER.fx,
-        borderRadius: '50%',
-        border: `3px solid ${GOLD_LIGHT}`,
-        boxShadow: `0 0 18px 4px ${GOLD}, inset 0 0 14px 2px ${GOLD}`,
+        borderRadius: 'var(--radius-card)',
+        background: `radial-gradient(ellipse at center, ${GOLD_LIGHT}, color-mix(in srgb, ${GOLD} 60%, transparent) 60%, transparent)`,
+        mixBlendMode: 'screen',
       },
       [
-        { opacity: 0.9, transform: 'scale(0.75)', borderWidth: '5px' },
-        { opacity: 0, transform: 'scale(1.6)', borderWidth: '1px' },
+        { opacity: 0, transform: 'scale(0.95)' },
+        { opacity: 1, transform: 'scale(1.03)', offset: 0.25 },
+        { opacity: 0, transform: 'scale(1.18)' },
       ],
-      { duration: d * 0.4, delay: d * 0.6, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
+      { duration: d * 0.35, delay: d * (down + 0.08), easing: 'ease-out' },
     ),
   );
-  // Embers of gold rising off the wreath
+  const point = () => ({ x: (Math.random() - 0.5) * w, y: (Math.random() - 0.5) * h });
+  // Embers of gold rising off the card
   for (let i = 0; i < 18; i++) {
     const s = 2 + Math.random() * 3;
-    const q = point(Math.random() * 360);
+    const q = point();
     const rise = h * (0.4 + Math.random() * 0.5);
     keep(
       add(
@@ -267,7 +240,7 @@ function materialization(document: Document, animations: BoardAnimations, card: 
         { opacity: 0.9, transform: 'scale(0.74)', offset: 0.88 },
         { opacity: 1, transform: 'scale(1)' },
       ],
-      { duration: d * land, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'both' },
+      { duration: d * land, easing: 'linear', fill: 'both' },
     ),
   );
   runs.push(charge.animate([{ opacity: 1 }, { opacity: 0 }], { duration: d * 0.25, delay: d * land, fill: 'forwards' }).finished);

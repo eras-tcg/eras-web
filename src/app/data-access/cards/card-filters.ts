@@ -7,6 +7,11 @@ export type SortDirection = 'asc' | 'desc';
 /** Which cards a search shows: the legal ones (not in testing), every card, or only the cards in testing. */
 export type CardPool = 'legal' | 'all' | 'test';
 export const CARD_POOL_LABELS: Record<CardPool, string> = { legal: 'Legales', all: 'Todas', test: 'Test' };
+/** A card's design, as the card editor draws it: its frame, and whether its border is gold. */
+export const CARD_FRAMES = ['standard', 'semi', 'full'] as const;
+export const CARD_FRAME_LABELS: Record<(typeof CARD_FRAMES)[number], string> = { standard: 'Normal', semi: 'Semi full art', full: 'Full art' };
+export const CARD_BORDERS = ['gold', 'plain'] as const;
+export const CARD_BORDER_LABELS: Record<(typeof CARD_BORDERS)[number], string> = { gold: 'Con borde de oro', plain: 'Sin borde de oro' };
 
 /** A numeric range; `null` bounds mean "no limit on this side". */
 export interface NumberRange {
@@ -30,6 +35,9 @@ export interface CardFilters {
   /** Edition id, "E1" or "E1.1"; empty = all. */
   edition: string;
   rarities: string[];
+  /** Designs (CARD_FRAMES) and borders (CARD_BORDERS); empty = all of them. */
+  frames: string[];
+  borders: string[];
   starterOnly: boolean;
   keywords: string[];
   tags: string[];
@@ -53,6 +61,8 @@ export const EMPTY_FILTERS: CardFilters = {
   requirement: '',
   edition: '',
   rarities: [],
+  frames: [],
+  borders: [],
   starterOnly: false,
   keywords: [],
   tags: [],
@@ -65,7 +75,7 @@ export function hasActiveFilters(f: CardFilters): boolean {
   return (
     !!(f.name || f.type || f.specialSummon || f.requirement || f.edition || f.starterOnly) ||
     f.pool !== 'legal' ||
-    [f.colors, f.classes, f.rarities, f.keywords, f.tags].some((list) => list.length > 0) ||
+    [f.colors, f.classes, f.rarities, f.frames, f.borders, f.keywords, f.tags].some((list) => list.length > 0) ||
     [f.cost, f.level, f.strength, f.specialCost].some(isRangeSet)
   );
 }
@@ -105,6 +115,14 @@ function matchesColor(card: CatalogCard, f: CardFilters): boolean {
   const colors = f.colorMode === 'identity' ? [card.color_identity] : [card.color_identity, ...(card.meta?.colors ?? [])];
   const known = colors.filter((c): c is string => !!c);
   return !known.length || known.some((c) => f.colors.includes(c));
+}
+
+/** Its frame and border as the editor saved them (a card never designed there: normal, no gold). */
+function matchesDesign(card: CatalogCard, f: CardFilters): boolean {
+  const design = card.meta?.design ?? {};
+  const frame = (CARD_FRAMES as readonly unknown[]).includes(design['frameStyle']) ? (design['frameStyle'] as string) : 'standard';
+  const border = design['goldBorder'] === true ? 'gold' : 'plain';
+  return (!f.frames.length || f.frames.includes(frame)) && (!f.borders.length || f.borders.includes(border));
 }
 
 function matchesKeywords(card: CatalogCard, keywords: string[]): boolean {
@@ -147,6 +165,7 @@ export function filterCards(cards: readonly CatalogCard[], f: CardFilters, inclu
     if (f.specialSummon && m?.specialSummonKind !== f.specialSummon) return false;
     if (!matchesPattern(f.requirement, m?.requirement ?? '')) return false;
     if (f.rarities.length && !f.rarities.includes(m?.rarity ?? '')) return false;
+    if (!matchesDesign(card, f)) return false;
     if (f.starterOnly && m?.starter !== true) return false;
     return matchesKeywords(card, f.keywords) && matchesTags(card, f.tags);
   });

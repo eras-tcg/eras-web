@@ -116,6 +116,19 @@ describe('filterCards', () => {
     expect(hasActiveFilters({ ...EMPTY_FILTERS, pool: 'test' })).toBe(true);
   });
 
+  it('filters by the design: frame and gold border (a card never designed: normal, no gold)', () => {
+    const designed = [
+      ...cards,
+      card({ id: 'f', name: 'Full', edition: 'E2', number: 2 }, { cardType: 'creature', design: { frameStyle: 'full', goldBorder: true } }),
+      card({ id: 's', name: 'Semi', edition: 'E2', number: 3 }, { cardType: 'creature', design: { frameStyle: 'semi' } }),
+    ];
+    expect(ids(filterCards(designed, { ...EMPTY_FILTERS, frames: ['full'] }, false))).toEqual(['f']);
+    expect(ids(filterCards(designed, { ...EMPTY_FILTERS, frames: ['standard', 'semi'] }, false))).toEqual(['a', 'b', 's']);
+    expect(ids(filterCards(designed, { ...EMPTY_FILTERS, borders: ['gold'] }, false))).toEqual(['f']);
+    expect(ids(filterCards(designed, { ...EMPTY_FILTERS, borders: ['plain'] }, false))).toEqual(['a', 'b', 's']);
+    expect(hasActiveFilters({ ...EMPTY_FILTERS, borders: ['gold'] })).toBe(true);
+  });
+
   it('filters by edition, including sub-editions', () => {
     expect(ids(filterCards(cards, { ...EMPTY_FILTERS, edition: 'E1' }, true))).toEqual(['a']);
     expect(ids(filterCards(cards, { ...EMPTY_FILTERS, edition: 'E1.1' }, true))).toEqual(['c']);

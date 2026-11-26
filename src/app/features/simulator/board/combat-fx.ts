@@ -1,9 +1,10 @@
 import { pileOf } from '@data/simulator/game-rules';
 import { GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { centerOf, fieldCard, fieldPlace, fieldSprite, liftPlace, pile, tableCard } from './board-dom';
+import { centerOf, fieldCard, fieldPlace, fieldSprite, lifeCard, liftPlace, pile, tableCard } from './board-dom';
+import { quake, quakesWithTable } from './board-quake';
 import { FxDraw } from './fx-draw';
-import { overlayFor } from './table-plane';
+import { Overlay, overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 
@@ -20,6 +21,8 @@ interface Drawn {
 }
 
 const RIVAL = 'var(--color-sim-rival)';
+/** When the attacker's blow lands, as a share of its charge. */
+const IMPACT = 0.46;
 
 /** The signs over a card: a block's white shield; an attack's sword (the clash's "VS" icon: steel blade, golden hilt). */
 const SHIELD =
@@ -47,9 +50,11 @@ export class CombatFx {
   ) {}
 
   /**
-   * The attacker charges: a copy of it leaves its place, strikes what it hits (`targetId`, or the lives of
+   * The attacker charges: a copy of it rises off its place (its shadow left on the table) and dives, nose first, onto
+   * what it hits (`targetId`, or the lives of
    * `attackerOwner`'s rival) and comes back; the real card's sprite waits hidden (its place, with its share of an Enlace
-   * band and its link mark, stays as it is). The target's sprite shakes with a red flash at the blow, over its neighbours.
+   * band and its link mark, stays as it is). At the blow it stops dead a moment, a shock wave opens there and the table
+   * jolts; the target's sprite is knocked back with a red flash, over its neighbours.
    */
   charge(attackerId: string, targetId: string | null, attackerOwner: string | null, state: GameState): Promise<void> {
     const rects = this.measure(state);
@@ -80,36 +85,91 @@ export class CombatFx {
       height: `${seen.height}px`,
       zIndex: LAYER.charge,
       pointerEvents: 'none',
-      boxShadow: '0 8px 24px rgb(0 0 0 / 45%)',
+      boxShadow: '0 2px 6px rgb(0 0 0 / 40%)',
       ...cardFaceStyle(seen.imageUrl),
     });
-    over.host.append(copy);
+    // Its shadow on the table under it: it stays on the table as the card rises, farther and softer the higher it is
+    const shade = this.document.createElement('div');
+    Object.assign(shade.style, {
+      position: over.position,
+      left: copy.style.left,
+      top: copy.style.top,
+      width: copy.style.width,
+      height: copy.style.height,
+      zIndex: LAYER.charge,
+      pointerEvents: 'none',
+      borderRadius: copy.style.borderRadius,
+      background: 'rgb(0 0 0 / 70%)',
+      opacity: '0',
+    });
+    if (over.position === 'fixed') [shade, copy].forEach(quakesWithTable);
+    over.host.append(shade, copy);
     if (real) real.style.visibility = 'hidden';
     this.animations.hold(TIMING.charge);
+    // It rises off the table leaning back, hangs a moment, tips over and dives onto what it attacks faster and faster,
+    // nose first; it slaps flat on the blow and stops dead, bounces off and goes back down to its place. `along`: how
+    // far along its way (over the table), `up`: how high (0 on the table), `pitch`: its leading edge down (degrees)
+    const lift = seen.height * 0.5;
+    const length = Math.hypot(dx, dy) || 1;
+    const axis = `${(-dy / length).toFixed(3)}, ${(dx / length).toFixed(3)}, 0`;
+    // It turns on the table to face what it attacks, so it strikes with its edge, not a corner: its front is its top
+    // (its side when exhausted, its top turned round for the rival's), never set upright; the shortest way round
+    const front = ((degrees - 90) * Math.PI) / 180;
+    const yaw = ((((Math.atan2(dy, dx) - front) * 180) / Math.PI + 540) % 360) - 180;
+    const frame = (along: number, up: number, pitch: number, scale: number, aim: number, offset: number | null, easing: string | null, filter: string) => {
+      const facing = ` rotate(${(yaw * aim).toFixed(1)}deg)`;
+      const card: Keyframe = {
+        transform: `perspective(900px) translate(${dx * along}px, ${dy * along - up * lift}px) rotate3d(${axis}, ${pitch}deg)${facing} scale(${scale})${turn}`,
+        filter,
+      };
+      const ground: Keyframe = {
+        transform: `translate(${dx * along + up * lift * 0.35}px, ${dy * along + up * lift * 0.3}px)${facing} scale(${scale * (1 - up * 0.12)})${turn}`,
+        opacity: 0.55 - up * 0.3,
+        filter: `blur(${(3 + up * 14).toFixed(1)}px)`,
+      };
+      for (const k of [card, ground]) {
+        if (offset !== null) k.offset = offset;
+        if (easing) k.easing = easing;
+      }
+      return { card, ground };
+    };
+    const frames = [
+      frame(0, 0, 0, 1, 0, null, 'cubic-bezier(0.25, 0.6, 0.35, 1)', 'none'),
+      frame(-0.06, 1, -24, 1.3, 1, 0.26, 'ease-in-out', `drop-shadow(0 0 12px ${RIVAL})`),
+      frame(0.02, 1.06, 12, 1.32, 1, 0.34, 'cubic-bezier(0.7, 0, 1, 0.5)', `drop-shadow(0 0 16px ${RIVAL})`),
+      frame(1, 0, 30, 1.06, 1, IMPACT, null, `brightness(1.6) drop-shadow(0 0 22px ${RIVAL})`),
+      frame(0.98, 0, 0, 1.03, 1, IMPACT + 0.07, 'cubic-bezier(0.2, 0.7, 0.4, 1)', `brightness(1.2) drop-shadow(0 0 18px ${RIVAL})`),
+      frame(0.8, 0.25, -8, 1.08, 0.5, 0.66, 'cubic-bezier(0.45, 0, 0.25, 1)', `drop-shadow(0 0 10px ${RIVAL})`),
+      frame(0, 0, 0, 1, 0, null, null, 'none'),
+    ];
     const animation = copy.animate(
-      [
-        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none' },
-        { transform: `translate(${-dx * 0.08}px, ${-dy * 0.08}px) scale(1.05)${turn}`, filter: `drop-shadow(0 0 10px ${RIVAL})`, offset: 0.18 },
-        { transform: `translate(${dx}px, ${dy}px) scale(1.18)${turn}`, filter: `drop-shadow(0 0 18px ${RIVAL})`, offset: 0.42 },
-        { transform: `translate(${dx * 0.92}px, ${dy * 0.92}px) scale(1.12)${turn}`, filter: `drop-shadow(0 0 14px ${RIVAL})`, offset: 0.55 },
-        { transform: `translate(0, 0) scale(1)${turn}`, filter: 'none' },
-      ],
-      { duration: TIMING.charge, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
+      frames.map((f) => f.card),
+      { duration: TIMING.charge },
     );
-    // The blow lands on the target: it shakes as it is drawn (an exhausted blocker stays turned)
+    shade.animate(
+      frames.map((f) => f.ground),
+      { duration: TIMING.charge },
+    );
+    const blow = TIMING.charge * IMPACT;
+    // The blow: a shock wave where it lands, and the table jolts (harder on the lives)
+    this.shock(over, hit, Math.max(seen.width, seen.height) * 1.6, blow);
+    quake(this.document, this.animations, targetId ? 1 : 1.4, blow);
+    // What it hits is knocked back the way the blow goes, flashing, and settles (an exhausted blocker stays turned)
     const own = target ? this.document.defaultView?.getComputedStyle(target).transform : null;
     const base = own && own !== 'none' ? `${own} ` : '';
-    // Over its neighbours while it shakes (its place does not move)
+    const kx = (dx / length) * 16;
+    const ky = (dy / length) * 16;
+    // Over its neighbours while it moves (its place does not move)
     const lowered = targetId && target ? liftPlace(fieldPlace(this.document, targetId)) : null;
     const shake = target?.animate(
       [
-        { transform: `${base}translateX(0)`, filter: 'none' },
-        { transform: `${base}translateX(-7px)`, filter: `brightness(1.6) drop-shadow(0 0 16px ${RIVAL})` },
-        { transform: `${base}translateX(6px)`, filter: `brightness(1.4) drop-shadow(0 0 12px ${RIVAL})` },
-        { transform: `${base}translateX(-3px)`, filter: `drop-shadow(0 0 6px ${RIVAL})` },
-        { transform: `${base}translateX(0)`, filter: 'none' },
+        { transform: `${base}translate(0, 0)`, filter: 'none' },
+        { transform: `${base}translate(${kx}px, ${ky}px) scale(0.94)`, filter: `brightness(2.2) drop-shadow(0 0 20px ${RIVAL})`, offset: 0.12 },
+        { transform: `${base}translate(${-kx * 0.35}px, ${-ky * 0.35}px)`, filter: `brightness(1.4) drop-shadow(0 0 14px ${RIVAL})`, offset: 0.4 },
+        { transform: `${base}translate(${kx * 0.15}px, ${ky * 0.15}px)`, filter: `drop-shadow(0 0 8px ${RIVAL})`, offset: 0.65 },
+        { transform: `${base}translate(0, 0)`, filter: 'none' },
       ],
-      { duration: TIMING.charge * 0.475, delay: TIMING.charge * 0.42, easing: 'ease-out' },
+      { duration: TIMING.charge * 0.5, delay: blow, easing: 'ease-out' },
     );
     if (shake && lowered) {
       shake.onfinish = lowered;
@@ -118,6 +178,7 @@ export class CombatFx {
     return new Promise((landed) => {
       const done = () => {
         copy.remove();
+        shade.remove();
         over.remove();
         if (real) real.style.visibility = '';
         landed();
@@ -157,22 +218,38 @@ export class CombatFx {
     return Promise.all([sign, arrowGone]).then(() => undefined);
   }
 
-  /** A block declared: a white shield rises over the blocker, which turns sideways when it is exhausted to block (`tap`). */
+  /**
+   * A block declared: a white shield rises over the blocker, which turns sideways when it is exhausted to block (`tap`)
+   * and braces, setting itself down hard.
+   */
   block(blockerId: string, tap: boolean): Promise<void> {
     const card = fieldCard(this.document, blockerId);
     if (!card) return Promise.resolve();
     if (tap) this.exhaust(card);
+    // It braces as the shield goes up: it rises a little and sets itself down hard (once turned), and the table feels it
+    const brace = TIMING.badge * 0.4;
+    const down = Math.max(tap ? TIMING.tap : 0, brace * 0.7);
+    card.animate(
+      [
+        { scale: '1', filter: 'none' },
+        { scale: '1.08', filter: 'brightness(1.25) drop-shadow(0 0 12px #fff)', offset: 0.45, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
+        { scale: '0.96', filter: 'brightness(1.1) drop-shadow(0 0 8px #fff)', offset: 0.7 },
+        { scale: '1', filter: 'none' },
+      ],
+      { duration: brace, delay: down - brace * 0.7 },
+    );
+    quake(this.document, this.animations, 0.35, down);
     return this.draw.badge(card, SHIELD, '#fff');
   }
 
   /**
-   * An effect activated: its card (on the table, in a hand or on its pile) glows white and a white aura spreads from
-   * it, twice; done when it has gone.
+   * An effect activated: its card (on the table, in a hand or on its pile) glows white, its edges light up and motes of
+   * light rise from it (FxDraw.lightUp); done when it has gone.
    */
-  activation(sourceId: string, state: GameState | null): Promise<void> {
-    const where = pileOf(state, sourceId);
-    const card = tableCard(this.document, sourceId) ?? (where ? pile(this.document, where.ownerId, where.zone) : null);
-    if (!card) return Promise.resolve();
+  async activation(sourceId: string, state: GameState | null): Promise<void> {
+    const shown = await this.activating(sourceId, state);
+    if (!shown) return;
+    const { card, done } = shown;
     card.animate(
       [
         { filter: 'none' },
@@ -180,9 +257,69 @@ export class CombatFx {
         { filter: 'brightness(1.15) drop-shadow(0 0 12px #fff)', offset: 0.7 },
         { filter: 'none' },
       ],
-      { duration: TIMING.badge, easing: 'ease-out' },
+      { duration: TIMING.activation, easing: 'ease-out' },
     );
-    return this.draw.aura(card);
+    await this.draw.lightUp(card);
+    done();
+  }
+
+  /**
+   * The card an effect is activated from, as drawn: on the table or in a hand; its own place in the lives; on top of
+   * the Descarte or the Tributos, where it comes while it plays (`done` puts the pile back as it was); else its pile.
+   * Null when it is not drawn.
+   */
+  private async activating(id: string, state: GameState | null): Promise<{ card: HTMLElement; done: () => void } | null> {
+    const none = () => undefined;
+    const drawn = tableCard(this.document, id);
+    if (drawn) return { card: drawn, done: none };
+    const where = pileOf(state, id);
+    if (!where) return null;
+    if (where.zone === 'lifeStack') {
+      const life = lifeCard(this.document, where.ownerId, id);
+      if (life) return { card: life, done: none };
+    }
+    const place = pile(this.document, where.ownerId, where.zone);
+    if (!place) return null;
+    if (where.zone === 'discardPile' || where.zone === 'tributeZone') {
+      this.animations.onTop.set(id);
+      await drawnNow();
+      const top = place.querySelector<HTMLElement>('eras-game-card');
+      const done = () => {
+        if (this.animations.onTop() === id) this.animations.onTop.set(null);
+      };
+      if (top) return { card: top, done };
+      done();
+    }
+    return { card: place, done: none };
+  }
+
+  /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */
+  private shock(over: Overlay, at: { x: number; y: number }, size: number, delay: number): void {
+    const ring = this.document.createElement('div');
+    Object.assign(ring.style, {
+      position: over.position,
+      left: `${at.x - size / 2}px`,
+      top: `${at.y - size / 2}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      zIndex: LAYER.charge,
+      pointerEvents: 'none',
+      borderRadius: '50%',
+      border: '3px solid rgb(255 236 220 / 95%)',
+      boxShadow: `0 0 24px 6px ${RIVAL}, inset 0 0 20px 4px ${RIVAL}`,
+      opacity: '0',
+    });
+    if (over.position === 'fixed') quakesWithTable(ring);
+    over.host.append(ring);
+    const wave = ring.animate(
+      [
+        { opacity: 1, transform: 'scale(0.1)', borderWidth: '8px' },
+        { opacity: 0, transform: 'scale(1)', borderWidth: '1px' },
+      ],
+      { duration: TIMING.charge * 0.45, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
+    );
+    wave.onfinish = () => ring.remove();
+    wave.oncancel = () => ring.remove();
   }
 
   /**
@@ -212,4 +349,17 @@ export class CombatFx {
     }
     return rects;
   }
+}
+
+/** Once the board has drawn what just changed (two frames; a little later if frames are held back). */
+function drawnNow(): Promise<void> {
+  return new Promise((done) => {
+    const timer = setTimeout(done, 80);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        clearTimeout(timer);
+        done();
+      }),
+    );
+  });
 }

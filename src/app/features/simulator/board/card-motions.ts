@@ -1,6 +1,8 @@
 import { BoardAnimations } from './board-animations';
+import { quake, quakesWithTable } from './board-quake';
 import { Seen, TableMeasure } from './card-seen';
-import { TablePlane, tablePlane } from './table-plane';
+import { TablePlane, overlayFor, tablePlane, underTable } from './table-plane';
+import { SpecialSummonKind, specialSummonFx, specialSummonLead } from './special-summon-fx';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 import { CARD_H, CARD_W, Point, seeded, shatterShape } from './shatter-shape';
@@ -24,8 +26,8 @@ export class CardMotions {
   private readonly broken = new Map<string, () => void>();
 
   /**
-   * A destroyed card breaks where it lies, and stays there: struck at a point, a white flash and a shock wave burst
-   * from it; the card splits into pieces along glowing cracks, pushed apart over a red-hot glow; sparks and splinters of
+   * A destroyed card breaks where it lies, and stays there: struck at a point, a white flash holds a moment, the table
+   * jolts and a shock wave bursts from it; the card splits into pieces along glowing cracks, pushed apart over a red-hot glow; sparks and splinters of
    * it fly off and fall; then the pieces close back up, the cracks and the burn die down, and the card waits, whole, for
    * its flight to its zone, which takes over from it (release). It never vanishes first. `id`: the card's instance id
    * (the same card always breaks the same way).
@@ -43,7 +45,7 @@ export class CardMotions {
     const turn = turnDeg ? `rotate(${turnDeg}deg)` : '';
     const face = cardFaceStyle(from.imageUrl);
     const pct = (p: Point) => `${((p.x / CARD_W) * 100).toFixed(2)}% ${((p.y / CARD_H) * 100).toFixed(2)}%`;
-    const place = (el: HTMLElement, x: number, y: number, ew: number, eh: number) =>
+    const place = (el: HTMLElement, x: number, y: number, ew: number, eh: number) => {
       Object.assign(el.style, {
         position: lying ? 'absolute' : 'fixed',
         left: `${x - ew / 2}px`,
@@ -53,6 +55,9 @@ export class CardMotions {
         zIndex: LAYER.shatter,
         pointerEvents: 'none',
       });
+      // Flat on the screen, it jolts with the table (on the leaning table, its layer does)
+      if (!lying) quakesWithTable(el);
+    };
     // The point struck, on the screen (the card may lie turned)
     const r = (turnDeg * Math.PI) / 180;
     const ox = (shape.impact.x / CARD_W - 0.5) * w;
@@ -109,14 +114,16 @@ export class CardMotions {
     made.push(box);
     this.animations.hold(d);
 
-    // The blow: a white flash, a jolt, the card glowing red; then it settles back as it was
+    // The blow: a blinding flash that holds a moment, a hard jolt with the table, the card glowing red; then it settles
+    quake(this.document, this.animations, 1, d * 0.04);
     box.animate(
       [
         { transform: `${turn} scale(1)`, filter: 'none' },
-        { transform: `${turn} scale(1.06)`, filter: 'brightness(2.6) saturate(0.6)', offset: 0.08 },
-        { transform: `${turn} translate(-3px, 1px) scale(1.02)`, filter: 'brightness(1.4) drop-shadow(0 0 18px #e0242f)', offset: 0.2 },
-        { transform: `${turn} translate(3px, -1px)`, filter: 'brightness(1.2) drop-shadow(0 0 24px #e0242f)', offset: 0.32 },
-        { transform: `${turn} translate(-1px, 0)`, filter: 'brightness(1.05) drop-shadow(0 0 16px #e0242f)', offset: 0.5 },
+        { transform: `${turn} scale(1.1)`, filter: 'brightness(3) saturate(0.5)', offset: 0.05 },
+        { transform: `${turn} scale(1.09)`, filter: 'brightness(2.6) saturate(0.6)', offset: 0.12 },
+        { transform: `${turn} translate(-5px, 2px) scale(1.02)`, filter: 'brightness(1.5) drop-shadow(0 0 22px #e0242f)', offset: 0.22 },
+        { transform: `${turn} translate(4px, -2px)`, filter: 'brightness(1.25) drop-shadow(0 0 26px #e0242f)', offset: 0.34 },
+        { transform: `${turn} translate(-2px, 1px)`, filter: 'brightness(1.05) drop-shadow(0 0 18px #e0242f)', offset: 0.5 },
         { transform: turn || 'none', filter: 'drop-shadow(0 0 6px #e0242f)', offset: 0.8 },
         { transform: turn || 'none', filter: 'none' },
       ],
@@ -126,14 +133,15 @@ export class CardMotions {
     burn.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0.35, offset: 0.45 }, { opacity: 0 }], { duration: d, fill: 'forwards' });
     // The pieces pushed apart along the cracks (a little turned), then closing back up
     for (const { el, piece } of pieces) {
-      const push = 2.2 + (Math.abs(piece.push.x) + Math.abs(piece.push.y)) * 0.8;
+      const push = 3 + (Math.abs(piece.push.x) + Math.abs(piece.push.y)) * 1.1;
       const tx = (piece.push.x * push * w) / CARD_W;
       const ty = (piece.push.y * push * h) / CARD_H;
       const rot = (piece.push.x * piece.push.y > 0 ? 1 : -1) * 1.6;
       el.animate(
         [
           { transform: 'translate(0, 0) rotate(0deg)' },
-          { transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`, offset: 0.22, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+          { transform: 'translate(0, 0) rotate(0deg)', offset: 0.1, easing: 'cubic-bezier(0.1, 0.9, 0.3, 1)' },
+          { transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`, offset: 0.26, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
           { transform: `translate(${tx * 0.8}px, ${ty * 0.8}px) rotate(${rot * 0.8}deg)`, offset: 0.5, easing: 'cubic-bezier(0.5, 0, 0.3, 1)' },
           { transform: 'translate(0, 0) rotate(0deg)' },
         ],
@@ -171,7 +179,7 @@ export class CardMotions {
 
     // Sparks: glowing points thrown out from the impact, falling as they fade
     const rnd = seeded(id + ':sparks');
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 30; i++) {
       const spark = this.document.createElement('div');
       const size = 2 + rnd() * 3;
       place(spark, hit.x, hit.y, size, size);
@@ -249,54 +257,313 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: a ring of light opens from it and a glow fades on it (blue yours, red the rival's).
-   * `landing`: where the card lies once landed (not where it travels from).
+   * A summoned card lands, as heavy as `weight` (0 to 1, by its strength): it presses into the table, which jolts;
+   * frames of light its shape open from it, sparks and pixels fly off its edges, circuits run out under it (a special
+   * summon plays its own instead: `special`) and the cards around it hop; a glow fades on it (blue yours, red the
+   * rival's).
    */
-  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number): void {
+  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, special: SpecialSummonKind | null = null): void {
     if (this.animations.still()) return;
-    this.run(() => this.burstNow(card, landing, mine, delay));
+    this.run(() => {
+      // A special summon has its own (in place of the circuits), starting a little before it lands for some
+      if (special) setTimeout(() => void specialSummonFx(special, this.document, this.animations, card), Math.max(0, delay - specialSummonLead(special)));
+      this.burstNow(card, landing, mine, delay, weight, !special);
+    });
   }
 
-  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number): void {
+  private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number, circuits: boolean): void {
     const color = mine ? 'var(--color-sim-link-mine)' : 'var(--color-sim-link-rival)';
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    // On the leaning table the ring lies on it, around the card at its own size
+    // On the leaning table the frame lies on it, around the card at its own size
     const lying = this.onPlane({ ...center, width: 0, height: 0, tapped: false, imageUrl: null, plane: this.measure.onTable(card) });
-    const size = lying ? Math.max(card.offsetWidth, card.offsetHeight) * 1.6 : Math.max(rect.width, rect.height) * 1.6;
+    const w = lying ? card.offsetWidth : rect.width;
+    const h = lying ? card.offsetHeight : rect.height;
     const at = lying?.at ?? center;
+    // A frame of light the card's shape, opening out from its edges
     const ring = this.document.createElement('div');
     Object.assign(ring.style, {
       position: lying ? 'absolute' : 'fixed',
-      left: `${at.x - size / 2}px`,
-      top: `${at.y - size / 2}px`,
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: '50%',
+      left: `${at.x - w / 2}px`,
+      top: `${at.y - h / 2}px`,
+      width: `${w}px`,
+      height: `${h}px`,
+      borderRadius: cardFaceStyle(null).borderRadius ?? '6px',
       border: `3px solid ${color}`,
-      boxShadow: `0 0 24px 6px ${color}, inset 0 0 24px 4px ${color}`,
+      boxShadow: `0 0 24px 6px ${color}, inset 0 0 18px 3px ${color}`,
       zIndex: LAYER.flight,
       pointerEvents: 'none',
       opacity: '0',
     });
-    (lying?.layer ?? this.document.body).append(ring);
+    if (!lying) quakesWithTable(ring);
+    // A white frame, quicker and closer, over the colored one
+    const flash = ring.cloneNode() as HTMLElement;
+    Object.assign(flash.style, { border: '4px solid #fff', boxShadow: `0 0 18px 4px #fff, 0 0 30px 8px ${color}` });
+    const host = lying?.layer ?? this.document.body;
+    host.append(ring, flash);
     this.animations.hold(delay + TIMING.burst);
     const animation = ring.animate(
       [
-        { opacity: 0.95, transform: 'scale(0.35)' },
-        { opacity: 0, transform: 'scale(1.15)' },
+        { opacity: 1, transform: 'scale(1)', borderWidth: '7px' },
+        { opacity: 0, transform: 'scale(1.45)', borderWidth: '1px' },
       ],
-      { duration: TIMING.burst, delay, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
+      { duration: TIMING.burst, delay, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
     );
-    const gone = () => (lying?.layer ?? ring).remove();
+    flash.animate(
+      [
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(1.18)' },
+      ],
+      { duration: TIMING.burst * 0.45, delay, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
+    );
+    const gone = () => {
+      flash.remove();
+      (lying?.layer ?? ring).remove();
+    };
     animation.onfinish = gone;
     animation.oncancel = gone;
+    // It lands with its weight: pressed into the table a moment and back, glowing; the table jolts
     card.animate(
       [
-        { boxShadow: `0 0 0 3px #fff, 0 0 40px 14px ${color}` },
-        { boxShadow: '0 0 0 0 transparent, 0 0 0 0 transparent' },
+        { scale: '1.04', boxShadow: `0 0 0 3px #fff, 0 0 48px 18px ${color}` },
+        { scale: '0.96', offset: 0.12 },
+        { scale: '1.01', offset: 0.3 },
+        { scale: '1', boxShadow: '0 0 0 0 transparent, 0 0 0 0 transparent' },
       ],
       { duration: TIMING.burst, delay, easing: 'ease-out' },
     );
+    quake(this.document, this.animations, 0.3 + 0.7 * weight, delay);
+    this.debris(host, at, w, h, color, delay, !lying);
+    if (circuits) this.circuits(center, w, h, color, delay);
+    this.hop(card, center, Math.max(rect.width, rect.height), delay, weight);
+  }
+
+  /**
+   * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
+   * around it jump up off the table (along its up, leaning with it) and drop back, each one tilted its own way, the
+   * nearest first and highest, as the blow spreads; higher and farther the heavier it is (`weight`, 0 to 1). A copy jumps, its shadow left on the table; the card waits hidden.
+   */
+  private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number, weight: number): void {
+    // A heavier card shakes the table farther
+    const reach = size * (2.4 + 1.6 * weight);
+    for (const other of this.document.querySelectorAll<HTMLElement>('[data-instance-id] > eras-sim-card eras-game-card')) {
+      const sprite = other.closest<HTMLElement>('eras-sim-card');
+      if (other === card || !sprite || sprite.style.visibility === 'hidden') continue;
+      const r = other.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const near = 1 - Math.hypot(cx - at.x, cy - at.y) / reach;
+      if (near < 0.12) continue;
+      this.hopOne(other, sprite, { x: cx, y: cy }, at, near, weight, delay + (1 - near) * reach * 0.25);
+    }
+  }
+
+  private hopOne(
+    card: HTMLElement,
+    sprite: HTMLElement,
+    center: { x: number; y: number },
+    blow: { x: number; y: number },
+    near: number,
+    weight: number,
+    delay: number,
+  ): void {
+    // On the leaning table its layer leans with it (in 3D): up from the layer is up from the table
+    const over = overlayFor(this.document, card, LAYER.charge);
+    const c = over.at(center.x, center.y);
+    const o = over.at(blow.x, blow.y);
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
+    const turn = (card.classList.contains('tapped') ? 90 : 0) + (card.closest('eras-player-half.opponent') ? 180 : 0);
+    const flat = over.position === 'fixed' ? 'perspective(900px) ' : '';
+    const made: HTMLElement[] = [];
+    const lay = (el: HTMLElement) => {
+      Object.assign(el.style, {
+        position: over.position,
+        left: `${c.x - w / 2}px`,
+        top: `${c.y - h / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+        zIndex: LAYER.charge,
+        pointerEvents: 'none',
+        borderRadius: cardFaceStyle(null).borderRadius ?? '',
+      });
+      if (!flat) el.style.transformStyle = 'preserve-3d';
+      else quakesWithTable(el);
+      over.host.append(el);
+      made.push(el);
+    };
+    const shade = this.document.createElement('div');
+    lay(shade);
+    Object.assign(shade.style, { background: 'rgb(0 0 0 / 80%)', opacity: '0' });
+    const copy = this.document.createElement('div');
+    lay(copy);
+    Object.assign(copy.style, { ...cardFaceStyle(card.querySelector('img')?.getAttribute('src') ?? null), boxShadow: '0 2px 6px rgb(0 0 0 / 40%)' });
+    // Tilted about an axis across the way the blow goes, turned a little at random: never flat, never two alike
+    const away = Math.atan2(c.y - o.y, c.x - o.x) + Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+    const axis = `${Math.cos(away).toFixed(3)}, ${Math.sin(away).toFixed(3)}, 0`;
+    // Higher and more tilted the heavier the card that landed
+    const tilt = (11 + Math.random() * 9) * near * (0.6 + 0.8 * weight) * (Math.random() < 0.8 ? 1 : -1);
+    const up = 34 * near * (0.3 + 1.2 * weight);
+    // How high its middle is for its lowest edge to touch the table, tilted `deg`
+    const rest = (deg: number) => (Math.abs(Math.sin((deg * Math.PI) / 180)) * Math.max(w, h)) / 2;
+    const steps: [number, number, number | null, string | null][] = [
+      [0, 0, null, 'cubic-bezier(0.15, 0.8, 0.4, 1)'],
+      [up, tilt, 0.26, 'cubic-bezier(0.6, 0, 1, 0.6)'],
+      [0, -tilt * 0.4, 0.46, 'cubic-bezier(0.15, 0.8, 0.4, 1)'],
+      [up * 0.28, tilt * 0.25, 0.62, 'cubic-bezier(0.6, 0, 1, 0.6)'],
+      [0, -tilt * 0.08, 0.78, null],
+      [0, 0, null, null],
+    ];
+    const frames = steps.map(([z, deg, offset, easing]) => {
+      const lift = z + rest(deg);
+      const k: Keyframe = { transform: `${flat}translateZ(${lift.toFixed(1)}px) rotate3d(${axis}, ${deg.toFixed(1)}deg) rotate(${turn}deg)` };
+      const g: Keyframe = { transform: `rotate(${turn}deg) scale(${(1 - lift / 300).toFixed(3)})`, opacity: Math.min(0.5, lift / 40), filter: `blur(${(2 + lift / 5).toFixed(1)}px)` };
+      for (const f of [k, g]) {
+        if (offset !== null) f.offset = offset;
+        if (easing) f.easing = easing;
+      }
+      return { k, g };
+    });
+    copy.style.transform = String(frames[0].k['transform']);
+    copy.style.visibility = 'hidden';
+    const timing = { duration: TIMING.hop * (0.85 + 0.35 * weight), delay };
+    const jump = copy.animate(frames.map((f) => f.k), timing);
+    shade.animate(frames.map((f) => f.g), timing);
+    // The card gives way to its copy only while it jumps
+    const swap = setTimeout(() => {
+      copy.style.visibility = '';
+      sprite.style.visibility = 'hidden';
+    }, delay);
+    const done = () => {
+      clearTimeout(swap);
+      sprite.style.visibility = '';
+      made.forEach((el) => el.remove());
+      over.remove();
+    };
+    jump.onfinish = done;
+    jump.oncancel = done;
+  }
+
+  /**
+   * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels), on a table of light: sparks and
+   * and flickering pixels thrown out from its edges; each one removes itself.
+   */
+  private debris(host: HTMLElement, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, flat: boolean): void {
+    const life = TIMING.burst * 0.85;
+    const add = (style: Partial<CSSStyleDeclaration>, size: number, frames: Keyframe[], duration: number, wait: number) => {
+      const el = this.document.createElement('div');
+      Object.assign(el.style, {
+        position: flat ? 'fixed' : 'absolute',
+        left: `${at.x - size / 2}px`,
+        top: `${at.y - size / 2}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        zIndex: LAYER.flight,
+        pointerEvents: 'none',
+        opacity: '0',
+        ...style,
+      });
+      if (flat) quakesWithTable(el);
+      host.append(el);
+      const a = el.animate(frames, { duration, delay: delay + wait, easing: 'cubic-bezier(0.15, 0.7, 0.35, 1)' });
+      a.onfinish = () => el.remove();
+      a.oncancel = () => el.remove();
+    };
+    const edge = () => edgePoint(w, h);
+    // Sparks: bright points shot out from the edges, fast, slowing as they fade
+    for (let i = 0; i < 26; i++) {
+      const e = edge();
+      const size = 2 + Math.random() * 3.5;
+      const spread = (Math.random() - 0.5) * 1.1;
+      const dist = Math.max(w, h) * (0.25 + Math.random() * 0.55);
+      const vx = (e.nx + spread * (e.ny ? 1 : 0)) * dist;
+      const vy = (e.ny + spread * (e.nx ? 1 : 0)) * dist;
+      const white = Math.random() < 0.45;
+      add(
+        { borderRadius: '50%', background: white ? '#fff' : color, boxShadow: `0 0 ${4 + size}px ${white ? '#fff' : color}` },
+        size,
+        [
+          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px) scale(1)` },
+          { opacity: 0.9, transform: `translate(${e.x + vx * 0.7}px, ${e.y + vy * 0.7}px) scale(0.8)`, offset: 0.55 },
+          { opacity: 0, transform: `translate(${e.x + vx}px, ${e.y + vy}px) scale(0.3)` },
+        ],
+        life * (0.55 + Math.random() * 0.45),
+        Math.random() * 40,
+      );
+    }
+    // Pixels: small squares of light jumping out in steps, flickering, as a screen glitches
+    for (let i = 0; i < 12; i++) {
+      const e = edge();
+      const size = 3 + Math.round(Math.random() * 3);
+      const dist = Math.max(w, h) * (0.15 + Math.random() * 0.35);
+      add(
+        { background: Math.random() < 0.5 ? '#fff' : color, boxShadow: `0 0 6px ${color}` },
+        size,
+        [
+          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px)` },
+          { opacity: 0.3, offset: 0.25 },
+          { opacity: 1, offset: 0.45 },
+          { opacity: 0.6, offset: 0.7 },
+          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px)` },
+        ],
+        life * (0.6 + Math.random() * 0.4),
+        Math.random() * 60,
+      );
+    }
+  }
+
+  /**
+   * Circuits from a card landing (its center on the screen `center`, `w`×`h` its own size): thin traces run out from its
+   * edges as on a circuit board (straight, a bend at 45°, straight again, ending in a pad), under everything on the
+   * table; a ray of light runs along each one, the trace lights up behind it and the pad flashes.
+   */
+  private circuits(center: { x: number; y: number }, w: number, h: number, color: string, delay: number): void {
+    const life = TIMING.burst * 0.85;
+    const edge = () => edgePoint(w, h);
+    const span = Math.max(w, h) * 2.4;
+    const under = underTable(this.document, center, span, span);
+    if (!under) return;
+    const svg = this.document.createElementNS(SVG, 'svg');
+    svg.setAttribute('viewBox', `${-span / 2} ${-span / 2} ${span} ${span}`);
+    Object.assign(svg.style, { width: '100%', height: '100%', overflow: 'visible' });
+    under.el.append(svg);
+    const unit = Math.max(w, h);
+    const runs: Promise<unknown>[] = [];
+    for (let i = 0; i < 12; i++) {
+      const e = edge();
+      // Out along the edge's normal, then a bend 45° to one side, then out again
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const a1 = unit * (0.06 + Math.random() * 0.12);
+      const a2 = unit * (0.08 + Math.random() * 0.14);
+      const a3 = unit * (0.04 + Math.random() * 0.14);
+      const bx = (e.nx - e.ny * side) * Math.SQRT1_2;
+      const by = (e.ny + e.nx * side) * Math.SQRT1_2;
+      const p1 = { x: e.x + e.nx * a1, y: e.y + e.ny * a1 };
+      const p2 = { x: p1.x + bx * a2, y: p1.y + by * a2 };
+      const p3 = { x: p2.x + e.nx * a3, y: p2.y + e.ny * a3 };
+      const d = `M${e.x.toFixed(1)} ${e.y.toFixed(1)} L${p1.x.toFixed(1)} ${p1.y.toFixed(1)} L${p2.x.toFixed(1)} ${p2.y.toFixed(1)} L${p3.x.toFixed(1)} ${p3.y.toFixed(1)}`;
+      const g = this.document.createElementNS(SVG, 'g');
+      g.innerHTML =
+        `<path d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="1.3" stroke-linejoin="round" opacity="0"/>` +
+        `<path d="${d}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="0.3 1.4" stroke-dashoffset="0.3" style="filter: drop-shadow(0 0 2px ${color}) drop-shadow(0 0 4px ${color})"/>` +
+        `<circle cx="${p3.x.toFixed(1)}" cy="${p3.y.toFixed(1)}" r="2" fill="none" stroke="#fff" stroke-width="1.2" opacity="0" style="filter: drop-shadow(0 0 3px ${color})"/>`;
+      svg.append(g);
+      const [trace, ray, pad] = Array.from(g.children) as SVGElement[];
+      const run = life * (0.45 + Math.random() * 0.25);
+      const wait = delay + Math.random() * 70;
+      runs.push(
+        ray.animate([{ strokeDashoffset: 0.3 }, { strokeDashoffset: -1 }], { duration: run, delay: wait, easing: 'cubic-bezier(0.3, 0.6, 0.5, 1)' }).finished,
+        trace.animate([{ opacity: 0 }, { opacity: 0.95, offset: 0.25 }, { opacity: 0.8, offset: 0.6 }, { opacity: 0 }], { duration: life, delay: wait }).finished,
+        pad.animate([{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'scale(1.3)', offset: 0.3 }, { opacity: 0, transform: 'scale(1)' }], {
+          duration: life * 0.45,
+          delay: wait + run * 0.6,
+        }).finished,
+      );
+      (pad as SVGElement).style.transformBox = 'fill-box';
+      (pad as SVGElement).style.transformOrigin = 'center';
+    }
+    Promise.all(runs)
+      .catch(() => undefined)
+      .then(under.remove);
   }
 
   /**
@@ -308,4 +575,13 @@ export class CardMotions {
     if (!plane) return null;
     return { plane, layer: plane.layer(LAYER.flight), at: plane.toLocal(from.x, from.y) };
   }
+}
+
+/** A point at random on the edge of a card `w`×`h` (from its center) and the way out from it there. */
+function edgePoint(w: number, h: number): { x: number; y: number; nx: number; ny: number } {
+  const side = Math.random() * 2 * (w + h);
+  if (side < w) return { x: side - w / 2, y: -h / 2, nx: 0, ny: -1 };
+  if (side < w + h) return { x: w / 2, y: side - w - h / 2, nx: 1, ny: 0 };
+  if (side < 2 * w + h) return { x: side - w - h - w / 2, y: h / 2, nx: 0, ny: 1 };
+  return { x: -w / 2, y: side - 2 * w - h - h / 2, nx: -1, ny: 0 };
 }

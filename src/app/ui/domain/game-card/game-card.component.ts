@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { CardFaceComponent } from '../card-face/card-face.component';
+import { roman } from './roman';
 
 /** What the table shows of a card with its information on: cost, type, classes and level. */
 export interface GameCardInfo {
@@ -12,12 +13,6 @@ export interface GameCardInfo {
 
 const TYPE_LABELS = { creature: 'Criatura', utility: 'Utilidad', structure: 'Estructura' } as const;
 
-function roman(n: number): string {
-  const parts: [number, string][] = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
-  let out = '';
-  for (const [value, letters] of parts) while (n >= value) { out += letters; n -= value; }
-  return out || '0';
-}
 
 /**
  * A card on the game table: the card itself (eras-card-face: picture or back, still shine, foil, peek) with what the

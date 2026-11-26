@@ -17,10 +17,10 @@
   // The simulator board's layers, low to high. One scale for the whole board: use these, not loose numbers.
   // 1. The table and its zones, the field cards, then the hands (local to the player's half; a field card's place
   //    rises over its neighbours while its sprite animates in it: --z-sim-field-lifted, within its row).
-  // 2. What sits over the table: the players' plates and status panels; the phase choices; a life waiting on its pile;
-  //    the combat shown big.
+  // 2. What sits over the table: the players' plates and status panels; the phase choices; a life waiting on its pile.
   // 3. Animated card sprites and flights, over everything on the table: a card revealed from a hand, the attacker's
-  //    charge, signs and arrows, "+N" floats, what a pile showed before, cards flying, a card breaking, a card dragged.
+  //    charge, signs and arrows, "+N" floats, what a pile showed before, cards flying, a card breaking; over them the
+  //    combat shown big (it dims the whole table, what is still on it too); then a card dragged.
   // 4. The panels over the board, above the animations (they never cover them): the card panel beside the board, the
   //    sidebar, the notices and the game menu.
   // 5. The table's alerts (and the chain's button) at its top.
@@ -35,7 +35,6 @@
   --z-sim-turn-draw: 18;
   --z-sim-popup: 30;
   --z-sim-parked: 30;
-  --z-sim-combat-reveal: 35;
   --z-sim-hand-reveal: 940;
   --z-sim-charge: 944;
   --z-sim-fx: 945;
@@ -43,6 +42,7 @@
   --z-sim-pile-under: 949;
   --z-sim-flight: 950;
   --z-sim-shatter: 951;
+  --z-sim-combat-reveal: 952;
   --z-sim-drag: 960;
   // A card clicked on the table, shown beside the board; the sidebar, the notices, the game menu: over the animations
   --z-sim-card-panel: 970;

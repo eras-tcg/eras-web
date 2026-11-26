@@ -61,7 +61,16 @@ export class LifeFlights {
     card.append(face);
     this.lifeSeen.set(lifeId, this.measure.seenOf(card, { imageUrl }));
     this.shown.push({ element: face, on: shownOn });
-    face.animate([{ transform: 'rotateY(90deg)' }, { transform: 'rotateY(0)' }], { duration: TIMING.lifeFlip, easing: 'ease-out' });
+    // Torn off face up: it turns over raised, flashing red, and drops back onto its pile
+    face.animate(
+      [
+        { transform: 'rotateY(90deg) scale(1.25)', filter: 'brightness(2.4)' },
+        { transform: 'rotateY(0) scale(1.18)', filter: 'brightness(1.8) drop-shadow(0 0 18px var(--color-sim-rival))', offset: 0.45, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
+        { transform: 'scale(0.95)', filter: 'brightness(1.2)', offset: 0.75 },
+        { transform: 'scale(1)', filter: 'none' },
+      ],
+      { duration: TIMING.lifeFlip },
+    );
   }
 
   /**

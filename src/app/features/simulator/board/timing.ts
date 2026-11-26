@@ -10,26 +10,51 @@ export const TIMING = {
   tapTurn: 300,
   tap: 440,
   /** The attacker striking what it hits. */
-  charge: 800,
+  charge: 1000,
   /** An arrow (an attack's target, an effect's targets) drawing itself, holding and fading. */
   arrow: 950,
-  /** A sign over a card (sword, shield) or an activation's aura. */
+  /** A sign over a card (sword, shield). */
   badge: 1100,
+  /** An effect activated on its card: it glows and motes of light rise from it. */
+  activation: 1300,
+  /**
+   * The special summons, each its own (special-summon-fx), and how long before the card lands each starts: by ritual a
+   * circle of runes; Ascenso a rank's insignia over a pillar of light; Materialización matter drawn in to compose it;
+   * Evolución strands of life coiling round it.
+   */
+  ritual: 1300,
+  ritualLead: 0,
+  promotion: 1500,
+  promotionLead: 0,
+  materialization: 1500,
+  materializationLead: 650,
+  evolution: 1400,
+  evolutionLead: 0,
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */
-  shatter: 720,
+  shatter: 860,
   /** Cards flying between zones; a draw, one card after another; a card changing line; a summon and its burst. */
   flight: 650,
-  draw: 550,
+  draw: 500,
   drawStagger: 120,
+  /** A card drawn, held over its place in the hand (while the hand makes room) and then set down into it. */
+  drawHold: 340,
+  drawDown: 220,
   move: 520,
   /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
   slide: 450,
-  summon: 600,
+  summon: 520,
+  /** A summoned card hanging over its place before it drops: the weakest a moment, the strongest much longer. */
+  summonHang: 40,
+  summonHangStrong: 200,
   burst: 750,
   /** The life lost turning face up on its pile. */
-  lifeFlip: 320,
+  lifeFlip: 480,
+  /** The cards around a summoned one hopping as it lands (each one's hop). */
+  hop: 620,
+  /** The table jolting under a blow (an attack landing, a card breaking, a summon landing). */
+  quake: 380,
   /** A deck shuffled: it shakes. */
   shuffle: 600,
   /** After an attack is declared, a moment before the block; after cards are destroyed, before the field settles. */
@@ -40,11 +65,25 @@ export const TIMING = {
   /** A chain link joining or resolving shown big; the chain starting to resolve. */
   chainShow: 2100,
   chainResolution: 1500,
+  /** The turn or the phase changing, shown big across the table. */
+  phaseShow: 1700,
   /** The players face to face at the start. */
   matchStart: 2800,
   /** A card revealed from a hand. */
   handReveal: HAND_REVEAL_MS,
 } as const;
+
+/** How heavy a card lands, 0 to 1: by its strength (2 or less the lightest, 12 or more the heaviest; none, light). */
+export function impactWeight(strength: number | null): number {
+  if (strength === null) return 0.25;
+  return Math.min(1, Math.max(0, (strength - 2) / 10));
+}
+
+/** A summon by its weight: how long it hangs over its place, and its whole flight (its way there, the hang, the drop). */
+export function summonTiming(weight: number): { hang: number; duration: number } {
+  const hang = TIMING.summonHang + (TIMING.summonHangStrong - TIMING.summonHang) * weight;
+  return { hang, duration: TIMING.summon + hang };
+}
 
 /** The timings the styles use, as custom properties of the board ("--sim-tap-turn: 300ms"…). */
 export function timingVars(): Record<string, string> {
@@ -52,6 +91,7 @@ export function timingVars(): Record<string, string> {
     '--sim-tap-widen': `${TIMING.tapWiden}ms`,
     '--sim-tap-turn': `${TIMING.tapTurn}ms`,
     '--sim-combat-reveal': `${TIMING.combatReveal}ms`,
+    '--sim-phase-show': `${TIMING.phaseShow}ms`,
     '--sim-chain-show': `${TIMING.chainShow}ms`,
     '--sim-chain-resolution': `${TIMING.chainResolution}ms`,
     '--sim-match-start': `${TIMING.matchStart}ms`,

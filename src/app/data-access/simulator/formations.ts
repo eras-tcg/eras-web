@@ -70,6 +70,25 @@ export function formationPlaces(player: PlayerState, row: readonly CardSlot[]): 
   return places;
 }
 
+/**
+ * The rank of each formation of a row (its creatures' highest level), shown under its middle: by the member it is
+ * drawn on, centered on it (an odd count) or at its right edge, between the two middle members (an even count).
+ */
+export function formationRanks(places: ReadonlyMap<string, FormationPlace>, row: readonly CardSlot[]): Map<string, { rank: number; between: boolean }> {
+  const ranks = new Map<string, { rank: number; between: boolean }>();
+  let run: CardSlot[] = [];
+  for (const c of row) {
+    const place = places.get(c.instanceId);
+    if (!place) continue;
+    if (place.start) run = [];
+    run.push(c);
+    if (!place.end) continue;
+    const rank = Math.max(0, ...run.map((m) => m.level ?? 0));
+    if (rank > 0) ranks.set(run[Math.floor((run.length - 1) / 2)].instanceId, { rank, between: run.length % 2 === 0 });
+  }
+  return ranks;
+}
+
 /** A link effect a card receives: the member that gives it. */
 export interface FormationGrant {
   sourceId: string;

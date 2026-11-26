@@ -14,7 +14,7 @@ export interface ChoreographySteps {
   declare(attackerId: string, targetId: string | null, defenderId: string | null, tap: boolean): Promise<void>;
   /** A block declared: a shield over the blocker, which is exhausted with it (`tap`). */
   block(blockerId: string, tap: boolean): Promise<void>;
-  /** An effect activated: its card lights up where it lies, a white aura spreading from it. */
+  /** An effect activated: its card lights up where it lies, motes of light rising from it. */
   activate(sourceId: string, playerId: string | null): Promise<void>;
   /** The chain as it is in the next update: links joining it or resolving, shown big; done when all have gone. */
   chain(next: GameState): Promise<void>;
@@ -94,6 +94,8 @@ export class BoardChoreography {
   private async play(now: GameState, next: GameState, fresh: GameEvent[], broken: GameEvent[]): Promise<void> {
     const release = this.animations.begin();
     const shattered = new Set<string>();
+    // Attackers that already struck in a clash: the damage they carry through to the lives (Perforante) needs no second blow
+    const struck = new Set<string>();
     const breakAfter = async (seq: number) => {
       const due = broken.filter((d) => d.seq > seq && !shattered.has(d.cardInstanceId!));
       due.forEach((d) => shattered.add(d.cardInstanceId!));
@@ -124,13 +126,14 @@ export class BoardChoreography {
         } else if (e.type === 'CLASH') {
           this.played.add(e.seq);
           await this.steps.charge?.(e.cardInstanceId!, e.data?.blockerId ?? null, e.playerId);
+          if (e.cardInstanceId) struck.add(e.cardInstanceId);
           await this.steps.reveal?.(next, e);
           await breakAfter(e.seq);
         } else if (e.type === 'LIFE_DAMAGE') {
           this.played.add(e.seq);
           const attackerId = e.data?.attackerId;
           const defenderId = e.data?.defenderId;
-          if (attackerId && !e.effectId) {
+          if (attackerId && !e.effectId && !struck.has(attackerId)) {
             const owner = Object.keys(now.players ?? {}).find((id) => id !== defenderId) ?? null;
             await this.steps.charge?.(attackerId, null, owner);
           }

@@ -56,17 +56,39 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
 /**
  * The game's start and end over the whole screen, always (even with the animations off). Start: both players face
  * to face, their icon and name, with "VS" between them (a moment; a click skips it). End: both players again,
- * "Victoria" or "Derrota" and how it was won, then (online) how far the game took the player's missions, with the
- * post-game choices (new game, change deck, leave).
+ * "Victoria" or "Derrota" across the screen and how it was won, with the post-game choices (new game, change deck,
+ * leave); when the game moved missions on (online), leaving is "Continuar" first: it shows them, as many as they are
+ * (a long list scrolls), with the same choices.
  */
 @Component({
   selector: 'eras-match-banner',
   imports: [AvatarComponent, IconComponent, RankEmblemComponent, RankProgressComponent],
   template: `
     @if (banner(); as b) {
-      <div #screen popover="manual" class="screen" [class.start]="b.kind === 'start'" [class.end]="b.kind === 'end'" [class.won]="b.kind === 'end' && b.won" role="status" aria-live="assertive" (click)="b.kind === 'start' && close()" (keydown.escape)="close()">
+      <div
+        #screen
+        popover="manual"
+        class="screen"
+        [class.start]="b.kind === 'start'"
+        [class.end]="b.kind === 'end'"
+        [class.won]="b.kind === 'end' && b.won"
+        [class.step-missions]="b.kind === 'end' && step() === 'missions'"
+        role="status"
+        aria-live="assertive"
+        (click)="b.kind === 'start' && close()"
+        (keydown.escape)="close()"
+      >
         @if (b.kind === 'end') {
-          <strong class="title">{{ b.won ? 'Victoria' : 'Derrota' }}</strong>
+          <!-- The result across the screen: rising sparks for a victory, a red haze and falling ash for a defeat -->
+          <div class="result">
+            <span class="rays" aria-hidden="true"></span>
+            <span class="motes" aria-hidden="true">
+              @for (m of motes; track $index) {
+                <i [style.--x.%]="m.x" [style.--delay.s]="m.delay" [style.--size.px]="m.size" [style.--dur.s]="m.dur"></i>
+              }
+            </span>
+            <strong class="title">{{ b.won ? 'Victoria' : 'Derrota' }}</strong>
+          </div>
         }
         <div class="players">
           @if (me(); as m) {
@@ -95,7 +117,7 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
         }
         @if (b.kind === 'end') {
           <span class="reason">{{ b.reason }}</span>
-          @if (rankChange(); as rc) {
+          @if (step() === 'result' && rankChange(); as rc) {
             <!-- A ranked game: where it left the player's rank -->
             @let moved = titleOf(rc.before) !== titleOf(rc.after);
             @let mood = rc.promoted ? 'up' : rc.demoted ? 'down' : rankGain(rc) > 0 ? 'gain' : rankGain(rc) < 0 ? 'loss' : 'same';
@@ -122,11 +144,11 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
               </span>
               <eras-rank-progress [standing]="rc.after" />
             </section>
-          } @else if (rankLoading()) {
+          } @else if (step() === 'result' && rankLoading()) {
             <span class="rank-wait">Actualizando tu rango…</span>
           }
-          @if (missionSteps().length) {
-            <!-- After the result: how far this game took the player's missions -->
+          @if (step() === 'missions') {
+            <!-- After the result ("Continuar"): how far this game took the player's missions; a long list scrolls -->
             <section class="missions" aria-label="Avance en las misiones">
               <h2 class="missions-title">Misiones</h2>
               <ul class="mission-list">
@@ -154,7 +176,12 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
               <span class="waiting">Elegiste: {{ labels[c] }}. Esperando al rival…</span>
             } @else {
               @for (o of options(); track o) {
-                <button type="button" class="choice" [class.exit]="o === 'exit'" (click)="choose(o)">{{ labels[o] }}</button>
+                <!-- With missions moved on, leaving first goes on to them ("Continuar"); from there it leaves -->
+                @if (o === 'exit' && step() === 'result' && missionSteps().length) {
+                  <button type="button" class="choice exit" (click)="step.set('missions')">Continuar</button>
+                } @else {
+                  <button type="button" class="choice" [class.exit]="o === 'exit'" (click)="choose(o)">{{ labels[o] }}</button>
+                }
               }
             }
           </div>
@@ -219,16 +246,107 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
       animation: slam 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.55s backwards;
     }
     .hint { color: rgb(244 244 246 / 75%); font-size: var(--font-size-sm); letter-spacing: 0.1em; text-transform: uppercase; animation: appear 0.4s ease 0.9s backwards; }
-    /* The end: the banner, the winner crowned and lit, the loser dimmed */
+    /* The end: the result across the screen in a band of its color (gold won, red lost), the winner crowned */
+    .result {
+      --tone: var(--color-sim-rival);
+
+      position: relative;
+      display: grid;
+      place-items: center;
+      inline-size: 100vw;
+      padding-block: var(--space-5);
+      isolation: isolate;
+      animation: band-open 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+    }
+    .won .result { --tone: var(--color-sim-gold); }
+    .result::before,
+    .result::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+    /* The band: dark, tinted, fading out at both ends; edged with light */
+    .result::before {
+      inset-block: 0;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tone) 18%, rgb(6 8 18 / 90%)) 22%, color-mix(in srgb, var(--tone) 18%, rgb(6 8 18 / 90%)) 78%, transparent);
+      box-shadow: inset 0 2px 0 -1px color-mix(in srgb, var(--tone) 80%, #fff), inset 0 -2px 0 -1px color-mix(in srgb, var(--tone) 80%, #fff);
+    }
+    .result::after {
+      inset-block: 0;
+      background: radial-gradient(ellipse 40% 90% at 50% 50%, color-mix(in srgb, var(--tone) 35%, transparent), transparent 70%);
+    }
+    /* A defeat's dark red haze pulsing behind the title (a victory has its sparks) */
+    .rays {
+      position: absolute;
+      inset: -45% 32%;
+      z-index: -1;
+      display: none;
+      background: radial-gradient(circle, color-mix(in srgb, var(--color-sim-rival) 45%, transparent), transparent 60%);
+      animation: rays-in 1s ease 0.3s backwards, haze 3.2s ease-in-out infinite;
+    }
+    .screen:not(.won) .rays { display: block; }
+    .motes { position: absolute; inset: -60% 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .motes i {
+      position: absolute;
+      inset-block-end: 0;
+      inset-inline-start: var(--x);
+      inline-size: var(--size);
+      block-size: var(--size);
+      border-radius: 50%;
+      background: var(--color-sim-glow);
+      box-shadow: 0 0 8px 1px var(--color-sim-moment);
+      opacity: 0;
+      animation: mote-rise var(--dur) ease-in var(--delay) infinite;
+    }
+    .screen:not(.won) .motes i {
+      inset-block: 0 auto;
+      background: rgb(180 170 170 / 70%);
+      box-shadow: none;
+      animation-name: mote-fall;
+    }
     .title {
-      animation: slam 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.2s backwards;
+      animation: slam 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.2s backwards, defeat-shake 0.5s ease 0.85s;
       font: 700 clamp(3rem, 11vw, 6.5rem)/1 var(--font-family-display);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #fecaca;
       text-shadow: 0 0 10px var(--color-sim-rival), 0 0 34px color-mix(in srgb, var(--color-sim-rival) 70%, #000);
     }
-    .won .title { color: #fef9c3; text-shadow: 0 0 10px var(--color-sim-glow), 0 0 34px var(--color-sim-moment); }
+    /* A victory's title in gold with a gleam crossing it */
+    .won .title {
+      color: transparent;
+      background: linear-gradient(100deg, #fde68a 30%, #fff 45%, #fef3c7 50%, #fde68a 65%) 0 0 / 250% 100%;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 10px var(--color-sim-glow)) drop-shadow(0 0 30px var(--color-sim-moment));
+      animation: slam 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.2s backwards, gleam 3.5s linear 1.2s infinite;
+    }
+    @keyframes band-open { from { clip-path: inset(50% 0); } to { clip-path: inset(-200% 0); } }
+    @keyframes rays-in { from { opacity: 0; transform: scale(0.6); } }
+    @keyframes haze { 50% { opacity: 0.55; scale: 1.1; } }
+    @keyframes mote-rise {
+      0% { opacity: 0; transform: translateY(0); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-40vh); }
+    }
+    @keyframes mote-fall {
+      0% { opacity: 0; transform: translate(0, 0); }
+      15% { opacity: 0.8; }
+      100% { opacity: 0; transform: translate(2rem, 40vh); }
+    }
+    @keyframes gleam { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+    @keyframes defeat-shake {
+      20% { translate: -6px 0; }
+      40% { translate: 5px 0; }
+      60% { translate: -3px 0; }
+      80% { translate: 2px 0; }
+    }
+    /* The missions step: the result stays on top; the players and the rank make room for the list */
+    .step-missions .players,
+    .step-missions .reason { display: none; }
+    .step-missions .title { font-size: clamp(2rem, 6vw, 3.5rem); }
     .edge {
       display: inline-flex;
       align-items: center;
@@ -252,9 +370,21 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
     .crown { position: absolute; inset-block-start: -2.4rem; inline-size: 2.2rem; block-size: 2.2rem; color: var(--color-sim-glow); filter: drop-shadow(0 0 8px var(--color-sim-moment)); animation: slam 0.5s ease 0.7s backwards; }
     .choices { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); animation: appear 0.4s ease 1s backwards; }
     /* The missions the game moved on: after the result, each bar grows from where it was to where it is now */
-    .missions { display: grid; gap: var(--space-2); inline-size: min(28rem, 100%); animation: appear 0.4s ease 1.2s backwards; }
+    .missions { display: grid; gap: var(--space-2); inline-size: min(46rem, 100%); animation: appear 0.4s ease backwards; }
     .missions-title { margin: 0; font: 400 var(--font-size-sm)/1.2 var(--font-family-display); letter-spacing: 0.12em; text-transform: uppercase; color: rgb(244 244 246 / 70%); text-align: center; }
-    .mission-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+    /* As many as they are: in columns as wide allows, scrolling inside past a share of the screen (the buttons stay put) */
+    .mission-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+      gap: var(--space-2);
+      max-block-size: min(52vh, 26rem);
+      margin: 0;
+      padding: 0 var(--space-1) 0 0;
+      overflow-y: auto;
+      list-style: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgb(255 255 255 / 30%) transparent;
+    }
     .mission {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -268,9 +398,9 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
     .mission-text { font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); }
     .mission-count { font-size: var(--font-size-sm); font-variant-numeric: tabular-nums; color: rgb(244 244 246 / 80%); }
     .mission-bar { grid-column: 1 / -1; block-size: 0.4rem; overflow: hidden; border-radius: var(--radius-pill); background: rgb(255 255 255 / 15%); }
-    .mission-fill { display: block; block-size: 100%; inline-size: var(--to); border-radius: inherit; background: var(--color-sim-link-mine); animation: mission-grow 0.9s ease 1.5s backwards; }
+    .mission-fill { display: block; block-size: 100%; inline-size: var(--to); border-radius: inherit; background: var(--color-sim-link-mine); animation: mission-grow 0.9s ease 0.4s backwards; }
     .mission.done .mission-fill { background: var(--color-sim-glow); }
-    .mission-done { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 0.3em; color: #fde68a; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); animation: appear 0.4s ease 2.4s backwards; }
+    .mission-done { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 0.3em; color: #fde68a; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); animation: appear 0.4s ease 1.3s backwards; }
     .mission-done eras-icon { inline-size: 0.9rem; block-size: 0.9rem; }
     @keyframes mission-grow { from { inline-size: var(--from); } }
     .choice {
@@ -384,6 +514,8 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
       .vs { font-size: 2.6rem; }
       .crown { inset-block-start: -1.5rem; inline-size: 1.4rem; block-size: 1.4rem; }
       .title { font-size: 2.6rem; letter-spacing: 0.1em; }
+      .result { padding-block: var(--space-2); }
+      .mission-list { max-block-size: 58vh; grid-template-columns: minmax(0, 1fr); }
       .end .vs { font-size: 1.2rem; }
       .reason { font-size: var(--font-size-sm); }
       .choices { gap: var(--space-2); }
@@ -403,7 +535,8 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
       .screen.end:has(.rank, .rank-wait, .missions) :is(.rank, .rank-wait, .missions, .choices) { grid-column: 2; justify-self: stretch; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .screen, .screen::before, .mine, .rival, .vs, .hint, .title, .reason, .crown, .choices, .winner eras-avatar { animation: none; }
+      .screen, .screen::before, .mine, .rival, .vs, .hint, .title, .reason, .crown, .choices, .winner eras-avatar, .result, .rays, .motes i { animation: none; }
+      .motes { display: none; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -458,6 +591,15 @@ export class MatchBannerComponent {
     return { kind: 'end', won, reason: winCondition(state.endReason, won, loser) };
   });
   protected readonly banner = computed<Banner | null>(() => this.end() ?? (this.start() ? { kind: 'start' } : null));
+  /** The end in two steps when the game moved missions on: the result, then ("Continuar") the missions. */
+  protected readonly step = signal<'result' | 'missions'>('result');
+  /** The sparks rising (a victory) or the ash falling (a defeat) over the result: where, how big, when, how long. */
+  protected readonly motes = Array.from({ length: 22 }, (_, i) => ({
+    x: (i * 37 + 11) % 100,
+    size: 2 + (i % 4),
+    delay: ((i * 0.47) % 3.2) + 0.6,
+    dur: 2.6 + ((i * 0.31) % 1.8),
+  }));
   protected readonly myChoice = computed(() => this.game.postGameChoices()[this.auth.user()?.id ?? ''] ?? null);
   /** What can be chosen now (after a surrender, the one who surrendered waits for the other's choice). */
   protected readonly options = computed(() => {
@@ -484,6 +626,10 @@ export class MatchBannerComponent {
     effect(() => {
       const status = this.game.status();
       untracked(() => this.onStatus(status));
+    });
+    // Each end starts at its result
+    effect(() => {
+      if (!this.end()) untracked(() => this.step.set('result'));
     });
     // Raised to the top layer once drawn
     afterRenderEffect(() => {

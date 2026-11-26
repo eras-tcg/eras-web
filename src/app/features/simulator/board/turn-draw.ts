@@ -30,6 +30,9 @@ const REVEAL_HOLD_MS = 350;
  * drawing waits (the card stays hidden in the hand, the engine's next choices wait for it as for any animation).
  */
 export class TurnDraw {
+  /** Lets the hand make room for the cards drawn (it waits for them to be taken from the deck). */
+  private openHand: () => void = () => undefined;
+
   constructor(
     private readonly document: Document,
     private readonly animations: BoardAnimations,
@@ -38,7 +41,8 @@ export class TurnDraw {
   ) {}
 
   /** Plays it for `cards` (drawn from `deck`, the deck pile), once what plays now has ended. */
-  play(deck: HTMLElement, cards: TurnDrawCard[]): void {
+  play(deck: HTMLElement, cards: TurnDrawCard[], openHand: () => void = () => undefined): void {
+    this.openHand = openHand;
     cards.forEach((c) => (c.element.style.visibility = 'hidden'));
     const done = this.animations.begin();
     // After what this update started (the turn's pop-up, a card breaking…), with the table as it is then
@@ -53,6 +57,7 @@ export class TurnDraw {
     const view = this.document.defaultView;
     if (!top || !view) {
       cards.forEach((c) => (c.element.style.visibility = ''));
+      this.openHand();
       return;
     }
     const done = this.animations.begin();
@@ -207,15 +212,18 @@ export class TurnDraw {
         });
         return { card: c, place };
       });
-      // Once shown: it flies to your hand while the deck goes back to its zone
+      // Once shown: it flies to just over its place in your hand and is set down into it, while the deck goes back to its zone
       setTimeout(() => {
+        // The hand makes room for them only now
+        this.openHand();
         shownCards.forEach(({ card, place }, i) => {
           const seen = this.measure.seenOf(place, { imageUrl: card.imageUrl });
           this.flyer.fly(seen, card.element, false, {
             delay: i * TIMING.drawStagger,
-            duration: TIMING.draw,
+            duration: TIMING.draw + TIMING.drawHold + TIMING.drawDown,
             hide: card.element,
             now: true,
+            settle: { hold: TIMING.drawHold, down: TIMING.drawDown },
           });
           place.remove();
         });

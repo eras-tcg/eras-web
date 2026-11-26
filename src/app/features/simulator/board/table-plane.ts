@@ -101,6 +101,8 @@ export function tablePlane(document: Document): TablePlane | null {
         pointerEvents: 'none',
         zIndex: String(zIndex),
       });
+      // It jolts with the table (quake)
+      el.dataset['simQuake'] = '';
       document.body.append(el);
       return el;
     },
@@ -108,6 +110,51 @@ export function tablePlane(document: Document): TablePlane | null {
     holds(element: Element | null): boolean {
       if (!element || !element.closest('.table.tilted .plane')) return false;
       return !element.closest('eras-player-half:not(.opponent) .hand') && !element.closest('eras-player-plate');
+    },
+  };
+}
+
+/**
+ * A box under everything on the table (its cards, zones and piles; over the playmats on the leaning table), centered at
+ * the point of the table under `center` (a point of the screen), `width`×`height` of the table's own pixels; null
+ * without a table. In the leaning table's depth a pixel under its cards; on a flat one at the back of its plane, which is
+ * set apart for it while one shows. Remove it when done.
+ */
+export function underTable(document: Document, center: { x: number; y: number }, width: number, height: number): { el: HTMLElement; remove(): void } | null {
+  const plane = document.querySelector<HTMLElement>('.board .table .plane');
+  if (!plane) return null;
+  const leaning = tablePlane(document);
+  const el = document.createElement('div');
+  Object.assign(el.style, { position: 'absolute', width: `${width}px`, height: `${height}px`, pointerEvents: 'none', overflow: 'visible' });
+  if (leaning) el.style.transform = 'translateZ(-1px)';
+  else {
+    el.style.zIndex = '-1';
+    const shown = Number(plane.dataset['under'] ?? 0);
+    if (!shown && !plane.style.isolation) {
+      plane.style.isolation = 'isolate';
+      plane.dataset['underIsolated'] = '';
+    }
+    plane.dataset['under'] = String(shown + 1);
+  }
+  plane.prepend(el);
+  // Placed in the plane's box (the table's, when the flat plane is not positioned)
+  const positioned = document.defaultView?.getComputedStyle(plane).position !== 'static';
+  const box = (positioned ? plane : (plane.offsetParent ?? plane)).getBoundingClientRect();
+  const at = leaning ? leaning.toLocal(center.x, center.y) : { x: center.x - box.left, y: center.y - box.top };
+  el.style.left = `${at.x - width / 2}px`;
+  el.style.top = `${at.y - height / 2}px`;
+  return {
+    el,
+    remove: () => {
+      el.remove();
+      if (leaning) return;
+      const left = Number(plane.dataset['under'] ?? 1) - 1;
+      if (left > 0) return void (plane.dataset['under'] = String(left));
+      delete plane.dataset['under'];
+      if ('underIsolated' in plane.dataset) {
+        plane.style.isolation = '';
+        delete plane.dataset['underIsolated'];
+      }
     },
   };
 }

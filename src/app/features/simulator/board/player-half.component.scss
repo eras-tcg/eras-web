@@ -308,6 +308,40 @@ eras-player-plate {
   border-end-end-radius: var(--radius-sm);
 }
 
+// Formations apart: a little more room between a formation and what stands beside it
+.placed.formed-start:not(:first-child) {
+  margin-inline-start: var(--space-3);
+}
+
+.placed.formed-end:not(:last-child) {
+  margin-inline-end: var(--space-3);
+}
+
+// A formation's rank (its highest level): a gold numeral on a dark tab, under the middle of its band
+.formation-rank {
+  position: absolute;
+  inset-block-end: -0.3rem;
+  inset-inline-start: 50%;
+  z-index: 6;
+  min-inline-size: 1.6rem;
+  padding: 0 var(--space-1);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  text-align: center;
+  transform: translate(-50%, 50%);
+  pointer-events: none;
+}
+
+// Two middle members: between them
+.formation-rank.between {
+  inset-inline-start: calc(100% + var(--space-2) / 2);
+}
+
 // Enlace: an arrow on the card's edge toward its neighbour; lit while it points to it (active), dim otherwise
 // A card carrying a link mark stands over the cards to its right (z-index set by its place in the row), so the mark, in the gap
 // over the next card's edge, is never under them

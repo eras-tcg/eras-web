@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
-import { PILES, findSlot } from '@data/simulator/game-rules';
+import { PILES, displayStrength, findSlot } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
 import { CardSlot, GameEvent, GameState, ZoneName } from '@data/simulator/simulator.model';
@@ -13,8 +13,9 @@ import { poseOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LifeFlights } from './life-flights';
 import { TimelineCursor } from './timeline-cursor';
-import { TIMING } from './timing';
+import { TIMING, impactWeight, summonTiming } from './timing';
 import { TurnDraw } from './turn-draw';
+import { SpecialSummonKind, isSpecialSummonKind } from './special-summon-fx';
 
 /** A move of a card from pile to pile in this update, from the timeline, with the turn it plays in. */
 interface Hop {
@@ -111,6 +112,7 @@ export class CardFlightsComponent {
         this.lives.park(state);
         // A jump through time: nothing flies, the cards are just where they are now
         if (this.game.jumped()) {
+          this.openHand(true);
           this.seen = this.measure.field(state);
           this.handSeen = this.measure.hands(state);
           this.deckIds = new Set(Object.values(state.players ?? {}).flatMap((p) => p.deck.map((c) => c.instanceId)));
@@ -130,12 +132,15 @@ export class CardFlightsComponent {
         this.attachments(state);
         // A card drawn with a summon (an effect's) is drawn once the summon has landed
         if (this.fieldMoves(state)) this.deferring = true;
+        this.handSlides(state);
         this.seen = this.measure.field(state);
         this.handSeen = this.measure.hands(state);
         this.pileOf = new Map(
           Object.values(state.players ?? {}).flatMap((p) => PILES.flatMap((z) => (p[z] as CardSlot[]).map((c) => [c.instanceId, `${p.userId}:${z}`] as const))),
         );
         this.draws(state);
+        // No turn draw took the hand's held room: it opens now
+        this.openHand();
         this.mulliganTop = new Map(
           Object.values(state.players ?? {})
             .filter((p) => state.status === 'MULLIGAN' && !p.hand.length)
@@ -200,7 +205,8 @@ export class CardFlightsComponent {
           return element ? [{ element, imageUrl: c.imageUrl }] : [];
         });
         if (cards.length) {
-          this.turnDraw.play(deck, cards);
+          const held = this.heldHand.splice(0);
+          this.turnDraw.play(deck, cards, () => this.release(held));
           continue;
         }
       }
@@ -211,7 +217,14 @@ export class CardFlightsComponent {
         // It leaves from the deck's top card, at its size (the empty pile when it was the last one)
         const from = this.measure.pileTop(deck, c.imageUrl);
         const faceUp = p.userId === me && !c.faceDown;
-        this.flyer.fly(from, target, !faceUp, { fromBack: true, delay: i * TIMING.drawStagger, duration: TIMING.draw, hide: card });
+        // Over its place in the hand (which makes room for it meanwhile), then set down into it
+        this.flyer.fly(from, target, !faceUp, {
+          fromBack: true,
+          delay: i * TIMING.drawStagger,
+          duration: card ? TIMING.draw + TIMING.drawHold + TIMING.drawDown : TIMING.draw,
+          hide: card,
+          settle: card ? { hold: TIMING.drawHold, down: TIMING.drawDown } : undefined,
+        });
       });
     }
   }
@@ -346,6 +359,12 @@ export class CardFlightsComponent {
     if (!this.seen.size && !this.handSeen.size) return false;
     let summoned = false;
     const me = this.me();
+    // Special summons of this update, by card: each has its own animation
+    const specials = new Map<string, SpecialSummonKind>();
+    for (const e of this.timeline.peek(state)) {
+      const kind = e.data?.['summonType'];
+      if (e.type === 'SPECIAL_SUMMON' && e.cardInstanceId && isSpecialSummonKind(kind)) specials.set(e.cardInstanceId, kind);
+    }
     for (const p of Object.values(state.players ?? {})) {
       const front = new Set(fieldRows(p.field).front.map((c) => c.instanceId));
       for (const c of p.field) {
@@ -367,12 +386,81 @@ export class CardFlightsComponent {
           this.lifePlayed(c, p.userId) ??
           this.handSeen.get(c.instanceId) ??
           this.fromPile(c, this.pileBefore(c.instanceId, p.userId));
-        if (from) this.glide(sprite, card, c, from, TIMING.summon);
-        this.motions.burst(card, landing, p.userId === me, from ? TIMING.summon : 0);
+        // The stronger, the longer it hangs over its place and the harder it lands
+        const weight = impactWeight(displayStrength(c));
+        const { hang, duration } = summonTiming(weight);
+        if (from) this.glide(sprite, card, c, from, duration, hang);
+        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, specials.get(c.instanceId) ?? null);
         summoned = true;
       }
     }
     return summoned;
+  }
+
+  /**
+   * A hand that changed (a card came in or left, or its order did): the cards that stay slide from where they were to
+   * their new places, so the hand opens room for a card coming in and closes the gap of one leaving. Only when it
+   * changed: a hand turned sideways by its player keeps still.
+   */
+  private handSlides(state: GameState): void {
+    // The table turned round (a test room shows the side whose turn it is): the hands changed sides, nothing slides
+    const me = this.me();
+    const turned = this.slidFor !== me;
+    this.slidFor = me;
+    if (this.animations.still() || !this.previous || turned) return;
+    const turnDraw = this.turnDrawStarts(state);
+    const half = (this.document.defaultView?.innerHeight ?? 0) / 2;
+    for (const p of Object.values(state.players ?? {})) {
+      const was = this.previous.players?.[p.userId]?.hand.map((c) => c.instanceId).join(',');
+      if (was === undefined || was === p.hand.map((c) => c.instanceId).join(',')) continue;
+      for (const c of p.hand) {
+        const from = this.handSeen.get(c.instanceId);
+        const place = handPlace(this.document, c.instanceId);
+        const card = place?.querySelector('eras-game-card');
+        if (!from || !place || !card) continue;
+        const r = card.getBoundingClientRect();
+        const dx = from.x - (r.left + r.width / 2);
+        const dy = from.y - (r.top + r.height / 2);
+        // A card that was on the other side of the table (it changed sides) just appears there
+        if ((Math.abs(dx) < 1 && Math.abs(dy) < 1) || Math.abs(dy) > half) continue;
+        // Your turn's draw waits for you to take it: the hand keeps its cards where they were until then
+        if (turnDraw && p.userId === this.me()) {
+          place.style.translate = `${dx}px ${dy}px`;
+          this.heldHand.push(place);
+        } else this.slideHome(place, `${dx}px ${dy}px`);
+      }
+    }
+  }
+
+  /** Whose side of the table the hands were seen from last time (a test room turns it round with the turn). */
+  private slidFor: string | undefined;
+
+  /** A card of a hand slides from `from` (a translate) to its place. */
+  private slideHome(place: HTMLElement, from: string): void {
+    place.animate([{ translate: from }, { translate: '0 0' }], { duration: TIMING.slide, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+  }
+
+  /** Cards of your hand kept where they were while your turn's draw waits to be taken. */
+  private heldHand: HTMLElement[] = [];
+
+  /** The held cards no turn draw took slide to their places (at once on a jump through time, `now`). */
+  private openHand(now = false): void {
+    this.release(this.heldHand.splice(0), now);
+  }
+
+  /** Held cards of a hand slide from where they were kept to their places (or just go there, `now`). */
+  private release(held: HTMLElement[], now = false): void {
+    for (const place of held) {
+      const from = place.style.translate;
+      place.style.translate = '';
+      if (!now && from) this.slideHome(place, from);
+    }
+  }
+
+  /** This update starts your turn and its draw will wait for you to take it (TurnDraw). */
+  private turnDrawStarts(state: GameState): boolean {
+    const me = this.me();
+    return !!me && state.currentTurnUserId === me && this.previous?.currentTurnUserId !== me && !this.game.sideByBot() && !this.animations.still();
   }
 
   /** A revealed life just played (the last choice was to play it): from the top of its owner's lives, face up. */
@@ -395,14 +483,22 @@ export class CardFlightsComponent {
     return was && !was.faceDown ? { ...from, imageUrl: card.imageUrl } : from;
   }
 
-  /** A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands). */
-  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number): void {
+  /**
+   * A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands);
+   * summoned (`hang`: how long it hangs over it), it slams onto it.
+   */
+  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, hang?: number): void {
     if (this.animations.still()) return;
     const to = card.getBoundingClientRect();
     if (Math.abs(from.x - (to.left + to.width / 2)) < 2 && Math.abs(from.y - (to.top + to.height / 2)) < 2) return;
     // A face-down card in a hand (the rival's) turns over as it flies, when it lands face up
     const imageUrl = slot.faceDown ? null : (slot.imageUrl ?? from.imageUrl);
-    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, { fromBack: !from.imageUrl && !!imageUrl, duration, hide: sprite });
+    this.flyer.fly({ ...from, imageUrl }, card, !!slot.faceDown, {
+      fromBack: !from.imageUrl && !!imageUrl,
+      duration,
+      hide: sprite,
+      slam: hang === undefined ? undefined : { hang },
+    });
   }
 
   /**

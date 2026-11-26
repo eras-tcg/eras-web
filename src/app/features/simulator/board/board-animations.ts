@@ -11,6 +11,8 @@ export class BoardAnimations {
    */
   readonly off = persistedFlag('eras-sim-animations-off');
   readonly idle = computed(() => this.running() === 0);
+  /** A card shown on top of its pile (the Descarte, the Tributos) while its effect's activation plays there. */
+  readonly onTop = signal<string | null>(null);
   /** Nothing moves: the animations are off, or the device asks for reduced motion. */
   still(): boolean {
     return this.off() || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches);

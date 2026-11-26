@@ -130,6 +130,11 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Mano recta</strong><small>Las cartas de la mano en fila, sin curva</small></span>
             <span class="state">{{ prefs.straightHand() ? 'Sí' : 'No' }}</span>
           </button>
+          <button type="button" class="pref" role="switch" [attr.aria-checked]="prefs.sortedHand()" (click)="prefs.sortedHand.set(!prefs.sortedHand())">
+            <eras-icon name="sort-asc" />
+            <span class="text"><strong>Ordenar la mano</strong><small>Criaturas, estructuras y utilidades</small></span>
+            <span class="state">{{ prefs.sortedHand() ? 'Sí' : 'No' }}</span>
+          </button>
           <label class="pref tilt">
             <eras-icon name="hand" />
             <span class="text">

@@ -26,6 +26,8 @@ export class BoardPreferences {
   readonly arcane = computed(() => this.tableStyle() === 1);
   /** "Mano recta": the hands in a row instead of a fan. */
   readonly straightHand = persistedFlag('eras-sim-straight-hand');
+  /** "Ordenar la mano": your hand always creatures, then structures, then utilities (hand-order). */
+  readonly sortedHand = persistedFlag('eras-sim-sorted-hand', true);
   /** "Altura de la mano": how much higher your hand stands over the table's edge, from low (0) to high (1). */
   readonly handLift = persistedNumber('eras-sim-hand-lift', 0.4, 0, 1);
   /**

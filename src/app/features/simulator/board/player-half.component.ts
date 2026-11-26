@@ -5,7 +5,8 @@ import { fieldRows, legalActions, attackableCreatures } from '@data/simulator/le
 import { GameStore } from '@data/simulator/game.store';
 import { CardBackService, cardBackFill, cardBackOf } from '@core/theme/card-back.service';
 import { CardSlot, OptionalMode, PlayerState, ZoneName } from '@data/simulator/simulator.model';
-import { drawnFrontRow, formationPlaces, pointsSide } from '@data/simulator/formations';
+import { drawnFrontRow, formationPlaces, formationRanks, pointsSide } from '@data/simulator/formations';
+import { roman } from '@ui/domain/game-card/roman';
 import { ResourcePipsComponent } from '@ui/domain/game-counters/resource-pips.component';
 import { GameCardComponent } from '@ui/domain/game-card/game-card.component';
 import { GameZoneComponent } from '@ui/domain/game-zone/game-zone.component';
@@ -16,6 +17,7 @@ import { BoardDialogs } from './board-dialogs';
 import { LineScrollDirective } from './line-scroll';
 import { BoardDrag } from './board-drag';
 import { BoardPreferences } from './board-preferences';
+import { sortedHand } from './hand-order';
 import { PlayerPlateComponent } from './player-plate.component';
 import { RowSlide } from './row-slide';
 import { SimCardComponent } from './sim-card.component';
@@ -71,6 +73,11 @@ export class PlayerHalfComponent {
   protected readonly mirrored = computed(() => this.opponent() && this.prefs.mirrored());
   /** "Mano recta": the hand in a row instead of a fan. */
   protected readonly straightHand = this.prefs.straightHand;
+  /** The hand as drawn: yours sorted by kind when "Ordenar la mano" is on; the rival's as it is (its kinds are hidden). */
+  protected readonly hand = computed(() => {
+    const hand = this.player().hand;
+    return this.opponent() || !this.prefs.sortedHand() ? hand : sortedHand(hand);
+  });
   /** "Mesa en perspectiva": the table leans back; your hand and both players' plates stand up from it, facing you. */
   protected readonly tilted = this.prefs.tilted;
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */
@@ -348,7 +355,7 @@ export class PlayerHalfComponent {
       discardPile: chainLinksOf(chain, p.discardPile),
     };
   });
-  protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
+  protected readonly topTribute = computed(() => this.shownOnTop(this.player().tributeZone));
   /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
   protected readonly tributeActions = computed(() => {
     const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c));
@@ -364,7 +371,7 @@ export class PlayerHalfComponent {
     const p = this.player();
     return { lifeStack: has(p.lifeStack), tributeZone: has(p.tributeZone), discardPile: has(p.discardPile) };
   });
-  protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
+  protected readonly topDiscard = computed(() => this.shownOnTop(this.player().discardPile));
   /** The lines' cards by x; in the Línea frontal a creature left between two members of a formation it is not in, drawn at its end. */
   protected readonly rows = computed(() => {
     const rows = fieldRows(this.player().field);
@@ -379,6 +386,9 @@ export class PlayerHalfComponent {
   }
   /** Enlace: the cards of the Línea frontal in a formation, with where each run starts and ends (drawn as one group). */
   protected readonly formation = computed(() => formationPlaces(this.player(), this.rows().front));
+  /** Each formation's rank (its highest level), under its middle. */
+  protected readonly formationRank = computed(() => formationRanks(this.formation(), this.rows().front));
+  protected readonly roman = roman;
   /**
    * Enlace: the arrows of each face-up card of the field that has them, lit when it points to the creature on that side (Línea
    * frontal, active), dim otherwise.
@@ -404,6 +414,12 @@ export class PlayerHalfComponent {
   /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */
   protected get lines(): readonly ('front' | 'back')[] {
     return this.opponent() ? ['back', 'front'] : ['front', 'back'];
+  }
+
+  /** The card a pile shows: its top one, or the one whose effect is being activated (it comes to the top meanwhile). */
+  private shownOnTop(list: CardSlot[]): CardSlot | null {
+    const raised = this.animations?.onTop();
+    return (raised && list.find((c) => c.instanceId === raised)) || this.last(list);
   }
 
   private last(list: CardSlot[]): CardSlot | null {

@@ -134,3 +134,59 @@ export function poseFrames(stage: Stage, from: CardPose, to: CardPose, faces: { 
     { transform: transformOf(stage, end, w, h, toFlip, endScale), filter: 'drop-shadow(0 4px 6px rgb(0 0 0 / 35%))' },
   ];
 }
+
+/**
+ * The keyframes of a card going to a hand and set down into its place (seen by `stage`'s camera): in one smooth motion
+ * it flies over its place (`rise` pixels out from it, the way the card's top points, and bigger), slowing down as it gets
+ * there; it holds there and goes down into it. `hold`: from when to when it is over its place, as shares of the flight.
+ * Each keyframe brings its own easing: play them linear.
+ */
+export function settleFrames(
+  stage: Stage,
+  from: CardPose,
+  to: CardPose,
+  faces: { fromBack: boolean; toBack: boolean },
+  rise: number,
+  hold = { from: 0.5, to: 0.8 },
+): Keyframe[] {
+  const t = (to.turn * Math.PI) / 180;
+  // Bigger over its place: nearer the eye, as held up above it
+  const over: CardPose = { ...to, x: to.x + rise * Math.sin(t), y: to.y - rise * Math.cos(t), scale: to.scale * 1.2 };
+  const [start, , above] = poseFrames(stage, from, over, faces);
+  const down = poseFrames(stage, from, to, faces)[2];
+  return [
+    { ...start, easing: 'cubic-bezier(0.3, 0.1, 0.25, 1)' },
+    { ...above, offset: hold.from },
+    { ...above, offset: hold.to, easing: 'cubic-bezier(0.45, 0, 0.3, 1)' },
+    { ...down },
+  ];
+}
+
+/**
+ * The keyframes of a summoned card slamming onto the table (seen by `stage`'s camera): in one motion it flies up over
+ * its place, already turned as it lands, slowing down as it gets there until it stops at the top (`apex`, a share of
+ * the flight: the later, the longer it lingers), then drops onto it faster and faster. Each keyframe brings its own
+ * easing: play them linear.
+ */
+export function slamFrames(
+  stage: Stage,
+  from: CardPose,
+  to: CardPose,
+  faces: { fromBack: boolean; toBack: boolean },
+  apex = 0.64,
+): Keyframe[] {
+  const w = from.width;
+  const h = from.height;
+  const end: CardPose = { ...to, turn: from.turn + ((((to.turn - from.turn) % 360) + 540) % 360) - 180 };
+  const endScale = (to.scale * to.width) / w;
+  const toFlip = faces.toBack ? 180 : 0;
+  // How high it hangs: along the table's up over its place, more the longer the way
+  const lift = Math.max(70, Math.min(140, Math.hypot(end.x - from.x, end.y - from.y, end.z - from.z) * 0.3));
+  const a = (end.lean * Math.PI) / 180;
+  const over = (k: number): CardPose => ({ ...end, y: end.y - lift * k * Math.sin(a), z: end.z + lift * k * Math.cos(a) });
+  return [
+    { transform: transformOf(stage, from, w, h, faces.fromBack ? 180 : 0, from.scale), easing: 'cubic-bezier(0.2, 0.7, 0.25, 1)' },
+    { transform: transformOf(stage, over(1), w, h, toFlip, endScale * 1.06), offset: apex, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
+    { transform: transformOf(stage, end, w, h, toFlip, endScale) },
+  ];
+}

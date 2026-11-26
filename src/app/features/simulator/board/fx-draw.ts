@@ -1,13 +1,20 @@
 import { BoardAnimations } from './board-animations';
 import { centerOf } from './board-dom';
+import { flatTurn } from './card-pose';
 import { overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
+/** An effect's light: the glow of the card's edges (its line, its blue, its outer haze) and its motes. */
+const GLOW_CORE = 'rgb(235 245 255 / 95%)';
+const GLOW_MID = 'rgb(110 170 255 / 85%)';
+const GLOW_OUT = 'rgb(40 100 255 / 45%)';
+const MOTE = '#7cc4ff';
+
 /**
  * What the board's effects draw over the table, lying on it when it leans ("Mesa en perspectiva"): curved arrows,
- * signs over a card, an aura spreading from a card, text rising and fading, a pile shaking. Each one removes itself.
+ * signs over a card, an effect lighting a card up, text rising and fading, a pile shaking. Each one removes itself.
  */
 export class FxDraw {
   /** The screen's layer for the arrows of a flat table. */
@@ -119,47 +126,96 @@ export class FxDraw {
     });
   }
 
-  /** A white aura spreads from a card, twice (turned as the card is); done when it has gone. */
-  aura(card: HTMLElement): Promise<void> {
-    const over = overlayFor(this.document, card, LAYER.fx);
+  /**
+   * An effect activated on a card: its edges light up blue-white and motes of light rise from it. Drawn over the card,
+   * lying as it does; the card's face shows through. Done when it has gone.
+   */
+  lightUp(card: HTMLElement): Promise<void> {
     const c = centerOf(card);
-    const at = over.at(c.x, c.y);
     const r = card.getBoundingClientRect();
-    const width = card.offsetWidth || r.width;
-    const height = card.offsetHeight || r.height;
-    const turn = card.classList.contains('tapped') ? ' rotate(90deg)' : '';
-    const drawn: HTMLElement[] = [];
-    const rings = [0, 0.3].map((delay) => {
-      const ring = this.document.createElement('div');
-      Object.assign(ring.style, {
-        position: over.position,
-        left: `${at.x - width / 2}px`,
-        top: `${at.y - height / 2}px`,
-        width: `${width}px`,
-        height: `${height}px`,
-        zIndex: LAYER.fx,
-        pointerEvents: 'none',
-        borderRadius: '8px',
-        border: '3px solid rgb(255 255 255 / 90%)',
-        boxShadow: '0 0 18px 6px rgb(255 255 255 / 70%), inset 0 0 14px 2px rgb(255 255 255 / 55%)',
-        opacity: '0',
-      });
-      over.host.append(ring);
-      drawn.push(ring);
-      return ring.animate(
-        [
-          { opacity: 0, transform: `scale(0.96)${turn}` },
-          { opacity: 1, transform: `scale(1.02)${turn}`, offset: 0.25 },
-          { opacity: 0, transform: `scale(1.3)${turn}` },
-        ],
-        { duration: TIMING.badge * 0.7, delay: TIMING.badge * delay, easing: 'ease-out' },
-      ).finished;
+    const w = card.offsetWidth || r.width;
+    const h = card.offsetHeight || r.height;
+    // Turned a quarter as it lies: exhausted, or a life lying sideways on its pile
+    const turned = Math.round(flatTurn(card, card.closest('.plane')).turn / 90) % 2 !== 0;
+    // The card as it lies: turned, its long sides run across
+    const cw = turned ? h : w;
+    const ch = turned ? w : h;
+    const size = Math.max(w, h) * 2;
+    const d = TIMING.activation;
+    const over = overlayFor(this.document, card, LAYER.fx);
+    const at = over.at(c.x, c.y);
+    const host = this.document.createElement('div');
+    Object.assign(host.style, {
+      position: over.position,
+      left: `${at.x - size / 2}px`,
+      top: `${at.y - size / 2}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      zIndex: LAYER.fx,
+      pointerEvents: 'none',
     });
-    this.animations.hold(TIMING.badge);
-    return Promise.all(rings)
+    over.host.append(host);
+    this.animations.hold(d);
+    const runs: Promise<unknown>[] = [];
+    const add = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[], timing: KeyframeAnimationOptions) => {
+      const el = this.document.createElement('div');
+      Object.assign(el.style, { position: 'absolute', opacity: '0', pointerEvents: 'none', ...style });
+      host.append(el);
+      runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished);
+    };
+    const left = (size - cw) / 2;
+    const top = (size - ch) / 2;
+    // The edges lit: a bright line round the card fading into blue outside it and a little inside; it flickers
+    add(
+      {
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${cw}px`,
+        height: `${ch}px`,
+        borderRadius: 'var(--radius-card)',
+        boxShadow: `0 0 3px 1px ${GLOW_CORE}, 0 0 12px 4px ${GLOW_MID}, 0 0 28px 10px ${GLOW_OUT}, inset 0 0 10px 2px ${GLOW_MID}`,
+      },
+      [
+        { opacity: 0 },
+        { opacity: 1, offset: 0.15 },
+        { opacity: 0.8, offset: 0.3 },
+        { opacity: 1, offset: 0.45 },
+        { opacity: 0.85, offset: 0.65 },
+        { opacity: 0 },
+      ],
+      { duration: d, easing: 'ease-out' },
+    );
+    // Motes of light rising from the card
+    for (let i = 0; i < 16; i++) {
+      const s = 2 + Math.random() * 3;
+      const x0 = size / 2 + (Math.random() - 0.5) * cw * 1.1;
+      const y0 = size / 2 + (Math.random() - 0.3) * ch * 0.8;
+      const rise = ch * (0.3 + Math.random() * 0.45);
+      const drift = (Math.random() - 0.5) * cw * 0.4;
+      const white = Math.random() < 0.4;
+      add(
+        {
+          left: `${x0 - s / 2}px`,
+          top: `${y0 - s / 2}px`,
+          width: `${s}px`,
+          height: `${s}px`,
+          borderRadius: '50%',
+          background: white ? '#fff' : MOTE,
+          boxShadow: `0 0 ${4 + s * 1.5}px ${white ? '#fff' : MOTE}`,
+        },
+        [
+          { opacity: 0, transform: 'translate(0, 0) scale(0.4)' },
+          { opacity: 1, transform: `translate(${drift * 0.3}px, ${-rise * 0.3}px) scale(1)`, offset: 0.3 },
+          { opacity: 0.6, transform: `translate(${drift * 0.7}px, ${-rise * 0.7}px) scale(0.9)`, offset: 0.7 },
+          { opacity: 0, transform: `translate(${drift}px, ${-rise}px) scale(0.3)` },
+        ],
+        { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.1 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
+      );
+    }
+    return Promise.all(runs)
       .catch(() => undefined)
       .then(() => {
-        drawn.forEach((ring) => ring.remove());
+        host.remove();
         over.remove();
       });
   }

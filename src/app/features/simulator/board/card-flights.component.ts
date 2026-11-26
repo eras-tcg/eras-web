@@ -403,8 +403,13 @@ export class CardFlightsComponent {
    * changed: a hand turned sideways by its player keeps still.
    */
   private handSlides(state: GameState): void {
-    if (this.animations.still() || !this.previous) return;
+    // The table turned round (a test room shows the side whose turn it is): the hands changed sides, nothing slides
+    const me = this.me();
+    const turned = this.slidFor !== me;
+    this.slidFor = me;
+    if (this.animations.still() || !this.previous || turned) return;
     const turnDraw = this.turnDrawStarts(state);
+    const half = (this.document.defaultView?.innerHeight ?? 0) / 2;
     for (const p of Object.values(state.players ?? {})) {
       const was = this.previous.players?.[p.userId]?.hand.map((c) => c.instanceId).join(',');
       if (was === undefined || was === p.hand.map((c) => c.instanceId).join(',')) continue;
@@ -416,7 +421,8 @@ export class CardFlightsComponent {
         const r = card.getBoundingClientRect();
         const dx = from.x - (r.left + r.width / 2);
         const dy = from.y - (r.top + r.height / 2);
-        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+        // A card that was on the other side of the table (it changed sides) just appears there
+        if ((Math.abs(dx) < 1 && Math.abs(dy) < 1) || Math.abs(dy) > half) continue;
         // Your turn's draw waits for you to take it: the hand keeps its cards where they were until then
         if (turnDraw && p.userId === this.me()) {
           place.style.translate = `${dx}px ${dy}px`;
@@ -425,6 +431,9 @@ export class CardFlightsComponent {
       }
     }
   }
+
+  /** Whose side of the table the hands were seen from last time (a test room turns it round with the turn). */
+  private slidFor: string | undefined;
 
   /** A card of a hand slides from `from` (a translate) to its place. */
   private slideHome(place: HTMLElement, from: string): void {

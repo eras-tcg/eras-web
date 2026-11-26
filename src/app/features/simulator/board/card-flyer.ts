@@ -67,7 +67,7 @@ export class CardFlyer {
     const faces = { fromBack: !!options.fromBack, toBack: faceDown };
     const frames = (
       options.slam
-        ? slamFrames(stage, start, end, faces, this.hover(options.duration ?? TIMING.flight, options.slam.hang))
+        ? slamFrames(stage, start, end, faces, this.apex(options.duration ?? TIMING.flight, options.slam.hang))
         : poseFrames(stage, start, end, faces, options.under)
     ).map(
       ({ filter, ...frame }) => (void filter, frame),
@@ -98,12 +98,11 @@ export class CardFlyer {
   }
 
   /**
-   * When a slam hangs over its place, as shares of its flight (`duration`, `hang` of it hanging): its way there takes
-   * three fifths of the rest, its drop the other two.
+   * When a slam stops at the top over its place, as a share of its flight (`duration`, `hang` of it lingering there as
+   * it slows down): its way up takes three fifths of the rest and the hang, its drop the other two fifths.
    */
-  private hover(duration: number, hang: number): { from: number; to: number } {
-    const there = (duration - hang) * 0.62;
-    return { from: there / duration, to: (there + hang) / duration };
+  private apex(duration: number, hang: number): number {
+    return ((duration - hang) * 0.62 + hang) / duration;
   }
 
   /** A still copy of a card where it was drawn (`seen`), until removed: a life waiting face up on its pile. */

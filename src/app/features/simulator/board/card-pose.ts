@@ -136,9 +136,9 @@ export function poseFrames(stage: Stage, from: CardPose, to: CardPose, faces: { 
 }
 
 /**
- * The keyframes of a summoned card slamming onto the table (seen by `stage`'s camera): it flies up over its place,
- * already turned as it lands, hangs there (`hover`: from and to, as shares of the flight) and drops onto it faster and
- * faster. Each keyframe brings its own
+ * The keyframes of a summoned card slamming onto the table (seen by `stage`'s camera): in one motion it flies up over
+ * its place, already turned as it lands, slowing down as it gets there until it stops at the top (`apex`, a share of
+ * the flight: the later, the longer it lingers), then drops onto it faster and faster. Each keyframe brings its own
  * easing: play them linear.
  */
 export function slamFrames(
@@ -146,7 +146,7 @@ export function slamFrames(
   from: CardPose,
   to: CardPose,
   faces: { fromBack: boolean; toBack: boolean },
-  hover = { from: 0.58, to: 0.64 },
+  apex = 0.64,
 ): Keyframe[] {
   const w = from.width;
   const h = from.height;
@@ -158,9 +158,8 @@ export function slamFrames(
   const a = (end.lean * Math.PI) / 180;
   const over = (k: number): CardPose => ({ ...end, y: end.y - lift * k * Math.sin(a), z: end.z + lift * k * Math.cos(a) });
   return [
-    { transform: transformOf(stage, from, w, h, faces.fromBack ? 180 : 0, from.scale), easing: 'cubic-bezier(0.25, 0.6, 0.35, 1)' },
-    { transform: transformOf(stage, over(1), w, h, toFlip, endScale * 1.06), offset: hover.from, easing: 'ease-in-out' },
-    { transform: transformOf(stage, over(1.04 + (hover.to - hover.from)), w, h, toFlip, endScale * 1.06), offset: hover.to, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
+    { transform: transformOf(stage, from, w, h, faces.fromBack ? 180 : 0, from.scale), easing: 'cubic-bezier(0.2, 0.7, 0.25, 1)' },
+    { transform: transformOf(stage, over(1), w, h, toFlip, endScale * 1.06), offset: apex, easing: 'cubic-bezier(0.75, 0, 1, 0.5)' },
     { transform: transformOf(stage, end, w, h, toFlip, endScale) },
   ];
 }

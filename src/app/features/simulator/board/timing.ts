@@ -29,7 +29,7 @@ export const TIMING = {
   summon: 520,
   /** A summoned card hanging over its place before it drops: the weakest a moment, the strongest much longer. */
   summonHang: 40,
-  summonHangStrong: 380,
+  summonHangStrong: 200,
   burst: 750,
   /** The life lost turning face up on its pile. */
   lifeFlip: 480,

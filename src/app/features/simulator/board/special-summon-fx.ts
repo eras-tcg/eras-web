@@ -193,8 +193,8 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
 
 /**
  * Materialización, matter composed into a creature: specks of matter are drawn in from all around to where the card
- * will be, faster as they near it; the card's outline traces itself and fills with matter, glowing, from its foot up as
- * they come in, and it flashes as the card lands into it. Lying on the table as the card does.
+ * will be, faster as they near it, feeding a bright core there that grows, pulsing, into the card's shape; it flashes as
+ * the card lands into it. Lying on the table as the card does.
  */
 function materialization(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.materialization;
@@ -211,8 +211,10 @@ function materialization(document: Document, animations: BoardAnimations, card: 
   for (let i = 0; i < 44; i++) {
     const a = Math.random() * Math.PI * 2;
     const far = Math.max(w, h) * (0.9 + Math.random() * 0.8);
-    const tx = (Math.random() - 0.5) * w * 0.9;
-    const ty = (Math.random() - 0.5) * h * 0.9;
+    // Into the core as it is when they arrive: the later, the farther from its middle
+    const grown = 0.15 + Math.random() * 0.75;
+    const tx = (Math.random() - 0.5) * w * grown;
+    const ty = (Math.random() - 0.5) * h * grown;
     const sx = Math.cos(a) * far;
     const sy = Math.sin(a) * far;
     const s = 2 + Math.random() * 4;
@@ -240,21 +242,9 @@ function materialization(document: Document, animations: BoardAnimations, card: 
       ),
     );
   }
-  // The outline tracing itself and filling with matter from its foot up, as the specks come in
-  const frame = keep(
-    add(
-      { left: `${at.x - w / 2}px`, top: `${at.y - h / 2}px`, width: `${w}px`, height: `${h}px`, zIndex: LAYER.fx, overflow: 'visible' },
-      [{ opacity: 1 }, { opacity: 1, offset: Math.min(0.95, land + 0.1) }, { opacity: 0 }],
-      { duration: d },
-      'svg',
-    ),
-  );
-  frame.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  frame.innerHTML = `<rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="${(w * 0.04).toFixed(1)}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="1" stroke-dashoffset="1" style="filter: drop-shadow(0 0 3px ${MATTER}) drop-shadow(0 0 6px ${MATTER})"/>`;
-  const outline = frame.firstElementChild as SVGElement;
-  runs.push(outline.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d * land * 0.8, delay: d * land * 0.1, easing: 'ease-in-out', fill: 'forwards' }).finished);
-  // The matter gathering in it: a glow rising from its foot, brightest at its rising edge
-  keep(
+  // The card charging up: a bright core where its middle will be, growing into the card's shape as the matter comes
+  // in, pulsing as it fills, its edge a line of light
+  const charge = keep(
     add(
       {
         left: `${at.x - w / 2}px`,
@@ -263,17 +253,24 @@ function materialization(document: Document, animations: BoardAnimations, card: 
         height: `${h}px`,
         zIndex: LAYER.fx,
         borderRadius: 'var(--radius-card)',
-        background: `linear-gradient(to top, color-mix(in srgb, ${MATTER} 35%, transparent), color-mix(in srgb, ${MATTER} 55%, transparent) 85%, #fff 98%, transparent)`,
+        border: '1.5px solid #fff',
+        background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${MATTER} 70%, transparent) 35%, color-mix(in srgb, ${MATTER} 30%, transparent) 80%)`,
+        boxShadow: `0 0 8px 2px ${MATTER}, inset 0 0 10px 2px ${MATTER}`,
         mixBlendMode: 'screen',
       },
       [
-        { opacity: 0.9, clipPath: 'inset(100% 0 0 0)' },
-        { opacity: 0.9, clipPath: 'inset(0 0 0 0)', offset: 0.85 },
-        { opacity: 0, clipPath: 'inset(0 0 0 0)' },
+        { opacity: 0, transform: 'scale(0.04)', borderRadius: '50%' },
+        { opacity: 1, transform: 'scale(0.12)', borderRadius: '50%', offset: 0.12 },
+        { opacity: 1, transform: 'scale(0.42)', borderRadius: '30%', offset: 0.45, easing: 'ease-in-out' },
+        { opacity: 0.85, transform: 'scale(0.38)', borderRadius: '24%', offset: 0.55 },
+        { opacity: 1, transform: 'scale(0.78)', offset: 0.82, easing: 'ease-in-out' },
+        { opacity: 0.9, transform: 'scale(0.74)', offset: 0.88 },
+        { opacity: 1, transform: 'scale(1)' },
       ],
-      { duration: d * land, delay: d * land * 0.25, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' },
+      { duration: d * land, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'both' },
     ),
   );
+  runs.push(charge.animate([{ opacity: 1 }, { opacity: 0 }], { duration: d * 0.25, delay: d * land, fill: 'forwards' }).finished);
   // The flash as it lands
   keep(
     add(
@@ -305,7 +302,7 @@ function materialization(document: Document, animations: BoardAnimations, card: 
 
 /**
  * Evolución, a creature evolving: two strands of green life coil round the card in a circle, rising off the table as
- * they turn, like a helix, while rings of growth the card's shape pulse out from it, one after another, each bigger
+ * they turn, like a helix, motes of it rising up the middle with them, while rings of growth the card's shape pulse out from it, one after another, each bigger
  * than the last. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
  */
 function evolution(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
@@ -340,42 +337,56 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
       ),
     );
   }
-  // The helix: beads on two strands, half a turn apart, going round the card in a circle as they rise
+  // The helix: beads on two strands, half a turn apart, going round the card as they rise. Each bead sits at the end
+  // of an arm that turns (rotate, then out along it), so it follows a true circle, not a polygon
   const radius = Math.max(w, h) * 0.62;
   const climb = Math.max(w, h) * 1.1;
   const deep = over.position === 'absolute';
+  // Leaning table: round it on the table, rising off it (its layer is 3D); flat: an ellipse climbing the screen
+  const place = (t: number, a: number, r: number) =>
+    deep
+      ? `translateZ(${(t * climb).toFixed(1)}px) rotate(${a.toFixed(1)}deg) translateX(${r.toFixed(1)}px)`
+      : `translateY(${(-t * climb).toFixed(1)}px) scaleY(0.45) rotate(${a.toFixed(1)}deg) translateX(${r.toFixed(1)}px)`;
+  const bead = (s: number, color: string, frames: Keyframe[], timing: KeyframeAnimationOptions) =>
+    keep(
+      lying(
+        {
+          left: `${at.x - s / 2}px`,
+          top: `${at.y - s / 2}px`,
+          width: `${s}px`,
+          height: `${s}px`,
+          zIndex: LAYER.fx,
+          borderRadius: '50%',
+          background: color,
+          boxShadow: `0 0 ${5 + s}px ${LIFE}`,
+        },
+        frames,
+        timing,
+      ),
+    );
   const beads = 16;
-  for (const strand of [0, Math.PI]) {
+  const turns = 540;
+  for (const strand of [0, 180]) {
     for (let i = 0; i < beads; i++) {
-      const s = 3 + Math.random() * 2;
-      const turns = 1.5;
-      const steps = 12;
-      const frames: Keyframe[] = Array.from({ length: steps + 1 }, (_, k) => {
-        const t = k / steps;
-        const a = strand + t * turns * Math.PI * 2;
-        const x = Math.cos(a) * radius;
-        const y = Math.sin(a) * radius;
-        // Leaning table: round it on the table, rising off it (its layer is 3D); flat: an ellipse climbing the screen
-        const move = deep ? `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${(t * climb).toFixed(1)}px)` : `translate(${x.toFixed(1)}px, ${(y * 0.45 - t * climb).toFixed(1)}px)`;
-        return { offset: t, opacity: t === 0 || t === 1 ? 0 : 1, transform: move };
-      });
-      keep(
-        lying(
-          {
-            left: `${at.x - s / 2}px`,
-            top: `${at.y - s / 2}px`,
-            width: `${s}px`,
-            height: `${s}px`,
-            zIndex: LAYER.fx,
-            borderRadius: '50%',
-            background: i % 3 ? LIFE : LIFE_LIGHT,
-            boxShadow: `0 0 ${5 + s}px ${LIFE}`,
-          },
-          frames,
-          { duration: d * 0.6, delay: (i / beads) * d * 0.35, easing: 'linear' },
-        ),
+      const at0 = strand;
+      bead(
+        3 + Math.random() * 2,
+        i % 3 ? LIFE : LIFE_LIGHT,
+        [0, 0.12, 0.88, 1].map((t) => ({ offset: t, opacity: t === 0 || t === 1 ? 0 : 1, transform: place(t, at0 + t * turns, radius) })),
+        { duration: d * 0.6, delay: (i / beads) * d * 0.35, easing: 'linear' },
       );
     }
+  }
+  // Motes rising up the middle with the strands, turning a little as they go
+  for (let i = 0; i < 14; i++) {
+    const r = Math.max(w, h) * Math.random() * 0.18;
+    const a0 = Math.random() * 360;
+    bead(
+      2 + Math.random() * 2.5,
+      Math.random() < 0.5 ? LIFE_LIGHT : LIFE,
+      [0, 0.15, 0.85, 1].map((t) => ({ offset: t, opacity: t === 0 || t === 1 ? 0 : 0.9, transform: place(t * 1.15, a0 + t * 180, r) })),
+      { duration: d * (0.45 + Math.random() * 0.2), delay: d * (0.08 + Math.random() * 0.4), easing: 'cubic-bezier(0.3, 0.2, 0.6, 1)' },
+    );
   }
   return Promise.all(runs).then(() => {
     made.forEach((el) => el.remove());

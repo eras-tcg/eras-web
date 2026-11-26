@@ -1,7 +1,7 @@
 import { BoardAnimations } from './board-animations';
 import { quake, quakesWithTable } from './board-quake';
 import { Seen, TableMeasure } from './card-seen';
-import { TablePlane, tablePlane } from './table-plane';
+import { TablePlane, overlayFor, tablePlane } from './table-plane';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
 import { CARD_H, CARD_W, Point, seeded, shatterShape } from './shatter-shape';
@@ -332,40 +332,98 @@ export class CardMotions {
 
   /**
    * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
-   * around it jump off the table (up from it, an edge first) and drop back, the nearest first and most, as the blow spreads.
+   * around it jump up off the table (along its up, leaning with it) and drop back, each one tilted its own way, the
+   * nearest first and highest, as the blow spreads. A copy jumps, its shadow left on the table; the card waits hidden.
    */
   private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number): void {
     const reach = size * 3.2;
     for (const other of this.document.querySelectorAll<HTMLElement>('[data-instance-id] > eras-sim-card eras-game-card')) {
-      if (other === card) continue;
+      const sprite = other.closest<HTMLElement>('eras-sim-card');
+      if (other === card || !sprite || sprite.style.visibility === 'hidden') continue;
       const r = other.getBoundingClientRect();
-      const d = Math.hypot(r.left + r.width / 2 - at.x, r.top + r.height / 2 - at.y);
-      const near = 1 - d / reach;
-      const up = 12 * near;
-      if (up < 1.5) continue;
-      // It jumps off the table, the edge nearest the blow first, lands on the other edge, bounces once less and settles:
-      // up from the table, never turning on it (its own transform, exhausted or the rival's, stays under)
-      const dx = r.left + r.width / 2 - at.x;
-      const dy = r.top + r.height / 2 - at.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const axis = `${(dy / len).toFixed(3)}, ${(-dx / len).toFixed(3)}, 0`;
-      const own = this.document.defaultView?.getComputedStyle(other).transform;
-      const base = own && own !== 'none' ? ` ${own}` : '';
-      const tilt = 14 * near;
-      const pose = (z: number, deg: number) => `perspective(700px) translateZ(${z.toFixed(1)}px) rotate3d(${axis}, ${deg.toFixed(1)}deg)${base}`;
-      other.animate(
-        [
-          { transform: pose(0, 0), easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
-          { transform: pose(up * 3, tilt), offset: 0.24, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
-          { transform: pose(0, -tilt * 0.35), offset: 0.44, easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
-          { transform: pose(up * 0.9, tilt * 0.2), offset: 0.6, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
-          { transform: pose(0, -tilt * 0.06), offset: 0.76 },
-          { transform: pose(0, 0) },
-        ],
-        // It reaches them as it spreads: a little later the farther they are
-        { duration: TIMING.hop, delay: delay + d * 0.25 },
-      );
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const near = 1 - Math.hypot(cx - at.x, cy - at.y) / reach;
+      if (near < 0.12) continue;
+      this.hopOne(other, sprite, { x: cx, y: cy }, at, near, delay + (1 - near) * reach * 0.25);
     }
+  }
+
+  private hopOne(card: HTMLElement, sprite: HTMLElement, center: { x: number; y: number }, blow: { x: number; y: number }, near: number, delay: number): void {
+    // On the leaning table its layer leans with it (in 3D): up from the layer is up from the table
+    const over = overlayFor(this.document, card, LAYER.charge);
+    const c = over.at(center.x, center.y);
+    const o = over.at(blow.x, blow.y);
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
+    const turn = (card.classList.contains('tapped') ? 90 : 0) + (card.closest('eras-player-half.opponent') ? 180 : 0);
+    const flat = over.position === 'fixed' ? 'perspective(900px) ' : '';
+    const made: HTMLElement[] = [];
+    const lay = (el: HTMLElement) => {
+      Object.assign(el.style, {
+        position: over.position,
+        left: `${c.x - w / 2}px`,
+        top: `${c.y - h / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+        zIndex: LAYER.charge,
+        pointerEvents: 'none',
+        borderRadius: cardFaceStyle(null).borderRadius ?? '',
+      });
+      if (!flat) el.style.transformStyle = 'preserve-3d';
+      else quakesWithTable(el);
+      over.host.append(el);
+      made.push(el);
+    };
+    const shade = this.document.createElement('div');
+    lay(shade);
+    Object.assign(shade.style, { background: 'rgb(0 0 0 / 80%)', opacity: '0' });
+    const copy = this.document.createElement('div');
+    lay(copy);
+    Object.assign(copy.style, { ...cardFaceStyle(card.querySelector('img')?.getAttribute('src') ?? null), boxShadow: '0 2px 6px rgb(0 0 0 / 40%)' });
+    // Tilted about an axis across the way the blow goes, turned a little at random: never flat, never two alike
+    const away = Math.atan2(c.y - o.y, c.x - o.x) + Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+    const axis = `${Math.cos(away).toFixed(3)}, ${Math.sin(away).toFixed(3)}, 0`;
+    const tilt = (11 + Math.random() * 9) * near * (Math.random() < 0.8 ? 1 : -1);
+    const up = 34 * near;
+    // How high its middle is for its lowest edge to touch the table, tilted `deg`
+    const rest = (deg: number) => (Math.abs(Math.sin((deg * Math.PI) / 180)) * Math.max(w, h)) / 2;
+    const steps: [number, number, number | null, string | null][] = [
+      [0, 0, null, 'cubic-bezier(0.15, 0.8, 0.4, 1)'],
+      [up, tilt, 0.26, 'cubic-bezier(0.6, 0, 1, 0.6)'],
+      [0, -tilt * 0.4, 0.46, 'cubic-bezier(0.15, 0.8, 0.4, 1)'],
+      [up * 0.28, tilt * 0.25, 0.62, 'cubic-bezier(0.6, 0, 1, 0.6)'],
+      [0, -tilt * 0.08, 0.78, null],
+      [0, 0, null, null],
+    ];
+    const frames = steps.map(([z, deg, offset, easing]) => {
+      const lift = z + rest(deg);
+      const k: Keyframe = { transform: `${flat}translateZ(${lift.toFixed(1)}px) rotate3d(${axis}, ${deg.toFixed(1)}deg) rotate(${turn}deg)` };
+      const g: Keyframe = { transform: `rotate(${turn}deg) scale(${(1 - lift / 300).toFixed(3)})`, opacity: Math.min(0.5, lift / 40), filter: `blur(${(2 + lift / 5).toFixed(1)}px)` };
+      for (const f of [k, g]) {
+        if (offset !== null) f.offset = offset;
+        if (easing) f.easing = easing;
+      }
+      return { k, g };
+    });
+    copy.style.transform = String(frames[0].k['transform']);
+    copy.style.visibility = 'hidden';
+    const timing = { duration: TIMING.hop, delay };
+    const jump = copy.animate(frames.map((f) => f.k), timing);
+    shade.animate(frames.map((f) => f.g), timing);
+    // The card gives way to its copy only while it jumps
+    const swap = setTimeout(() => {
+      copy.style.visibility = '';
+      sprite.style.visibility = 'hidden';
+    }, delay);
+    const done = () => {
+      clearTimeout(swap);
+      sprite.style.visibility = '';
+      made.forEach((el) => el.remove());
+      over.remove();
+    };
+    jump.onfinish = done;
+    jump.oncancel = done;
   }
 
   /**

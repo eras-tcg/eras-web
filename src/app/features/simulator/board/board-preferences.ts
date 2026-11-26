@@ -13,7 +13,7 @@ const TABLE_TILT_MAX = 24;
 export class BoardPreferences {
   /** "Animaciones" off: the table changes at once (BoardAnimations reads it). */
   readonly animationsOff = persistedFlag('eras-sim-animations-off');
-  /** "Velocidad de las animaciones": a step of ANIMATION_PACES (timing.ts), slowest (0) to fastest (4); normal 2. */
+  /** "Velocidad de las animaciones": a step of ANIMATION_SPEEDS (timing.ts), ×0,5 (0) to ×2 (4); normal ×1 (2). */
   readonly animationSpeed = persistedNumber('eras-sim-animation-speed', 2, 0, 4);
   /** "Brillo de las cartas" off: the table's cards without their still glossy coat and gold metal (lighter). */
   readonly shineOff = persistedFlag('eras-sim-shine-off');
@@ -33,12 +33,12 @@ export class BoardPreferences {
   /** "Altura de la mano": how much higher your hand stands over the table's edge, from low (0) to high (1). */
   readonly handLift = persistedNumber('eras-sim-hand-lift', 0.4, 0, 1);
   /**
-   * "Mesa en perspectiva": how far the table leans back, as seen from your seat (not on phones), from flat (0) to
-   * TABLE_TILT_MAX (1). Only a slider, no number.
+   * "Mesa en perspectiva": leaning back as seen from your seat (not on phones) at TABLE_TILT_MAX, or flat. Stored as 1 or
+   * 0 (a value between, kept from the old slider, counts as leaning).
    */
   readonly tilt = persistedNumber('eras-sim-tilt', 0, 0, 1);
   readonly tilted = computed(() => this.tilt() > 0);
-  readonly tiltAngle = computed(() => `${this.tilt() * TABLE_TILT_MAX}deg`);
+  readonly tiltAngle = computed(() => `${this.tilted() ? TABLE_TILT_MAX : 0}deg`);
   /** The latest actions shown as notices over the table (top left). */
   // Hidden by default (a new key: the old one was stored as shown for everyone who had played)
   readonly noticesOff = persistedFlag('eras-sim-notices-hidden', true);

@@ -75,11 +75,10 @@ const BASE = {
 } as const;
 
 /**
- * "Velocidad de las animaciones", slowest to fastest: what every duration is multiplied by (BoardPreferences keeps the
- * step, BoardAnimations sets it here).
+ * "Velocidad de las animaciones", slowest to fastest: how much faster than normal they play (×2: in half the time).
+ * BoardPreferences keeps the step; BoardAnimations sets the durations' factor here (1 / the speed).
  */
-export const ANIMATION_PACES = [1.5, 1.25, 1, 0.8, 0.6] as const;
-export const ANIMATION_PACE_NAMES = ['muy lenta', 'lenta', 'normal', 'rápida', 'muy rápida'] as const;
+export const ANIMATION_SPEEDS = [0.5, 0.75, 1, 1.5, 2] as const;
 
 let pace = 1;
 

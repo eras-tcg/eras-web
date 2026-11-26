@@ -1,4 +1,4 @@
-import { ANIMATION_PACES, TIMING, setAnimationPace, summonTiming, timingVars } from './timing';
+import { ANIMATION_SPEEDS, TIMING, setAnimationPace, summonTiming, timingVars } from './timing';
 
 describe('animation pace', () => {
   afterEach(() => setAnimationPace(1));
@@ -18,6 +18,6 @@ describe('animation pace', () => {
   });
 
   it('has normal in the middle of its steps', () => {
-    expect(ANIMATION_PACES[2]).toBe(1);
+    expect(ANIMATION_SPEEDS[2]).toBe(1);
   });
 });

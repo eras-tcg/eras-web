@@ -1,7 +1,7 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { persistedFlag } from '@core/storage/persisted-flag';
 import { BoardPreferences } from './board-preferences';
-import { ANIMATION_PACES, setAnimationPace } from './timing';
+import { ANIMATION_SPEEDS, setAnimationPace } from './timing';
 
 /** Animations playing on the board: the engine's choices wait until they are over. */
 @Injectable()
@@ -15,7 +15,7 @@ export class BoardAnimations {
   readonly off = persistedFlag('eras-sim-animations-off');
   readonly idle = computed(() => this.running() === 0);
   /** "Velocidad de las animaciones": what every duration is multiplied by (1 normal, under 1 faster). */
-  readonly pace = computed(() => ANIMATION_PACES[Math.round(this.prefs.animationSpeed())] ?? 1);
+  readonly pace = computed(() => 1 / (ANIMATION_SPEEDS[Math.round(this.prefs.animationSpeed())] ?? 1));
   /** A card shown on top of its pile (the Descarte, the Tributos) while its effect's activation plays there. */
   readonly onTop = signal<string | null>(null);
   /** Nothing moves: the animations are off, or the device asks for reduced motion. */

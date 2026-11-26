@@ -141,6 +141,9 @@
   position: absolute;
   inset-inline: 0;
   inset-block-end: 4%;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
   opacity: 0;
 }
 
@@ -151,9 +154,9 @@
 .band {
   position: relative;
   display: flex !important;
+  align-self: stretch;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.8rem, 2vw, 1.4rem);
   padding-block: clamp(0.7rem, 1.8vh, 1.1rem);
   overflow: hidden;
   background: linear-gradient(
@@ -202,9 +205,13 @@
   animation: name-in calc(0.6s * var(--pace, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) calc(0.7s * var(--pace, 1)) backwards;
 }
 
-/* The level as the card has it: its roman numeral in gold on a disc of the card's color in a bevelled gold ring */
+/* The level as the card has it, under the name over the band's lower line: its roman numeral in gold on a disc of the
+   card's color in a bevelled gold ring */
 .level {
   flex: none;
+  position: relative;
+  z-index: 1;
+  margin-block-start: calc(clamp(3.2rem, 6.5vw, 4.6rem) * -0.3);
   display: grid !important;
   place-items: center;
   inline-size: clamp(3.2rem, 6.5vw, 4.6rem);

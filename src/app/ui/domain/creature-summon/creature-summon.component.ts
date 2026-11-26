@@ -52,15 +52,15 @@ export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
       <span class="shock" aria-hidden="true"></span>
       <span class="motes" #motes aria-hidden="true"></span>
       <span class="creature"><img [src]="creature()" alt="" (load)="loaded()" (error)="finish()" /></span>
-      <!-- Its name across a band of light, as the turn's phases are shown; its level on a gold medal beside it -->
+      <!-- Its name across a band of light, as the turn's phases are shown; its level on a gold medal under it -->
       <span class="plate">
         <span class="band">
-          @if (level(); as lv) {
-            <span class="level" aria-hidden="true">{{ romanOf(lv) }}</span>
-          }
           <span class="name">{{ name() }}</span>
           <span class="sweep" aria-hidden="true"></span>
         </span>
+        @if (level(); as lv) {
+          <span class="level" aria-hidden="true">{{ romanOf(lv) }}</span>
+        }
       </span>
       <span class="flash" aria-hidden="true"></span>
     </button>

@@ -327,6 +327,7 @@ export class CardMotions {
     );
     quake(this.document, this.animations, 0.6, delay);
     this.debris(host, at, w, h, color, delay, !lying);
+    this.circuits(center, w, h, color, delay);
     this.hop(card, center, Math.max(rect.width, rect.height), delay);
   }
 
@@ -428,7 +429,7 @@ export class CardMotions {
 
   /**
    * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels), on a table of light: sparks and
-   * flickering pixels thrown out from its edges, and rays of light running along circuit traces out from them; each one removes itself.
+   * and flickering pixels thrown out from its edges; each one removes itself.
    */
   private debris(host: HTMLElement, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, flat: boolean): void {
     const life = TIMING.burst * 0.85;
@@ -451,14 +452,7 @@ export class CardMotions {
       a.onfinish = () => el.remove();
       a.oncancel = () => el.remove();
     };
-    // A point on the card's edge and the way out from it
-    const edge = () => {
-      const side = Math.random() * 2 * (w + h);
-      if (side < w) return { x: side - w / 2, y: -h / 2, nx: 0, ny: -1 };
-      if (side < w + h) return { x: w / 2, y: side - w - h / 2, nx: 1, ny: 0 };
-      if (side < 2 * w + h) return { x: side - w - h - w / 2, y: h / 2, nx: 0, ny: 1 };
-      return { x: -w / 2, y: side - 2 * w - h - h / 2, nx: -1, ny: 0 };
-    };
+    const edge = () => edgePoint(w, h);
     // Sparks: bright points shot out from the edges, fast, slowing as they fade
     for (let i = 0; i < 26; i++) {
       const e = edge();
@@ -499,23 +493,41 @@ export class CardMotions {
         Math.random() * 60,
       );
     }
-    // Circuits: thin traces running out from its edges as on a circuit board (straight, a bend at 45°, straight again,
-    // ending in a pad); a ray of light runs along each one, faint traces light up behind it and the pad flashes
+  }
+
+  /**
+   * Circuits from a card landing (its center on the screen `center`, `w`×`h` its own size): thin traces run out from its
+   * edges as on a circuit board (straight, a bend at 45°, straight again, ending in a pad), under everything on the
+   * table; a ray of light runs along each one, the trace lights up behind it and the pad flashes.
+   */
+  private circuits(center: { x: number; y: number }, w: number, h: number, color: string, delay: number): void {
+    const life = TIMING.burst * 0.85;
+    const edge = () => edgePoint(w, h);
+    const plane = this.document.querySelector<HTMLElement>('.board .table .plane');
+    if (!plane) return;
+    const leaning = tablePlane(this.document);
     const span = Math.max(w, h) * 2.4;
     const svg = this.document.createElementNS(SVG, 'svg');
     svg.setAttribute('viewBox', `${-span / 2} ${-span / 2} ${span} ${span}`);
-    Object.assign(svg.style, {
-      position: flat ? 'fixed' : 'absolute',
-      left: `${at.x - span / 2}px`,
-      top: `${at.y - span / 2}px`,
-      width: `${span}px`,
-      height: `${span}px`,
-      zIndex: LAYER.flight,
-      pointerEvents: 'none',
-      overflow: 'visible',
-    });
-    if (flat) svg.dataset['simQuake'] = '';
-    host.append(svg);
+    // Under everything on the table: in the leaning table's depth, a pixel under its cards and zones (and over the
+    // playmats, two under); on a flat table, at the back of the plane, set apart for it while it shows
+    Object.assign(svg.style, { position: 'absolute', width: `${span}px`, height: `${span}px`, pointerEvents: 'none', overflow: 'visible' });
+    let isolated = false;
+    if (leaning) svg.style.transform = 'translateZ(-1px)';
+    else {
+      svg.style.zIndex = '-1';
+      if (!plane.style.isolation) {
+        plane.style.isolation = 'isolate';
+        isolated = true;
+      }
+    }
+    plane.prepend(svg);
+    // Placed in the plane's box (the table's, when the flat plane is not positioned)
+    const positioned = this.document.defaultView?.getComputedStyle(plane).position !== 'static';
+    const box = (positioned ? plane : (plane.offsetParent ?? plane)).getBoundingClientRect();
+    const at = leaning ? leaning.toLocal(center.x, center.y) : { x: center.x - box.left, y: center.y - box.top };
+    svg.style.left = `${at.x - span / 2}px`;
+    svg.style.top = `${at.y - span / 2}px`;
     const unit = Math.max(w, h);
     const runs: Promise<unknown>[] = [];
     for (let i = 0; i < 12; i++) {
@@ -533,16 +545,16 @@ export class CardMotions {
       const d = `M${e.x.toFixed(1)} ${e.y.toFixed(1)} L${p1.x.toFixed(1)} ${p1.y.toFixed(1)} L${p2.x.toFixed(1)} ${p2.y.toFixed(1)} L${p3.x.toFixed(1)} ${p3.y.toFixed(1)}`;
       const g = this.document.createElementNS(SVG, 'g');
       g.innerHTML =
-        `<path d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="0.8" stroke-linejoin="round" opacity="0"/>` +
-        `<path d="${d}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.22 1.4" stroke-dashoffset="0.22" style="filter: drop-shadow(0 0 2px ${color}) drop-shadow(0 0 4px ${color})"/>` +
-        `<circle cx="${p3.x.toFixed(1)}" cy="${p3.y.toFixed(1)}" r="1.6" fill="none" stroke="#fff" stroke-width="0.8" opacity="0" style="filter: drop-shadow(0 0 3px ${color})"/>`;
+        `<path d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="1.3" stroke-linejoin="round" opacity="0"/>` +
+        `<path d="${d}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="0.3 1.4" stroke-dashoffset="0.3" style="filter: drop-shadow(0 0 2px ${color}) drop-shadow(0 0 4px ${color})"/>` +
+        `<circle cx="${p3.x.toFixed(1)}" cy="${p3.y.toFixed(1)}" r="2" fill="none" stroke="#fff" stroke-width="1.2" opacity="0" style="filter: drop-shadow(0 0 3px ${color})"/>`;
       svg.append(g);
       const [trace, ray, pad] = Array.from(g.children) as SVGElement[];
       const run = life * (0.45 + Math.random() * 0.25);
       const wait = delay + Math.random() * 70;
       runs.push(
-        ray.animate([{ strokeDashoffset: 0.22 }, { strokeDashoffset: -1 }], { duration: run, delay: wait, easing: 'cubic-bezier(0.3, 0.6, 0.5, 1)' }).finished,
-        trace.animate([{ opacity: 0 }, { opacity: 0.5, offset: 0.3 }, { opacity: 0 }], { duration: life, delay: wait }).finished,
+        ray.animate([{ strokeDashoffset: 0.3 }, { strokeDashoffset: -1 }], { duration: run, delay: wait, easing: 'cubic-bezier(0.3, 0.6, 0.5, 1)' }).finished,
+        trace.animate([{ opacity: 0 }, { opacity: 0.95, offset: 0.25 }, { opacity: 0.8, offset: 0.6 }, { opacity: 0 }], { duration: life, delay: wait }).finished,
         pad.animate([{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'scale(1.3)', offset: 0.3 }, { opacity: 0, transform: 'scale(1)' }], {
           duration: life * 0.45,
           delay: wait + run * 0.6,
@@ -553,7 +565,10 @@ export class CardMotions {
     }
     Promise.all(runs)
       .catch(() => undefined)
-      .then(() => svg.remove());
+      .then(() => {
+        svg.remove();
+        if (isolated) plane.style.isolation = '';
+      });
   }
 
   /**
@@ -565,4 +580,13 @@ export class CardMotions {
     if (!plane) return null;
     return { plane, layer: plane.layer(LAYER.flight), at: plane.toLocal(from.x, from.y) };
   }
+}
+
+/** A point at random on the edge of a card `w`×`h` (from its center) and the way out from it there. */
+function edgePoint(w: number, h: number): { x: number; y: number; nx: number; ny: number } {
+  const side = Math.random() * 2 * (w + h);
+  if (side < w) return { x: side - w / 2, y: -h / 2, nx: 0, ny: -1 };
+  if (side < w + h) return { x: w / 2, y: side - w - h / 2, nx: 1, ny: 0 };
+  if (side < 2 * w + h) return { x: side - w - h - w / 2, y: h / 2, nx: 0, ny: 1 };
+  return { x: -w / 2, y: side - 2 * w - h - h / 2, nx: -1, ny: 0 };
 }

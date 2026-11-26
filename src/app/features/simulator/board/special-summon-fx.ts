@@ -127,7 +127,7 @@ function completed(
 
 /**
  * Ascenso, a promotion in rank: the card's edge lights up gold on the table, and the light rises from it as a wall all
- * round the card (round its rounded corners too), fading out towards its top, lighting the card from every side; then the wall fades as it goes on
+ * round the card (open at its rounded corners), fading out towards its top, lighting the card from every side; then the wall fades as it goes on
  * up, the card glows gold faintly and embers rise. On the leaning table the wall stands up from it in depth; on a flat
  * one a curtain of light rises up the screen from the card's foot.
  */
@@ -180,37 +180,28 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
   const wall = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[]) =>
     keep(add({ zIndex: LAYER.fx, ...style }, frames, { duration: d, easing: 'linear' }));
   if (deep) {
-    // Panels standing up all round the card's edge, its rounded corners too: the edge as a ring of points (the corners
-    // as arcs), a panel on each stretch between two, laid on the table out from it, turned up on it, then turned on the
-    // table to lie along it
+    // Four panels standing up along the card's straight edges (each laid on the table out from its edge, turned up on
+    // it, then turned on the table to lie along it). They stop where its rounded corners start: panels there, seen
+    // edge on, would read as pillars
     const r = Math.min(w, h) * 0.032 * 1.4;
     const x0 = at.x - w / 2;
     const y0 = at.y - h / 2;
-    const corners: [number, number, number][] = [
-      [x0 + w - r, y0 + h - r, 0],
-      [x0 + r, y0 + h - r, 90],
-      [x0 + r, y0 + r, 180],
-      [x0 + w - r, y0 + r, 270],
+    const sides: [{ x: number; y: number }, { x: number; y: number }][] = [
+      [{ x: x0 + w - r, y: y0 + h }, { x: x0 + r, y: y0 + h }],
+      [{ x: x0, y: y0 + h - r }, { x: x0, y: y0 + r }],
+      [{ x: x0 + r, y: y0 }, { x: x0 + w - r, y: y0 }],
+      [{ x: x0 + w, y: y0 + r }, { x: x0 + w, y: y0 + h - r }],
     ];
-    const ring = corners.flatMap(([cx, cy, from]) =>
-      [0, 1, 2, 3].map((k) => {
-        const deg = ((from + k * 30) * Math.PI) / 180;
-        return { x: cx + Math.cos(deg) * r, y: cy + Math.sin(deg) * r };
-      }),
-    );
-    ring.forEach((p1, i) => {
-      const p2 = ring[(i + 1) % ring.length];
+    for (const [p1, p2] of sides) {
       const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      if (len < 0.5) return;
       const mx = (p1.x + p2.x) / 2;
       const my = (p1.y + p2.y) / 2;
       const turn = (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI;
       wall(
-        // A hair longer, so the panels meet without seams
-        { left: `${mx - len / 2 - 0.5}px`, top: `${my - tall}px`, width: `${len + 1}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top') },
+        { left: `${mx - len / 2}px`, top: `${my - tall}px`, width: `${len}px`, height: `${tall}px`, transformOrigin: '50% 100%', background: glow('top') },
         rise(`rotate(${turn.toFixed(1)}deg) rotateX(-90deg)`, 'scaleY'),
       );
-    });
+    }
   } else {
     // Flat: a curtain of light rising up the screen from the card's foot, as wide as the card
     wall(

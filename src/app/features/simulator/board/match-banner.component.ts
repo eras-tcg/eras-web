@@ -79,7 +79,7 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
         (keydown.escape)="close()"
       >
         @if (b.kind === 'end') {
-          <!-- The result across the screen: light rays and rising sparks for a victory, falling ash for a defeat -->
+          <!-- The result across the screen: rising sparks for a victory, a red haze and falling ash for a defeat -->
           <div class="result">
             <span class="rays" aria-hidden="true"></span>
             <span class="motes" aria-hidden="true">
@@ -277,20 +277,16 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
       inset-block: 0;
       background: radial-gradient(ellipse 40% 90% at 50% 50%, color-mix(in srgb, var(--tone) 35%, transparent), transparent 70%);
     }
-    /* A victory's rays turning slowly behind the title; a defeat's dark red haze pulsing */
+    /* A defeat's dark red haze pulsing behind the title (a victory has its sparks) */
     .rays {
       position: absolute;
       inset: -45% 32%;
       z-index: -1;
-      background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--tone) 32%, transparent) 0 4deg, transparent 4deg 14deg);
-      mask-image: radial-gradient(closest-side, #000 20%, transparent 100%);
-      animation: rays-in 1s ease 0.3s backwards, spin 24s linear infinite;
-    }
-    .screen:not(.won) .rays {
+      display: none;
       background: radial-gradient(circle, color-mix(in srgb, var(--color-sim-rival) 45%, transparent), transparent 60%);
-      mask-image: none;
       animation: rays-in 1s ease 0.3s backwards, haze 3.2s ease-in-out infinite;
     }
+    .screen:not(.won) .rays { display: block; }
     .motes { position: absolute; inset: -60% 0; z-index: -1; overflow: hidden; pointer-events: none; }
     .motes i {
       position: absolute;
@@ -329,7 +325,6 @@ function missionSteps(before: MissionBoard | null, after: MissionBoard | null): 
     }
     @keyframes band-open { from { clip-path: inset(50% 0); } to { clip-path: inset(-200% 0); } }
     @keyframes rays-in { from { opacity: 0; transform: scale(0.6); } }
-    @keyframes spin { to { rotate: 360deg; } }
     @keyframes haze { 50% { opacity: 0.55; scale: 1.1; } }
     @keyframes mote-rise {
       0% { opacity: 0; transform: translateY(0); }

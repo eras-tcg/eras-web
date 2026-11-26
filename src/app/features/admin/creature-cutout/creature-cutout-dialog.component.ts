@@ -1,6 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
+import { ApiConfig } from '@core/http/api-config';
 import { CardMeta } from '@data/cards/card.model';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CreatureSummonComponent } from '@ui/domain/creature-summon/creature-summon.component';
@@ -8,7 +9,7 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
-import { Mask, combine, dab, emptyMask, fadedAtEdges, shownBox } from './cutout-mask';
+import { Mask, combine, dab, emptyMask, fadedAtEdges, maskFromCutout, placeOf, shownBox, withPlace } from './cutout-mask';
 import { CutoutSam } from './cutout-sam';
 
 export interface CreatureCutoutData {
@@ -16,8 +17,8 @@ export interface CreatureCutoutData {
   name: string;
   strength: number;
   identity: string;
-  /** It has a cut-out already (it can be taken away). */
-  hasCreature: boolean;
+  /** Its cut-out saved now (its address), or null: the editor starts from it. */
+  creature: string | null;
 }
 
 type Tool = 'add' | 'remove' | 'paint' | 'erase';
@@ -82,7 +83,7 @@ const UNDO_STEPS = 30;
         Agregar o Quitar parte: un clic sobre ella. Pincel y Borrador: arrastrar. Lo que queda fuera se ve en magenta.
       </p>
       <footer class="actions">
-        @if (data.hasCreature) {
+        @if (data.creature) {
           <button erasButton variant="danger" size="sm" type="button" [disabled]="busy()" (click)="removeCut()">Quitar recorte</button>
         }
         <span class="spacer"></span>
@@ -160,6 +161,7 @@ export class CreatureCutoutDialogComponent {
   protected readonly data = inject<CreatureCutoutData>(DIALOG_DATA);
   protected readonly ref = inject<DialogRef<CardMeta | null>>(DialogRef);
   private readonly admin = inject(CardsAdminApi);
+  private readonly api = inject(ApiConfig);
 
   protected readonly tools: { id: Tool; label: string; brush: boolean }[] = [
     { id: 'add', label: 'Agregar parte', brush: false },
@@ -195,6 +197,8 @@ export class CreatureCutoutDialogComponent {
   }
 
   private async start(): Promise<void> {
+    // What to say once it is ready, about the cut-out it started from
+    let note: string | null = null;
     try {
       const blob = await firstValueFrom(this.admin.art(this.data.metaId));
       const bitmap = await createImageBitmap(blob);
@@ -211,6 +215,7 @@ export class CreatureCutoutDialogComponent {
       // SAM reads the illustration as it is shown (its size, so its parts match the mask)
       const scaled = await new Promise<Blob | null>((done) => canvas.toBlob(done, 'image/png'));
       this.artUrl = scaled ? URL.createObjectURL(scaled) : null;
+      if (this.data.creature) note = await this.resume(this.data.creature, w, h);
       this.draw();
     } catch (e) {
       this.status.set(null);
@@ -223,11 +228,31 @@ export class CreatureCutoutDialogComponent {
       this.status.set('Leyendo la ilustración…');
       if (this.artUrl) await this.sam.read(this.artUrl);
       this.samReady.set(true);
-      this.status.set(null);
+      this.status.set(note);
     } catch {
       // The brush still works without it
       this.tool.set('paint');
       this.status.set('No se pudo cargar el modelo de recorte: solo el pincel está disponible.');
+    }
+  }
+
+  /** The cut-out saved before, put back on the illustration to go on from it (if it says where it was cropped from). */
+  private async resume(url: string, w: number, h: number): Promise<string | null> {
+    try {
+      const bytes = new Uint8Array(await (await fetch(this.api.url(url))).arrayBuffer());
+      const place = placeOf(bytes);
+      if (!place) return 'El recorte guardado no dice de qué parte de la ilustración salió: este empieza desde cero.';
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0);
+      const rgba = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+      const alpha = new Uint8ClampedArray(bitmap.width * bitmap.height);
+      for (let i = 0; i < alpha.length; i++) alpha[i] = rgba[i * 4 + 3];
+      this.mask = maskFromCutout(alpha, bitmap.width, bitmap.height, place, w, h);
+      return null;
+    } catch {
+      return 'No se pudo abrir el recorte guardado: este empieza desde cero.';
     }
   }
 
@@ -342,7 +367,9 @@ export class CreatureCutoutDialogComponent {
     full.getContext('2d')!.putImageData(rgba, 0, 0);
     const out = new OffscreenCanvas(box.w, box.h);
     out.getContext('2d')!.drawImage(full, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
-    return out.convertToBlob({ type: 'image/png' });
+    // It keeps where it was cropped from, so it can be edited again from where it was left
+    const png = new Uint8Array(await (await out.convertToBlob({ type: 'image/png' })).arrayBuffer());
+    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h })], { type: 'image/png' });
   }
 
   private remember(): void {

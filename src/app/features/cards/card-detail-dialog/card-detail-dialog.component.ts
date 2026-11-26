@@ -222,7 +222,7 @@ export class CardDetailDialogComponent {
         name: v.name,
         strength: meta.strength ?? 0,
         identity: v.color ? `var(--color-card-${v.color.toLowerCase()})` : '#64748b',
-        hasCreature: !!meta.creatureKey,
+        creature: cardCreatureUrl(meta),
       },
       maxWidth: '100vw',
       maxHeight: '100dvh',

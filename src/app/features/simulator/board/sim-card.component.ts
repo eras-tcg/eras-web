@@ -1,4 +1,4 @@
-import { HoldPeekDirective } from './hold-peek';
+import { HoldPeekDirective } from '@ui/utilities/hold-peek';
 import { CdkContextMenuTrigger } from '@angular/cdk/menu';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, effect, inject, input, signal } from '@angular/core';

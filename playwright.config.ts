@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 /**
  * End-to-end checks of the critical flows (plan, phase 7).
  *
- * - Local (default): starts `ng serve`, which proxies /api to the staging backend.
+ * - Local (default): starts `ng serve`, which proxies /api to production (read only: no staging since 2026-11-26).
  * - Remote: `E2E_BASE_URL=https://next.erastcg.com npm run e2e` runs the same specs against a deployment.
  *
  * Reads hit the real backend; anything that needs a session or writes is mocked in the browser

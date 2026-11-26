@@ -5,7 +5,7 @@ import { CardSlot, ZONES, ZoneName } from '@data/simulator/simulator.model';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { openCardDetail } from './card-peek.component';
-import { holdToPeek } from './hold-peek';
+import { holdToPeek } from '@ui/utilities/hold-peek';
 import { EffectLineComponent } from '@ui/domain/effect-line/effect-line.component';
 import { effectLines, matchingLine } from './card-effect-lines';
 import { CardSheetComponent } from './card-sheet.component';

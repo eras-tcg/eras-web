@@ -13,7 +13,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
 import { openCardDetailDialog } from '../../cards/card-detail-dialog/card-detail-dialog.component';
 import { EffectLine, effectLines, matchingLine } from './card-effect-lines';
-import { HoldPeekDirective } from './hold-peek';
+import { HoldPeekDirective } from '@ui/utilities/hold-peek';
 import { slotFacts } from './slot-facts';
 
 /** An effect shown in a section, with where it comes from (a Recurso, a linked creature) and whether it is the one that asks. */

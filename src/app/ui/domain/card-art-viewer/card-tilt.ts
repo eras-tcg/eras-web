@@ -1,5 +1,7 @@
 /** Pixels a press moves before it counts as a drag (less is a tap). */
 export const DRAG_START = 6;
+/** The same for a finger, which trembles more than a mouse: a tap that moves a little is still a tap. */
+export const TOUCH_DRAG_START = 12;
 
 /** How far a held card leans (and how far its light follows the turn), each way, in degrees. */
 export const MAX_TILT = 35;

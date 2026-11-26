@@ -2,6 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { apiErrorMessage } from '@core/http/api-error';
 import { ApiConfig } from '@core/http/api-config';
+import { LoadingState } from '@core/http/loading';
 import { CardMeta } from '@data/cards/card.model';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CreatureSummonComponent } from '@ui/domain/creature-summon/creature-summon.component';
@@ -231,6 +232,7 @@ export class CreatureCutoutDialogComponent {
   protected readonly ref = inject<DialogRef<CardMeta | null>>(DialogRef);
   private readonly admin = inject(CardsAdminApi);
   private readonly api = inject(ApiConfig);
+  private readonly loading = inject(LoadingState);
 
   protected readonly tools: { id: Tool; label: string; brush: boolean }[] = [
     { id: 'add', label: 'Agregar parte', brush: false },
@@ -257,7 +259,7 @@ export class CreatureCutoutDialogComponent {
   /** How much of each pixel shows with that fade (all 1 without one), kept for drawing and saving. */
   private fades: Float32Array | null = null;
   protected readonly samReady = signal(false);
-  protected readonly status = signal<string | null>('Cargando la ilustración…');
+  protected readonly status = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly undoable = signal(false);
@@ -354,7 +356,20 @@ export class CreatureCutoutDialogComponent {
     });
   }
 
+  /**
+   * Gets it ready under the site's loading screen: the illustration, the cut-out saved before and what the clicks by
+   * parts need (the model reading the illustration). Then it can all be used.
+   */
   private async start(): Promise<void> {
+    this.loading.start();
+    try {
+      await this.prepare();
+    } finally {
+      this.loading.end();
+    }
+  }
+
+  private async prepare(): Promise<void> {
     // What to say once it is ready, about the cut-out it started from
     let note: string | null = null;
     try {
@@ -383,11 +398,8 @@ export class CreatureCutoutDialogComponent {
       return;
     }
     try {
-      this.status.set('Cargando el modelo de recorte (la primera vez descarga unos 15 MB)…');
-      this.sam = await CutoutSam.load((p) => this.status.set(`Cargando el modelo de recorte… ${Math.round(p * 100)} %`));
-      this.status.set('Leyendo la ilustración…');
-      if (this.artUrl) await this.sam.read(this.artUrl);
-      this.samReady.set(true);
+      if (this.artUrl) this.sam = await CutoutSam.open(this.artUrl);
+      this.samReady.set(!!this.sam);
       this.status.set(note);
     } catch {
       // The brush still works without it

@@ -14,21 +14,34 @@ export class CutoutSam {
     private readonly processor: Processor,
   ) {}
 
+  /**
+   * Loads the model and reads the illustration at `url`: on the graphics card when the browser has one for the web
+   * (WebGPU, several times faster), else (or if it fails there) on the processor.
+   */
+  static async open(url: string): Promise<CutoutSam> {
+    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+      try {
+        const sam = await CutoutSam.load('webgpu');
+        await sam.read(url);
+        return sam;
+      } catch {
+        // Not on this card: on the processor
+      }
+    }
+    const sam = await CutoutSam.load('wasm');
+    await sam.read(url);
+    return sam;
+  }
+
   private inputs: { original_sizes: [number, number][]; reshaped_input_sizes: [number, number][] } | null = null;
   private embeddings: Record<string, Tensor> | null = null;
 
-  /** Loads the library and the model; `progress` 0..1 while the model downloads. */
-  static async load(progress: (done: number) => void): Promise<CutoutSam> {
+  /** Loads the library and the model, to run on `device` (quantized on the processor, full precision on the card). */
+  private static async load(device: 'webgpu' | 'wasm'): Promise<CutoutSam> {
     const lib = await import('@huggingface/transformers');
-    const files = new Map<string, number>();
-    const onProgress = (p: { status: string; file?: string; progress?: number }) => {
-      if (p.status !== 'progress' || !p.file) return;
-      files.set(p.file, (p.progress ?? 0) / 100);
-      progress([...files.values()].reduce((a, b) => a + b, 0) / Math.max(2, files.size));
-    };
     const [model, processor] = await Promise.all([
-      lib.SamModel.from_pretrained(MODEL, { dtype: 'q8', progress_callback: onProgress }),
-      lib.AutoProcessor.from_pretrained(MODEL, { progress_callback: onProgress }),
+      lib.SamModel.from_pretrained(MODEL, { device, dtype: device === 'webgpu' ? 'fp32' : 'q8' }),
+      lib.AutoProcessor.from_pretrained(MODEL),
     ]);
     return new CutoutSam(lib, model, processor);
   }

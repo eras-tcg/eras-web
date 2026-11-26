@@ -1,19 +1,21 @@
 import { BoardAnimations } from './board-animations';
 import { centerOf } from './board-dom';
-import { overlayFor, tablePlane, underTable } from './table-plane';
+import { overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
-/** An effect's mist: its blue (its core and its body), its veil, and its motes of light. */
-const MIST_CORE = 'rgb(120 175 255 / 70%)';
-const MIST_EDGE = 'rgb(50 110 255 / 45%)';
-const MIST_VEIL = 'rgb(170 210 255 / 35%)';
+/** An effect's light: the glow of the card's edges (its line, its blue, its outer haze), its mist and its motes. */
+const GLOW_CORE = 'rgb(235 245 255 / 95%)';
+const GLOW_MID = 'rgb(110 170 255 / 85%)';
+const GLOW_OUT = 'rgb(40 100 255 / 45%)';
+const WISP_CORE = 'rgb(200 225 255 / 80%)';
+const WISP_EDGE = 'rgb(70 130 255 / 45%)';
 const MOTE = '#7cc4ff';
 
 /**
  * What the board's effects draw over the table, lying on it when it leans ("Mesa en perspectiva"): curved arrows,
- * signs over a card, an effect's mist under a card, text rising and fading, a pile shaking. Each one removes itself.
+ * signs over a card, an effect's mist pouring off a card, text rising and fading, a pile shaking. Each one removes itself.
  */
 export class FxDraw {
   /** The screen's layer for the arrows of a flat table. */
@@ -126,24 +128,25 @@ export class FxDraw {
   }
 
   /**
-   * An effect activated on a card: a pool of blue mist the card's shape, soft-edged, spreads out under it, swirling; a thin veil of it
-   * drifts over the card and motes of light rise from it, over the card; then all of it fades. The pool lies under
-   * everything on the table when the card lies on it (over it elsewhere: a hand, a plate). Done when it has gone.
+   * An effect activated on a card: its edges light up blue-white and a blue mist pours off them, wisps streaming out
+   * and away from the card as they thin out; motes of light rise from it. Drawn over the card, lying as it does; the
+   * card's face shows through. Done when it has gone.
    */
   mist(card: HTMLElement): Promise<void> {
     const c = centerOf(card);
     const r = card.getBoundingClientRect();
     const w = card.offsetWidth || r.width;
     const h = card.offsetHeight || r.height;
-    const size = Math.max(w, h) * 1.7;
+    const turned = card.classList.contains('tapped');
+    // The card as it lies: an exhausted one is turned, so its long sides run across
+    const cw = turned ? h : w;
+    const ch = turned ? w : h;
+    const size = Math.max(w, h) * 2;
     const d = TIMING.activation;
-    const plane = tablePlane(this.document);
-    const lying = plane ? plane.holds(card) : !!card.closest('.plane');
-    // Over the card: a box of the same size, lying as the card does
     const over = overlayFor(this.document, card, LAYER.fx);
     const at = over.at(c.x, c.y);
-    const top = this.document.createElement('div');
-    Object.assign(top.style, {
+    const host = this.document.createElement('div');
+    Object.assign(host.style, {
       position: over.position,
       left: `${at.x - size / 2}px`,
       top: `${at.y - size / 2}px`,
@@ -152,92 +155,81 @@ export class FxDraw {
       zIndex: LAYER.fx,
       pointerEvents: 'none',
     });
-    over.host.append(top);
-    const under = lying ? underTable(this.document, c, size, size) : null;
-    const pool = under?.el ?? top;
+    over.host.append(host);
     this.animations.hold(d);
     const runs: Promise<unknown>[] = [];
-    const add = (host: HTMLElement, style: Partial<CSSStyleDeclaration>, frames: Keyframe[], timing: KeyframeAnimationOptions) => {
+    const add = (style: Partial<CSSStyleDeclaration>, frames: Keyframe[], timing: KeyframeAnimationOptions) => {
       const el = this.document.createElement('div');
-      Object.assign(el.style, { position: 'absolute', opacity: '0', ...style });
+      Object.assign(el.style, { position: 'absolute', opacity: '0', pointerEvents: 'none', ...style });
       host.append(el);
       runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished);
     };
-    // The pool: the card's shape a little bigger, its edge soft as mist, swirling inside and spreading out as it fades
-    const margin = Math.max(w, h) * 0.13;
-    const turned = card.classList.contains('tapped') ? ' rotate(90deg)' : '';
-    const frame = this.document.createElement('div');
-    Object.assign(frame.style, {
-      position: 'absolute',
-      left: `${(size - w) / 2 - margin}px`,
-      top: `${(size - h) / 2 - margin}px`,
-      width: `${w + margin * 2}px`,
-      height: `${h + margin * 2}px`,
-      borderRadius: `${margin * 0.9}px`,
-      overflow: 'hidden',
-      background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE})`,
-      boxShadow: `0 0 ${margin}px ${margin * 0.4}px ${MIST_EDGE}`,
-      filter: `blur(${(margin * 0.35).toFixed(1)}px)`,
-      opacity: '0',
-    });
-    pool.append(frame);
-    runs.push(
-      frame.animate(
-        [
-          { opacity: 0, transform: `scale(0.8)${turned}` },
-          { opacity: 0.95, transform: `scale(1)${turned}`, offset: 0.28 },
-          { opacity: 0.75, transform: `scale(1.1)${turned}`, offset: 0.72 },
-          { opacity: 0, transform: `scale(1.22)${turned}` },
-        ],
-        { duration: d, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)', fill: 'backwards' },
-      ).finished,
-    );
-    // Inside it, the mist turns slowly: brighter clouds drifting round
-    for (let i = 0; i < 2; i++) {
-      const spin = (i ? -1 : 1) * (40 + Math.random() * 30);
-      add(
-        frame,
-        {
-          inset: '-30%',
-          background: `radial-gradient(ellipse 30% 22% at ${35 + i * 30}% ${40 + i * 20}%, ${MIST_VEIL}, transparent 70%)`,
-          mixBlendMode: 'screen',
-          opacity: '1',
-        },
-        [{ transform: 'rotate(0deg)' }, { transform: `rotate(${spin}deg)` }],
-        { duration: d, easing: 'linear' },
-      );
-    }
-    // A thin veil of it over the card, drifting across
+    const left = (size - cw) / 2;
+    const top = (size - ch) / 2;
+    // The edges lit: a bright line round the card fading into blue outside it and a little inside; it flickers
     add(
-      top,
       {
-        left: `${(size - w * 1.15) / 2}px`,
-        top: `${(size - h * 1.1) / 2}px`,
-        width: `${w * 1.15}px`,
-        height: `${h * 1.1}px`,
-        borderRadius: '45%',
-        background: `radial-gradient(ellipse 50% 50% at 50% 55%, ${MIST_VEIL}, transparent 70%)`,
-        filter: 'blur(6px)',
-        mixBlendMode: 'screen',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${cw}px`,
+        height: `${ch}px`,
+        borderRadius: 'var(--radius-card)',
+        boxShadow: `0 0 3px 1px ${GLOW_CORE}, 0 0 12px 4px ${GLOW_MID}, 0 0 28px 10px ${GLOW_OUT}, inset 0 0 10px 2px ${GLOW_MID}`,
       },
       [
-        { opacity: 0, transform: `translate(${-w * 0.08}px, ${h * 0.04}px)` },
-        { opacity: 1, transform: 'translate(0, 0)', offset: 0.35 },
-        { opacity: 0.7, transform: `translate(${w * 0.06}px, ${-h * 0.03}px)`, offset: 0.7 },
-        { opacity: 0, transform: `translate(${w * 0.1}px, ${-h * 0.06}px)` },
+        { opacity: 0 },
+        { opacity: 1, offset: 0.15 },
+        { opacity: 0.8, offset: 0.3 },
+        { opacity: 1, offset: 0.45 },
+        { opacity: 0.85, offset: 0.65 },
+        { opacity: 0 },
       ],
-      { duration: d, delay: d * 0.08, easing: 'ease-in-out' },
+      { duration: d, easing: 'ease-out' },
     );
-    // Motes of light rising from the card, over it, drifting and twinkling out
-    for (let i = 0; i < 18; i++) {
-      const s = 2 + Math.random() * 3;
-      const x0 = size / 2 + (Math.random() - 0.5) * w * 1.1;
-      const y0 = size / 2 + (Math.random() - 0.3) * h * 0.8;
-      const rise = h * (0.3 + Math.random() * 0.45);
-      const drift = (Math.random() - 0.5) * w * 0.4;
-      const white = Math.random() < 0.35;
+    // The mist pouring off the edges: wisps born on them one after another, streaming out (and a little up) as they
+    // swell and thin out
+    const edge = () => {
+      const side = Math.random() * 2 * (cw + ch);
+      if (side < cw) return { x: side, y: 0, nx: 0, ny: -1 };
+      if (side < cw + ch) return { x: cw, y: side - cw, nx: 1, ny: 0 };
+      if (side < 2 * cw + ch) return { x: side - cw - ch, y: ch, nx: 0, ny: 1 };
+      return { x: 0, y: side - 2 * cw - ch, nx: -1, ny: 0 };
+    };
+    const unit = Math.min(cw, ch);
+    for (let i = 0; i < 46; i++) {
+      const e = edge();
+      const s = unit * (0.22 + Math.random() * 0.18);
+      const out = unit * (0.18 + Math.random() * 0.22);
+      const up = unit * (0.05 + Math.random() * 0.12);
+      const life = d * (0.35 + Math.random() * 0.2);
       add(
-        top,
+        {
+          left: `${left + e.x - s / 2}px`,
+          top: `${top + e.y - s / 2}px`,
+          width: `${s}px`,
+          height: `${s}px`,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${WISP_CORE}, ${WISP_EDGE} 45%, transparent 70%)`,
+          filter: 'blur(3px)',
+          mixBlendMode: 'screen',
+        },
+        [
+          { opacity: 0, transform: 'translate(0, 0) scale(0.5)' },
+          { opacity: 0.95, transform: `translate(${e.nx * out * 0.3}px, ${e.ny * out * 0.3 - up * 0.3}px) scale(0.9)`, offset: 0.25 },
+          { opacity: 0, transform: `translate(${e.nx * out}px, ${e.ny * out - up}px) scale(1.6)` },
+        ],
+        { duration: life, delay: Math.random() * (d - life) * 0.85, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)' },
+      );
+    }
+    // Motes of light rising from the card
+    for (let i = 0; i < 16; i++) {
+      const s = 2 + Math.random() * 3;
+      const x0 = size / 2 + (Math.random() - 0.5) * cw * 1.1;
+      const y0 = size / 2 + (Math.random() - 0.3) * ch * 0.8;
+      const rise = ch * (0.3 + Math.random() * 0.45);
+      const drift = (Math.random() - 0.5) * cw * 0.4;
+      const white = Math.random() < 0.4;
+      add(
         {
           left: `${x0 - s / 2}px`,
           top: `${y0 - s / 2}px`,
@@ -253,14 +245,13 @@ export class FxDraw {
           { opacity: 0.6, transform: `translate(${drift * 0.7}px, ${-rise * 0.7}px) scale(0.9)`, offset: 0.7 },
           { opacity: 0, transform: `translate(${drift}px, ${-rise}px) scale(0.3)` },
         ],
-        { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.12 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
+        { duration: d * (0.5 + Math.random() * 0.35), delay: d * (0.1 + Math.random() * 0.35), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
       );
     }
     return Promise.all(runs)
       .catch(() => undefined)
       .then(() => {
-        under?.remove();
-        top.remove();
+        host.remove();
         over.remove();
       });
   }

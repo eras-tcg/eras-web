@@ -243,8 +243,8 @@ export class CombatFx {
   }
 
   /**
-   * An effect activated: its card (on the table, in a hand or on its pile) glows white and a blue mist with motes of
-   * light spreads under it (FxDraw.mist); done when it has gone.
+   * An effect activated: its card (on the table, in a hand or on its pile) glows white, its edges light up and a blue
+   * mist pours off them (FxDraw.mist); done when it has gone.
    */
   activation(sourceId: string, state: GameState | null): Promise<void> {
     const where = pileOf(state, sourceId);

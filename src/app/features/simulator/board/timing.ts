@@ -65,6 +65,8 @@ export const TIMING = {
   /** A chain link joining or resolving shown big; the chain starting to resolve. */
   chainShow: 2100,
   chainResolution: 1500,
+  /** The turn or the phase changing, shown big across the table. */
+  phaseShow: 1700,
   /** The players face to face at the start. */
   matchStart: 2800,
   /** A card revealed from a hand. */
@@ -89,6 +91,7 @@ export function timingVars(): Record<string, string> {
     '--sim-tap-widen': `${TIMING.tapWiden}ms`,
     '--sim-tap-turn': `${TIMING.tapTurn}ms`,
     '--sim-combat-reveal': `${TIMING.combatReveal}ms`,
+    '--sim-phase-show': `${TIMING.phaseShow}ms`,
     '--sim-chain-show': `${TIMING.chainShow}ms`,
     '--sim-chain-resolution': `${TIMING.chainResolution}ms`,
     '--sim-match-start': `${TIMING.matchStart}ms`,

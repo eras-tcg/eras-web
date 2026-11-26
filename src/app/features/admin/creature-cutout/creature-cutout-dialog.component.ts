@@ -9,8 +9,8 @@ import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
-import { Mask, combine, dab, emptyMask, fadeDab, maskFromCutout, shownBox } from './cutout-mask';
-import { placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
+import { Mask, combine, dab, edgeFades, emptyMask, fadeDab, maskFromCutout, shownBox } from './cutout-mask';
+import { ALL_EDGES, CutoutEdges, NO_EDGES, placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 import { CutoutSam } from './cutout-sam';
 
 export interface CreatureCutoutData {
@@ -72,6 +72,28 @@ const UNDO_STEPS = 30;
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!redoable()" (click)="redo()">Rehacer</button>
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!mask" (click)="clear()">Limpiar</button>
         </div>
+      </div>
+      <!-- An even fade from the picture's edges chosen, as wide as asked (seen as it will be saved) -->
+      <div class="tools" role="group" aria-label="Desvanecer bordes">
+        <span class="edges-title">Desvanecer bordes:</span>
+        <div class="group">
+          @for (e of edgeButtons; track e.id) {
+            <button
+              erasButton
+              size="sm"
+              type="button"
+              [variant]="fadeEdges()[e.id] ? 'primary' : 'secondary'"
+              [attr.aria-pressed]="fadeEdges()[e.id]"
+              (click)="toggleEdge(e.id)"
+            >
+              {{ e.label }}
+            </button>
+          }
+        </div>
+        <label class="size">
+          Ancho: <span class="size-value">{{ fadeWidth() }} %</span>
+          <input type="range" min="2" max="40" step="1" aria-label="Ancho del desvanecido de bordes" [value]="fadeWidth()" (input)="setFadeWidth(+$any($event.target).value)" />
+        </label>
       </div>
       @if (status(); as s) {
         <p class="status" aria-live="polite">{{ s }}</p>
@@ -151,6 +173,10 @@ const UNDO_STEPS = 30;
       gap: var(--space-2);
     }
     /* Room for "120 px" always, so the slider never moves */
+    .edges-title {
+      font-size: var(--font-size-sm, 0.875rem);
+      color: var(--color-text-muted);
+    }
     .size-value {
       display: inline-block;
       min-inline-size: 6ch;
@@ -219,6 +245,17 @@ export class CreatureCutoutDialogComponent {
   protected readonly brush = signal(6);
   /** How much one stroke of the Desvanecer brush takes away at its middle (%): a stroke again fades further. */
   protected readonly fadeStrength = signal(25);
+  /** "Desvanecer bordes": which edges of the picture the figure fades out from, and how far in (% of its shorter side). */
+  protected readonly fadeEdges = signal<CutoutEdges>(NO_EDGES);
+  protected readonly fadeWidth = signal(16);
+  protected readonly edgeButtons: { id: keyof CutoutEdges; label: string }[] = [
+    { id: 'top', label: 'Arriba' },
+    { id: 'bottom', label: 'Abajo' },
+    { id: 'left', label: 'Izquierda' },
+    { id: 'right', label: 'Derecha' },
+  ];
+  /** How much of each pixel shows with that fade (all 1 without one), kept for drawing and saving. */
+  private fades: Float32Array | null = null;
   protected readonly samReady = signal(false);
   protected readonly status = signal<string | null>('Cargando la ilustración…');
   protected readonly error = signal<string | null>(null);
@@ -338,6 +375,7 @@ export class CreatureCutoutDialogComponent {
       const scaled = await new Promise<Blob | null>((done) => canvas.toBlob(done, 'image/png'));
       this.artUrl = scaled ? URL.createObjectURL(scaled) : null;
       if (this.data.creature) note = await this.resume(this.data.creature, w, h);
+      if (!this.fades) this.refade();
       this.draw();
     } catch (e) {
       this.status.set(null);
@@ -358,6 +396,23 @@ export class CreatureCutoutDialogComponent {
     }
   }
 
+  protected toggleEdge(edge: keyof CutoutEdges): void {
+    this.fadeEdges.update((e) => ({ ...e, [edge]: !e[edge] }));
+    this.refade();
+  }
+
+  protected setFadeWidth(width: number): void {
+    this.fadeWidth.set(width);
+    this.refade();
+  }
+
+  /** The edge fade worked out again (its edges or its width changed) and shown. */
+  private refade(): void {
+    if (!this.mask) return;
+    this.fades = edgeFades(this.mask.width, this.mask.height, this.fadeWidth() / 100, this.fadeEdges());
+    this.scheduleDraw();
+  }
+
   /** The cut-out saved before, put back on the illustration to go on from it (if it says where it was cropped from). */
   private async resume(url: string, w: number, h: number): Promise<string | null> {
     try {
@@ -372,6 +427,11 @@ export class CreatureCutoutDialogComponent {
       const alpha = new Uint8ClampedArray(bitmap.width * bitmap.height);
       for (let i = 0; i < alpha.length; i++) alpha[i] = rgba[i * 4 + 3];
       this.mask = maskFromCutout(alpha, bitmap.width, bitmap.height, place, w, h);
+      // Its edge fade comes back as it was chosen (the old saves faded all four edges by 16 %)
+      const old = place.fade === undefined;
+      this.fadeEdges.set(old ? ALL_EDGES : (place.edges ?? NO_EDGES));
+      if (old || (place.fade ?? 0) > 0) this.fadeWidth.set(Math.round((place.fade ?? 0.16) * 100));
+      this.refade();
       return null;
     } catch {
       return 'No se pudo abrir el recorte guardado: este empieza desde cero.';
@@ -559,13 +619,14 @@ export class CreatureCutoutDialogComponent {
     }
   }
 
-  /** The creature's PNG: the illustration with the mask (faded at the picture's edge), cropped round it. */
+  /** The creature's PNG: the illustration with the mask (faded from the edges chosen), cropped round it. */
   private async cutout(): Promise<Blob | null> {
     if (!this.mask || !this.art) return null;
     const { width: w, height: h } = this.mask;
-    // As it is: the fades are where the Desvanecer brush put them
-    const alpha = this.mask.data;
-    const box = shownBox(alpha, w, h);
+    const fades = this.fades;
+    const alpha = fades ? this.mask.data.map((v, i) => v * fades[i]) : this.mask.data;
+    // Cropped round the figure before its fade, so the faded rim is kept and it reopens whole
+    const box = shownBox(this.mask.data, w, h);
     if (!box) {
       this.error.set('El recorte está vacío: agrega la criatura primero');
       return null;
@@ -580,7 +641,7 @@ export class CreatureCutoutDialogComponent {
     out.getContext('2d')!.drawImage(full, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
     // It keeps where it was cropped from, so it can be edited again from where it was left
     const png = new Uint8Array(await (await out.convertToBlob({ type: 'image/png' })).arrayBuffer());
-    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h, fade: 0 })], { type: 'image/png' });
+    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h, fade: this.fadeWidth() / 100, edges: this.fadeEdges() })], { type: 'image/png' });
   }
 
   private remember(): void {
@@ -625,8 +686,10 @@ export class CreatureCutoutDialogComponent {
     const src = this.art.data;
     const dst = shown.data;
     const m = this.mask.data;
+    // As it will be saved: the edge fade over the mask
+    const f = this.fades;
     for (let i = 0; i < m.length; i++) {
-      const k = (255 - m[i]) / 255;
+      const k = (255 - m[i] * (f ? f[i] : 1)) / 255;
       const o = i * 4;
       dst[o] = src[o] + (200 - src[o]) * k * 0.6;
       dst[o + 1] = src[o + 1] * (1 - k * 0.6);

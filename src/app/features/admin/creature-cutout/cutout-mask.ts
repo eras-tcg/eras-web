@@ -1,4 +1,4 @@
-import { CutoutPlace } from '@ui/domain/creature-summon/cutout-place';
+import { ALL_EDGES, CutoutEdges, CutoutPlace, NO_EDGES } from '@ui/domain/creature-summon/cutout-place';
 
 /**
  * A cut-out's mask: one byte per pixel of the illustration (0 outside the creature, 255 inside), row by row. The editor
@@ -77,11 +77,27 @@ export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array
   }
 }
 
-/** How much of a pixel at (x, y) the old saves left near the picture's edge (`fade` of its shorter side, 0 at it). */
-function edgeFade(x: number, y: number, w: number, h: number, fade: number): number {
+/**
+ * How much of a pixel at (x, y) shows when the figure fades out from the chosen `edges` of a picture `w`×`h`: nothing at
+ * those edges, rising evenly to all of it `fade` of the picture's shorter side in.
+ */
+export function edgeFade(x: number, y: number, w: number, h: number, fade: number, edges: CutoutEdges): number {
   if (fade <= 0) return 1;
-  const near = Math.min(x, w - 1 - x, y, h - 1 - y);
+  let near = Infinity;
+  if (edges.left) near = Math.min(near, x);
+  if (edges.right) near = Math.min(near, w - 1 - x);
+  if (edges.top) near = Math.min(near, y);
+  if (edges.bottom) near = Math.min(near, h - 1 - y);
+  if (near === Infinity) return 1;
   return Math.pow(Math.min(1, near / (fade * Math.min(w, h))), 1.5);
+}
+
+/** How much of each pixel of a picture `w`×`h` shows with that fade (all 1 without one). */
+export function edgeFades(w: number, h: number, fade: number, edges: CutoutEdges): Float32Array {
+  const out = new Float32Array(w * h).fill(1);
+  if (fade <= 0 || (!edges.top && !edges.right && !edges.bottom && !edges.left)) return out;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = edgeFade(x, y, w, h, fade, edges);
+  return out;
 }
 
 /**
@@ -93,15 +109,16 @@ export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number,
   const W = place.width;
   const H = place.height;
   const fade = place.fade ?? 0.16;
+  const edges = place.fade === undefined ? ALL_EDGES : (place.edges ?? NO_EDGES);
   // An old save faded the picture's edge out and cropped off the rim it left clear: on the sides it reached, the rim is
   // filled from just inside it (where the fade still kept the picture)
   const inner = fade > 0 ? Math.ceil(0.45 * fade * Math.min(W, H)) : 0;
   const band = 0.08 * Math.min(W, H);
   const lost = {
-    left: fade > 0 && place.x <= band,
-    top: fade > 0 && place.y <= band,
-    right: fade > 0 && W - (place.x + cw) <= band,
-    bottom: fade > 0 && H - (place.y + ch) <= band,
+    left: fade > 0 && edges.left && place.x <= band,
+    top: fade > 0 && edges.top && place.y <= band,
+    right: fade > 0 && edges.right && W - (place.x + cw) <= band,
+    bottom: fade > 0 && edges.bottom && H - (place.y + ch) <= band,
   };
   for (let y = 0; y < height; y++) {
     let py = Math.floor((y * H) / height);
@@ -117,7 +134,7 @@ export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number,
       if (sx < 0 || sx >= cw) continue;
       const a = alpha[sy * cw + sx];
       if (!a) continue;
-      const f = edgeFade(px, py, W, H, fade);
+      const f = edgeFade(px, py, W, H, fade, edges);
       mask.data[y * width + x] = f > 0.02 ? Math.min(255, a / f) : 255;
     }
   }

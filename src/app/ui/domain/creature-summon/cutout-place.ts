@@ -9,11 +9,23 @@ export interface CutoutPlace {
   width: number;
   height: number;
   /**
-   * How much of the picture's shorter side the save faded out at its edge: 0 now (the editor's Desvanecer brush puts a
-   * fade where it is wanted); cut-outs saved before say nothing, and had 0.16.
+   * How far in from the picture's edges the save faded the figure out, as a share of the picture's shorter side, and from
+   * which edges (the editor's "Desvanecer bordes"). Cut-outs saved before say nothing: all four edges at 0.16.
    */
   fade?: number;
+  edges?: CutoutEdges;
 }
+
+/** The picture's edges a cut-out fades out from. */
+export interface CutoutEdges {
+  top: boolean;
+  right: boolean;
+  bottom: boolean;
+  left: boolean;
+}
+
+export const ALL_EDGES: CutoutEdges = { top: true, right: true, bottom: true, left: true };
+export const NO_EDGES: CutoutEdges = { top: false, right: false, bottom: false, left: false };
 
 /** The PNG text chunk keeping it (the cut-out tool of the batch writes the same). */
 const PLACE_KEY = 'eras-cutout';

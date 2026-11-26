@@ -256,7 +256,7 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, chips and dust thrown out from its edges and a glow fades on it
+   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, chips and dust thrown out from its edges, and the cards around it hop and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
@@ -327,6 +327,32 @@ export class CardMotions {
     );
     quake(this.document, this.animations, 0.6, delay);
     this.debris(host, at, w, h, color, delay, !lying);
+    this.hop(card, center, Math.max(rect.width, rect.height), delay);
+  }
+
+  /**
+   * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
+   * around it hop off the table and drop back, the nearest first and highest, as the blow spreads.
+   */
+  private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number): void {
+    const reach = size * 3.2;
+    for (const other of this.document.querySelectorAll<HTMLElement>('[data-instance-id] > eras-sim-card eras-game-card')) {
+      if (other === card) continue;
+      const r = other.getBoundingClientRect();
+      const d = Math.hypot(r.left + r.width / 2 - at.x, r.top + r.height / 2 - at.y);
+      const up = 12 * (1 - d / reach);
+      if (up < 1.5) continue;
+      other.animate(
+        [
+          { translate: '0 0', scale: '1', easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
+          { translate: `0 ${-up}px`, scale: `${1 + up * 0.004}`, offset: 0.35, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
+          { translate: `0 ${up * 0.12}px`, scale: '1', offset: 0.72 },
+          { translate: '0 0', scale: '1' },
+        ],
+        // It reaches them as it spreads: a little later the farther they are
+        { duration: TIMING.hop, delay: delay + d * 0.25 },
+      );
+    }
   }
 
   /**

@@ -26,10 +26,12 @@ export const TIMING = {
   move: 520,
   /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
   slide: 450,
-  summon: 720,
+  summon: 560,
   burst: 750,
   /** The life lost turning face up on its pile. */
   lifeFlip: 480,
+  /** The cards around a summoned one hopping as it lands (each one's hop). */
+  hop: 360,
   /** The table jolting under a blow (an attack landing, a card breaking, a summon landing). */
   quake: 380,
   /** A deck shuffled: it shakes. */

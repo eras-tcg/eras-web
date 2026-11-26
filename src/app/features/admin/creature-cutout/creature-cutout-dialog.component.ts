@@ -11,7 +11,7 @@ import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { firstValueFrom } from 'rxjs';
 import { Mask, combine, dab, edgeFades, emptyMask, fadeDab, maskFromCutout, shownBox } from './cutout-mask';
-import { ALL_EDGES, CutoutEdges, NO_EDGES, placeOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
+import { CutoutSides, NO_SIDES, placeOf, sidesOf, withPlace } from '@ui/domain/creature-summon/cutout-place';
 import { CutoutSam } from './cutout-sam';
 
 export interface CreatureCutoutData {
@@ -74,27 +74,23 @@ const UNDO_STEPS = 30;
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!mask" (click)="clear()">Limpiar</button>
         </div>
       </div>
-      <!-- An even fade from the picture's edges chosen, as wide as asked (seen as it will be saved) -->
+      <!-- An even fade from each edge of the picture, each as far in as asked (0: none; seen as it will be saved) -->
       <div class="tools" role="group" aria-label="Desvanecer bordes">
         <span class="edges-title">Desvanecer bordes:</span>
-        <div class="group">
-          @for (e of edgeButtons; track e.id) {
-            <button
-              erasButton
-              size="sm"
-              type="button"
-              [variant]="fadeEdges()[e.id] ? 'primary' : 'secondary'"
-              [attr.aria-pressed]="fadeEdges()[e.id]"
-              (click)="toggleEdge(e.id)"
-            >
-              {{ e.label }}
-            </button>
-          }
-        </div>
-        <label class="size">
-          Ancho: <span class="size-value">{{ fadeWidth() }} %</span>
-          <input type="range" min="2" max="40" step="1" aria-label="Ancho del desvanecido de bordes" [value]="fadeWidth()" (input)="setFadeWidth(+$any($event.target).value)" />
-        </label>
+        @for (e of edgeSides; track e.id) {
+          <label class="size side">
+            {{ e.label }}: <span class="size-value">{{ fadeSides()[e.id] }} %</span>
+            <input
+              type="range"
+              min="0"
+              max="40"
+              step="1"
+              [attr.aria-label]="'Desvanecer desde ' + e.label.toLowerCase()"
+              [value]="fadeSides()[e.id]"
+              (input)="setSide(e.id, +$any($event.target).value)"
+            />
+          </label>
+        }
       </div>
       @if (status(); as s) {
         <p class="status" aria-live="polite">{{ s }}</p>
@@ -186,6 +182,9 @@ const UNDO_STEPS = 30;
     .size input {
       inline-size: 160px;
     }
+    .side input {
+      inline-size: 110px;
+    }
     /* Where the brush or the eraser reaches, round the pointer */
     .reach {
       position: absolute;
@@ -247,10 +246,9 @@ export class CreatureCutoutDialogComponent {
   protected readonly brush = signal(6);
   /** How much one stroke of the Desvanecer brush takes away at its middle (%): a stroke again fades further. */
   protected readonly fadeStrength = signal(25);
-  /** "Desvanecer bordes": which edges of the picture the figure fades out from, and how far in (% of its shorter side). */
-  protected readonly fadeEdges = signal<CutoutEdges>(NO_EDGES);
-  protected readonly fadeWidth = signal(16);
-  protected readonly edgeButtons: { id: keyof CutoutEdges; label: string }[] = [
+  /** "Desvanecer bordes": how far in the figure fades out from each edge of the picture (% of its shorter side; 0: none). */
+  protected readonly fadeSides = signal<CutoutSides>(NO_SIDES);
+  protected readonly edgeSides: { id: keyof CutoutSides; label: string }[] = [
     { id: 'top', label: 'Arriba' },
     { id: 'bottom', label: 'Abajo' },
     { id: 'left', label: 'Izquierda' },
@@ -408,20 +406,21 @@ export class CreatureCutoutDialogComponent {
     }
   }
 
-  protected toggleEdge(edge: keyof CutoutEdges): void {
-    this.fadeEdges.update((e) => ({ ...e, [edge]: !e[edge] }));
+  protected setSide(side: keyof CutoutSides, percent: number): void {
+    this.fadeSides.update((s) => ({ ...s, [side]: percent }));
     this.refade();
   }
 
-  protected setFadeWidth(width: number): void {
-    this.fadeWidth.set(width);
-    this.refade();
+  /** The sides as shares of the picture's shorter side (as saved). */
+  private sides(): CutoutSides {
+    const s = this.fadeSides();
+    return { top: s.top / 100, right: s.right / 100, bottom: s.bottom / 100, left: s.left / 100 };
   }
 
   /** The edge fade worked out again (its edges or its width changed) and shown. */
   private refade(): void {
     if (!this.mask) return;
-    this.fades = edgeFades(this.mask.width, this.mask.height, this.fadeWidth() / 100, this.fadeEdges());
+    this.fades = edgeFades(this.mask.width, this.mask.height, this.sides());
     this.scheduleDraw();
   }
 
@@ -440,9 +439,9 @@ export class CreatureCutoutDialogComponent {
       for (let i = 0; i < alpha.length; i++) alpha[i] = rgba[i * 4 + 3];
       this.mask = maskFromCutout(alpha, bitmap.width, bitmap.height, place, w, h);
       // Its edge fade comes back as it was chosen (the old saves faded all four edges by 16 %)
-      const old = place.fade === undefined;
-      this.fadeEdges.set(old ? ALL_EDGES : (place.edges ?? NO_EDGES));
-      if (old || (place.fade ?? 0) > 0) this.fadeWidth.set(Math.round((place.fade ?? 0.16) * 100));
+      const sides = sidesOf(place);
+      const pct = (v: number) => Math.round(v * 100);
+      this.fadeSides.set({ top: pct(sides.top), right: pct(sides.right), bottom: pct(sides.bottom), left: pct(sides.left) });
       this.refade();
       return null;
     } catch {
@@ -653,7 +652,7 @@ export class CreatureCutoutDialogComponent {
     out.getContext('2d')!.drawImage(full, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
     // It keeps where it was cropped from, so it can be edited again from where it was left
     const png = new Uint8Array(await (await out.convertToBlob({ type: 'image/png' })).arrayBuffer());
-    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h, fade: this.fadeWidth() / 100, edges: this.fadeEdges() })], { type: 'image/png' });
+    return new Blob([withPlace(png, { x: box.x, y: box.y, width: w, height: h, fade: 0, sides: this.sides() })], { type: 'image/png' });
   }
 
   private remember(): void {

@@ -104,20 +104,21 @@ describe('cut-out place', () => {
     expect(back.data[200 * 400 + 200]).toBe(255);
   });
 
-  it('fades evenly from the chosen edges only', () => {
-    const top = { top: true, right: false, bottom: false, left: false };
-    expect(edgeFade(50, 0, 100, 100, 0.2, top)).toBe(0);
-    expect(edgeFade(50, 10, 100, 100, 0.2, top)).toBeCloseTo(Math.pow(0.5, 1.5));
-    expect(edgeFade(50, 20, 100, 100, 0.2, top)).toBe(1);
-    // The left edge is not chosen: no fade there
-    expect(edgeFade(0, 50, 100, 100, 0.2, top)).toBe(1);
+  it('fades evenly from each edge as far in as it says', () => {
+    const sides = { top: 0.2, right: 0, bottom: 0, left: 0.1 };
+    expect(edgeFade(50, 0, 100, 100, sides)).toBe(0);
+    expect(edgeFade(50, 10, 100, 100, sides)).toBeCloseTo(Math.pow(0.5, 1.5));
+    expect(edgeFade(50, 20, 100, 100, sides)).toBe(1);
+    expect(edgeFade(5, 50, 100, 100, sides)).toBeCloseTo(Math.pow(0.5, 1.5));
+    // The right edge is not faded
+    expect(edgeFade(99, 50, 100, 100, sides)).toBe(1);
   });
 
   it('puts back a cut-out faded from some edges, undoing only those', () => {
-    const edges = { top: true, right: false, bottom: false, left: false };
+    const sides = { top: 0.2, right: 0, bottom: 0, left: 0 };
     const crop = new Uint8ClampedArray(100 * 100);
-    for (let y = 0; y < 100; y++) for (let x = 0; x < 100; x++) crop[y * 100 + x] = 255 * edgeFade(x, y, 100, 100, 0.2, edges);
-    const back = maskFromCutout(crop, 100, 100, { x: 0, y: 0, width: 100, height: 100, fade: 0.2, edges }, 100, 100);
+    for (let y = 0; y < 100; y++) for (let x = 0; x < 100; x++) crop[y * 100 + x] = 255 * edgeFade(x, y, 100, 100, sides);
+    const back = maskFromCutout(crop, 100, 100, { x: 0, y: 0, width: 100, height: 100, fade: 0, sides }, 100, 100);
     expect(back.data[10 * 100 + 50]).toBeGreaterThan(250);
     expect(back.data[50 * 100 + 0]).toBe(255);
   });

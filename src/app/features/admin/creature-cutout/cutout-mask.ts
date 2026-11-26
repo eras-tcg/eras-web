@@ -1,4 +1,4 @@
-import { ALL_EDGES, CutoutEdges, CutoutPlace, NO_EDGES } from '@ui/domain/creature-summon/cutout-place';
+import { CutoutPlace, CutoutSides, sidesOf } from '@ui/domain/creature-summon/cutout-place';
 
 /**
  * A cut-out's mask: one byte per pixel of the illustration (0 outside the creature, 255 inside), row by row. The editor
@@ -78,25 +78,27 @@ export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array
 }
 
 /**
- * How much of a pixel at (x, y) shows when the figure fades out from the chosen `edges` of a picture `w`×`h`: nothing at
- * those edges, rising evenly to all of it `fade` of the picture's shorter side in.
+ * How much of a pixel at (x, y) shows when the figure fades out from the edges of a picture `w`×`h`, each as far in as
+ * `sides` says (a share of its shorter side): nothing at an edge, rising evenly to all of it that far in.
  */
-export function edgeFade(x: number, y: number, w: number, h: number, fade: number, edges: CutoutEdges): number {
-  if (fade <= 0) return 1;
-  let near = Infinity;
-  if (edges.left) near = Math.min(near, x);
-  if (edges.right) near = Math.min(near, w - 1 - x);
-  if (edges.top) near = Math.min(near, y);
-  if (edges.bottom) near = Math.min(near, h - 1 - y);
-  if (near === Infinity) return 1;
-  return Math.pow(Math.min(1, near / (fade * Math.min(w, h))), 1.5);
+export function edgeFade(x: number, y: number, w: number, h: number, sides: CutoutSides): number {
+  const short = Math.min(w, h);
+  let f = 1;
+  const side = (near: number, width: number) => {
+    if (width > 0) f = Math.min(f, Math.pow(Math.min(1, near / (width * short)), 1.5));
+  };
+  side(x, sides.left);
+  side(w - 1 - x, sides.right);
+  side(y, sides.top);
+  side(h - 1 - y, sides.bottom);
+  return f;
 }
 
 /** How much of each pixel of a picture `w`×`h` shows with that fade (all 1 without one). */
-export function edgeFades(w: number, h: number, fade: number, edges: CutoutEdges): Float32Array {
+export function edgeFades(w: number, h: number, sides: CutoutSides): Float32Array {
   const out = new Float32Array(w * h).fill(1);
-  if (fade <= 0 || (!edges.top && !edges.right && !edges.bottom && !edges.left)) return out;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = edgeFade(x, y, w, h, fade, edges);
+  if (!sides.top && !sides.right && !sides.bottom && !sides.left) return out;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = edgeFade(x, y, w, h, sides);
   return out;
 }
 
@@ -108,33 +110,33 @@ export function maskFromCutout(alpha: Uint8ClampedArray, cw: number, ch: number,
   const mask = emptyMask(width, height);
   const W = place.width;
   const H = place.height;
-  const fade = place.fade ?? 0.16;
-  const edges = place.fade === undefined ? ALL_EDGES : (place.edges ?? NO_EDGES);
-  // An old save faded the picture's edge out and cropped off the rim it left clear: on the sides it reached, the rim is
-  // filled from just inside it (where the fade still kept the picture)
-  const inner = fade > 0 ? Math.ceil(0.45 * fade * Math.min(W, H)) : 0;
-  const band = 0.08 * Math.min(W, H);
+  const sides = sidesOf(place);
+  // A save that faded an edge out may have cropped off the rim it left clear: on those sides the rim is filled from
+  // just inside it (where the fade still kept the picture)
+  const short = Math.min(W, H);
+  const inner = (side: number) => Math.ceil(0.45 * side * short);
+  const band = (side: number) => Math.max(0.08 * short, 0.5 * side * short);
   const lost = {
-    left: fade > 0 && edges.left && place.x <= band,
-    top: fade > 0 && edges.top && place.y <= band,
-    right: fade > 0 && edges.right && W - (place.x + cw) <= band,
-    bottom: fade > 0 && edges.bottom && H - (place.y + ch) <= band,
+    left: sides.left > 0 && place.x <= band(sides.left),
+    top: sides.top > 0 && place.y <= band(sides.top),
+    right: sides.right > 0 && W - (place.x + cw) <= band(sides.right),
+    bottom: sides.bottom > 0 && H - (place.y + ch) <= band(sides.bottom),
   };
   for (let y = 0; y < height; y++) {
     let py = Math.floor((y * H) / height);
-    if (lost.top) py = Math.max(py, inner, place.y);
-    if (lost.bottom) py = Math.min(py, H - 1 - inner, place.y + ch - 1);
+    if (lost.top) py = Math.max(py, inner(sides.top), place.y);
+    if (lost.bottom) py = Math.min(py, H - 1 - inner(sides.bottom), place.y + ch - 1);
     const sy = py - place.y;
     if (sy < 0 || sy >= ch) continue;
     for (let x = 0; x < width; x++) {
       let px = Math.floor((x * W) / width);
-      if (lost.left) px = Math.max(px, inner, place.x);
-      if (lost.right) px = Math.min(px, W - 1 - inner, place.x + cw - 1);
+      if (lost.left) px = Math.max(px, inner(sides.left), place.x);
+      if (lost.right) px = Math.min(px, W - 1 - inner(sides.right), place.x + cw - 1);
       const sx = px - place.x;
       if (sx < 0 || sx >= cw) continue;
       const a = alpha[sy * cw + sx];
       if (!a) continue;
-      const f = edgeFade(px, py, W, H, fade, edges);
+      const f = edgeFade(px, py, W, H, sides);
       mask.data[y * width + x] = f > 0.02 ? Math.min(255, a / f) : 255;
     }
   }

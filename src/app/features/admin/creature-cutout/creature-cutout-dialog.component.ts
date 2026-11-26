@@ -91,7 +91,7 @@ const UNDO_STEPS = 30;
       </div>
       <p class="hint">
         Agregar o Quitar parte: un clic sobre ella. Pincel y Borrador: arrastrar. Lo que queda fuera se ve en magenta.
-        Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer. Ctrl + Y: rehacer.
+        Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer. Ctrl + Y: rehacer. Alt: ver la ilustración sin la máscara.
       </p>
       <footer class="actions">
         @if (data.creature) {
@@ -252,6 +252,8 @@ export class CreatureCutoutDialogComponent {
   private sam: CutoutSam | null = null;
   private history: Uint8ClampedArray[] = [];
   private future: Uint8ClampedArray[] = [];
+  /** Alt held: the illustration without the mask. */
+  private plain = false;
   private stroke: { x: number; y: number } | null = null;
   private frame = 0;
 
@@ -273,6 +275,11 @@ export class CreatureCutoutDialogComponent {
         if (key === 'y' || event.shiftKey) this.redo();
         else this.undo();
       }
+      // Alt held: the illustration as it is, without the magenta over what is left out
+      if (event.key === 'Alt') {
+        event.preventDefault();
+        this.showPlain(event.type === 'keydown');
+      }
       if (event.key === ' ') {
         this.space = event.type === 'keydown';
         if ((event.target as HTMLElement).tagName !== 'INPUT') event.preventDefault();
@@ -280,10 +287,14 @@ export class CreatureCutoutDialogComponent {
     };
     document.addEventListener('keydown', keys);
     document.addEventListener('keyup', keys);
+    // Alt let go while the window was elsewhere: back to the mask
+    const blur = () => this.showPlain(false);
+    window.addEventListener('blur', blur);
     const destroy = inject(DestroyRef);
     destroy.onDestroy(() => {
       document.removeEventListener('keydown', keys);
       document.removeEventListener('keyup', keys);
+      window.removeEventListener('blur', blur);
       cancelAnimationFrame(this.frame);
       if (this.artUrl) URL.revokeObjectURL(this.artUrl);
       this.endPreview();
@@ -566,8 +577,19 @@ export class CreatureCutoutDialogComponent {
   }
 
   /** The illustration with what is left out of the creature tinted magenta. */
+  /** Shows the illustration alone (Alt held) or with the mask over it again. */
+  private showPlain(plain: boolean): void {
+    if (plain === this.plain) return;
+    this.plain = plain;
+    this.draw();
+  }
+
   private draw(): void {
     if (!this.art || !this.mask) return;
+    if (this.plain) {
+      this.canvas().nativeElement.getContext('2d')!.putImageData(this.art, 0, 0);
+      return;
+    }
     const shown = new ImageData(this.art.width, this.art.height);
     const src = this.art.data;
     const dst = shown.data;

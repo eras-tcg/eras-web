@@ -53,13 +53,14 @@ const UNDO_STEPS = 30;
         </div>
         @if (tool() === 'paint' || tool() === 'erase') {
           <label class="size">
-            Tamaño: {{ brush() }} px
+            Tamaño: <span class="size-value">{{ brush() }} px</span>
             <input type="range" min="1" max="120" step="1" aria-label="Tamaño del pincel" [value]="brush()" (input)="brush.set(+$any($event.target).value)" />
           </label>
         }
         <div class="group">
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="zoom() === 1" (click)="fit()">Ajustar ({{ zoomText() }})</button>
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!undoable()" (click)="undo()">Deshacer</button>
+          <button erasButton variant="ghost" size="sm" type="button" [disabled]="!redoable()" (click)="redo()">Rehacer</button>
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="!mask" (click)="clear()">Limpiar</button>
         </div>
       </div>
@@ -79,14 +80,18 @@ const UNDO_STEPS = 30;
           [style.height.px]="view().h"
           (pointerdown)="down($event)"
           (pointermove)="move($event)"
+          (pointerleave)="hover.set(null)"
           (pointerup)="up()"
           (pointercancel)="up()"
           (contextmenu)="$event.preventDefault()"
         ></canvas>
+        @if (reach(); as r) {
+          <span class="reach" aria-hidden="true" [style.left.px]="r.x" [style.top.px]="r.y" [style.width.px]="r.d" [style.height.px]="r.d"></span>
+        }
       </div>
       <p class="hint">
         Agregar o Quitar parte: un clic sobre ella. Pincel y Borrador: arrastrar. Lo que queda fuera se ve en magenta.
-        Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer.
+        Ctrl + rueda: acercar o alejar. Rueda, botón central o espacio + arrastrar: mover la vista. Ctrl + Z: deshacer. Ctrl + Y: rehacer.
       </p>
       <footer class="actions">
         @if (data.creature) {
@@ -135,6 +140,24 @@ const UNDO_STEPS = 30;
       display: flex;
       align-items: center;
       gap: var(--space-2);
+    }
+    /* Room for "120 px" always, so the slider never moves */
+    .size-value {
+      display: inline-block;
+      min-inline-size: 6ch;
+      font-variant-numeric: tabular-nums;
+    }
+    .size input {
+      inline-size: 160px;
+    }
+    /* Where the brush or the eraser reaches, round the pointer */
+    .reach {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid #fff;
+      box-shadow: 0 0 0 1px rgb(0 0 0 / 80%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
     }
     .status,
     .hint {
@@ -188,6 +211,16 @@ export class CreatureCutoutDialogComponent {
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly undoable = signal(false);
+  protected readonly redoable = signal(false);
+  /** Where the pointer is over the illustration (in its box), for the brush's reach. */
+  protected readonly hover = signal<{ x: number; y: number } | null>(null);
+  /** The circle the brush or the eraser reaches, as big as it is on screen. */
+  protected readonly reach = computed(() => {
+    const at = this.hover();
+    if (!at || (this.tool() !== 'paint' && this.tool() !== 'erase') || this.panning()) return null;
+    const scale = this.view().w / (this.artSize().w || 1);
+    return { x: at.x, y: at.y, d: Math.max(2, this.brush() * scale) };
+  });
   protected readonly previewUrl = signal<string | null>(null);
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
@@ -218,6 +251,7 @@ export class CreatureCutoutDialogComponent {
   private artUrl: string | null = null;
   private sam: CutoutSam | null = null;
   private history: Uint8ClampedArray[] = [];
+  private future: Uint8ClampedArray[] = [];
   private stroke: { x: number; y: number } | null = null;
   private frame = 0;
 
@@ -229,11 +263,15 @@ export class CreatureCutoutDialogComponent {
       destroy.onDestroy(() => resize.disconnect());
       void this.start();
     });
-    // Ctrl + Z undoes; the space bar held moves the view while dragging
+    // Ctrl + Z undoes and Ctrl + Y (or Ctrl + Shift + Z) redoes, a step per press (a key held does not repeat it); the
+    // space bar held moves the view while dragging
     const keys = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
         event.preventDefault();
-        if (this.undoable()) this.undo();
+        if (event.type !== 'keydown' || event.repeat) return;
+        if (key === 'y' || event.shiftKey) this.redo();
+        else this.undo();
       }
       if (event.key === ' ') {
         this.space = event.type === 'keydown';
@@ -396,6 +434,8 @@ export class CreatureCutoutDialogComponent {
   }
 
   protected move(event: PointerEvent): void {
+    const box = this.box().nativeElement.getBoundingClientRect();
+    this.hover.set({ x: event.clientX - box.left, y: event.clientY - box.top });
     if (!this.stroke || !this.mask) return;
     const at = this.pointAt(event);
     const add = this.tool() === 'paint';
@@ -415,9 +455,25 @@ export class CreatureCutoutDialogComponent {
 
   protected undo(): void {
     const last = this.history.pop();
-    if (last && this.mask) this.mask = { ...this.mask, data: last };
-    this.undoable.set(this.history.length > 0);
+    if (!last || !this.mask) return;
+    this.future.push(this.mask.data);
+    this.mask = { ...this.mask, data: last };
+    this.steps();
     this.draw();
+  }
+
+  protected redo(): void {
+    const next = this.future.pop();
+    if (!next || !this.mask) return;
+    this.history.push(this.mask.data);
+    this.mask = { ...this.mask, data: next };
+    this.steps();
+    this.draw();
+  }
+
+  private steps(): void {
+    this.undoable.set(this.history.length > 0);
+    this.redoable.set(this.future.length > 0);
   }
 
   protected clear(): void {
@@ -489,7 +545,9 @@ export class CreatureCutoutDialogComponent {
     if (!this.mask) return;
     this.history.push(this.mask.data.slice());
     if (this.history.length > UNDO_STEPS) this.history.shift();
-    this.undoable.set(true);
+    // A new change: what was undone cannot be redone any more
+    this.future = [];
+    this.steps();
   }
 
   /** Where the pointer is, in pixels of the illustration. */

@@ -61,9 +61,20 @@ function adder(document: Document, host: HTMLElement, position: string, runs: Pr
 
 /**
  * The card completed (`at`, `w`×`h`, in its host's pixels): when `filled`, the card's shape lit full in `color` with a
- * line of light round it, fading; and a flash of white and `color` that swells off it. After `delay`; `d` scales them.
+ * line of light round it, fading; and a flash of white and `color` that swells off it. After `delay`; `d` scales them;
+ * `strength` (0 to 1) how bright they get.
  */
-function completed(add: ReturnType<typeof adder>, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, d: number, filled: boolean): HTMLElement[] {
+function completed(
+  add: ReturnType<typeof adder>,
+  at: { x: number; y: number },
+  w: number,
+  h: number,
+  color: string,
+  delay: number,
+  d: number,
+  filled: boolean,
+  strength = 1,
+): HTMLElement[] {
   const box = { left: `${at.x - w / 2}px`, top: `${at.y - h / 2}px`, width: `${w}px`, height: `${h}px`, zIndex: LAYER.fx, borderRadius: 'var(--radius-card)', mixBlendMode: 'screen' };
   const made: HTMLElement[] = [];
   if (filled) {
@@ -71,13 +82,13 @@ function completed(add: ReturnType<typeof adder>, at: { x: number; y: number }, 
       add(
         {
           ...box,
-          border: '1.5px solid #fff',
+          border: `1.5px solid rgb(255 255 255 / ${Math.round(strength * 100)}%)`,
           background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${color} 70%, transparent) 35%, color-mix(in srgb, ${color} 30%, transparent) 80%)`,
           boxShadow: `0 0 8px 2px ${color}, inset 0 0 10px 2px ${color}`,
         },
         [
           { opacity: 0, transform: 'scale(0.94)' },
-          { opacity: 1, transform: 'scale(1)', offset: 0.2 },
+          { opacity: strength, transform: 'scale(1)', offset: 0.2 },
           { opacity: 0, transform: 'scale(1)' },
         ],
         { duration: d * 0.3, delay, easing: 'ease-out' },
@@ -89,7 +100,7 @@ function completed(add: ReturnType<typeof adder>, at: { x: number; y: number }, 
       { ...box, background: `radial-gradient(ellipse at center, #fff, color-mix(in srgb, ${color} 60%, transparent) 60%, transparent)` },
       [
         { opacity: 0, transform: 'scale(0.9)' },
-        { opacity: 1, transform: 'scale(1.02)', offset: 0.2 },
+        { opacity: strength, transform: 'scale(1.02)', offset: 0.2 },
         { opacity: 0, transform: 'scale(1.2)' },
       ],
       { duration: d * 0.35, delay: delay + (filled ? d * 0.04 : 0), easing: 'ease-out' },
@@ -295,8 +306,8 @@ function materialization(document: Document, animations: BoardAnimations, card: 
 
 /**
  * Evolución, a creature evolving: four strands of green life coil round the card in a circle, rising off the table as
- * they turn, like a helix, motes of it rising up the middle with them; then the card is completed: lit full in green,
- * it flashes. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
+ * they turn, like a helix, motes of it rising up the middle with them, as the card is lit faintly in green and
+ * flashes. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
  */
 function evolution(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.evolution;
@@ -359,10 +370,10 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
       { duration: d * (0.45 + Math.random() * 0.2), delay: d * (0.08 + Math.random() * 0.4), easing: 'cubic-bezier(0.3, 0.2, 0.6, 1)' },
     );
   }
-  // The card completed, in green, as the strands have risen: in a layer of its own (its blending would flatten the
+  // The card lit, faintly, in green as the strands start: in a layer of its own (its blending would flatten the
   // helix's layer, which rises in depth)
   const top = overlayFor(document, card, LAYER.fx);
-  const done = completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, LIFE, d * 0.6, d, true);
+  const done = completed(adder(document, top.host, top.position, runs), top.at(screen.x, screen.y), w, h, LIFE, 0, d, true, 0.4);
   done.forEach(keep);
   return Promise.all(runs).then(() => {
     made.forEach((el) => el.remove());

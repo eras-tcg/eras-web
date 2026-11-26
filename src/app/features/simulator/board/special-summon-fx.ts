@@ -60,104 +60,115 @@ function adder(document: Document, host: HTMLElement, position: string, runs: Pr
 }
 
 /**
- * Ascenso, a promotion in rank: a pillar of golden light rises from the card, and a rank's insignia builds up over it,
- * chevron after chevron, crowned by a star, then rises off and fades; golden sparks go up with it. Seen from in front
- * (flat on the screen), as a banner raised over the card.
+ * Ascenso, a promotion in rank: a laurel wreath of gold grows round the card as it lies, two branches rising leaf by
+ * leaf from its foot to meet over its head; then the wreath flashes, a golden ring of honor opens from it across the
+ * table and embers of gold rise. Lying on the table as the card does.
  */
 function promotion(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.promotion;
-  const over = overlayFor(document, null, LAYER.fx);
-  const { screen, rect } = measure(card, over);
+  const over = overlayFor(document, card, LAYER.fx);
+  const { at, w, h } = measure(card, over);
   const runs: Promise<unknown>[] = [];
   const made: HTMLElement[] = [];
-  const add = adder(document, document.body, 'fixed', runs);
+  const add = adder(document, over.host, over.position, runs);
   const keep = (el: HTMLElement) => (made.push(el), el);
   animations.hold(d);
-  const tall = Math.max(rect.height * 2.6, 220);
-  const beamW = rect.width * 0.9;
-  // The pillar of light: from the card up, widening at its foot, fading at its top
-  keep(
+  // The wreath: an oval round the card, each branch a stem along one side with leaves set along it, outward and inward
+  const rx = w * 0.78;
+  const ry = h * 0.66;
+  const pad = 24;
+  const vw = rx * 2 + pad * 2;
+  const vh = ry * 2 + pad * 2;
+  const wreath = keep(
     add(
-      {
-        left: `${screen.x - beamW / 2}px`,
-        top: `${screen.y - tall}px`,
-        width: `${beamW}px`,
-        height: `${tall}px`,
-        zIndex: LAYER.fx,
-        background: `linear-gradient(to top, ${GOLD_LIGHT}, color-mix(in srgb, ${GOLD} 70%, transparent) 30%, transparent)`,
-        clipPath: 'polygon(30% 0, 70% 0, 100% 100%, 0 100%)',
-        filter: 'blur(4px)',
-        mixBlendMode: 'screen',
-        transformOrigin: '50% 100%',
-      },
+      { left: `${at.x - vw / 2}px`, top: `${at.y - vh / 2}px`, width: `${vw}px`, height: `${vh}px`, zIndex: LAYER.fx, overflow: 'visible', filter: `drop-shadow(0 0 4px ${GOLD}) drop-shadow(0 1px 2px rgb(0 0 0 / 70%))` },
       [
-        { opacity: 0, transform: 'scaleY(0.1)' },
-        { opacity: 0.9, transform: 'scaleY(1)', offset: 0.25 },
-        { opacity: 0.7, transform: 'scaleY(1)', offset: 0.7 },
-        { opacity: 0, transform: 'scaleY(1.05) scaleX(0.6)' },
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 1, transform: 'scale(1)', offset: 0.62 },
+        { opacity: 1, transform: 'scale(1.04)', filter: `brightness(1.8) drop-shadow(0 0 10px ${GOLD})`, offset: 0.7 },
+        { opacity: 0, transform: 'scale(1.1)' },
       ],
-      { duration: d, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-    ),
-  );
-  // The insignia: three chevrons stacking up from below, then a star over them; all of it rises and fades
-  const size = rect.width * 0.9;
-  const insignia = keep(
-    add(
-      {
-        left: `${screen.x - size / 2}px`,
-        top: `${screen.y - size * 0.9}px`,
-        width: `${size}px`,
-        height: `${size}px`,
-        zIndex: LAYER.fx,
-        overflow: 'visible',
-        filter: `drop-shadow(0 0 6px ${GOLD}) drop-shadow(0 2px 4px rgb(0 0 0 / 60%))`,
-      },
-      [
-        { opacity: 1, transform: 'translateY(0) scale(1)' },
-        { opacity: 1, transform: 'translateY(0) scale(1)', offset: 0.68 },
-        { opacity: 0, transform: `translateY(${-size * 0.5}px) scale(1.1)` },
-      ],
-      { duration: d, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' },
+      { duration: d, easing: 'ease-out' },
       'svg',
     ),
   );
-  insignia.setAttribute('viewBox', '0 0 100 100');
-  const chevron = (y: number) => `<path d="M14 ${y} L50 ${y - 16} L86 ${y} L86 ${y + 11} L50 ${y - 5} L14 ${y + 11} Z"/>`;
-  const star = (cx: number, cy: number, r: number) =>
-    `<path d="${Array.from({ length: 10 }, (_, i) => {
-      const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-      const k = i % 2 ? r * 0.45 : r;
-      return `${i ? 'L' : 'M'}${(cx + Math.cos(a) * k).toFixed(1)} ${(cy + Math.sin(a) * k).toFixed(1)}`;
-    }).join(' ')} Z"/>`;
-  const parts = [chevron(92), chevron(72), chevron(52), star(50, 18, 13)];
-  insignia.innerHTML = parts
-    .map((p, i) => `<g data-i="${i}" fill="${GOLD}" stroke="${GOLD_LIGHT}" stroke-width="2" stroke-linejoin="round" opacity="0">${p}</g>`)
-    .join('');
-  insignia.style.opacity = '1';
-  insignia.querySelectorAll<SVGGElement>('g').forEach((g, i) =>
+  wreath.setAttribute('viewBox', `${-vw / 2} ${-vh / 2} ${vw} ${vh}`);
+  // From the foot (angle 90°, down) up each side to the head (−90°), leaving a gap at both ends
+  const leaves = 9;
+  const point = (deg: number, k = 1) => ({ x: Math.cos((deg * Math.PI) / 180) * rx * k, y: Math.sin((deg * Math.PI) / 180) * ry * k });
+  const branch = (side: 1 | -1) => {
+    const from = 90 + side * 18;
+    const to = 90 + side * 162;
+    const steps = 24;
+    const stem = Array.from({ length: steps + 1 }, (_, i) => {
+      const q = point(from + ((to - from) * i) / steps);
+      return `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
+    }).join(' ');
+    const leafs = Array.from({ length: leaves }, (_, i) => {
+      const deg = from + ((to - from) * (i + 0.6)) / (leaves + 0.2);
+      const q = point(deg);
+      // Along the stem, pointing on towards its tip, alternately out and in
+      const tangent = deg + side * 90;
+      const lean = (i % 2 ? -1 : 1) * 32 * side;
+      const len = Math.min(rx, ry) * 0.2;
+      return `<ellipse data-leaf="${i}" cx="0" cy="0" rx="${(len * 0.5).toFixed(1)}" ry="${(len * 0.2).toFixed(1)}" transform="translate(${q.x.toFixed(1)} ${q.y.toFixed(1)}) rotate(${(tangent + lean).toFixed(1)}) translate(${(len * 0.45).toFixed(1)} 0)" opacity="0"/>`;
+    }).join('');
+    return `<g><path d="${stem}" pathLength="1" fill="none" stroke="${GOLD}" stroke-width="2" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1"/><g fill="${GOLD}" stroke="${GOLD_LIGHT}" stroke-width="0.8">${leafs}</g></g>`;
+  };
+  wreath.innerHTML = branch(1) + branch(-1);
+  wreath.style.opacity = '1';
+  const grow = d * 0.45;
+  wreath.querySelectorAll<SVGPathElement>('path').forEach((stem) =>
+    runs.push(stem.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: grow, easing: 'cubic-bezier(0.3, 0, 0.3, 1)', fill: 'forwards' }).finished.catch(() => undefined)),
+  );
+  wreath.querySelectorAll<SVGEllipseElement>('ellipse').forEach((leaf) => {
+    const i = Number(leaf.dataset['leaf']);
+    leaf.style.transformBox = 'fill-box';
+    leaf.style.transformOrigin = 'center';
     runs.push(
-      g
+      leaf
         .animate(
           [
-            { opacity: 0, transform: 'translateY(14px)', filter: 'brightness(2.5)' },
-            { opacity: 1, transform: 'translateY(0)', filter: 'brightness(1.6)', offset: 0.5 },
-            { opacity: 1, transform: 'translateY(0)', filter: 'brightness(1)' },
+            { opacity: 0, scale: '0.2' },
+            { opacity: 1, scale: '1.25', offset: 0.6 },
+            { opacity: 1, scale: '1' },
           ],
-          { duration: d * 0.18, delay: d * (0.12 + i * 0.1), easing: 'cubic-bezier(0.2, 0.8, 0.3, 1.2)', fill: 'both' },
+          { duration: grow * 0.35, delay: grow * (0.1 + (i / leaves) * 0.75), easing: 'ease-out', fill: 'forwards' },
         )
         .finished.catch(() => undefined),
+    );
+  });
+  // The ring of honor: opens from the wreath across the table as it flashes
+  const ring = Math.max(rx, ry) * 2;
+  keep(
+    add(
+      {
+        left: `${at.x - ring / 2}px`,
+        top: `${at.y - ring / 2}px`,
+        width: `${ring}px`,
+        height: `${ring}px`,
+        zIndex: LAYER.fx,
+        borderRadius: '50%',
+        border: `3px solid ${GOLD_LIGHT}`,
+        boxShadow: `0 0 18px 4px ${GOLD}, inset 0 0 14px 2px ${GOLD}`,
+      },
+      [
+        { opacity: 0.9, transform: 'scale(0.75)', borderWidth: '5px' },
+        { opacity: 0, transform: 'scale(1.6)', borderWidth: '1px' },
+      ],
+      { duration: d * 0.4, delay: d * 0.6, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)' },
     ),
   );
-  // Golden sparks rising along the pillar
-  for (let i = 0; i < 20; i++) {
+  // Embers of gold rising off the wreath
+  for (let i = 0; i < 18; i++) {
     const s = 2 + Math.random() * 3;
-    const x = screen.x + (Math.random() - 0.5) * rect.width * 0.8;
-    const rise = tall * (0.4 + Math.random() * 0.5);
+    const q = point(Math.random() * 360);
+    const rise = h * (0.4 + Math.random() * 0.5);
     keep(
       add(
         {
-          left: `${x - s / 2}px`,
-          top: `${screen.y - s / 2}px`,
+          left: `${at.x + q.x - s / 2}px`,
+          top: `${at.y + q.y - s / 2}px`,
           width: `${s}px`,
           height: `${s}px`,
           zIndex: LAYER.fx,
@@ -170,7 +181,7 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
           { opacity: 1, transform: `translateY(${-rise * 0.3}px)`, offset: 0.3 },
           { opacity: 0, transform: `translateY(${-rise}px)` },
         ],
-        { duration: d * (0.5 + Math.random() * 0.3), delay: d * (0.05 + Math.random() * 0.45), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
+        { duration: d * (0.35 + Math.random() * 0.25), delay: d * (0.6 + Math.random() * 0.1), easing: 'cubic-bezier(0.3, 0.5, 0.5, 1)' },
       ),
     );
   }
@@ -182,8 +193,8 @@ function promotion(document: Document, animations: BoardAnimations, card: HTMLEl
 
 /**
  * Materialización, matter composed into a creature: specks of matter are drawn in from all around to where the card
- * will be, faster as they near it; the card's outline traces itself, a lattice of light fills it, and it flashes as the
- * card lands into it. Lying on the table as the card does.
+ * will be, faster as they near it; the card's outline traces itself and fills with matter, glowing, from its foot up as
+ * they come in, and it flashes as the card lands into it. Lying on the table as the card does.
  */
 function materialization(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.materialization;
@@ -229,7 +240,7 @@ function materialization(document: Document, animations: BoardAnimations, card: 
       ),
     );
   }
-  // The outline tracing itself and a lattice filling it, as the matter comes in; then a flash as the card lands
+  // The outline tracing itself and filling with matter from its foot up, as the specks come in
   const frame = keep(
     add(
       { left: `${at.x - w / 2}px`, top: `${at.y - h / 2}px`, width: `${w}px`, height: `${h}px`, zIndex: LAYER.fx, overflow: 'visible' },
@@ -239,19 +250,29 @@ function materialization(document: Document, animations: BoardAnimations, card: 
     ),
   );
   frame.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  const cells = 4;
-  const lattice = Array.from({ length: cells - 1 }, (_, i) => {
-    const x = ((i + 1) * w) / cells;
-    const y = ((i + 1) * h) / cells;
-    return `<path d="M${x.toFixed(1)} 0 V${h}"/><path d="M0 ${y.toFixed(1)} H${w}"/>`;
-  }).join('');
-  frame.innerHTML =
-    `<rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="${(w * 0.04).toFixed(1)}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="1" stroke-dashoffset="1" style="filter: drop-shadow(0 0 3px ${MATTER}) drop-shadow(0 0 6px ${MATTER})"/>` +
-    `<g stroke="${MATTER}" stroke-width="0.8" opacity="0">${lattice}</g>`;
-  const [outline, grid] = Array.from(frame.children) as SVGElement[];
-  runs.push(
-    outline.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d * land * 0.8, delay: d * land * 0.1, easing: 'ease-in-out', fill: 'forwards' }).finished,
-    grid.animate([{ opacity: 0 }, { opacity: 0.7, offset: 0.6 }, { opacity: 0.2 }], { duration: d * land * 0.7, delay: d * land * 0.3, fill: 'forwards' }).finished,
+  frame.innerHTML = `<rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="${(w * 0.04).toFixed(1)}" pathLength="1" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="1" stroke-dashoffset="1" style="filter: drop-shadow(0 0 3px ${MATTER}) drop-shadow(0 0 6px ${MATTER})"/>`;
+  const outline = frame.firstElementChild as SVGElement;
+  runs.push(outline.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d * land * 0.8, delay: d * land * 0.1, easing: 'ease-in-out', fill: 'forwards' }).finished);
+  // The matter gathering in it: a glow rising from its foot, brightest at its rising edge
+  keep(
+    add(
+      {
+        left: `${at.x - w / 2}px`,
+        top: `${at.y - h / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+        zIndex: LAYER.fx,
+        borderRadius: 'var(--radius-card)',
+        background: `linear-gradient(to top, color-mix(in srgb, ${MATTER} 35%, transparent), color-mix(in srgb, ${MATTER} 55%, transparent) 85%, #fff 98%, transparent)`,
+        mixBlendMode: 'screen',
+      },
+      [
+        { opacity: 0.9, clipPath: 'inset(100% 0 0 0)' },
+        { opacity: 0.9, clipPath: 'inset(0 0 0 0)', offset: 0.85 },
+        { opacity: 0, clipPath: 'inset(0 0 0 0)' },
+      ],
+      { duration: d * land, delay: d * land * 0.25, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' },
+    ),
   );
   // The flash as it lands
   keep(
@@ -283,19 +304,18 @@ function materialization(document: Document, animations: BoardAnimations, card: 
 }
 
 /**
- * Evolución, a creature evolving: two strands of green life coil around the card, rising from its foot past its top
- * like a helix, while rings of growth the card's shape pulse out from it, one after another, each bigger than the last.
- * The strands are seen from in front (flat on the screen); the rings lie on the table.
+ * Evolución, a creature evolving: two strands of green life coil round the card in a circle, rising off the table as
+ * they turn, like a helix, while rings of growth the card's shape pulse out from it, one after another, each bigger
+ * than the last. On the leaning table the helix rises from it in depth; on a flat one it climbs the screen.
  */
 function evolution(document: Document, animations: BoardAnimations, card: HTMLElement): Promise<void> {
   const d = TIMING.evolution;
   const over = overlayFor(document, card, LAYER.fx);
-  const { at, w, h, screen, rect } = measure(card, over);
+  const { at, w, h } = measure(card, over);
   const runs: Promise<unknown>[] = [];
   const made: HTMLElement[] = [];
   const keep = (el: HTMLElement) => (made.push(el), el);
   const lying = adder(document, over.host, over.position, runs);
-  const flat = adder(document, document.body, 'fixed', runs);
   animations.hold(d);
   // Rings of growth: the card's shape, pulsing out one after another
   for (let i = 0; i < 3; i++) {
@@ -320,32 +340,30 @@ function evolution(document: Document, animations: BoardAnimations, card: HTMLEl
       ),
     );
   }
-  // The helix: beads on two strands, half a turn apart, coiling round the card as they rise from its foot past its top
-  const radius = rect.width * 0.62;
-  const bottom = screen.y + rect.height * 0.45;
-  const climb = rect.height * 1.5;
+  // The helix: beads on two strands, half a turn apart, going round the card in a circle as they rise
+  const radius = Math.max(w, h) * 0.62;
+  const climb = Math.max(w, h) * 1.1;
+  const deep = over.position === 'absolute';
   const beads = 16;
   for (const strand of [0, Math.PI]) {
     for (let i = 0; i < beads; i++) {
       const s = 3 + Math.random() * 2;
-      const turns = 1.6;
-      const steps = 8;
+      const turns = 1.5;
+      const steps = 12;
       const frames: Keyframe[] = Array.from({ length: steps + 1 }, (_, k) => {
         const t = k / steps;
         const a = strand + t * turns * Math.PI * 2;
-        // In front of the card on one side of its turn, behind it (dimmer, smaller) on the other
-        const front = Math.sin(a);
-        return {
-          offset: t,
-          opacity: t === 0 || t === 1 ? 0 : 0.55 + 0.45 * front,
-          transform: `translate(${(Math.cos(a) * radius).toFixed(1)}px, ${(-t * climb).toFixed(1)}px) scale(${(0.7 + 0.3 * front).toFixed(2)})`,
-        };
+        const x = Math.cos(a) * radius;
+        const y = Math.sin(a) * radius;
+        // Leaning table: round it on the table, rising off it (its layer is 3D); flat: an ellipse climbing the screen
+        const move = deep ? `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${(t * climb).toFixed(1)}px)` : `translate(${x.toFixed(1)}px, ${(y * 0.45 - t * climb).toFixed(1)}px)`;
+        return { offset: t, opacity: t === 0 || t === 1 ? 0 : 1, transform: move };
       });
       keep(
-        flat(
+        lying(
           {
-            left: `${screen.x - s / 2}px`,
-            top: `${bottom - s / 2}px`,
+            left: `${at.x - s / 2}px`,
+            top: `${at.y - s / 2}px`,
             width: `${s}px`,
             height: `${s}px`,
             zIndex: LAYER.fx,

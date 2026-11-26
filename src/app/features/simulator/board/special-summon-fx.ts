@@ -38,21 +38,37 @@ const MATTER = '#5eead4';
 const LIFE = '#4ade80';
 const LIFE_LIGHT = '#d9ffe6';
 
-/** A card where it lands: its center on the screen and in `over`, its own size, and whether it lies turned a quarter. */
+/**
+ * A card where it lands: its center on the screen and in `over`, its own size, and whether it lies turned a quarter.
+ * Its center is where its own middle is drawn (a point in it), not the middle of the box round it: on the leaning
+ * table the far half of a card looks smaller, so the two differ.
+ */
 function measure(card: HTMLElement, over: Overlay) {
-  const screen = centerOf(card);
   const r = card.getBoundingClientRect();
+  const screen = middleOf(card) ?? centerOf(card);
   const turned = Math.round(flatTurn(card, card.closest('.plane')).turn / 90) % 2 !== 0;
   const w = card.offsetWidth || r.width;
   const h = card.offsetHeight || r.height;
   return { screen, at: over.at(screen.x, screen.y), w: turned ? h : w, h: turned ? w : h, rect: r };
 }
 
+/** Where an element's own middle is drawn on the screen (a point placed there inside it); null if it cannot hold one. */
+function middleOf(el: HTMLElement): { x: number; y: number } | null {
+  if (el.ownerDocument.defaultView?.getComputedStyle(el).position === 'static') return null;
+  const probe = el.ownerDocument.createElement('span');
+  Object.assign(probe.style, { position: 'absolute', left: '50%', top: '50%', width: '0', height: '0', pointerEvents: 'none' });
+  el.append(probe);
+  const p = probe.getBoundingClientRect();
+  probe.remove();
+  return { x: p.left, y: p.top };
+}
+
 /** Adds an element to `host` (absolute, or fixed on the screen), animates it and collects when it ends. */
 function adder(document: Document, host: HTMLElement, position: string, runs: Promise<unknown>[]) {
   return (style: Partial<CSSStyleDeclaration>, frames: Keyframe[], timing: KeyframeAnimationOptions, tag = 'div') => {
     const el = tag === 'svg' ? (document.createElementNS(SVG, 'svg') as unknown as HTMLElement) : document.createElement(tag);
-    Object.assign(el.style, { position, pointerEvents: 'none', opacity: '0', ...style });
+    // Its border inside its size, so it lines up with the card's edge
+    Object.assign(el.style, { position, boxSizing: 'border-box', pointerEvents: 'none', opacity: '0', ...style });
     host.append(el);
     runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished.catch(() => undefined));
     return el;

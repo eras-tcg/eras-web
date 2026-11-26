@@ -5,10 +5,9 @@ import { LAYER, TIMING } from './timing';
 
 export const SVG = 'http://www.w3.org/2000/svg';
 
-/** An effect's mist: its blue clouds (their core, their body and their bright rim), its veil, and its motes of light. */
+/** An effect's mist: its blue (its core and its body), its veil, and its motes of light. */
 const MIST_CORE = 'rgb(120 175 255 / 70%)';
 const MIST_EDGE = 'rgb(50 110 255 / 45%)';
-const MIST_RIM = 'rgb(140 200 255 / 75%)';
 const MIST_VEIL = 'rgb(170 210 255 / 35%)';
 const MOTE = '#7cc4ff';
 
@@ -127,7 +126,7 @@ export class FxDraw {
   }
 
   /**
-   * An effect activated on a card: a pool of blue mist the card's shape, with a clear edge, spreads under it, swirling; a thin veil of it
+   * An effect activated on a card: a pool of blue mist the card's shape, soft-edged, spreads out under it, swirling; a thin veil of it
    * drifts over the card and motes of light rise from it, over the card; then all of it fades. The pool lies under
    * everything on the table when the card lies on it (over it elsewhere: a hand, a plate). Done when it has gone.
    */
@@ -164,7 +163,7 @@ export class FxDraw {
       host.append(el);
       runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished);
     };
-    // The pool: the card's shape a little bigger, its edge a bright clear line, swirling mist inside it
+    // The pool: the card's shape a little bigger, its edge soft as mist, swirling inside and spreading out as it fades
     const margin = Math.max(w, h) * 0.13;
     const turned = card.classList.contains('tapped') ? ' rotate(90deg)' : '';
     const frame = this.document.createElement('div');
@@ -176,19 +175,19 @@ export class FxDraw {
       height: `${h + margin * 2}px`,
       borderRadius: `${margin * 0.9}px`,
       overflow: 'hidden',
-      border: `1.5px solid ${MIST_RIM}`,
-      background: `radial-gradient(ellipse 70% 70% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE})`,
-      boxShadow: `0 0 12px 2px ${MIST_RIM}, inset 0 0 16px 3px ${MIST_RIM}`,
+      background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE})`,
+      boxShadow: `0 0 ${margin}px ${margin * 0.4}px ${MIST_EDGE}`,
+      filter: `blur(${(margin * 0.35).toFixed(1)}px)`,
       opacity: '0',
     });
     pool.append(frame);
     runs.push(
       frame.animate(
         [
-          { opacity: 0, transform: `scale(0.85)${turned}` },
+          { opacity: 0, transform: `scale(0.8)${turned}` },
           { opacity: 0.95, transform: `scale(1)${turned}`, offset: 0.28 },
-          { opacity: 0.8, transform: `scale(1.02)${turned}`, offset: 0.72 },
-          { opacity: 0, transform: `scale(1.04)${turned}` },
+          { opacity: 0.75, transform: `scale(1.1)${turned}`, offset: 0.72 },
+          { opacity: 0, transform: `scale(1.22)${turned}` },
         ],
         { duration: d, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)', fill: 'backwards' },
       ).finished,

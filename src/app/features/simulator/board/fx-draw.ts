@@ -1,5 +1,6 @@
 import { BoardAnimations } from './board-animations';
 import { centerOf } from './board-dom';
+import { flatTurn } from './card-pose';
 import { overlayFor } from './table-plane';
 import { LAYER, TIMING } from './timing';
 
@@ -134,8 +135,9 @@ export class FxDraw {
     const r = card.getBoundingClientRect();
     const w = card.offsetWidth || r.width;
     const h = card.offsetHeight || r.height;
-    const turned = card.classList.contains('tapped');
-    // The card as it lies: an exhausted one is turned, so its long sides run across
+    // Turned a quarter as it lies: exhausted, or a life lying sideways on its pile
+    const turned = Math.round(flatTurn(card, card.closest('.plane')).turn / 90) % 2 !== 0;
+    // The card as it lies: turned, its long sides run across
     const cw = turned ? h : w;
     const ch = turned ? w : h;
     const size = Math.max(w, h) * 2;

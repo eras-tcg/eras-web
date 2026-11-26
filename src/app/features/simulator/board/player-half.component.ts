@@ -354,7 +354,7 @@ export class PlayerHalfComponent {
       discardPile: chainLinksOf(chain, p.discardPile),
     };
   });
-  protected readonly topTribute = computed(() => this.last(this.player().tributeZone));
+  protected readonly topTribute = computed(() => this.shownOnTop(this.player().tributeZone));
   /** Something in my Tributos can be done now (a special summon from there, an effect): the pile glows like a card would. */
   protected readonly tributeActions = computed(() => {
     const actions = this.opponent() || this.lookOnly() ? [] : this.player().tributeZone.flatMap((c) => legalActions(this.game.rules(), c));
@@ -370,7 +370,7 @@ export class PlayerHalfComponent {
     const p = this.player();
     return { lifeStack: has(p.lifeStack), tributeZone: has(p.tributeZone), discardPile: has(p.discardPile) };
   });
-  protected readonly topDiscard = computed(() => this.last(this.player().discardPile));
+  protected readonly topDiscard = computed(() => this.shownOnTop(this.player().discardPile));
   /** The lines' cards by x; in the Línea frontal a creature left between two members of a formation it is not in, drawn at its end. */
   protected readonly rows = computed(() => {
     const rows = fieldRows(this.player().field);
@@ -410,6 +410,12 @@ export class PlayerHalfComponent {
   /** Own side: the Línea frontal on top (towards the rival); the rival's side is mirrored. */
   protected get lines(): readonly ('front' | 'back')[] {
     return this.opponent() ? ['back', 'front'] : ['front', 'back'];
+  }
+
+  /** The card a pile shows: its top one, or the one whose effect is being activated (it comes to the top meanwhile). */
+  private shownOnTop(list: CardSlot[]): CardSlot | null {
+    const raised = this.animations?.onTop();
+    return (raised && list.find((c) => c.instanceId === raised)) || this.last(list);
   }
 
   private last(list: CardSlot[]): CardSlot | null {

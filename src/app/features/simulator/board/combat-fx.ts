@@ -1,4 +1,4 @@
-import { findSlot, pileOf } from '@data/simulator/game-rules';
+import { pileOf } from '@data/simulator/game-rules';
 import { GameState } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
 import { centerOf, fieldCard, fieldPlace, fieldSprite, lifeCard, liftPlace, pile, tableCard } from './board-dom';
@@ -246,9 +246,9 @@ export class CombatFx {
    * An effect activated: its card (on the table, in a hand or on its pile) glows white, its edges light up and motes of
    * light rise from it (FxDraw.lightUp); done when it has gone.
    */
-  activation(sourceId: string, state: GameState | null): Promise<void> {
-    const shown = this.activating(sourceId, state);
-    if (!shown) return Promise.resolve();
+  async activation(sourceId: string, state: GameState | null): Promise<void> {
+    const shown = await this.activating(sourceId, state);
+    if (!shown) return;
     const { card, done } = shown;
     card.animate(
       [
@@ -259,15 +259,16 @@ export class CombatFx {
       ],
       { duration: TIMING.activation, easing: 'ease-out' },
     );
-    return this.draw.lightUp(card).then(done);
+    await this.draw.lightUp(card);
+    done();
   }
 
   /**
    * The card an effect is activated from, as drawn: on the table or in a hand; its own place in the lives; on top of
-   * the Descarte or the Tributos, its face laid over the card shown there meanwhile (`done` takes it away); else its
-   * pile. Null when it is not drawn.
+   * the Descarte or the Tributos, where it comes while it plays (`done` puts the pile back as it was); else its pile.
+   * Null when it is not drawn.
    */
-  private activating(id: string, state: GameState | null): { card: HTMLElement; done: () => void } | null {
+  private async activating(id: string, state: GameState | null): Promise<{ card: HTMLElement; done: () => void } | null> {
     const none = () => undefined;
     const drawn = tableCard(this.document, id);
     if (drawn) return { card: drawn, done: none };
@@ -278,19 +279,19 @@ export class CombatFx {
       if (life) return { card: life, done: none };
     }
     const place = pile(this.document, where.ownerId, where.zone);
-    const top = place?.querySelector<HTMLElement>('eras-game-card');
-    const imageUrl = findSlot(state, id)?.imageUrl;
-    if (top && imageUrl && (where.zone === 'discardPile' || where.zone === 'tributeZone')) {
-      const face = this.document.createElement('div');
-      Object.assign(face.style, { position: 'absolute', inset: '0', zIndex: '2', pointerEvents: 'none', ...cardFaceStyle(imageUrl) });
-      // The rival's pile shows its cards upside down
-      if (top.classList.contains('upside-down')) face.style.transform = 'rotate(180deg)';
-      top.append(face);
-      return { card: face, done: () => face.remove() };
+    if (!place) return null;
+    if (where.zone === 'discardPile' || where.zone === 'tributeZone') {
+      this.animations.onTop.set(id);
+      await drawnNow();
+      const top = place.querySelector<HTMLElement>('eras-game-card');
+      const done = () => {
+        if (this.animations.onTop() === id) this.animations.onTop.set(null);
+      };
+      if (top) return { card: top, done };
+      done();
     }
-    return place ? { card: place, done: none } : null;
+    return { card: place, done: none };
   }
-
 
   /** A shock wave opens from where a blow lands (`at`, in `over`'s pixels) after `delay`, and fades. */
   private shock(over: Overlay, at: { x: number; y: number }, size: number, delay: number): void {
@@ -348,4 +349,17 @@ export class CombatFx {
     }
     return rects;
   }
+}
+
+/** Once the board has drawn what just changed (two frames; a little later if frames are held back). */
+function drawnNow(): Promise<void> {
+  return new Promise((done) => {
+    const timer = setTimeout(done, 80);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        clearTimeout(timer);
+        done();
+      }),
+    );
+  });
 }

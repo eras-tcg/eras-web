@@ -1,6 +1,6 @@
 import { CardSlot, GameState, ZoneName } from '@data/simulator/simulator.model';
 import { BoardAnimations } from './board-animations';
-import { CardPose, Stage, poseFrames, poseOf, slamFrames, stageOf } from './card-pose';
+import { CardPose, Stage, poseFrames, poseOf, settleFrames, slamFrames, stageOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LAYER, TIMING } from './timing';
 import { cardFaceStyle } from '@ui/domain/card-face/card-face-style';
@@ -19,6 +19,8 @@ export interface FlightOptions {
   now?: boolean;
   /** It slams onto its place (a summon): up over it, hangs there this long (ms), then down hard. */
   slam?: { hang: number };
+  /** It stops just over its place (a card drawn to the hand) and is set down into it. */
+  settle?: boolean;
 }
 
 /** What the flyer reads from the board: the state shown now and before, and whether flights wait for what plays. */
@@ -68,7 +70,9 @@ export class CardFlyer {
     const frames = (
       options.slam
         ? slamFrames(stage, start, end, faces, this.apex(options.duration ?? TIMING.flight, options.slam.hang))
-        : poseFrames(stage, start, end, faces, options.under)
+        : options.settle
+          ? settleFrames(stage, start, end, faces, end.height * end.scale * 0.45)
+          : poseFrames(stage, start, end, faces, options.under)
     ).map(
       ({ filter, ...frame }) => (void filter, frame),
     );
@@ -84,7 +88,7 @@ export class CardFlyer {
     inner.style.transform = String(frames[0]['transform']);
     const launch = () => {
       this.animations.hold(delay + duration);
-      this.launch(inner, flight, frames, delay, duration, options.slam ? 'linear' : 'cubic-bezier(0.4, 0, 0.2, 1)', options.hide, landed);
+      this.launch(inner, flight, frames, delay, duration, options.slam || options.settle ? 'linear' : 'cubic-bezier(0.4, 0, 0.2, 1)', options.hide, landed);
     };
     if (this.context.deferring() && !options.now) {
       flight.style.visibility = 'hidden';

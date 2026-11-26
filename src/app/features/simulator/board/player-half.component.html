@@ -148,7 +148,7 @@
   <!-- The cards' window: with the straight hand, what is past its ends fades out -->
   <div class="hand-window">
     <div #handCards class="hand-cards" [class.straight]="straightHand()" [style.--hand-turn]="handTurn()">
-      @for (s of p.hand; track s.instanceId; let i = $index) {
+      @for (s of hand(); track s.instanceId; let i = $index) {
         <div class="in-hand" [attr.data-hand-id]="s.instanceId" [class.raised]="game.selectedId() === s.instanceId" [style.--fan]="i - (p.hand.length - 1) / 2 - handTurn()">
           <eras-sim-card [slot]="s" zone="hand" [opponent]="opponent()" />
         </div>

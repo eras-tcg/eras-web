@@ -16,6 +16,7 @@ import { BoardDialogs } from './board-dialogs';
 import { LineScrollDirective } from './line-scroll';
 import { BoardDrag } from './board-drag';
 import { BoardPreferences } from './board-preferences';
+import { sortedHand } from './hand-order';
 import { PlayerPlateComponent } from './player-plate.component';
 import { RowSlide } from './row-slide';
 import { SimCardComponent } from './sim-card.component';
@@ -71,6 +72,11 @@ export class PlayerHalfComponent {
   protected readonly mirrored = computed(() => this.opponent() && this.prefs.mirrored());
   /** "Mano recta": the hand in a row instead of a fan. */
   protected readonly straightHand = this.prefs.straightHand;
+  /** The hand as drawn: yours sorted by kind when "Ordenar la mano" is on; the rival's as it is (its kinds are hidden). */
+  protected readonly hand = computed(() => {
+    const hand = this.player().hand;
+    return this.opponent() || !this.prefs.sortedHand() ? hand : sortedHand(hand);
+  });
   /** "Mesa en perspectiva": the table leans back; your hand and both players' plates stand up from it, facing you. */
   protected readonly tilted = this.prefs.tilted;
   /** A choice is lowered to look at the table: cards and zones can be looked at, nothing else. */

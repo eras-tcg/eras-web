@@ -23,6 +23,8 @@ export const TIMING = {
   flight: 650,
   draw: 550,
   drawStagger: 120,
+  /** A card drawn, held over its place in the hand (while the hand makes room) and then set down into it. */
+  drawSettle: 300,
   move: 520,
   /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
   slide: 450,

@@ -207,15 +207,16 @@ export class TurnDraw {
         });
         return { card: c, place };
       });
-      // Once shown: it flies to your hand while the deck goes back to its zone
+      // Once shown: it flies to just over its place in your hand and is set down into it, while the deck goes back to its zone
       setTimeout(() => {
         shownCards.forEach(({ card, place }, i) => {
           const seen = this.measure.seenOf(place, { imageUrl: card.imageUrl });
           this.flyer.fly(seen, card.element, false, {
             delay: i * TIMING.drawStagger,
-            duration: TIMING.draw,
+            duration: TIMING.draw + TIMING.drawSettle,
             hide: card.element,
             now: true,
+            settle: true,
           });
           place.remove();
         });

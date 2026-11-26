@@ -136,6 +136,25 @@ export function poseFrames(stage: Stage, from: CardPose, to: CardPose, faces: { 
 }
 
 /**
+ * The keyframes of a card going to a hand and set down into its place (seen by `stage`'s camera): it flies to just over
+ * its place (`rise` pixels out from it, the way the card's top points), holds there a moment and goes down into it.
+ * `at`: when it is over its place, a share of the flight. Each keyframe brings its own easing: play them linear.
+ */
+export function settleFrames(stage: Stage, from: CardPose, to: CardPose, faces: { fromBack: boolean; toBack: boolean }, rise: number, at = 0.62): Keyframe[] {
+  const t = (to.turn * Math.PI) / 180;
+  const over: CardPose = { ...to, x: to.x + rise * Math.sin(t), y: to.y - rise * Math.cos(t) };
+  const [start, mid, above] = poseFrames(stage, from, over, faces);
+  const down = poseFrames(stage, from, to, faces)[2];
+  return [
+    { ...start, easing: 'cubic-bezier(0.3, 0, 0.3, 1)' },
+    { ...mid, offset: at / 2, easing: 'cubic-bezier(0.2, 0, 0.2, 1)' },
+    { ...above, offset: at },
+    { ...above, offset: at + 0.1, easing: 'cubic-bezier(0.45, 0, 0.3, 1)' },
+    { ...down },
+  ];
+}
+
+/**
  * The keyframes of a summoned card slamming onto the table (seen by `stage`'s camera): in one motion it flies up over
  * its place, already turned as it lands, slowing down as it gets there until it stops at the top (`apex`, a share of
  * the flight: the later, the longer it lingers), then drops onto it faster and faster. Each keyframe brings its own

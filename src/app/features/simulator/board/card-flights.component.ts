@@ -130,6 +130,7 @@ export class CardFlightsComponent {
         this.attachments(state);
         // A card drawn with a summon (an effect's) is drawn once the summon has landed
         if (this.fieldMoves(state)) this.deferring = true;
+        this.handSlides(state);
         this.seen = this.measure.field(state);
         this.handSeen = this.measure.hands(state);
         this.pileOf = new Map(
@@ -211,7 +212,14 @@ export class CardFlightsComponent {
         // It leaves from the deck's top card, at its size (the empty pile when it was the last one)
         const from = this.measure.pileTop(deck, c.imageUrl);
         const faceUp = p.userId === me && !c.faceDown;
-        this.flyer.fly(from, target, !faceUp, { fromBack: true, delay: i * TIMING.drawStagger, duration: TIMING.draw, hide: card });
+        // Over its place in the hand (which makes room for it meanwhile), then set down into it
+        this.flyer.fly(from, target, !faceUp, {
+          fromBack: true,
+          delay: i * TIMING.drawStagger,
+          duration: TIMING.draw + TIMING.drawSettle,
+          hide: card,
+          settle: !!card,
+        });
       });
     }
   }
@@ -376,6 +384,30 @@ export class CardFlightsComponent {
       }
     }
     return summoned;
+  }
+
+  /**
+   * A hand that changed (a card came in or left, or its order did): the cards that stay slide from where they were to
+   * their new places, so the hand opens room for a card coming in and closes the gap of one leaving. Only when it
+   * changed: a hand turned sideways by its player keeps still.
+   */
+  private handSlides(state: GameState): void {
+    if (this.animations.still() || !this.previous) return;
+    for (const p of Object.values(state.players ?? {})) {
+      const was = this.previous.players?.[p.userId]?.hand.map((c) => c.instanceId).join(',');
+      if (was === undefined || was === p.hand.map((c) => c.instanceId).join(',')) continue;
+      for (const c of p.hand) {
+        const from = this.handSeen.get(c.instanceId);
+        const place = handPlace(this.document, c.instanceId);
+        const card = place?.querySelector('eras-game-card');
+        if (!from || !place || !card) continue;
+        const r = card.getBoundingClientRect();
+        const dx = from.x - (r.left + r.width / 2);
+        const dy = from.y - (r.top + r.height / 2);
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+        place.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: TIMING.slide, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+      }
+    }
   }
 
   /** A revealed life just played (the last choice was to play it): from the top of its owner's lives, face up. */

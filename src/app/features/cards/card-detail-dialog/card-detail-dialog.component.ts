@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { EditDirective } from '@core/auth/edit.directive';
 import { apiErrorMessage } from '@core/http/api-error';
 import { AltArt, CardMeta, CatalogCard } from '@data/cards/card.model';
-import { altArtName, altArtsOf, cardShineUrl, fullEditionId, isGlossyRarity, nameVariants, withAltArt } from '@data/cards/card-rules';
+import { altArtName, altArtsOf, cardCreatureUrl, cardShineUrl, fullEditionId, isGlossyRarity, nameVariants, withAltArt } from '@data/cards/card-rules';
 import { CardsAdminApi } from '@data/cards/cards-admin.api';
 import { CardsStore } from '@data/cards/cards.store';
 import { FINISHES, FINISH_LABELS, bestAlt, bestFinish, bestFinishAmong, nearestFinish, shineOf } from '@data/collection/collection-rules';
@@ -17,6 +17,7 @@ import { fromPercent, toPercent } from '@data/shop/shop-rules';
 import { ShopOddsStore } from '@data/shop/shop-odds.store';
 import { CardArtViewerComponent, CardArtViewerData } from '@ui/domain/card-art-viewer/card-art-viewer.component';
 import { CardDetailComponent } from '@ui/domain/card-detail/card-detail.component';
+import { CreatureSummonComponent } from '@ui/domain/creature-summon/creature-summon.component';
 import { AlertComponent } from '@ui/feedback/alert/alert.component';
 import { ButtonComponent } from '@ui/primitives/button/button.component';
 import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
@@ -59,7 +60,7 @@ export function openCardDetailDialog(
  */
 @Component({
   selector: 'eras-card-detail-dialog',
-  imports: [CardDetailComponent, CardImageComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent, DetailFrameComponent],
+  imports: [CardDetailComponent, CardImageComponent, AlertComponent, ButtonComponent, IconComponent, EditDirective, ToggleGroupComponent, DetailFrameComponent, CreatureSummonComponent],
   templateUrl: './card-detail-dialog.component.html',
   styleUrl: './card-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,6 +138,9 @@ export class CardDetailDialogComponent {
    * (its texts may sit otherwise; the frame, name and code, and the boxes the foil leaves clear are the card's).
    */
   protected readonly shine = computed(() => cardShineUrl(this.card().meta));
+  /** Its creature cut out of the illustration (a full-art card): its summon can be seen from here. */
+  protected readonly creature = computed(() => cardCreatureUrl(this.card().meta));
+  protected readonly summoning = signal(false);
   protected readonly altShown = computed(() => this.shown() !== this.card());
 
   protected readonly view = computed(() => cardDetailView(this.shown(), this.store.ref(), this.store.unprogrammedOf(this.card())));
@@ -204,6 +208,30 @@ export class CardDetailDialogComponent {
     const code = `${fullEditionId(card)}-${card.color_identity ?? ''}${String(card.number ?? 0).padStart(2, '0')}`;
     this.ref.close();
     void this.router.navigate(['/card-editor'], { queryParams: card.meta ? { card: card.meta.id } : { slot: code } });
+  }
+
+  /** The editor of its creature cut out of the illustration (for its full-art summon), loaded only when opened. */
+  protected async openCutout(): Promise<void> {
+    const meta = this.card().meta;
+    if (!meta) return;
+    const { CreatureCutoutDialogComponent } = await import('../../admin/creature-cutout/creature-cutout-dialog.component');
+    const v = this.view();
+    const ref = this.modal.open<CardMeta | null>(CreatureCutoutDialogComponent, {
+      data: {
+        metaId: meta.id,
+        name: v.name,
+        strength: meta.strength ?? 0,
+        identity: v.color ? `var(--color-card-${v.color.toLowerCase()})` : '#64748b',
+        hasCreature: !!meta.creatureKey,
+      },
+      maxWidth: '100vw',
+      maxHeight: '100dvh',
+    });
+    const changed = await firstValueFrom(ref.closed);
+    if (changed) {
+      this.printing.set({ ...this.card(), meta: changed });
+      void this.store.load(true);
+    }
   }
 
   // ── Alternative arts (manage_cards) ──────────────────────────────────

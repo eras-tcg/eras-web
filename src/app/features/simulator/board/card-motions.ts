@@ -262,13 +262,16 @@ export class CardMotions {
    * summon plays its own instead: `special`) and the cards around it hop; a glow fades on it (blue yours, red the
    * rival's).
    */
-  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, special: SpecialSummonKind | null = null): void {
+  burst(card: HTMLElement, landing: DOMRect, mine: boolean, delay: number, weight = 0.5, special: SpecialSummonKind | null = null, now = false): void {
     if (this.animations.still()) return;
-    this.run(() => {
+    const play = () => {
       // A special summon has its own (in place of the circuits), starting a little before it lands for some
       if (special) setTimeout(() => void specialSummonFx(special, this.document, this.animations, card), Math.max(0, delay - specialSummonLead(special)));
       this.burstNow(card, landing, mine, delay, weight, !special);
-    });
+    };
+    // Now: what was waiting for it is the reason it plays (a full-art moment ended), it does not queue again
+    if (now) play();
+    else this.run(play);
   }
 
   private burstNow(card: HTMLElement, rect: DOMRect, mine: boolean, delay: number, weight: number, circuits: boolean): void {

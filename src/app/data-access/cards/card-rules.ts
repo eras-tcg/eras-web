@@ -249,6 +249,12 @@ export function isGlossyRarity(rarity: string | null | undefined): boolean {
 }
 
 /** Where a saved card shines (drawn with its render: gloss on top, gold below), or null when it has no shine yet. */
+/** The card's creature cut out of its illustration (for its summon), or null without one. */
+export function cardCreatureUrl(meta: Pick<CardMeta, 'id' | 'creatureKey'> | null | undefined): string | null {
+  if (!meta?.creatureKey) return null;
+  return `/api/cards/${encodeURIComponent(meta.id)}/creature?v=${encodeURIComponent(meta.creatureKey)}`;
+}
+
 export function cardShineUrl(meta: Pick<CardMeta, 'id' | 'shineKey'> | null | undefined): string | null {
   if (!meta?.shineKey) return null;
   return `/api/cards/${encodeURIComponent(meta.id)}/shine?v=${encodeURIComponent(meta.shineKey)}`;

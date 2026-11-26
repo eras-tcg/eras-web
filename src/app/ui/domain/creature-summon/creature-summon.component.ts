@@ -19,8 +19,6 @@ export const CREATURE_SUMMON_OUT = 450;
 /** The whole moment, from the stage lighting up to it gone (the image already loaded). */
 export const CREATURE_SUMMON_MS = CREATURE_SUMMON_HOLD + CREATURE_SUMMON_OUT;
 
-/** The vortex opens once the creature is there and closes into its eye before it goes. */
-const VORTEX = { hold: CREATURE_SUMMON_HOLD, openAt: 450, openFor: 600, closeFor: 450 };
 
 /**
  * A full-art summon: the creature cut out of its illustration, big over its own stage (a soft vortex under a breathing
@@ -42,6 +40,7 @@ const VORTEX = { hold: CREATURE_SUMMON_HOLD, openAt: 450, openFor: 600, closeFor
       [style.--c1]="colors()[0]"
       [style.--c2]="colors()[1]"
       [style.--identity]="identity()"
+      [style.--pace]="pace()"
       aria-live="assertive"
       [attr.aria-label]="name() + ', fuerza ' + strength() + '. Saltar la animación'"
       (click)="finish()"
@@ -70,6 +69,8 @@ export class CreatureSummonComponent {
   readonly identity = input('#64748b');
   /** How long it may wait for the picture (ms) before giving up (it then just says `done`); null: as long as it takes. */
   readonly patience = input<number | null>(null);
+  /** Its speed: every duration times this (1 normal, under 1 faster), as the board's animations. */
+  readonly pace = input(1);
 
   readonly done = output<void>();
 
@@ -121,7 +122,14 @@ export class CreatureSummonComponent {
     this.phase.set('on');
     // The colors reach the shader once they are on the stage
     const [main, second] = this.colors();
-    this.vortex = summonVortex(this.canvas().nativeElement, main, second, VORTEX);
+    // The vortex opens once the creature is there and closes into its eye before it goes
+    const k = this.pace();
+    this.vortex = summonVortex(this.canvas().nativeElement, main, second, {
+      hold: CREATURE_SUMMON_HOLD * k,
+      openAt: 450 * k,
+      openFor: 600 * k,
+      closeFor: 450 * k,
+    });
     const t0 = performance.now();
     const draw = () => {
       this.vortex?.draw(performance.now() - t0);
@@ -130,12 +138,12 @@ export class CreatureSummonComponent {
     this.frame = requestAnimationFrame(draw);
     this.shards();
     this.risingMotes();
-    this.timers.push(setTimeout(() => this.leave(), CREATURE_SUMMON_HOLD));
+    this.timers.push(setTimeout(() => this.leave(), CREATURE_SUMMON_HOLD * k));
   }
 
   private leave(): void {
     this.phase.set('off');
-    this.timers.push(setTimeout(() => this.end(), CREATURE_SUMMON_OUT));
+    this.timers.push(setTimeout(() => this.end(), CREATURE_SUMMON_OUT * this.pace()));
   }
 
   private end(): void {
@@ -181,7 +189,8 @@ export class CreatureSummonComponent {
       shard.style.setProperty('--w', `${1.2 + near * 2.6}vmin`);
       shard.style.filter = `blur(${(1 - near) * 2}px) drop-shadow(0 0 6px var(--c1))`;
       host.append(shard);
-      shard.animate(frames, { duration: CREATURE_SUMMON_HOLD - 900, delay: 450 + Math.random() * 300, easing: 'linear', fill: 'both' });
+      const k = this.pace();
+      shard.animate(frames, { duration: (CREATURE_SUMMON_HOLD - 900) * k, delay: (450 + Math.random() * 300) * k, easing: 'linear', fill: 'both' });
     }
   }
 
@@ -200,7 +209,12 @@ export class CreatureSummonComponent {
           { opacity: 1, offset: 0.2 },
           { opacity: 0, transform: `translateY(${-60 - Math.random() * 160}px)` },
         ],
-        { duration: 1300 + Math.random() * 1000, delay: 350 + Math.random() * CREATURE_SUMMON_HOLD * 0.7, easing: 'ease-out', fill: 'backwards' },
+        {
+          duration: (1300 + Math.random() * 1000) * this.pace(),
+          delay: (350 + Math.random() * CREATURE_SUMMON_HOLD * 0.7) * this.pace(),
+          easing: 'ease-out',
+          fill: 'backwards',
+        },
       );
     }
   }

@@ -1,4 +1,4 @@
-<div class="board" [class.no-animations]="animations.off()" [style]="timing">
+<div class="board" [class.no-animations]="animations.off()" [style]="timing()">
   <!-- Game status | gem bar | phases: the strip across the middle of the table (at the top before a game) -->
   <ng-template #strip let-gems="gems">
     <div class="strip" [class.with-gems]="gems">

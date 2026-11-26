@@ -11,6 +11,7 @@ import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { frameImage } from '@ui/domain/image-framer/frame-image';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { ANIMATION_PACE_NAMES } from './timing';
 import { BoardPreferences } from './board-preferences';
 import { BoardScreen } from './board-screen';
 import { openCardBackDialog } from './card-back-dialog.component';
@@ -113,6 +114,24 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Animaciones</strong><small>Cartas que vuelan, combates y avisos de turno y fase</small></span>
             <span class="state">{{ prefs.animationsOff() ? 'No' : 'Sí' }}</span>
           </button>
+          @if (!prefs.animationsOff()) {
+            <label class="pref tilt">
+              <eras-icon name="zap" />
+              <span class="text">
+                <strong>Velocidad de las animaciones: {{ paceNames[prefs.animationSpeed()] }}</strong>
+                <input
+                  type="range"
+                  min="0"
+                  max="4"
+                  step="1"
+                  aria-label="Velocidad de las animaciones"
+                  [attr.aria-valuetext]="paceNames[prefs.animationSpeed()]"
+                  [value]="prefs.animationSpeed()"
+                  (input)="prefs.animationSpeed.set($any($event.target).valueAsNumber)"
+                />
+              </span>
+            </label>
+          }
           <button type="button" class="pref" role="switch" [attr.aria-checked]="!prefs.shineOff()" (click)="prefs.shineOff.set(!prefs.shineOff())">
             <eras-icon name="sparkles" />
             <span class="text"><strong>Brillo de las cartas</strong><small>Glossy y borde dorado de las cartas en la mesa</small></span>
@@ -385,6 +404,7 @@ export class GamePreferencesPanelComponent {
   }
 
   protected readonly prefs = inject(BoardPreferences);
+  protected readonly paceNames = ANIMATION_PACE_NAMES;
   protected readonly theme = inject(ThemeService);
   protected readonly backdrop = inject(BackdropService);
   protected readonly appFullscreen = inject(AppFullscreen);

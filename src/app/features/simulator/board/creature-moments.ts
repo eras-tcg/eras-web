@@ -2,6 +2,7 @@ import { ApplicationRef, EnvironmentInjector, createComponent } from '@angular/c
 import { cardCreatureUrl } from '@data/cards/card-rules';
 import { CatalogCard } from '@data/cards/card.model';
 import { CreatureSummonComponent } from '@ui/domain/creature-summon/creature-summon.component';
+import { animationPace } from './timing';
 
 /** What a full-art summon shows: the creature cut out of its card, its name, strength and identity color. */
 export interface CreatureMoment {
@@ -55,6 +56,7 @@ export class CreatureMoments {
       ref.setInput('strength', moment.strength);
       ref.setInput('identity', moment.identity);
       ref.setInput('patience', PATIENCE);
+      ref.setInput('pace', animationPace());
       this.app.attachView(ref.hostView);
       this.document.body.append(ref.location.nativeElement);
       const sub = ref.instance.done.subscribe(() => {

@@ -13,6 +13,8 @@ const TABLE_TILT_MAX = 24;
 export class BoardPreferences {
   /** "Animaciones" off: the table changes at once (BoardAnimations reads it). */
   readonly animationsOff = persistedFlag('eras-sim-animations-off');
+  /** "Velocidad de las animaciones": a step of ANIMATION_PACES (timing.ts), slowest (0) to fastest (4); normal 2. */
+  readonly animationSpeed = persistedNumber('eras-sim-animation-speed', 2, 0, 4);
   /** "Brillo de las cartas" off: the table's cards without their still glossy coat and gold metal (lighter). */
   readonly shineOff = persistedFlag('eras-sim-shine-off');
   /** "Zonas espejadas": the rival's lives and gems swap with their piles. */

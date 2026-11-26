@@ -1,10 +1,11 @@
 import { HAND_REVEAL_MS } from '@data/simulator/game-notices';
 
 /**
- * How long the board's animations last, in milliseconds: the one place to change them. The styles get them as custom
- * properties (`timingVars`, set on the board), so a CSS animation and the code waiting for it never drift apart.
+ * How long the board's animations last at normal speed, in milliseconds: the one place to change them. Read them through
+ * TIMING (scaled by the player's speed). The styles get them as custom properties (`timingVars`, set on the board), so a
+ * CSS animation and the code waiting for it never drift apart.
  */
-export const TIMING = {
+const BASE = {
   /** A field card exhausted: its place widens first, then it turns sideways into it. */
   tapWiden: 140,
   tapTurn: 300,
@@ -33,13 +34,13 @@ export const TIMING = {
   /** "+2" / "−1" rising from a card or the gems. */
   float: 1100,
   /** A destroyed card breaking where it lies. */
-  shatter: 860,
+  shatter: 700,
   /** Cards flying between zones; a draw, one card after another; a card changing line; a summon and its burst. */
   flight: 650,
   draw: 500,
   drawStagger: 120,
   /** A card drawn, held over its place in the hand (while the hand makes room) and then set down into it. */
-  drawHold: 340,
+  drawHold: 220,
   drawDown: 220,
   move: 520,
   /** The cards of a row sliding to their new places when its order changes (a swap, a creature placed, the row closing up). */
@@ -73,6 +74,30 @@ export const TIMING = {
   handReveal: HAND_REVEAL_MS,
 } as const;
 
+/**
+ * "Velocidad de las animaciones", slowest to fastest: what every duration is multiplied by (BoardPreferences keeps the
+ * step, BoardAnimations sets it here).
+ */
+export const ANIMATION_PACES = [1.5, 1.25, 1, 0.8, 0.6] as const;
+export const ANIMATION_PACE_NAMES = ['muy lenta', 'lenta', 'normal', 'rápida', 'muy rápida'] as const;
+
+let pace = 1;
+
+/** Every board animation from now on lasts `factor` times its normal length (1 normal, under 1 faster). */
+export function setAnimationPace(factor: number): void {
+  pace = factor;
+}
+
+export function animationPace(): number {
+  return pace;
+}
+
+/** The board's durations at the player's speed (each read gives the current one). */
+export const TIMING = Object.defineProperties(
+  {},
+  Object.fromEntries(Object.keys(BASE).map((k) => [k, { enumerable: true, get: () => BASE[k as keyof typeof BASE] * pace }])),
+) as { readonly [K in keyof typeof BASE]: number };
+
 /** How heavy a card lands, 0 to 1: by its strength (2 or less the lightest, 12 or more the heaviest; none, light). */
 export function impactWeight(strength: number | null): number {
   if (strength === null) return 0.25;
@@ -85,17 +110,22 @@ export function summonTiming(weight: number): { hang: number; duration: number }
   return { hang, duration: TIMING.summon + hang };
 }
 
-/** The timings the styles use, as custom properties of the board ("--sim-tap-turn: 300ms"…). */
-export function timingVars(): Record<string, string> {
+/**
+ * The timings the styles use at speed `factor`, as custom properties of the board ("--sim-tap-turn: 300ms"…), and the
+ * factor itself (--sim-pace) for the styles' own durations.
+ */
+export function timingVars(factor = pace): Record<string, string> {
+  const ms = (k: keyof typeof BASE) => `${BASE[k] * factor}ms`;
   return {
-    '--sim-tap-widen': `${TIMING.tapWiden}ms`,
-    '--sim-tap-turn': `${TIMING.tapTurn}ms`,
-    '--sim-combat-reveal': `${TIMING.combatReveal}ms`,
-    '--sim-phase-show': `${TIMING.phaseShow}ms`,
-    '--sim-chain-show': `${TIMING.chainShow}ms`,
-    '--sim-chain-resolution': `${TIMING.chainResolution}ms`,
-    '--sim-match-start': `${TIMING.matchStart}ms`,
-    '--sim-hand-reveal': `${TIMING.handReveal}ms`,
+    '--sim-pace': `${factor}`,
+    '--sim-tap-widen': ms('tapWiden'),
+    '--sim-tap-turn': ms('tapTurn'),
+    '--sim-combat-reveal': ms('combatReveal'),
+    '--sim-phase-show': ms('phaseShow'),
+    '--sim-chain-show': ms('chainShow'),
+    '--sim-chain-resolution': ms('chainResolution'),
+    '--sim-match-start': ms('matchStart'),
+    '--sim-hand-reveal': ms('handReveal'),
   };
 }
 

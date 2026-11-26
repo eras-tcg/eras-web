@@ -132,7 +132,7 @@ export class BoardPage {
   /** Full screen, installed, landscape lock. */
   protected readonly screen = inject(BoardScreen);
   /** The animations' timings, as custom properties for the styles. */
-  protected readonly timing = timingVars();
+  protected readonly timing = computed(() => timingVars(this.animations.pace()));
   private readonly drag = inject(BoardDrag);
   private readonly sheet = inject(SheetState);
   /** A choice is lowered to look at the table: nothing can be done meanwhile. */

@@ -25,11 +25,11 @@
 }
 
 .stage.on {
-  animation: in 0.3s ease forwards;
+  animation: in calc(0.3s * var(--pace, 1)) ease forwards;
 }
 
 .stage.off {
-  animation: out 0.45s ease forwards;
+  animation: out calc(0.45s * var(--pace, 1)) ease forwards;
 }
 
 .fx,
@@ -64,7 +64,7 @@
   );
   filter: blur(20px);
   mix-blend-mode: screen;
-  animation: aura 3s ease-in-out infinite alternate;
+  animation: aura calc(3s * var(--pace, 1)) ease-in-out infinite alternate;
 }
 
 /* Where it lands: a glow on the ground and a ring of light opening across it */
@@ -96,11 +96,11 @@
 }
 
 .on .ground {
-  animation: ground 0.6s ease-out 0.35s forwards;
+  animation: ground calc(0.6s * var(--pace, 1)) ease-out calc(0.35s * var(--pace, 1)) forwards;
 }
 
 .on .shock {
-  animation: shock 0.8s cubic-bezier(0.1, 0.7, 0.3, 1) 0.4s forwards;
+  animation: shock calc(0.8s * var(--pace, 1)) cubic-bezier(0.1, 0.7, 0.3, 1) calc(0.4s * var(--pace, 1)) forwards;
 }
 
 .creature,
@@ -132,8 +132,8 @@
 
 .on .creature {
   animation:
-    rise 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.1) 0.3s forwards,
-    live 2.2s ease-in-out 0.85s forwards;
+    rise calc(0.55s * var(--pace, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.1) calc(0.3s * var(--pace, 1)) forwards,
+    live calc(2.2s * var(--pace, 1)) ease-in-out calc(0.85s * var(--pace, 1)) forwards;
 }
 
 .plate {
@@ -147,7 +147,7 @@
 }
 
 .on .plate {
-  animation: plate 0.45s ease-out 0.6s forwards;
+  animation: plate calc(0.45s * var(--pace, 1)) ease-out calc(0.6s * var(--pace, 1)) forwards;
 }
 
 .name {
@@ -188,7 +188,7 @@
 }
 
 .on .flash {
-  animation: flash 0.55s ease-out 0.35s;
+  animation: flash calc(0.55s * var(--pace, 1)) ease-out calc(0.35s * var(--pace, 1));
 }
 
 /* Added from the script: shards circling the vortex and motes rising */

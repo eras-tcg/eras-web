@@ -137,7 +137,7 @@ export function poseFrames(stage: Stage, from: CardPose, to: CardPose, faces: { 
 
 /**
  * The keyframes of a card going to a hand and set down into its place (seen by `stage`'s camera): in one smooth motion
- * it flies to just over its place (`rise` pixels out from it, the way the card's top points), slowing down as it gets
+ * it flies over its place (`rise` pixels out from it, the way the card's top points, and bigger), slowing down as it gets
  * there; it holds there and goes down into it. `hold`: from when to when it is over its place, as shares of the flight.
  * Each keyframe brings its own easing: play them linear.
  */
@@ -150,7 +150,8 @@ export function settleFrames(
   hold = { from: 0.5, to: 0.8 },
 ): Keyframe[] {
   const t = (to.turn * Math.PI) / 180;
-  const over: CardPose = { ...to, x: to.x + rise * Math.sin(t), y: to.y - rise * Math.cos(t) };
+  // Bigger over its place: nearer the eye, as held up above it
+  const over: CardPose = { ...to, x: to.x + rise * Math.sin(t), y: to.y - rise * Math.cos(t), scale: to.scale * 1.2 };
   const [start, , above] = poseFrames(stage, from, over, faces);
   const down = poseFrames(stage, from, to, faces)[2];
   return [

@@ -71,7 +71,7 @@ export class CardFlyer {
       options.slam
         ? slamFrames(stage, start, end, faces, this.apex(options.duration ?? TIMING.flight, options.slam.hang))
         : options.settle
-          ? settleFrames(stage, start, end, faces, end.height * end.scale * 0.45, this.hold(options.duration ?? TIMING.flight, options.settle))
+          ? settleFrames(stage, start, end, faces, end.height * end.scale * 0.9, this.hold(options.duration ?? TIMING.flight, options.settle))
           : poseFrames(stage, start, end, faces, options.under)
     ).map(
       ({ filter, ...frame }) => (void filter, frame),

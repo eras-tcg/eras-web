@@ -256,7 +256,7 @@ export class CardMotions {
   }
 
   /**
-   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, chips and dust thrown out from its edges, and the cards around it hop and a glow fades on it
+   * A summoned card lands: it presses into the table, which jolts; frames of light its shape open from it, sparks, pixels and traces of light from its edges, and the cards around it hop and a glow fades on it
    * (blue yours, red the rival's).
    * `landing`: where the card lies once landed (not where it travels from).
    */
@@ -332,7 +332,7 @@ export class CardMotions {
 
   /**
    * The table struck by a card landing (`card`, its center on the screen `at`, `size` its length there): the field cards
-   * around it hop off the table and drop back, the nearest first and highest, as the blow spreads.
+   * around it hop off the table and drop back rocking, the nearest first and most, as the blow spreads.
    */
   private hop(card: HTMLElement, at: { x: number; y: number }, size: number, delay: number): void {
     const reach = size * 3.2;
@@ -340,14 +340,20 @@ export class CardMotions {
       if (other === card) continue;
       const r = other.getBoundingClientRect();
       const d = Math.hypot(r.left + r.width / 2 - at.x, r.top + r.height / 2 - at.y);
-      const up = 12 * (1 - d / reach);
+      const near = 1 - d / reach;
+      const up = 12 * near;
       if (up < 1.5) continue;
+      // It rocks away from the blow, then back and forth less and less until it settles
+      const away = r.left + r.width / 2 >= at.x ? 1 : -1;
+      const tilt = 7 * near * away;
       other.animate(
         [
-          { translate: '0 0', scale: '1', easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
-          { translate: `0 ${-up}px`, scale: `${1 + up * 0.004}`, offset: 0.35, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
-          { translate: `0 ${up * 0.12}px`, scale: '1', offset: 0.72 },
-          { translate: '0 0', scale: '1' },
+          { translate: '0 0', rotate: '0deg', scale: '1', easing: 'cubic-bezier(0.15, 0.8, 0.4, 1)' },
+          { translate: `0 ${-up}px`, rotate: `${tilt}deg`, scale: `${1 + up * 0.004}`, offset: 0.22, easing: 'cubic-bezier(0.6, 0, 1, 0.6)' },
+          { translate: `0 ${up * 0.12}px`, rotate: `${-tilt * 0.65}deg`, scale: '1', offset: 0.42 },
+          { translate: '0 0', rotate: `${tilt * 0.4}deg`, offset: 0.6 },
+          { rotate: `${-tilt * 0.2}deg`, offset: 0.78 },
+          { translate: '0 0', rotate: '0deg', scale: '1' },
         ],
         // It reaches them as it spreads: a little later the farther they are
         { duration: TIMING.hop, delay: delay + d * 0.25 },
@@ -356,8 +362,8 @@ export class CardMotions {
   }
 
   /**
-   * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels): sparks and chips thrown out from its
-   * edges along the table, and dust puffing out low around it; each one removes itself.
+   * The impact of a card landing (centered at `at`, `w`×`h`, in `host`'s pixels), on a table of light: sparks and
+   * flickering pixels thrown out from its edges, and traces of light running out from them; each one removes itself.
    */
   private debris(host: HTMLElement, at: { x: number; y: number }, w: number, h: number, color: string, delay: number, flat: boolean): void {
     const life = TIMING.burst * 0.85;
@@ -409,38 +415,58 @@ export class CardMotions {
         Math.random() * 40,
       );
     }
-    // Chips: small shards spinning out
-    for (let i = 0; i < 10; i++) {
+    // Pixels: small squares of light jumping out in steps, flickering, as a screen glitches
+    for (let i = 0; i < 12; i++) {
       const e = edge();
-      const size = 3 + Math.random() * 4;
-      const dist = Math.max(w, h) * (0.2 + Math.random() * 0.35);
-      const spin = (Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 360);
+      const size = 3 + Math.round(Math.random() * 3);
+      const dist = Math.max(w, h) * (0.15 + Math.random() * 0.35);
       add(
-        { background: 'rgb(255 255 255 / 85%)', clipPath: 'polygon(50% 0, 100% 80%, 0 100%)', filter: `drop-shadow(0 0 3px ${color})` },
+        { background: Math.random() < 0.5 ? '#fff' : color, boxShadow: `0 0 6px ${color}` },
         size,
         [
-          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px) rotate(0deg)` },
-          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px) rotate(${spin}deg)` },
+          { opacity: 1, transform: `translate(${e.x}px, ${e.y}px)` },
+          { opacity: 0.3, offset: 0.25 },
+          { opacity: 1, offset: 0.45 },
+          { opacity: 0.6, offset: 0.7 },
+          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px)` },
         ],
         life * (0.6 + Math.random() * 0.4),
-        0,
+        Math.random() * 60,
       );
     }
-    // Dust: soft puffs rolling out low from the bottom and sides, growing as they thin
-    for (let i = 0; i < 8; i++) {
+    // Traces: lines of light running out from its edges straight along the table, as through a circuit, then fading
+    for (let i = 0; i < 10; i++) {
       const e = edge();
-      const size = Math.min(w, h) * (0.25 + Math.random() * 0.2);
-      const dist = Math.min(w, h) * (0.3 + Math.random() * 0.3);
-      add(
-        { borderRadius: '50%', background: 'radial-gradient(circle, rgb(220 225 240 / 45%), rgb(220 225 240 / 0%) 70%)' },
-        size,
+      const len = Math.max(w, h) * (0.35 + Math.random() * 0.45);
+      const across = e.nx !== 0;
+      const trace = this.document.createElement('div');
+      const head = across ? (e.nx > 0 ? 'right' : 'left') : e.ny > 0 ? 'bottom' : 'top';
+      Object.assign(trace.style, {
+        position: flat ? 'fixed' : 'absolute',
+        left: `${at.x + e.x - (across ? (e.nx < 0 ? len : 0) : 1)}px`,
+        top: `${at.y + e.y - (across ? 1 : e.ny < 0 ? len : 0)}px`,
+        width: across ? `${len}px` : '2px',
+        height: across ? '2px' : `${len}px`,
+        zIndex: LAYER.flight,
+        pointerEvents: 'none',
+        opacity: '0',
+        background: `linear-gradient(to ${head}, transparent, ${color} 60%, #fff)`,
+        boxShadow: `0 0 6px ${color}`,
+        transformOrigin: across ? (e.nx > 0 ? 'left' : 'right') : e.ny > 0 ? 'top' : 'bottom',
+      });
+      if (flat) quakesWithTable(trace);
+      host.append(trace);
+      const grow = across ? 'scaleX' : 'scaleY';
+      const t = trace.animate(
         [
-          { opacity: 0.9, transform: `translate(${e.x}px, ${e.y}px) scale(0.4)` },
-          { opacity: 0, transform: `translate(${e.x + e.nx * dist}px, ${e.y + e.ny * dist}px) scale(1.6)` },
+          { opacity: 1, transform: `${grow}(0)` },
+          { opacity: 1, transform: `${grow}(1)`, offset: 0.45 },
+          { opacity: 0, transform: `${grow}(1)` },
         ],
-        life,
-        20,
+        { duration: life * (0.7 + Math.random() * 0.3), delay: delay + Math.random() * 50, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' },
       );
+      t.onfinish = () => trace.remove();
+      t.oncancel = () => trace.remove();
     }
   }
 

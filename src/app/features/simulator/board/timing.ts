@@ -31,7 +31,7 @@ export const TIMING = {
   /** The life lost turning face up on its pile. */
   lifeFlip: 480,
   /** The cards around a summoned one hopping as it lands (each one's hop). */
-  hop: 360,
+  hop: 620,
   /** The table jolting under a blow (an attack landing, a card breaking, a summon landing). */
   quake: 380,
   /** A deck shuffled: it shakes. */

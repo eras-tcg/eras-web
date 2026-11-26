@@ -98,6 +98,9 @@
     <eras-toggle-group label="Rareza" [options]="rarityOptions()" [selected]="activeRarities()" (toggled)="toggleRarity($event)" />
   }
 
+  <eras-toggle-group label="Diseño" [options]="frameOptions" [selected]="activeFrames()" (toggled)="toggleFrame($event)" />
+  <eras-toggle-group label="Borde de oro" [options]="borderOptions" [selected]="activeBorders()" (toggled)="toggleBorder($event)" />
+
   <label class="eras-form-field__text">
     <input type="checkbox" [checked]="f.starterOnly" (change)="set('starterOnly', $any($event.target).checked)" />
     Solo iniciadores

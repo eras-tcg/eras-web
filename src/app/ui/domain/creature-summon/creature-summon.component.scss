@@ -1,0 +1,440 @@
+/* A popover: in the browser's top layer, above the table, dialogs and any choice */
+.stage {
+  --c1: rgb(203 213 225);
+  --c2: rgb(148 163 184);
+  position: fixed;
+  inset: 0;
+  inline-size: auto;
+  block-size: auto;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  opacity: 0;
+  background: #03050c;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+
+  > span,
+  > span > * {
+    display: block;
+  }
+}
+
+.stage.on {
+  animation: in calc(0.3s * var(--pace, 1)) ease forwards;
+}
+
+.stage.off {
+  animation: out calc(0.45s * var(--pace, 1)) ease forwards;
+}
+
+/* The feather filter's definitions take no room */
+.defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+}
+
+.fx,
+.motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.fx canvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* The creature's own light behind it, breathing; it lightens the vortex where they meet */
+.aura {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  inline-size: 120vmin;
+  block-size: 120vmin;
+  margin: -60vmin;
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--c1) 45%, transparent),
+    color-mix(in srgb, var(--c2) 25%, transparent) 40%,
+    transparent 68%
+  );
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  animation: aura calc(3s * var(--pace, 1)) ease-in-out infinite alternate;
+}
+
+/* Where it lands: a glow on the ground and a ring of light opening across it */
+.ground,
+.shock {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: 13%;
+  inline-size: 70vmin;
+  block-size: 14vmin;
+  margin-inline-start: -35vmin;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.ground {
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--c1) 70%, #fff),
+    color-mix(in srgb, var(--c1) 30%, transparent) 45%,
+    transparent 70%
+  );
+}
+
+.shock {
+  border: 3px solid #fff;
+  box-shadow: 0 0 20px 4px var(--c1);
+  transform: translateY(50%) scale(0.2);
+}
+
+.on .ground {
+  animation: ground calc(0.6s * var(--pace, 1)) ease-out calc(0.35s * var(--pace, 1)) forwards;
+}
+
+.on .shock {
+  animation: shock calc(0.8s * var(--pace, 1)) cubic-bezier(0.1, 0.7, 0.3, 1) calc(0.4s * var(--pace, 1)) forwards;
+}
+
+.creature,
+.plate,
+.motes,
+.flash {
+  z-index: 2;
+}
+
+.creature {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: 14%;
+  block-size: 70%;
+  max-inline-size: 80vw;
+  opacity: 0;
+  transform: translateX(-50%);
+  /* A soft light round it in its colors (no white rim: it would trace a cut-out's edges) */
+  filter: drop-shadow(0 0 22px color-mix(in srgb, var(--c1) 50%, transparent)) drop-shadow(0 26px 30px rgb(0 0 0 / 70%));
+
+  img {
+    block-size: 100%;
+    max-inline-size: 80vw;
+    object-fit: contain;
+    /* Its foot fades out: a cut-out figure often ends in the ground it stood on */
+    mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  }
+}
+
+.on .creature {
+  animation:
+    rise calc(0.55s * var(--pace, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.1) calc(0.3s * var(--pace, 1)) forwards,
+    live calc(2.2s * var(--pace, 1)) ease-in-out calc(0.85s * var(--pace, 1)) forwards;
+}
+
+/* Where it was: low on the screen, a band of light across it as the turn's phases have */
+.plate {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 4%;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+.on .plate {
+  animation: plate calc(0.2s * var(--pace, 1)) ease-out calc(0.55s * var(--pace, 1)) forwards;
+}
+
+.band {
+  position: relative;
+  display: flex !important;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(0.7rem, 1.8vh, 1.1rem);
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--identity) 22%, rgb(6 8 18 / 92%)) 22%,
+    color-mix(in srgb, var(--identity) 22%, rgb(6 8 18 / 92%)) 78%,
+    transparent
+  );
+  clip-path: inset(50% 0);
+}
+
+.on .band {
+  animation: band-open calc(0.5s * var(--pace, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) calc(0.55s * var(--pace, 1)) forwards;
+}
+
+.band::before,
+.band::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  block-size: 2px;
+  background: linear-gradient(90deg, transparent, var(--identity) 25%, #fff 50%, var(--identity) 75%, transparent);
+  box-shadow: 0 0 14px 2px var(--identity);
+}
+
+.band::before {
+  inset-block-start: 0;
+}
+
+.band::after {
+  inset-block-end: 0;
+}
+
+.name {
+  color: #fff;
+  font-family: var(--font-family-display);
+  font-size: clamp(1.8rem, 4.2vw, 3rem);
+  line-height: 1;
+  text-shadow:
+    0 0 22px var(--identity),
+    0 3px 0 rgb(0 0 0 / 55%);
+}
+
+.on .name {
+  animation: name-in calc(0.6s * var(--pace, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) calc(0.7s * var(--pace, 1)) backwards;
+}
+
+/* The level as the card has it, under the name over the band's lower line: its roman numeral in gold on a disc of the
+   card's color in a bevelled gold ring */
+.level {
+  flex: none;
+  position: relative;
+  z-index: 1;
+  margin-block-start: calc(clamp(3.2rem, 6.5vw, 4.6rem) * -0.3);
+  display: grid !important;
+  place-items: center;
+  inline-size: clamp(3.2rem, 6.5vw, 4.6rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--identity) 45%, #000), color-mix(in srgb, var(--identity) 15%, #05040a) 75%) padding-box,
+    linear-gradient(160deg, #e9c874, #b8892e 45%, #7a5518 70%, #c99a3c) border-box;
+  border: clamp(3px, 0.45vw, 5px) solid transparent;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 55%),
+    inset 0 2px 4px rgb(0 0 0 / 45%),
+    0 0 0 1px rgb(0 0 0 / 55%),
+    0 3px 8px rgb(0 0 0 / 55%);
+  color: #e3c06a;
+  /* The card's own serif (Book Antiqua Bold, not shipped: the one installed, else the closest) */
+  font-family: 'Book Antiqua', 'Palatino Linotype', Palatino, 'URW Palladio L', 'P052', Georgia, serif;
+  font-size: clamp(1.25rem, 2.7vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+}
+
+.on .level {
+  animation: level-in calc(0.45s * var(--pace, 1)) ease-out calc(0.8s * var(--pace, 1)) backwards;
+}
+
+/* A gleam crossing the band once the name is in */
+.sweep {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 30%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 22%), transparent);
+  translate: -150% 0;
+}
+
+.on .sweep {
+  animation: sweep calc(0.7s * var(--pace, 1)) ease-in-out calc(1s * var(--pace, 1)) forwards;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 60%, #fff, transparent 60%);
+  opacity: 0;
+}
+
+.on .flash {
+  animation: flash calc(0.55s * var(--pace, 1)) ease-out calc(0.35s * var(--pace, 1));
+}
+
+/* Added from the script: shards circling the vortex and motes rising */
+:host ::ng-deep {
+  .shard {
+    position: absolute;
+    inline-size: var(--w);
+    block-size: calc(var(--w) * 1.6);
+    opacity: 0;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, #fff 70%, var(--c1)),
+      color-mix(in srgb, var(--c1) 40%, transparent)
+    );
+    clip-path: polygon(50% 0, 100% 40%, 60% 100%, 0 60%);
+  }
+
+  .mote {
+    position: absolute;
+    inline-size: 3px;
+    block-size: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px var(--c1);
+    opacity: 0;
+  }
+}
+
+@keyframes in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes aura {
+  from {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+
+  to {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes ground {
+  to {
+    opacity: 0.9;
+  }
+}
+
+@keyframes shock {
+  0% {
+    opacity: 1;
+    transform: translateY(50%) scale(0.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(50%) scale(1.8);
+  }
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16vh) scale(0.7);
+    filter: brightness(5);
+  }
+
+  55% {
+    opacity: 1;
+    filter: brightness(1.8) drop-shadow(0 0 20px var(--c1));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes live {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-1vh) scale(1.025);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-0.5vh) scale(1.05);
+  }
+}
+
+@keyframes plate {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes band-open {
+  to {
+    clip-path: inset(0 0);
+  }
+}
+
+@keyframes name-in {
+  from {
+    opacity: 0;
+    translate: 5rem 0;
+    letter-spacing: 0.3em;
+    filter: blur(4px);
+  }
+
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes level-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
+@keyframes sweep {
+  from {
+    translate: -150% 0;
+  }
+
+  to {
+    translate: 450% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura {
+    animation: none;
+  }
+}

@@ -1,5 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, EnvironmentInjector, afterRenderEffect, inject } from '@angular/core';
+import { cardCreatureUrl } from '@data/cards/card-rules';
+import { CardsStore } from '@data/cards/cards.store';
 import { PILES, displayStrength, findSlot } from '@data/simulator/game-rules';
 import { GameStore } from '@data/simulator/game.store';
 import { fieldRows } from '@data/simulator/legal-actions';
@@ -9,6 +11,7 @@ import { BoardChoreography } from './board-choreography';
 import { fieldCard, fieldSprite, handCard, handPlace, pile } from './board-dom';
 import { CardFlyer } from './card-flyer';
 import { CardMotions } from './card-motions';
+import { CreatureMoments, creatureMomentOf } from './creature-moments';
 import { poseOf } from './card-pose';
 import { Seen, TableMeasure } from './card-seen';
 import { LifeFlights } from './life-flights';
@@ -58,6 +61,8 @@ export class CardFlightsComponent {
   private readonly lives = new LifeFlights(this.document, this.measure, this.flyer);
   private readonly turnDraw = new TurnDraw(this.document, this.animations, this.measure, this.flyer);
   private readonly timeline = new TimelineCursor();
+  private readonly cards = inject(CardsStore);
+  private readonly creatures = new CreatureMoments(this.document, inject(ApplicationRef), inject(EnvironmentInjector));
 
   /** Where each field card was drawn last time: it flies from there when it leaves the field. */
   private seen = new Map<string, Seen>();
@@ -131,6 +136,7 @@ export class CardFlightsComponent {
         this.pileMoves(state);
         this.attachments(state);
         // A card drawn with a summon (an effect's) is drawn once the summon has landed
+        this.preloadCreatures(state);
         if (this.fieldMoves(state)) this.deferring = true;
         this.handSlides(state);
         this.seen = this.measure.field(state);
@@ -389,8 +395,24 @@ export class CardFlightsComponent {
         // The stronger, the longer it hangs over its place and the harder it lands
         const weight = impactWeight(displayStrength(c));
         const { hang, duration } = summonTiming(weight);
-        if (from) this.glide(sprite, card, c, from, duration, hang);
-        this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, specials.get(c.instanceId) ?? null);
+        const special = specials.get(c.instanceId) ?? null;
+        const land = (now: boolean) => {
+          if (from) this.glide(sprite, card, c, from, duration, hang, now);
+          this.motions.burst(card, landing, p.userId === me, from ? duration : 0, weight, special, now);
+        };
+        // A full-art creature first shows itself big, over its own stage; then its card lands (a special summon's own
+        // light after that). The board waits for it all
+        const moment = this.animations.still() ? null : creatureMomentOf(this.catalogCard(c.cardId));
+        if (moment) {
+          sprite.style.visibility = 'hidden';
+          const release = this.animations.begin();
+          void this.creatures.play(moment).then(() => {
+            sprite.style.visibility = '';
+            land(true);
+            this.animations.hold(duration + 200);
+            release();
+          });
+        } else land(false);
         summoned = true;
       }
     }
@@ -487,7 +509,23 @@ export class CardFlightsComponent {
    * A copy of a field card flies from where it was to its place (`card`, its sprite `sprite` hidden until it lands);
    * summoned (`hang`: how long it hangs over it), it slams onto it.
    */
-  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, hang?: number): void {
+  private catalogCard(cardId: string) {
+    return this.cards.cards().find((x) => x.id === cardId);
+  }
+
+  /** The creatures of the cards in the hands (any may be summoned next) are fetched ahead. */
+  private preloadCreatures(state: GameState): void {
+    if (this.animations.still()) return;
+    const ids = new Set(Object.values(state.players ?? {}).flatMap((p) => p.hand.map((c) => c.cardId)));
+    const urls: string[] = [];
+    for (const id of ids) {
+      const url = id ? cardCreatureUrl(this.catalogCard(id)?.meta) : null;
+      if (url) urls.push(url);
+    }
+    this.creatures.preload(urls);
+  }
+
+  private glide(sprite: HTMLElement, card: HTMLElement, slot: CardSlot, from: Seen, duration: number, hang?: number, now = false): void {
     if (this.animations.still()) return;
     const to = card.getBoundingClientRect();
     if (Math.abs(from.x - (to.left + to.width / 2)) < 2 && Math.abs(from.y - (to.top + to.height / 2)) < 2) return;
@@ -498,6 +536,7 @@ export class CardFlightsComponent {
       duration,
       hide: sprite,
       slam: hang === undefined ? undefined : { hang },
+      now,
     });
   }
 

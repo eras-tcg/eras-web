@@ -1,6 +1,6 @@
 {
   "name": "eras-web",
-  "version": "2.21.0",
+  "version": "2.22.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -27,6 +27,7 @@
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
     "@capgo/capacitor-updater": "^8.54.2",
+    "@huggingface/transformers": "^4.3.2",
     "@stomp/stompjs": "^7.3.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

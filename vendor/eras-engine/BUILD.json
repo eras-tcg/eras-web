@@ -1,8 +1,8 @@
 {
-  "commit": "2812daea35499df83839d2293e296472ac879526",
+  "commit": "290cf0afd9735125963d120fef2b5d4d7d0470b1",
   "dirty": false,
-  "subject": "feat(simulator): each player's card back travels with them to the table",
-  "copiedAt": "2026-11-23T17:53:16.058Z",
+  "subject": "Merge pull request #106 from eras-tcg/feat/recorte-criatura",
+  "copiedAt": "2026-11-26T21:28:39.715Z",
   "files": [
     "bot-resources.json",
     "card-bundle.json",

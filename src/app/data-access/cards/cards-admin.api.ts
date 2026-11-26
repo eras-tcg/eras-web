@@ -94,6 +94,17 @@ export class CardsAdminApi {
     });
   }
 
+  /** Its creature cut out of the illustration (a PNG with transparency, for its summon): answers the card. */
+  setCreature(metaId: string, image: Blob): Observable<CardMeta> {
+    return this.http.put<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/creature`), image, {
+      headers: { 'Content-Type': 'image/png' },
+    });
+  }
+
+  removeCreature(metaId: string): Observable<CardMeta> {
+    return this.http.delete<CardMeta>(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/creature`));
+  }
+
   render(metaId: string): Observable<Blob> {
     return this.http.get(this.api.url(`/api/cards/${encodeURIComponent(metaId)}/render`), { responseType: 'blob' });
   }

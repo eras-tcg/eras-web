@@ -132,7 +132,7 @@ export class PlayerHalfComponent {
   protected pileEdge(cards: number): string {
     const depth = this.pileDepth(cards);
     const edges = Array.from({ length: depth }, (_, i) => {
-      const narrower = (i + 1) * PILE_EDGE_TAPER * this.prefs.tilt();
+      const narrower = (i + 1) * PILE_EDGE_TAPER * (this.prefs.tilted() ? 1 : 0);
       return `0 ${i + 1 + narrower}px 0 ${-narrower}px ${i % 2 ? '#2a3441' : '#0b0f14'}`;
     });
     return [...edges, `0 ${depth + 2}px ${4 + depth / 2}px rgb(0 0 0 / 45%)`].join(', ');

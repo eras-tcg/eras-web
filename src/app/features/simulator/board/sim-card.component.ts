@@ -26,7 +26,6 @@ const TOUCH_DRAG_PX = 14;
 
 /** A card of the field turning sideways as it is exhausted (sim-card.component.scss uses the same time). */
 /** Turning sideways when exhausted: its place widens, then it turns. */
-const TAP_MS = TIMING.tap;
 
 /**
  * A card on the board with its interactions: click shows its legal actions (or picks the target), double
@@ -183,8 +182,8 @@ export class SimCardComponent {
       const animate = !!this.animations && !this.animations.off();
       // Exhausted just now: what comes with it (its attack, the effect it paid for) waits until it has turned
       if (animate && this.wasTapped === false && tapped) {
-        this.tapEndsAt = Date.now() + TAP_MS;
-        this.animations!.hold(TAP_MS);
+        this.tapEndsAt = Date.now() + TIMING.tap;
+        this.animations!.hold(TIMING.tap);
       }
       this.wasTapped = tapped;
       if (this.roleTimer) clearTimeout(this.roleTimer);

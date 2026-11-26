@@ -79,6 +79,8 @@ export interface CardMeta {
   renderKey?: string | null;
   /** Where the card shines, drawn with its render (gloss on top, gold below): GET /api/cards/{id}/shine. */
   shineKey?: string | null;
+  /** Its creature cut out of the illustration (a PNG), shown big when it is summoned: GET /api/cards/{id}/creature. */
+  creatureKey?: string | null;
   /** In a structure deck (ST…): how many copies of this card the deck brings. */
   deckCopies?: number | null;
 }

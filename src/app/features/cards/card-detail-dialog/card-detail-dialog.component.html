@@ -35,6 +35,11 @@
     [class.with-versions]="showVersions"
   >
     <ng-container ngProjectAs="[detail-actions]">
+      @if (creature()) {
+        <button erasButton variant="secondary" size="sm" type="button" (click)="summoning.set(true)">
+          <eras-icon name="play" /> Ver animación
+        </button>
+      }
       @if (!data.readonly) {
       <!-- Administration: not from a game (read only there) -->
       <ng-container *erasEdit="'manage_cards'">
@@ -45,6 +50,9 @@
           <eras-icon name="edit" /> Abrir en el editor
         </button>
         @if (card().meta) {
+          <button erasButton variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="openCutout()">
+            <eras-icon name="creature" /> Recorte de la criatura
+          </button>
           <!-- The alternative arts: very rare versions of this card a pack may give (never cards of their own) -->
           <section class="alt-arts" aria-label="Artes alternativos">
             <h3 class="alt-title">Artes alternativos</h3>
@@ -107,3 +115,12 @@
     }
   </eras-card-detail>
 </eras-detail-frame>
+@if (summoning() && creature(); as creature) {
+  <eras-creature-summon
+    [creature]="creature"
+    [name]="v.name"
+    [level]="card().meta?.level ?? null"
+    [identity]="v.color ? 'var(--color-card-' + v.color.toLowerCase() + ')' : '#64748b'"
+    (done)="summoning.set(false)"
+  />
+}

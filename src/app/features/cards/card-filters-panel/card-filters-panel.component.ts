@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, model, output } from '@angular/core';
-import { CARD_POOL_LABELS, CardFilters, CardPool, CardSortKey, NumberRange } from '@data/cards/card-filters';
+import { CARD_BORDERS, CARD_BORDER_LABELS, CARD_FRAMES, CARD_FRAME_LABELS, CARD_POOL_LABELS, CardFilters, CardPool, CardSortKey, NumberRange } from '@data/cards/card-filters';
 import { FilterOptions } from '@data/cards/card-rules';
 import { CARD_TYPE_LABELS, COLOR_LABELS, SPECIAL_SUMMON_LABELS } from '@data/cards/card.model';
 import { Edition } from '@data/editions/edition.model';
@@ -13,7 +13,7 @@ import { IconComponent } from '@ui/primitives/icon/icon.component';
 import { CardView, SORT_OPTIONS } from '../card-view';
 
 type RangeKey = 'cost' | 'level' | 'strength' | 'specialCost';
-type ListKey = 'classes' | 'keywords' | 'tags' | 'rarities';
+type ListKey = 'classes' | 'keywords' | 'tags' | 'rarities' | 'frames' | 'borders';
 
 /**
  * Sidebar with every card filter plus the grid view options and the catalog's marks ("Mostrar obtenidas" first,
@@ -90,6 +90,20 @@ export class CardFiltersPanelComponent {
 
   protected toggleRarity(rarity: string): void {
     this.setList('rarities', toggleInAll(this.filters().rarities, rarity, this.options().rarities));
+  }
+
+  /** The card's design and its gold border: the same rule as the colors (all on = no filter). */
+  protected readonly frameOptions: ToggleOption[] = CARD_FRAMES.map((v) => ({ value: v, label: CARD_FRAME_LABELS[v] }));
+  protected readonly borderOptions: ToggleOption[] = CARD_BORDERS.map((v) => ({ value: v, label: CARD_BORDER_LABELS[v] }));
+  protected readonly activeFrames = computed(() => (this.filters().frames.length ? this.filters().frames : [...CARD_FRAMES]));
+  protected readonly activeBorders = computed(() => (this.filters().borders.length ? this.filters().borders : [...CARD_BORDERS]));
+
+  protected toggleFrame(frame: string): void {
+    this.setList('frames', toggleInAll(this.filters().frames, frame, CARD_FRAMES));
+  }
+
+  protected toggleBorder(border: string): void {
+    this.setList('borders', toggleInAll(this.filters().borders, border, CARD_BORDERS));
   }
 
   protected setView<K extends keyof CardView>(key: K, value: CardView[K]): void {

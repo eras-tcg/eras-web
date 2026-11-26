@@ -11,6 +11,8 @@ import { ThemeService } from '@core/theme/theme.service';
 import { IconComponent, IconName } from '@ui/primitives/icon/icon.component';
 import { frameImage } from '@ui/domain/image-framer/frame-image';
 import { ModalService } from '@ui/surfaces/modal/modal.service';
+import { ANIMATION_SPEEDS } from './timing';
+import { ToggleGroupComponent, ToggleOption } from '@ui/forms/toggle-group/toggle-group.component';
 import { BoardPreferences } from './board-preferences';
 import { BoardScreen } from './board-screen';
 import { openCardBackDialog } from './card-back-dialog.component';
@@ -24,7 +26,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
  */
 @Component({
   selector: 'eras-game-preferences-panel',
-  imports: [IconComponent, NgTemplateOutlet],
+  imports: [IconComponent, NgTemplateOutlet, ToggleGroupComponent],
   template: `
     <div class="tabs" role="tablist" aria-label="Secciones">
       @for (t of sections(); track t.id) {
@@ -88,21 +90,16 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Visibilidad de zonas</strong><small>Cuánto se marcan las zonas de la mesa</small></span>
             <span class="state">{{ prefs.zoneLookNames[prefs.zoneLook()] }}</span>
           </button>
-          <label class="pref tilt">
+          <div class="pref static choice">
             <eras-icon name="box" />
-            <span class="text">
-              <strong>Mesa en perspectiva</strong>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                aria-label="Inclinación de la mesa"
-                [value]="prefs.tilt()"
-                (input)="prefs.tilt.set($any($event.target).valueAsNumber)"
-              />
-            </span>
-          </label>
+            <eras-toggle-group
+              class="text"
+              label="Ángulo de la mesa"
+              [options]="tiltOptions"
+              [selected]="[prefs.tilted() ? 'max' : 'flat']"
+              (toggled)="prefs.tilt.set($event === 'max' ? 1 : 0)"
+            />
+          </div>
           <button type="button" class="pref" role="switch" [attr.aria-checked]="prefs.mirrored()" (click)="prefs.mirrored.set(!prefs.mirrored())">
             <eras-icon name="layers" />
             <span class="text"><strong>Zonas espejadas</strong><small>Las vidas y las pilas del rival cambian de lado</small></span>
@@ -113,6 +110,18 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
             <span class="text"><strong>Animaciones</strong><small>Cartas que vuelan, combates y avisos de turno y fase</small></span>
             <span class="state">{{ prefs.animationsOff() ? 'No' : 'Sí' }}</span>
           </button>
+          @if (!prefs.animationsOff()) {
+            <div class="pref static choice">
+              <eras-icon name="zap" />
+              <eras-toggle-group
+                class="text"
+                label="Velocidad de las animaciones"
+                [options]="speedOptions"
+                [selected]="['' + prefs.animationSpeed()]"
+                (toggled)="prefs.animationSpeed.set(+$event)"
+              />
+            </div>
+          }
           <button type="button" class="pref" role="switch" [attr.aria-checked]="!prefs.shineOff()" (click)="prefs.shineOff.set(!prefs.shineOff())">
             <eras-icon name="sparkles" />
             <span class="text"><strong>Brillo de las cartas</strong><small>Glossy y borde dorado de las cartas en la mesa</small></span>
@@ -297,6 +306,7 @@ type Section = 'interface' | 'table' | 'hand' | 'screen' | 'bots';
     .text small { color: var(--color-text-muted); font-size: var(--font-size-xs); }
     .state { flex: none; color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); text-transform: capitalize; }
     .tilt { cursor: default; }
+    .choice eras-toggle-group { flex: 1; min-inline-size: 0; }
     .tilt input { inline-size: 100%; margin-block-start: var(--space-1); accent-color: var(--color-primary); cursor: pointer; }
     .static { cursor: default; }
     .static:hover { --pref-fill: var(--color-surface); }
@@ -385,6 +395,16 @@ export class GamePreferencesPanelComponent {
   }
 
   protected readonly prefs = inject(BoardPreferences);
+  /** ×0,5 … ×2, by their step. */
+  protected readonly speedOptions: ToggleOption[] = ANIMATION_SPEEDS.map((s, i) => ({
+    value: String(i),
+    label: `Velocidad ×${String(s).replace('.', ',')}`,
+    text: `×${String(s).replace('.', ',')}`,
+  }));
+  protected readonly tiltOptions: ToggleOption[] = [
+    { value: 'max', label: 'Ángulo máximo' },
+    { value: 'flat', label: 'Sin ángulo' },
+  ];
   protected readonly theme = inject(ThemeService);
   protected readonly backdrop = inject(BackdropService);
   protected readonly appFullscreen = inject(AppFullscreen);

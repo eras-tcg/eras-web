@@ -127,7 +127,7 @@ export class FxDraw {
   }
 
   /**
-   * An effect activated on a card: a pool of blue mist with a clear edge spreads under it, swirling; a thin veil of it
+   * An effect activated on a card: a pool of blue mist the card's shape, with a clear edge, spreads under it, swirling; a thin veil of it
    * drifts over the card and motes of light rise from it, over the card; then all of it fades. The pool lies under
    * everything on the table when the card lies on it (over it elsewhere: a hand, a plate). Done when it has gone.
    */
@@ -164,29 +164,48 @@ export class FxDraw {
       host.append(el);
       runs.push(el.animate(frames, { fill: 'backwards', ...timing }).finished);
     };
-    // The pool: blue clouds, each a little off the middle, ending in a bright, clear rim; they turn slowly as they fade
-    for (let i = 0; i < 3; i++) {
-      const ox = (Math.random() - 0.5) * size * 0.08;
-      const oy = (Math.random() - 0.5) * size * 0.08;
-      const spin = (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 25);
-      const rx = 64 + Math.random() * 8;
-      const ry = 58 + Math.random() * 8;
-      add(
-        pool,
-        {
-          inset: `${4 + i * 5}%`,
-          borderRadius: '50%',
-          background: `radial-gradient(ellipse ${rx}% ${ry}% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE} 52%, ${MIST_RIM} 64%, transparent 69%)`,
-          filter: 'blur(2px)',
-          mixBlendMode: 'screen',
-        },
+    // The pool: the card's shape a little bigger, its edge a bright clear line, swirling mist inside it
+    const margin = Math.max(w, h) * 0.13;
+    const turned = card.classList.contains('tapped') ? ' rotate(90deg)' : '';
+    const frame = this.document.createElement('div');
+    Object.assign(frame.style, {
+      position: 'absolute',
+      left: `${(size - w) / 2 - margin}px`,
+      top: `${(size - h) / 2 - margin}px`,
+      width: `${w + margin * 2}px`,
+      height: `${h + margin * 2}px`,
+      borderRadius: `${margin * 0.9}px`,
+      overflow: 'hidden',
+      border: `1.5px solid ${MIST_RIM}`,
+      background: `radial-gradient(ellipse 70% 70% at 50% 50%, ${MIST_CORE}, ${MIST_EDGE})`,
+      boxShadow: `0 0 12px 2px ${MIST_RIM}, inset 0 0 16px 3px ${MIST_RIM}`,
+      opacity: '0',
+    });
+    pool.append(frame);
+    runs.push(
+      frame.animate(
         [
-          { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(0.6) rotate(0deg)` },
-          { opacity: 0.95, transform: `translate(${ox}px, ${oy}px) scale(1) rotate(${spin * 0.45}deg)`, offset: 0.28 },
-          { opacity: 0.8, transform: `translate(${ox}px, ${oy}px) scale(1.04) rotate(${spin * 0.8}deg)`, offset: 0.72 },
-          { opacity: 0, transform: `translate(${ox}px, ${oy}px) scale(1.08) rotate(${spin}deg)` },
+          { opacity: 0, transform: `scale(0.85)${turned}` },
+          { opacity: 0.95, transform: `scale(1)${turned}`, offset: 0.28 },
+          { opacity: 0.8, transform: `scale(1.02)${turned}`, offset: 0.72 },
+          { opacity: 0, transform: `scale(1.04)${turned}` },
         ],
-        { duration: d, delay: i * 50, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)' },
+        { duration: d, easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)', fill: 'backwards' },
+      ).finished,
+    );
+    // Inside it, the mist turns slowly: brighter clouds drifting round
+    for (let i = 0; i < 2; i++) {
+      const spin = (i ? -1 : 1) * (40 + Math.random() * 30);
+      add(
+        frame,
+        {
+          inset: '-30%',
+          background: `radial-gradient(ellipse 30% 22% at ${35 + i * 30}% ${40 + i * 20}%, ${MIST_VEIL}, transparent 70%)`,
+          mixBlendMode: 'screen',
+          opacity: '1',
+        },
+        [{ transform: 'rotate(0deg)' }, { transform: `rotate(${spin}deg)` }],
+        { duration: d, easing: 'linear' },
       );
     }
     // A thin veil of it over the card, drifting across

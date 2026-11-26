@@ -35,7 +35,7 @@ describe('cutout mask', () => {
     fadeDab(m, base, reach, 10.5, 10.5, 16);
     const middle = m.data[10 * 21 + 10];
     const nearRim = m.data[10 * 21 + 17];
-    expect(middle).toBe(Math.round(255 * 0.2));
+    expect(middle).toBe(Math.round(255 * 0.75));
     expect(nearRim).toBeGreaterThan(middle);
     expect(nearRim).toBeLessThan(255);
     expect(m.data[0]).toBe(255);

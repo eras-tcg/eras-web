@@ -56,7 +56,7 @@ export function dab(mask: Mask, x: number, y: number, size: number, add: boolean
  * the stroke began (`base`) by up to `strength` at the dab's middle, less towards its rim (`reach` keeps how far each
  * pixel was reached in the stroke, so going over it again does not add up). Another stroke fades it further.
  */
-export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array, x: number, y: number, size: number, strength = 0.8): void {
+export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array, x: number, y: number, size: number, strength = 0.25): void {
   const { width, height, data } = mask;
   const r = Math.max(0.5, size / 2);
   const x0 = Math.max(0, Math.floor(x - r));
@@ -67,8 +67,8 @@ export function fadeDab(mask: Mask, base: Uint8ClampedArray, reach: Float32Array
     for (let px = x0; px <= x1; px++) {
       const d = Math.hypot(px + 0.5 - x, py + 0.5 - y) / r;
       if (d >= 1) continue;
-      // Smooth from the middle to nothing at the rim
-      const k = 1 - d * d * (3 - 2 * d);
+      // From the middle to nothing at the rim, gently (most of the dab only touched lightly)
+      const k = (1 - d) * (1 - d);
       const i = py * width + px;
       if (k <= reach[i]) continue;
       reach[i] = k;

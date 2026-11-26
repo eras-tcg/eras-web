@@ -59,6 +59,12 @@ const UNDO_STEPS = 30;
             Tamaño: <span class="size-value">{{ brush() }} px</span>
             <input type="range" min="1" max="120" step="1" aria-label="Tamaño del pincel" [value]="brush()" (input)="brush.set(+$any($event.target).value)" />
           </label>
+          @if (tool() === 'fade') {
+            <label class="size">
+              Intensidad: <span class="size-value">{{ fadeStrength() }} %</span>
+              <input type="range" min="5" max="100" step="5" aria-label="Intensidad del desvanecido" [value]="fadeStrength()" (input)="fadeStrength.set(+$any($event.target).value)" />
+            </label>
+          }
         }
         <div class="group">
           <button erasButton variant="ghost" size="sm" type="button" [disabled]="zoom() === 1" (click)="fit()">Ajustar ({{ zoomText() }})</button>
@@ -211,6 +217,8 @@ export class CreatureCutoutDialogComponent {
   protected readonly isBrush = computed(() => BRUSHES.includes(this.tool()));
   /** How many pixels of the illustration the brush covers across (1: a single pixel). */
   protected readonly brush = signal(6);
+  /** How much one stroke of the Desvanecer brush takes away at its middle (%): a stroke again fades further. */
+  protected readonly fadeStrength = signal(25);
   protected readonly samReady = signal(false);
   protected readonly status = signal<string | null>('Cargando la ilustración…');
   protected readonly error = signal<string | null>(null);
@@ -476,7 +484,7 @@ export class CreatureCutoutDialogComponent {
     if (!this.mask) return;
     const tool = this.tool();
     if (tool === 'fade') {
-      if (this.fadeBase && this.fadeReach) fadeDab(this.mask, this.fadeBase, this.fadeReach, x, y, this.brush());
+      if (this.fadeBase && this.fadeReach) fadeDab(this.mask, this.fadeBase, this.fadeReach, x, y, this.brush(), this.fadeStrength() / 100);
     } else dab(this.mask, x, y, this.brush(), tool === 'paint');
   }
 
